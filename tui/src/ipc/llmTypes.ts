@@ -106,10 +106,25 @@ export type KosmosInputJsonDelta = {
   partial_json: string
 }
 
+/**
+ * KOSMOS / Anthropic-compat thinking delta. Carries a chunk of the model's
+ * chain-of-thought trace. The backend forwards K-EXAONE's
+ * ``delta.reasoning_content`` (FriendliAI / vLLM separated reasoning channel)
+ * via ``AssistantChunkFrame.thinking``, and llmClient.ts converts those frames
+ * into one or more ``content_block_delta { delta: KosmosThinkingDelta }``
+ * events on a dedicated thinking block index. The TUI's ``Message.tsx``
+ * picks up ``type: 'thinking'`` content blocks and routes them to
+ * ``AssistantThinkingMessage`` (``∴ Thinking`` in dim italic).
+ */
+export type KosmosThinkingDelta = {
+  type: 'thinking_delta'
+  thinking: string
+}
+
 export type KosmosContentBlockDelta = {
   type: 'content_block_delta'
   index: number
-  delta: KosmosTextDelta | KosmosInputJsonDelta
+  delta: KosmosTextDelta | KosmosInputJsonDelta | KosmosThinkingDelta
 }
 
 export type KosmosContentBlockStop = {

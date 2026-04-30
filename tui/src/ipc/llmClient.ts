@@ -90,6 +90,13 @@ interface _TurnAccumulator {
    *  `blockIndex` — otherwise the terminal `content_block_stop` for text
    *  fires on the wrong index (Codex review P1 on PR #1706). */
   toolBlockCounter: number
+  /** Index of the thinking block, if any. K-EXAONE's reasoning_content
+   *  channel is forwarded by the backend as `AssistantChunkFrame.thinking`;
+   *  llmClient mirrors CC's claude.ts:2148-2165 by routing those chunks to
+   *  a dedicated thinking content block (`type: 'thinking'`). The block
+   *  is opened lazily on the first thinking delta and closed at the same
+   *  time as the text block (done frame). Undefined until first delta. */
+  thinkingBlockIndex: number | undefined
   seenFirstChunk: boolean
 }
 
@@ -101,6 +108,7 @@ function _defaultAccumulator(): _TurnAccumulator {
     stopReason: 'end_turn',
     blockIndex: 0,
     toolBlockCounter: 0,
+    thinkingBlockIndex: undefined,
     seenFirstChunk: false,
   }
 }
@@ -340,6 +348,35 @@ export class LLMClient {
               } satisfies KosmosRawMessageStreamEvent
 
               acc.blockIndex = 0
+              acc.contentBlocks[0] = { type: 'text', text: '' }
+            }
+
+            // Thinking delta — K-EXAONE's reasoning_content channel arrives
+            // here. CC's claude.ts:2148-2165 routes thinking_delta to its own
+            // content block; we mirror that so Message.tsx can pick up
+            // `type: 'thinking'` blocks and route them to the
+            // AssistantThinkingMessage component (∴ Thinking dim italic).
+            if (chunk.thinking && chunk.thinking.length > 0) {
+              if (acc.thinkingBlockIndex === undefined) {
+                const thinkingIdx = acc.contentBlocks.length
+                acc.thinkingBlockIndex = thinkingIdx
+                yield {
+                  type: 'content_block_start',
+                  index: thinkingIdx,
+                  content_block: { type: 'thinking', thinking: '' },
+                } satisfies KosmosRawMessageStreamEvent
+                acc.contentBlocks[thinkingIdx] = { type: 'thinking', thinking: '' }
+              }
+              const thinkingIdx = acc.thinkingBlockIndex
+              yield {
+                type: 'content_block_delta',
+                index: thinkingIdx,
+                delta: { type: 'thinking_delta', thinking: chunk.thinking },
+              } satisfies KosmosRawMessageStreamEvent
+              const existing = acc.contentBlocks[thinkingIdx]
+              if (existing && existing.type === 'thinking') {
+                existing.thinking += chunk.thinking
+              }
             }
 
             // Emit text delta (even if delta is empty — forward compat).
