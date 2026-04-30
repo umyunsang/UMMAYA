@@ -755,3 +755,12 @@ async function checkAutoThreshold(
     metrics: { deferredToolDescriptionChars, charThreshold },
   }
 }
+
+// SWAP/anti-anthropic-1p(2521): byte-copied tui/src/services/api/claude.ts
+// imports `isToolSearchEnabled` from this module. KOSMOS already gates
+// auto-tool-search via `getAutoToolSearchPercentage()` and feature flags, so
+// the explicit boolean predicate is N/A here; stub returns false. The byte-
+// copy is zero-callers at runtime so the value is never consulted.
+export function isToolSearchEnabled(..._args: unknown[]): boolean {
+  return false
+}

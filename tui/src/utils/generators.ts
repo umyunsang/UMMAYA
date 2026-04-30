@@ -86,3 +86,11 @@ export async function* fromArray<T>(values: T[]): AsyncGenerator<T, void> {
     yield value
   }
 }
+
+// SWAP/anti-anthropic-1p(2521): byte-copied tui/src/services/api/claude.ts
+// imports `returnValue` (CC's helper for accessing an async-generator's final
+// `return` value via `yield*`-style consumers). Stub returns undefined; the
+// byte-copy never invokes it at runtime (zero callers).
+export function returnValue<T>(_gen: AsyncGenerator<unknown, T>): T | undefined {
+  return undefined
+}
