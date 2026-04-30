@@ -524,21 +524,53 @@ async def run(  # noqa: C901
     # Keyed by session_id → set of tool_ids approved for the session lifetime.
     _session_grants: dict[str, set[str]] = {}
 
-    # Epic #2077 T010 — single ToolRegistry instance reused across every
-    # chat_request. The registry rebuilds its in-memory adapter index at
-    # backend boot via ``register_all`` side-effects (Spec 1634); rebuilding
-    # it per turn would re-execute every adapter ``__init_subclass__`` hook
+    # Epic #2077 T010 — single ToolRegistry + ToolExecutor instance pair
+    # reused across every chat_request. Adapter registration happens lazily
+    # on first access by invoking ``register_all_tools(registry, executor)``
+    # exactly once (Spec 1634); per-turn reconstruction would force every
+    # adapter ``register()`` call to re-execute and would also rebuild BM25
     # for no observable gain. The list-of-one indirection mirrors the
     # ``_llm_client_ref`` pattern above so the closure-bound name binding
     # survives reassignment under typing strictness.
+    #
+    # Bug fix (2026-05-01, citizen "부산 날씨" report):  the previous
+    # implementation created an empty ``ToolRegistry()`` here AND another
+    # empty pair inside ``_dispatch_primitive`` for every lookup call, so
+    # ``lookup(mode="search", ...)`` always returned ``reason="empty_registry"``
+    # and ``mode="fetch"`` always failed with ``unknown_tool``. The comment
+    # claimed registration happened "via register_all side-effects" but no
+    # such side-effects exist — registration is a function call, not a
+    # module-level statement. This pair is now the single source of truth
+    # for *all* dispatcher paths (search/fetch/export_core_tools_openai).
     _tool_registry_ref: list[object] = []
+    _tool_executor_ref: list[object] = []
 
     def _ensure_tool_registry() -> object:
         if not _tool_registry_ref:
+            from kosmos.tools.executor import ToolExecutor  # noqa: PLC0415
+            from kosmos.tools.register_all import register_all_tools  # noqa: PLC0415
             from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
 
-            _tool_registry_ref.append(ToolRegistry())
+            registry = ToolRegistry()
+            executor = ToolExecutor(registry=registry)
+            register_all_tools(registry, executor)
+            # Cache only after full success — a partial registration leaves
+            # the registry in a mixed state, so let the exception propagate
+            # and a subsequent call retry from scratch.
+            _tool_registry_ref.append(registry)
+            _tool_executor_ref.append(executor)
         return _tool_registry_ref[0]
+
+    def _ensure_tool_executor() -> object:
+        """Return the ToolExecutor paired with the singleton ToolRegistry.
+
+        Triggers lazy registration if neither has been built yet so callers
+        that need only the executor stay correct without taking a registry
+        reference first.
+        """
+        if not _tool_executor_ref:
+            _ensure_tool_registry()  # populates both refs in one shot
+        return _tool_executor_ref[0]
 
     async def _ensure_llm_client() -> object:
         if not _llm_client_ref:
@@ -999,17 +1031,21 @@ async def run(  # noqa: C901
                     }
 
                 elif fname == "lookup":
-                    from kosmos.tools.executor import ToolExecutor  # noqa: PLC0415
                     from kosmos.tools.lookup import lookup  # noqa: PLC0415
                     from kosmos.tools.models import (  # noqa: PLC0415
                         LookupFetchInput,
                         LookupSearchInput,
                     )
-                    from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
 
                     mode = str(args_obj.get("mode", "search"))
-                    registry = ToolRegistry()
-                    executor = ToolExecutor(registry=registry)
+                    # Use the session-scoped singleton populated by
+                    # register_all_tools (Spec 1634). Constructing a fresh
+                    # empty ToolRegistry / ToolExecutor here would trigger
+                    # reason="empty_registry" for every search and
+                    # "unknown_tool" for every fetch — the very bug fixed
+                    # on 2026-05-01.
+                    registry = _ensure_tool_registry()
+                    executor = _ensure_tool_executor()
                     inp_lk: LookupSearchInput | LookupFetchInput
                     if mode == "search":
                         inp_lk = LookupSearchInput(
