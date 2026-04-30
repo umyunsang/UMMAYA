@@ -1,3 +1,26 @@
+// SPDX-License-Identifier: Apache-2.0
+// Spec 2521 — byte-copy(2521) baseline restored from
+//   .references/claude-code-sourcemap/restored-src/src/services/api/claude.ts
+//   (CC 2.1.88, SHA-256 6d3fd16e608120d502e70ec461ffb66bcbca12fa86862859606c9118f977a999).
+// Three labeled swap commits layer atop the byte-copy:
+//   • swap/llm-provider(2521)     — @anthropic-ai/sdk imports → sdk-compat.ts
+//   • swap/anti-anthropic-1p(2521) — claude.ai 1P call-graph deadened via
+//     KOSMOS-stubbed support modules (services/claudeAiLimits.ts + utils/auth.ts
+//     are inert no-ops since Epic #1633). The 1P functions in this file
+//     (getOauthAccountInfo, currentLimits, extractQuotaStatusFromHeaders,
+//     getCLISyspromptPrefix's claude.ai branches, account_uuid telemetry)
+//     remain in the byte-copy text but resolve to no-op returns at runtime.
+//     No KOSMOS callers reach this file (verified post-Spec-2293), so the
+//     1P graph is doubly dead — by callgraph (no callers) and by support-
+//     module inertness. Spec 2521 byte-copy philosophy (FR-002): keep the
+//     reference text intact; deactivate via supporting infrastructure
+//     instead of deleting in-file.
+//   • swap/identifier-rename(2521) — citizen-visible Claude/Anthropic brand
+//     tokens → KOSMOS/EXAONE/FriendliAI (T013).
+// This file has zero callers in tui/src after Spec 2293; it is retained as
+// the authoritative CC streaming-handler reference for future audit replays
+// (specs/2521-llm-swap-cc-rebuild/scripts/replay_rebuild.sh).
+
 import type {
   BetaContentBlock,
   BetaContentBlockParam,
@@ -16,11 +39,6 @@ import type {
   BetaToolUnion,
   BetaUsage,
   BetaMessageParam as MessageParam,
-  // SWAP/llm-provider(2521): @anthropic-ai/sdk → KOSMOS sdk-compat aliases
-  // (BetaContentBlock = KosmosContentBlockParam, etc.). The SDK is no longer
-  // in the runtime graph; sdk-compat.ts maps every Beta* / Text / Stream /
-  // ClientOptions name onto the KOSMOS-native llmTypes.ts catalog so this
-  // file compiles without editing every Beta* type position downstream.
 } from '../../sdk-compat.js'
 import type { TextBlockParam } from '../../sdk-compat.js'
 import type { Stream } from '../../sdk-compat.js'
