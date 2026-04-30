@@ -23,6 +23,20 @@ from kosmos.llm.config import LLMClientConfig
 from kosmos.llm.models import ChatMessage, StreamEvent
 
 
+class _MockSSEByteStream(httpx.AsyncByteStream):
+    """Minimal AsyncByteStream concrete impl for SSE replay in tests."""
+
+    def __init__(self, chunks: list[bytes]) -> None:
+        self._chunks = chunks
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        for chunk in self._chunks:
+            yield chunk
+
+    async def aclose(self) -> None:  # noqa: D401
+        return None
+
+
 def _sse_chunk(payload: dict) -> bytes:
     """Format a single SSE data chunk per OpenAI streaming protocol."""
     return f"data: {json.dumps(payload)}\n\n".encode()
@@ -53,9 +67,10 @@ async def test_reasoning_content_forwarded_as_thinking_delta(
     reasoning_chunks = ["사용자가 ", "부산 날씨를 ", "물어보고 있습니다."]
 
     async def _mock_stream(request: httpx.Request) -> httpx.Response:
-        async def _body() -> AsyncIterator[bytes]:
-            for chunk in reasoning_chunks:
-                yield _sse_chunk(
+        chunks: list[bytes] = []
+        for chunk in reasoning_chunks:
+            chunks.append(
+                _sse_chunk(
                     {
                         "id": "chatcmpl-test-2521",
                         "choices": [
@@ -67,7 +82,9 @@ async def test_reasoning_content_forwarded_as_thinking_delta(
                         ],
                     }
                 )
-            yield _sse_chunk(
+            )
+        chunks.append(
+            _sse_chunk(
                 {
                     "id": "chatcmpl-test-2521",
                     "choices": [
@@ -79,9 +96,9 @@ async def test_reasoning_content_forwarded_as_thinking_delta(
                     ],
                 }
             )
-            yield _sse_done()
-
-        return httpx.Response(200, stream=httpx.AsyncByteStream(_body()))
+        )
+        chunks.append(_sse_done())
+        return httpx.Response(200, stream=_MockSSEByteStream(chunks))
 
     transport = httpx.MockTransport(_mock_stream)
     config = LLMClientConfig()  # type: ignore[call-arg]
