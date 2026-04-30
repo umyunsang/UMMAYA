@@ -2939,7 +2939,10 @@ export function cleanupStream(
 
 /**
  * Updates usage statistics with new values from streaming API events.
- * Note: Anthropic's streaming API provides cumulative usage totals, not incremental deltas.
+ * Note: the upstream streaming API provides cumulative usage totals, not incremental deltas.
+ * (KOSMOS: byte-copied from CC where this read "Anthropic's streaming API"; FriendliAI's
+ * OpenAI-compatible streaming surface follows the same cumulative semantics, so the
+ * algorithm is unchanged — only the brand token is renamed.)
  * Each event contains the complete usage up to that point in the stream.
  *
  * Input-related tokens (input_tokens, cache_creation_input_tokens, cache_read_input_tokens)
@@ -3319,7 +3322,10 @@ export async function queryHaiku({
 type QueryWithModelOptions = Omit<Options, 'getToolPermissionContext'>
 
 /**
- * Query a specific model through the Claude Code infrastructure.
+ * Query a specific model through the KOSMOS infrastructure.
+ * (Originally "Claude Code infrastructure" in the CC byte-copy; KOSMOS renames
+ * the citizen-visible doc string but preserves the function shape so future
+ * audit replays diff cleanly against CC. swap/identifier-rename(2521).)
  * This goes through the full query pipeline including proper authentication,
  * betas, and headers - unlike direct API calls.
  */
