@@ -21,6 +21,7 @@ CC reference chain:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import io
 import json
 import uuid
@@ -34,24 +35,13 @@ def _ts() -> str:
     return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
 
 
-@pytest.mark.asyncio
-async def test_thinking_channel_e2e_plumbing(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """T006 scaffold — verifies the FriendliAI → LLMClient → AssistantChunkFrame
-    backend half of the chain. The TUI half (assistant message thinking content
-    block + Ink render) is covered by T024 ink-testing-library snapshot.
+def _make_thinking_only_llm_client():
+    """Return a synthetic LLMClient class emitting thinking_delta events.
 
-    Full assertions populated in T023 once Procedure-A byte-copy is complete.
+    Extracted to module level to keep the test function under C901 complexity.
     """
-    from kosmos.ipc.frame_schema import (  # noqa: PLC0415
-        AssistantChunkFrame,
-        ChatRequestFrame,
-        ChatMessage as IPCChatMessage,
-    )
     from kosmos.llm.models import StreamEvent  # noqa: PLC0415
 
-    # ---- Stage 1: synthetic LLMClient that emits thinking_delta events ----
     class _ThinkingOnlyLLMClient:
         _class_turn = 0
 
@@ -65,17 +55,12 @@ async def test_thinking_channel_e2e_plumbing(
             yield StreamEvent(type="content_delta", content="조회 완료.")
             yield StreamEvent(type="done")
 
-    class _FakeLLMConfig:
-        pass
+    return _ThinkingOnlyLLMClient
 
-    import kosmos.llm.client as llm_client_mod  # noqa: PLC0415
-    import kosmos.llm.config as llm_config_mod  # noqa: PLC0415
 
-    monkeypatch.setattr(llm_client_mod, "LLMClient", _ThinkingOnlyLLMClient)
-    monkeypatch.setattr(llm_config_mod, "LLMClientConfig", _FakeLLMConfig)
-
-    # Stub PromptLoader to avoid manifest disk I/O
-    try:
+def _stub_prompt_loader(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Stub PromptLoader to avoid manifest disk I/O during the test."""
+    with contextlib.suppress(ImportError):
         import kosmos.context.prompt_loader as pl_mod  # noqa: PLC0415
 
         class _FPL:
@@ -86,8 +71,62 @@ async def test_thinking_channel_e2e_plumbing(
                 return f"System prompt ({name})"
 
         monkeypatch.setattr(pl_mod, "PromptLoader", _FPL)
-    except ImportError:
+
+
+class _CaptureBuf:
+    def __init__(self) -> None:
+        self._buf = io.BytesIO()
+
+    def write(self, data: bytes) -> None:
+        self._buf.write(data)
+
+    def flush(self) -> None:
         pass
+
+    def as_frames(self) -> list[dict]:
+        self._buf.seek(0)
+        frames: list[dict] = []
+        for line in self._buf:
+            stripped = line.strip()
+            if stripped:
+                with contextlib.suppress(json.JSONDecodeError):
+                    frames.append(json.loads(stripped))
+        return frames
+
+
+class _FakeStdout:
+    def __init__(self) -> None:
+        self.buffer = _CaptureBuf()
+
+
+@pytest.mark.asyncio
+async def test_thinking_channel_e2e_plumbing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """T006 scaffold — verifies the FriendliAI → LLMClient → AssistantChunkFrame
+    backend half of the chain. The TUI half (assistant message thinking content
+    block + Ink render) is covered by T024 ink-testing-library snapshot.
+
+    Full assertions populated in T023 once Procedure-A byte-copy is complete.
+    """
+    from kosmos.ipc.frame_schema import (
+        ChatMessage as IPCChatMessage,
+    )
+    from kosmos.ipc.frame_schema import (  # noqa: PLC0415
+        ChatRequestFrame,
+    )
+
+    # ---- Stage 1: synthetic LLMClient that emits thinking_delta events ----
+    class _FakeLLMConfig:
+        pass
+
+    import kosmos.llm.client as llm_client_mod  # noqa: PLC0415
+    import kosmos.llm.config as llm_config_mod  # noqa: PLC0415
+
+    monkeypatch.setattr(llm_client_mod, "LLMClient", _make_thinking_only_llm_client())
+    monkeypatch.setattr(llm_config_mod, "LLMClientConfig", _FakeLLMConfig)
+
+    _stub_prompt_loader(monkeypatch)
 
     # ---- Stage 2: run a single chat_request through stdio backend ----
     sid = str(uuid.uuid4())
@@ -114,32 +153,6 @@ async def test_thinking_channel_e2e_plumbing(
         "payload": {},
     }
 
-    class _CaptureBuf:
-        def __init__(self) -> None:
-            self._buf = io.BytesIO()
-
-        def write(self, data: bytes) -> None:
-            self._buf.write(data)
-
-        def flush(self) -> None:
-            pass
-
-        def as_frames(self) -> list[dict]:
-            self._buf.seek(0)
-            frames = []
-            for line in self._buf:
-                stripped = line.strip()
-                if stripped:
-                    try:
-                        frames.append(json.loads(stripped))
-                    except json.JSONDecodeError:
-                        pass
-            return frames
-
-    class _FakeStdout:
-        def __init__(self) -> None:
-            self.buffer = _CaptureBuf()
-
     fake_stdout = _FakeStdout()
     import sys
 
@@ -165,13 +178,12 @@ async def test_thinking_channel_e2e_plumbing(
 
     from kosmos.ipc.stdio import run as ipc_run  # noqa: PLC0415
 
-    try:
+    # Backend may exit early on stdin EOF — suppress so the assertion phase
+    # can run on whatever frames were emitted before exit.
+    with contextlib.suppress(Exception):
         await asyncio.wait_for(ipc_run(session_id=sid), timeout=15.0)
-    except (TimeoutError, Exception):
-        pass
-    finally:
-        if not r_file.closed:
-            r_file.close()
+    if not r_file.closed:
+        r_file.close()
 
     # ---- Stage 3: assert AssistantChunkFrame with thinking field emitted ----
     frames = fake_stdout.buffer.as_frames()

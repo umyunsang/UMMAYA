@@ -3078,6 +3078,25 @@ export function handleMessageFromStream(
         }
         case 'thinking_delta':
           onUpdateLength(message.event.delta.thinking)
+          // Spec 2521 SWAP/llm-provider: surface K-EXAONE reasoning live.
+          // CC reference: services/api/claude.ts:2148-2161 (Anthropic
+          // thinking_delta — CC keeps streaming thinking off the citizen-
+          // visible channel and only shows it after message completion via
+          // line 2968-2978 below). KOSMOS divergence justification: K-EXAONE
+          // on FriendliAI emits a substantive reasoning trace (~1KB-50KB
+          // per turn) that takes 30-180 seconds; without live surfacing the
+          // citizen sees only "+ Ideating…" with no insight into what the
+          // agent is reasoning about. Spec 2521 SC-001 requires ≥1 visible
+          // ∴ Thinking line "between the user prompt and the first tool call"
+          // → must update streamingThinking incrementally during streaming.
+          onStreamingThinking?.(current => {
+            const previousText = current?.thinking ?? ''
+            return {
+              thinking: previousText + message.event.delta.thinking,
+              isStreaming: true,
+              streamingEndedAt: undefined,
+            }
+          })
           return
         case 'signature_delta':
           // Signatures are cryptographic authentication strings, not model

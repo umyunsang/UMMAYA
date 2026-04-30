@@ -269,6 +269,44 @@ Lead Opus then runs `Read` on each `*.png` and asserts the visible elements matc
 - `ScrollUp <n>` / `ScrollDown <n>` — exercise the REPL's scrollback (e.g. assert that compaction-marker glyphs survive scrollback, or that long tool_result envelopes do not get truncated visually).
 - `Ctrl+Left` / `Ctrl+Up` / `Ctrl+Right` / `Ctrl+Down` chord support — required for KOSMOS keybinding tier-1 smoke (Spec 287 / 1979 keybinding wiring) where word-jump and history-navigation chords need a tape capture.
 
+#### Frame-timing methodology — `Wait` over `Sleep` (Spec 2521 — added 2026-05-01)
+
+**Hard rule**: when capturing a transient UI state (spinner phase, thinking glyph, in-flight tool_use indicator, streaming text mid-render), use `vhs` `Wait+Screen /<regex>/` or `Wait+Line /<regex>/` instead of fixed `Sleep N` before the `Screenshot` call. `Sleep` captures whatever happens to be on screen at that wall-clock moment; `Wait` blocks until the regex matches the actual screen content (default 15-second timeout, `@<interval>` overrides polling rate). This eliminates the entire class of "captured-too-early / captured-too-late / captured-during-spinner-flicker" false negatives that LLM agent verification cannot self-recover from.
+
+**Pattern** (canonical for any "I expect glyph X to appear":
+
+```text
+# Citizen sends prompt → ∴ Thinking should render before tool_call
+Type "오늘 부산 날씨 어때?"
+Enter
+Wait+Screen /∴ Thinking/                       # blocks ≤ 15 s; fail-fast if glyph never appears
+Screenshot specs/<spec>/smoke-keyframe-thinking-visible.png
+
+# Now wait for the FIRST tool_call row, then capture
+Wait+Screen /● lookup\(/
+Screenshot specs/<spec>/smoke-keyframe-first-tool-call.png
+
+# Wait for the agentic-loop completion marker, then capture
+Wait+Screen /Crunched for/
+Screenshot specs/<spec>/smoke-keyframe-final-result.png
+```
+
+**`Wait` failure behaviour**: vhs exits non-zero when the timeout fires. The PR-side smoke artefacts then *do not exist* (Screenshot never ran) and CI / Lead-review catches the missing PNG immediately. This is strictly safer than `Sleep`-based capture which always produces SOME PNG, even if it's the wrong moment.
+
+**When to keep `Sleep`**:
+- Boot-settle phase before the first interactive step (no UI marker to wait for; 6-8s is universal across hosts).
+- Final exit phase (Ctrl+C dispatch — no glyph to wait for, just a brief grace window).
+- When the test specifically asserts "this glyph is NOT visible at time T".
+
+**Multi-layer redundancy** for LLM-friendly verification (Spec 2521 directive 2026-05-01: TUI verification methodology must let LLM agents catch any missed state transitions):
+
+1. **vhs `Wait` + Screenshot** — the Layer 4 visual capture, deterministic timing.
+2. **asciinema cast** (`*.cast` JSON-Lines) — companion timeline; LLM can grep `cast.frames` for the target glyph at any time index without re-running the scenario.
+3. **PTY text-log** (already mandatory at Layer 3) — ANSI-strip + grep for the target glyph; this catches the byte-level event even if the visual frame is unstable.
+4. **ink-testing-library Layer 1b unit test** — proves the component itself renders the glyph correctly when given the expected props; isolates "wiring missing" from "rendering broken".
+
+**The four together are the rule**: every LLM-driven TUI verification of a transient state MUST instrument all four layers. Single-layer verification is brittle and will miss state transitions.
+
 The tape, the gif, and every keyframe go into the spec directory and the PR description references them. The text-log version of the same scenario (Layer 3) lives next to them for LLM grep audit.
 
 **Why this layer is mandatory** (and not, as previously stated, "supplementary"): pure text logs cannot detect ANSI-cell-level rendering regressions (purple-on-purple branding text invisible against the wrong theme; Korean wide-glyph alignment breaking the prompt; the UFO mascot rendering as `?`-blocks). The Epic γ #2294 PR #2394 review surfaced the gap — `feedback_pr_pre_merge_interactive_test` was satisfied by the text log, but no agent had visually confirmed the citizen UI actually composed correctly. Layer 4 with `Screenshot` PNGs closes that loop without sacrificing the LLM-review property.
