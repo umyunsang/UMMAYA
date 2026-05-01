@@ -112,7 +112,10 @@ jobs:
               | (.. | strings) |= gsub("(?<p>[^\"\\s]+?)-(?<h>[0-9a-f]{16})(?<t>\"|\\b)"; "\(.p)\(.t)")
               | (.. | strings) |= gsub("package-id=(?<h>[0-9a-f]{16})"; "package-id=STRIPPED")
               | (.components // []) |= (sort_by(.name, .version) | unique_by(.name, .version))
-              | (.dependencies // []) |= (sort_by(.ref) | unique_by(.ref))
+              | (.dependencies // []) |= (
+                  map(.dependsOn |= (. // [] | sort | unique))
+                  | sort_by(.ref) | unique_by(.ref)
+                )
             ' "$1"
           }
           diff <(strip_cdx sbom-cyclonedx-run1.json) <(strip_cdx sbom-cyclonedx-run2.json) \
