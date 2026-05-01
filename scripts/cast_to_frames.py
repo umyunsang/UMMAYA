@@ -52,8 +52,17 @@ def _parse_header(line: str) -> tuple[int, int, int]:
 
 
 def _snap_text(screen: pyte.Screen) -> str:
-    """Render screen as plain text — strip trailing whitespace per row."""
-    return "\n".join(row.rstrip() for row in screen.display).rstrip("\n") + "\n"
+    """Render screen as plain text — strip trailing whitespace per row.
+
+    Wraps ``screen.display`` because pyte ≥0.8.2 occasionally raises
+    ``IndexError`` from ``wcwidth(char[0])`` when a cell's char is the
+    empty string (split multi-byte UTF-8). On replay we'd rather lose
+    one row than abort the whole frame stream.
+    """
+    try:
+        return "\n".join(row.rstrip() for row in screen.display).rstrip("\n") + "\n"
+    except (IndexError, ValueError):
+        return ""
 
 
 def replay(cast_path: Path, out_dir: Path) -> int:
@@ -106,9 +115,24 @@ def replay(cast_path: Path, out_dir: Path) -> int:
         if kind != "o":
             continue
         if isinstance(data, str):
-            stream.feed(data.encode("utf-8"))
+            if not data:
+                continue
+            try:
+                stream.feed(data.encode("utf-8"))
+            except (IndexError, ValueError):
+                # pyte ≥0.8.2 occasionally raises IndexError on
+                # zero-length characters introduced by SSE chunk
+                # splits at multi-byte UTF-8 boundaries. Skip the
+                # malformed event rather than abort replay so the
+                # surrounding frames stay grep-able.
+                continue
         elif isinstance(data, bytes):
-            stream.feed(data)
+            if not data:
+                continue
+            try:
+                stream.feed(data)
+            except (IndexError, ValueError):
+                continue
         else:
             continue
         snap = _snap_text(screen)
