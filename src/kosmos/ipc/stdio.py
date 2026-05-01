@@ -580,6 +580,7 @@ async def run(  # noqa: C901
             # outside the event loop's task graph.
             try:
                 import sys as _sys  # noqa: PLC0415
+
                 from kosmos.ipc.adapter_manifest_emitter import (  # noqa: PLC0415
                     emit_manifest,
                 )
@@ -765,7 +766,7 @@ async def run(  # noqa: C901
         _os_chat_env.environ.get("KOSMOS_AVAILABLE_ADAPTERS_TOP_K", "5")
     )
 
-    def _build_available_adapters_suffix(user_query: str) -> str:
+    def _build_available_adapters_suffix(user_query: str) -> str:  # noqa: C901
         """Run BM25 against the live registry and emit the citizen-turn
         ``<available_adapters>`` XML block for the dynamic system-prompt
         suffix.
@@ -1222,7 +1223,7 @@ async def run(  # noqa: C901
                     # function as tool" UI block.
                     from kosmos.tools.lookup import lookup  # noqa: PLC0415
                     from kosmos.tools.models import (  # noqa: PLC0415
-                        LookupError,
+                        LookupError,  # noqa: A004 — Pydantic model named LookupError; intentional shadow with module-level alias not feasible in narrow import scope
                         LookupErrorReason,
                         LookupFetchInput,
                     )

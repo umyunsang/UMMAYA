@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 
 import httpx
 import pytest
@@ -16,7 +17,6 @@ from kosmos.tools._outbound_trace import (
     start_outbound_capture,
     traced_async_client,
 )
-
 
 # ---------------------------------------------------------------------------
 # Capture lifecycle
@@ -49,7 +49,7 @@ async def test_async_context_manager_closes_scope() -> None:
 
 
 def _mock_transport_factory(
-    handler: "callable[[httpx.Request], httpx.Response]",
+    handler: Callable[[httpx.Request], httpx.Response],
 ) -> httpx.MockTransport:
     return httpx.MockTransport(handler)
 

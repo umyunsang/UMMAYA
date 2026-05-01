@@ -25,9 +25,10 @@ import hashlib
 import json
 import logging
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
-from typing import Any, AsyncIterator
+from typing import Any
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
@@ -42,14 +43,6 @@ _REDACT_HEADERS = frozenset(
     {"authorization", "x-api-key", "x-secret-key", "cookie", "set-cookie"}
 )
 _REDACT_QUERY_PARAMS = frozenset({"servicekey", "service_key", "apikey", "api_key"})
-
-# ContextVar holds the per-call trace list. ``None`` means "capture disabled"
-# so adapters wrapped in :func:`traced_async_client` outside a capture scope
-# (e.g. unit tests calling ``_fetch`` directly) emit no traces.
-_outbound_traces_var: ContextVar[list["OutboundCallTrace"] | None] = ContextVar(
-    "kosmos_outbound_traces", default=None
-)
-
 
 # ---------------------------------------------------------------------------
 # Public schema
@@ -86,6 +79,16 @@ class OutboundCallTrace(BaseModel):
     timestamp_iso: str = Field(
         description="UTC start timestamp in ISO-8601 format."
     )
+
+
+# ContextVar holds the per-call trace list. ``None`` means "capture disabled"
+# so adapters wrapped in :func:`traced_async_client` outside a capture scope
+# (e.g. unit tests calling ``_fetch`` directly) emit no traces. Declared
+# AFTER ``OutboundCallTrace`` so the generic parameter resolves directly
+# (no PEP 563 forward reference needed — keeps ruff UP037 happy).
+_outbound_traces_var: ContextVar[list[OutboundCallTrace] | None] = ContextVar(
+    "kosmos_outbound_traces", default=None
+)
 
 
 # ---------------------------------------------------------------------------
@@ -234,7 +237,7 @@ async def _arecord_response(response: httpx.Response) -> None:
     try:
         if not response.is_closed:
             await response.aread()
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110 — defensive read; capture path must not abort the adapter
         pass
     _emit_trace(response.request, response)
 

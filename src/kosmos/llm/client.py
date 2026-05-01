@@ -820,7 +820,7 @@ class LLMClient:
             if i + step < n:
                 await asyncio.sleep(_LLM_STREAM_PACE_S)
 
-    async def _parse_sse_line(self, line: str) -> AsyncIterator[StreamEvent]:
+    async def _parse_sse_line(self, line: str) -> AsyncIterator[StreamEvent]:  # noqa: C901
         """Parse a single SSE line and yield corresponding StreamEvent(s)."""
         if not line or not line.startswith("data: "):
             return

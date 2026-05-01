@@ -21,7 +21,6 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-import httpx
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from kosmos.tools._outbound_trace import traced_async_client

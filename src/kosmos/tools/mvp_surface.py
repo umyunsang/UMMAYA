@@ -171,7 +171,8 @@ LOOKUP_SEARCH_TOOL = GovAPITool(
         "예시 (시민: '오늘 부산 날씨'):\n"
         "  {\n"
         '    "tool_id": "kma_forecast_fetch",\n'
-        '    "params": {"lat": 35.18, "lon": 129.08, "base_date": "20260501", "base_time": "1400"}\n'
+        '    "params": {"lat": 35.18, "lon": 129.08,\n'
+        '               "base_date": "20260501", "base_time": "1400"}\n'
         "  }\n\n"
         "ORDERING RULE: <available_adapters> 에서 tool_id 선택 → 호출 → 결과 "
         "분석 → 다음 도구 또는 답변. 동일 tool_id 를 한 turn 안에서 반복 호출하지 "

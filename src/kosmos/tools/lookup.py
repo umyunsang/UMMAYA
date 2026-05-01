@@ -160,14 +160,17 @@ async def _lookup_fetch(
     # LookupOutput consumers stay unchanged; the bundle's typed fields
     # (coords.lat / coords.lon / adm_cd) are preserved inside record.fields.
     if inp.tool_id == "resolve_location":
-        from kosmos.tools.resolve_location import resolve_location as _resolve_fn
+        from datetime import UTC, datetime
+
         from kosmos.tools.models import (
-            ResolveLocationInput as _ResolveLocationInput,
-            LookupRecord,
             LookupMeta,
+            LookupRecord,
             ResolveError,
         )
-        from datetime import datetime, UTC
+        from kosmos.tools.models import (
+            ResolveLocationInput as _ResolveLocationInput,
+        )
+        from kosmos.tools.resolve_location import resolve_location as _resolve_fn
 
         try:
             resolve_inp = _ResolveLocationInput.model_validate(inp.params or {})
