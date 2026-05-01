@@ -76,6 +76,10 @@ jobs:
       # UUIDs, tool-version metadata) are stripped by jq before diffing.
       # Reference: specs/024-tool-security-v1/research.md §3.7 "Supply-chain posture"
       - name: Divergence gate — SPDX (FR-019)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message || '' }}
         run: |
           # Normalise syft's per-run non-determinism so the gate flags
           # genuine lockfile drift, not tool-internal ID reshuffling:
@@ -101,10 +105,12 @@ jobs:
           # eyeball the SBOM diff in the PR description; the sentinel is
           # the deliberate-regen acknowledgement the gate's error message
           # has always asked for.
-          # Shallow checkout fetch-depth=1 makes `origin/main..HEAD`
-          # empty. Scan the last 50 reachable commits — the sentinel
-          # MUST be on the PR head or close to it, well within range.
-          if git log -50 HEAD --format=%B 2>/dev/null | grep -qF "[sbom-lock-change-ok]"; then
+          # PR builds checkout a synthetic merge commit whose message
+          # never carries our sentinel. Read PR title/body context AND
+          # any reachable commit messages so manual reruns / push
+          # events both work.
+          GIT_LOG_MSGS=$(git log -50 HEAD --format=%B 2>/dev/null || true)
+          if printf '%s\n%s\n%s\n%s\n' "$PR_TITLE" "$PR_BODY" "$HEAD_COMMIT_MSG" "$GIT_LOG_MSGS" | grep -qF "[sbom-lock-change-ok]"; then
             BYPASS=1
           else
             BYPASS=0
@@ -123,6 +129,10 @@ jobs:
           fi
 
       - name: Divergence gate — CycloneDX (FR-019)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message || '' }}
         run: |
           # Same normalisation rationale as the SPDX gate above —
           # CycloneDX also carries per-run UUID suffixes on
@@ -140,10 +150,12 @@ jobs:
             ' "$1"
           }
           # Same FR-019 escape hatch as SPDX (see above).
-          # Shallow checkout fetch-depth=1 makes `origin/main..HEAD`
-          # empty. Scan the last 50 reachable commits — the sentinel
-          # MUST be on the PR head or close to it, well within range.
-          if git log -50 HEAD --format=%B 2>/dev/null | grep -qF "[sbom-lock-change-ok]"; then
+          # PR builds checkout a synthetic merge commit whose message
+          # never carries our sentinel. Read PR title/body context AND
+          # any reachable commit messages so manual reruns / push
+          # events both work.
+          GIT_LOG_MSGS=$(git log -50 HEAD --format=%B 2>/dev/null || true)
+          if printf '%s\n%s\n%s\n%s\n' "$PR_TITLE" "$PR_BODY" "$HEAD_COMMIT_MSG" "$GIT_LOG_MSGS" | grep -qF "[sbom-lock-change-ok]"; then
             BYPASS=1
           else
             BYPASS=0
