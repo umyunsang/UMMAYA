@@ -163,27 +163,34 @@ export const LookupPrimitive = buildTool({
     context: ToolUseContext,
   ): Promise<import('../../Tool.js').ValidationResult> {
     // Epic ε #2296 T011 — two-tier resolution (FR-017 / FR-018 / FR-019 / FR-020).
-
-    // Tier 0 — fail closed if manifest not yet synced (FR-019).
-    if (!isManifestSynced()) {
-      return {
-        result: false,
-        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
-        errorCode: PrimitiveErrorCode.AdapterNotFound,
-      }
-    }
+    // Spec 2521 (2026-05-01) — citation-missing branch added so the
+    // 1002 contract (Spec 024 invariant: every adapter cites the agency
+    // policy URL) is enforced at the primitive surface, not just at the
+    // permission gauntlet.
 
     // Tier 1 — synced backend manifest (FR-017).
-    const backendEntry = resolveAdapter(input.tool_id)
-    if (backendEntry) {
-      const citation: AdapterCitation | null = backendEntry.policy_authority_url
-        ? {
-            real_classification_url: backendEntry.policy_authority_url,
-            policy_authority: backendEntry.name,
+    if (isManifestSynced()) {
+      const backendEntry = resolveAdapter(input.tool_id)
+      if (backendEntry) {
+        // Internal-mode adapters are exempt from the citation invariant.
+        if (backendEntry.source_mode === 'internal') {
+          ;(context as ContextWithCitation).kosmosCitations = []
+          return { result: true }
+        }
+        if (!backendEntry.policy_authority_url) {
+          return {
+            result: false,
+            message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+            errorCode: PrimitiveErrorCode.CitationMissing,
           }
-        : null
-      ;(context as ContextWithCitation).kosmosCitations = citation ? [citation] : []
-      return { result: true }
+        }
+        const citation: AdapterCitation = {
+          real_classification_url: backendEntry.policy_authority_url,
+          policy_authority: backendEntry.name,
+        }
+        ;(context as ContextWithCitation).kosmosCitations = [citation]
+        return { result: true }
+      }
     }
 
     // Tier 2 — TS-side internal tools fallback (FR-018 / existing path).
@@ -192,10 +199,27 @@ export const LookupPrimitive = buildTool({
     )
     if (internalAdapter) {
       const citation = extractCitation(internalAdapter)
-      if (citation) {
-        ;(context as ContextWithCitation).kosmosCitations = [citation]
+      if (!citation) {
+        return {
+          result: false,
+          message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+          errorCode: PrimitiveErrorCode.CitationMissing,
+        }
       }
+      ;(context as ContextWithCitation).kosmosCitations = [citation]
       return { result: true }
+    }
+
+    // Tier 0 — fail closed if manifest not yet synced AND no internal hit
+    // (FR-019). When a citizen retry happens before backend boot completes
+    // we keep the original manifest-not-synced diagnostic, otherwise the
+    // tool_id is genuinely unknown.
+    if (!isManifestSynced()) {
+      return {
+        result: false,
+        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
+        errorCode: PrimitiveErrorCode.AdapterNotFound,
+      }
     }
 
     // Fail closed (FR-020).

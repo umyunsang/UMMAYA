@@ -148,27 +148,30 @@ export const SubscribePrimitive = buildTool({
     context: ToolUseContext,
   ) {
     // Epic ε #2296 T014 — two-tier resolution (FR-017 / FR-018 / FR-019 / FR-020).
-
-    // Tier 0 — fail closed if manifest not yet synced (FR-019).
-    if (!isManifestSynced()) {
-      return {
-        result: false as const,
-        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
-        errorCode: PrimitiveErrorCode.AdapterNotFound,
-      }
-    }
+    // Spec 2521 (2026-05-01) — citation-missing branch added (1002).
 
     // Tier 1 — synced backend manifest (FR-017).
-    const backendEntry = resolveAdapter(input.tool_id)
-    if (backendEntry) {
-      const citation: AdapterCitation | null = backendEntry.policy_authority_url
-        ? {
-            real_classification_url: backendEntry.policy_authority_url,
-            policy_authority: backendEntry.name,
+    if (isManifestSynced()) {
+      const backendEntry = resolveAdapter(input.tool_id)
+      if (backendEntry) {
+        if (backendEntry.source_mode === 'internal') {
+          ;(context as ContextWithCitation).kosmosCitations = []
+          return { result: true as const }
+        }
+        if (!backendEntry.policy_authority_url) {
+          return {
+            result: false as const,
+            message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+            errorCode: PrimitiveErrorCode.CitationMissing,
           }
-        : null
-      ;(context as ContextWithCitation).kosmosCitations = citation ? [citation] : []
-      return { result: true as const }
+        }
+        const citation: AdapterCitation = {
+          real_classification_url: backendEntry.policy_authority_url,
+          policy_authority: backendEntry.name,
+        }
+        ;(context as ContextWithCitation).kosmosCitations = [citation]
+        return { result: true as const }
+      }
     }
 
     // Tier 2 — TS-side internal tools fallback (FR-018 / existing path).
@@ -178,10 +181,24 @@ export const SubscribePrimitive = buildTool({
 
     if (adapter) {
       const citation = extractCitation(adapter)
-      if (citation) {
-        ;(context as ContextWithCitation).kosmosCitations = [citation]
+      if (!citation) {
+        return {
+          result: false as const,
+          message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+          errorCode: PrimitiveErrorCode.CitationMissing,
+        }
       }
+      ;(context as ContextWithCitation).kosmosCitations = [citation]
       return { result: true as const }
+    }
+
+    // Tier 0 — fail closed if manifest not yet synced AND no internal hit.
+    if (!isManifestSynced()) {
+      return {
+        result: false as const,
+        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
+        errorCode: PrimitiveErrorCode.AdapterNotFound,
+      }
     }
 
     // Fail closed (FR-020).

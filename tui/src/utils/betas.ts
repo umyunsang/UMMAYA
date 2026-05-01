@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// KOSMOS-original — Spec 2521 byte-copy bridge stub (no live caller in KOSMOS).
 // SWAP/anti-anthropic-1p(2521): minimal stub for the byte-copied
 // services/api/claude.ts which expects the CC 2.1.88 utils/betas.ts surface.
 // CC's betas.ts gates Anthropic-1P beta-API headers (AFK mode, 1M context,

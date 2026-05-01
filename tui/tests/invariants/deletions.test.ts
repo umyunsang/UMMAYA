@@ -28,7 +28,15 @@ function isFile(relativeToTuiSrc: string): boolean {
 
 describe('Epic #1633 T041 — US3 invariant: CC dead-code directories removed', () => {
   test.each([
-    'utils/telemetry',
+    // Spec 2521 (2026-05-01) — exception: utils/telemetry/sessionTracing.ts,
+    // utils/modelCost.ts, utils/betas.ts, constants/betas.ts are required
+    // KOSMOS no-op stubs for the byte-copied services/api/claude.ts. They
+    // satisfy the byte-copy invariant (claude.ts imports must resolve)
+    // without re-introducing Anthropic telemetry / cost / beta surfaces;
+    // each stub raises a runtime error if its functions are ever invoked.
+    // The Spec 1633 dead-code deletion intent is preserved by the
+    // companion "stub files restored as KOSMOS no-ops" describe block
+    // below, which is the canonical home for byte-copy bridge stubs.
     'utils/secureStorage',
     'remote',
     'services/policyLimits',
@@ -39,10 +47,7 @@ describe('Epic #1633 T041 — US3 invariant: CC dead-code directories removed', 
     'services/claudeAiLimitsHook.ts',
     'utils/teleport.tsx',
     'utils/teleport',
-    'utils/modelCost.ts',
-    'utils/betas.ts',
     'utils/model/antModels.ts',
-    'constants/betas.ts',
     'constants/oauth.ts',
     'components/grove',
     'components/TeleportResumeWrapper.tsx',
@@ -78,11 +83,23 @@ describe('Epic #1633 T041 — US3 invariant: stub files restored as KOSMOS no-op
     'utils/auth.ts',
     'services/oauth/client.ts',
     'services/oauth/index.ts',
+    // Spec 2521 (2026-05-01) — byte-copy bridge stubs required by the
+    // restored services/api/claude.ts. Each is a KOSMOS no-op that
+    // satisfies the byte-copy invariant without re-introducing the
+    // Anthropic surface area; the import sites in claude.ts are gated
+    // behind dead callers (verifyApiKey/queryHaiku/queryWithModel) that
+    // never execute under KOSMOS's stdio bridge routing.
+    'utils/telemetry/sessionTracing.ts',
+    'utils/modelCost.ts',
+    'utils/betas.ts',
+    'constants/betas.ts',
   ])('%s exists as KOSMOS no-op stub', async (path) => {
     expect(isFile(path), `${path} stub missing`).toBe(true)
     const content = await Bun.file(join(TUI_SRC, path)).text()
     expect(content).toContain('KOSMOS-original')
-    expect(content).toContain('Epic #1633')
+    // The byte-copy bridge stubs above carry Spec 2521 header instead of
+    // Epic #1633; the original Spec 1633 stubs still carry Epic #1633.
+    expect(content).toMatch(/Epic #1633|Spec 2521/)
     // No imports from the real @anthropic-ai/sdk in any stub
     expect(content).not.toMatch(/from ['"]@anthropic-ai\/sdk/)
   })

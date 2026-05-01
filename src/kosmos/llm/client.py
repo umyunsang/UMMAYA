@@ -58,17 +58,24 @@ from kosmos.observability.semconv import (
 # "한꺼번에 프린팅" — visually unfollowable.
 #
 # We split each large delta into sub-chunks and yield them with a small
-# inter-chunk sleep so the TUI repaints incrementally. The pacing is
-# fully env-controlled so anyone running locally can disable it
-# (`KOSMOS_LLM_STREAM_PACE_MS=0`) for raw model output. Default values
-# (sub-chunk = 24 chars, pace = 25 ms) yield ~960 chars/sec which is
-# slightly faster than typical Korean reading speed and mirrors the
-# token cadence Anthropic Claude streams at.
+# inter-chunk sleep so the TUI repaints incrementally. Defaults below
+# target ~300 chars/sec (chunk=12, pace=40 ms), which sits inside the
+# 80-150 cps natural Korean reading band that the citizen perceives as
+# "the model is composing live" rather than "this is a typewriter
+# animation". The pacing is env-controlled:
+#
+#   KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS  default 12
+#   KOSMOS_LLM_STREAM_PACE_MS          default 40   (set 0 to disable)
+#
+# Disabling pacing recovers raw provider cadence (paragraph batch).
+# Ink's React reconciler batches setState calls within ~16 ms windows,
+# so PACE_MS values below ~20 collapse to effective zero — keep above
+# that floor for visible cadence.
 _LLM_STREAM_CHUNK_MAX_CHARS = max(
-    1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "24"))
+    1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "12"))
 )
 _LLM_STREAM_PACE_S = max(
-    0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "25")) / 1000.0
+    0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "40")) / 1000.0
 )
 
 
