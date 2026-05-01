@@ -169,16 +169,40 @@ Concrete metadata schema, transparency fields, mock fidelity grades, citation en
 
 ## TUI verification (LLM-readable smoke) — **PR mandatory**
 
-**Hard rule**: Any PR that modifies `tui/src/**` MUST capture (a) an interactive PTY text-log scenario AND (b) a vhs visual scenario that emits LLM-reviewable PNG keyframes, and commit the artefacts under `specs/<feature>/` BEFORE pushing. `bun typecheck` (KOSMOS narrows to `src/stubs/**` only) + `bun test` (REPL.tsx dynamic imports unchecked) + boot-only smoke all fail to catch stale-import regressions and dead JSX paths. Skipping interactive verification is the #1 source of post-merge TUI breakage. Memory: `feedback_pr_pre_merge_interactive_test` + `feedback_vhs_tui_smoke`.
+**Hard rule**: Any PR that modifies `tui/src/**` MUST capture (a) an interactive PTY scenario AND (b) per-frame text snapshots from `asciinema → pyte` replay AND (c) a vhs visual scenario that emits PNG keyframes, and commit the artefacts under `specs/<feature>/` BEFORE pushing. `bun typecheck` (KOSMOS narrows to `src/stubs/**` only) + `bun test` (REPL.tsx dynamic imports unchecked) + boot-only smoke all fail to catch stale-import regressions, dead JSX paths, AND transient repaint flashes (an ~80 ms wrong-state flash during partial-redraw is invisible to a single-shot end-of-run check). Skipping interactive verification is the #1 source of post-merge TUI breakage. Memory: `feedback_pr_pre_merge_interactive_test` + `feedback_vhs_tui_smoke` + `feedback_pty_log_full_inspection`.
 
-Layered verification chain (all layers required for TUI-changing PRs):
+Layered verification chain (all layers required for TUI-changing PRs). Numbering matches [`docs/testing.md § TUI verification methodology`](./docs/testing.md#tui-verification-methodology):
 
-1. **Layer 0 — typecheck + bun test (Ink snapshot)**: `bun typecheck` + `bun test` MUST include `ink-testing-library` v4 snapshot tests (`render(...).frames` / `lastFrame()`) for any new or changed Ink component — these catch component-level prop / state regressions in milliseconds without spawning a real terminal. Necessary but not sufficient: REPL.tsx dynamic imports + ANSI cell-grid rendering still escape this layer.
-2. **Layer 1 — stdio JSONL probe**: bypasses the TUI for backend baseline.
-3. **Layer 2 — interactive PTY text-log scenario** (mandatory): `expect` / `asciinema` (asciicast v3) / `script` capture the full pty session running real slash commands, real input, and real exit flow. Output goes to `specs/<feature>/smoke-<scenario>-pty.txt` (LLM-grep-friendly text log). Minimum scenario: spawn `bun run tui` → assert `KOSMOS` branding → send `/help\r` → sleep 6s → send `\003\003` → expect eof. Add scenarios when the change touches registry / permissions / REPL paths.
-4. **Layer 3 — vhs `.tape` visual scenario with LLM-reviewable PNG keyframes** (mandatory, 2026-04-29 promotion): the `.tape` file MUST emit BOTH the animated `Output ...gif` AND **3+ named `Screenshot <path>.png` keyframes** at the canonical scenario stages (boot+branding, input-accepted, post-action). Lead Opus then uses the Read tool on each PNG (Claude / Codex multimodal vision) to verify the rendered UI before push. **The animated `.gif` alone is no longer sufficient** — agent Read renders only the first frame, which during boot is typically a blank prompt. Charm vhs ≥ 0.11.0 supports `Screenshot` natively (and ScrollUp/ScrollDown + Ctrl+Arrow chords for scrollback / word-jump scenarios as of v0.11.0, March 2026); do NOT use ffmpeg post-extraction (less deterministic, requires a second tool). Reference recipe + the canonical 3-keyframe rule live in [`docs/testing.md § Layer 4 — vhs visual + PNG keyframes`](./docs/testing.md#layer-4--vhs-visual--png-keyframes).
+1. **Layer 1a — Python unit / fixture (`pytest`)**: backend module contracts.
+2. **Layer 1b — Ink snapshot (`bun test` + `ink-testing-library` v4)**: component-level `render().frames` / `lastFrame()` tests — fastest TUI regression net (ms-fast, no terminal spawn). Necessary but not sufficient: REPL.tsx dynamic imports + ANSI cell-grid rendering still escape this layer.
+3. **Layer 2 — stdio JSONL probe**: bypasses the TUI render entirely; proves the LLM tool-calling chain works.
+4. **Layer 3 — interactive PTY text-log scenario**: `expect` / `asciinema` / `script` capture the full pty session running real slash commands, real input, real exit flow. Minimum scenario: spawn `bun run tui` → assert `tool_registry: \d+ entries verified` → assert `KOSMOS` branding → send `/help\r` → sleep 6s → send `\003\003` → expect eof.
+5. **Layer 4 — vhs `.tape` visual scenario with PNG keyframes** (2026-04-29 promotion): the `.tape` file MUST emit BOTH the animated `Output ...gif` AND **3+ named `Screenshot <path>.png` keyframes** at the canonical scenario stages (boot+branding, input-accepted, post-action). Lead Opus uses the Read tool on each PNG (Claude / Codex multimodal vision) to verify rendered UI. **The animated `.gif` alone is insufficient** — agent Read renders only the first frame.
+6. **Layer 5 — per-frame cell-grid text capture** (mandatory, 2026-05-01 promotion): run `scripts/tui-text-debug.sh <outdir> <scenario.expect>` which records the PTY through `asciinema rec --output-format asciicast-v3` and replays the cast through `pyte` (real VT-100 + xterm subset, CJK wide-char aware). Output: `frame_NNNN_t<sec>_<sha>.txt` per *distinct* cell-grid state + `timeline.txt` index. The agent Read-greps the frames byte-for-byte to catch (a) transient flash regressions invisible to PNG keyframes, (b) wrong tool-call UI exposure, (c) Korean wide-char misalignment, (d) ANSI escape leak. **This layer alone proves "the user actually saw N at frame K"** — `bun test` proves a state could exist; PNG keyframes prove a state existed at sample T; only Layer 5 enumerates EVERY distinct state in order. Companion script: `scripts/cast_to_frames.py` (offline replay; works on any committed `*.cast`).
 
-Mismatches between layers identify which layer regressed. PR description MUST cite the captured `specs/<feature>/scripts/smoke-*.expect` + `smoke-*-pty.txt` + `specs/<feature>/scripts/smoke-*.tape` + every `smoke-keyframe-*.png` the tape produced. Full methodology + recipes: [`docs/testing.md § TUI verification methodology`](./docs/testing.md#tui-verification-methodology).
+Mismatches between layers identify which layer regressed. PR description MUST cite the captured `specs/<feature>/scripts/smoke-*.expect` + `smoke-*-pty.txt` + `smoke-*.tape` + every `smoke-keyframe-*.png` the tape produced + the Layer 5 `frames/` directory (or `raw.cast` + `timeline.txt`). Full methodology + recipes: [`docs/testing.md § TUI verification methodology`](./docs/testing.md#tui-verification-methodology).
+
+### Five mandatory probe points (add BEFORE claiming a TUI bug is fixed)
+
+Per the methodology in [`docs/testing.md § TUI verification methodology`](./docs/testing.md#tui-verification-methodology):
+
+1. **Input ingress** — log `KEYSTROKE ts=… txn=… key=… mode=…` at the keypress handler.
+2. **IPC frame boundary** — log every `chat_request` / `assistant_chunk` / `tool_call` envelope with `correlation_id` (already required by Spec 032).
+3. **Tool dispatch boundary** — log `TOOL ts=… txn=… tool_id=… status={dispatched|completed|errored}`.
+4. **Render commit** — every Ink reconcile commits a frame; emit `RENDER ts=… txn=… frame_hash=…` so the timeline.txt cross-references frame_NNNN.txt.
+5. **Snapshot trigger** — Layer 4 capture must run for every TUI-touching PR; absence of an `frames/` directory under `specs/<feature>/` is a CI bypass violation.
+
+### Seven anti-patterns (the LLM-agent-debugging traps the user has flagged)
+
+These are forbidden — each maps to a memory entry the agent has been corrected on:
+
+1. **Final-state fallacy** — reading only `lastFrame()` / end-of-PTY-log, declaring the fix done, missing the 80 ms flash. Memory: `feedback_pty_log_full_inspection`. **Mandatory countermeasure: enumerate EVERY frame in `frames/` directory.**
+2. **Grep-as-proof** — `grep -c "tool_call" smoke.txt` returning 0 ≠ "no tool call emitted". The grep may be looking for the wrong literal in an ANSI-leaking log. Memory: `feedback_pty_log_full_inspection`. **Countermeasure: full read after grep, never grep alone.**
+3. **Snapshot blindness** — green `bun test` ≠ green TUI. Component snapshots can't prove the REPL.tsx dynamic-import path even compiled. **Countermeasure: Layers 2-4 are non-negotiable.**
+4. **Tool-substitution for methodology** — adding more tools (vhs, asciinema) without anchoring them to a 5-step methodology. **Countermeasure: every captured artefact must answer a probe point above.**
+5. **Skim-and-summarize** — reading first 200 lines of a 10k-line PTY log, hallucinating the middle. **Countermeasure: cast→pyte de-dups consecutive identical states; agent reads the deduped frame set in full.**
+6. **Trusting one's own expect run** — same machine, same warm cache; flashes that humans see on cold start may not reproduce. **Countermeasure: vary `KOSMOS_*` startup env, run twice, diff frame sets.**
+7. **Fix-the-symptom spiral** — three+ failed fixes in a row without questioning architecture. Memory: superpowers `systematic-debugging`. **Countermeasure: STOP at fix #3, capture frames, post timeline to user.**
 
 **Bypass**: PRs that do not touch `tui/src/**` (Python backend / spec docs / workflow only) are exempt — declare `TUI no-change` in the PR description.
 

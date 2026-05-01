@@ -133,8 +133,9 @@ Run **all four layers** for any change that touches the chat-request emit path, 
 | 2. **stdio JSONL probe** | "Does the backend invoke tools when given a citizen prompt?" — bypasses the TUI render entirely | `subprocess.Popen(['uv','run','kosmos','--ipc','stdio'])` + line-based JSONL frames | `*.jsonl` | ✓ grep |
 | 3. **Text-log smoke** | "Does the full TUI session render the expected text?" | `expect(1)` / `script(1)` / `asciinema rec` (asciicast v3) | `*.txt` / `*.cast` (JSON-Lines) | ✓ grep |
 | 4. **vhs visual + PNG keyframes** | "Does the rendered UI render the expected pixels at each scenario stage?" | `vhs file.tape` (Charm vhs ≥ 0.11.0) with `Output ...gif` + 3+ `Screenshot ...png` directives | `*.gif` (animated) + `*.png` (keyframes) | ✓ multimodal vision (Claude / Codex Read tool on each PNG) |
+| 5. **Per-frame cell-grid text capture** | "What did the user *actually* see at every distinct frame, in order?" — only layer that catches transient repaint flashes (~80 ms) | `scripts/tui-text-debug.sh` = `asciinema rec --output-format asciicast-v3` → `scripts/cast_to_frames.py` (pyte VT-100 emulator) | `frame_NNNN_t<sec>_<sha>.txt` (one per distinct cell-grid state) + `timeline.txt` + `raw.cast` | ✓ grep + Read |
 
-All four layers are **gating** for TUI-changing PRs (2026-04-29 — Layer 4 promoted from supplementary; 2026-05-01 — Layer 1b split out so the rule names `ink-testing-library` explicitly, since it was already in `tui/package.json` but undocumented in the ladder). Layers 1–3 are LLM-grep-friendly text; Layer 4 is LLM-vision-friendly via the keyframe PNGs (the bare `.gif` is for humans + animated proof, but the agent Read tool only renders its first frame, which is typically a blank prompt during boot).
+All five layers are **gating** for TUI-changing PRs (2026-04-29 — Layer 4 promoted from supplementary; 2026-05-01 — Layer 1b split out so the rule names `ink-testing-library` explicitly + Layer 5 added because PNG keyframes alone can't catch transient flashes that fall between sample timestamps, see `feedback_pty_log_full_inspection`). Layers 1–3 + 5 are LLM-grep-friendly text; Layer 4 is LLM-vision-friendly via the keyframe PNGs.
 
 ### Layer 1b — Ink snapshot tests with `ink-testing-library`
 
@@ -311,13 +312,80 @@ The tape, the gif, and every keyframe go into the spec directory and the PR desc
 
 **Why this layer is mandatory** (and not, as previously stated, "supplementary"): pure text logs cannot detect ANSI-cell-level rendering regressions (purple-on-purple branding text invisible against the wrong theme; Korean wide-glyph alignment breaking the prompt; the UFO mascot rendering as `?`-blocks). The Epic γ #2294 PR #2394 review surfaced the gap — `feedback_pr_pre_merge_interactive_test` was satisfied by the text log, but no agent had visually confirmed the citizen UI actually composed correctly. Layer 4 with `Screenshot` PNGs closes that loop without sacrificing the LLM-review property.
 
+### Layer 5 — Per-frame cell-grid text capture (asciinema → pyte)
+
+The most LLM-friendly layer. Records every byte the PTY emits with sub-millisecond timestamps via `asciinema rec` (asciicast-v3 format), then replays the cast through `pyte` — a real VT-100 + xterm subset emulator with full CJK wide-char support. The replay collapses consecutive identical cell-grid states and writes one plain-text snapshot per *distinct* state, indexed by absolute timestamp + sha1.
+
+**Why this layer exists**: PNG keyframes (Layer 4) capture state at sample timestamps T₁, T₂, T₃. Any transient state that exists *between* samples — an 80 ms wrong-state flash during partial-redraw, an internal-search `lookup(search:…)` UI that should have been hidden but flashed for one frame, a Korean wide-glyph misalignment that self-corrects on the next reconcile — is invisible. Layer 5 records EVERY byte the PTY ever emitted, so the replay is byte-deterministic and frame-complete by construction.
+
+**Why pyte over `tmux capture-pane`**: capture-pane is polling-based; an 80 ms spinner tick can fall between samples and become invisible. asciinema records every byte event with timestamps; pyte's `Stream.feed()` applies them all deterministically, so a re-run of the same cast produces byte-identical frames.
+
+**Recipe**:
+
+```bash
+# Drives the scenario, records the PTY, writes per-frame text snapshots.
+scripts/tui-text-debug.sh specs/<spec>/frames/ specs/<spec>/scripts/smoke.expect
+#   → specs/<spec>/frames/raw.cast              # asciicast v3, replayable
+#   → specs/<spec>/frames/frame_NNNN_tX.YYY_SHA.txt  # per distinct state
+#   → specs/<spec>/frames/timeline.txt          # idx<TAB>t<TAB>sha1<TAB>label
+#   → specs/<spec>/frames/summary.txt           # final frame + counts
+
+# The expect script is exactly the same one used at Layer 3 — there is
+# no double-authoring cost. Only the recording wrapper differs.
+```
+
+**Offline replay** (re-derive frames from a committed cast without re-running the scenario):
+
+```bash
+uv run python scripts/cast_to_frames.py specs/<spec>/frames/raw.cast /tmp/frames-rerun/
+# Byte-identical to the original frames if the cast is unchanged.
+```
+
+**Reading the output**: `timeline.txt` is the index — pick the frame indices of interest, then `Read` the corresponding `frame_NNNN_*.txt`. Standard greps:
+
+```bash
+# When did the first tool-call ui appear?
+grep -lF "● lookup" specs/<spec>/frames/frame_*.txt | head -1
+
+# When was the user input first echoed?
+grep -lF "오늘 서울 날씨" specs/<spec>/frames/frame_*.txt | head -1
+
+# Did the internal-search UI ever leak (should be hidden)?
+grep -l "lookup(search:" specs/<spec>/frames/frame_*.txt
+# (returns ZERO frames → hide is working; any hit is a bug)
+```
+
+### Five mandatory probe points
+
+Every TUI bugfix PR must verify all five before claiming "fixed":
+
+1. **Input ingress** — log `KEYSTROKE ts=… txn=… key=… mode=…` at the keypress handler. Confirms what the user typed.
+2. **IPC frame boundary** — every `chat_request` / `assistant_chunk` / `tool_call` envelope MUST carry `correlation_id` (Spec 032 invariant). Confirms backend received what frontend sent.
+3. **Tool dispatch boundary** — log `TOOL ts=… txn=… tool_id=… status={dispatched|completed|errored}`. Confirms agentic loop completed each round.
+4. **Render commit** — every Ink reconcile commits a frame; the resulting `frame_NNNN_*.txt` IS this probe. Confirms what was actually painted.
+5. **Snapshot trigger** — Layer 5 capture must run for every TUI-touching PR; absence of `specs/<feature>/frames/` (or `raw.cast`) is a CI bypass violation.
+
+### Seven anti-patterns LLM agents fall into (forbidden)
+
+Each maps to a memory entry the agent has been corrected on. Catching yourself doing any of these → STOP, return to systematic debugging:
+
+1. **Final-state fallacy** — reading only `lastFrame()` / end-of-PTY-log, declaring fix done, missing the 80 ms flash. (`feedback_pty_log_full_inspection`). **Countermeasure**: enumerate EVERY frame in the Layer 5 `frames/` directory.
+2. **Grep-as-proof** — `grep -c "tool_call" smoke.txt = 0` ≠ "no tool call emitted". The literal may be wrong, the log may have ANSI leak, the grep may be in the wrong file. (`feedback_pty_log_full_inspection`). **Countermeasure**: full read after grep, never grep alone.
+3. **Snapshot blindness** — green `bun test` ≠ green TUI. Component snapshots can't prove REPL.tsx dynamic-import path even compiled. **Countermeasure**: Layers 2-5 are non-negotiable.
+4. **Tool-substitution for methodology** — adding more tools (vhs, asciinema) without anchoring them to a probe point. **Countermeasure**: every captured artefact must answer one of the 5 probe points above.
+5. **Skim-and-summarize** — reading first 200 lines of a 10k-line PTY log, hallucinating the middle. **Countermeasure**: cast→pyte de-dups consecutive identical states; agent reads the deduped frame set in full.
+6. **Trusting one's own expect run** — same machine, warm cache; a flash humans see on cold start may not reproduce. **Countermeasure**: vary `KOSMOS_*` startup env between runs, diff frame sets.
+7. **Fix-the-symptom spiral** — three+ failed fixes without questioning architecture. (`superpowers:systematic-debugging` Phase 4.5). **Countermeasure**: STOP at fix #3, capture frames, post timeline.txt to user before attempting fix #4.
+
 ### Cross-layer debugging heuristics
 
 - **Tool-calling regression** — Layer 2 (stdio) is the gate. If `tool_call` count is 0, the prompt or registry is the bug.
 - **TUI render regression** — Layer 3 (text log) reveals it: missing assistant text, garbled ANSI, frozen cursor.
-- **Latency or streaming regression** — Layer 3 `.cast` timestamps surface chunk delays.
+- **Transient flash regression** — Layer 5 only. Read every frame, look for one-off content that disappears on the next frame. (`feedback_pty_log_full_inspection`)
+- **Latency or streaming regression** — Layer 3 `.cast` timestamps + Layer 5 `timeline.txt` `t_seconds` column surface chunk delays.
 - **Prompt / context bleed** — Layer 3 grep on the captured transcript: e.g. `grep -E '/Users/|gitStatus|claudeMd' smoke.txt` should return zero for citizen runs.
 - **Visual / pixel-level regression** — Layer 4 `Screenshot` PNGs, agent-vision-reviewed via Read. Catches: theme contrast (purple-on-purple branding), Korean wide-glyph misalignment, mascot rendering as `?`-blocks, banner truncation, REPL prompt jumping.
+- **Wrong tool-call UI exposure** (e.g. internal-search leaking) — Layer 5 only. `grep -l "lookup(search:" frames/*.txt` should return zero hits if the hide is working.
 
 ### Forward-looking — agent-driven autonomous smoke (not yet gating)
 
