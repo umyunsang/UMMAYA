@@ -133,8 +133,18 @@ jobs:
         # `bun run test` and catches genuine regressions; reviewers
         # eyeball the warn output. Tracked separately for upstream
         # report once a reproducible Bun patch tag is found.
+        env:
+          # PR builds checkout a synthetic merge commit ("Merge X into Y")
+          # whose message never carries our sentinel — even with fetch-depth>=1.
+          # Read the sentinel directly from the PR's title/body context AND
+          # any reachable commit messages so manual reruns / push events both
+          # work.
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message || '' }}
         run: |
-          if git -C "$GITHUB_WORKSPACE" log -50 HEAD --format=%B 2>/dev/null | grep -qF "[tui-bun-linux-known-issue]"; then
+          GIT_LOG_MSGS=$(git -C "$GITHUB_WORKSPACE" log -50 HEAD --format=%B 2>/dev/null || true)
+          if printf '%s\n%s\n%s\n%s\n' "$PR_TITLE" "$PR_BODY" "$HEAD_COMMIT_MSG" "$GIT_LOG_MSGS" | grep -qF "[tui-bun-linux-known-issue]"; then
             BYPASS=1
           else
             BYPASS=0
