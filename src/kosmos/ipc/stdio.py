@@ -794,10 +794,18 @@ async def run(  # noqa: C901
             return ""
         if not candidates:
             return ""
-        # Build a compact, LLM-readable block. Avoid the full JSON-Schema
-        # blob — that lives on the AdapterCandidate but would balloon the
-        # suffix; the LLM can still infer params from search_hint, and
-        # the typed fetch result will surface schema issues anyway.
+        # Build a compact, LLM-readable block.
+        #
+        # Spec 2521 (2026-05-02) — emit per-field schema signatures so the
+        # LLM can fill ``params`` against each adapter's actual REST shape.
+        # The previous suffix only carried ``search_hint`` and assumed the
+        # LLM could "infer params from search_hint" — K-EXAONE on FriendliAI
+        # consistently invented ``{"location": "...", "date": "..."}`` style
+        # payloads which fail every adapter's pydantic validation
+        # (``Invalid parameters for tool``). Rendering each field with its
+        # type + required flag + truncated description gives K-EXAONE
+        # enough signal to call e.g. ``{"lat": 37.5, "lon": 129.0,
+        # "base_date": "20260502", "base_time": "0500"}`` correctly.
         lines: list[str] = [
             f'<available_adapters query="{q[:120]}">',
             f"백엔드 BM25 후보 (top {len(candidates)}, 점수 내림차순):",
@@ -805,15 +813,50 @@ async def run(  # noqa: C901
         ]
         for c in candidates:
             hint = (c.search_hint or "").strip()
-            # search_hint can be long bilingual; cap to first 90 chars for
-            # the prompt-cache-friendly suffix.
             if len(hint) > 90:
                 hint = hint[:87] + "..."
             lines.append(f"- {c.tool_id} [{c.score:.2f}] — {hint or '(설명 없음)'}")
+            # Render input schema signature so the LLM sees exact field
+            # names + types + required flags + (truncated) descriptions.
+            schema = c.input_schema_json or {}
+            properties = (
+                schema.get("properties") if isinstance(schema, dict) else None
+            )
+            required: set[str] = set()
+            raw_required = schema.get("required") if isinstance(schema, dict) else None
+            if isinstance(raw_required, list):
+                required = {str(item) for item in raw_required if isinstance(item, str)}
+            if isinstance(properties, dict) and properties:
+                for fname, fmeta in properties.items():
+                    if not isinstance(fmeta, dict):
+                        continue
+                    ftype = fmeta.get("type") or fmeta.get("anyOf") or "any"
+                    if isinstance(ftype, list):
+                        ftype = "|".join(str(t) for t in ftype)
+                    fdesc = str(fmeta.get("description", "")).strip().replace("\n", " ")
+                    if len(fdesc) > 80:
+                        fdesc = fdesc[:77] + "..."
+                    pat = fmeta.get("pattern")
+                    pat_part = f" pattern={pat!r}" if isinstance(pat, str) else ""
+                    enum = fmeta.get("enum")
+                    enum_part = (
+                        f" enum={enum}"
+                        if isinstance(enum, list) and len(enum) <= 8
+                        else ""
+                    )
+                    flag = "필수" if fname in required else "선택"
+                    lines.append(
+                        f"    · {fname} ({ftype}, {flag}{pat_part}{enum_part})"
+                        + (f" — {fdesc}" if fdesc else "")
+                    )
         lines.append("")
         lines.append(
             "규칙: 위 목록의 tool_id 만 lookup({\"tool_id\":\"...\", \"params\":{...}})"
             " 으로 호출하세요. 동일 tool_id 를 한 turn 안에서 반복 호출하지 마세요."
+        )
+        lines.append(
+            "params 는 위에 표시된 정확한 필드명만 사용하세요 — 일반적인 \"location\"/"
+            "\"date\" 같은 추측 키는 모든 어댑터에서 invalid_params 로 거부됩니다."
         )
         lines.append(
             "BM25 도구 발견은 백엔드 internal 기능 — lookup(mode='search') 같은 호출은"
@@ -1658,7 +1701,20 @@ async def run(  # noqa: C901
             loop = asyncio.get_event_loop()
             issued_calls: list[tuple[str, str]] = []  # (call_id, name)
             assistant_tool_calls: list[LLMToolCall] = []
-            for idx in sorted(tool_call_buf.keys()):
+            tool_call_indices = sorted(tool_call_buf.keys())
+            if len(tool_call_indices) > 1:
+                selected_idx = tool_call_indices[0]
+                dropped = tool_call_indices[1:]
+                logger.warning(
+                    "_handle_chat_request: received %d tool calls in one LLM turn; "
+                    "dispatching index %s only and dropping indices %s to enforce "
+                    "one observed tool result per turn",
+                    len(tool_call_indices),
+                    selected_idx,
+                    dropped,
+                )
+                tool_call_indices = [selected_idx]
+            for idx in tool_call_indices:
                 slot = tool_call_buf[idx]
                 call_id = slot["id"] or str(uuid.uuid4())
                 try:

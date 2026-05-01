@@ -29,6 +29,7 @@ import { isEnvTruthy } from '../utils/envUtils.js';
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js';
 import { applyGrouping } from '../utils/groupToolUses.js';
 import { buildMessageLookups, createAssistantMessage, deriveUUID, getMessagesAfterCompactBoundary, getToolUseID, getToolUseIDs, hasUnresolvedHooksFromLookup, isNotEmptyMessage, normalizeMessages, reorderMessagesInUI, type StreamingThinking, type StreamingToolUse, shouldShowUserMessage } from '../utils/messages.js';
+import { createStreamingThinkingLayoutMessage, getStreamingThinkingInsertIndex, isSameAssistantToolStack, isStreamingThinkingLayoutMessage } from '../utils/multiToolLayout.js';
 import { plural } from '../utils/stringUtils.js';
 import { renderableSearchText } from '../utils/transcriptSearch.js';
 import { Divider } from './design-system/Divider.js';
@@ -542,6 +543,14 @@ const MessagesImpl = ({
     return renderRange ? collapsed_0.slice(renderRange[0], renderRange[1]) : sliceStart > 0 ? collapsed_0.slice(sliceStart) : collapsed_0;
   }, [collapsed_0, renderRange, virtualScrollRuntimeGate, disableRenderCap]);
   const streamingToolUseIDs = useMemo(() => new Set(streamingToolUses.map(__0 => __0.contentBlock.id)), [streamingToolUses]);
+  const streamingThinkingLayoutMessage = useMemo(() => isStreamingThinkingVisible && streamingThinking && !isBriefOnly ? createStreamingThinkingLayoutMessage(streamingThinking.thinking) : null, [isStreamingThinkingVisible, streamingThinking, isBriefOnly]);
+  const streamingThinkingInsertIndex = streamingThinkingLayoutMessage ? getStreamingThinkingInsertIndex(renderableMessages) : -1;
+  const layoutMessages = useMemo(() => {
+    if (!streamingThinkingLayoutMessage) return renderableMessages;
+    const next = renderableMessages.slice();
+    next.splice(streamingThinkingInsertIndex, 0, streamingThinkingLayoutMessage as RenderableMessage);
+    return next;
+  }, [renderableMessages, streamingThinkingLayoutMessage, streamingThinkingInsertIndex]);
 
   // Divider insertion point: first renderableMessage whose uuid shares the
   // 24-char prefix with firstUnseenUuid (deriveUUID keeps the first 24
@@ -549,12 +558,12 @@ const MessagesImpl = ({
   const dividerBeforeIndex = useMemo(() => {
     if (!unseenDivider) return -1;
     const prefix = unseenDivider.firstUnseenUuid.slice(0, 24);
-    return renderableMessages.findIndex(m => m.uuid.slice(0, 24) === prefix);
-  }, [unseenDivider, renderableMessages]);
+    return layoutMessages.findIndex(m => m.uuid.slice(0, 24) === prefix);
+  }, [unseenDivider, layoutMessages]);
   const selectedIdx = useMemo(() => {
     if (!cursor) return -1;
-    return renderableMessages.findIndex(m_0 => m_0.uuid === cursor.uuid);
-  }, [cursor, renderableMessages]);
+    return layoutMessages.findIndex(m_0 => m_0.uuid === cursor.uuid);
+  }, [cursor, layoutMessages]);
 
   // Fullscreen: click a message to toggle verbose rendering for it. Keyed by
   // tool_use_id where available so a tool_use and its tool_result (separate
@@ -610,18 +619,29 @@ const MessagesImpl = ({
   useEffect(() => {
     return () => progress(null);
   }, [progress]);
-  const messageKey = useCallback((msg_7: RenderableMessage) => `${msg_7.uuid}-${conversationId}`, [conversationId]);
+  const layoutKeyVersion = streamingThinkingLayoutMessage ? streamingThinkingInsertIndex : -1;
+  const messageKey = useCallback((msg_7: RenderableMessage) => isStreamingThinkingLayoutMessage(msg_7) ? `${msg_7.uuid}-${conversationId}-${layoutKeyVersion}` : `${msg_7.uuid}-${conversationId}`, [conversationId, layoutKeyVersion]);
   const renderMessageRow = (msg_8: RenderableMessage, index: number) => {
-    const prevType = index > 0 ? renderableMessages[index - 1]?.type : undefined;
+    if (isStreamingThinkingLayoutMessage(msg_8)) {
+      return <Box key={messageKey(msg_8)} marginTop={1}>
+          <AssistantThinkingMessage param={{
+        type: 'thinking',
+        thinking: msg_8.thinking
+      }} addMargin={false} isTranscriptMode={isTranscriptMode} verbose={verbose} hideInTranscript={false} />
+        </Box>;
+    }
+    const prevMsg = index > 0 ? layoutMessages[index - 1] : undefined;
+    const prevType = prevMsg?.type;
     const isUserContinuation = msg_8.type === 'user' && prevType === 'user';
+    const suppressTopMargin = isSameAssistantToolStack(prevMsg, msg_8, streamingToolUseIDs);
     // hasContentAfter is only consumed for collapsed_read_search groups;
     // skip the scan for everything else. streamingText is rendered as a
     // sibling after this map, so it's never in renderableMessages — OR it
     // in explicitly so the group flips to past tense as soon as text starts
     // streaming instead of waiting for the block to finalize.
-    const hasContentAfter = msg_8.type === 'collapsed_read_search' && (!!streamingText || hasContentAfterIndex(renderableMessages, index, tools, streamingToolUseIDs));
+    const hasContentAfter = msg_8.type === 'collapsed_read_search' && (!!streamingText || hasContentAfterIndex(layoutMessages, index, tools, streamingToolUseIDs));
     const k_0 = messageKey(msg_8);
-    const row = <MessageRow key={k_0} message={msg_8} isUserContinuation={isUserContinuation} hasContentAfter={hasContentAfter} tools={tools} commands={commands} verbose={verbose || isItemExpanded(msg_8) || cursor?.expanded === true && index === selectedIdx} inProgressToolUseIDs={inProgressToolUseIDs} streamingToolUseIDs={streamingToolUseIDs} screen={screen} canAnimate={canAnimate} onOpenRateLimitOptions={onOpenRateLimitOptions} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} columns={columns} isLoading={isLoading} lookups={lookups_0} />;
+    const row = <MessageRow key={k_0} message={msg_8} isUserContinuation={isUserContinuation} suppressTopMargin={suppressTopMargin} hasContentAfter={hasContentAfter} tools={tools} commands={commands} verbose={verbose || isItemExpanded(msg_8) || cursor?.expanded === true && index === selectedIdx} inProgressToolUseIDs={inProgressToolUseIDs} streamingToolUseIDs={streamingToolUseIDs} screen={screen} canAnimate={canAnimate} onOpenRateLimitOptions={onOpenRateLimitOptions} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} columns={columns} isLoading={isLoading} lookups={lookups_0} />;
 
     // Per-row Provider — only 2 rows re-render on selection change.
     // Wrapped BEFORE divider branch so both return paths get it.
@@ -697,8 +717,8 @@ const MessagesImpl = ({
           passing the array would accumulate every historical version
           (~1-2MB over a 7-turn session). */}
       {virtualScrollRuntimeGate ? <InVirtualListContext.Provider value={true}>
-          <VirtualMessageList messages={renderableMessages} scrollRef={scrollRef} columns={columns} itemKey={messageKey} renderItem={renderMessageRow} onItemClick={onItemClick} isItemClickable={isItemClickable} isItemExpanded={isItemExpanded} trackStickyPrompt={trackStickyPrompt} selectedIndex={selectedIdx >= 0 ? selectedIdx : undefined} cursorNavRef={cursorNavRef} setCursor={setCursor} jumpRef={jumpRef} onSearchMatchesChange={onSearchMatchesChange} scanElement={scanElement} setPositions={setPositions} extractSearchText={extractSearchText} />
-        </InVirtualListContext.Provider> : renderableMessages.flatMap(renderMessageRow)}
+          <VirtualMessageList messages={layoutMessages} scrollRef={scrollRef} columns={columns} itemKey={messageKey} renderItem={renderMessageRow} onItemClick={onItemClick} isItemClickable={isItemClickable} isItemExpanded={isItemExpanded} trackStickyPrompt={trackStickyPrompt} selectedIndex={selectedIdx >= 0 ? selectedIdx : undefined} cursorNavRef={cursorNavRef} setCursor={setCursor} jumpRef={jumpRef} onSearchMatchesChange={onSearchMatchesChange} scanElement={scanElement} setPositions={setPositions} extractSearchText={extractSearchText} />
+        </InVirtualListContext.Provider> : layoutMessages.flatMap(renderMessageRow)}
 
       {/* SWAP/llm-provider(2521): trim guard moved INTO StreamingMarkdown so
           the typewriter (visibleLen=0 at first tick) doesn't lose the row
@@ -717,12 +737,6 @@ const MessagesImpl = ({
           </Box>
         </Box>}
 
-      {isStreamingThinkingVisible && streamingThinking && !isBriefOnly && <Box marginTop={1}>
-          <AssistantThinkingMessage param={{
-        type: 'thinking',
-        thinking: streamingThinking.thinking
-      }} addMargin={false} isTranscriptMode={isTranscriptMode} verbose={verbose} hideInTranscript={false} />
-        </Box>}
     </>;
 };
 

@@ -989,9 +989,15 @@ class LLMClient:
         if stop is not None:
             payload["stop"] = stop
         if tools is not None:
-            payload["tools"] = [
+            tool_payloads = [
                 t.model_dump() if isinstance(t, ToolDefinition) else t for t in tools
             ]
+            payload["tools"] = tool_payloads
+            if tool_payloads:
+                # KOSMOS citizen flows require one observed tool result before
+                # the model may request the next tool. FriendliAI's
+                # OpenAI-compatible default permits parallel tool calls.
+                payload["parallel_tool_calls"] = False
             if tool_choice is not None:
                 payload["tool_choice"] = tool_choice
         if stream:

@@ -144,6 +144,60 @@ mock.module(join(TUI_ROOT, 'src/query/toolSerialization.js'), () => ({
   toolToFunctionSchema: async () => ({}),
 }))
 
+mock.module(join(TUI_ROOT, 'src/utils/messages.js'), () => ({
+  SYNTHETIC_MODEL: 'kosmos-test-model',
+  createAssistantMessage: ({ content }: { content: unknown }) => ({
+    type: 'assistant',
+    uuid: 'assistant-message-stub',
+    timestamp: new Date().toISOString(),
+    message: {
+      id: 'assistant-inner-stub',
+      type: 'message',
+      role: 'assistant',
+      content:
+        typeof content === 'string'
+          ? [{ type: 'text', text: content }]
+          : content,
+      model: 'kosmos-test-model',
+      stop_reason: null,
+      stop_sequence: null,
+      usage: {
+        input_tokens: 0,
+        output_tokens: 0,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+      },
+    },
+  }),
+  createSystemMessage: (
+    content: string,
+    subtype = 'info',
+    uuid = 'system-message-stub',
+  ) => ({
+    type: 'system',
+    uuid,
+    content,
+    subtype,
+    timestamp: new Date().toISOString(),
+  }),
+  createUserMessage: ({
+    content,
+    toolUseResult,
+    sourceToolAssistantUUID,
+  }: {
+    content: unknown
+    toolUseResult?: unknown
+    sourceToolAssistantUUID?: string
+  }) => ({
+    type: 'user',
+    uuid: 'user-message-stub',
+    timestamp: new Date().toISOString(),
+    message: { role: 'user', content },
+    toolUseResult,
+    sourceToolAssistantUUID,
+  }),
+}))
+
 // Dynamic import AFTER mock.module() so the mocked bindings are in place
 // when deps.ts resolves its own imports of bridgeSingleton / toolSerialization.
 const { productionDeps } = await import(join(TUI_ROOT, 'src/query/deps.js'))
@@ -314,6 +368,7 @@ describe('stream-event projection I3', () => {
         role: string
         content: Array<{ type?: string; tool_use_id?: string; content?: string }>
       }
+      toolUseResult?: { ok?: boolean; result?: unknown }
     }
 
     const userMessages = results.filter(
@@ -328,6 +383,8 @@ describe('stream-event projection I3', () => {
     const block = toolResultMsg.message.content[0]!
     expect(block.type).toBe('tool_result')
     expect(block.tool_use_id).toBe(callId)
+    expect(toolResultMsg.toolUseResult?.ok).toBe(true)
+    expect(toolResultMsg.toolUseResult?.result).toEqual(envelope)
   })
 })
 
@@ -359,6 +416,7 @@ describe('stream-event projection I4', () => {
 
     type UserMsgItem = {
       type: 'user'
+      toolUseResult?: { ok?: boolean; error?: { message?: string } }
       message: { role: string; content: Array<{ type?: string; is_error?: boolean }> }
     }
 
@@ -367,8 +425,11 @@ describe('stream-event projection I4', () => {
     ) as UserMsgItem[]
 
     expect(userMessages.length).toBeGreaterThan(0)
-    const block = userMessages[0]!.message.content[0]!
+    const toolResultMsg = userMessages[0]!
+    const block = toolResultMsg.message.content[0]!
     expect(block.is_error).toBe(true)
+    expect(toolResultMsg.toolUseResult?.ok).toBe(false)
+    expect(toolResultMsg.toolUseResult?.error?.message).toBe('adapter returned 500')
   })
 })
 

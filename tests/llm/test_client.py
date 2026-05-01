@@ -249,6 +249,7 @@ async def test_complete_with_tools(
     assert "tools" in payload
     assert len(payload["tools"]) == 1
     assert payload["tools"][0]["function"]["name"] == "get_weather"
+    assert payload["parallel_tool_calls"] is False
 
     # Verify response.tool_calls is populated correctly
     assert len(response.tool_calls) == 1

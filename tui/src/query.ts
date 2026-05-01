@@ -112,6 +112,37 @@ import {
 import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
 import { count } from './utils/array.js'
 
+function getToolResultIDsFromUserMessage(message: UserMessage): string[] {
+  const content = message.message.content
+  if (!Array.isArray(content)) return []
+  return content.flatMap(block => {
+    if (
+      block &&
+      typeof block === 'object' &&
+      'type' in block &&
+      block.type === 'tool_result' &&
+      'tool_use_id' in block &&
+      typeof block.tool_use_id === 'string'
+    ) {
+      return [block.tool_use_id]
+    }
+    return []
+  })
+}
+
+function getResolvedToolUseIDs(
+  toolResults: (UserMessage | AttachmentMessage)[],
+): Set<string> {
+  const resolved = new Set<string>()
+  for (const result of toolResults) {
+    if (result.type !== 'user') continue
+    for (const id of getToolResultIDsFromUserMessage(result)) {
+      resolved.add(id)
+    }
+  }
+  return resolved
+}
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 const snipModule = feature('HISTORY_SNIP')
   ? (require('./services/compact/snipCompact.js') as typeof import('./services/compact/snipCompact.js'))
@@ -796,14 +827,24 @@ async function* queryLoop(
             if (!withheld) {
               yield yieldMessage
             }
+            if (
+              message.type === 'user' &&
+              getToolResultIDsFromUserMessage(message).length > 0
+            ) {
+              toolResults.push(message)
+            }
             if (message.type === 'assistant') {
               assistantMessages.push(message)
 
               const msgToolUseBlocks = message.message.content.filter(
                 content => content.type === 'tool_use',
               ) as ToolUseBlock[]
-              if (msgToolUseBlocks.length > 0) {
-                toolUseBlocks.push(...msgToolUseBlocks)
+              const resolvedToolUseIDs = getResolvedToolUseIDs(toolResults)
+              const unresolvedToolUseBlocks = msgToolUseBlocks.filter(
+                block => !resolvedToolUseIDs.has(block.id),
+              )
+              if (unresolvedToolUseBlocks.length > 0) {
+                toolUseBlocks.push(...unresolvedToolUseBlocks)
                 needsFollowUp = true
               }
 
@@ -811,7 +852,7 @@ async function* queryLoop(
                 streamingToolExecutor &&
                 !toolUseContext.abortController.signal.aborted
               ) {
-                for (const toolBlock of msgToolUseBlocks) {
+                for (const toolBlock of unresolvedToolUseBlocks) {
                   streamingToolExecutor.addTool(toolBlock, message)
                 }
               }

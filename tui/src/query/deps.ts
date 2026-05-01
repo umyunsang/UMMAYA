@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID, type UUID } from 'crypto'
 import { APIUserAbortError } from 'src/sdk-compat.js'
 import { autoCompactIfNeeded } from '../services/compact/autoCompact.js'
 import { microcompactMessages } from '../services/compact/microCompact.js'
@@ -22,6 +22,54 @@ import { createAssistantMessage, createSystemMessage, createUserMessage, SYNTHET
 // reveal) is staged separately; until that lands we leave the
 // stream_event hot-path untouched so disabled-pacing == zero
 // latency cost.
+
+function buildToolUseResultFromEnvelope(
+  envelope: { kind?: string; [k: string]: unknown },
+): Record<string, unknown> {
+  const outboundTraces = Array.isArray(envelope['outbound_traces'])
+    ? envelope['outbound_traces']
+    : undefined
+  const errorMessage =
+    typeof envelope['error'] === 'string'
+      ? envelope['error']
+      : envelope.kind === 'error' && typeof envelope['message'] === 'string'
+        ? envelope['message']
+        : undefined
+
+  if (errorMessage && errorMessage.length > 0) {
+    const errorResult: Record<string, unknown> = {
+      ok: false,
+      error: {
+        kind: typeof envelope.kind === 'string' ? envelope.kind : 'dispatch_error',
+        message: errorMessage,
+      },
+    }
+    if (outboundTraces && outboundTraces.length > 0) {
+      errorResult['outbound_traces'] = outboundTraces
+    }
+    return errorResult
+  }
+
+  const successResult: Record<string, unknown> = {
+    ok: true,
+    result: 'result' in envelope ? envelope['result'] : envelope,
+  }
+  if (outboundTraces && outboundTraces.length > 0) {
+    successResult['outbound_traces'] = outboundTraces
+  }
+  return successResult
+}
+
+function stripUiOnlyToolResultFields(toolUseResult: Record<string, unknown>): string {
+  const llmFacing = Object.fromEntries(
+    Object.entries(toolUseResult).filter(([key]) => key !== 'outbound_traces'),
+  )
+  return JSON.stringify(llmFacing)
+}
+
+function isErrorEnvelope(envelope: { kind?: string; [k: string]: unknown }): boolean {
+  return envelope.kind === 'error' || typeof envelope['error'] === 'string'
+}
 
 
 /**
@@ -435,16 +483,19 @@ async function* queryModelWithStreaming(params: {
       }
 
       const env = fa.envelope ?? {}
-      const isError = env.kind === 'error'
+      const toolUseResult = buildToolUseResultFromEnvelope(env)
+      const isError = isErrorEnvelope(env)
       yield createUserMessage({
         content: [
           {
             type: 'tool_result' as const,
             tool_use_id: resultCallId,
-            content: JSON.stringify(env),
+            content: stripUiOnlyToolResultFields(toolUseResult),
             ...(isError ? { is_error: true as const } : {}),
           },
         ] as Parameters<typeof createUserMessage>[0]['content'],
+        toolUseResult,
+        sourceToolAssistantUUID: messageUuid as UUID,
       })
     } else if (fa.kind === 'permission_request') {
       // Epic #2077 T020 (Step 7) — CC permission gauntlet wire. Routes the
