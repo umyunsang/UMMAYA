@@ -67,13 +67,25 @@ from kosmos.observability.semconv import (
 # streaming benefit. The knobs survive for headless / no-Ink callers
 # that still want server-side cadence:
 #
-#   KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS  default 12
-#   KOSMOS_LLM_STREAM_PACE_MS          default 0   (disabled)
+#   KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS  default 6
+#   KOSMOS_LLM_STREAM_PACE_MS          default 150  (set 0 to disable)
+#
+# Spec 2521 (2026-05-01) — Layer 5 frame-txt evidence (frame_0294 of
+# /tmp/tdb-md-fix and frame_0572 of /tmp/tdb-final) showed that without
+# backend pacing K-EXAONE pushes content-channel chunks (~3-10 codepoints
+# each) faster than the frontend StreamingMarkdown typewriter can
+# reveal — so the agentic loop transitions to the final
+# AssistantMessage paint before the typewriter visibleLen catches up,
+# and the paragraph still paints in one Ink commit. Pacing chunks at
+# 150 ms × 6 codepoints ≈ 40 cps lines up with the frontend typewriter
+# default (30 ms × 1 codepoint ≈ 33 cps), so the streamingText buffer
+# stays alive long enough for visibleLen → target.length to complete
+# before the final transition.
 _LLM_STREAM_CHUNK_MAX_CHARS = max(
-    1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "12"))
+    1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "6"))
 )
 _LLM_STREAM_PACE_S = max(
-    0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "0")) / 1000.0
+    0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "150")) / 1000.0
 )
 
 

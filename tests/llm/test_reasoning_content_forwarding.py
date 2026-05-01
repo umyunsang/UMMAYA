@@ -114,13 +114,21 @@ async def test_reasoning_content_forwarded_as_thinking_delta(
         events.append(event)
 
     thinking_events = [e for e in events if e.type == "thinking_delta"]
-    assert len(thinking_events) == len(reasoning_chunks), (
-        f"expected {len(reasoning_chunks)} thinking_delta events, got {len(thinking_events)}"
+    # Spec 2521 (2026-05-01) — backend pacing splits each chunk into
+    # sub-chunks of ``KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS``. The contract is
+    # now "total reasoning text preserved verbatim" rather than "1:1 chunk
+    # boundary preservation"; the split is invisible to the LLM-history
+    # consumer (which concatenates) and to the TUI thinking renderer
+    # (which appends). The assertion below validates the byte-level
+    # invariant the agentic loop actually depends on.
+    assert len(thinking_events) >= len(reasoning_chunks), (
+        f"expected at least {len(reasoning_chunks)} thinking_delta events, "
+        f"got {len(thinking_events)}"
     )
 
     concatenated = "".join(e.thinking or "" for e in thinking_events)
     assert concatenated == "".join(reasoning_chunks), (
-        f"reasoning_content chunks not preserved verbatim: got {concatenated!r}"
+        f"reasoning_content bytes not preserved verbatim: got {concatenated!r}"
     )
 
     # Content channel should be empty (or only contain post-reasoning content)

@@ -1,12 +1,30 @@
 import { c as _c } from "react/compiler-runtime";
 import { marked, type Token, type Tokens } from 'marked';
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Ansi, Box, useTheme } from '../ink.js';
 import type { CliHighlight } from '../utils/cliHighlight.js';
 import { hashContent } from '../utils/hash.js';
 import { configureMarked, formatToken } from '../utils/markdown.js';
 import { stripPromptXMLTags } from '../utils/messages.js';
 import { MarkdownTable } from './MarkdownTable.js';
+
+// SWAP/llm-provider(2521) — Spec 2521 explicitly extends the byte-copy
+// invariant relaxation into the Ink rendering layer for the
+// LLM-provider-streaming surface only. K-EXAONE on FriendliAI emits SSE
+// chunks at paragraph granularity (~60-1000 chars per `data:` line) instead
+// of Anthropic's per-token cadence; without this in-component typewriter
+// the citizen sees the entire paragraph paint in one Ink commit. The
+// modification is *additive* — the original boundary algorithm is
+// preserved and the typewriter only shrinks `stripped` to the visible
+// prefix before the algorithm runs. User-approved relaxation 2026-05-01.
+//
+//   KOSMOS_TUI_TYPEWRITER_PACE_MS  default 30  (set 0 to disable)
+const _STREAMING_TYPEWRITER_PACE_MS = (() => {
+  const raw = process.env['KOSMOS_TUI_TYPEWRITER_PACE_MS'];
+  if (raw === undefined) return 30;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 30;
+})();
 type Props = {
   children: string;
   /** When true, render all text content as dim */
@@ -171,8 +189,55 @@ export function StreamingMarkdown({
   // (line 29). When a closing tag arrives, stripped(N+1) is not a prefix
   // of stripped(N), but the startsWith reset below handles that with a
   // one-time re-lex on the smaller stripped string.
-  const stripped = stripPromptXMLTags(children);
+  const fullStripped = stripPromptXMLTags(children);
+
+  // SWAP/llm-provider(2521) — typewriter pacing layered before the
+  // stable/unstable boundary algorithm. ``visibleLen`` advances one
+  // codepoint per ``setInterval`` tick so a paragraph-batch SSE chunk
+  // still paints incrementally. ``targetRef`` keeps the latest text
+  // visible to the interval without re-binding the effect when
+  // children grows.
+  const fullCodepoints = Array.from(fullStripped);
+  const targetRef = useRef(fullCodepoints);
+  targetRef.current = fullCodepoints;
+  const [visibleLen, setVisibleLen] = useState(
+    _STREAMING_TYPEWRITER_PACE_MS <= 0 ? fullCodepoints.length : 0,
+  );
+  // Hoisted above the early `null` return below so React hook ordering
+  // stays stable across renders that hide the empty-prefix row.
   const stablePrefixRef = useRef('');
+  useEffect(() => {
+    if (_STREAMING_TYPEWRITER_PACE_MS <= 0) return;
+    const id = setInterval(() => {
+      setVisibleLen((cur) => {
+        const total = targetRef.current.length;
+        if (cur >= total) return cur;
+        return cur + 1;
+      });
+    }, _STREAMING_TYPEWRITER_PACE_MS);
+    return () => clearInterval(id);
+  }, []);
+  // Reset cursor when upstream content shrinks (e.g. between turns when
+  // streamingText is set back to null and the next turn restarts).
+  useEffect(() => {
+    if (fullCodepoints.length < visibleLen) {
+      setVisibleLen(fullCodepoints.length);
+    }
+  }, [fullCodepoints.length, visibleLen]);
+
+  const stripped =
+    visibleLen >= fullCodepoints.length
+      ? fullStripped
+      : fullCodepoints.slice(0, visibleLen).join('');
+
+  // SWAP/llm-provider(2521): hide the row entirely while the typewriter is
+  // still on the leading whitespace prefix that K-EXAONE often emits as its
+  // first chunk. ``stripped.trim().length === 0`` means the visible portion
+  // is whitespace-only — drawing the bare ● bullet for that single frame
+  // was the regression frame_40 of smoke-small.gif caught.
+  if (stripped.trim().length === 0) {
+    return null;
+  }
 
   // Reset if text was replaced (defensive; normally unmount handles this)
   if (!stripped.startsWith(stablePrefixRef.current)) {
