@@ -27,6 +27,10 @@ import {
   resolveAdapter,
 } from '../../services/api/adapterManifest.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import {
+  renderVerboseInputJson,
+  renderVerboseOutputJson,
+} from '../_shared/verboseRender.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
 
@@ -60,6 +64,9 @@ type InputSchema = ReturnType<typeof inputSchema>
 // Output schema — discriminated union on "ok"
 // ---------------------------------------------------------------------------
 
+// Spec 2521 (2026-05-02) — ``outbound_traces`` preserved through
+// safeParse so verboseRender can show the verification vendor's HTTP
+// request/response.
 const outputSchema = lazySchema(() =>
   z.discriminatedUnion('ok', [
     z.object({
@@ -67,6 +74,7 @@ const outputSchema = lazySchema(() =>
       result: z.unknown().describe(
         'Verify result including auth_family, auth_level, and adapter-specific verification payload',
       ),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
     z.object({
       ok: z.literal(false),
@@ -74,6 +82,7 @@ const outputSchema = lazySchema(() =>
         kind: z.string().describe('Error classification, e.g. "verification_failed", "tool_not_found"'),
         message: z.string().describe('Human-readable error description'),
       }),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
   ]),
 )
@@ -123,14 +132,30 @@ export const VerifyPrimitive = buildTool({
   },
 
   mapToolResultToToolResultBlockParam(output, toolUseID) {
+    // Spec 2521 (2026-05-02) — outbound_traces is UI-only (see Lookup).
+    const llmContent =
+      typeof output === 'object' && output !== null
+        ? Object.fromEntries(
+            Object.entries(output as Record<string, unknown>).filter(
+              ([k]) => k !== 'outbound_traces',
+            ),
+          )
+        : output
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: JSON.stringify(output),
+      content: JSON.stringify(llmContent),
     }
   },
 
-  renderToolUseMessage(input: { tool_id?: string; family_hint?: string }) {
+  renderToolUseMessage(
+    input: { tool_id?: string; family_hint?: string; params?: unknown },
+    options: { verbose: boolean },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose surfaces full request JSON.
+    if (options.verbose) {
+      return renderVerboseInputJson(input)
+    }
     return input.tool_id ?? input.family_hint ?? ''
   },
 
@@ -203,7 +228,16 @@ export const VerifyPrimitive = buildTool({
     }
   },
 
-  renderToolResultMessage(output: Output) {
+  renderToolResultMessage(
+    output: Output,
+    _progress: unknown,
+    options: { verbose: boolean; isTranscriptMode?: boolean } = { verbose: false },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose / transcript mode surface
+    // the full envelope JSON. CC BashTool/UI.tsx parity.
+    if (options.verbose || options.isTranscriptMode) {
+      return renderVerboseOutputJson(output)
+    }
     // KOSMOS hotfix #2519 — after dispatchPrimitive register-and-await
     // rewrite, output.result is the actual verify primitive output
     // unwrapped from ToolResultEnvelope.result.

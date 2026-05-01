@@ -26,6 +26,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ToolExecutionError, _require_env
 from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
 
@@ -779,7 +780,7 @@ async def handle(
     )
 
     own_client = client is None
-    _client: httpx.AsyncClient = httpx.AsyncClient(timeout=30.0) if own_client else client  # type: ignore[assignment]
+    _client: httpx.AsyncClient = traced_async_client(timeout=30.0) if own_client else client  # type: ignore[assignment]
 
     try:
         response = await _client.get(_BASE_URL, params=params)

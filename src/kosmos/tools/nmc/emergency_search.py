@@ -24,6 +24,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import LookupErrorReason
 from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
 from kosmos.tools.nmc.freshness import FreshnessResult
@@ -177,7 +178,7 @@ async def handle(inp: NmcEmergencySearchInput) -> dict[str, Any]:
         "wgs84Lon": inp.lon,
     }
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with traced_async_client(timeout=10.0) as client:
         resp = await client.get(
             _BASE_URL,
             params=params,

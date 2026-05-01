@@ -1116,6 +1116,18 @@ async def run(  # noqa: C901
             # narrowing complaints.
             raw: Any
 
+            # Spec 2521 (2026-05-01) — open an outbound HTTP trace scope so
+            # any ``data.go.kr`` / agency call the adapter makes is captured
+            # and attached to the envelope as ``outbound_traces``. The TUI's
+            # verbose render reads this field to show the citizen / operator
+            # the exact request/response JSON.
+            from kosmos.tools._outbound_trace import (  # noqa: PLC0415
+                consume_outbound_capture,
+                start_outbound_capture,
+            )
+
+            _outbound_trace_token = start_outbound_capture()
+
             try:
                 if fname == "verify":
                     from kosmos.primitives.verify import (  # noqa: PLC0415
@@ -1267,6 +1279,15 @@ async def run(  # noqa: C901
                     "error": dispatch_error,
                     "tool_id": str(args_obj.get("tool_id", fname)),
                 }
+
+            # Drain the outbound HTTP trace buffer + attach to the envelope.
+            outbound_traces = consume_outbound_capture(_outbound_trace_token)
+            if outbound_traces:
+                # Pydantic model_dump → JSON-serialisable dict; envelope
+                # accepts the extra field via ``extra="allow"``.
+                result_payload["outbound_traces"] = [
+                    t.model_dump() for t in outbound_traces
+                ]
 
             # Build ToolResultEnvelope + ToolResultFrame.
             # ToolResultEnvelope uses extra="allow" so extra payload fields are kept.

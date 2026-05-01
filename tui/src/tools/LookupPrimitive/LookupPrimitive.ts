@@ -28,6 +28,10 @@ import {
 } from '../../services/api/adapterManifest.js'
 import { LOOKUP_TOOL_NAME, DESCRIPTION, LOOKUP_TOOL_PROMPT } from './prompt.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import {
+  renderVerboseInputJson,
+  renderVerboseOutputJson,
+} from '../_shared/verboseRender.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
 
@@ -69,11 +73,18 @@ type InputSchema = ReturnType<typeof inputSchema>
 // Output schema — discriminated union on "ok"
 // ---------------------------------------------------------------------------
 
+// Spec 2521 (2026-05-02) — ``outbound_traces`` carries the captured
+// outbound HTTP request/response array from
+// ``kosmos.tools._outbound_trace``. Optional + ``z.unknown()`` items so
+// each primitive doesn't have to mirror the full Pydantic schema. The
+// verbose render path (``verboseRender.ts``) reads this field; without
+// it Zod's strip default would drop the trace at safeParse time.
 const outputSchema = lazySchema(() =>
   z.discriminatedUnion('ok', [
     z.object({
       ok: z.literal(true),
       result: z.unknown().describe('Adapter result or search results array'),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
     z.object({
       ok: z.literal(false),
@@ -81,6 +92,7 @@ const outputSchema = lazySchema(() =>
         kind: z.string().describe('Error classification, e.g. "tool_not_found"'),
         message: z.string().describe('Human-readable error description'),
       }),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
   ]),
 )
@@ -130,10 +142,22 @@ export const LookupPrimitive = buildTool({
   },
 
   mapToolResultToToolResultBlockParam(output, toolUseID) {
+    // Spec 2521 (2026-05-02) — strip ``outbound_traces`` from the
+    // LLM-facing content. The trace is UI-only (verbose render);
+    // shipping raw HTTP bodies back into the next turn would bloat
+    // K-EXAONE's context with KMA/data.go.kr response payloads.
+    const llmContent =
+      typeof output === 'object' && output !== null
+        ? Object.fromEntries(
+            Object.entries(output as Record<string, unknown>).filter(
+              ([k]) => k !== 'outbound_traces',
+            ),
+          )
+        : output
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: JSON.stringify(output),
+      content: JSON.stringify(llmContent),
     }
   },
 
@@ -142,7 +166,16 @@ export const LookupPrimitive = buildTool({
   // 숨겨서 시민이 어떤 tool이 dispatch 됐는지 못 봄. CC byte-identical pattern.
   // Spec 2521 (2026-05-01) — fetch-only surface; legacy mode='search'
   // payloads from older sessions surface as the bare tool_id.
-  renderToolUseMessage(input: { tool_id?: string; mode?: string; query?: string }) {
+  // Spec 2521 (2026-05-01 evening) — verbose flag mirrors CC BashTool's
+  // verbose==true full-payload pattern: Ctrl+O expand surfaces the full
+  // request JSON the LLM sent to the adapter.
+  renderToolUseMessage(
+    input: { tool_id?: string; mode?: string; query?: string; params?: unknown },
+    options: { verbose: boolean },
+  ) {
+    if (options.verbose) {
+      return renderVerboseInputJson(input)
+    }
     return input.tool_id ?? input.query ?? ''
   },
 
@@ -238,7 +271,17 @@ export const LookupPrimitive = buildTool({
    * - mode='search', ok=true: ranked-hit list.
    * - ok=false:               Korean error message in citizen-friendly tone.
    */
-  renderToolResultMessage(output: Output): React.ReactNode {
+  renderToolResultMessage(
+    output: Output,
+    _progress: unknown,
+    options: { verbose: boolean; isTranscriptMode?: boolean } = { verbose: false },
+  ): React.ReactNode {
+    // Spec 2521 (2026-05-01 evening) — Ctrl+O expand / transcript mode
+    // surfaces the full envelope JSON the backend returned. Mirrors
+    // CC BashTool/UI.tsx:renderToolResultMessage(verbose).
+    if (options.verbose || options.isTranscriptMode) {
+      return renderVerboseOutputJson(output)
+    }
     // KOSMOS hotfix #2519 (CC-original migration, 2026-04-30):
     //
     // After the dispatchPrimitive register-and-await rewrite, output.result

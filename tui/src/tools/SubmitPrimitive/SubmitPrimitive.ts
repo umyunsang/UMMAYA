@@ -27,6 +27,10 @@ import {
   resolveAdapter,
 } from '../../services/api/adapterManifest.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import {
+  renderVerboseInputJson,
+  renderVerboseOutputJson,
+} from '../_shared/verboseRender.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
 
@@ -60,11 +64,14 @@ type InputSchema = ReturnType<typeof inputSchema>
 // Output schema — discriminated union on "ok"
 // ---------------------------------------------------------------------------
 
+// Spec 2521 (2026-05-02) — ``outbound_traces`` preserved through
+// safeParse so verboseRender can show the agency POST request/response.
 const outputSchema = lazySchema(() =>
   z.discriminatedUnion('ok', [
     z.object({
       ok: z.literal(true),
       result: z.unknown().describe('Submit result including transaction_id, status, adapter_receipt'),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
     z.object({
       ok: z.literal(false),
@@ -72,6 +79,7 @@ const outputSchema = lazySchema(() =>
         kind: z.string().describe('Error classification, e.g. "permission_denied", "tool_not_found"'),
         message: z.string().describe('Human-readable error description'),
       }),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
   ]),
 )
@@ -126,14 +134,31 @@ export const SubmitPrimitive = buildTool({
   },
 
   mapToolResultToToolResultBlockParam(output, toolUseID) {
+    // Spec 2521 (2026-05-02) — outbound_traces is UI-only (see Lookup).
+    const llmContent =
+      typeof output === 'object' && output !== null
+        ? Object.fromEntries(
+            Object.entries(output as Record<string, unknown>).filter(
+              ([k]) => k !== 'outbound_traces',
+            ),
+          )
+        : output
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: JSON.stringify(output),
+      content: JSON.stringify(llmContent),
     }
   },
 
-  renderToolUseMessage(input: { tool_id?: string }) {
+  renderToolUseMessage(
+    input: { tool_id?: string; params?: unknown },
+    options: { verbose: boolean },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose flag surfaces the full
+    // request body the LLM submitted (CC BashTool parity).
+    if (options.verbose) {
+      return renderVerboseInputJson(input)
+    }
     return input.tool_id ?? ''
   },
 
@@ -211,7 +236,17 @@ export const SubmitPrimitive = buildTool({
     }
   },
 
-  renderToolResultMessage(output: Output) {
+  renderToolResultMessage(
+    output: Output,
+    _progress: unknown,
+    options: { verbose: boolean; isTranscriptMode?: boolean } = { verbose: false },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose / transcript mode surface
+    // the full envelope JSON. CC BashTool/UI.tsx:renderToolResultMessage
+    // pattern.
+    if (options.verbose || options.isTranscriptMode) {
+      return renderVerboseOutputJson(output)
+    }
     // NOTE: This file is `.ts` (not `.tsx`); Bun runtime cannot parse JSX in
     // `.ts`. Use `React.createElement` for parity with the other 3 primitives.
     //

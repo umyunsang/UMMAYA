@@ -22,6 +22,7 @@ from typing import Any, Literal
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ConfigurationError, ToolExecutionError, _require_env  # noqa: F401
 from kosmos.tools.executor import ToolExecutor
 from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
@@ -272,7 +273,7 @@ async def _call(
     }
 
     own_client = client is None
-    _client: httpx.AsyncClient = httpx.AsyncClient() if own_client else client  # type: ignore[assignment]
+    _client: httpx.AsyncClient = traced_async_client() if own_client else client  # type: ignore[assignment]
     assert _client is not None  # narrow: either injected or freshly created above
 
     try:

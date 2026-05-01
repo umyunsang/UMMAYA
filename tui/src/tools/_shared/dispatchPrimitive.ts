@@ -241,21 +241,39 @@ export async function dispatchPrimitive<O = unknown>(
   span.end()
 
   if (typeof env?.error === 'string' && env.error.length > 0) {
+    // Spec 2521 (2026-05-02) — forward outbound_traces even on dispatch
+    // error so partial-failure cases (adapter made N calls then crashed)
+    // still surface their captured request/response in the verbose view.
+    const errorData: Record<string, unknown> = {
+      ok: false,
+      error: {
+        kind: 'dispatch_error',
+        message: env.error,
+      },
+    }
+    if (Array.isArray(env['outbound_traces']) && (env['outbound_traces'] as unknown[]).length > 0) {
+      errorData['outbound_traces'] = env['outbound_traces']
+    }
     return {
-      data: {
-        ok: false as const,
-        error: {
-          kind: 'dispatch_error',
-          message: env.error,
-        },
-      } as unknown as O,
+      data: errorData as unknown as O,
     }
   }
 
   // Forward the inner `result` if present, else the entire envelope.
   // Each primitive's renderToolResultMessage knows its own result shape.
   const inner = 'result' in env ? env.result : env
+
+  // Spec 2521 (2026-05-02) — surface envelope-level ``outbound_traces``
+  // (populated by ``kosmos.tools._outbound_trace`` on the backend) so the
+  // 4 primitives' ``renderToolResultMessage`` can render the verbose
+  // outbound HTTP request/response section. Without this, the dispatcher
+  // strips the field at unwrap time and the verbose view shows nothing
+  // even when ``serviceKey``-redacted traces exist.
+  const data: Record<string, unknown> = { ok: true, result: inner }
+  if (Array.isArray(env['outbound_traces']) && (env['outbound_traces'] as unknown[]).length > 0) {
+    data['outbound_traces'] = env['outbound_traces']
+  }
   return {
-    data: { ok: true as const, result: inner } as unknown as O,
+    data: data as unknown as O,
   }
 }
