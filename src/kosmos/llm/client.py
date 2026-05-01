@@ -67,25 +67,21 @@ from kosmos.observability.semconv import (
 # streaming benefit. The knobs survive for headless / no-Ink callers
 # that still want server-side cadence:
 #
-#   KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS  default 6
-#   KOSMOS_LLM_STREAM_PACE_MS          default 150  (set 0 to disable)
+#   KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS  default 999  (no extra splitting)
+#   KOSMOS_LLM_STREAM_PACE_MS          default 0    (disabled — natural cadence)
 #
-# Spec 2521 (2026-05-01) — Layer 5 frame-txt evidence (frame_0294 of
-# /tmp/tdb-md-fix and frame_0572 of /tmp/tdb-final) showed that without
-# backend pacing K-EXAONE pushes content-channel chunks (~3-10 codepoints
-# each) faster than the frontend StreamingMarkdown typewriter can
-# reveal — so the agentic loop transitions to the final
-# AssistantMessage paint before the typewriter visibleLen catches up,
-# and the paragraph still paints in one Ink commit. Pacing chunks at
-# 150 ms × 6 codepoints ≈ 40 cps lines up with the frontend typewriter
-# default (30 ms × 1 codepoint ≈ 33 cps), so the streamingText buffer
-# stays alive long enough for visibleLen → target.length to complete
-# before the final transition.
+# Spec 2521 (2026-05-01) — pacing now disabled by default. The
+# paragraph-batch repaint root cause was Ink's
+# ``FRAME_INTERVAL_MS = 16`` throttle folding K-EXAONE's 13-17 ms inter-
+# chunk arrival latency into one render. Fix is to lower the throttle
+# (``tui/src/ink/constants.ts`` byte-copy relax to 4 ms), not to slow
+# the provider down. The pacing knobs survive for headless / no-Ink
+# callers that still want server-side cadence.
 _LLM_STREAM_CHUNK_MAX_CHARS = max(
-    1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "6"))
+    1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "999"))
 )
 _LLM_STREAM_PACE_S = max(
-    0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "150")) / 1000.0
+    0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "0")) / 1000.0
 )
 
 
@@ -802,8 +798,21 @@ class LLMClient:
         }
         make_event = kind_to_event[kind]
         n = len(text)
-        if _LLM_STREAM_PACE_S <= 0 or n <= _LLM_STREAM_CHUNK_MAX_CHARS:
+        if _LLM_STREAM_PACE_S <= 0:
+            # Pacing disabled — provider cadence passes through verbatim.
             yield make_event(text)
+            return
+        if n <= _LLM_STREAM_CHUNK_MAX_CHARS:
+            # Provider already gave us a small natural chunk (e.g. K-EXAONE
+            # emits 3-10 codepoints per SSE line on the content channel).
+            # Yield it whole, then sleep so the *next* chunk's effective
+            # arrival latency at the frontend is ≥ PACE — guaranteeing it
+            # falls outside Ink's FRAME_INTERVAL_MS throttle and gets its
+            # own ANSI flush. The post-yield sleep is the entire point;
+            # without it K-EXAONE's 13-17 ms inter-chunk latency stays
+            # below Ink's 16 ms throttle and chunks fold into one paint.
+            yield make_event(text)
+            await asyncio.sleep(_LLM_STREAM_PACE_S)
             return
         step = _LLM_STREAM_CHUNK_MAX_CHARS
         for i in range(0, n, step):
