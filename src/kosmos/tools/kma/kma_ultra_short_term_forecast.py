@@ -23,6 +23,7 @@ from typing import Any, Literal, cast
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ConfigurationError, ToolExecutionError, _require_env
 from kosmos.tools.executor import ToolExecutor
 from kosmos.tools.kma.kma_short_term_forecast import (
@@ -227,7 +228,7 @@ async def _call(
 
     own_client = client is None
     if own_client:
-        client = httpx.AsyncClient(timeout=30.0)
+        client = traced_async_client(timeout=30.0)
 
     try:
         assert client is not None  # noqa: S101

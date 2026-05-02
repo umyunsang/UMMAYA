@@ -84,7 +84,7 @@ describe('LookupPrimitive.validateInput: cold-boot race', () => {
   test('fails closed with manifest-not-synced message before any frame arrives', async () => {
     const ctx = makeContext()
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'nmc_emergency_search', params: {} },
+      { tool_id: 'nmc_emergency_search', params: {} },
       ctx,
     )
     expect(result.result).toBe(false)
@@ -92,15 +92,12 @@ describe('LookupPrimitive.validateInput: cold-boot race', () => {
     expect(msg).toContain('manifest not yet synced')
   })
 
-  test('search mode bypasses cold-boot check (BM25 handles discovery)', async () => {
-    const ctx = makeContext()
-    const result = await LookupPrimitive.validateInput(
-      { mode: 'search', query: '응급실', params: {} } as Parameters<typeof LookupPrimitive.validateInput>[0],
-      ctx,
-    )
-    // search mode should be allowed immediately (no adapter needed)
-    expect(result.result).toBe(true)
-  })
+  // Spec 2521 (2026-05-01): the search-mode bypass test was deleted.
+  // BM25 adapter discovery is now a backend-internal mechanism injected
+  // into the system prompt's <available_adapters> dynamic suffix; it is
+  // never a callable mode for the LLM, so there is no "search bypass"
+  // path to validate here. Cold-boot semantics for the only remaining
+  // mode (fetch) are covered by the manifest-not-yet-synced test above.
 })
 
 // ---------------------------------------------------------------------------
@@ -124,7 +121,7 @@ describe('LookupPrimitive.validateInput: tier-1 backend manifest resolution', ()
 
     const ctx = makeContext() // no internal tools with this name
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'nmc_emergency_search', params: {} },
+      { tool_id: 'nmc_emergency_search', params: {} },
       ctx,
     )
 
@@ -158,7 +155,7 @@ describe('LookupPrimitive.validateInput: tier-2 internal tools fallback', () => 
     // Internal tools list contains WebFetch
     const ctx = makeContext(['WebFetch'])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'WebFetch', params: {} },
+      { tool_id: 'WebFetch', params: {} },
       ctx,
     )
 
@@ -186,7 +183,7 @@ describe('LookupPrimitive.validateInput: AdapterNotFound fail-closed', () => {
 
     const ctx = makeContext() // no internal tools
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'bogus_tool_xyz', params: {} },
+      { tool_id: 'bogus_tool_xyz', params: {} },
       ctx,
     )
 

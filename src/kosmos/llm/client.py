@@ -7,6 +7,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 import random
 import time
 from collections.abc import AsyncIterator
@@ -46,6 +47,41 @@ from kosmos.observability.semconv import (
     GEN_AI_USAGE_INPUT_TOKENS,
     GEN_AI_USAGE_OUTPUT_TOKENS,
 )
+
+# Spec 2521 (2026-05-01) — backend-side stream pacing knobs (now OFF
+# by default; see history below).
+#
+# Initial implementation paced sub-chunks server-side. Layer 5 frame
+# capture (post-d11c835-raw.cast frame_0903) confirmed that even with
+# the most aggressive backend defaults (CHUNK=8 / PACE=80 ms) Ink's
+# React reconciler folds rapid setStates into a single commit, so the
+# whole paragraph still paints in one cell-grid transition. The fix
+# moved to the frontend (tui/src/query/deps.ts ``_typewriter``) which
+# can sleep *between* setState dispatches and force one Ink reconcile
+# per codepoint.
+#
+# Backend pacing therefore now defaults to OFF — leaving it on at the
+# same time as the frontend typewriter would just stack two paces
+# (e.g. 80 ms backend + 30 ms frontend = ~110 ms per byte), making
+# the citizen wait for K-EXAONE answers without adding any visible
+# streaming benefit. The knobs survive for headless / no-Ink callers
+# that still want server-side cadence:
+#
+#   KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS  default 999  (no extra splitting)
+#   KOSMOS_LLM_STREAM_PACE_MS          default 0    (disabled — natural cadence)
+#
+# Spec 2521 (2026-05-01) — pacing now disabled by default. The
+# paragraph-batch repaint root cause was Ink's
+# ``FRAME_INTERVAL_MS = 16`` throttle folding K-EXAONE's 13-17 ms inter-
+# chunk arrival latency into one render. Fix is to lower the throttle
+# (``tui/src/ink/constants.ts`` byte-copy relax to 4 ms), not to slow
+# the provider down. The pacing knobs survive for headless / no-Ink
+# callers that still want server-side cadence.
+_LLM_STREAM_CHUNK_MAX_CHARS = max(
+    1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "999"))
+)
+_LLM_STREAM_PACE_S = max(0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "0")) / 1000.0)
+
 
 if TYPE_CHECKING:
     from kosmos.observability.event_logger import ObservabilityEventLogger
@@ -745,7 +781,50 @@ class LLMClient:
             or error_type in {"rate_limit", "rate_limited"}
         )
 
-    async def _parse_sse_line(self, line: str) -> AsyncIterator[StreamEvent]:
+    async def _pace_text_chunk(self, text: str, kind: str) -> AsyncIterator[StreamEvent]:
+        """Split a paragraph-granular delta into character-paced sub-events.
+
+        Spec 2521 (2026-05-01) — see the ``_LLM_STREAM_*`` module-level
+        constants for the rationale + tunables. Disabled when the pace
+        is set to zero.
+        """
+        from collections.abc import Callable as _Callable  # noqa: PLC0415
+
+        def _content_event(s: str) -> StreamEvent:
+            return StreamEvent(type="content_delta", content=s)
+
+        def _thinking_event(s: str) -> StreamEvent:
+            return StreamEvent(type="thinking_delta", thinking=s)
+
+        kind_to_event: dict[str, _Callable[[str], StreamEvent]] = {
+            "content": _content_event,
+            "thinking": _thinking_event,
+        }
+        make_event = kind_to_event[kind]
+        n = len(text)
+        if _LLM_STREAM_PACE_S <= 0:
+            # Pacing disabled — provider cadence passes through verbatim.
+            yield make_event(text)
+            return
+        if n <= _LLM_STREAM_CHUNK_MAX_CHARS:
+            # Provider already gave us a small natural chunk (e.g. K-EXAONE
+            # emits 3-10 codepoints per SSE line on the content channel).
+            # Yield it whole, then sleep so the *next* chunk's effective
+            # arrival latency at the frontend is ≥ PACE — guaranteeing it
+            # falls outside Ink's FRAME_INTERVAL_MS throttle and gets its
+            # own ANSI flush. The post-yield sleep is the entire point;
+            # without it K-EXAONE's 13-17 ms inter-chunk latency stays
+            # below Ink's 16 ms throttle and chunks fold into one paint.
+            yield make_event(text)
+            await asyncio.sleep(_LLM_STREAM_PACE_S)
+            return
+        step = _LLM_STREAM_CHUNK_MAX_CHARS
+        for i in range(0, n, step):
+            yield make_event(text[i : i + step])
+            if i + step < n:
+                await asyncio.sleep(_LLM_STREAM_PACE_S)
+
+    async def _parse_sse_line(self, line: str) -> AsyncIterator[StreamEvent]:  # noqa: C901
         """Parse a single SSE line and yield corresponding StreamEvent(s)."""
         if not line or not line.startswith("data: "):
             return
@@ -785,7 +864,9 @@ class LLMClient:
 
         if "content" in delta and delta["content"] is not None:
             # CC reference: services/api/claude.ts:2113 (text_delta content_block_delta).
-            yield StreamEvent(type="content_delta", content=delta["content"])
+            content = delta["content"]
+            async for sub in self._pace_text_chunk(content, "content"):
+                yield sub
         elif "reasoning_content" in delta and delta["reasoning_content"] is not None:
             # CC reference: services/api/claude.ts:2148-2161 (thinking_delta
             # content_block_delta) — K-EXAONE emits chain-of-thought on a
@@ -800,7 +881,8 @@ class LLMClient:
                 "Forwarding reasoning_content as thinking_delta (len=%d)",
                 len(reasoning_text),
             )
-            yield StreamEvent(type="thinking_delta", thinking=reasoning_text)
+            async for sub in self._pace_text_chunk(reasoning_text, "thinking"):
+                yield sub
 
         if "tool_calls" in delta and delta["tool_calls"]:
             # CC reference: services/api/claude.ts:1997 (tool_use content_block_start)
@@ -852,32 +934,39 @@ class LLMClient:
         uses the caller's values — defaults are set at the call site.
 
         K-EXAONE specific: ``chat_template_kwargs.enable_thinking`` controls
-        the model's reasoning mode. KOSMOS now defaults this to ``True`` —
-        aligning with the K-EXAONE-236B-A23B model-card recommendation and
-        the τ²-Bench evaluation conditions (Retail 78.6 / Airline 60.4 /
-        Telecom 73.5 are all measured with thinking ON).
+        the model's reasoning mode. **KOSMOS now defaults this to ``False``**
+        (Spec 2521 FriendliAI-cadence migration, 2026-05-01) so the citizen
+        gets a sub-10 s first-token answer on the visible content channel
+        instead of 1-3 minutes of reasoning trace before the bullet appears.
 
-        Empirical channel verification (probe_friendli_channels.py, 2026-05-01):
-            enable_thinking=False → 0 bytes content, 0 bytes reasoning, clean
-                                     tool_calls only — but the agentic loop
-                                     loses the model's CoT signal entirely.
+        Empirical channel behaviour (probe_friendli_channels.py, 2026-05-01):
+            enable_thinking=False → answer streams out on ``delta.content`` at
+                                     paragraph granularity (one SSE chunk
+                                     ≈ one paragraph; verified via
+                                     ``/tmp/tdb-thinking-off/raw.cast`` —
+                                     117-byte and 617-byte chunks separated
+                                     by ~5 s).
             enable_thinking=True  → ~0 bytes content (just newlines), full
                                      reasoning routed to ``reasoning_content``
                                      (separated channel), clean tool_calls.
+                                     First-paragraph latency: 60-180 s.
 
-        With thinking ON the reasoning trace flows out on
-        ``delta.reasoning_content`` (K-EXAONE separates this from
-        ``delta.content`` natively — see :meth:`_stream_response`'s
-        ``reasoning_content`` branch). The TUI then paints it in the dim-italic
-        ``∴ Thinking`` channel via ``AssistantThinkingMessage``, NOT in the
-        ``●`` content bullet. Net effect: clean CC-style separation between
-        reasoning and final answer, without sacrificing the thinking signal
-        the agentic loop relies on for multi-step tool chaining.
+        Why default flipped (Spec 2521 user directive):
+            Layer 5 frame-by-frame review proved no frontend / pacing layer
+            could dilate K-EXAONE's paragraph-granularity SSE chunks into
+            Anthropic-style per-token deltas. The CC-token-streaming UX
+            cannot be back-ported, so KOSMOS migrates to the FriendliAI
+            cadence as the design baseline: paragraph-shaped reveal with
+            inter-paragraph spinner cycling. ``enable_thinking=False``
+            puts the answer on the visible channel where that cadence is
+            citizen-readable; ``True`` buries it on ``reasoning_content``
+            with a 1-3 min wait.
 
-        Override via ``KOSMOS_K_EXAONE_THINKING=false`` for the latency-
-        sensitive non-reasoning path (sub-10s first token vs 1-3 min
-        reasoning trace). Slash-command ``/effort low`` integration is the
-        followup home for that toggle.
+        Override via ``KOSMOS_K_EXAONE_THINKING=true`` to re-enable the
+        model-card-recommended reasoning mode for benchmark / evaluation
+        runs (τ²-Bench Retail 78.6 / Airline 60.4 / Telecom 73.5 are all
+        measured with thinking ON). The ``/effort high`` slash command
+        is the planned UX shortcut.
         """
         import os  # noqa: PLC0415 — local import keeps top-level imports thin
 
@@ -904,9 +993,13 @@ class LLMClient:
         if stop is not None:
             payload["stop"] = stop
         if tools is not None:
-            payload["tools"] = [
-                t.model_dump() if isinstance(t, ToolDefinition) else t for t in tools
-            ]
+            tool_payloads = [t.model_dump() if isinstance(t, ToolDefinition) else t for t in tools]
+            payload["tools"] = tool_payloads
+            if tool_payloads:
+                # KOSMOS citizen flows require one observed tool result before
+                # the model may request the next tool. FriendliAI's
+                # OpenAI-compatible default permits parallel tool calls.
+                payload["parallel_tool_calls"] = False
             if tool_choice is not None:
                 payload["tool_choice"] = tool_choice
         if stream:

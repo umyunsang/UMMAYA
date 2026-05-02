@@ -32,8 +32,6 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 from kosmos.tools.models import (
     AdapterRealDomainPolicy,
     GovAPITool,
-    LookupFetchInput,
-    LookupSearchInput,
     ResolveLocationInput,
 )
 
@@ -53,8 +51,48 @@ class _LookupOutput(RootModel[object]):
     """Placeholder output schema for lookup tool registration."""
 
 
-class _LookupInput(RootModel[LookupSearchInput | LookupFetchInput]):
-    """Combined input schema covering both search and fetch modes."""
+class _LookupInputForLLM(BaseModel):
+    """LLM-visible lookup input — fetch-only ``{tool_id, params}`` envelope.
+
+    Spec 2521 (2026-05-01): the previous ``_LookupInput`` (RootModel union of
+    LookupSearchInput | LookupFetchInput) exposed BM25 adapter discovery as
+    a callable mode. That mis-modeled an *internal backend mechanism* as a
+    user-visible tool: the LLM kept emitting ``lookup(mode='search')`` calls
+    after each answer turn, painting a redundant `● lookup(search:)` block
+    in the citizen transcript and burning agentic-loop budget.
+
+    The corrected design (per user directive 2026-05-01):
+
+    1. BM25 search is a backend-internal *function*, not a tool. The
+       backend runs it automatically against every citizen utterance and
+       injects the top-K candidates into the system prompt's
+       ``<available_adapters>`` dynamic suffix (see ``stdio.py``).
+    2. The LLM-visible ``lookup`` tool is fetch-only: pick a ``tool_id``
+       from the injected suffix, supply ``params``, get a typed result.
+    3. ``LookupSearchInput`` / ``LookupSearchResults`` survive as
+       internal API consumed by the auto-inject path + the eval harness
+       (``kosmos.eval.retrieval``); they are NOT exposed to the LLM.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    tool_id: str = Field(
+        # Mirrors LookupFetchInput.tool_id pattern (Spec 1636 ADR-007).
+        pattern=r"^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe|resolve_location))$",
+        description=(
+            "Adapter identifier picked from the dynamically-injected "
+            "<available_adapters> block. Must come from the candidate "
+            "list — never guess."
+        ),
+    )
+    params: dict[str, object] = Field(
+        description="Validated against the target adapter's input_schema at fetch time."
+    )
+    page: int | None = Field(
+        default=None,
+        ge=1,
+        description="Optional pagination cursor for adapters that return collections.",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -120,24 +158,25 @@ LOOKUP_SEARCH_TOOL = GovAPITool(
     category=["시스템", "도구검색", "데이터조회"],
     endpoint="internal://lookup",
     auth_type="public",
-    input_schema=_LookupInput,
+    input_schema=_LookupInputForLLM,
     output_schema=_LookupOutput,
     llm_description=(
-        "Two-mode tool for discovering and invoking KOSMOS data adapters.\n\n"
-        "MODE 1 — search (mode='search'):\n"
-        "  BM25-ranked discovery over the adapter registry. Returns ranked candidates "
-        "  with tool_id, required_params, and search_hint.\n"
-        "  Use this FIRST to discover what tools are available for the user's request.\n"
-        '  Example: {"mode": "search", "query": "교통사고 위험지역"}\n\n'
-        "MODE 2 — fetch (mode='fetch'):\n"
-        "  Invokes a specific adapter by tool_id. The params dict must match the "
-        "  adapter's input_schema exactly. tool_id MUST come from a prior search result.\n"
-        "  Example: {\n"
-        '    "mode": "fetch",\n'
-        '    "tool_id": "koroad_accident_hazard_search",\n'
-        '    "params": {"adm_cd": "1168000000", "year": 2024}\n'
+        "외부 도메인 API (기상청 단기예보, HIRA 병원 검색, KOROAD 사고 데이터, "
+        "KMA 현재 관측 등) 를 조회하는 추상 도구. 시스템 프롬프트의 "
+        "<available_adapters> 블록에 백엔드가 매 사용자 발화마다 후보 어댑터를 "
+        "자동으로 inject 합니다 — LLM 은 그 목록의 tool_id 중 하나를 선택해 "
+        "이 lookup 도구를 호출하면 됩니다.\n\n"
+        "사용법:\n"
+        '  {"tool_id": "<후보 목록의 tool_id>", "params": {...}}\n\n'
+        "예시 (시민: '오늘 부산 날씨'):\n"
+        "  {\n"
+        '    "tool_id": "kma_forecast_fetch",\n'
+        '    "params": {"lat": 35.18, "lon": 129.08,\n'
+        '               "base_date": "20260501", "base_time": "1400"}\n'
         "  }\n\n"
-        "ORDERING RULE: search → fetch. Never guess a tool_id; always search first."
+        "ORDERING RULE: <available_adapters> 에서 tool_id 선택 → 호출 → 결과 "
+        "분석 → 다음 도구 또는 답변. 동일 tool_id 를 한 turn 안에서 반복 호출하지 "
+        "않습니다 — 결과를 바탕으로 답변하거나, 필요하면 다른 tool_id 로 보완 호출."
     ),
     search_hint=(
         "데이터 조회 도구 호출 검색 패치 lookup search fetch invoke tool adapter data query"

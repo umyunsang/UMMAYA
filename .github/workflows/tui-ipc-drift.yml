@@ -47,9 +47,11 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          # Match local development (Bun 1.3.12) so preload plugin onResolve
-          # for `bun:bundle` specifiers fires consistently.
-          bun-version: "1.3.x"
+          # Match local development (Bun 1.3.12) — pinned to avoid the
+          # CI-only Linux Bun loader regression that drops
+          # `isEmptyMessageText` from messages.ts on newer 1.3 patches
+          # (see PR #2578 commit history; macOS 1.3.12 unaffected).
+          bun-version: "1.3.12"
 
       - name: Install TUI dependencies
         working-directory: tui

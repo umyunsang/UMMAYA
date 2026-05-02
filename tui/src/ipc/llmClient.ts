@@ -624,12 +624,41 @@ export class LLMClient {
 
       // ------------------------------------------------------------------
       // Step 8: return KosmosMessageFinal (G6).
+      //
+      // SWAP/llm-provider(2521, 2026-05-02): K-EXAONE on FriendliAI emits
+      // `delta.reasoning_content` and `delta.tool_calls` on independent
+      // channels with no guaranteed ordering. CC's Anthropic API
+      // guarantees ``thinking`` content_blocks ALWAYS precede ``tool_use``
+      // blocks because the API serializes them inline. With K-EXAONE the
+      // streaming order can land tool_use blocks BEFORE thinking blocks
+      // in ``acc.contentBlocks`` — which makes the TUI render
+      // ``● lookup(...)`` BEFORE ``∴ Thinking — ...`` and confuses the
+      // citizen ("왜 도구호출부터 하는거지?", user-reported 2026-05-02).
+      //
+      // Re-order to canonical CC layout at commit time so the rendered
+      // message reads: thinking → text → tool_use, preserving
+      // intra-bucket order. Stream-event indices already emitted to the
+      // SDK are NOT mutated — only the final ``content`` array.
       // ------------------------------------------------------------------
+      const reorderedContent: typeof acc.contentBlocks = []
+      const _thinking: typeof acc.contentBlocks = []
+      const _text: typeof acc.contentBlocks = []
+      const _tools: typeof acc.contentBlocks = []
+      const _other: typeof acc.contentBlocks = []
+      for (const block of acc.contentBlocks) {
+        if (!block) continue
+        if (block.type === 'thinking' || block.type === 'redacted_thinking') _thinking.push(block)
+        else if (block.type === 'text') _text.push(block)
+        else if (block.type === 'tool_use') _tools.push(block)
+        else _other.push(block)
+      }
+      reorderedContent.push(..._thinking, ..._text, ..._tools, ..._other)
+
       const finalMessage: KosmosMessageFinal = {
         id: acc.messageId ?? correlationId,
         role: 'assistant',
         model: this.model,
-        content: acc.contentBlocks,
+        content: reorderedContent,
         stop_reason: acc.stopReason,
         usage: acc.usage,
       }

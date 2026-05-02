@@ -22,6 +22,7 @@ from typing import Any, Literal, cast
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ConfigurationError, ToolExecutionError, _require_env
 from kosmos.tools.executor import ToolExecutor
 from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
@@ -336,7 +337,7 @@ async def _call(
 
     own_client = client is None
     if own_client:
-        client = httpx.AsyncClient(timeout=30.0)
+        client = traced_async_client(timeout=30.0)
 
     try:
         assert client is not None  # noqa: S101 — guaranteed by branch above
@@ -452,5 +453,18 @@ def register(registry: ToolRegistry, executor: ToolExecutor) -> None:
     from kosmos.tools.executor import AdapterFn
 
     registry.register(KMA_CURRENT_OBSERVATION_TOOL)
-    executor.register_adapter("kma_current_observation", cast(AdapterFn, _call))
+
+    # SWAP/llm-provider(2521): wrap the flat KmaCurrentObservationOutput dict
+    # into a LookupRecord envelope so envelope.normalize()'s 5-variant
+    # LookupOutput validator (kind=record/collection/timeseries/error/search)
+    # accepts it. Citizen-visible symptom without this wrap: "Response
+    # processing failed" — LLM never sees real weather data, retries lookup
+    # in confusion (probe-traced 2026-05-01).
+    async def _kma_observation_adapter(inp: BaseModel) -> dict[str, Any]:
+        # AdapterFn is BaseModel; dispatcher narrows by tool_id, so runtime
+        # type is always KmaCurrentObservationInput. cast for mypy strict.
+        raw = await _call(cast("KmaCurrentObservationInput", inp))
+        return {"kind": "record", "item": raw}
+
+    executor.register_adapter("kma_current_observation", cast(AdapterFn, _kma_observation_adapter))
     logger.info("Registered tool: kma_current_observation")

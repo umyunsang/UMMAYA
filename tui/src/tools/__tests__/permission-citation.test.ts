@@ -133,7 +133,7 @@ describe('validateInput — happy path (citation populates context)', () => {
   test('LookupPrimitive mode=fetch: result true + kosmosCitations populated', async () => {
     const context = buildContext([syntheticAdapter])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'koroad_accident_hazard_search', params: {} },
+      { tool_id: 'koroad_accident_hazard_search', params: {} },
       context,
     )
 
@@ -186,17 +186,12 @@ describe('validateInput — happy path (citation populates context)', () => {
     expect(citations[0].policy_authority).toBe(KOROAD_POLICY_AUTHORITY)
   })
 
-  test('LookupPrimitive mode=search: skips citation, still returns result true', async () => {
-    const context = buildContext([])
-    const result = await LookupPrimitive.validateInput(
-      { mode: 'search', query: '응급실' },
-      context,
-    )
-    // mode=search intentionally bypasses adapter resolution — no citation needed.
-    expect(result.result).toBe(true)
-    const citations = (context as unknown as Record<string, unknown>).kosmosCitations
-    expect(citations).toBeUndefined()
-  })
+  // Spec 2521 (2026-05-01): the "mode=search bypasses citation" test
+  // was deleted. BM25 adapter discovery is now a backend-internal
+  // mechanism (auto-injected into the system prompt's
+  // <available_adapters> dynamic suffix) — never an LLM-callable mode,
+  // so there is no search-side citation path to skip. Citation
+  // resolution for the remaining (fetch) mode is covered above.
 })
 
 // ---------------------------------------------------------------------------
@@ -300,7 +295,7 @@ describe('validateInput — citation-missing path (errorCode 1002)', () => {
   test('LookupPrimitive mode=fetch returns CitationMissing + Korean message', async () => {
     const context = buildContext([emptyPolicyAdapter])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'koroad_accident_hazard_search', params: {} },
+      { tool_id: 'koroad_accident_hazard_search', params: {} },
       context,
     )
 
@@ -358,7 +353,7 @@ describe('validateInput — adapter-not-found path (errorCode 1001)', () => {
   test('LookupPrimitive mode=fetch returns AdapterNotFound for unknown tool_id', async () => {
     const context = buildContext([syntheticAdapter])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'nonexistent', params: {} },
+      { tool_id: 'nonexistent', params: {} },
       context,
     )
 

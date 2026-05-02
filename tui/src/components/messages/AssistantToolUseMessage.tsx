@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-import type { ToolUseBlockParam } from 'src/sdk-compat.js';
+import type { ToolUseBlockParam } from '../../sdk-compat.js';
 import React, { useMemo } from 'react';
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js';
 import type { ThemeName } from 'src/utils/theme.js';

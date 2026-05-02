@@ -27,6 +27,10 @@ import {
   resolveAdapter,
 } from '../../services/api/adapterManifest.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import {
+  renderVerboseInputJson,
+  renderVerboseOutputJson,
+} from '../_shared/verboseRender.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
 
@@ -60,11 +64,14 @@ type InputSchema = ReturnType<typeof inputSchema>
 // Output schema — discriminated union on "ok"
 // ---------------------------------------------------------------------------
 
+// Spec 2521 (2026-05-02) — ``outbound_traces`` preserved through
+// safeParse so verboseRender can show the agency POST request/response.
 const outputSchema = lazySchema(() =>
   z.discriminatedUnion('ok', [
     z.object({
       ok: z.literal(true),
       result: z.unknown().describe('Submit result including transaction_id, status, adapter_receipt'),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
     z.object({
       ok: z.literal(false),
@@ -72,6 +79,7 @@ const outputSchema = lazySchema(() =>
         kind: z.string().describe('Error classification, e.g. "permission_denied", "tool_not_found"'),
         message: z.string().describe('Human-readable error description'),
       }),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
   ]),
 )
@@ -126,14 +134,31 @@ export const SubmitPrimitive = buildTool({
   },
 
   mapToolResultToToolResultBlockParam(output, toolUseID) {
+    // Spec 2521 (2026-05-02) — outbound_traces is UI-only (see Lookup).
+    const llmContent =
+      typeof output === 'object' && output !== null
+        ? Object.fromEntries(
+            Object.entries(output as Record<string, unknown>).filter(
+              ([k]) => k !== 'outbound_traces',
+            ),
+          )
+        : output
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: JSON.stringify(output),
+      content: JSON.stringify(llmContent),
     }
   },
 
-  renderToolUseMessage(input: { tool_id?: string }) {
+  renderToolUseMessage(
+    input: { tool_id?: string; params?: unknown },
+    options: { verbose: boolean },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose flag surfaces the full
+    // request body the LLM submitted (CC BashTool parity).
+    if (options.verbose) {
+      return renderVerboseInputJson(input)
+    }
     return input.tool_id ?? ''
   },
 
@@ -145,27 +170,35 @@ export const SubmitPrimitive = buildTool({
     context: ToolUseContext,
   ) {
     // Epic ε #2296 T012 — two-tier resolution (FR-017 / FR-018 / FR-019 / FR-020).
-
-    // Tier 0 — fail closed if manifest not yet synced (FR-019).
-    if (!isManifestSynced()) {
-      return {
-        result: false as const,
-        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
-        errorCode: PrimitiveErrorCode.AdapterNotFound,
-      }
-    }
+    // Spec 2521 (2026-05-01) — citation-missing branch added so the
+    // 1002 contract (Spec 024 invariant: every adapter cites the agency
+    // policy URL) is enforced at the primitive surface.
 
     // Tier 1 — synced backend manifest (FR-017).
-    const backendEntry = resolveAdapter(input.tool_id)
-    if (backendEntry) {
-      const citation: AdapterCitation | null = backendEntry.policy_authority_url
-        ? {
-            real_classification_url: backendEntry.policy_authority_url,
-            policy_authority: backendEntry.name,
+    if (isManifestSynced()) {
+      const backendEntry = resolveAdapter(input.tool_id)
+      if (backendEntry) {
+        // Internal-mode adapters (lookup/submit/verify/subscribe primitives
+        // themselves, resolve_location, etc.) are not citizen-facing
+        // agency calls and are exempt from the citation invariant.
+        if (backendEntry.source_mode === 'internal') {
+          ;(context as ContextWithCitation).kosmosCitations = []
+          return { result: true as const }
+        }
+        if (!backendEntry.policy_authority_url) {
+          return {
+            result: false as const,
+            message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+            errorCode: PrimitiveErrorCode.CitationMissing,
           }
-        : null
-      ;(context as ContextWithCitation).kosmosCitations = citation ? [citation] : []
-      return { result: true as const }
+        }
+        const citation: AdapterCitation = {
+          real_classification_url: backendEntry.policy_authority_url,
+          policy_authority: backendEntry.name,
+        }
+        ;(context as ContextWithCitation).kosmosCitations = [citation]
+        return { result: true as const }
+      }
     }
 
     // Tier 2 — TS-side internal tools fallback (FR-018 / existing path).
@@ -175,10 +208,24 @@ export const SubmitPrimitive = buildTool({
 
     if (adapter) {
       const citation = extractCitation(adapter)
-      if (citation) {
-        ;(context as ContextWithCitation).kosmosCitations = [citation]
+      if (!citation) {
+        return {
+          result: false as const,
+          message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+          errorCode: PrimitiveErrorCode.CitationMissing,
+        }
       }
+      ;(context as ContextWithCitation).kosmosCitations = [citation]
       return { result: true as const }
+    }
+
+    // Tier 0 — fail closed if manifest not yet synced AND no internal hit.
+    if (!isManifestSynced()) {
+      return {
+        result: false as const,
+        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
+        errorCode: PrimitiveErrorCode.AdapterNotFound,
+      }
     }
 
     // Fail closed (FR-020).
@@ -189,7 +236,17 @@ export const SubmitPrimitive = buildTool({
     }
   },
 
-  renderToolResultMessage(output: Output) {
+  renderToolResultMessage(
+    output: Output,
+    _progress: unknown,
+    options: { verbose: boolean; isTranscriptMode?: boolean } = { verbose: false },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose / transcript mode surface
+    // the full envelope JSON. CC BashTool/UI.tsx:renderToolResultMessage
+    // pattern.
+    if (options.verbose || options.isTranscriptMode) {
+      return renderVerboseOutputJson(output)
+    }
     // NOTE: This file is `.ts` (not `.tsx`); Bun runtime cannot parse JSX in
     // `.ts`. Use `React.createElement` for parity with the other 3 primitives.
     //

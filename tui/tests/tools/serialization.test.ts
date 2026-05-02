@@ -16,7 +16,7 @@ import {
 // Test 1 — lookup-primitive emits Draft 2020-12 schema
 // ---------------------------------------------------------------------------
 describe('toolToFunctionSchema - LookupPrimitive', () => {
-  test('lookup-primitive emits Draft 2020-12 schema with anyOf discriminated union', async () => {
+  test('lookup-primitive emits Draft 2020-12 schema (Spec 2521 fetch-only)', async () => {
     const def = await toolToFunctionSchema(LookupPrimitive)
 
     expect(def.function.name).toBe('lookup')
@@ -25,8 +25,19 @@ describe('toolToFunctionSchema - LookupPrimitive', () => {
     const params = def.function.parameters as Record<string, unknown>
     // zod/v4 toJSONSchema emits $schema for Draft 2020-12
     expect(params['$schema']).toBe('https://json-schema.org/draft/2020-12/schema')
-    // discriminatedUnion('mode', [...]) is emitted as anyOf
-    expect(Array.isArray(params['anyOf'])).toBe(true)
+    // Spec 2521 (2026-05-01): the LLM-visible lookup surface is a single
+    // object {tool_id, params} — BM25 search is a backend-internal
+    // mechanism, not a callable mode. The previous anyOf discriminated
+    // union (search|fetch) collapsed to a flat object.
+    expect(params['type']).toBe('object')
+    const properties = params['properties'] as Record<string, unknown>
+    expect(properties).toBeDefined()
+    expect(properties['tool_id']).toBeDefined()
+    expect(properties['params']).toBeDefined()
+    const required = params['required'] as string[]
+    expect(required).toContain('tool_id')
+    expect(required).toContain('params')
+    expect(properties['mode']).toBeUndefined()
   })
 })
 
@@ -52,29 +63,16 @@ describe('toolToFunctionSchema - SubmitPrimitive', () => {
 // ---------------------------------------------------------------------------
 // Test 3 — optional fields excluded from required
 // ---------------------------------------------------------------------------
-describe('toolToFunctionSchema - optional fields', () => {
-  test('optional top_k excluded from required; mode and query are required (searchModeSchema)', async () => {
+describe('toolToFunctionSchema - LookupPrimitive required fields', () => {
+  test('Spec 2521: tool_id and params are the only required keys; mode is gone', async () => {
     const def = await toolToFunctionSchema(LookupPrimitive)
 
     const params = def.function.parameters as Record<string, unknown>
-    // LookupPrimitive is a discriminatedUnion; each branch has its own required list.
-    // The searchModeSchema branch includes mode (required), query (required), top_k (optional).
-    const anyOf = params['anyOf'] as Array<Record<string, unknown>>
-    expect(Array.isArray(anyOf)).toBe(true)
-
-    // Find the search branch (has 'query' in properties)
-    const searchBranch = anyOf.find(branch => {
-      const props = branch['properties'] as Record<string, unknown> | undefined
-      return props && 'query' in props
-    })
-    expect(searchBranch).toBeDefined()
-
-    const required = searchBranch!['required'] as string[] | undefined
-    // mode and query must be present in required
-    expect(required).toContain('mode')
-    expect(required).toContain('query')
-    // top_k is optional — must NOT be in required
-    expect(required ?? []).not.toContain('top_k')
+    const required = params['required'] as string[]
+    // Fetch-only surface — both tool_id and params required, no mode.
+    expect(required).toEqual(expect.arrayContaining(['tool_id', 'params']))
+    expect(required).not.toContain('mode')
+    expect(required).not.toContain('query')
   })
 })
 

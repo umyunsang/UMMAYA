@@ -21,6 +21,7 @@
 import * as React from 'react';
 
 import type { Command, LocalJSXCommandModule } from '../types/command.js';
+import type { CommandHandlerArgs, CommandResult } from './types.js';
 import { CANONICAL_PIPA_ACK_SHA256 } from '../ipc/pipa.generated.js';
 import { PluginInstallFlow } from '../components/plugins/PluginInstallFlow.js';
 
@@ -127,13 +128,132 @@ const call: LocalJSXCommandModule['call'] = async (onDone, _context, args) => {
   return null;
 };
 
-const pluginCommand: Command = {
+// ---------------------------------------------------------------------------
+// Procedural CommandDefinition.handle — Spec 1636 P5 / T053-T057 contract
+// ---------------------------------------------------------------------------
+//
+// `tests/commands/plugin.test.ts` and `tests/commands/registry.test.ts`
+// expect every default-registry entry to expose `handle(args) → CommandResult`.
+// The slash command's *interactive* flow is the React `call()` above (Ink
+// component + progress UI); the procedural `handle` is the deterministic
+// IPC-frame emitter that satisfies the FR-036 registry-shape invariant.
+//
+// Both surfaces co-exist: the dispatcher prefers `call` when running through
+// the Ink stack (because `type: 'local-jsx'` is set), and falls back to
+// `handle` for the headless / test paths.
+
+function _handle(rawArgs: CommandHandlerArgs): CommandResult {
+  const { args: raw, sendPluginOp } = rawArgs;
+  const { sub, rest } = _parseSubcommand(raw);
+
+  if (sub === '') {
+    return { acknowledgement: _USAGE_KO };
+  }
+
+  if (sub === 'pipa-text') {
+    const text = [
+      'PIPA §26 trustee acknowledgment canonical SHA-256:',
+      `  ${CANONICAL_PIPA_ACK_SHA256}`,
+      'Source: docs/plugins/security-review.md (마커 사이 텍스트)',
+      'manifest.yaml 의 acknowledgment_sha256 필드에 위 값을 그대로 기록하세요.',
+    ].join('\n');
+    return { acknowledgement: text };
+  }
+
+  if (sub === 'install') {
+    const { name, version, dryRun } = _parseInstallArgs(rest);
+    if (!name) {
+      return { acknowledgement: '플러그인 이름이 필요합니다: /plugin install <name>' };
+    }
+    if (!sendPluginOp) {
+      return {
+        acknowledgement:
+          'IPC 가 연결되지 않았습니다 — backend 가 시작될 때까지 기다려 주세요.',
+      };
+    }
+    sendPluginOp({
+      kind: 'plugin_op',
+      version: '1.0',
+      role: 'tui',
+      session_id: '',
+      correlation_id: crypto.randomUUID(),
+      ts: new Date().toISOString(),
+      op: 'request',
+      request_op: 'install',
+      name,
+      ...(version ? { requested_version: version } : {}),
+      ...(dryRun ? { dry_run: true } : {}),
+    });
+    return {
+      acknowledgement: `/plugin install ${name}${version ? ` --version ${version}` : ''}${dryRun ? ' --dry-run' : ''} 요청을 backend 에 보냈습니다.`,
+    };
+  }
+
+  if (sub === 'list') {
+    if (!sendPluginOp) {
+      return {
+        acknowledgement:
+          'IPC 가 연결되지 않았습니다 — backend 가 시작될 때까지 기다려 주세요.',
+      };
+    }
+    sendPluginOp({
+      kind: 'plugin_op',
+      version: '1.0',
+      role: 'tui',
+      session_id: '',
+      correlation_id: crypto.randomUUID(),
+      ts: new Date().toISOString(),
+      op: 'request',
+      request_op: 'list',
+    });
+    return { acknowledgement: '/plugin list 요청을 backend 에 보냈습니다.' };
+  }
+
+  if (sub === 'uninstall') {
+    const targetName = rest.trim().split(/\s+/)[0];
+    if (!targetName) {
+      return { acknowledgement: '플러그인 이름이 필요합니다: /plugin uninstall <name>' };
+    }
+    if (!sendPluginOp) {
+      return {
+        acknowledgement:
+          'IPC 가 연결되지 않았습니다 — backend 가 시작될 때까지 기다려 주세요.',
+      };
+    }
+    sendPluginOp({
+      kind: 'plugin_op',
+      version: '1.0',
+      role: 'tui',
+      session_id: '',
+      correlation_id: crypto.randomUUID(),
+      ts: new Date().toISOString(),
+      op: 'request',
+      request_op: 'uninstall',
+      name: targetName,
+    });
+    return {
+      acknowledgement: `/plugin uninstall ${targetName} 요청을 backend 에 보냈습니다.`,
+    };
+  }
+
+  return {
+    acknowledgement: `알 수 없는 subcommand: ${sub}\n${_USAGE_KO}`,
+  };
+}
+
+// Hybrid Command — interactive `call` (Ink) + procedural `handle` (FR-036).
+type _PluginCommand = Command & {
+  handle: (args: CommandHandlerArgs) => CommandResult;
+};
+
+const pluginCommand: _PluginCommand = {
   type: 'local-jsx',
   name: 'plugin',
   description: 'KOSMOS 플러그인 설치 / 목록 / 제거 / PIPA 해시 (Install / list / uninstall KOSMOS plugins)',
   argumentHint: '<install|list|uninstall|pipa-text> [name]',
   immediate: true,
   load: async () => ({ call }),
+  handle: _handle,
 };
 
 export default pluginCommand;

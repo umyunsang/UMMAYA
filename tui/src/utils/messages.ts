@@ -29,12 +29,13 @@ import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from '../services/analytics/growthbook.js'
-// services/api/errors removed (Spec 2293 cleanup); inline stubs below.
-const getImageTooLargeErrorMessage = (): string => 'Image too large'
-const getPdfInvalidErrorMessage = (): string => 'Invalid PDF'
-const getPdfPasswordProtectedErrorMessage = (): string => 'Password-protected PDF'
-const getPdfTooLargeErrorMessage = (): string => 'PDF too large'
-const getRequestTooLargeErrorMessage = (): string => 'Request too large'
+import {
+  getImageTooLargeErrorMessage,
+  getPdfInvalidErrorMessage,
+  getPdfPasswordProtectedErrorMessage,
+  getPdfTooLargeErrorMessage,
+  getRequestTooLargeErrorMessage,
+} from '../services/api/errors.js'
 import type { AnyObject, Progress } from '../Tool.js'
 import { isConnectorTextBlock } from '../types/connectorText.js'
 import type {
@@ -102,14 +103,9 @@ import type {
   HookEvent,
   SDKAssistantMessageError,
 } from 'src/entrypoints/agentSdkTypes.js'
-// Epic #1634 P3 T027: explore/plan/guide/verify built-in CC agents removed.
-// AgentTool is retained as the Task primitive backing (FR-017); the 4 built-in
-// agents were specific to Claude Code's code-exploration workflow and are not
-// citizen-facing. Placeholder constants preserve the existing template-string
-// sites without resurrecting the deleted agents.
-const EXPLORE_AGENT = { agentType: 'explorer' } as const
-const PLAN_AGENT = { agentType: 'planner' } as const
-const areExplorePlanAgentsEnabled = (): boolean => false
+import { EXPLORE_AGENT } from 'src/tools/AgentTool/built-in/exploreAgent.js'
+import { PLAN_AGENT } from 'src/tools/AgentTool/built-in/planAgent.js'
+import { areExplorePlanAgentsEnabled } from 'src/tools/AgentTool/builtInAgents.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from 'src/tools/AskUserQuestionTool/prompt.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
@@ -826,208 +822,11 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
   })
 }
 
-type ToolUseRequestMessage = NormalizedAssistantMessage & {
-  message: { content: [ToolUseBlock] }
-}
-
-export function isToolUseRequestMessage(
-  message: Message,
-): message is ToolUseRequestMessage {
-  return (
-    message.type === 'assistant' &&
-    // Note: stop_reason === 'tool_use' is unreliable -- it's not always set correctly
-    message.message.content.some(_ => _.type === 'tool_use')
-  )
-}
-
-type ToolUseResultMessage = NormalizedUserMessage & {
-  message: { content: [ToolResultBlockParam] }
-}
-
-export function isToolUseResultMessage(
-  message: Message,
-): message is ToolUseResultMessage {
-  return (
-    message.type === 'user' &&
-    ((Array.isArray(message.message.content) &&
-      message.message.content[0]?.type === 'tool_result') ||
-      Boolean(message.toolUseResult))
-  )
-}
-
-// Re-order, to move result messages to be after their tool use messages
-export function reorderMessagesInUI(
-  messages: (
-    | NormalizedUserMessage
-    | NormalizedAssistantMessage
-    | AttachmentMessage
-    | SystemMessage
-  )[],
-  syntheticStreamingToolUseMessages: NormalizedAssistantMessage[],
-): (
-  | NormalizedUserMessage
-  | NormalizedAssistantMessage
-  | AttachmentMessage
-  | SystemMessage
-)[] {
-  // Maps tool use ID to its related messages
-  const toolUseGroups = new Map<
-    string,
-    {
-      toolUse: ToolUseRequestMessage | null
-      preHooks: AttachmentMessage[]
-      toolResult: NormalizedUserMessage | null
-      postHooks: AttachmentMessage[]
-    }
-  >()
-
-  // First pass: group messages by tool use ID
-  for (const message of messages) {
-    // Handle tool use messages
-    if (isToolUseRequestMessage(message)) {
-      const toolUseID = message.message.content[0]?.id
-      if (toolUseID) {
-        if (!toolUseGroups.has(toolUseID)) {
-          toolUseGroups.set(toolUseID, {
-            toolUse: null,
-            preHooks: [],
-            toolResult: null,
-            postHooks: [],
-          })
-        }
-        toolUseGroups.get(toolUseID)!.toolUse = message
-      }
-      continue
-    }
-
-    // Handle pre-tool-use hooks
-    if (
-      isHookAttachmentMessage(message) &&
-      message.attachment.hookEvent === 'PreToolUse'
-    ) {
-      const toolUseID = message.attachment.toolUseID
-      if (!toolUseGroups.has(toolUseID)) {
-        toolUseGroups.set(toolUseID, {
-          toolUse: null,
-          preHooks: [],
-          toolResult: null,
-          postHooks: [],
-        })
-      }
-      toolUseGroups.get(toolUseID)!.preHooks.push(message)
-      continue
-    }
-
-    // Handle tool results
-    if (
-      message.type === 'user' &&
-      message.message.content[0]?.type === 'tool_result'
-    ) {
-      const toolUseID = message.message.content[0].tool_use_id
-      if (!toolUseGroups.has(toolUseID)) {
-        toolUseGroups.set(toolUseID, {
-          toolUse: null,
-          preHooks: [],
-          toolResult: null,
-          postHooks: [],
-        })
-      }
-      toolUseGroups.get(toolUseID)!.toolResult = message
-      continue
-    }
-
-    // Handle post-tool-use hooks
-    if (
-      isHookAttachmentMessage(message) &&
-      message.attachment.hookEvent === 'PostToolUse'
-    ) {
-      const toolUseID = message.attachment.toolUseID
-      if (!toolUseGroups.has(toolUseID)) {
-        toolUseGroups.set(toolUseID, {
-          toolUse: null,
-          preHooks: [],
-          toolResult: null,
-          postHooks: [],
-        })
-      }
-      toolUseGroups.get(toolUseID)!.postHooks.push(message)
-      continue
-    }
-  }
-
-  // Second pass: reconstruct the message list in the correct order
-  const result: (
-    | NormalizedUserMessage
-    | NormalizedAssistantMessage
-    | AttachmentMessage
-    | SystemMessage
-  )[] = []
-  const processedToolUses = new Set<string>()
-
-  for (const message of messages) {
-    // Check if this is a tool use
-    if (isToolUseRequestMessage(message)) {
-      const toolUseID = message.message.content[0]?.id
-      if (toolUseID && !processedToolUses.has(toolUseID)) {
-        processedToolUses.add(toolUseID)
-        const group = toolUseGroups.get(toolUseID)
-        if (group && group.toolUse) {
-          // Output in order: tool use, pre hooks, tool result, post hooks
-          result.push(group.toolUse)
-          result.push(...group.preHooks)
-          if (group.toolResult) {
-            result.push(group.toolResult)
-          }
-          result.push(...group.postHooks)
-        }
-      }
-      continue
-    }
-
-    // Check if this message is part of a tool use group
-    if (
-      isHookAttachmentMessage(message) &&
-      (message.attachment.hookEvent === 'PreToolUse' ||
-        message.attachment.hookEvent === 'PostToolUse')
-    ) {
-      // Skip - already handled in tool use groups
-      continue
-    }
-
-    if (
-      message.type === 'user' &&
-      message.message.content[0]?.type === 'tool_result'
-    ) {
-      // Skip - already handled in tool use groups
-      continue
-    }
-
-    // Handle api error messages (only keep the last one)
-    if (message.type === 'system' && message.subtype === 'api_error') {
-      const last = result.at(-1)
-      if (last?.type === 'system' && last.subtype === 'api_error') {
-        result[result.length - 1] = message
-      } else {
-        result.push(message)
-      }
-      continue
-    }
-
-    // Add standalone messages
-    result.push(message)
-  }
-
-  // Add synthetic streaming tool use messages
-  for (const message of syntheticStreamingToolUseMessages) {
-    result.push(message)
-  }
-
-  // Filter to keep only the last api error message
-  const last = result.at(-1)
-  return result.filter(
-    _ => _.type !== 'system' || _.subtype !== 'api_error' || _ === last,
-  )
-}
+export {
+  isToolUseRequestMessage,
+  isToolUseResultMessage,
+  reorderMessagesInUI,
+} from './messageReorder.js'
 
 function isHookAttachmentMessage(
   message: Message,
@@ -2754,17 +2553,13 @@ export function normalizeContentFromAPI(
   })
 }
 
-export function isEmptyMessageText(text: string): boolean {
-  return (
-    stripPromptXMLTags(text).trim() === '' || text.trim() === NO_CONTENT_MESSAGE
-  )
-}
-const STRIPPED_TAGS_RE =
-  /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
-
-export function stripPromptXMLTags(content: string): string {
-  return content.replace(STRIPPED_TAGS_RE, '').trim()
-}
+// Spec debug-infra-rebuild (2026-05-02): the canonical implementations of
+// these two helpers now live in `./messageText.ts` so small importers
+// (e.g. AssistantThinkingMessage → thinking-delta-render.test) don't pay
+// the parse cost — and the Bun-Linux SyntaxError — of evaluating this
+// 5,000+-line module just to read two pure functions. Re-exported here
+// so existing call sites continue to compile.
+export { isEmptyMessageText, stripPromptXMLTags } from './messageText.js'
 
 export function getToolUseID(message: NormalizedMessage): string | null {
   switch (message.type) {
@@ -3076,28 +2871,25 @@ export function handleMessageFromStream(
           })
           return
         }
-        case 'thinking_delta':
-          onUpdateLength(message.event.delta.thinking)
-          // Spec 2521 SWAP/llm-provider: surface K-EXAONE reasoning live.
-          // CC reference: services/api/claude.ts:2148-2161 (Anthropic
-          // thinking_delta — CC keeps streaming thinking off the citizen-
-          // visible channel and only shows it after message completion via
-          // line 2968-2978 below). KOSMOS divergence justification: K-EXAONE
-          // on FriendliAI emits a substantive reasoning trace (~1KB-50KB
-          // per turn) that takes 30-180 seconds; without live surfacing the
-          // citizen sees only "+ Ideating…" with no insight into what the
-          // agent is reasoning about. Spec 2521 SC-001 requires ≥1 visible
-          // ∴ Thinking line "between the user prompt and the first tool call"
-          // → must update streamingThinking incrementally during streaming.
-          onStreamingThinking?.(current => {
-            const previousText = current?.thinking ?? ''
-            return {
-              thinking: previousText + message.event.delta.thinking,
-              isStreaming: true,
-              streamingEndedAt: undefined,
-            }
-          })
+        case 'thinking_delta': {
+          const thinkingDelta = message.event.delta.thinking
+          onUpdateLength(thinkingDelta)
+          // SWAP/llm-provider(2521): K-EXAONE on FriendliAI emits its
+          // chain-of-thought on the reasoning_content channel. Without
+          // wiring streamingThinking here (CC's source only updates it
+          // on the final assistant message) the citizen sees the
+          // ``● lookup(...)`` tool_call painted with no reasoning
+          // preview — which user surfaced as "왜 도구호출부터 하는거지?".
+          // Live-streaming the reasoning preview lets the citizen see
+          // *what* the model is reasoning about right before the
+          // tool_call paints.
+          onStreamingThinking?.((prev) => ({
+            thinking: (prev?.thinking ?? '') + thinkingDelta,
+            isStreaming: true,
+            streamingEndedAt: undefined,
+          }))
           return
+        }
         case 'signature_delta':
           // Signatures are cryptographic authentication strings, not model
           // output. Excluding them from onUpdateLength prevents them from

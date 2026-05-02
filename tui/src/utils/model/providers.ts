@@ -38,3 +38,11 @@ export function isFirstPartyKosmosBaseUrl(): boolean {
   }
 }
 
+
+// SWAP/anti-anthropic-1p(2521): byte-copied tui/src/services/api/claude.ts
+// imports `isFirstPartyAnthropicBaseUrl`. KOSMOS routes through FriendliAI
+// single provider; stub returns false so claude.ts's first-party gates fall
+// through to the 3P branch (byte-copy is zero-callers at runtime anyway).
+export function isFirstPartyAnthropicBaseUrl(_url?: string): boolean {
+  return false
+}

@@ -108,6 +108,45 @@ jobs:
       - run: uv sync --frozen --all-extras --dev
       - run: uv run vulture src vulture_whitelist.py --min-confidence 80
 
+  parity-audit:
+    name: LLM Swap-Surface Parity Audit (Spec 2521)
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.pull_request.title, '2521') ||
+      contains(toJson(github.event.pull_request.labels.*.name), '2521') ||
+      true
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Run parity audit
+        run: |
+          chmod +x scripts/llm_swap_parity_audit.sh
+          # The audit reads .references/claude-code-sourcemap/ which is .gitignored
+          # (the upstream CC source is fetched locally by developers and never
+          # committed). On CI runners that path is absent, in which case the
+          # audit job emits a non-failing "skipped" notice rather than blocking
+          # merges on a precondition that only exists on developer machines.
+          if [ ! -d .references/claude-code-sourcemap/restored-src ]; then
+            echo "::notice::Parity audit skipped — .references/claude-code-sourcemap/ is .gitignored (developer-local only). Audit + replay self-test are run locally before push; CI verifies via TUI typecheck + tests + boot smoke instead."
+            echo '{"verdict":"skipped","reason":"cc_source_unavailable_on_ci","exit_code":0}' > parity-audit-result.json
+            exit 0
+          fi
+          scripts/llm_swap_parity_audit.sh --strict --json | tee parity-audit-result.json
+          exit_code=$(jq '.exit_code' parity-audit-result.json)
+          verdict=$(jq -r '.verdict' parity-audit-result.json)
+          echo "Parity audit verdict: $verdict (exit $exit_code)"
+          if [ "$exit_code" != "0" ]; then
+            echo "::error::Parity audit DRIFT detected — see parity-audit-result.json"
+            exit "$exit_code"
+          fi
+      - name: Upload parity audit result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: parity-audit-result
+          path: parity-audit-result.json
+
   docker-build:
     name: Docker Build
     needs: lint

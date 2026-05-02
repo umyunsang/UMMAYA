@@ -1,0 +1,55 @@
+{
+  "_comment": "Regression fixture for Spec 2521: parallel_tool_calls=False fix. This fixture emits 3 tool_calls. KOSMOS must drop extras and only execute the first one when parallel_tool_calls is disabled. If the fix regresses, all 3 will fire and the adapter layer will emit 3 distinct upstream calls.",
+  "fixtures": [
+    {
+      "match": {
+        "userMessageContains": "부산 날씨 여러 도구"
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "name": "lookup",
+            "arguments": {
+              "tool_id": "kma_forecast_fetch",
+              "params": {
+                "lat": 35.1,
+                "lon": 128.97,
+                "base_date": "20260502",
+                "base_time": "0500"
+              }
+            }
+          },
+          {
+            "name": "lookup",
+            "arguments": {
+              "tool_id": "kma_ultra_short_term_forecast",
+              "params": {
+                "lat": 35.1,
+                "lon": 128.97,
+                "base_date": "20260502",
+                "base_time": "0500"
+              }
+            }
+          },
+          {
+            "name": "lookup",
+            "arguments": {
+              "tool_id": "kma_short_term_forecast",
+              "params": {
+                "lat": 35.1,
+                "lon": 128.97,
+                "base_date": "20260502",
+                "base_time": "0500"
+              }
+            }
+          }
+        ]
+      },
+      "streaming": {
+        "ttft": 200,
+        "tps": 50,
+        "jitter": 50
+      }
+    }
+  ]
+}

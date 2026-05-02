@@ -748,3 +748,10 @@ export {
   listCommands,
 } from './commands/index.js'
 export type { CommandRegistry, DispatchResult } from './commands/index.js'
+
+export type Command = {
+  name: string
+  description?: string
+  isHidden?: boolean
+  [key: string]: unknown
+}

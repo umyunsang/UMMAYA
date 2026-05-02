@@ -146,6 +146,142 @@ def _stream_response(self, ...):
     """
 ```
 
+## Replay refresh handling
+
+When the CC source-of-truth is updated to a newer CC release (e.g. CC 2.1.88 → CC 2.2.0),
+the byte-copy commit's SHA will become stale and `scripts/llm_swap_parity_audit.sh` will
+report a SHA mismatch. Use this step-by-step procedure to bring KOSMOS back in sync.
+
+### Step R-1 — Update the CC source directory
+
+Fetch the new CC release into `.references/claude-code-sourcemap/restored-src/`.
+Exact fetch procedure is out of scope for this spec (see `.references/` directory conventions
+and Deferred Item #2576); the canonical expectation is that the directory is replaced in place.
+
+```sh
+# Verify the new CC source is in place:
+sha256sum .references/claude-code-sourcemap/restored-src/src/services/api/claude.ts
+# Record the new SHA — you will need it for Step R-3.
+```
+
+### Step R-2 — Run parity audit to see the drift
+
+```sh
+scripts/llm_swap_parity_audit.sh --strict
+```
+
+The audit output will show:
+- `byte_copy_sha_match=false` for `tui/src/services/api/claude.ts`
+- Possibly new unjustified hunks if the CC file changed in regions that were previously
+  byte-identical (i.e., no KOSMOS swap was needed there before, but now the CC and KOSMOS
+  files differ)
+
+Save the drift report:
+
+```sh
+scripts/llm_swap_parity_audit.sh --strict > specs/2521-llm-swap-cc-rebuild/drift-report-$(date +%Y%m%d).md 2>&1 || true
+```
+
+### Step R-3 — Update parity-matrix.md File-level row
+
+Open `specs/2521-llm-swap-cc-rebuild/parity-matrix.md` and update the
+`tui/src/services/api/claude.ts` File-level row:
+
+| column | old value | new value |
+|--------|-----------|-----------|
+| CC SHA-256 / lines | previous CC SHA | new SHA from Step R-1 |
+| Expected post-byte-copy SHA-256 | previous CC SHA | new SHA from Step R-1 |
+| Drift evidence | prior note | add `CC refreshed to vX.Y.Z on <date>` |
+
+Also update `EXPECTED_CC_SHA` constant in
+`specs/2521-llm-swap-cc-rebuild/scripts/replay_rebuild.sh`:
+
+```sh
+# Replace the hard-coded SHA near the top of replay_rebuild.sh:
+# EXPECTED_CC_SHA="<old-sha>"
+# → EXPECTED_CC_SHA="<new-sha>"
+```
+
+### Step R-4 — Re-run the replay script; resolve cherry-pick conflicts
+
+Run the replay script on a scratch worktree to see which swap commits apply cleanly and
+which conflict:
+
+```sh
+git worktree add /tmp/2521-replay-refresh main
+cd /tmp/2521-replay-refresh
+specs/2521-llm-swap-cc-rebuild/scripts/replay_rebuild.sh --no-test 2>&1 | tee /tmp/replay-log.txt
+```
+
+**If cherry-pick succeeds** for all 4 swap commits: the CC change did not touch any of the
+swap points — no further action needed except a follow-up commit to record the new baseline.
+
+**If cherry-pick fails (conflict)**:
+
+1. The conflict is in one of the swap-point regions (a hunk that was previously swapped but
+   the CC file changed that region in the new version).
+2. Resolve the conflict by editing the conflicted file:
+   - Accept the CC change if the new CC code still compiles with the existing swap (e.g. a
+     refactor that does not affect the IPC call site) — result is still a `SWAP/llm-provider`
+     diff, just against new CC lines.
+   - Reject the CC change if KOSMOS's IPC bridge already handles the new CC behavior through
+     a different code path — result is a `SWAP/anti-anthropic-1p` or `SWAP/llm-provider`
+     deletion with updated citation.
+3. After resolving, stage the file and continue:
+
+```sh
+git add tui/src/services/api/claude.ts
+git cherry-pick --continue
+```
+
+4. Update the swap commit's body to change the `Refs:` line citation to the new CC line
+   numbers:
+
+```sh
+git commit --amend
+# Edit the commit body: change Refs: services/api/claude.ts:<old-lines> to <new-lines>
+```
+
+### Step R-5 — PR procedure
+
+Create a dedicated PR for the CC refresh using the per-file swap commit convention:
+
+1. **One byte-copy commit** (re-applies the new CC source verbatim):
+   ```
+   byte-copy(2521): import CC services/api/claude.ts byte-identical [CC vX.Y.Z]
+   ```
+
+2. **One swap commit per changed swap point** (re-applies each SWAP category with updated
+   citations):
+   ```
+   swap/llm-provider(2521): route claude.ts through KOSMOS IPC adapter [CC vX.Y.Z refresh]
+   Refs: services/api/claude.ts:<new-line-range>
+   ```
+
+3. Open a single PR combining all the refresh commits. Title:
+   ```
+   chore(2521): refresh CC byte-copy baseline to vX.Y.Z + reapply bounded swaps
+   ```
+
+4. Run the full audit before pushing:
+   ```sh
+   scripts/llm_swap_parity_audit.sh --strict
+   ```
+   Expected: exit 0, all swap commits classified, new SHA verified.
+
+5. Commit the updated `specs/2521-llm-swap-cc-rebuild/parity-matrix.md` and updated
+   `EXPECTED_CC_SHA` in `replay_rebuild.sh` as part of the same PR.
+
+### Summary table
+
+| Step | Command | Expected outcome |
+|------|---------|-----------------|
+| R-1 | fetch new CC source | `.references/` updated |
+| R-2 | `llm_swap_parity_audit.sh --strict` | shows drift |
+| R-3 | edit parity-matrix + replay_rebuild.sh | new SHA recorded |
+| R-4 | `replay_rebuild.sh --no-test` on scratch worktree | cherry-picks succeed or conflict resolved |
+| R-5 | single PR: 1 byte-copy + N swap commits | audit exits 0 |
+
 ## What this Epic does NOT do
 
 Per spec § Out of Scope:

@@ -19,6 +19,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ToolExecutionError, _require_env
 from kosmos.tools.koroad.code_tables import (
     GANGWON_NEW_CODE_YEAR,
@@ -318,7 +319,7 @@ async def _call(
     params["guGun"] = inp.gu_gun.value
 
     own_client = client is None
-    _client: httpx.AsyncClient = httpx.AsyncClient() if own_client else client  # type: ignore[assignment]
+    _client: httpx.AsyncClient = traced_async_client() if own_client else client  # type: ignore[assignment]
     assert _client is not None  # narrowed: always an AsyncClient at this point
 
     try:

@@ -1,0 +1,60 @@
+           "request_body": null,
+           "response_status": 200,
+           "response_headers": {
+             "date": "Fri, 01 May 2026 17:37:28 GMT",
+             "content-type": "application/json; charset=utf-8",
+             "content-length": "879",
+             "connection": "keep-alive",
+             "x-request-id": "62f8f801676d8cce81518781cbc10ac3",
+             "access-control-allow-origin": "*",
+             "access-control-allow-methods": "GET, OPTIONS",
+             "access-control-allow-headers": "Authorization, KA, Origin, X-Requested-With, Content-Type, Accept",
+             "access-control-max-age": "86400"
+           },
+           "response_body": "{\n  \"documents\": [\n    {\n      \"address\": {\n        \"address_name\": \"서울 종로구 세종로 1\",\n        \"b_code\": \"1111011900\",\n
+         \"h_code\": \"1111051500\",\n        \"main_address_no\": \"1\",\n        \"mountain_yn\": \"N\",\n        \"region_1depth_name\": \"서울\",\n
+     \"region_2depth_name\": \"종로구\",\n        \"region_3depth_h_name\": \"청운효자동\",\n        \"region_3depth_name\": \"세종로\",\n        \"sub_address_no\": \"\",\n
+           \"x\": \"126.974936757836\",\n        \"y\": \"37.5864756914613\"\n      },\n      \"address_name\": \"서울 종로구 청와대로 1\",\n      \"address_type\":
+     \"ROAD_ADDR\",\n      \"road_address\": {\n        \"address_name\": \"서울 종로구 청와대로 1\",\n        \"building_name\": \"\",\n        \"main_building_no\": \"1\",\n
+             \"region_1depth_name\": \"서울\",\n        \"region_2depth_name\": \"종로구\",\n        \"region_3depth_name\": \"세종로\",\n        \"road_name\":
+     \"청와대로\",\n        \"sub_building_no\": \"\",\n        \"underground_yn\": \"N\",\n        \"x\": \"126.974936757836\",\n        \"y\": \"37.5864756914613\",\n
+      \"zone_no\": \"03048\"\n      },\n      \"x\": \"126.974936757836\",\n      \"y\": \"37.5864756914613\"\n    }\n  ],\n  \"meta\": {\n    \"is_end\": true,\n
+     \"pageable_count\": 1,\n    \"total_count\": 1\n  }\n}",
+           "elapsed_ms": 172,
+           "timestamp_iso": "2026-05-01T17:37:28Z"
+         }
+       ]
+     }
+
+     외부 API 요청 #1 — GET https://dapi.kakao.com/v2/local/search/address.json?query=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C%20%EC%A2%85%EB%A1%9C%EA%B5%AC%20%EC%B2%AD%E
+     C%99%80%EB%8C%80%EB%A1%9C%201&size=2 → 200 (172ms)
+     응답 body:
+     {
+       "documents": [
+         {
+           "address": {
+             "address_name": "서울 종로구 세종로 1",
+             "b_code": "1111011900",
+             "h_code": "1111051500",
+             "main_address_no": "1",
+             "mountain_yn": "N",
+             "region_1depth_name": "서울",
+             "region_2depth_name": "종로구",
+             "region_3depth_h_name": "청운효자동",
+             "region_3depth_name": "세종로",
+             "sub_address_no": "",
+             "x": "126.974936757836",
+             "y": "37.5864756914613"
+           },
+           "address_name": "서울 종로구 청와대로 1",
+           "address_type": "ROAD_ADDR",
+           "road_address": {
+             "address_name": "서울 종로구 청와대로 1",
+             "building_name": "",
+             "main_building_no": "1",
+             "region_1depth_name": "서울",
+             "region_2depth_name": "종로구",
+             "region_3depth_name": "세종로",
+             "road_name": "청와대로",
+             "sub_building_no": "",
+             "underground_yn": "N",

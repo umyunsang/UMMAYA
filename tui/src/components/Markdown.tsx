@@ -5,7 +5,7 @@ import { Ansi, Box, useTheme } from '../ink.js';
 import type { CliHighlight } from '../utils/cliHighlight.js';
 import { hashContent } from '../utils/hash.js';
 import { configureMarked, formatToken } from '../utils/markdown.js';
-import { stripPromptXMLTags } from '../utils/messages.js';
+import { stripPromptXMLTags } from '../utils/messageText.js';
 import { MarkdownTable } from './MarkdownTable.js';
 type Props = {
   children: string;
@@ -173,6 +173,14 @@ export function StreamingMarkdown({
   // one-time re-lex on the smaller stripped string.
   const stripped = stripPromptXMLTags(children);
   const stablePrefixRef = useRef('');
+
+  // SWAP/llm-provider(2521): hide the row entirely while the visible
+  // text is still the leading whitespace K-EXAONE often emits as its
+  // first chunk. Drawing the bare ● bullet for that single frame was
+  // the regression frame_40 of smoke-small.gif caught.
+  if (stripped.trim().length === 0) {
+    return null;
+  }
 
   // Reset if text was replaced (defensive; normally unmount handles this)
   if (!stripped.startsWith(stablePrefixRef.current)) {

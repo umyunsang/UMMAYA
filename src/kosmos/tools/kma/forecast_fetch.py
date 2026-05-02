@@ -32,6 +32,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import LookupErrorReason, _require_env
 from kosmos.tools.kma.projection import KMADomainError, latlon_to_lcc
 from kosmos.tools.models import (  # noqa: A004
@@ -235,7 +236,13 @@ async def _fetch(
     }
 
     own_client = client is None
-    _client: httpx.AsyncClient = httpx.AsyncClient(timeout=30.0) if own_client else client  # type: ignore[assignment]
+    # Spec 2521 (2026-05-01) — switch to the traced client so the verbose
+    # tool view in the TUI can surface request/response JSON for the
+    # outbound data.go.kr call. When no capture scope is open (unit tests
+    # invoking ``_fetch`` directly) the hook is a no-op.
+    _client: httpx.AsyncClient = (
+        traced_async_client(timeout=30.0) if own_client else client  # type: ignore[assignment]
+    )
 
     request_id = str(uuid.uuid4())
     t_start = datetime.now(tz=UTC)

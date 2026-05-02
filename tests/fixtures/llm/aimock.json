@@ -1,0 +1,7 @@
+{
+  "_comment": "aimock server config. Mounted into the container at /fixtures/aimock.json. The 'llm' key points to the directory containing all LLM fixture files relative to this config file.",
+  "llm": {
+    "fixtures": "./",
+    "providers": ["openai"]
+  }
+}

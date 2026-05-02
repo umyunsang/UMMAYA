@@ -1,0 +1,25 @@
+{
+  "probe": "busan-payload-probe",
+  "user_query": "부산 사하구 날씨 알려줘",
+  "system_prompt_length": 10274,
+  "suffix_included": true,
+  "ttft_s": 1.244,
+  "total_time_s": 2.478,
+  "reasoning_chars": 432,
+  "content": "\n\n",
+  "tool_calls": [
+    {
+      "index": 0,
+      "name": "resolve_location",
+      "arguments": {
+        "query": "부산 사하구"
+      }
+    }
+  ],
+  "tool_calls_count": 1,
+  "diagnosis": {
+    "kma_called_directly_without_resolve": false,
+    "resolve_location_called_first": true,
+    "kma_called_with_nx_ny": false
+  }
+}

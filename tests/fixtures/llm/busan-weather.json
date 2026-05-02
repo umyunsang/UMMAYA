@@ -1,0 +1,30 @@
+{
+  "fixtures": [
+    {
+      "match": {
+        "userMessageContains": "부산"
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "name": "lookup",
+            "arguments": {
+              "tool_id": "kma_forecast_fetch",
+              "params": {
+                "lat": 35.1,
+                "lon": 128.97,
+                "base_date": "20260502",
+                "base_time": "0500"
+              }
+            }
+          }
+        ]
+      },
+      "streaming": {
+        "ttft": 200,
+        "tps": 50,
+        "jitter": 50
+      }
+    }
+  ]
+}

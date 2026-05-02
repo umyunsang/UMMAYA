@@ -16,6 +16,8 @@ export type Props = {
   message: RenderableMessage;
   /** Whether the previous message in renderableMessages is also a user message. */
   isUserContinuation: boolean;
+  /** Suppress the normal inter-message gap for adjacent blocks from one assistant turn. */
+  suppressTopMargin?: boolean;
   /**
    * Whether there is non-skippable content after this message in renderableMessages.
    * Only needs to be accurate for `collapsed_read_search` messages — used to decide
@@ -95,6 +97,7 @@ function MessageRowImpl(t0) {
   const {
     message: msg,
     isUserContinuation,
+    suppressTopMargin: t0_suppressTopMargin,
     hasContentAfter,
     tools,
     commands,
@@ -110,6 +113,7 @@ function MessageRowImpl(t0) {
     isLoading,
     lookups
   } = t0;
+  const suppressTopMargin = t0_suppressTopMargin === undefined ? false : t0_suppressTopMargin;
   const isTranscriptMode = screen === "transcript";
   const isGrouped = msg.type === "grouped_tool_use";
   const isCollapsed = msg.type === "collapsed_read_search";
@@ -226,7 +230,7 @@ function MessageRowImpl(t0) {
     t5 = $[36];
   }
   const hasMetadata = t5;
-  const t6 = !hasMetadata;
+  const t6 = !hasMetadata && !suppressTopMargin;
   const t7 = hasMetadata ? undefined : columns;
   let t8;
   if ($[37] !== commands || $[38] !== inProgressToolUseIDs || $[39] !== isActiveCollapsedGroup || $[40] !== isStatic || $[41] !== isTranscriptMode || $[42] !== isUserContinuation || $[43] !== lastThinkingBlockId || $[44] !== latestBashOutputUUID || $[45] !== lookups || $[46] !== msg || $[47] !== onOpenRateLimitOptions || $[48] !== progressMessagesForMessage || $[49] !== shouldAnimate || $[50] !== t6 || $[51] !== t7 || $[52] !== tools || $[53] !== verbose) {
@@ -342,6 +346,9 @@ export function allToolsResolved(msg: RenderableMessage, resolvedToolUseIDs: Set
 export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
   // Different message reference = content may have changed, must re-render
   if (prev.message !== next.message) return false;
+
+  // Row margin is part of the rendered layout.
+  if (prev.suppressTopMargin !== next.suppressTopMargin) return false;
 
   // Screen mode change = re-render
   if (prev.screen !== next.screen) return false;

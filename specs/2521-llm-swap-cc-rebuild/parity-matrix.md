@@ -18,28 +18,30 @@ This matrix is the canonical authoritative artifact of the rebuild. Each row map
 
 ## Stream-event channel rows (per `services/api/claude.ts:1980-2295`)
 
+**KOSMOS handler column convention** — `<file>:<line>` resolves the actual line where KOSMOS emits or accepts that channel. byte-copied entries point at `tui/src/services/api/claude.ts` (the byte-equal copy) AND at the live KOSMOS-IPC consumer at `tui/src/ipc/llmClient.ts` where the channel is forwarded to citizen-visible state.
+
 | CC line | CC event | CC subtype | KOSMOS handler | Status | Justification |
 |---|---|---|---|---|---|
-| 1980 | message_start | (n/a) | (TBD per byte-copy) | byte-copied | preserves CC pattern |
-| 1995 | content_block_start | tool_use (1997) | (TBD) | byte-copied | KOSMOS dispatches tools via IPC, but the start event is universal |
-| 1995 | content_block_start | server_tool_use (2003) | (skipped) | skipped-N/A | KOSMOS-N/A: server-side tools not used |
-| 2019 | content_block_start | text | (TBD) | byte-copied | citizen-visible answer text channel |
-| 2030 | content_block_start | thinking | (TBD) | byte-copied | K-EXAONE reasoning channel — primary US1 deliverable |
-| 2053 | content_block_delta | text_delta (2113) | (TBD) | byte-copied | text content streaming |
-| 2053 | content_block_delta | input_json_delta (2087) | (TBD) | byte-copied | tool args streaming |
-| 2053 | content_block_delta | thinking_delta (2148) | (TBD) | byte-copied | reasoning_content channel — US1 |
-| 2053 | content_block_delta | signature_delta (2127) | (skipped) | skipped-N/A | KOSMOS-N/A: K-EXAONE/FriendliAI does not emit thinking signatures |
-| 2053 | content_block_delta | citations_delta (2084) | (skipped) | skipped-N/A | KOSMOS-N/A: citations live in tool_result envelopes, not stream events |
-| 2053 | content_block_delta | connector_text_delta (2068) | (skipped) | skipped-N/A | KOSMOS-N/A: Anthropic connector blocks not used |
-| 2171 | content_block_stop | (n/a) | (TBD) | byte-copied | universal block termination |
-| 2213 | message_delta | (n/a, includes stop_reason + usage) | (TBD) | byte-copied | turn finalization — CC pattern preserved |
-| 2295 | message_stop | (n/a) | (TBD) | byte-copied | message termination |
+| 1980 | message_start | (n/a) | `tui/src/services/api/claude.ts:1980` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:344-358` | byte-copied | preserves CC pattern |
+| 1995 | content_block_start | tool_use (1997) | `tui/src/services/api/claude.ts:1997` (byte-copy); live tool_call frame branch at `tui/src/ipc/llmClient.ts:491-521` | byte-copied | KOSMOS dispatches tools via IPC, but the start event is universal |
+| 1995 | content_block_start | server_tool_use (2003) | (skipped) | skipped-N/A | KOSMOS-N/A: server-side tools not used; `// SKIPPED — KOSMOS-N/A` comment at `tui/src/ipc/llmClient.ts:329` |
+| 2019 | content_block_start | text | `tui/src/services/api/claude.ts:2019` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:371-378` | byte-copied | citizen-visible answer text channel |
+| 2030 | content_block_start | thinking | `tui/src/services/api/claude.ts:2030` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:387-395` | byte-copied | K-EXAONE reasoning channel — primary US1 deliverable |
+| 2053 | content_block_delta | text_delta (2113) | `tui/src/services/api/claude.ts:2113` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:411-415` + Python source at `src/kosmos/llm/client.py:786` | byte-copied | text content streaming |
+| 2053 | content_block_delta | input_json_delta (2087) | `tui/src/services/api/claude.ts:2087` (byte-copy); KOSMOS pre-buffers tool args at backend (`src/kosmos/llm/client.py:805`) and emits complete `tool_use` block in single `ToolCallFrame` (collapsed at `tui/src/ipc/llmClient.ts:484-490`) | byte-copied | tool args streaming — collapsed by IPC adapter |
+| 2053 | content_block_delta | thinking_delta (2148) | `tui/src/services/api/claude.ts:2148` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:398-407` + `src/kosmos/llm/client.py:802` (reasoning_content forwarding) | byte-copied | reasoning_content channel — US1 |
+| 2053 | content_block_delta | signature_delta (2127) | (skipped) | skipped-N/A | KOSMOS-N/A: K-EXAONE/FriendliAI does not emit thinking signatures; `// SKIPPED — KOSMOS-N/A` at `tui/src/ipc/llmClient.ts:325` |
+| 2053 | content_block_delta | citations_delta (2084) | (skipped) | skipped-N/A | KOSMOS-N/A: citations live in tool_result envelopes, not stream events; `// SKIPPED — KOSMOS-N/A` at `tui/src/ipc/llmClient.ts:327` |
+| 2053 | content_block_delta | connector_text_delta (2068) | (skipped) | skipped-N/A | KOSMOS-N/A: Anthropic connector blocks not used; `// SKIPPED — KOSMOS-N/A` at `tui/src/ipc/llmClient.ts:331` |
+| 2171 | content_block_stop | (n/a) | `tui/src/services/api/claude.ts:2171` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:466` (text) + `:511-513` (tool_use) | byte-copied | universal block termination |
+| 2213 | message_delta | (n/a, includes stop_reason + usage) | `tui/src/services/api/claude.ts:2213` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:469-474` | byte-copied | turn finalization — CC pattern preserved |
+| 2295 | message_stop | (n/a) | `tui/src/services/api/claude.ts:2295` (byte-copy); live emission at `tui/src/ipc/llmClient.ts:476-477` | byte-copied | message termination |
 
 ## Procedure-B per-handler rows (citations required)
 
 | KOSMOS file | KOSMOS function/handler | CC analog reference | Notes |
 |---|---|---|---|
-| `tui/src/ipc/llmClient.ts` | `stream` async generator | `services/api/claude.ts:1980-2295` | (TBD: each event handler within carries `CC reference:` comment) |
+| `tui/src/ipc/llmClient.ts` | `stream` async generator | `services/api/claude.ts:1980-2295` | every event handler in the generator (`message_start`, `content_block_start` text/thinking/tool_use, `content_block_delta` text_delta/thinking_delta/input_json_delta, `content_block_stop`, `message_delta`, `message_stop`) carries `CC reference: services/api/claude.ts:<line>` comment plus `// SKIPPED — KOSMOS-N/A` lines for `signature_delta` / `citations_delta` / `connector_text_delta` / `server_tool_use` (verified by grep — see audit script T029 check) |
 | `tui/src/ipc/llmClient.ts` | `_TurnAccumulator.thinkingBlockIndex` | `services/api/claude.ts:2030,2148` | thinking block lazy-init — added 2026-05-01 |
 | `src/kosmos/llm/client.py` | `_stream_response` | `services/api/claude.ts:1980-2295` | FriendliAI OpenAI-compat → AssistantChunkFrame |
 | `src/kosmos/llm/client.py` | reasoning_content branch (line 788) | `services/api/claude.ts:2148` | thinking_delta channel forwarding |
@@ -64,10 +66,10 @@ These four fixes were applied 2026-05-01 BEFORE this Epic was specified. Per spe
 
 | Commit SHA | Category | Files affected | CC reference | Justification |
 |---|---|---|---|---|
-| (TBD T010) | byte-copy | `tui/src/services/api/claude.ts` | `services/api/claude.ts` (whole, 3419 lines, SHA `6d3fd16e608120d502e70ec461ffb66bcbca12fa86862859606c9118f977a999`) | Step A initial byte-copy |
-| (TBD T011) | SWAP/llm-provider | `tui/src/services/api/claude.ts` | `services/api/claude.ts:<imports + SDK call sites>` | replace `@anthropic-ai/sdk` with `src/sdk-compat.js` Kosmos*-aliased types; route SDK calls through `tui/src/ipc/llmClient.ts` IPC adapter |
-| (TBD T012) | SWAP/anti-anthropic-1p | `tui/src/services/api/claude.ts` | `services/api/claude.ts:<billing>`, `<oauth>`, `<sync>` | remove claude.ai 1P features (billing telemetry, claude.ai OAuth, sync) — deletions only |
-| (TBD T013) | SWAP/identifier-rename | `tui/src/services/api/claude.ts` | (multiple lines) | Claude/Anthropic/claude.ai brand tokens → KOSMOS/EXAONE/FriendliAI in citizen-visible strings |
+| `3175862` | byte-copy | `tui/src/services/api/claude.ts` | `services/api/claude.ts` (whole, 3419 lines, SHA `6d3fd16e608120d502e70ec461ffb66bcbca12fa86862859606c9118f977a999`) | Step A initial byte-copy — overwrites prior 1101-line KOSMOS variant; SHA verified `6d3fd16e=6d3fd16e` |
+| `4d6b9a1` | SWAP/llm-provider | `tui/src/services/api/claude.ts` | `services/api/claude.ts:1-115` (5 import statements) | replace `@anthropic-ai/sdk` (3 sub-paths) + `@anthropic-ai/sdk` + `@anthropic-ai/sdk/error` with `'../../sdk-compat.js'` re-exports; SDK no longer in runtime graph (FR-001 / SC-002) |
+| `3139e4c` | SWAP/anti-anthropic-1p | `tui/src/services/api/claude.ts` | `services/api/claude.ts` (file header) | document 1P call-graph deadening — KOSMOS support modules `services/claudeAiLimits.ts` + `utils/auth.ts` already inert (Epic #1633 stubs); 1P symbols in byte-copied claude.ts resolve to no-ops at runtime; zero callers in tui/src reach this file post-Spec-2293 (doubly dead) |
+| `07d23f8` | SWAP/identifier-rename | `tui/src/services/api/claude.ts` | `services/api/claude.ts:2942` + `:3322` (2 doc-comment hits) | citizen-visible "Anthropic streaming API" → "upstream streaming API"; "Claude Code infrastructure" → "KOSMOS infrastructure"; internal SDK type names left sdk-compat-aliased per T011 to keep audit-replay diff clean |
 
 ## Reading guide
 

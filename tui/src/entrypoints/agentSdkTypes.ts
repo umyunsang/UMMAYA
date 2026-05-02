@@ -441,3 +441,10 @@ export async function connectRemoteControl(
 ): Promise<RemoteControlHandle | null> {
   throw new Error('not implemented')
 }
+
+export type HookEvent = string
+export type SDKAssistantMessageError = {
+  type: 'assistant_error'
+  error: string
+  [key: string]: unknown
+}

@@ -27,6 +27,10 @@ import {
   resolveAdapter,
 } from '../../services/api/adapterManifest.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import {
+  renderVerboseInputJson,
+  renderVerboseOutputJson,
+} from '../_shared/verboseRender.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
 
@@ -66,6 +70,9 @@ type InputSchema = ReturnType<typeof inputSchema>
 // Output schema — discriminated union on "ok"
 // ---------------------------------------------------------------------------
 
+// Spec 2521 (2026-05-02) — ``outbound_traces`` preserved through
+// safeParse so verboseRender can show the subscription handshake's
+// outbound HTTP if the adapter pulls before yielding.
 const outputSchema = lazySchema(() =>
   z.discriminatedUnion('ok', [
     z.object({
@@ -73,6 +80,7 @@ const outputSchema = lazySchema(() =>
       result: z.unknown().describe(
         'SubscriptionHandle: { handle_id, lifetime, kind } — stream delivered out-of-band via TUI ⎿ prefix',
       ),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
     z.object({
       ok: z.literal(false),
@@ -80,6 +88,7 @@ const outputSchema = lazySchema(() =>
         kind: z.string().describe('Error classification, e.g. "tool_not_found", "permission_denied"'),
         message: z.string().describe('Human-readable error description'),
       }),
+      outbound_traces: z.array(z.unknown()).optional(),
     }),
   ]),
 )
@@ -129,14 +138,30 @@ export const SubscribePrimitive = buildTool({
   },
 
   mapToolResultToToolResultBlockParam(output, toolUseID) {
+    // Spec 2521 (2026-05-02) — outbound_traces is UI-only (see Lookup).
+    const llmContent =
+      typeof output === 'object' && output !== null
+        ? Object.fromEntries(
+            Object.entries(output as Record<string, unknown>).filter(
+              ([k]) => k !== 'outbound_traces',
+            ),
+          )
+        : output
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: JSON.stringify(output),
+      content: JSON.stringify(llmContent),
     }
   },
 
-  renderToolUseMessage(input: { tool_id?: string }) {
+  renderToolUseMessage(
+    input: { tool_id?: string; params?: unknown },
+    options: { verbose: boolean },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose surfaces full request JSON.
+    if (options.verbose) {
+      return renderVerboseInputJson(input)
+    }
     return input.tool_id ?? ''
   },
 
@@ -148,27 +173,30 @@ export const SubscribePrimitive = buildTool({
     context: ToolUseContext,
   ) {
     // Epic ε #2296 T014 — two-tier resolution (FR-017 / FR-018 / FR-019 / FR-020).
-
-    // Tier 0 — fail closed if manifest not yet synced (FR-019).
-    if (!isManifestSynced()) {
-      return {
-        result: false as const,
-        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
-        errorCode: PrimitiveErrorCode.AdapterNotFound,
-      }
-    }
+    // Spec 2521 (2026-05-01) — citation-missing branch added (1002).
 
     // Tier 1 — synced backend manifest (FR-017).
-    const backendEntry = resolveAdapter(input.tool_id)
-    if (backendEntry) {
-      const citation: AdapterCitation | null = backendEntry.policy_authority_url
-        ? {
-            real_classification_url: backendEntry.policy_authority_url,
-            policy_authority: backendEntry.name,
+    if (isManifestSynced()) {
+      const backendEntry = resolveAdapter(input.tool_id)
+      if (backendEntry) {
+        if (backendEntry.source_mode === 'internal') {
+          ;(context as ContextWithCitation).kosmosCitations = []
+          return { result: true as const }
+        }
+        if (!backendEntry.policy_authority_url) {
+          return {
+            result: false as const,
+            message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+            errorCode: PrimitiveErrorCode.CitationMissing,
           }
-        : null
-      ;(context as ContextWithCitation).kosmosCitations = citation ? [citation] : []
-      return { result: true as const }
+        }
+        const citation: AdapterCitation = {
+          real_classification_url: backendEntry.policy_authority_url,
+          policy_authority: backendEntry.name,
+        }
+        ;(context as ContextWithCitation).kosmosCitations = [citation]
+        return { result: true as const }
+      }
     }
 
     // Tier 2 — TS-side internal tools fallback (FR-018 / existing path).
@@ -178,10 +206,24 @@ export const SubscribePrimitive = buildTool({
 
     if (adapter) {
       const citation = extractCitation(adapter)
-      if (citation) {
-        ;(context as ContextWithCitation).kosmosCitations = [citation]
+      if (!citation) {
+        return {
+          result: false as const,
+          message: `'${input.tool_id}' 어댑터 정책 인용이 누락되었습니다 (Spec 024 invariant 위반).`,
+          errorCode: PrimitiveErrorCode.CitationMissing,
+        }
       }
+      ;(context as ContextWithCitation).kosmosCitations = [citation]
       return { result: true as const }
+    }
+
+    // Tier 0 — fail closed if manifest not yet synced AND no internal hit.
+    if (!isManifestSynced()) {
+      return {
+        result: false as const,
+        message: 'Adapter manifest not yet synced from backend; retry once boot completes.',
+        errorCode: PrimitiveErrorCode.AdapterNotFound,
+      }
     }
 
     // Fail closed (FR-020).
@@ -192,7 +234,16 @@ export const SubscribePrimitive = buildTool({
     }
   },
 
-  renderToolResultMessage(output: Output) {
+  renderToolResultMessage(
+    output: Output,
+    _progress: unknown,
+    options: { verbose: boolean; isTranscriptMode?: boolean } = { verbose: false },
+  ) {
+    // Spec 2521 (2026-05-01 evening) — verbose / transcript mode surface
+    // the full envelope JSON. CC BashTool/UI.tsx parity.
+    if (options.verbose || options.isTranscriptMode) {
+      return renderVerboseOutputJson(output)
+    }
     // KOSMOS hotfix #2519 — after dispatchPrimitive register-and-await
     // rewrite, output.result is the actual subscribe primitive output
     // (handle_id / lifetime / kind) unwrapped from ToolResultEnvelope.result.

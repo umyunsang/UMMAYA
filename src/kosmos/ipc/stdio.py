@@ -567,6 +567,28 @@ async def run(  # noqa: C901
             # and a subsequent call retry from scratch.
             _tool_registry_ref.append(registry)
             _tool_executor_ref.append(executor)
+
+            # SWAP/llm-provider(2521): emit AdapterManifestSyncFrame to the
+            # TUI so the frontend's LookupPrimitive.validateInput can resolve
+            # tool_ids. Without this frame, isManifestSynced() stays false
+            # and every lookup(mode="fetch") returns "Adapter manifest not
+            # yet synced from backend" — the LLM then retries lookup
+            # endlessly while fabricating answers from BM25 search candidates
+            # (citizen-traced 2026-05-01: fake hourly-temperature tables).
+            # emit_manifest() writes the JSONL frame directly to sys.stdout,
+            # bypassing the asyncio write_frame helper because lazy init runs
+            # outside the event loop's task graph.
+            try:
+                import sys as _sys  # noqa: PLC0415
+
+                from kosmos.ipc.adapter_manifest_emitter import (  # noqa: PLC0415
+                    emit_manifest,
+                )
+
+                emit_manifest(_sys.stdout, registry)
+                logger.info("Emitted AdapterManifestSyncFrame to TUI")
+            except Exception as _exc:
+                logger.exception("Failed to emit adapter manifest: %s", _exc)
         return _tool_registry_ref[0]
 
     def _ensure_tool_executor() -> object:
@@ -733,6 +755,135 @@ async def run(  # noqa: C901
     # (kosmos.prompt.hash slicing in ``kosmos.llm.client``) splits on this
     # marker to compute the static-prefix-only hash.
     _DYNAMIC_BOUNDARY_MARKER = "\nSYSTEM_PROMPT_DYNAMIC_BOUNDARY\n"  # noqa: N806
+
+    # Spec 2521 (2026-05-01) — BM25 candidate count for the dynamic
+    # ``<available_adapters>`` block. Must be small enough to keep the
+    # dynamic suffix LLM-readable (over-injecting blows the suffix budget
+    # and reduces prompt-cache effectiveness for the static prefix). Five
+    # mirrors the historical ``lookup(mode='search')`` default top_k that
+    # K-EXAONE had been calling explicitly, so token-budget impact is
+    # neutral relative to pre-2521 behavior.
+    _AVAILABLE_ADAPTERS_TOP_K = int(  # noqa: N806 — env-derived constant
+        _os_chat_env.environ.get("KOSMOS_AVAILABLE_ADAPTERS_TOP_K", "5")
+    )
+
+    def _build_available_adapters_suffix(user_query: str) -> str:  # noqa: C901
+        """Run BM25 against the live registry and emit the citizen-turn
+        ``<available_adapters>`` XML block for the dynamic system-prompt
+        suffix.
+
+        Returns an empty string on any retrieval failure or when the
+        query is blank — fail-open so a flaky retriever does not break
+        the citizen path (FR-002 mirror of the lookup primitive's own
+        fail-open contract). Logged warnings are picked up by the OTEL
+        spans Spec 028 already wires.
+        """
+        q = (user_query or "").strip()
+        if not q:
+            return ""
+        try:
+            from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
+            from kosmos.tools.search import search  # noqa: PLC0415
+
+            registry = cast("ToolRegistry", _ensure_tool_registry())
+            candidates = search(
+                query=q,
+                bm25_index=registry.bm25_index,
+                registry=registry,
+                top_k=_AVAILABLE_ADAPTERS_TOP_K,
+            )
+        except Exception:
+            logger.exception("BM25 retrieval failed for '%s'", q[:80])
+            return ""
+        if not candidates:
+            return ""
+        # Build a compact, LLM-readable block.
+        #
+        # Spec 2521 (2026-05-02) — emit per-field schema signatures so the
+        # LLM can fill ``params`` against each adapter's actual REST shape.
+        # The previous suffix only carried ``search_hint`` and assumed the
+        # LLM could "infer params from search_hint" — K-EXAONE on FriendliAI
+        # consistently invented ``{"location": "...", "date": "..."}`` style
+        # payloads which fail every adapter's pydantic validation
+        # (``Invalid parameters for tool``). Rendering each field with its
+        # type + required flag + truncated description gives K-EXAONE
+        # enough signal to call e.g. ``{"lat": 37.5, "lon": 129.0,
+        # "base_date": "20260502", "base_time": "0500"}`` correctly.
+        lines: list[str] = [
+            f'<available_adapters query="{q[:120]}">',
+            f"백엔드 BM25 후보 (top {len(candidates)}, 점수 내림차순):",
+            "",
+        ]
+        for c in candidates:
+            hint = (c.search_hint or "").strip()
+            if len(hint) > 90:
+                hint = hint[:87] + "..."
+            lines.append(f"- {c.tool_id} [{c.score:.2f}] — {hint or '(설명 없음)'}")
+            # Render the adapter's llm_description (usage prose, ORDERING RULE,
+            # prerequisites, worked examples) so the LLM sees the complete
+            # "먼저 resolve_location 호출" ordering rule.
+            # Bug: without this, the per-field description for nx is truncated
+            # and K-EXAONE skips resolve_location, producing invalid_params.
+            if c.llm_description:
+                desc_text = c.llm_description.strip().replace("\n", " ")
+                # Emit at most 300 chars — enough for the ORDERING RULE and
+                # worked example without blowing the per-turn token budget.
+                if len(desc_text) > 300:
+                    desc_text = desc_text[:297] + "..."
+                lines.append(f"  설명: {desc_text}")
+            # Render input schema signature so the LLM sees exact field
+            # names + types + required flags + (truncated) descriptions.
+            # Field desc limit raised 80→120 so nx/ny examples fit untruncated.
+            schema = c.input_schema_json or {}
+            properties = schema.get("properties") if isinstance(schema, dict) else None
+            required: set[str] = set()
+            raw_required = schema.get("required") if isinstance(schema, dict) else None
+            if isinstance(raw_required, list):
+                required = {str(item) for item in raw_required if isinstance(item, str)}
+            # If this adapter requires KMA grid coords, emit an explicit
+            # ordering directive so K-EXAONE knows it must call
+            # resolve_location BEFORE this lookup (the key ordering rule).
+            needs_kma_grid = "nx" in required and "ny" in required
+            if needs_kma_grid:
+                lines.append(
+                    "  [ORDERING] nx/ny 는 KMA 격자 좌표 — 이 도구 호출 전에 반드시"
+                    " resolve_location(query='<지역명>') 을 먼저 호출해 nx/ny 를 받아야 합니다."
+                )
+            if isinstance(properties, dict) and properties:
+                for fname, fmeta in properties.items():
+                    if not isinstance(fmeta, dict):
+                        continue
+                    ftype = fmeta.get("type") or fmeta.get("anyOf") or "any"
+                    if isinstance(ftype, list):
+                        ftype = "|".join(str(t) for t in ftype)
+                    fdesc = str(fmeta.get("description", "")).strip().replace("\n", " ")
+                    if len(fdesc) > 120:
+                        fdesc = fdesc[:117] + "..."
+                    pat = fmeta.get("pattern")
+                    pat_part = f" pattern={pat!r}" if isinstance(pat, str) else ""
+                    enum = fmeta.get("enum")
+                    enum_part = f" enum={enum}" if isinstance(enum, list) and len(enum) <= 8 else ""
+                    flag = "필수" if fname in required else "선택"
+                    lines.append(
+                        f"    · {fname} ({ftype}, {flag}{pat_part}{enum_part})"
+                        + (f" — {fdesc}" if fdesc else "")
+                    )
+        lines.append("")
+        lines.append(
+            '규칙: 위 목록의 tool_id 만 lookup({"tool_id":"...", "params":{...}})'
+            " 으로 호출하세요. 동일 tool_id 를 한 turn 안에서 반복 호출하지 마세요."
+        )
+        lines.append(
+            'params 는 위에 표시된 정확한 필드명만 사용하세요 — 일반적인 "location"/'
+            '"date" 같은 추측 키는 모든 어댑터에서 invalid_params 로 거부됩니다.'
+        )
+        lines.append(
+            "BM25 도구 발견은 백엔드 internal 기능 — lookup(mode='search') 같은 호출은"
+            " 무효화됩니다 (Spec 2521)."
+        )
+        lines.append("</available_adapters>")
+        return "\n".join(lines)
+
     # Spec 1978 T053 — eager-import the Mock adapter tree so every adapter
     # self-registers with its primitive dispatcher before the first chat
     # turn arrives. Equivalent to plan.md "Mock adapter activation"; failure
@@ -1028,6 +1179,18 @@ async def run(  # noqa: C901
             # narrowing complaints.
             raw: Any
 
+            # Spec 2521 (2026-05-01) — open an outbound HTTP trace scope so
+            # any ``data.go.kr`` / agency call the adapter makes is captured
+            # and attached to the envelope as ``outbound_traces``. The TUI's
+            # verbose render reads this field to show the citizen / operator
+            # the exact request/response JSON.
+            from kosmos.tools._outbound_trace import (  # noqa: PLC0415
+                consume_outbound_capture,
+                start_outbound_capture,
+            )
+
+            _outbound_trace_token = start_outbound_capture()
+
             try:
                 if fname == "verify":
                     from kosmos.primitives.verify import (  # noqa: PLC0415
@@ -1046,45 +1209,66 @@ async def run(  # noqa: C901
                     }
 
                 elif fname == "lookup":
+                    # Spec 2521 (2026-05-01): the LLM-visible ``lookup``
+                    # surface is fetch-only. BM25 adapter discovery is a
+                    # backend-internal mechanism (auto-injected into the
+                    # ``<available_adapters>`` dynamic suffix) — the LLM
+                    # MUST NOT see "search" as a callable mode. Stale
+                    # ``mode='search'`` payloads from older sessions are
+                    # rejected with a typed LookupError so the agentic
+                    # loop continues without painting an "internal
+                    # function as tool" UI block.
+                    from kosmos.tools.errors import LookupErrorReason  # noqa: PLC0415
                     from kosmos.tools.lookup import lookup  # noqa: PLC0415
                     from kosmos.tools.models import (  # noqa: PLC0415
+                        LookupError,  # noqa: A004 — Pydantic model named LookupError; intentional shadow with module-level alias not feasible in narrow import scope
                         LookupFetchInput,
-                        LookupSearchInput,
                     )
 
-                    mode = str(args_obj.get("mode", "search"))
-                    # Use the session-scoped singleton populated by
-                    # register_all_tools (Spec 1634). Constructing a fresh
-                    # empty ToolRegistry / ToolExecutor here would trigger
-                    # reason="empty_registry" for every search and
-                    # "unknown_tool" for every fetch — the very bug fixed
-                    # on 2026-05-01.
-                    registry = _ensure_tool_registry()
-                    executor = _ensure_tool_executor()
-                    inp_lk: LookupSearchInput | LookupFetchInput
-                    if mode == "search":
-                        inp_lk = LookupSearchInput(
-                            mode="search",
-                            query=str(args_obj.get("query", "")),
-                            domain=cast("Any", args_obj.get("domain")),
-                            top_k=cast("Any", args_obj.get("top_k")),
+                    requested_mode = args_obj.get("mode")
+                    if requested_mode is not None and str(requested_mode) != "fetch":
+                        logger.warning(
+                            "lookup: rejected mode=%r — LLM-visible surface is "
+                            "fetch-only since Spec 2521. Skipping dispatch.",
+                            requested_mode,
                         )
+                        raw = LookupError(
+                            kind="error",
+                            reason=LookupErrorReason.invalid_params,
+                            message=(
+                                "lookup(mode='search') 는 백엔드 internal 기능입니다 — "
+                                "직접 호출하지 마십시오. 시스템 프롬프트의 "
+                                "<available_adapters> 에서 tool_id 를 골라 fetch 호출만 사용하세요."
+                            ),
+                            retryable=False,
+                        )
+                        result_payload = {
+                            "kind": "lookup",
+                            "result": _serialize_primitive_result(raw),
+                        }
                     else:
+                        # Use the session-scoped singleton populated by
+                        # register_all_tools (Spec 1634). Constructing a fresh
+                        # empty ToolRegistry / ToolExecutor here would trigger
+                        # reason="empty_registry" for every fetch — the very
+                        # bug fixed on 2026-05-01.
+                        registry = _ensure_tool_registry()
+                        executor = _ensure_tool_executor()
                         inp_lk = LookupFetchInput(
                             mode="fetch",
                             tool_id=str(args_obj.get("tool_id", "")),
                             params=cast("dict[str, object]", args_obj.get("params") or {}),
                         )
-                    raw = await lookup(
-                        inp_lk,
-                        registry=registry,
-                        executor=executor,
-                        session_identity=session_id,
-                    )
-                    result_payload = {
-                        "kind": "lookup",
-                        "result": _serialize_primitive_result(raw),
-                    }
+                        raw = await lookup(
+                            inp_lk,
+                            registry=registry,
+                            executor=executor,
+                            session_identity=session_id,
+                        )
+                        result_payload = {
+                            "kind": "lookup",
+                            "result": _serialize_primitive_result(raw),
+                        }
 
                 elif fname == "resolve_location":
                     from kosmos.tools.models import ResolveLocationInput  # noqa: PLC0415
@@ -1158,6 +1342,13 @@ async def run(  # noqa: C901
                     "error": dispatch_error,
                     "tool_id": str(args_obj.get("tool_id", fname)),
                 }
+
+            # Drain the outbound HTTP trace buffer + attach to the envelope.
+            outbound_traces = consume_outbound_capture(_outbound_trace_token)
+            if outbound_traces:
+                # Pydantic model_dump → JSON-serialisable dict; envelope
+                # accepts the extra field via ``extra="allow"``.
+                result_payload["outbound_traces"] = [t.model_dump() for t in outbound_traces]
 
             # Build ToolResultEnvelope + ToolResultFrame.
             # ToolResultEnvelope uses extra="allow" so extra payload fields are kept.
@@ -1296,6 +1487,29 @@ async def run(  # noqa: C901
                 "필요하면 도구 (예: kma_short_term_forecast) 를 호출해서 "
                 "실제 데이터를 받아 응답에 인용합니다.\n"
             )
+
+            # Spec 2521 (2026-05-01) — BM25 adapter discovery is a backend
+            # function, NOT an LLM-callable tool. Run the search against the
+            # latest citizen utterance and inject the top-K candidates into
+            # the dynamic suffix as ``<available_adapters>``. The LLM picks
+            # a tool_id from this block and calls ``lookup({tool_id, params})``
+            # — search-mode calls were the source of the "● lookup(search:)"
+            # phantom tool-UI noise that user surfaced via Layer 5 frame
+            # capture (specs/2521 frames/raw.cast frame_0160 onwards).
+            try:
+                latest_user_utt = ""
+                for m in reversed(frame.messages):
+                    if m.role == "user" and m.content:
+                        latest_user_utt = m.content
+                        break
+                if latest_user_utt:
+                    suffix_block = _build_available_adapters_suffix(latest_user_utt)
+                    if suffix_block:
+                        augmented_system = augmented_system + "\n\n" + suffix_block + "\n"
+            except Exception:  # noqa: BLE001 — fail-open per FR-002
+                logger.exception(
+                    "available_adapters auto-inject failed — continuing without suffix"
+                )
         llm_messages: list[LLMChatMessage] = []
         if augmented_system:
             llm_messages.append(LLMChatMessage(role="system", content=augmented_system))
@@ -1505,7 +1719,20 @@ async def run(  # noqa: C901
             loop = asyncio.get_event_loop()
             issued_calls: list[tuple[str, str]] = []  # (call_id, name)
             assistant_tool_calls: list[LLMToolCall] = []
-            for idx in sorted(tool_call_buf.keys()):
+            tool_call_indices = sorted(tool_call_buf.keys())
+            if len(tool_call_indices) > 1:
+                selected_idx = tool_call_indices[0]
+                dropped = tool_call_indices[1:]
+                logger.warning(
+                    "_handle_chat_request: received %d tool calls in one LLM turn; "
+                    "dispatching index %s only and dropping indices %s to enforce "
+                    "one observed tool result per turn",
+                    len(tool_call_indices),
+                    selected_idx,
+                    dropped,
+                )
+                tool_call_indices = [selected_idx]
+            for idx in tool_call_indices:
                 slot = tool_call_buf[idx]
                 call_id = slot["id"] or str(uuid.uuid4())
                 try:

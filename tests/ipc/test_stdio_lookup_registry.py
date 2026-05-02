@@ -212,17 +212,22 @@ async def _run_lookup_search(
 
 
 @pytest.mark.asyncio
-async def test_dispatch_primitive_lookup_uses_populated_registry(
+async def test_dispatch_primitive_lookup_rejects_legacy_search_mode(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Regression: ``_dispatch_primitive`` lookup branch must hit the
-    register_all_tools-populated singleton registry, not a fresh empty one.
+    """Spec 2521 (2026-05-01): the LLM-visible ``lookup`` surface is
+    fetch-only.  BM25 adapter discovery is a backend-internal mechanism
+    (auto-injected into the system prompt's ``<available_adapters>``
+    dynamic suffix) — it is no longer a callable mode.
 
-    The fake LLM emits ``lookup(mode="search", query="부산 날씨")``. After the
-    fix, the dispatcher routes this through the same ToolRegistry that
-    ``register_all_tools`` initialised, so BM25 surfaces KMA forecast
-    adapters with reason="ok". Before the fix the envelope contained
-    reason="empty_registry" and an empty candidate list.
+    Older fake-client harnesses emit ``lookup(mode="search", query=...)``
+    (mirroring how K-EXAONE used to invoke the surface).  The dispatcher
+    must refuse such calls with a typed ``LookupError`` whose reason is
+    ``invalid_params``, so the agentic loop continues without painting a
+    phantom tool-UI block.
+
+    Replaces the pre-2521 regression test that asserted reason=='ok' on
+    a search call — that contract is gone by design.
     """
     frame = _make_chat_request("부산 날씨 알려줘")
     buf = await _run_lookup_search(frame, monkeypatch)
@@ -240,23 +245,11 @@ async def test_dispatch_primitive_lookup_uses_populated_registry(
     envelope = lookup_results[0]["envelope"]
     inner = envelope.get("result")
     assert isinstance(inner, dict), f"envelope.result must be a dict, got {type(inner)}"
-    assert inner.get("kind") == "search", (
-        f"expected result.kind='search', got {inner.get('kind')!r}; full inner={inner!r}"
+    assert inner.get("kind") == "error", (
+        f"Spec 2521: legacy mode='search' calls must surface as a "
+        f"LookupError envelope, got kind={inner.get('kind')!r}; "
+        f"full inner={inner!r}"
     )
-    assert inner.get("reason") == "ok", (
-        f"REGRESSION: dispatcher returned reason={inner.get('reason')!r}. "
-        f"This means _dispatch_primitive is using an empty ToolRegistry "
-        f"(stdio.py bug fixed 2026-05-01)."
-    )
-
-    candidates = inner.get("candidates") or []
-    assert candidates, (
-        f"BM25 returned no candidates for '부산 날씨' query. "
-        f"Either the registry is still empty, or BM25 indexing broke. "
-        f"total_registry_size={inner.get('total_registry_size')}"
-    )
-
-    candidate_ids = [c.get("tool_id") for c in candidates]
-    assert any("kma" in (cid or "") for cid in candidate_ids), (
-        f"expected at least one KMA adapter for weather query, got candidate_ids={candidate_ids}"
+    assert inner.get("reason") == "invalid_params", (
+        f"Spec 2521: rejection reason must be 'invalid_params', got {inner.get('reason')!r}."
     )

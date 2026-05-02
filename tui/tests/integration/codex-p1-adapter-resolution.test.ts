@@ -147,7 +147,7 @@ describe('US2 Scenario 1: nmc_emergency_search resolves through synced manifest'
     // LookupPrimitive.validateInput must resolve nmc_emergency_search (Tier 1 path).
     const ctx = makeContext() // no internal tools with this name
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'nmc_emergency_search', params: {} },
+      { tool_id: 'nmc_emergency_search', params: {} },
       ctx,
     )
     expect(result.result).toBe(true)
@@ -185,7 +185,7 @@ describe('US2 Scenario 2: WebFetch resolves through internal-tools fallback', ()
     // Tier 2: context.options.tools contains WebFetch (internal tool).
     const ctx = makeContext(['WebFetch'])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'WebFetch', params: {} },
+      { tool_id: 'WebFetch', params: {} },
       ctx,
     )
 
@@ -262,7 +262,7 @@ describe('US2 Scenario 4: bogus tool_id fails with named AdapterNotFound', () =>
     const BOGUS_ID = 'totally_bogus_nonexistent_adapter_xyz'
 
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: BOGUS_ID, params: {} },
+      { tool_id: BOGUS_ID, params: {} },
       ctx,
     )
 

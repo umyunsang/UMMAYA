@@ -38,3 +38,12 @@ export async function getAnthropicClient(_opts: Record<string, unknown>): Promis
     },
   }
 }
+
+// SWAP/anti-anthropic-1p(2521): byte-copied tui/src/services/api/claude.ts
+// imports `getAnthropicClient`. KOSMOS routes LLM calls via stdio IPC bridge
+// (Spec 1978) and never instantiates an Anthropic client directly. Stub
+// returns null so the byte-copy's import resolves at link time; the zero-
+// callers status guarantees this null is never dereferenced.
+export function getAnthropicClient(..._args: unknown[]): null {
+  return null
+}

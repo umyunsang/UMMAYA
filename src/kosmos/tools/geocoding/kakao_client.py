@@ -23,6 +23,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ConfigurationError, _require_env
 
 logger = logging.getLogger(__name__)
@@ -206,7 +207,7 @@ async def search_address(
 
     own_client = client is None
     if own_client:
-        client = httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT)
+        client = traced_async_client(timeout=_DEFAULT_TIMEOUT)
 
     try:
         assert client is not None

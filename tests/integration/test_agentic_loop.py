@@ -629,23 +629,20 @@ async def test_five_turn_agentic_loop(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 # ---------------------------------------------------------------------------
-# T017 (US2) — Three tool_calls in one turn, paired correctly
+# T017 follow-up — multi-call LLM turn coerced to one visible dispatch
 # ---------------------------------------------------------------------------
 
 
 class _ThreeToolsInOneTurnLLMClient(_BaseFakeLLMClient):
-    """LLM that emits 3 simultaneous tool_call_deltas in Turn 1, then answers in Turn 2.
+    """LLM that emits 3 simultaneous tool calls, then a follow-up single call.
 
     Turn 1: three tool_call_delta events at index 0, 1, 2 — each for name='lookup'
             with a distinct query argument. Then done.
-    Turn 2: one content_delta carrying the final answer text. Then done.
+    Turn 2: one follow-up tool_call_delta after observing the first result.
+    Turn 3: one content_delta carrying the final answer text. Then done.
 
-    Each tool_call_delta carries its own unique tool_call_id so the backend's
-    tool_call_buf separates the three calls by index, wires 3 distinct Futures,
-    and dispatches 3 independent _dispatch_primitive tasks.
-
-    US2 acceptance scenario 3: every invocation has its own transcript record
-    and every record has a matching result record — no orphans (FR-009).
+    The backend must expose only the first Turn-1 call to the TUI/context so
+    results paint before any additional tool request.
     """
 
     recorded_calls: list[dict[str, Any]] = []
@@ -657,6 +654,7 @@ class _ThreeToolsInOneTurnLLMClient(_BaseFakeLLMClient):
         f"call-t17-{uuid.uuid4().hex[:12]}",
         f"call-t17-{uuid.uuid4().hex[:12]}",
     ]
+    _followup_call_id: str = f"call-t17-followup-{uuid.uuid4().hex[:12]}"
 
     def __init__(self, config: Any) -> None:
         super().__init__(config)
@@ -686,14 +684,37 @@ class _ThreeToolsInOneTurnLLMClient(_BaseFakeLLMClient):
                     tool_call_index=idx,
                     tool_call_id=call_id,
                     function_name="lookup",
-                    function_args_delta=f'{{"mode":"search","query":"{query}"}}',
+                    function_args_delta=json.dumps(
+                        {
+                            "mode": "fetch",
+                            "tool_id": "nmc_emergency_search",
+                            "params": {"query": query},
+                        },
+                        ensure_ascii=False,
+                    ),
                 )
             yield StreamEvent(type="done")
+        elif turn == 2:
+            yield StreamEvent(
+                type="tool_call_delta",
+                tool_call_index=0,
+                tool_call_id=type(self)._followup_call_id,
+                function_name="lookup",
+                function_args_delta=json.dumps(
+                    {
+                        "mode": "fetch",
+                        "tool_id": "nmc_emergency_search",
+                        "params": {"query": "응급실 서초"},
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+            yield StreamEvent(type="done")
         else:
-            # Turn 2+: emit the final answer after all 3 tool_results are back.
+            # Turn 3+: emit the final answer after sequential tool_results.
             yield StreamEvent(
                 type="content_delta",
-                content="근처 응급실 3곳을 찾았습니다. 강남, 서초, 송파 응급실 정보를 확인하세요.",
+                content="순차 조회 결과로 근처 응급실 정보를 확인했습니다.",
             )
             yield StreamEvent(type="done")
 
@@ -704,22 +725,10 @@ class _ThreeToolsInOneTurnLLMClient(_BaseFakeLLMClient):
 
 
 @pytest.mark.asyncio
-async def test_three_tools_in_one_turn_paired_correctly(
+async def test_multi_tool_turn_is_coerced_to_one_visible_dispatch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Backend emits 3 tool_calls in one turn → 3 tool_results paired by call_id.
-
-    Validates US2 acceptance scenario 3: every invocation has its own
-    transcript record + every record has a matching result record.
-
-    Assertions:
-    1. Exactly 3 tool_call frames with unique call_ids.
-    2. Exactly 3 tool_result frames with unique call_ids.
-    3. Pairing: each tool_call.call_id has a matching tool_result.call_id.
-    4. All 3 tool_call frames carry name='lookup' (tool_call_index 0, 1, 2).
-    5. A final assistant_chunk containing the Turn-2 answer text was emitted.
-    6. No orphan: every tool_result.call_id matches a prior tool_call.call_id.
-    """
+    """Backend exposes one tool call per LLM turn even if the model emits many."""
     # Reset class-level state before test so call_ids are fresh.
     _ThreeToolsInOneTurnLLMClient._class_turn = 0
     _ThreeToolsInOneTurnLLMClient._call_ids = [
@@ -727,6 +736,7 @@ async def test_three_tools_in_one_turn_paired_correctly(
         f"call-t17-{uuid.uuid4().hex[:12]}",
         f"call-t17-{uuid.uuid4().hex[:12]}",
     ]
+    _ThreeToolsInOneTurnLLMClient._followup_call_id = f"call-t17-followup-{uuid.uuid4().hex[:12]}"
 
     frame = _make_chat_request(
         prompt="강남, 서초, 송파 응급실 각각 알려주세요",
@@ -784,61 +794,38 @@ async def test_three_tools_in_one_turn_paired_correctly(
     emitted = buf.as_frames()
     assert emitted, "No IPC frames were emitted — harness or handler may have failed"
 
-    # --- Assertion 1: exactly 3 distinct tool_call frames ------------------
     tool_call_frames = [f for f in emitted if f.get("kind") == "tool_call"]
     tool_call_ids: list[str] = [
         str(f.get("call_id", "")) for f in tool_call_frames if f.get("call_id")
     ]
-    unique_call_ids: set[str] = set(tool_call_ids)
-    assert len(unique_call_ids) == 3, (
-        f"Expected exactly 3 distinct tool_call frames (one per parallel call). "
-        f"Found {len(unique_call_ids)} distinct call_ids: {sorted(unique_call_ids)}. "
-        f"Total tool_call frames: {len(tool_call_frames)}."
-    )
-
-    # --- Assertion 2: exactly 3 distinct tool_result frames ----------------
     tool_result_frames = [f for f in emitted if f.get("kind") == "tool_result"]
     result_call_ids: list[str] = [
         str(f.get("call_id", "")) for f in tool_result_frames if f.get("call_id")
     ]
-    unique_result_ids: set[str] = set(result_call_ids)
-    assert len(unique_result_ids) == 3, (
-        f"Expected exactly 3 distinct tool_result frames (one per parallel call). "
-        f"Found {len(unique_result_ids)} distinct call_ids: {sorted(unique_result_ids)}. "
-        f"Total tool_result frames: {len(tool_result_frames)}."
-    )
+    expected_call_ids = [
+        _ThreeToolsInOneTurnLLMClient._call_ids[0],
+        _ThreeToolsInOneTurnLLMClient._followup_call_id,
+    ]
+    assert tool_call_ids == expected_call_ids
+    assert result_call_ids == expected_call_ids
+    assert _ThreeToolsInOneTurnLLMClient._call_ids[1] not in tool_call_ids
+    assert _ThreeToolsInOneTurnLLMClient._call_ids[2] not in tool_call_ids
+    assert call_counter["n"] == 2
 
-    # --- Assertion 3: every tool_call.call_id has a matching tool_result ---
-    for cid in unique_call_ids:
-        assert cid in unique_result_ids, (
-            f"tool_call.call_id={cid!r} has no matching tool_result frame. "
-            f"Pairing violation: orphan tool_call detected (FR-009). "
-            f"Result call_ids seen: {sorted(unique_result_ids)}"
-        )
+    frame_kinds = [f.get("kind") for f in emitted]
+    first_call_idx = frame_kinds.index("tool_call")
+    first_result_idx = frame_kinds.index("tool_result")
+    second_call_idx = frame_kinds.index("tool_call", first_call_idx + 1)
+    second_result_idx = frame_kinds.index("tool_result", first_result_idx + 1)
+    assert first_call_idx < first_result_idx < second_call_idx < second_result_idx
 
-    # --- Assertion 4: all tool_call frames carry name='lookup' -------------
-    lookup_call_frames = [f for f in tool_call_frames if f.get("name") == "lookup"]
-    assert len(lookup_call_frames) == 3, (
-        f"Expected all 3 tool_call frames to carry name='lookup'. "
-        f"Actual names: {[f.get('name') for f in tool_call_frames]}"
-    )
-
-    # --- Assertion 5: assistant_chunk with Turn-2 answer was emitted -------
     assistant_chunks = [f for f in emitted if f.get("kind") == "assistant_chunk"]
     assert assistant_chunks, (
-        "No assistant_chunk frames emitted after the 3 tool_results. "
-        "The agentic loop must emit a Turn-2 final answer."
+        "No assistant_chunk frames emitted after sequential tool_results. "
+        "The agentic loop must emit a final answer."
     )
     all_delta_text = "".join(str(f.get("delta", "")) for f in assistant_chunks if f.get("delta"))
-    assert "근처 응급실" in all_delta_text or "응급실" in all_delta_text, (
-        f"Turn-2 final answer text not found in assistant_chunk deltas. "
+    assert "순차 조회" in all_delta_text or "응급실" in all_delta_text, (
+        f"Final answer text not found in assistant_chunk deltas. "
         f"Concatenated deltas: {all_delta_text!r}"
     )
-
-    # --- Assertion 6: no orphan tool_results (every result has a prior call) --
-    for rid in unique_result_ids:
-        assert rid in unique_call_ids, (
-            f"tool_result.call_id={rid!r} has no matching prior tool_call frame. "
-            f"Orphan tool_result detected (FR-009). "
-            f"tool_call call_ids seen: {sorted(unique_call_ids)}"
-        )

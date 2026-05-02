@@ -83,3 +83,5 @@ tui/test-output/
 specs/1979-plugin-dx-tui-integration/smoke-1979.gif
 specs/1979-plugin-dx-tui-integration/smoke-1979.mp4
 specs/1979-plugin-dx-tui-integration/debug-*.png
+specs/*/frames-*/
+specs/*/scenes-*/

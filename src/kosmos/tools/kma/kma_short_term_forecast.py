@@ -24,6 +24,7 @@ from typing import Any, Literal, cast
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ConfigurationError, ToolExecutionError, _require_env
 from kosmos.tools.executor import ToolExecutor
 from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
@@ -300,7 +301,7 @@ async def _call(
 
     own_client = client is None
     if own_client:
-        client = httpx.AsyncClient(timeout=30.0)
+        client = traced_async_client(timeout=30.0)
 
     try:
         assert client is not None  # noqa: S101
@@ -409,5 +410,16 @@ def register(registry: ToolRegistry, executor: ToolExecutor) -> None:
     from kosmos.tools.executor import AdapterFn
 
     registry.register(KMA_SHORT_TERM_FORECAST_TOOL)
-    executor.register_adapter("kma_short_term_forecast", cast(AdapterFn, _call))
+
+    # SWAP/llm-provider(2521): wrap forecast output as LookupRecord so
+    # envelope.normalize() accepts it (5-variant LookupOutput discriminator).
+    async def _kma_stf_adapter(inp: BaseModel) -> dict[str, object]:
+        # AdapterFn signature is BaseModel; the dispatcher narrows by
+        # tool_id before invoking, so the runtime type is always
+        # KmaShortTermForecastInput.  cast keeps mypy --strict happy
+        # without a defensive isinstance() at the hot path.
+        raw = await _call(cast("KmaShortTermForecastInput", inp))
+        return {"kind": "record", "item": raw}
+
+    executor.register_adapter("kma_short_term_forecast", cast(AdapterFn, _kma_stf_adapter))
     logger.info("Registered tool: kma_short_term_forecast")

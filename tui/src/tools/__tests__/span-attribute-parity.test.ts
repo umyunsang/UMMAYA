@@ -205,7 +205,7 @@ describe('LookupPrimitive.validateInput — kosmosCitations slot shape', () => {
   test('mode=fetch with valid adapter: result=true and kosmosCitations populated', async () => {
     const ctx = makeContext([NMC_ADAPTER_FIXTURE])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'nmc_emergency_search', params: {} },
+      { tool_id: 'nmc_emergency_search', params: {} },
       ctx,
     )
     expect(result.result).toBe(true)
@@ -228,7 +228,7 @@ describe('LookupPrimitive.validateInput — kosmosCitations slot shape', () => {
   test('mode=fetch with unknown tool_id: result=false, errorCode=AdapterNotFound', async () => {
     const ctx = makeContext([NMC_ADAPTER_FIXTURE])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'nonexistent_adapter', params: {} },
+      { tool_id: 'nonexistent_adapter', params: {} },
       ctx,
     )
     expect(result.result).toBe(false)
@@ -242,7 +242,7 @@ describe('LookupPrimitive.validateInput — kosmosCitations slot shape', () => {
   test('mode=fetch with citation-missing adapter: result=false, errorCode=CitationMissing', async () => {
     const ctx = makeContext([NO_POLICY_ADAPTER])
     const result = await LookupPrimitive.validateInput(
-      { mode: 'fetch', tool_id: 'no_policy_adapter', params: {} },
+      { tool_id: 'no_policy_adapter', params: {} },
       ctx,
     )
     expect(result.result).toBe(false)
@@ -250,17 +250,11 @@ describe('LookupPrimitive.validateInput — kosmosCitations slot shape', () => {
     expect(result.errorCode).toBe(PrimitiveErrorCode.CitationMissing)
   })
 
-  test('mode=search: result=true, no kosmosCitations (BM25 path, no adapter resolution)', async () => {
-    const ctx = makeContext([NMC_ADAPTER_FIXTURE])
-    const result = await LookupPrimitive.validateInput(
-      { mode: 'search', query: '응급실' },
-      ctx,
-    )
-    expect(result.result).toBe(true)
-    // Search mode skips adapter resolution — no citation expected.
-    const ctxWithCitations = ctx as unknown as { kosmosCitations?: AdapterCitation[] }
-    expect(ctxWithCitations.kosmosCitations).toBeUndefined()
-  })
+  // Spec 2521 (2026-05-01): the "mode=search bypasses citation" test
+  // was deleted. BM25 adapter discovery is now a backend-internal
+  // mechanism (auto-injected into the system prompt's
+  // <available_adapters> dynamic suffix); it has no LLM-callable mode
+  // and therefore no citation-skip path to assert here.
 })
 
 // ---------------------------------------------------------------------------
@@ -269,20 +263,10 @@ describe('LookupPrimitive.validateInput — kosmosCitations slot shape', () => {
 // This group confirms the input schema preserves the source fields.
 // ---------------------------------------------------------------------------
 
-describe('span attribute source fields — input schema preserves tool.id and tool.mode', () => {
-  test('fetch mode input carries tool_id and mode (source of kosmos.tool.id / kosmos.tool.mode)', async () => {
-    const input = { mode: 'fetch' as const, tool_id: 'nmc_emergency_search', params: {} }
-    // These values are what a span emitter would read to set:
-    //   span.setAttribute('kosmos.tool.id', input.tool_id)
-    //   span.setAttribute('kosmos.tool.mode', input.mode)
+describe('span attribute source fields — Spec 2521 fetch-only input schema', () => {
+  test('input carries tool_id (source of kosmos.tool.id span attribute)', () => {
+    const input = { tool_id: 'nmc_emergency_search', params: {} }
     expect(input.tool_id).toBe('nmc_emergency_search')
-    expect(input.mode).toBe('fetch')
-  })
-
-  test('search mode input carries mode but no tool_id (mode=search does not route to an adapter)', () => {
-    const input = { mode: 'search' as const, query: '응급실' }
-    expect(input.mode).toBe('search')
-    // tool_id is absent in search mode — a span emitter would omit kosmos.tool.id.
-    expect('tool_id' in input).toBe(false)
+    expect('mode' in input).toBe(false)
   })
 })

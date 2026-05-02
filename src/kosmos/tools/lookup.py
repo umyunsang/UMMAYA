@@ -145,6 +145,74 @@ async def _lookup_fetch(
             retryable=False,
         )
 
+    # SWAP/llm-provider(2521): resolve_location bypass.
+    # resolve_location's 6-variant ResolveLocationOutput union (CoordResult /
+    # AdmCodeResult / AddressResult / POIResult / ResolveBundle / ResolveError)
+    # does NOT match ToolExecutor.invoke()'s 5-variant LookupOutput envelope
+    # contract — handing it to executor.invoke() makes envelope.normalize()
+    # raise EnvelopeNormalizationError → "Response processing failed". The
+    # mvp_surface.py docstring already declared this: "These tools are NOT
+    # bound to executor adapters — their invocation is handled directly by
+    # the KOSMOS orchestrator loop". Citizen-visible symptom without this
+    # bypass: 7-turn lookup() spam ending in two unrelated upstream errors
+    # because the LLM never gets a usable lat/lon back (probe-traced
+    # 2026-05-01). Returning a LookupRecord wraps the bundle so the existing
+    # LookupOutput consumers stay unchanged; the bundle's typed fields
+    # (coords.lat / coords.lon / adm_cd) are preserved inside record.fields.
+    if inp.tool_id == "resolve_location":
+        from datetime import UTC, datetime
+
+        from kosmos.tools.models import (
+            LookupMeta,
+            LookupRecord,
+            ResolveError,
+        )
+        from kosmos.tools.models import (
+            ResolveLocationInput as _ResolveLocationInput,
+        )
+        from kosmos.tools.resolve_location import resolve_location as _resolve_fn
+
+        try:
+            resolve_inp = _ResolveLocationInput.model_validate(inp.params or {})
+        except Exception as exc:
+            return LookupError(
+                kind="error",
+                reason=LookupErrorReason.invalid_params,
+                message=f"resolve_location: input validation failed: {exc}",
+                retryable=False,
+            )
+        try:
+            resolve_result = await _resolve_fn(resolve_inp)
+        except Exception as exc:
+            return LookupError(
+                kind="error",
+                reason=LookupErrorReason.upstream_unavailable,
+                message=f"resolve_location: {type(exc).__name__}: {exc}",
+                retryable=False,
+            )
+
+        if isinstance(resolve_result, ResolveError):
+            return LookupError(
+                kind="error",
+                reason=LookupErrorReason.upstream_unavailable,
+                message=f"resolve_location: {resolve_result.message}",
+                retryable=False,
+            )
+
+        # Wrap the typed ResolveLocationOutput into a LookupRecord so the
+        # downstream agentic-loop code path (which expects a LookupOutput
+        # variant) keeps working. The original bundle is in record.fields.
+        return LookupRecord(
+            kind="record",
+            item=resolve_result.model_dump(),
+            meta=LookupMeta(
+                source="resolve_location",
+                fetched_at=datetime.now(tz=UTC),
+                request_id=str(uuid.uuid4()),
+                elapsed_ms=0,
+            ),
+        )
+
     request_id = str(uuid.uuid4())
 
     # FR-018: annotate the current execute_tool span with kosmos.tool.adapter

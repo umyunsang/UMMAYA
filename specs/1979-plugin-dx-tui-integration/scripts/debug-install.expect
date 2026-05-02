@@ -1,0 +1,38 @@
+#!/usr/bin/env expect -f
+# Spec 1979 L3 debug — diagnostic expect to capture TUI output after
+# /plugin install command. Used to identify the actual rendering of:
+#   1. Whether the slash command is accepted at all
+#   2. What the consent modal looks like (Layer glyph rendering)
+#   3. Whether a PR banner intercepts input
+
+set timeout 45
+
+set spec_dir [file dirname [file dirname [info script]]]
+set log_path "$spec_dir/debug-install.txt"
+
+# Spawn under script(1) so all PTY output is captured.
+spawn script -q $log_path bash -c "cd tui && bun run tui"
+
+# 1. Wait for prompt
+expect {
+  -re ".*KOSMOS.*" { puts "STAGE-1: KOSMOS branding observed" }
+  timeout { puts "FAIL: branding timeout"; exit 1 }
+}
+
+# 2. Sleep 2s before sending — give TUI time to settle past the splash
+sleep 2
+
+# 3. Send the install command
+puts "STAGE-2: sending /plugin install seoul-subway"
+send -- "/plugin install seoul-subway\r"
+
+# 4. Wait 30s with no specific assertion — let the TUI do whatever it does
+puts "STAGE-3: waiting 30s for any output"
+sleep 30
+
+# 5. Send Ctrl-C to gracefully exit
+puts "STAGE-4: sending Ctrl-C to exit"
+send -- "\003"
+sleep 2
+send -- "\003"
+expect eof

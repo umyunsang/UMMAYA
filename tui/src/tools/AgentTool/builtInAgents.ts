@@ -30,3 +30,7 @@ export function getBuiltInAgents(): AgentDefinition[] {
 
   return [GENERAL_PURPOSE_AGENT, STATUSLINE_SETUP_AGENT]
 }
+
+export function areExplorePlanAgentsEnabled(): boolean {
+  return false
+}

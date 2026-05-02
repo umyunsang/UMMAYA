@@ -115,6 +115,11 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     register_mvp_surface(registry)
     import kosmos.tools.mock  # noqa: F401 — registers all mock surfaces in production
 
+    # NOTE: resolve_location is intentionally NOT bound here — its
+    # 6-variant ResolveLocationOutput union is incompatible with
+    # ToolExecutor.invoke()'s LookupOutput envelope normalisation. The
+    # bypass lives in lookup._lookup_fetch (Spec 2521 SWAP/llm-provider).
+
     reg_koroad(registry, executor)
     reg_koroad_hazard(registry, executor)
     reg_kma_alert(registry, executor)

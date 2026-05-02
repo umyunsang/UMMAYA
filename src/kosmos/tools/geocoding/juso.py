@@ -16,6 +16,8 @@ import logging
 
 import httpx
 
+from kosmos.tools._outbound_trace import traced_async_client
+
 logger = logging.getLogger(__name__)
 
 _JUSO_API_URL = "https://business.juso.go.kr/addrlink/addrLinkApi.do"
@@ -50,7 +52,7 @@ async def lookup_adm_cd(
     }
 
     own_client = client is None
-    _client: httpx.AsyncClient = httpx.AsyncClient(timeout=10.0) if own_client else client  # type: ignore[assignment]
+    _client: httpx.AsyncClient = traced_async_client(timeout=10.0) if own_client else client  # type: ignore[assignment]
 
     try:
         resp = await _client.get(_JUSO_API_URL, params=params)
