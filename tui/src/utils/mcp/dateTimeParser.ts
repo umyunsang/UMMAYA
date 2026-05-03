@@ -103,8 +103,13 @@ Parse the user's input into ISO 8601 format. Return ONLY the formatted string, o
 
     return { success: true, value: parsedText }
   } catch (error) {
-    // Log error but don't expose details to user
-    logError(error)
+    // SWAP/codex-p2(2643): suppress AbortError logging — ElicitationDialog
+    // intentionally aborts in-flight parses on every keystroke (Codex P2 review
+    // on PR #2753); only log unexpected failures to avoid filling --hard-fail
+    // logs with normal typing noise. CC byte-copy preserved for non-abort path.
+    if (!(error instanceof Error && error.name === 'AbortError')) {
+      logError(error)
+    }
     return {
       success: false,
       error:
