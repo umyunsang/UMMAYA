@@ -44,9 +44,7 @@ from kosmos.ipc.frame_schema import _BaseFrame
 
 _REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 _REAL_CODEC_PATH = _REPO_ROOT / "tui" / "src" / "ipc" / "codec.ts"
-_DRIFT_FIXTURE_PATH = (
-    _REPO_ROOT / "tests" / "ipc" / "fixtures" / "codec_drift_negative.ts"
-)
+_DRIFT_FIXTURE_PATH = _REPO_ROOT / "tests" / "ipc" / "fixtures" / "codec_drift_negative.ts"
 _DRIFT_ENV_VAR = "KOSMOS_IPC_PARITY_DRIFT_FIXTURE"
 
 
@@ -181,9 +179,7 @@ def _split_into_top_level_statements(text: str) -> list[str]:
             depth_brace += 1
         elif ch == "}":
             depth_brace -= 1
-        at_top_level_comma = (
-            ch == "," and depth_paren == 0 and depth_brace == 0
-        )
+        at_top_level_comma = ch == "," and depth_paren == 0 and depth_brace == 0
         if at_top_level_comma:
             statements.append("".join(current).strip())
             current = []
@@ -357,9 +353,8 @@ def run_codec_envelope_parity_check(codec_path: pathlib.Path | None = None) -> N
         #     so the wire-frame TS validates includes the value.
         # - codec.ts:required=False, Pydantic:required=True           → INCOMPATIBLE
         #     (TS would accept a frame with the field omitted, Python rejects).
-        required_compat = (
-            cd_spec.required == py_spec.required
-            or (cd_spec.required and not py_spec.required)
+        required_compat = cd_spec.required == py_spec.required or (
+            cd_spec.required and not py_spec.required
         )
         assert required_compat, (
             f"codec.ts:{codec_name} required={cd_spec.required} does not match "
@@ -402,9 +397,7 @@ def test_drift_negative_fixture_triggers_failure(monkeypatch: pytest.MonkeyPatch
 
 def test_drift_fixture_file_exists_and_is_test_only() -> None:
     """The drift fixture must exist and carry a forbid-runtime-import header."""
-    assert _DRIFT_FIXTURE_PATH.exists(), (
-        f"Drift fixture not found at {_DRIFT_FIXTURE_PATH}."
-    )
+    assert _DRIFT_FIXTURE_PATH.exists(), f"Drift fixture not found at {_DRIFT_FIXTURE_PATH}."
     text = _DRIFT_FIXTURE_PATH.read_text(encoding="utf-8")
     assert "DO NOT IMPORT" in text or "DO NOT import" in text, (
         "Drift fixture must carry a 'DO NOT IMPORT' header to prevent runtime use."

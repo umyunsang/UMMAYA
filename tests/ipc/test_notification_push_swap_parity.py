@@ -73,8 +73,7 @@ def test_notification_push_docstring_records_cc_parity_finding() -> None:
     )
     # Sanity: docstring also references the alternative CC path.
     assert "useTerminalNotification" in doc, (
-        "Docstring should cite CC's actual notification path "
-        "(`ink/useTerminalNotification.ts`)."
+        "Docstring should cite CC's actual notification path (`ink/useTerminalNotification.ts`)."
     )
 
 
@@ -120,9 +119,7 @@ def test_notification_push_payload_fields_match_expected_set() -> None:
     spec author to update the SWAP justification.
     """
     schema_fields = NotificationPushFrame.model_fields
-    arm_specific = {
-        name for name in schema_fields if name not in _ENVELOPE_FIELDS
-    }
+    arm_specific = {name for name in schema_fields if name not in _ENVELOPE_FIELDS}
     assert arm_specific == _EXPECTED_REQUIRED_FIELDS, (
         f"notification_push arm-payload fields drifted.\n"
         f"  Expected: {sorted(_EXPECTED_REQUIRED_FIELDS)}\n"
@@ -132,9 +129,7 @@ def test_notification_push_payload_fields_match_expected_set() -> None:
     # Each arm-specific field must be required (no default).
     for field_name in _EXPECTED_REQUIRED_FIELDS:
         info = schema_fields[field_name]
-        assert info.is_required(), (
-            f"notification_push.{field_name} must be required (no default)."
-        )
+        assert info.is_required(), f"notification_push.{field_name} must be required (no default)."
 
 
 # ---------------------------------------------------------------------------
