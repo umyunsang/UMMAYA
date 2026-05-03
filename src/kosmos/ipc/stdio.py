@@ -880,6 +880,33 @@ async def run(  # noqa: C901
                             return target_enum
                 return None
 
+            def _resolve_enum_with_names(
+                meta: dict[str, Any], defs: dict[str, Any] | None
+            ) -> list[tuple[Any, str]] | None:
+                """Spec 2522 — agency 자체 코드체계 (KOROAD GugunCode SEOUL_GANGNAM=680
+                등) 의 IntEnum name 을 의미 매핑으로 노출. pydantic JSON schema 의
+                $defs 안 IntEnum 의 'enum' (값) + 'x-enum-varnames' (name) 또는
+                'description' (docstring) 을 묶어서 LLM 에 보여줌.
+                """
+                ref = meta.get("$ref")
+                if not (isinstance(ref, str) and ref.startswith("#/$defs/")):
+                    return None
+                if not isinstance(defs, dict):
+                    return None
+                name = ref.removeprefix("#/$defs/")
+                target = defs.get(name)
+                if not isinstance(target, dict):
+                    return None
+                values = target.get("enum")
+                if not isinstance(values, list):
+                    return None
+                # IntEnum name 추출 — pydantic v2 가 'x-enum-varnames' 또는
+                # 'enumNames' 로 export 하지 않음. 대신 module-level dict 조회.
+                varnames = target.get("x-enum-varnames")
+                if isinstance(varnames, list) and len(varnames) == len(values):
+                    return list(zip(values, varnames, strict=False))
+                return None
+
             if isinstance(properties, dict) and properties:
                 for fname, fmeta in properties.items():
                     if not isinstance(fmeta, dict):
@@ -888,16 +915,22 @@ async def run(  # noqa: C901
                     if isinstance(ftype, list):
                         ftype = "|".join(str(t) for t in ftype)
                     fdesc = str(fmeta.get("description", "")).strip().replace("\n", " ")
-                    if len(fdesc) > 120:
-                        fdesc = fdesc[:117] + "..."
+                    # Spec 2522 — agency 자체 코드체계 (KOROAD 68 시군구 매핑 ≈ 1600
+                    # chars + 기존 description ≈ 600 chars = ~2200 chars / KMA 156
+                    # station 등) 인라인 허용. 일반 도구는 100자 미만이라 영향 X.
+                    if len(fdesc) > 5000:
+                        fdesc = fdesc[:4997] + "..."
                     pat = fmeta.get("pattern")
                     pat_part = f" pattern={pat!r}" if isinstance(pat, str) else ""
                     enum = _resolve_enum(fmeta, defs)
-                    # Threshold raised 8→25 so KOROAD SearchYearCd/SidoCode/
-                    # GugunCode 등 도메인 enum (15-30 values) inline 노출.
-                    enum_part = (
-                        f" enum={enum}" if isinstance(enum, list) and len(enum) <= 25 else ""
-                    )
+                    # Spec 2522 T047 — threshold 25→200 — KOROAD GugunCode (115) /
+                    # SearchYearCd (20) / SidoCode (17) 등 모두 노출. 의미 매핑은
+                    # field description 에 따로 인라인 (Pydantic IntEnum 의 name
+                    # 은 JSON schema 표준 export 안 됨).
+                    if isinstance(enum, list) and len(enum) <= 200:
+                        enum_part = f" enum={enum}"
+                    else:
+                        enum_part = ""
                     flag = "필수" if fname in required else "선택"
                     lines.append(
                         f"    · {fname} ({ftype}, {flag}{pat_part}{enum_part})"

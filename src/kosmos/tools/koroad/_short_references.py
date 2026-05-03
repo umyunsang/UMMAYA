@@ -36,3 +36,22 @@ KOROAD_SIDO_SHORT_REFERENCE: str = (
     "대전=25 울산=26 세종=27 경기=13 강원=14 "
     "충북=15 충남=16 전북=17 전남=18 경북=19 경남=20 제주=21"
 )
+
+
+# Spec 2522 — KOROAD GugunCode 250+ 시군구 매핑. 사용자 디렉티브 "코드체계 노출".
+# IntEnum name (e.g. SEOUL_GANGNAM=680) 영문 transliteration → K-EXAONE 가
+# 시민 한국어 발화 ("강남구") 와 매칭 가능. Pydantic JSON schema 가 IntEnum
+# name 을 standard export 안 하므로 description 에 인라인 필요.
+def _build_gugun_reference() -> str:
+    """GugunCode IntEnum 동적 dump. 새 GugunCode 추가 시 자동 update."""
+    from kosmos.tools.koroad.code_tables import GugunCode
+
+    pairs = []
+    for member in GugunCode:
+        # SEOUL_GANGNAM → "seoul gangnam=680" (lowercase, space-separated)
+        readable = member.name.lower().replace("_", " ")
+        pairs.append(f"{readable}={member.value}")
+    return " / ".join(pairs)
+
+
+KOROAD_GUGUN_REFERENCE: str = _build_gugun_reference()

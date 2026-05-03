@@ -21,7 +21,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from kosmos.tools._outbound_trace import traced_async_client
 from kosmos.tools.errors import ToolExecutionError, _require_env
-from kosmos.tools.koroad._short_references import KOROAD_SIDO_SHORT_REFERENCE
+from kosmos.tools.koroad._short_references import (
+    KOROAD_GUGUN_REFERENCE,
+    KOROAD_SIDO_SHORT_REFERENCE,
+)
 from kosmos.tools.koroad.code_tables import (
     GANGWON_NEW_CODE_YEAR,
     JEONBUK_NEW_CODE_YEAR,
@@ -134,21 +137,19 @@ class KoroadAccidentSearchInput(BaseModel):
 
     gu_gun: GugunCode = Field(
         description=(
-            # Section 1 — what this field is
             "3-digit 시군구 code for the KOROAD guGun wire parameter. Required by the KOROAD API. "
-            # Section 2 — sourcing rule (mandatory geocoding prerequisite)
             "MUST be derived from a prior resolve_location geocoding tool call "
             "on the user-provided location string — never fill this from model memory. "
-            # Section 3 — wire format note
             "[WIRE FORMAT] siDo is 2-digit (e.g. '11'=서울), guGun is 3-digit (e.g. '680'=강남구). "
             "Do NOT use 4-digit 행정구역코드 (e.g. '1100', '1168') — the API rejects them. "
-            # Section 4 — empirical counter-example
             "Empirical counter-example: a Korean-domain LLM produced gu_gun=110 (Jongno) "
             "instead of gu_gun=680 (Gangnam) for a '강남역' query because it guessed from "
             "memory rather than consulting geocoding. "
-            # Section 5 — authoritative enum reference
-            "Valid codes are defined in the GugunCode enumeration; "
-            "codes are specific to the paired si_do value."
+            # Spec 2522 — 사용자 디렉티브 "코드체계 노출". GugunCode IntEnum name 의
+            # 영문 transliteration → K-EXAONE 시민 한국어 발화 ("강남구") → "seoul
+            # gangnam=680" 매칭 추론. Pydantic JSON schema 가 IntEnum name 을
+            # standard export X 라 description 에 인라인.
+            f"매핑 (광역시도+시군구=KOROAD wire code): {KOROAD_GUGUN_REFERENCE}"
         )
     )
     """3-digit 시군구 code (guGun wire parameter). See Field description for sourcing rules."""
