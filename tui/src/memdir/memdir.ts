@@ -382,6 +382,13 @@ export function buildSearchingPastContextSection(autoMemDir: string): string[] {
   // In REPL mode, both Grep and Bash are hidden from direct use — the model
   // calls them from inside REPL scripts, so the grep shell form is what it
   // will write in the script anyway.
+  // SWAP-2-PRESERVE: byte-identical with CC memdir/memdir.ts:385.
+  // isReplModeEnabled() is env-gated (CLAUDE_REPL_MODE or USER_TYPE=ant +
+  // CLAUDE_CODE_ENTRYPOINT=cli) and CAN return true in those cases, flipping
+  // `embedded` true and switching memSearch/transcriptSearch to shell-form
+  // grep guidance. Effect is independent of REPLTool, so unaffected by
+  // REPLTool=null (Spec 1633 / Epic #2293). Branch preserved for CC parity
+  // (CORE THESIS: byte-identical default).
   const embedded = hasEmbeddedSearchTools() || isReplModeEnabled()
   const memSearch = embedded
     ? `grep -rn "<search term>" ${autoMemDir} --include="*.md"`

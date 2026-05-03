@@ -12,10 +12,39 @@ import { TranslateTool } from './tools/TranslateTool/TranslateTool.js'
 import { CalculatorTool } from './tools/CalculatorTool/CalculatorTool.js'
 import { DateParserTool } from './tools/DateParserTool/DateParserTool.js'
 import { ExportPDFTool } from './tools/ExportPDFTool/ExportPDFTool.js'
-// CC dev tool imports retained at compile-time — referenced by shared
-// infrastructure (permissions/sandbox/attachments) per FR-013 scope
-// correction (see spec.md § Deferred Items #1757). They are NOT registered
-// in getAllBaseTools() post-P3.
+// ============================================================================
+// SWAP-2-RETAINED-IMPORT-BLOCK (FR-013, Spec 2638 / Initiative #2636)
+// ----------------------------------------------------------------------------
+// Below imports (BashTool, FileEditTool, FileReadTool, FileWriteTool, GlobTool,
+// NotebookEditTool, TaskOutputTool, TaskStopTool, TodoWriteTool,
+// ExitPlanModeV2Tool, GrepTool, AskUserQuestionTool, LSPTool, ConfigTool,
+// EnterPlanModeTool, EnterWorktreeTool, ExitWorktreeTool, TaskCreateTool,
+// TaskGetTool, TaskUpdateTool, TaskListTool, TestingPermissionTool,
+// ListMcpResourcesTool, ReadMcpResourceTool, ToolSearchTool, SkillTool,
+// BriefTool, WebFetchTool, WebSearchTool — 14+ dev/auxiliary tools) are
+// retained at compile-time but NOT registered in getAllBaseTools() (post-P3).
+//
+// Why: KOSMOS 13-tool citizen-facing surface (Spec 1634 P3 contracts/
+// primitive-envelope.md § 1) excludes CC dev tools from LLM visibility.
+// However, permissions/sandbox/attachments infrastructure references the
+// tool name constants (FR-013 scope correction, #1757) — removing imports
+// would break those references and create KOSMOS-only divergence with CC
+// (CORE THESIS violation).
+//
+// Outside-caller counts (measured 2026-05-03, Spec 2638 specify): BashTool 196,
+// FileReadTool 91, FileEditTool 69, FileWriteTool 52, GrepTool 36,
+// ToolSearchTool 31, GlobTool 28, SkillTool 26, ExitPlanModeV2Tool 24,
+// BriefTool 22, WebFetchTool 18, AskUserQuestionTool 17, NotebookEditTool 16,
+// TodoWriteTool 15, EnterWorktreeTool 14, TaskStopTool 12, ListMcpResources 10,
+// ReadMcpResource 9, TaskOutputTool 8, EnterPlanModeTool 6, TaskCreateTool 6,
+// WebSearchTool 6, TaskUpdateTool 5, ScheduleCronTool 4, LSPTool 3,
+// TaskGetTool 3, TaskListTool 3, ConfigTool 1, ExitWorktreeTool 1,
+// TestingPermissionTool 1. All ≥ 1 — FR-013 confirmed.
+//
+// CC byte-identical: same imports exist in
+// .references/claude-code-sourcemap/restored-src/src/tools.ts (CORE THESIS
+// preserves byte-identical default).
+// ============================================================================
 import { BashTool } from './tools/BashTool/BashTool.js'
 import { FileEditTool } from './tools/FileEditTool/FileEditTool.js'
 import { FileReadTool } from './tools/FileReadTool/FileReadTool.js'
@@ -271,6 +300,10 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
     // --bare + REPL mode: REPL wraps Bash/Read/Edit/etc inside the VM, so
     // return REPL instead of the raw primitives. Matches the non-bare path
     // below which also hides REPL_ONLY_TOOLS when REPL is enabled.
+    // SWAP-2-PRESERVE: byte-identical with CC tools.ts:277. The `&& REPLTool` guard
+    // makes this branch provably dead in KOSMOS (REPLTool=null per Spec 1633 / Epic #2293)
+    // even when isReplModeEnabled() is true via CLAUDE_REPL_MODE or USER_TYPE=ant.
+    // Branch preserved for CC parity (CORE THESIS: byte-identical default).
     if (isReplModeEnabled() && REPLTool) {
       const replSimple: Tool[] = [REPLTool]
       if (
@@ -308,6 +341,12 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
 
   // When REPL mode is enabled, hide primitive tools from direct use.
   // They're still accessible inside REPL via the VM context.
+  // SWAP-2-PRESERVE: byte-identical with CC tools.ts:314. isReplModeEnabled() is
+  // env-gated (CLAUDE_REPL_MODE or USER_TYPE=ant + CLAUDE_CODE_ENTRYPOINT=cli) and
+  // CAN run in those cases. With REPLTool=null (Spec 1633 / Epic #2293), no
+  // REPL_TOOL_NAME tool exists in `allowedTools`, so `replEnabled` evaluates to
+  // false and the REPL_ONLY_TOOLS filter step is a no-op. Branch preserved for
+  // CC parity (CORE THESIS: byte-identical default).
   if (isReplModeEnabled()) {
     const replEnabled = allowedTools.some(tool =>
       toolMatchesName(tool, REPL_TOOL_NAME),
