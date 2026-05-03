@@ -138,7 +138,12 @@ import { cwd } from 'process'
 import { getCwd } from 'src/utils/cwd.js'
 import omit from 'lodash-es/omit.js'
 import reject from 'lodash-es/reject.js'
-import { isPolicyAllowed } from 'src/services/policyLimits/index.js'
+// SWAP: KOSMOS-2637/print policyLimits stub — Spec 1633 P1+P2 removed the
+// policyLimits service; CC's `isPolicyAllowed` gate is replaced by Spec 033
+// permission gauntlet. Inline stub keeps print.ts byte-shape with CC while
+// the only call site (line ~4996, teleport print mode) is itself dead in
+// KOSMOS (--teleport routes to claude.ai 1P-business surface, never ported).
+const isPolicyAllowed = (_feature: string): boolean => true
 import type { ReplBridgeHandle } from 'src/bridge/replBridge.js'
 import { getRemoteSessionUrl } from 'src/constants/product.js'
 import { buildBridgeConnectUrl } from 'src/bridge/bridgeStatusUtil.js'

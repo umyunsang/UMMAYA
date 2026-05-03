@@ -3636,9 +3636,12 @@ export function REPL({
         helpers.setCursorOffset(0);
         helpers.clearBuffer();
         const { parseLangCommand } = await import('../commands/lang.js');
+        const { getUiL2I18n } = await import('../i18n/uiL2.js');
         const langResult = parseLangCommand(_kosmosArgs);
         if (langResult.ok) {
-          addNotification({ key: 'kosmos-lang', text: `언어가 ${langResult.locale}로 변경되었습니다.`, priority: 'immediate' });
+          // Use the new locale's bundle so the toast itself reflects the change.
+          const newI18n = getUiL2I18n(langResult.locale);
+          addNotification({ key: 'kosmos-lang', text: newI18n.langChanged(langResult.locale), priority: 'immediate' });
         } else {
           addNotification({ key: 'kosmos-lang-error', text: langResult.message, priority: 'immediate' });
         }

@@ -92,7 +92,11 @@ send_keys_pane() {
 }
 
 send_text_pane() {
-  tmux send-keys -t "$TMUX_SESSION" -- "$1"
+  # -l = literal mode: bytes are sent as-is, so spaces in the string are
+  # transmitted as space characters (not parsed as the "Space" key name).
+  # Without -l, "/lang en" would be split on whitespace and "en" would
+  # follow a "Space" key event, which the TUI input layer may discard.
+  tmux send-keys -t "$TMUX_SESSION" -l -- "$1"
 }
 
 send_enter_pane() {
