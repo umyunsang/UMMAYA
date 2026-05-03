@@ -14,7 +14,7 @@ import { renderAndRun, showSetupDialog } from './interactiveHelpers.js';
 import { KeybindingSetup } from './keybindings/KeybindingProviderSetup.js';
 import type { AppState } from './state/AppStateStore.js';
 import type { AgentMemoryScope } from './tools/AgentTool/agentMemory.js';
-import type { TeleportRemoteResponse } from './utils/conversationRecovery.js';
+// TeleportRemoteResponse import removed alongside launchTeleportResumeWrapper (Epic #2639 D1).
 import type { FpsMetrics } from './utils/fpsTracker.js';
 import type { ValidationError } from './utils/settings/validation.js';
 
@@ -84,16 +84,14 @@ export async function launchAssistantInstallWizard(root: Root): Promise<string |
   return Promise.race([resultPromise, errorPromise]);
 }
 
-/**
- * Site ~4549: TeleportResumeWrapper (interactive teleport session picker).
- * Original callback wiring: onComplete={done}, onCancel={() => done(null)}, source="cliArg".
- */
-export async function launchTeleportResumeWrapper(root: Root): Promise<TeleportRemoteResponse | null> {
-  const {
-    TeleportResumeWrapper
-  } = await import('./components/TeleportResumeWrapper.js');
-  return showSetupDialog<TeleportRemoteResponse | null>(root, done => <TeleportResumeWrapper onComplete={done} onCancel={() => done(null)} source="cliArg" />);
-}
+// SWAP: dead-code-cleanup (Epic #2639 D1 — TeleportResumeWrapper component removed from KOSMOS)
+// CC reference: .references/claude-code-sourcemap/restored-src/src/dialogLaunchers.tsx (lines 87-96)
+// Divergence LOC: 9 (launchTeleportResumeWrapper export + Site ~4549 doc comment removed)
+// Spec citation: Epic #2639 (audit § 4 row #7), specs/cc-migration-audit/decisions.md § S3 D1
+// Justification: Underlying ./components/TeleportResumeWrapper.js is intentionally NEVER ported
+//   (claude.ai cloud Teleport = swap-1 dependent; see tui/src/components/.never-port.md). The
+//   dead launcher would throw at the dynamic import; removing it is safer than leaving a stub.
+//   No caller of launchTeleportResumeWrapper exists in tui/src — verified via grep.
 
 /**
  * Site ~4597: TeleportRepoMismatchDialog (pick a local checkout of the target repo).

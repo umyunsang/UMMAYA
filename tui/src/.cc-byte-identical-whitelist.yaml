@@ -1,0 +1,280 @@
+# SHA-256 byte-identical guard whitelist (Epic #2639 · Spec 2639-s3-ui-guard)
+#
+# The CI workflow `.github/workflows/cc-byte-identical-guard.yml` enforces
+# byte-identical parity between Claude Code 2.1.88 (`.references/claude-code-
+# sourcemap/restored-src/src/`) and KOSMOS `tui/src/` for the S3 slice
+# (components/, screens/, outputStyles/, moreright/, dialogLaunchers.tsx,
+# interactiveHelpers.tsx, replLauncher.tsx).
+#
+# This file enumerates every legitimate KOSMOS-side divergence with its
+# cause (W1~W13) and a citation (issue # OR doc path). Any divergence not
+# listed here causes CI to fail.
+#
+# When you intentionally diverge a file from CC, add an entry here in the
+# same PR. When CI fails, choose:
+#   (a) revert to byte-identical, OR
+#   (b) add an entry below with cause + spec_ref.
+#
+# AGENTS.md §CORE THESIS — KOSMOS = CC + 2 swap; the third correctly-removed
+# thing is 1P-Anthropic billing/telemetry/growth surfaces.
+#
+# Audit reference: specs/cc-migration-audit/scope-S3-components-screens.md
+# Audit decisions: specs/cc-migration-audit/decisions.md § S3
+# Spec / plan: specs/2639-s3-ui-guard/{spec,plan}.md
+version: 1
+generated_by: "Epic #2639 Lead Opus, 2026-05-03"
+
+# Cause taxonomy. W1~W12 originate from audit § 7. W13 is added by this
+# Epic to capture Spec 1633 / Spec 1978 / Spec 2293 dead-code cleanup
+# (Anthropic services/api/auth/secureStorage/teleport/claudeAiLimits modules
+# inlined or stubbed at the call site).
+causes:
+  W1: "@anthropic-ai/sdk → src/sdk-compat.js import substitution"
+  W2: "Brand string substitution (Claude Code → KOSMOS)"
+  W3: "Mascot character swap (Clawd → UFO)"
+  W4: "Brand glyph (✻ preserved — informational, never a real divergence)"
+  W5: "Korean i18n string injection"
+  W6: "Color palette (CC blue → KOSMOS violet #a78bfa)"
+  W7: "Anthropic 1P-business surface removed (no replacement)"
+  W8: "sourceMappingURL trailing line stripped"
+  W9: "K-EXAONE-specific render (reasoning_content, multi-tool layout, parallel_tool_calls UI)"
+  W10: "Korean IME hotfix (Hangul Jamo composition)"
+  W11: "Sandbox-runtime install hint stripped"
+  W12: "OTEL frame_commit instrumentation hook"
+  W13: "Dead-code cleanup (Spec 1633/1978/2293 — Anthropic services/api/auth/secureStorage/teleport stubbed at call site)"
+
+# Each entry must specify: path (repo-root relative), cause (one or comma-separated),
+# spec_ref (issue # or docs path). Optional: notes, expected_sha256 (locks
+# divergence content; mismatch = fail).
+entries:
+  # ── W1: @anthropic-ai/sdk → src/sdk-compat.js (mostly 2-line diffs) ──
+  - path: tui/src/components/FallbackToolUseErrorMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+    notes: "Single SDK type import substitution."
+  - path: tui/src/components/MessageSelector.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/AssistantToolUseMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/GroupedToolUseContent.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserAgentNotificationMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserBashInputMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserChannelMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserCommandMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserPromptMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserResourceUpdateMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserTeammateMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserTextMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserToolResultMessage/UserToolErrorMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserToolResultMessage/UserToolResultMessage.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/messages/UserToolResultMessage/utils.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/permissions/AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/permissions/PermissionRequest.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+  - path: tui/src/components/Message.tsx
+    cause: W1
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § L1-A"
+    notes: "sdk-compat import + minor wrap (audit § 5.5)."
+
+  # ── W2: brand string substitution (Claude Code → KOSMOS) ──
+  - path: tui/src/components/HelpV2/HelpV2.tsx
+    cause: W2
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "Tabs title 'Claude Code v...' → 'KOSMOS v...'"
+  - path: tui/src/components/IdeOnboardingDialog.tsx
+    cause: W2
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "'Welcome to Claude Code for {ideName}' → 'Welcome to KOSMOS for ...'"
+  - path: tui/src/components/LogoV2/Opus1mMergeNotice.tsx
+    cause: W2
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "Anthropic Opus 1M context promo replaced with KOSMOS K-EXAONE tagline."
+
+  # ── W3: mascot rewrite (Clawd → UFO, palette violet) ──
+  - path: tui/src/components/LogoV2/AnimatedClawd.tsx
+    cause: W3,W8
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "UFO mascot ASCII art rewrite (4-pose); sourceMappingURL stripped."
+  - path: tui/src/components/LogoV2/Clawd.tsx
+    cause: W3,W8
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "UFO mascot core component; preserves CC row-fill/quadrant-block rendering technique."
+  - path: tui/src/components/LogoV2/CondensedLogo.tsx
+    cause: W3,W2
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+  - path: tui/src/components/LogoV2/LogoV2.tsx
+    cause: W3,W2
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+  - path: tui/src/components/LogoV2/WelcomeV2.tsx
+    cause: W3,W2,W8
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "Welcome screen — UFO ASCII + KOSMOS branding + sourceMappingURL stripped."
+  - path: tui/src/components/LogoV2/feedConfigs.tsx
+    cause: W3,W2,W8
+    spec_ref: "docs/requirements/kosmos-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "Brand-feed slot config (mascot quadrant config rewritten)."
+
+  # ── W8: sourceMappingURL stripped (build-pipeline cosmetic) ──
+  - path: tui/src/components/Spinner.tsx
+    cause: W8
+    spec_ref: "specs/cc-migration-audit/scope-S3-components-screens.md § 5.3"
+    notes: "Trailing //# sourceMappingURL=...base64... line removed."
+  - path: tui/src/replLauncher.tsx
+    cause: W8
+    spec_ref: "specs/cc-migration-audit/scope-S3-components-screens.md § 5.7"
+    notes: "Brace formatting normalized; sourceMappingURL stripped."
+
+  # ── W9: K-EXAONE-specific render (Spec 2521) ──
+  - path: tui/src/components/Markdown.tsx
+    cause: W9,W13
+    spec_ref: "#1633 (cli-highlight unbundled), #2521 (K-EXAONE leading-whitespace skip)"
+    notes: "Suspense + use(promise) lazy-load path replaced with highlight=null; skip render when stripped text empty."
+  - path: tui/src/components/MessageRow.tsx
+    cause: W9
+    spec_ref: "#2521 (K-EXAONE multi-tool layout)"
+    notes: "suppressTopMargin prop added for adjacent blocks from one assistant turn."
+  - path: tui/src/components/Messages.tsx
+    cause: W9,W12
+    spec_ref: "#2521 (multi-tool layout), #2294 (frame_commit OTEL Phase 4)"
+    notes: "createStreamingThinkingLayoutMessage + getStreamingThinkingInsertIndex + isSameAssistantToolStack inserted; useFrameCommitTracker hook for kosmos.tui.frame_commit event."
+  - path: tui/src/components/messages/AssistantThinkingMessage.tsx
+    cause: W9,W1
+    spec_ref: "#2521 (K-EXAONE thinking preview)"
+    notes: "First non-empty reasoning_content line shown inline next to ∴ Thinking glyph."
+
+  # ── W10: Korean IME hotfix ──
+  - path: tui/src/components/BaseTextInput.tsx
+    cause: W10
+    spec_ref: "#2519 (Korean IME Enter swallow fix)"
+    notes: "usePasteHandler Enter swallow guard adapted for Hangul Jamo composition."
+
+  # ── W11: sandbox-runtime install hint stripped ──
+  - path: tui/src/components/sandbox/SandboxDependenciesTab.tsx
+    cause: W11
+    spec_ref: "specs/cc-migration-audit/scope-S3-components-screens.md § 5.2"
+    notes: "'npm install -g @anthropic-ai/sandbox-runtime' install hint removed."
+
+  # ── W13: dead-code cleanup (Spec 1633 / 1978 / 2293) ──
+  - path: tui/src/components/messages/AssistantTextMessage.tsx
+    cause: W13,W1
+    spec_ref: "#1633 (services/api/errors removal), #2293 (secureStorage removal)"
+    notes: "API error message constants inlined; isMacOsKeychainLocked stubbed → false; sdk-compat."
+  - path: tui/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx
+    cause: W13,W1
+    spec_ref: "#1633 (Anthropic queryHaiku auto-naming removal), #2293 (utils/auth removal)"
+    notes: "autoNameSessionFromPlan no-op; UUID/generateSessionName/getSettings_DEPRECATED removed."
+  - path: tui/src/screens/REPL.tsx
+    cause: W13,W1,W10
+    spec_ref: "#2521 (LLM swap), #032 (IPC stdio hardening), #2293 (services/api removal)"
+    notes: "Largest single file in TUI subtree (920 KB). Both swaps converge — IPC frame routing, FriendliAI K-EXAONE streaming, permission decision propagation."
+  - path: tui/src/interactiveHelpers.tsx
+    cause: W13
+    spec_ref: "#1633 (Anthropic services/api/grove + utils/auth removal)"
+    notes: "Grove dialog removed; logEvent calls removed; getClaudeAIOAuthTokens removed; channel-allowlist OAuth check fall-through."
+  - path: tui/src/components/ConsoleOAuthFlow.tsx
+    cause: W13
+    spec_ref: "#1633 (services/api/oauth removal)"
+  - path: tui/src/components/FeedbackSurvey/submitTranscriptShare.ts
+    cause: W13
+    spec_ref: "#1633 (Anthropic feedback survey endpoint removal)"
+  - path: tui/src/components/FeedbackSurvey/useFeedbackSurvey.tsx
+    cause: W13
+    spec_ref: "#1633 (Anthropic feedback survey endpoint removal)"
+  - path: tui/src/components/FeedbackSurvey/useMemorySurvey.tsx
+    cause: W13
+    spec_ref: "#1633 (Anthropic feedback survey endpoint removal)"
+  - path: tui/src/components/FeedbackSurvey/usePostCompactSurvey.tsx
+    cause: W13
+    spec_ref: "#1633 (utils/telemetry/events removed; Spec 021 OTEL pipeline)"
+    notes: "logOTelEvent stubbed."
+  - path: tui/src/components/agents/generateAgent.ts
+    cause: W13,W1
+    spec_ref: "#1633 (Anthropic queryHaiku removal)"
+  - path: tui/src/components/mcp/MCPRemoteServerMenu.tsx
+    cause: W13
+    spec_ref: "#1633 (Anthropic services removal)"
+  - path: tui/src/components/messages/RateLimitMessage.tsx
+    cause: W13
+    spec_ref: "#1633 (Anthropic rate-limit messaging removal)"
+  - path: tui/src/components/messages/SystemAPIErrorMessage.tsx
+    cause: W13
+    spec_ref: "#1633 (services/api/errors removal)"
+  - path: tui/src/components/PromptInput/Notifications.tsx
+    cause: W13
+    spec_ref: "#1633 / #1978 (claudeAiLimitsHook deletion)"
+    notes: "useClaudeAiLimits stubbed — KOSMOS does not surface Claude.ai utilization."
+  - path: tui/src/components/PromptInput/PromptInput.tsx
+    cause: W13
+    spec_ref: "#1978 T003 (Enter-swallow guard diagnostic logging)"
+    notes: "logForDebugging traces added for Korean IME / suggestions / footer-selection guards."
+  - path: tui/src/components/PromptInput/PromptInputFooterLeftSide.tsx
+    cause: W13
+    spec_ref: "#1633 (proactive module dead-code path)"
+    notes: "Inline feature() conditional require → utils/proactiveModule import."
+  - path: tui/src/components/PromptInput/usePromptInputPlaceholder.ts
+    cause: W13
+    spec_ref: "#1633 (proactive module dead-code path)"
+  - path: tui/src/components/RemoteEnvironmentDialog.tsx
+    cause: W13
+    spec_ref: "#1633 / #1978 T011 (utils/teleport deletion)"
+    notes: "EnvironmentResource + getEnvironmentSelectionInfo stubbed at call site."
+  - path: tui/src/components/ResumeTask.tsx
+    cause: W13
+    spec_ref: "#1633 / #1978 T011 (utils/teleport deletion)"
+    notes: "CodeSession + fetchCodeSessionsFromSessionsAPI stubbed at call site."
+  - path: tui/src/components/Settings/Settings.tsx
+    cause: W13,W7
+    spec_ref: "#1633 (Settings/Usage component removed)"
+    notes: "Usage tab + import dropped — claude.ai SaaS billing dead in KOSMOS."
+  - path: tui/src/components/StatusLine.tsx
+    cause: W13
+    spec_ref: "#1633 / #1978 T011 (services/claudeAiLimits deletion)"
+    notes: "getRawUtilization stubbed → null."
+  - path: tui/src/components/TeleportProgress.tsx
+    cause: W13
+    spec_ref: "#1633 / #1978 T011 (utils/teleport deletion)"
+    notes: "Teleport progress UI retained as unreachable component (no live trigger); type stubs preserve compile."
+  - path: tui/src/components/tasks/BackgroundTasksDialog.tsx
+    cause: W13
+    spec_ref: "#1633 (useEffectEvent → useCallback workaround)"
+    notes: "useEffectEvent (React experimental) replaced with useCallback for downstream Bun compatibility."
+  - path: tui/src/components/tasks/RemoteSessionDetailDialog.tsx
+    cause: W13
+    spec_ref: "#1633 / #1978 T011 (utils/teleport deletion)"
+    notes: "teleportResumeCodeSession stubbed."
+  - path: tui/src/dialogLaunchers.tsx
+    cause: W13
+    spec_ref: "Epic #2639 D1 (TeleportResumeWrapper DROP)"
+    notes: "launchTeleportResumeWrapper export removed; underlying TeleportResumeWrapper.tsx is in NEVER-PORT registry (tui/src/components/.never-port.md row 7)."

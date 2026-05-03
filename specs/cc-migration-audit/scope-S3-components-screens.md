@@ -138,7 +138,7 @@ which never apply to a citizen public-service harness).
 | 4 | `LogoV2/OverageCreditUpsell.tsx` | — | API overage credit-purchase nudge | **DROP-CONFIRMED**. Same reason. |
 | 5 | `Passes/Passes.tsx` | — | "Claude passes" billing surface | **DROP-CONFIRMED**. Same reason. |
 | 6 | `Settings/Usage.tsx` | — | Per-account API spend / token usage dashboard | **DROP-CONFIRMED**. K-EXAONE on FriendliAI is the swap; usage telemetry is owned by FriendliAI Console + local OTEL → Langfuse (Spec 028), not by an in-TUI billing widget. |
-| 7 | `TeleportResumeWrapper.tsx` | — | "Teleport" feature wrapper (paired with `TeleportProgress.tsx` which IS ported but diverged) | **PORT-P2 (deferred)**. CC's Teleport is a remote-resume hand-off feature; KOSMOS has `TeleportProgress.tsx` as a divergent port (10 diff-lines) but never ported the Wrapper. Likely incomplete CC-spec port. **Decision needed**: keep TeleportProgress and port Wrapper, or drop both? Defer to a Phase post-#2290 spec issue. |
+| 7 | `TeleportResumeWrapper.tsx` | — | "Teleport" feature wrapper (paired with `TeleportProgress.tsx` which IS ported but diverged) | **DROP-CONFIRMED · NEVER-PORT** (Epic #2639 D1, 2026-05-03). claude.ai cloud Teleport = swap-1 dependent. The dead launcher `launchTeleportResumeWrapper` was also removed from `tui/src/dialogLaunchers.tsx`. See `tui/src/components/.never-port.md` row 7 + appendix § 10 below. The diverged `TeleportProgress.tsx` partner remains as an unreachable component (per audit § 5 — has stub imports for Spec 1633 P1+P2 / Spec 1978 T011 utils/teleport deletion); a follow-up sweep may drop it under Spec 2293 (UI residue cleanup) deferred. |
 
 (Note: count above is 7, not 6 — the prompt-time `comm` output counted
 the trailing newline. Real CC-only count is 7 entries.)
@@ -409,11 +409,11 @@ attributable to S3 PORT debt.**
 
 | # | Decision | Owner | Severity |
 |---|---|---|---|
-| **D1** | `TeleportResumeWrapper.tsx` (CC has, KOSMOS missing). Partner `TeleportProgress.tsx` is ported but diverged. **Choose**: (a) port the Wrapper to complete the parity, or (b) drop both (the "Teleport remote-resume" feature has no citizen analog). Recommend (b) — track as a one-line removal under Spec 2293. | User / Lead Opus | LOW (not citizen-visible until /resume-remote command is enabled). |
-| **D2** | Add a CI invariant: for every file in `comm -12 cc.txt kosmos.txt`, if the SHA-256 differs but the file is not on the W1–W12 whitelist, fail the build. This is the "AGENTS.md feedback_pr_pre_merge_interactive_test" methodology applied at the static-analysis layer. **Recommend**: build under Spec 2293 follow-up (P1 priority). | User / Lead Opus | MEDIUM — locks in 85% PRESERVE-IDENTICAL number. |
-| **D3** | Three files (`messages/AssistantTextMessage.tsx`, `permissions/ExitPlanModePermissionRequest`, `replLauncher.tsx`, `interactiveHelpers.tsx`, `screens/REPL.tsx`) need a spot-check confirming each carries an in-file `// SWAP:` or `// KOSMOS:` comment block tying the divergence to a spec issue. **Recommend**: 30-min audit pass; back-fill missing comments as a non-PR cosmetic chore on `main` (allowed under AGENTS.md "docs:/chore: touching no source"). | Sonnet teammate | LOW. |
+| **D1** | ~~`TeleportResumeWrapper.tsx` (CC has, KOSMOS missing). Partner `TeleportProgress.tsx` is ported but diverged. **Choose**: (a) port the Wrapper to complete the parity, or (b) drop both (the "Teleport remote-resume" feature has no citizen analog). Recommend (b) — track as a one-line removal under Spec 2293.~~ **CLOSED 2026-05-03 by Epic #2639** — chose option (b). Removed `launchTeleportResumeWrapper` export from `tui/src/dialogLaunchers.tsx`, added `TeleportResumeWrapper.tsx` to NEVER-PORT registry (`tui/src/components/.never-port.md` + § 10 below). | User / Lead Opus | LOW (not citizen-visible until /resume-remote command is enabled). |
+| **D2** | ~~Add a CI invariant: for every file in `comm -12 cc.txt kosmos.txt`, if the SHA-256 differs but the file is not on the W1–W12 whitelist, fail the build. This is the "AGENTS.md feedback_pr_pre_merge_interactive_test" methodology applied at the static-analysis layer. **Recommend**: build under Spec 2293 follow-up (P1 priority).~~ **CLOSED 2026-05-03 by Epic #2639** — `.github/workflows/cc-byte-identical-guard.yml` + `scripts/cc_byte_identical_guard.py` + `tui/src/.cc-byte-identical-whitelist.yaml` (60 entries, W1~W13) + vendored baseline `specs/2639-s3-ui-guard/fixtures/cc-baseline-shas.txt`. Cause taxonomy extended with W13 (dead-code cleanup). | User / Lead Opus | MEDIUM — locks in 85% PRESERVE-IDENTICAL number. |
+| **D3** | ~~Five files (`messages/AssistantTextMessage.tsx`, `permissions/ExitPlanModePermissionRequest`, `replLauncher.tsx`, `interactiveHelpers.tsx`, `screens/REPL.tsx`) need a spot-check confirming each carries an in-file `// SWAP:` or `// KOSMOS:` comment block tying the divergence to a spec issue. **Recommend**: 30-min audit pass; back-fill missing comments as a non-PR cosmetic chore on `main` (allowed under AGENTS.md "docs:/chore: touching no source").~~ **CLOSED 2026-05-03 by Epic #2639** — all 5 file heads carry the canonical 5-line `// SWAP:` block citing cause + CC reference + divergence LOC + spec citation + justification. | Sonnet teammate | LOW. |
 | **D4** | The 64 KOSMOS-only files in § 6 should be added to the spec audit registry (`specs/cc-migration-audit/scope-S3-kosmos-original-registry.md` follow-up) so future audits don't re-classify them as DROP-CANDIDATE. **Recommend**: defer to next audit cycle. | Lead Opus | LOW. |
-| **D5** | The 6 confirmed-DROP files (Feedback, Grove, GuestPassesUpsell, OverageCreditUpsell, Passes, Settings/Usage) should be added to a permanent NEVER-PORT list (e.g. as a comment block in `tui/src/components/.never-port` or in this audit doc) so future "complete CC port" sweeps don't accidentally restore them. **Recommend**: append to this doc as appendix § 10. | Lead Opus | LOW. |
+| **D5** | ~~The 6 confirmed-DROP files (Feedback, Grove, GuestPassesUpsell, OverageCreditUpsell, Passes, Settings/Usage) should be added to a permanent NEVER-PORT list (e.g. as a comment block in `tui/src/components/.never-port` or in this audit doc) so future "complete CC port" sweeps don't accidentally restore them. **Recommend**: append to this doc as appendix § 10.~~ **CLOSED 2026-05-03 by Epic #2639** — appendix § 10 enriched (now 7 entries including TeleportResumeWrapper); in-tree mirror added at `tui/src/components/.never-port.md`. | Lead Opus | LOW. |
 
 ---
 
@@ -432,10 +432,12 @@ src/components/LogoV2/GuestPassesUpsell.tsx
 src/components/LogoV2/OverageCreditUpsell.tsx
 src/components/Passes/Passes.tsx
 src/components/Settings/Usage.tsx
+src/components/TeleportResumeWrapper.tsx   # added 2026-05-03 by Epic #2639 D1
 ```
 
 If a future PR tries to add any of these, reject and link to this
-appendix.
+appendix. The in-tree mirror of this list lives at
+`tui/src/components/.never-port.md`.
 
 ---
 

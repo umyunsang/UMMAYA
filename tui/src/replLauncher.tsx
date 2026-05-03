@@ -1,3 +1,8 @@
+// SWAP: build-pipeline cosmetic (sourceMappingURL stripped + import block reformatted)
+// CC reference: .references/claude-code-sourcemap/restored-src/src/replLauncher.tsx
+// Divergence LOC: ~10 (sourceMappingURL strip + brace formatting)
+// Spec citation: Epic #2639 (audit § 5.7 + § 5.3 — W8 sourceMappingURL strip)
+// Justification: Build-pipeline cosmetic divergence; no semantic change.
 import React from 'react';
 import type { StatsStore } from './context/stats.js';
 import type { Root } from './ink.js';

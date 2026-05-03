@@ -1,0 +1,72 @@
+name: CC Byte-Identical Guard (S3 slice)
+
+# Epic #2639 (Spec 2639-s3-ui-guard) — locks the byte-identical default
+# of `tui/src/components/`, `screens/`, `outputStyles/`, `moreright/`,
+# and the 3 top-level launchers (dialogLaunchers / interactiveHelpers /
+# replLauncher) against CC 2.1.88 (`.references/claude-code-sourcemap/
+# restored-src/src/`). Divergences must be enumerated in
+# `tui/src/.cc-byte-identical-whitelist.yaml` with cause (W1~W13) +
+# spec_ref. Otherwise the guard fails.
+#
+# Audit: specs/cc-migration-audit/scope-S3-components-screens.md § 9 D2
+# Spec: specs/2639-s3-ui-guard/{spec,plan}.md (FR-001~FR-005)
+#
+# CC sourcemap is .gitignore-excluded; the SHA-256 baseline is vendored
+# at `specs/2639-s3-ui-guard/fixtures/cc-baseline-shas.txt`. Regenerate
+# only when the CC sourcemap is intentionally updated (separate ADR-004
+# cycle per Spec 287).
+
+on:
+  pull_request:
+    paths:
+      - "tui/src/components/**"
+      - "tui/src/screens/**"
+      - "tui/src/dialogLaunchers.tsx"
+      - "tui/src/interactiveHelpers.tsx"
+      - "tui/src/replLauncher.tsx"
+      - "tui/src/outputStyles/**"
+      - "tui/src/moreright/**"
+      - "tui/src/.cc-byte-identical-whitelist.yaml"
+      - "specs/2639-s3-ui-guard/fixtures/cc-baseline-shas.txt"
+      - "scripts/cc_byte_identical_guard.py"
+      - ".github/workflows/cc-byte-identical-guard.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "tui/src/components/**"
+      - "tui/src/screens/**"
+      - "tui/src/dialogLaunchers.tsx"
+      - "tui/src/interactiveHelpers.tsx"
+      - "tui/src/replLauncher.tsx"
+      - "tui/src/outputStyles/**"
+      - "tui/src/moreright/**"
+      - "tui/src/.cc-byte-identical-whitelist.yaml"
+      - "specs/2639-s3-ui-guard/fixtures/cc-baseline-shas.txt"
+      - "scripts/cc_byte_identical_guard.py"
+      - ".github/workflows/cc-byte-identical-guard.yml"
+
+jobs:
+  guard:
+    name: "S3 SHA-256 byte-identical + whitelist check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML (CI-only tooling dep)
+        run: pip install --quiet "pyyaml>=6.0"
+
+      - name: Run cc_byte_identical_guard
+        run: |
+          python3 scripts/cc_byte_identical_guard.py \
+            --baseline specs/2639-s3-ui-guard/fixtures/cc-baseline-shas.txt \
+            --whitelist tui/src/.cc-byte-identical-whitelist.yaml \
+            --slice-root tui/src

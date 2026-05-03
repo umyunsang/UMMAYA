@@ -6,9 +6,9 @@
 - **R4 AgentTool 11파일 정밀 byte 비교** → **Epic B 에 포함** (별도 추적)
 
 ## S3 Components
-- **D1 TeleportResumeWrapper** → **양쪽 DROP**. claude.ai cloud teleport feature, swap-1 종속이라 KOSMOS 에서 제거 정당. CC 측은 NEVER-PORT 명단에 박제.
-- **D2 SHA-256 fail-build CI invariant** → **수용**. 브랜드 화이트리스트(W1~W12) 외 발산을 CI 단계에서 차단해 회귀 방지.
-- **D3 5파일 SWAP 주석 백필** → **수용**. AssistantTextMessage / ExitPlanMode / replLauncher / interactiveHelpers / REPL 에 in-file `// SWAP:` 주석 추가.
+- **D1 TeleportResumeWrapper** → **양쪽 DROP**. claude.ai cloud teleport feature, swap-1 종속이라 KOSMOS 에서 제거 정당. CC 측은 NEVER-PORT 명단에 박제. **CLOSED 2026-05-03 (Epic #2639)** — `tui/src/dialogLaunchers.tsx` 의 `launchTeleportResumeWrapper` export + 관련 type-only import 제거; `tui/src/components/.never-port.md` 신규 + `scope-S3-components-screens.md` § 4/§ 9/§ 10 갱신.
+- **D2 SHA-256 fail-build CI invariant** → **수용**. 브랜드 화이트리스트(W1~W12) 외 발산을 CI 단계에서 차단해 회귀 방지. **CLOSED 2026-05-03 (Epic #2639)** — `.github/workflows/cc-byte-identical-guard.yml` + `scripts/cc_byte_identical_guard.py` + `tui/src/.cc-byte-identical-whitelist.yaml` (60 entries) + vendored CC baseline (`specs/2639-s3-ui-guard/fixtures/cc-baseline-shas.txt`, 397 entries). W13 (dead-code-cleanup) 신규 enum 도입.
+- **D3 5파일 SWAP 주석 백필** → **수용**. AssistantTextMessage / ExitPlanMode / replLauncher / interactiveHelpers / REPL 에 in-file `// SWAP:` 주석 추가. **CLOSED 2026-05-03 (Epic #2639)** — 5파일 모두 head 에 5-line 표준 `// SWAP:` 블록 박제 (cause + CC reference + LOC + spec citation + justification).
 
 ## S5 Commands/Skills
 - **claude-api/ 29파일 SDK docs** → **제거**. Anthropic SDK 사용 안 함, K-EXAONE docs 는 별도 Epic 으로 신설 시 진행.
