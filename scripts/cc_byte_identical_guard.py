@@ -240,9 +240,14 @@ def main() -> int:
         print(f"::error file={repo_rel}::{msg}")
 
     if stats["failed"]:
+        # `failed` aggregates two failure modes: (a) divergent KOSMOS file
+        # without a whitelist entry, and (b) CC-baselined file missing from
+        # tui/src without a NEVER_PORT carve-out (deletion guard). Worded
+        # to cover both per Copilot review on PR #2723.
         print(
-            f"::error::cc-byte-identical-guard FAILED · {stats['failed']} divergent "
-            f"file(s) without whitelist entry. Total scanned: {stats['total']}.",
+            f"::error::cc-byte-identical-guard FAILED · {stats['failed']} "
+            f"unjustified divergence(s) (missing-from-kosmos OR sha-mismatch-without-whitelist). "
+            f"Total scanned: {stats['total']}.",
             file=sys.stderr,
         )
         return 1

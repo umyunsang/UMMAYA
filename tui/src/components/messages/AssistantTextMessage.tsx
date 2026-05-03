@@ -1,9 +1,8 @@
 // SWAP: dead-code-cleanup (Spec 1633 P1 + Epic #2293) + LLM provider (sdk-compat)
 // CC reference: .references/claude-code-sourcemap/restored-src/src/components/messages/AssistantTextMessage.tsx
 // Divergence LOC: ~18 (services/api/errors inlined; secureStorage stub; sdk-compat import)
-// Spec citation: #1633 (Anthropic services/api removal), #2293 (secureStorage removal), Epic #2639 (audit § 5.5)
-// Justification: Anthropic services/api/errors and secureStorage modules removed by KOSMOS dead-code cleanup;
-//   constants and isMacOsKeychainLocked → false stub inlined to preserve component contract.
+// Spec citation: #1633 (services/api removal), #2293 (secureStorage removal), Epic #2639 (audit § 5.5)
+// Justification: Anthropic services/api/errors and secureStorage removed; constants and isMacOsKeychainLocked → false stub inlined to preserve contract.
 import { c as _c } from "react/compiler-runtime";
 import type { TextBlockParam } from 'src/sdk-compat.js';
 import React, { useContext } from 'react';
