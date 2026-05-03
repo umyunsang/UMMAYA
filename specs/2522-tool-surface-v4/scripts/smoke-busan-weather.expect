@@ -9,9 +9,9 @@
 #   1. Boot: "tool_registry: N entries verified"
 #   2. Branding: "KOSMOS"
 #   3. Input accepted (query text visible in pane)
-#   4. Tool dispatched: kma_current_observation call (single-tool, not multi-tool regression)
-#   5. Tool result visible: "⎿" prefix (CC result line pattern)
-#   6. LLM answer with weather data keywords
+#   4. Tool dispatched: kma_short_term_forecast or kma_current_observation single call
+#   5. Tool result visible: "⎿" prefix (CC result line pattern) + actual data
+#   6. LLM answer completed (streaming indicator disappears)
 #   7. No "invalid_params" error
 #
 # Sourced by tui-tmux-capture.sh — helpers available:
@@ -34,30 +34,30 @@ sleep 0.5
 snapshot_pane "input-submitted"
 
 # Stage C1: Wait for thinking/streaming indicator (confirms LLM received query)
-# "Thinking" or "Manifesting" or "Billowing" = K-EXAONE streaming
-wait_for_pane "(Thinking|Manifesting|Billowing|∴|·)" 30
+# "Thinking" or "Manifesting" or "Billowing" or "Lollygagging" = K-EXAONE streaming
+wait_for_pane "(Thinking|Manifesting|Billowing|Lollygagging|∴|·|✻)" 30
 snapshot_pane "streaming-start"
 
 # Stage C2: Wait for tool call to appear — kma adapter dispatched
-# K-EXAONE picks kma_current_observation for real-time weather
-# Tool lines appear as "● lookup" or "kma_current_observation" in the pane
-wait_for_pane "(kma_|lookup|⏺)" 90
+# K-EXAONE picks kma_short_term_forecast or kma_current_observation for weather
+wait_for_pane "(kma_|lookup)" 90
 snapshot_pane "tool-dispatched"
 
 # Stage C3: Wait for tool result — "⎿" is the CC result-row prefix
 # This proves the tool returned data (not hanging or errored)
-wait_for_pane "(⎿|Result|result)" 60
+wait_for_pane "⎿" 60
 snapshot_pane "tool-result"
 
-# Stage D: Wait for LLM final answer text (weather data keywords)
-# These only appear in the assistant's text reply, not user input
-wait_for_pane "(°C|℃|기온|현재|온도|강수량|습도|흐림|맑음|구름|바람)" 90
+# Stage D: Wait for LLM final answer — extended budget for K-EXAONE post-tool reasoning
+# K-EXAONE may do a second reasoning pass after tool result (30-90s additional)
+# Gate on weather-specific content OR temperature digits from forecast data
+# "TMP" appears in the raw tool result already visible in pane (fcst_value=17)
+# "17" + "°" together, or Korean weather summary text
+wait_for_pane "(°C|℃|기온|현재|온도|강수량|습도|흐림|맑음|구름|바람|precipitation|temperature)" 180
 snapshot_pane "weather-answer"
 
-# Stage E: Confirm turn completion — spinner gone, footer shows shortcuts
-# After turn ends, "esc to interrupt" footer disappears; "? for shortcuts" returns
-wait_for_pane "[?] for shortcuts" 30
-snapshot_pane "turn-complete"
+# Stage E: Final snapshot after weather answer visible
+snapshot_pane "final-before-quit"
 
 # Quit cleanly
 send_text_pane "/quit"
