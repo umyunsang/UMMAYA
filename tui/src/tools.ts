@@ -300,7 +300,10 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
     // --bare + REPL mode: REPL wraps Bash/Read/Edit/etc inside the VM, so
     // return REPL instead of the raw primitives. Matches the non-bare path
     // below which also hides REPL_ONLY_TOOLS when REPL is enabled.
-    // SWAP-2-PRESERVE: REPLTool=null chain (Spec 1633 / Epic #2293) — branch byte-identical with CC tools.ts:277, dead-by-design.
+    // SWAP-2-PRESERVE: byte-identical with CC tools.ts:277. The `&& REPLTool` guard
+    // makes this branch provably dead in KOSMOS (REPLTool=null per Spec 1633 / Epic #2293)
+    // even when isReplModeEnabled() is true via CLAUDE_REPL_MODE or USER_TYPE=ant.
+    // Branch preserved for CC parity (CORE THESIS: byte-identical default).
     if (isReplModeEnabled() && REPLTool) {
       const replSimple: Tool[] = [REPLTool]
       if (
@@ -338,7 +341,12 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
 
   // When REPL mode is enabled, hide primitive tools from direct use.
   // They're still accessible inside REPL via the VM context.
-  // SWAP-2-PRESERVE: REPLTool=null chain (Spec 1633 / Epic #2293) — branch byte-identical with CC tools.ts:314, dead-by-design.
+  // SWAP-2-PRESERVE: byte-identical with CC tools.ts:314. isReplModeEnabled() is
+  // env-gated (CLAUDE_REPL_MODE or USER_TYPE=ant + CLAUDE_CODE_ENTRYPOINT=cli) and
+  // CAN run in those cases. With REPLTool=null (Spec 1633 / Epic #2293), no
+  // REPL_TOOL_NAME tool exists in `allowedTools`, so `replEnabled` evaluates to
+  // false and the REPL_ONLY_TOOLS filter step is a no-op. Branch preserved for
+  // CC parity (CORE THESIS: byte-identical default).
   if (isReplModeEnabled()) {
     const replEnabled = allowedTools.some(tool =>
       toolMatchesName(tool, REPL_TOOL_NAME),
