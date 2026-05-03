@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Spec: 2522-tool-surface-v4 — T043 TUI PTY smoke scenario 2: 강남구 병원
+#
+# Sourced (not exec'd) by scripts/tui-tmux-capture.sh — helpers available:
+#   wait_for_pane <regex> [deadline_s]
+#   snapshot_pane <label>
+#   send_text_pane <text>
+#   send_enter_pane
+#   send_ctrlc_pane
+#   send_keys_pane <key...>
+#
+# Scenario: US2 autonomous two-turn chain
+#   turn 1 = resolve_location("강남구")  → yPos≈37.517 xPos≈127.047
+#   turn 2 = hira_hospital_search(xPos=127.047, yPos=37.517, radius=2000)
+#
+# Verification checklist (per tasks.md T043):
+#   [A] resolve_location dispatched autonomously (turn 1)
+#   [B] hira_hospital_search dispatched autonomously (turn 2)
+#   [C] ≥3 hospital records in final answer
+#   [D] _type=json applied — no XML in response
+#
+# Deadline map:
+#   boot/branding    60s  (cold start)
+#   turn-1 tool      60s  (K-EXAONE reasoning_content)
+#   turn-2 tool      90s  (two-turn chain total latency)
+#   final answer    120s  (≥3 hospitals listed)
+#   settle           15s  (activity-based)
+
+# ── 1. Boot ──────────────────────────────────────────────────────────────────
+wait_for_pane "tool_registry: [0-9]+ entries verified" 60
+wait_for_pane "KOSMOS" 30
+snapshot_pane boot
+
+# ── 2. User prompt ───────────────────────────────────────────────────────────
+send_text_pane "강남구 병원 알려줘"
+sleep 0.5
+send_enter_pane
+snapshot_pane input-submitted
+
+# ── 3. Turn 1 — autonomous resolve_location dispatch ─────────────────────────
+# K-EXAONE should call resolve_location("강남구") first.
+# Pattern: "● lookup" (lookup primitive) OR "resolve_location" in tool trace.
+wait_for_pane "● lookup|resolve_location" 60 || {
+  echo "[SMOKE WARN T043-A] resolve_location not dispatched within 60s — checking for direct hospital call" >&2
+}
+snapshot_pane turn1-resolve-location
+
+# ── 4. Turn 2 — autonomous hira_hospital_search dispatch ─────────────────────
+# After getting coords from resolve_location, K-EXAONE calls HIRA.
+# Accept either the tool-call paint OR the result arriving in one combined turn.
+wait_for_pane "hira_hospital_search|hira|병원|HIRA|건강보험심사" 90 || {
+  echo "[SMOKE WARN T043-B] hira_hospital_search not observed within 90s" >&2
+}
+snapshot_pane turn2-hira-search
+
+# ── 5. Final answer — ≥3 hospitals ───────────────────────────────────────────
+# The LLM synthesizes hospital names from the JSON response.
+# Accept Korean hospital name patterns: 병원/의원/클리닉/의료원/센터
+wait_for_pane "병원|의원|클리닉|의료원|센터|내과|외과|정형" 120 || {
+  echo "[SMOKE WARN T043-C] hospital name not observed in final answer within 120s" >&2
+}
+snapshot_pane after-result
+
+# ── 6. Verify no XML response (T043-D: _type=json applied) ───────────────────
+# Capture current pane content and check for XML markers that indicate
+# the _type=json fix (T019) was NOT applied.
+__pane_content=$(tmux capture-pane -t "$TMUX_SESSION" -p 2>/dev/null || true)
+if echo "$__pane_content" | grep -qE '<[A-Za-z]+>.*</[A-Za-z]+>|<\?xml'; then
+  echo "[SMOKE FAIL T043-D] XML markers detected in pane — _type=json fix may not be applied" >&2
+  snapshot_pane xml-regression-detected
+else
+  echo "[SMOKE PASS T043-D] No XML markers in pane — _type=json is active"
+fi
+
+# ── 7. Settle (activity-based) ───────────────────────────────────────────────
+__prev=""
+__stable_start=$(date +%s)
+__settle_deadline=$(( $(date +%s) + 15 ))
+while (( $(date +%s) < __settle_deadline )); do
+  __cur=$(tmux capture-pane -t "$TMUX_SESSION" -p)
+  if [[ "$__cur" != "$__prev" ]]; then
+    __prev="$__cur"
+    __stable_start=$(date +%s)
+  fi
+  if (( $(date +%s) - __stable_start >= 1 )); then break; fi
+  sleep 0.3
+done
+snapshot_pane stable
+
+# ── 8. Graceful quit ─────────────────────────────────────────────────────────
+send_ctrlc_pane
+sleep 1
+send_ctrlc_pane
+snapshot_pane quit

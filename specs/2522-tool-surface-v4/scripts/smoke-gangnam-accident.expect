@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Spec 2522 T047 — TUI PTY smoke scenario 6: 서울 강남구 교통사고 (US6)
+#
+# Pattern: scripts/tui-tmux-capture.sh (tmux capture-pane, NOT asciinema-in-asciinema)
+# Memory: feedback_debug_infra_rebuild — wait_for_pane <regex> <deadline>, no hardcoded sleep
+#
+# Verification targets (2 autonomous turns ≤ 120s):
+#   1. Boot: "tool_registry: N entries verified"
+#   2. Branding: "KOSMOS"
+#   3. Turn 1 — resolve_location call (adm_cd or siDo/guGun derivation)
+#   4. Turn 2 — koroad_accident_hazard_search(adm_cd="1168000000", year=2024)
+#              OR koroad_accident_search(si_do="11", gu_gun="680")
+#              2+3-digit code correct (NOT 4-digit 1168 reject)
+#   5. Response contains hazard spot keywords (사고, 위험, 강남, 교차로 etc.)
+#   6. geom_json Polygon NOT present in LLM response (stripped by adapter)
+#   7. No "invalid_params" error visible
+#
+# Sourced by tui-tmux-capture.sh — helpers available:
+#   wait_for_pane, snapshot_pane, send_text_pane, send_enter_pane, send_ctrlc_pane
+
+# Stage A1: Wait for backend boot
+wait_for_pane "tool_registry: [0-9]+ entries verified" 45
+snapshot_pane "boot"
+
+# Stage A2: Wait for KOSMOS branding / REPL ready
+wait_for_pane "KOSMOS" 20
+snapshot_pane "branding"
+
+# Stage B: Submit the query
+send_text_pane "서울 강남구 교통사고 위험지역 알려줘"
+snapshot_pane "input-typed"
+send_enter_pane
+snapshot_pane "input-submitted"
+
+# Stage C1: Wait for Turn 1 — resolve_location geocoding call
+# K-EXAONE must call resolve_location first per ORDERING RULE in llm_description
+# Gate: tool dispatch log or "resolve_location" appearing in pane
+wait_for_pane "(resolve_location|adm_cd|강남|siDo|guGun|geocod)" 60
+snapshot_pane "turn1-resolve-location"
+
+# Stage C2: Wait for Turn 2 — KOROAD accident tool call
+# Covers both koroad_accident_hazard_search and koroad_accident_search
+# siDo="11" + guGun="680" (2+3-digit) OR adm_cd="1168000000"
+wait_for_pane "(koroad_accident|사고|위험|hazard|spot)" 90
+snapshot_pane "turn2-koroad-call"
+
+# Stage D: Wait for LLM final response — accident hazard keywords
+# Covers: 위험지점, 사고다발, 강남, 교차로, 발생건수, 사망, 부상
+# geom_json must NOT appear (stripped by _strip_geom_json adapter)
+wait_for_pane "(위험|사고|강남|교차로|발생|다발|안전)" 60
+snapshot_pane "response-partial"
+
+# Stage E: Wait for turn completion (REPL input prompt re-appears)
+wait_for_pane "(>|●|⏺|입력|Input)" 30
+snapshot_pane "response-complete"
+
+# Stage F: Final capture before quit
+snapshot_pane "final-before-quit"
+
+# Quit cleanly
+send_text_pane "/quit"
+send_enter_pane

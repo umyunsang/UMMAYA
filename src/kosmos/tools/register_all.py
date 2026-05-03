@@ -62,7 +62,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
      11. kma_forecast_fetch — KMA short-term forecast by (lat, lon) → LCC grid
      12. hira_hospital_search — HIRA hospital search by coordinates + radius
      13. nfa_emergency_info_service — NFA EMS statistics (Phase 2, Layer 3 gated stub)
-     14. mohw_welfare_eligibility_search — SSIS welfare service list (Phase 2, Layer 3 gated stub)
+     14. mohw_welfare_eligibility_search — SSIS welfare service list (Phase 2, real XML handler — T025)
      15. mock_lookup_module_hometax_simplified — Hometax simplified data (Mock, Epic ε T028)
      16. mock_lookup_module_gov24_certificate — Gov24 certificate lookup (Mock, Epic ε T029)
 
@@ -109,7 +109,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     from kosmos.tools.mvp_surface import register_mvp_surface
     from kosmos.tools.nfa119.emergency_info_service import register as reg_nfa
     from kosmos.tools.nmc.emergency_search import register as reg_nmc
-    from kosmos.tools.ssis.welfare_eligibility_search import register as reg_mohw
+    from kosmos.tools.mohw.welfare_eligibility_search import register as reg_mohw
 
     # Register MVP LLM-visible core surface first (FR-001, SC-003)
     register_mvp_surface(registry)
@@ -148,7 +148,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
 
     # Phase 2 adapters (spec 029 — NFA 119 + MOHW SSIS, Layer 3 gated stubs)
     reg_nfa(registry, executor)  # T014 — NFA EMS statistics (interface-only)
-    reg_mohw(registry, executor)  # T022 — MOHW welfare eligibility search (interface-only)
+    reg_mohw(registry, executor)  # T025 — MOHW welfare eligibility search (real XML handler)
 
     # Epic ε #2296 T028/T029 — New lookup mock GovAPITools (main ToolRegistry,
     # not per-primitive sub-registry — lookup adapters use BM25 discovery).

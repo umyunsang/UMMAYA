@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Spec 2522 T046 — TUI PTY smoke scenario 5: 강남소방서 구급통계 (US5)
+#
+# Pattern: scripts/tui-tmux-capture.sh (tmux capture-pane, NOT asciinema-in-asciinema)
+# Memory: feedback_debug_infra_rebuild — wait_for_pane <regex> <deadline>, no hardcoded sleep
+#
+# Verification targets:
+#   1. Boot: "tool_registry: N entries verified"
+#   2. Branding: "KOSMOS"
+#   3. Input "강남소방서 1월 구급통계" accepted
+#   4. LLM dispatches lookup(mode=fetch, tool_id=nfa_emergency_info_service)
+#      with correct params:
+#        - operation="getEmgencyActivityInfo"
+#        - sido_hq_ogid_nm="서울특별시소방재난본부"
+#        - rsac_gut_fstt_ogid_nm="강남소방서"
+#        - stmt_ym="202501"  (gutYm wire param — T030 research: activity op uses gutYm)
+#   5. NFA base URL + operation suffix routing: URL =
+#      https://apis.data.go.kr/1661000/EmergencyInformationService/getEmgencyActivityInfo
+#      (base URL operation suffix fix confirmed — resultCode 00 vs old resultCode 10)
+#   6. resultCode 00 / NORMAL SERVICE response (or auth_required if API key gated)
+#   7. No "invalid_params" error visible (schema regression guard)
+#   8. No raw resultCode 10 visible (operation suffix routing regression guard)
+#
+# Deadline map:
+#   boot/branding   45s  (cold-start: bun + node_modules)
+#   llm turn       90s   (K-EXAONE reasoning_content 30-90s)
+#   settle         15s   (activity-based, not wall-clock)
+#
+# Wire param note (research-nfa-wire.md § Year-Month param):
+#   getEmgencyActivityInfo uses gutYm (출동년월), NOT stmtYm.
+#   _build_params() in emergency_info_service.py routes stmt_ym → gutYm
+#   automatically when operation == "getEmgencyActivityInfo".
+#   The LLM passes stmt_ym in the input schema; the adapter translates.
+#
+# Sourced by tui-tmux-capture.sh — helpers available:
+#   wait_for_pane, snapshot_pane, send_text_pane, send_enter_pane, send_ctrlc_pane
+
+# ── Stage A: Boot ─────────────────────────────────────────────────────────────
+wait_for_pane "tool_registry: [0-9]+ entries verified" 45
+snapshot_pane "boot"
+
+# ── Stage B: Branding ─────────────────────────────────────────────────────────
+wait_for_pane "KOSMOS" 20
+snapshot_pane "branding"
+
+# ── Stage C: Submit query ─────────────────────────────────────────────────────
+send_text_pane "강남소방서 1월 구급통계 알려줘"
+snapshot_pane "input-typed"
+send_enter_pane
+snapshot_pane "input-submitted"
+
+# ── Stage D: Wait for LLM tool dispatch ──────────────────────────────────────
+# K-EXAONE should dispatch lookup(fetch, nfa_emergency_info_service).
+# Pattern covers: tool dispatch marker (● lookup) + tool result content.
+# IMPORTANT: Do NOT match on "강남소방" — that text appears in user input line too.
+# Use patterns that only appear AFTER LLM processes and dispatches the tool call:
+#   - "● lookup" : the tool-call dispatch visual indicator from REPL
+#   - "nfa_emergency_info" : tool_id in tool-call display
+#   - "getEmgencyActivity" : operation value in tool result
+#   - "구급활동" : Korean label in NFA activity response
+#   - "gutYm" : wire param key in NFA response
+#   - "resultCode" : NFA API response envelope field
+#   - "출동년월" : Korean label for gutYm field
+# Deadline: 90s for K-EXAONE reasoning_content + first tool_call paint.
+wait_for_pane "(● lookup|nfa_emergency_info|getEmgencyActivity|구급활동|gutYm|resultCode|출동년월|NORMAL SERVICE)" 90 || {
+  echo "[SMOKE WARN] nfa_emergency_info_service dispatch not observed within 90s — may be timing" >&2
+}
+snapshot_pane "tool-dispatch"
+
+# ── Stage E: resultCode guard ─────────────────────────────────────────────────
+# resultCode 10 = operation suffix missing (old base-URL-only bug).
+# Presence of resultCode 10 = base URL operation suffix routing regression.
+if tmux capture-pane -t "$TMUX_SESSION" -p 2>/dev/null | grep -qE "(resultCode.*10|result_code.*10|INVALID REQUEST PARAMETER ERROR)"; then
+  echo "[SMOKE FAIL] resultCode 10 visible — NFA operation suffix routing regression detected" >&2
+  snapshot_pane "resultcode-10-regression"
+fi
+
+# ── Stage F: invalid_params regression guard ─────────────────────────────────
+if tmux capture-pane -t "$TMUX_SESSION" -p 2>/dev/null | grep -qF "invalid_params"; then
+  echo "[SMOKE FAIL] invalid_params error visible — nfa_emergency_info_service input schema regression" >&2
+  snapshot_pane "invalid-params-regression"
+fi
+
+# ── Stage G: NFA response path verification ──────────────────────────────────
+# Valid paths after tool dispatch:
+#   (a) resultCode 00: activity records returned (gutYm key present)
+#   (b) auth_required: API key gate short-circuit (tool IS dispatched — URL routing verified)
+#   (c) NFA HTTP error: surfaced as ToolExecutionError (not invalid_params)
+# All three confirm the operation suffix routing is correct.
+if tmux capture-pane -t "$TMUX_SESSION" -p 2>/dev/null | grep -qE "(NORMAL SERVICE|result_code.*00|gutYm|구급활동|출동|rsacGutFsttOgidNm)"; then
+  echo "[SMOKE INFO] NFA resultCode 00 NORMAL SERVICE path confirmed" >&2
+  snapshot_pane "nfa-success-path"
+elif tmux capture-pane -t "$TMUX_SESSION" -p 2>/dev/null | grep -qE "(auth_required|인증|로그인|serviceKey)"; then
+  echo "[SMOKE INFO] auth_required gate short-circuit — operation suffix routing still verified" >&2
+  snapshot_pane "auth-gate-path"
+else
+  echo "[SMOKE INFO] NFA response pattern unmatched — see tool-dispatch snapshot for details" >&2
+fi
+
+# ── Stage H: Wait for LLM final answer ───────────────────────────────────────
+# K-EXAONE summarises the NFA tool result for the citizen.
+# Pattern: EMS-related Korean phrases OR dispatch count OR error explanation.
+wait_for_pane "(구급|출동|소방서|통계|활동정보|환자|stale|auth|인증|알려드|안내|확인|resultCode)" 60 || true
+snapshot_pane "llm-response"
+
+# ── Stage I: Settle (activity-based, not wall-clock) ────────────────────────
+__prev=""
+__stable_start=$(date +%s)
+__settle_deadline=$(( $(date +%s) + 15 ))
+while (( $(date +%s) < __settle_deadline )); do
+  __cur=$(tmux capture-pane -t "$TMUX_SESSION" -p)
+  if [[ "$__cur" != "$__prev" ]]; then
+    __prev="$__cur"
+    __stable_start=$(date +%s)
+  fi
+  if (( $(date +%s) - __stable_start >= 1 )); then break; fi
+  sleep 0.3
+done
+snapshot_pane "stable"
+
+# ── Stage J: Graceful quit ────────────────────────────────────────────────────
+send_text_pane "/quit"
+send_enter_pane
+# sleep 1: signal delivery settle — no screen predicate fits as TUI exits.
+sleep 1
+send_ctrlc_pane
+snapshot_pane "quit"

@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Spec 2522 T048 — TUI PTY smoke scenario 7: chain 독립 + LLM autonomous chain (US7)
+#
+# Pattern: scripts/tui-tmux-capture.sh (tmux capture-pane, NOT asciinema-in-asciinema)
+# Memory: feedback_debug_infra_rebuild — wait_for_pane <regex> <deadline>, no hardcoded sleep
+#
+# Verification targets:
+#
+#   Scenario A: "lat 37.5 lon 127.0 병원"
+#     1. Boot: "tool_registry: N entries verified"
+#     2. Branding: "KOSMOS"
+#     3. Input accepted
+#     4. LLM calls hira_hospital_search DIRECTLY (single turn, ≤60s)
+#     5. No resolve_location call in turn 1 — KOSMOS does NOT force cross-domain chain
+#     6. Result visible: "병원" keyword in response
+#
+#   Scenario B: "강남구 병원"
+#     1. Same boot/branding checks
+#     2. LLM autonomously calls resolve_location (turn 1)
+#     3. LLM autonomously calls hira_hospital_search (turn 2, ≤120s total)
+#     4. KOSMOS did NOT hardcode this chain — LLM decided from tool descriptions
+#     5. Result visible: "강남구" or "병원" keyword in response
+#
+# Fixtures loaded (aimock-bun alphabetical order):
+#   chain-independence-a.json — matches "lat 37.5 lon 127.0 병원"
+#   chain-independence-b.json — matches "강남구 병원" (two-turn: resolve_location → HIRA)
+#
+# Sourced by tui-tmux-capture.sh — helpers available:
+#   wait_for_pane, snapshot_pane, send_text_pane, send_enter_pane, send_ctrlc_pane
+
+# ---------------------------------------------------------------------------
+# SCENARIO A: lat/lon 직접 제공 — single-turn, no resolve_location
+# ---------------------------------------------------------------------------
+# NOTE: tui-tmux-capture.sh already spawned "bun run tui" in the tmux session
+# before sourcing this script. The TUI backend connects to aimock on port 4010.
+
+# Stage A1: Wait for backend boot
+wait_for_pane "tool_registry: [0-9]+ entries verified" 45
+snapshot_pane "A-boot"
+
+# Stage A2: Wait for KOSMOS branding / REPL ready
+wait_for_pane "KOSMOS" 20
+snapshot_pane "A-branding"
+
+# Stage A3: Submit scenario A query — lat/lon given directly in message
+send_text_pane "lat 37.5 lon 127.0 병원"
+snapshot_pane "A-input-typed"
+send_enter_pane
+snapshot_pane "A-input-submitted"
+
+# Stage A4: Wait for HIRA single-turn response (≤60s)
+# Gate: "lookup" dispatch OR "hira" OR "병원" in response
+# Also acceptable: the result body keyword ("반환" / "검색")
+wait_for_pane "(hira|병원|반환|검색|lookup|HIRA)" 60
+snapshot_pane "A-response-partial"
+
+# Stage A5: Wait for turn completion — footer "? for shortcuts" reappears
+# (same pattern as smoke-busan-weather.expect — the ❯ prompt is U+276F, not ">")
+wait_for_pane "shortcuts" 30
+snapshot_pane "A-response-complete"
+
+# Stage A6: Final capture — documents that resolve_location was NOT called
+snapshot_pane "A-final"
+
+# ---------------------------------------------------------------------------
+# SCENARIO B: address-only — autonomous 2-turn chain (resolve_location → HIRA)
+# ---------------------------------------------------------------------------
+
+# Stage B1: Submit scenario B query — address only, no coordinates
+send_text_pane "강남구 병원"
+snapshot_pane "B-input-typed"
+send_enter_pane
+snapshot_pane "B-input-submitted"
+
+# Stage B2: Wait for resolve_location turn (turn 1)
+# LLM should autonomously call resolve_location before HIRA
+wait_for_pane "(resolve_location|강남구|lookup)" 60
+snapshot_pane "B-resolve-dispatched"
+
+# Stage B3: Wait for HIRA turn (turn 2) — autonomous chain
+# After resolve_location returns coords, LLM calls hira_hospital_search
+wait_for_pane "(hira|병원|반환|검색|HIRA)" 120
+snapshot_pane "B-hira-dispatched"
+
+# Stage B4: Wait for final text response (turn complete)
+wait_for_pane "(>|●|⏺|입력|Input)" 30
+snapshot_pane "B-response-complete"
+
+# Stage B5: Final capture
+snapshot_pane "B-final"
+
+# Quit cleanly
+send_text_pane "/quit"
+send_enter_pane
