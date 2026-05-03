@@ -111,6 +111,40 @@ REGION_TO_GRID: dict[str, tuple[int, int]] = {
 }
 
 
+def kma_grid_short_reference() -> str:
+    """Return a compact inline table of 17 Korean metropolitan regions → KMA (nx, ny) grids.
+
+    Extracts the 17 canonical 광역시도 centroids from REGION_TO_GRID and formats
+    them as a single-line table suitable for embedding in a GovAPITool.llm_description
+    section 3 (short_reference).  Token budget: ≤ 200 tokens.
+
+    Returns:
+        A string of the form "서울=(61,126) 부산=(98,76) ..."
+    """
+    # Canonical 17 광역시도 keys (한글 short name order)
+    _SIDO_KEYS: list[str] = [
+        "서울",
+        "부산",
+        "대구",
+        "인천",
+        "광주",
+        "대전",
+        "울산",
+        "세종",
+        "경기",
+        "강원",
+        "충북",
+        "충남",
+        "전북",
+        "전남",
+        "경북",
+        "경남",
+        "제주",
+    ]
+    parts = [f"{k}=({REGION_TO_GRID[k][0]},{REGION_TO_GRID[k][1]})" for k in _SIDO_KEYS]
+    return " ".join(parts)
+
+
 def lookup_grid(region: str) -> tuple[int, int]:
     """Look up the KMA grid (nx, ny) for a named Korean region.
 
