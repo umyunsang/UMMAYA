@@ -16,6 +16,7 @@ FR-036: ``ResolveBundle`` carries per-backend provenance.
 from __future__ import annotations
 
 import logging
+from typing import Literal
 
 import httpx
 
@@ -154,12 +155,15 @@ async def _kakao_adm_cd(
         if not b_code or len(b_code) != 10:
             return None
         # 행정 단위 추정: 시도 (XX0000000) / 시군구 (XXYY00000) / 동
+        level: Literal["sido", "sigungu", "eupmyeondong"]
         if b_code[2:].rstrip("0") == "":
             level = "sido"
         elif b_code[5:].rstrip("0") == "":
             level = "sigungu"
         else:
             level = "eupmyeondong"
+        # doc.address 는 위에서 falsy guard 통과한 상태 — mypy narrowing 위해 assert
+        assert doc.address is not None  # noqa: S101 — type narrowing for mypy
         name = (doc.address.address_name or query).strip()
         return AdmCodeResult(
             kind="adm_cd",

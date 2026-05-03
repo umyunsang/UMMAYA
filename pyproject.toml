@@ -186,6 +186,24 @@ ignore = [
 # Plugin test suite mirrors `tests/**` permissions — assert + subprocess
 # (multi-process flock race tests) are intentional.
 "src/kosmos/plugins/tests/**" = ["S101", "S105", "S106", "S603", "S607"]
+# Spec 2522 — agency wire param 명명 (KMA tmFc / MOHW callTp / KOROAD 등) 은
+# data.go.kr 공식 spec 의 camelCase 그대로 (입력/필드/함수 모두). naming 룰
+# (N802/N806/N815) 적용 시 wire 호환성 깨짐 — agency contract 보존 (FR-001).
+"src/kosmos/tools/kma/kma_weather_alert_status.py" = ["N802", "N815"]
+"src/kosmos/tools/kma/grid_coords.py" = ["N806"]
+"tests/tools/kma/test_kma_weather_alert_status.py" = ["N802"]
+"tests/tools/kma/test_v4_live.py" = ["N806", "SIM108"]
+"tests/tools/mohw/test_v4.py" = ["N802"]
+# C901 (complexity) — domain branching (NFA 6 sub-operation / resolve_location
+# 6 want variants) 에 의해 fan-out 큰 함수. 분할 시 가독성 ↓ 라 ignore.
+# E501 line-too-long — Korean error message + URL 인용 라 분할 어려움.
+"src/kosmos/tools/nfa119/emergency_info_service.py" = ["C901", "E501"]
+"src/kosmos/tools/resolve_location.py" = ["C901"]
+"src/kosmos/tools/nmc/emergency_search.py" = ["E501"]
+"src/kosmos/tools/register_all.py" = ["E501"]
+"tests/tools/ssis/test_mohw_welfare_eligibility_search.py" = ["E501"]
+# S110 (try/except/pass) — test 의 expected exception swallow 패턴 의도적
+"tests/tools/nmc/test_v4.py" = ["S110"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

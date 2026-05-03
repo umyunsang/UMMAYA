@@ -859,9 +859,12 @@ async def run(  # noqa: C901
             # K-EXAONE to guess plain '2024' (invalid). Spec 2522 frames-gangnam-
             # accident-fix2 evidence: invalid_params persisted after T042 fix.
             # Fix: resolve $ref against schema['$defs'] + raise threshold 8→25.
-            defs = schema.get("$defs") if isinstance(schema, dict) else None
+            defs_raw = schema.get("$defs") if isinstance(schema, dict) else None
+            defs: dict[str, Any] | None = defs_raw if isinstance(defs_raw, dict) else None
 
-            def _resolve_enum(meta: dict, defs: dict | None) -> list | None:
+            def _resolve_enum(
+                meta: dict[str, Any], defs: dict[str, Any] | None
+            ) -> list[Any] | None:
                 # direct enum
                 e = meta.get("enum")
                 if isinstance(e, list):
@@ -871,8 +874,10 @@ async def run(  # noqa: C901
                 if isinstance(ref, str) and ref.startswith("#/$defs/") and isinstance(defs, dict):
                     name = ref.removeprefix("#/$defs/")
                     target = defs.get(name)
-                    if isinstance(target, dict) and isinstance(target.get("enum"), list):
-                        return target["enum"]
+                    if isinstance(target, dict):
+                        target_enum = target.get("enum")
+                        if isinstance(target_enum, list):
+                            return target_enum
                 return None
 
             if isinstance(properties, dict) and properties:

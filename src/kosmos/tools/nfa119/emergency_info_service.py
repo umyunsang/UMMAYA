@@ -27,7 +27,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import httpx
 from pydantic import (  # noqa: F401 (RootModel kept for compat)
@@ -433,7 +433,9 @@ def _parse_response(
         NfaEmgOperation.vehicle_info.value: NfaVehicleInfoItem,
     }
     item_model = _model_map.get(operation, NfaActivityItem)
-    parsed_items: list[NfaItem] = [item_model.model_validate(raw) for raw in raw_items]
+    parsed_items: list[NfaItem] = [
+        cast("NfaItem", item_model.model_validate(raw)) for raw in raw_items
+    ]
 
     return NfaEmergencyInfoServiceOutput(
         operation=operation,
