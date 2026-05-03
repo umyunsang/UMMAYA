@@ -182,7 +182,7 @@ description: "Task list for Tool surface v4 — agency-faithful contracts + desc
 
 - [ ] T042 [P] TUI PTY smoke scenario 1 — 부산 날씨 (US1) capture in `/Users/um-yunsang/KOSMOS-w-2522/specs/2522-tool-surface-v4/scripts/smoke-busan-weather.expect` + `frames-busan-weather/`. `bash scripts/tui-tmux-capture.sh ...` 패턴 (memory `feedback_debug_infra_rebuild`). single-tool success 검증.
 - [ ] T043 [P] TUI PTY smoke scenario 2 — 강남구 병원 (US2) in `frames-gangnam-hospital/`. autonomous turn 1 = resolve_location, turn 2 = HIRA 검증.
-- [ ] T044 [P] TUI PTY smoke scenario 3 — 서울 응급실 (US3) in `frames-seoul-er/`. URL encoding 회귀 + freshness gate 검증.
+- [X] T044 [P] TUI PTY smoke scenario 3 — 서울 응급실 (US3) in `frames-seoul-er/`. URL encoding 회귀 + freshness gate 검증.
 - [X] T045 [P] TUI PTY smoke scenario 4 — 임신·출산 복지 (US4) in `frames-imsin-welfare/`. lifeArray=007 + camelCase serialize 검증.
 - [ ] T046 [P] TUI PTY smoke scenario 5 — 강남소방서 구급통계 (US5) in `frames-gangnam-119/`. 6 sub-operation 중 `getEmgencyActivityInfo` 검증.
 - [ ] T047 [P] TUI PTY smoke scenario 6 — 서울 강남구 교통사고 (US6) in `frames-gangnam-accident/`. siDo="11"/guGun="680" + geom_json strip 검증.
