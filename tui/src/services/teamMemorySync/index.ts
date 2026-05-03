@@ -48,15 +48,22 @@
 //   SyncState object created by the caller and threaded through every call.
 //   This avoids module-level mutable state and gives tests natural isolation.
 
-// SWAP/anti-anthropic-1p(2641): dead-call gate. Throws unless explicit
-// override is set. Used by all 4 public entry-points below.
+// SWAP/anti-anthropic-1p(2641): dead-call gate. Throws unless the strict
+// override value `'1'` is set. Codex P2 (PR #2688): rejecting permissive
+// truthy checks (`Boolean(...)`) prevents accidental reactivation when CI
+// or shell environments template booleans as `KOSMOS_ENABLE_DEAD_*=0` or
+// `=false`. Only the literal string `'1'` opens the gate.
+function isDeadCallOverrideExplicit(envValue: string | undefined): boolean {
+  return envValue === '1'
+}
+
 function assertNotDeadCall(entryName: string): void {
-  if (!process.env.KOSMOS_ENABLE_DEAD_TEAM_MEM_SYNC) {
+  if (!isDeadCallOverrideExplicit(process.env.KOSMOS_ENABLE_DEAD_TEAM_MEM_SYNC)) {
     throw new Error(
       `[KOSMOS] services/teamMemorySync.${entryName}: dead in KOSMOS — ` +
         'claude.ai team memory is not part of the L1-A K-EXAONE harness. ' +
-        'Set KOSMOS_ENABLE_DEAD_TEAM_MEM_SYNC=1 only when intentionally ' +
-        'exercising the byte-copy reference (Spec 2641).',
+        "Set KOSMOS_ENABLE_DEAD_TEAM_MEM_SYNC='1' (literal) only when " +
+        'intentionally exercising the byte-copy reference (Spec 2641).',
     )
   }
 }

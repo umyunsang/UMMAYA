@@ -81,4 +81,23 @@ describe('teamMemorySync dead-call gate (Spec 2641)', () => {
       /dead in KOSMOS/,
     )
   })
+
+  // Codex P2 hardening (PR #2688): only the literal '1' opens the gate.
+  // Any other truthy-looking string (`0`, `false`, `yes`, ...) MUST keep
+  // the gate closed so CI/shell boolean templating cannot reactivate the
+  // dead path by accident.
+  test('env override "0" keeps the gate closed (rejects truthy fallthrough)', () => {
+    process.env[ENV_KEY] = '0'
+    expect(() => isTeamMemorySyncAvailable()).toThrow(/dead in KOSMOS/)
+  })
+
+  test('env override "false" keeps the gate closed', () => {
+    process.env[ENV_KEY] = 'false'
+    expect(() => isTeamMemorySyncAvailable()).toThrow(/dead in KOSMOS/)
+  })
+
+  test('env override "true" keeps the gate closed (only "1" is valid)', () => {
+    process.env[ENV_KEY] = 'true'
+    expect(() => isTeamMemorySyncAvailable()).toThrow(/dead in KOSMOS/)
+  })
 })

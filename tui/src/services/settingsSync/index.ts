@@ -78,12 +78,17 @@ const SETTINGS_SYNC_TIMEOUT_MS = 10000 // 10 seconds
 const DEFAULT_MAX_RETRIES = 3
 const MAX_FILE_SIZE_BYTES = 500 * 1024 // 500 KB per file (matches backend limit)
 
-// SWAP/anti-anthropic-1p(2641): dead-call gate. Returns true when the env
-// override is set (caller proceeds with original CC behaviour); returns
-// false otherwise (caller short-circuits silently). Used by all 4 entry-
-// points below.
+// SWAP/anti-anthropic-1p(2641): dead-call gate. Returns true only when the
+// env override is the strict literal string `'1'` (caller proceeds with
+// original CC behaviour); returns false otherwise (caller short-circuits
+// silently). Used by all 4 entry-points below.
+//
+// Codex P2 (PR #2688): rejecting permissive truthy checks (`Boolean(...)`)
+// prevents accidental reactivation when CI or shell environments template
+// booleans as `KOSMOS_ENABLE_DEAD_SETTINGS_SYNC=0` or `=false`. Only the
+// literal string `'1'` opens the gate.
 function isDeadCallGateOpen(): boolean {
-  return Boolean(process.env.KOSMOS_ENABLE_DEAD_SETTINGS_SYNC)
+  return process.env.KOSMOS_ENABLE_DEAD_SETTINGS_SYNC === '1'
 }
 
 /**

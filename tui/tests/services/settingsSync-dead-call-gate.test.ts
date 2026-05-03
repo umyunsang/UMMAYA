@@ -62,4 +62,28 @@ describe('settingsSync dead-call gate (Spec 2641)', () => {
   test('_resetDownloadPromiseForTesting remains callable (test harness contract)', () => {
     expect(() => _resetDownloadPromiseForTesting()).not.toThrow()
   })
+
+  // Codex P2 hardening (PR #2688): only the literal '1' opens the gate.
+  // Any other string keeps the silent-skip behavior so CI/shell boolean
+  // templating cannot reactivate the dead path by accident.
+  test('env override "0" still returns false (rejects truthy fallthrough)', async () => {
+    process.env[ENV_KEY] = '0'
+    expect(await downloadUserSettings()).toBe(false)
+    expect(await redownloadUserSettings()).toBe(false)
+    await expect(uploadUserSettingsInBackground()).resolves.toBeUndefined()
+  })
+
+  test('env override "true" still returns false (only "1" is valid)', async () => {
+    process.env[ENV_KEY] = 'true'
+    expect(await downloadUserSettings()).toBe(false)
+  })
+
+  test('env override "1" reaches the original CC code paths', async () => {
+    process.env[ENV_KEY] = '1'
+    // With the gate open, downloadUserSettings reaches doDownloadUserSettings,
+    // which itself short-circuits when feature('DOWNLOAD_USER_SETTINGS') is
+    // false (the bun:bundle stub). End result is still `false`, but via a
+    // different code path — proving the gate actually opened.
+    expect(await downloadUserSettings()).toBe(false)
+  })
 })
