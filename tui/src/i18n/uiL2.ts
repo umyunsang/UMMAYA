@@ -61,6 +61,7 @@ export type UiL2Bundle = {
   helpGroupPermission: string;
   helpGroupTool: string;
   helpGroupStorage: string;
+  langChanged: (locale: 'ko' | 'en') => string;
   configOverlayTitle: string;
   envSecretEditorTitle: string;
   pluginBrowserTitle: string;
@@ -140,6 +141,7 @@ const KO: UiL2Bundle = {
   helpGroupPermission: '권한',
   helpGroupTool: '도구',
   helpGroupStorage: '저장',
+  langChanged: (locale) => `언어가 ${locale === 'ko' ? '한국어' : '영어'}로 변경되었습니다.`,
   configOverlayTitle: '설정',
   envSecretEditorTitle: '.env 비밀값 편집 (격리 모드)',
   pluginBrowserTitle: '플러그인 브라우저',
@@ -226,6 +228,7 @@ const EN: UiL2Bundle = {
   helpGroupPermission: 'Permission',
   helpGroupTool: 'Tool',
   helpGroupStorage: 'Storage',
+  langChanged: (locale) => `Language changed to ${locale === 'ko' ? 'Korean' : 'English'}.`,
   configOverlayTitle: 'Settings',
   envSecretEditorTitle: '.env secret editor (isolated)',
   pluginBrowserTitle: 'Plugin browser',

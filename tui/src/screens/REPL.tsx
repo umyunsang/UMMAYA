@@ -3340,11 +3340,24 @@ export function REPL({
         setInputValue('');
         helpers.setCursorOffset(0);
         helpers.clearBuffer();
-        const helpResult = executeHelp((process.env['KOSMOS_TUI_LOCALE'] as 'ko' | 'en' | undefined) ?? 'ko');
+        // Mount the KOSMOS 4-group help overlay (HelpV2Grouped) but with
+        // `isLocalJSXCommand: false` so PromptInput.tsx:244's
+        // `isLocalJSXCommandActive` flag stays false — that flag, when
+        // true, sets `isModalOverlayActive` to true and deactivates EVERY
+        // useInput hook in the parent prompt subtree. Ink delivers
+        // stdin events to all active hooks via the same EventEmitter; if
+        // none are active in the parent and the overlay's child hook
+        // is the only listener, Esc must reach it. (Frame 28/29 proved
+        // raw \x1b reaches the child stdin via the Bun PTY harness; the
+        // deactivation in 32 was the missing link.)
+        // HelpV2Grouped.tsx now wires both `useKeybinding` and a
+        // `useInput((_,key)=>key.escape && onDismiss())` fallback so the
+        // overlay actually closes on a single Esc.
+        executeHelp((process.env['KOSMOS_TUI_LOCALE'] as 'ko' | 'en' | undefined) ?? 'ko');
         setToolJSX({
           jsx: React.createElement(HelpV2Grouped, { onDismiss: () => _kosmosCloseJSX() }),
           shouldHidePromptInput: false,
-          isLocalJSXCommand: true,
+          isLocalJSXCommand: false,
         });
         return;
       }
@@ -3636,9 +3649,19 @@ export function REPL({
         helpers.setCursorOffset(0);
         helpers.clearBuffer();
         const { parseLangCommand } = await import('../commands/lang.js');
+        const { getUiL2I18n } = await import('../i18n/uiL2.js');
         const langResult = parseLangCommand(_kosmosArgs);
         if (langResult.ok) {
-          addNotification({ key: 'kosmos-lang', text: `언어가 ${langResult.locale}로 변경되었습니다.`, priority: 'immediate' });
+          // Force any currently-mounted i18n consumer (e.g. HelpV2Grouped) to
+          // unmount so the next /help invocation re-evaluates useUiL2I18n() and
+          // renders the new locale. Without this, process.env mutation alone
+          // does not trigger a React re-render and the citizen sees the old
+          // locale's labels until they manually dismiss + re-open the overlay
+          // (integration-verification frame 05-lang-consent-agents § snap-006).
+          setToolJSX({ jsx: null, shouldHidePromptInput: false, clearLocalJSX: true });
+          // Use the new locale's bundle so the toast itself reflects the change.
+          const newI18n = getUiL2I18n(langResult.locale);
+          addNotification({ key: 'kosmos-lang', text: newI18n.langChanged(langResult.locale), priority: 'immediate' });
         } else {
           addNotification({ key: 'kosmos-lang-error', text: langResult.message, priority: 'immediate' });
         }

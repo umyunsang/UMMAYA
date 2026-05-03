@@ -7,7 +7,8 @@
 // Visual layout mirrors CC HelpV2/Commands.tsx at ≥90% fidelity (FR-034 / SC-009).
 
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useInput } from 'ink';
+import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { useTheme } from '../../theme/provider.js';
 import {
   groupCatalog,
@@ -117,6 +118,26 @@ export function HelpV2Grouped({ onDismiss }: HelpV2GroupedProps): React.ReactEle
   const theme = useTheme();
   const i18n = useUiL2I18n();
   const grouped = groupCatalog(UI_L2_SLASH_COMMANDS);
+
+  // Defense-in-depth: register both `useKeybinding('help:dismiss')` for
+  // the CC HelpV2 keybinding-registry contract and a direct `useInput`
+  // Escape watcher for runtimes whose keybinding chord registry does NOT
+  // bind `help:dismiss → Escape` by default (Tier 1 chord catalogue
+  // covers a fixed set; `help:dismiss` is not Tier 1 in KOSMOS, so the
+  // useKeybinding path needs a useInput fallback to actually fire on
+  // raw Escape bytes from the PTY). With the Bun-native PTY harness
+  // delivering raw `\x1b` immediately (no tmux escape-time race), the
+  // useInput branch is the path that actually triggers in
+  // integration-verification frame 28+.
+  useKeybinding('help:dismiss', () => {
+    onDismiss?.();
+  }, { context: 'Help' });
+  useInput((_input, key) => {
+    if (!onDismiss) return;
+    if (key.escape) {
+      onDismiss();
+    }
+  });
 
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1}>

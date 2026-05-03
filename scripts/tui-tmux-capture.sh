@@ -57,6 +57,19 @@ trap cleanup EXIT
 # Spawn detached tmux session running the TUI
 tmux new-session -d -s "$TMUX_SESSION" -x "$COLS" -y "$ROWS" 'bun run tui'
 
+# Disable tmux's 500 ms escape-time timer.
+# `tmux send-keys Escape` sends `^[` (0x1b). tmux normally waits up to
+# escape-time ms before delivering it to the program, in case the byte is
+# the prefix of a Meta-/function-key sequence (Modifier-Keys wiki). With
+# the default 500 ms, automated scenarios that send Escape immediately
+# followed by another byte trigger the Meta-prefix branch — the program
+# never sees a standalone Escape, and overlay dismiss handlers never fire
+# (integration-verification frame 19/20 root cause).  escape-time=0
+# delivers Escape immediately and matches what an interactive human's
+# keystroke produces.  Must run AFTER new-session so the tmux server
+# exists.
+tmux set-option -t "$TMUX_SESSION" -s escape-time 0
+
 # Helper: poll-with-deadline wait (replaces every Sleep <wallclock>)
 wait_for_pane() {
   local pattern="${1:?wait_for_pane <regex>}"
@@ -92,7 +105,11 @@ send_keys_pane() {
 }
 
 send_text_pane() {
-  tmux send-keys -t "$TMUX_SESSION" -- "$1"
+  # -l = literal mode: bytes are sent as-is, so spaces in the string are
+  # transmitted as space characters (not parsed as the "Space" key name).
+  # Without -l, "/lang en" would be split on whitespace and "en" would
+  # follow a "Space" key event, which the TUI input layer may discard.
+  tmux send-keys -t "$TMUX_SESSION" -l -- "$1"
 }
 
 send_enter_pane() {

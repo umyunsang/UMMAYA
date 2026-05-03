@@ -281,7 +281,7 @@ class TestFreshnessIntegration:
         registry, executor = nmc_reg_exec
 
         payload = json.loads(_FRESH_FIXTURE.read_text(encoding="utf-8"))
-        respx.get(url__regex=r".*odcloud\.kr.*").respond(200, json=payload)
+        respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(200, json=payload)
 
         from kosmos.tools.models import LookupCollection
 
@@ -311,7 +311,7 @@ class TestFreshnessIntegration:
         registry, executor = nmc_reg_exec
 
         payload = json.loads(_STALE_FIXTURE.read_text(encoding="utf-8"))
-        respx.get(url__regex=r".*odcloud\.kr.*").respond(200, json=payload)
+        respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(200, json=payload)
 
         from kosmos.tools.models import LookupError as LookupErrorModel
 
@@ -334,10 +334,22 @@ class TestFreshnessIntegration:
     @respx.mock
     @patch("kosmos.tools.nmc.freshness.datetime")
     @patch("kosmos.settings.settings")
-    async def test_missing_hvidate_returns_stale_error(
+    async def test_missing_hvidate_returns_not_applicable_collection(
         self, mock_settings, mock_dt, nmc_reg_exec
     ) -> None:
-        """Response with no hvidate field → fail-closed: LookupError with reason='stale_data'."""
+        """Response with no hvidate field → endpoint-static collection with
+        meta.freshness_status='not_applicable'.
+
+        Behavior changed on 2026-05-04 (integration-verification): the NMC
+        adapter now targets `getEgytLcinfoInqire` (location endpoint) which
+        returns ER static metadata WITHOUT real-time bed counts or hvidate.
+        Treating absent hvidate as stale would now mean every location
+        request fails closed — instead, when hvidate is uniformly absent we
+        recognise the response as a static-location batch and tag freshness
+        as not_applicable. The fail-closed stale_data behaviour is preserved
+        for the real-time bed endpoint, which always carries hvidate per
+        record (verified upstream by `_evaluate_freshness`'s worst-case loop).
+        """
         mock_settings.data_go_kr_api_key = "test-key"
         mock_settings.nmc_freshness_minutes = 30
         _mock_dt(mock_dt)
@@ -352,9 +364,9 @@ class TestFreshnessIntegration:
                 },
             }
         }
-        respx.get(url__regex=r".*odcloud\.kr.*").respond(200, json=no_hvidate_payload)
+        respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(200, json=no_hvidate_payload)
 
-        from kosmos.tools.models import LookupError as LookupErrorModel
+        from kosmos.tools.models import LookupCollection
 
         result = await executor.invoke(
             "nmc_emergency_search",
@@ -363,10 +375,11 @@ class TestFreshnessIntegration:
             session_identity=object(),
         )
 
-        assert isinstance(result, LookupErrorModel), (
-            f"Expected LookupError, got {type(result).__name__}: {result!r}"
+        assert isinstance(result, LookupCollection), (
+            f"Expected LookupCollection, got {type(result).__name__}: {result!r}"
         )
-        assert result.reason == "stale_data"
+        assert result.meta.freshness_status == "not_applicable"
+        assert result.total_count == 1
 
     @pytest.mark.asyncio
     @respx.mock
@@ -385,7 +398,7 @@ class TestFreshnessIntegration:
                 "body": {"items": [], "totalCount": 0},
             }
         }
-        respx.get(url__regex=r".*odcloud\.kr.*").respond(200, json=error_payload)
+        respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(200, json=error_payload)
 
         from kosmos.tools.models import LookupError as LookupErrorModel
 
@@ -411,7 +424,7 @@ class TestFreshnessIntegration:
         mock_settings.nmc_freshness_minutes = 30
         _, executor = nmc_reg_exec
 
-        respx.get(url__regex=r".*odcloud\.kr.*").respond(
+        respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(
             200,
             content=b"<html>Service Unavailable</html>",
             headers={"content-type": "text/html"},
@@ -445,7 +458,7 @@ class TestFreshnessIntegration:
                 "body": {"items": [], "totalCount": 0},
             }
         }
-        respx.get(url__regex=r".*odcloud\.kr.*").respond(200, json=empty_payload)
+        respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(200, json=empty_payload)
 
         from kosmos.tools.models import LookupCollection
 
@@ -492,7 +505,7 @@ class TestThresholdIntegration:
         # stale_response.json: hvidate 13:00:00 → 70 min old at FIXED_NOW 14:10
         # With threshold=120, 70 < 120 → should be fresh
         payload = json.loads(_STALE_FIXTURE.read_text(encoding="utf-8"))
-        respx.get(url__regex=r".*odcloud\.kr.*").respond(200, json=payload)
+        respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(200, json=payload)
 
         from kosmos.tools.models import LookupCollection
 

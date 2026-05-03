@@ -1507,8 +1507,11 @@ async function run(): Promise<CommanderCommand> {
           // T052: emit surface activation before mounting the flow
           emitSurfaceActivation('onboarding', { 'onboarding.mode': 'initial' });
           logForDebugging('[KOSMOS] Onboarding incomplete — launching 5-step flow');
+          // SWAP: KOSMOS-integration-verification — `require()` of OnboardingFlow.tsx
+          // fails on Bun because the module's transitive deps include top-level
+          // await; switch to dynamic `await import()` (already async-safe context).
+          const { OnboardingFlow } = await import('./components/onboarding/OnboardingFlow.js');
           await showDialog(root, (done) => {
-            const { OnboardingFlow } = require('./components/onboarding/OnboardingFlow.js') as typeof import('./components/onboarding/OnboardingFlow.js');
             return React.createElement(OnboardingFlow, {
               sessionId: getKosmosBridgeSessionId(),
               onComplete: () => done(),

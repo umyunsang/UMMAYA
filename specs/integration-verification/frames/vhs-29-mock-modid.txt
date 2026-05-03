@@ -1,0 +1,841 @@
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/KOSMOS/tui && KOSMOS_ONBOARDING_AUTO_COMPLETE=1 bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2754                                                                                                                                     ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/KOSMOS/tui && KOSMOS_ONBOARDING_AUTO_COMPLETE=1 bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2754                                                                                                                                     ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/KOSMOS/tui && KOSMOS_ONBOARDING_AUTO_COMPLETE=1 bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 모바일 ID 발급 시뮬레이션 해줘
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2754                                                                                                                                     ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/KOSMOS/tui && KOSMOS_ONBOARDING_AUTO_COMPLETE=1 bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+· Generating…
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2754 · esc to interrupt                                                                                                                  ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 ID 발급 시뮬레이션 해줘
+
+⏺ 모바일 ID 발급 시뮬레이션을 위해 적합한 어댑터를 확인해보겠습니다.
+
+  모바일 ID 발급 시뮬레이션을 시도해보았습니다만, 현재 시스템에서 예상된 어댑터들이 실제로 등록되어 있지 않은 상태입니다.
+
+  시스템 상태 확인 결과:
+  - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
+  - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
+  - verify: 등록되지 않음 (unknown_tool)
+  - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
+
+  모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
+
+  인증 위임 발급 (verify 어댑터)
+    - 목적: 모바일 ID 발급을 위한 인증 위임 토큰 발급
+    - 필요한 정보: 발급 목적, 권한 범위(scope_list)
+  사용자 동의 프로세스
+    - 모바일 ID 발급 목적 설명 (예: "금융거래용 모바일 신분증 발급")
+    - 권한 범위 동의 (예: "개인신원확인", "전자문서 발급")
+  위임 토큰 수령
+    - 발급된 DelegationToken으로 후속 작업 수행
+  모바일 ID 발급 요청
+    - 발급기관(행정안전부, 금융감독원 등)에 요청
+
+  현재 제약사항:
+  실제 어댑터가 시스템에 등록되어 있지 않아 시뮬레이션을 직접 실행할 수 없습니다. 하지만 개념적인 절차는 위와 같습니다.
+
+  제안:
+  실제 모바일 ID 발급 시스템을 사용하시려면:
+  1. 행정안전부 모바일신분증 앱 접속
+  2. 본인인증 절차 진행
+  3. 발급 목적 선택 (금융거래, 공공기관 이용 등)
+  4. 권한 동의 및 발급 완료
+
+  혹시 다른 공공서비스 조회나 신청이 필요하시면 해당 어댑터를 알려주시면 도와드리겠습니다.
+
+⏺ lookup(mock_verify_module_modid)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_module_modid'.
+
+⏺ lookup(mock_verify_mobile_id)
+  ⎿  검색 오류: No adapter registered for tool 'mock_verify_mobile_id'.
+
+⏺ lookup(verify)
+────────────────────────────────────────────────────────────────────────────────

@@ -424,7 +424,19 @@ def register(registry: object, executor: object) -> None:
 
     async def _adapter(inp: BaseModel) -> dict[str, Any]:
         assert isinstance(inp, KoroadAccidentSearchInput)
-        return await _call(inp)
+        raw = await _call(inp)
+        # Wrap into LookupOutput collection envelope so envelope.normalize()
+        # in the executor pipeline accepts it. Without this, the raw
+        # KoroadAccidentSearchOutput shape (no `kind` discriminator) fails
+        # the discriminated-union validation and surfaces as the citizen-
+        # facing "Response processing failed." error message
+        # (integration-verification frame 10-tool-traffic).
+        hotspots = raw.get("hotspots", []) if isinstance(raw, dict) else []
+        return {
+            "kind": "collection",
+            "items": hotspots,
+            "next_cursor": None,
+        }
 
     registry.register(KOROAD_ACCIDENT_SEARCH_TOOL)
     executor.register_adapter("koroad_accident_search", _adapter)

@@ -797,8 +797,12 @@ class LookupMeta(BaseModel):
     rate_limit_remaining: int | None = None
     """Remaining rate-limit slots for this adapter, if known."""
 
-    freshness_status: Literal["fresh"] | None = None
-    """'fresh' when adapter freshness check passes; None otherwise."""
+    freshness_status: Literal["fresh", "not_applicable"] | None = None
+    """Adapter freshness signal:
+    - 'fresh': adapter ran a freshness check and the data is within the SLO threshold.
+    - 'not_applicable': adapter is endpoint-static (no per-record timestamp to check
+      — e.g. NMC `getEgytLcinfoInqire` location endpoint, which lacks `hvidate`).
+    - None: adapter does not declare a freshness signal at all."""
 
 
 class AdapterCandidate(BaseModel):

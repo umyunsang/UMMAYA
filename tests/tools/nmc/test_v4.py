@@ -56,7 +56,7 @@ _SEOUL_LAT = 37.5665
 _SEOUL_LON = 126.9780
 
 # NMC endpoint URL regex for respx matching
-_NMC_URL_PATTERN = r".*odcloud\.kr.*"
+_NMC_URL_PATTERN = r".*apis\.data\.go\.kr.*"
 
 
 def _mock_dt(mock_dt_cls: object) -> None:
@@ -411,7 +411,7 @@ class TestNmcUrlEncodingRegression:
         assert "params:" in source or "params =" in source, (
             "handle() must use params={} dict for httpx request"
         )
-        assert "wgs84Lat" in source or "lat" in source, (
+        assert "WGS84_LAT" in source or "lat" in source, (
             "handle() must pass lat coordinate as a params dict value, not URL interpolation"
         )
 
@@ -423,7 +423,8 @@ class TestNmcUrlEncodingRegression:
     ) -> None:
         """Verify httpx params dict passes all required NMC query params.
 
-        The adapter must pass: serviceKey, page, perPage, wgs84Lat, wgs84Lon.
+        The adapter must pass: serviceKey, pageNo, numOfRows, WGS84_LAT, WGS84_LON, _type.
+        Param names match data.go.kr B552657 wire format (post-2026-05-04 host fix).
         All values are numeric/string (not Korean) for the current lat/lon endpoint —
         but the params dict pattern is mandatory to prevent future regressions
         if STAGE1/STAGE2 Korean params are ever added.
@@ -448,14 +449,14 @@ class TestNmcUrlEncodingRegression:
         assert "serviceKey=" in request_url or "serviceKey" in str(called_request.url.params), (
             "serviceKey must be in request"
         )
-        assert "wgs84Lat" in request_url or "wgs84Lat" in str(called_request.url.params), (
-            "wgs84Lat must be in request"
+        assert "WGS84_LAT" in request_url or "WGS84_LAT" in str(called_request.url.params), (
+            "WGS84_LAT must be in request (data.go.kr B552657 wire param)"
         )
-        assert "wgs84Lon" in request_url or "wgs84Lon" in str(called_request.url.params), (
-            "wgs84Lon must be in request"
+        assert "WGS84_LON" in request_url or "WGS84_LON" in str(called_request.url.params), (
+            "WGS84_LON must be in request (data.go.kr B552657 wire param)"
         )
-        assert "perPage" in request_url or "perPage" in str(called_request.url.params), (
-            "perPage must be in request"
+        assert "numOfRows" in request_url or "numOfRows" in str(called_request.url.params), (
+            "numOfRows must be in request (data.go.kr B552657 wire param)"
         )
 
 

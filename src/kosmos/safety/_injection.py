@@ -158,9 +158,31 @@ def run_detector(text: str) -> InjectionSignalSet:
 
     combined = _W_STRUCTURAL * structural + _W_ENTROPY * entropy + _W_LENGTH * length_dev
 
+    # Block decision (integration-verification follow-up — 2026-05-03):
+    # require ≥ 1 structural-pattern category hit AS WELL AS the combined
+    # score crossing _BLOCK_THRESHOLD. Pure entropy or pure length-deviation
+    # signals are treated as auxiliary — they amplify a structural hit but
+    # never trigger a block on their own.
+    #
+    # Rationale: the 0.20 threshold was tuned around "single-category
+    # structural hit ≈ 0.20" (see _BLOCK_EPS comment) under the assumption
+    # that legitimate corpora cap out around 0.035. The Layer-5 verification
+    # pass disproved that assumption — HIRA's `ykiho` field carries an
+    # 80-char base64-like opaque identifier (entropy ~4.17 → normalized ~0.93
+    # → weighted ~0.23) that crosses the threshold without any LLM01-style
+    # structural pattern present. The result was a 100% false-positive block
+    # for the medical hospital adapter (verified at integration-verification
+    # frame 09-tool-hospital). True indirect-prompt-injection attacks
+    # essentially always carry at least one structural-pattern signal
+    # (role assumption, system override, or exfiltration lure) — requiring
+    # `structural > 0` preserves Layer-C protection on real attacks while
+    # eliminating the opaque-identifier false positive.
+    #
     # Use float-tolerant comparison so a single-category structural hit
     # (0.6 × 1/3 = 0.19999…) still trips the 0.20 threshold; see _BLOCK_EPS.
-    decision: str = "block" if combined >= _BLOCK_THRESHOLD - _BLOCK_EPS else "allow"
+    decision: str = (
+        "block" if structural > 0 and combined >= _BLOCK_THRESHOLD - _BLOCK_EPS else "allow"
+    )
 
     return InjectionSignalSet(
         structural_score=structural,
