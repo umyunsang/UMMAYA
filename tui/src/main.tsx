@@ -1957,18 +1957,44 @@ async function run(): Promise<CommanderCommand> {
         startDeferredPrefetches();
         void import('./utils/backgroundHousekeeping.js').then(m => m.startBackgroundHousekeeping());
       }
-      // KOSMOS Spec 1633 / Epic #2293 — cli/print.ts deleted (claude-code
-      // headless dispatcher with verifyApiKey/queryHaiku/queryWithModel).
-      // KOSMOS does not yet provide a `--print` / non-interactive headless
-      // pipeline (out of scope for this Epic; tracked as deferred follow-up).
-      // Emit an explicit error so scripted callers fail fast instead of
-      // exiting silently with no output.
-      console.error(
-        'KOSMOS: --print / non-interactive (headless) mode is not supported. ' +
-        'Use the interactive REPL (run without --print) or wait for a future ' +
-        'KOSMOS headless dispatcher (Spec 1633 follow-up).',
-      )
-      process.exit(2)
+      // KOSMOS Epic #2637 — cli/print.ts PORT (FR-003, FR-016).
+      // CC-original: dynamic import of print.ts + runHeadless invocation.
+      // Replaces the Spec 1633/2293 "not supported" block.
+      const {
+        runHeadless
+      } = await import('src/cli/print.js');
+      void runHeadless(inputPrompt, () => headlessStore.getState(), headlessStore.setState, commandsHeadless, tools, sdkMcpConfigs, agentDefinitions.activeAgents, {
+        continue: options.continue,
+        resume: options.resume,
+        verbose: verbose,
+        outputFormat: outputFormat,
+        jsonSchema,
+        permissionPromptToolName: options.permissionPromptTool,
+        allowedTools,
+        thinkingConfig,
+        maxTurns: options.maxTurns,
+        maxBudgetUsd: options.maxBudgetUsd,
+        taskBudget: options.taskBudget ? {
+          total: options.taskBudget
+        } : undefined,
+        systemPrompt,
+        appendSystemPrompt,
+        userSpecifiedModel: effectiveModel,
+        fallbackModel: userSpecifiedFallbackModel,
+        teleport,
+        sdkUrl,
+        replayUserMessages: effectiveReplayUserMessages,
+        includePartialMessages: effectiveIncludePartialMessages,
+        forkSession: options.forkSession || false,
+        resumeSessionAt: options.resumeSessionAt || undefined,
+        rewindFiles: options.rewindFiles,
+        enableAuthStatus: options.enableAuthStatus,
+        agent: agentCli,
+        workload: options.workload,
+        setupTrigger: setupTrigger ?? undefined,
+        sessionStartHooksPromise
+      });
+      return;
     }
 
 
