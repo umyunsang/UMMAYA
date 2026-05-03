@@ -17,7 +17,6 @@ import pytest
 import respx
 from pydantic import ValidationError
 
-from kosmos.tools.errors import Layer3GateViolation
 from kosmos.tools.executor import ToolExecutor
 from kosmos.tools.lookup import lookup
 from kosmos.tools.models import (
@@ -245,21 +244,32 @@ class TestNfaInputSchemaErrors:
 
 
 class TestNfaLayer3Gate:
-    """Verify handle() raises Layer3GateViolation (defence-in-depth)."""
+    """Verify handle() guard behaviour (T031: live handler replaces stub).
+
+    handle() is now a live HTTP handler. The defence-in-depth backstop is no
+    longer Layer3GateViolation — instead, handle() raises ConfigurationError
+    when KOSMOS_DATA_GO_KR_API_KEY is absent (which is the CI equivalent).
+    Layer3GateViolation is still raised by the executor auth gate *before*
+    handle() is ever called (FR-025, FR-026, SC-006 via executor.invoke()).
+    """
 
     @pytest.mark.asyncio
-    async def test_handle_raises_layer3_gate_violation(self) -> None:
-        """handle() with valid input must always raise Layer3GateViolation."""
+    async def test_handle_raises_config_error_without_api_key(
+        self, monkeypatch
+    ) -> None:
+        """handle() raises ConfigurationError if KOSMOS_DATA_GO_KR_API_KEY is not set."""
+        from kosmos.tools.errors import ConfigurationError
+
+        monkeypatch.delenv("KOSMOS_DATA_GO_KR_API_KEY", raising=False)
+
         inp = NfaEmergencyInfoServiceInput.model_validate(
             {
                 "rsac_gut_fstt_ogid_nm": "천안동남소방서",
                 "stmt_ym": "202112",
             }
         )
-        with pytest.raises(Layer3GateViolation) as exc_info:
+        with pytest.raises(ConfigurationError):
             await handle(inp)
-
-        assert "nfa_emergency_info_service" in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------

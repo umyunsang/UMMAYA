@@ -1,0 +1,40 @@
+{
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE" },
+    "body": {
+      "pageNo": 1,
+      "numOfRows": 2,
+      "totalCount": 1199,
+      "items": [
+        {
+          "sidoHqOgidNm": "서울소방재난본부",
+          "rsacGutFsttOgidNm": "은평소방서",
+          "stmtYm": "202001",
+          "stmtHh": "12",
+          "vctpCdNm": "구급차특수(중형)",
+          "vhclSeCd": "1",
+          "vhclNo": "998머5826",
+          "vhclStatCdNm": "본소출동불가능대기",
+          "gotFrmtAt": "Y",
+          "vhcn": "역촌2",
+          "gutPcnt": "3",
+          "gutOdr": "1"
+        },
+        {
+          "sidoHqOgidNm": "서울소방재난본부",
+          "rsacGutFsttOgidNm": "은평소방서",
+          "stmtYm": "202101",
+          "stmtHh": "13",
+          "vctpCdNm": "구급차특수(소형)",
+          "vhclSeCd": "1",
+          "vhclNo": "998머5809",
+          "vhclStatCdNm": "본소출동대기",
+          "gotFrmtAt": "Y",
+          "vhcn": "역촌1",
+          "gutPcnt": "3",
+          "gutOdr": "1"
+        }
+      ]
+    }
+  }
+}

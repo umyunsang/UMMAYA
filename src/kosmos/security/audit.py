@@ -20,7 +20,7 @@ The table covers the ``GovAPITool`` tools bound to V3 (``auth_level`` ==
 - ``lookup`` — AAL1
 - ``resolve_location`` — AAL1
 - ``nfa_emergency_info_service`` — AAL1 (Spec 029)
-- ``mohw_welfare_eligibility_search`` — AAL2 (Spec 029)
+- ``mohw_welfare_eligibility_search`` — AAL1 (Spec 2522 US4: read-only public catalog)
 
 Spec 031 v1.2 GA (T080) supersedes the legacy 8-verb row set with the
 dual-axis ``(published_tier_minimum, nist_aal_hint)`` contract carried on
@@ -78,7 +78,10 @@ TOOL_MIN_AAL: Final[dict[str, AALLevel]] = {
     # Phase 2 API adapters (spec 029):
     # NFA EMS stats — api_key serviceKey auth; citizen_facing_gate=login derives AAL2.
     "nfa_emergency_info_service": "AAL2",
-    "mohw_welfare_eligibility_search": "AAL2",  # SSIS welfare — personal demographic inputs
+    # Spec 2522 US4: citizen_facing_gate changed from "login" to "read-only"
+    # (live evidence: NationalWelfarelistV001 is a public API-key-only catalog;
+    # no citizen authentication required). derive_min_auth_level("read-only") = AAL1.
+    "mohw_welfare_eligibility_search": "AAL1",
 }
 
 

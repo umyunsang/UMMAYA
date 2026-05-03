@@ -231,12 +231,19 @@ class TestMohwLayer3Gate:
 
 
 class TestMohwExecutorAuthGate:
-    """SC-006: Layer 3 gate short-circuits unauthenticated MOHW calls."""
+    """SC-006 (pre-US4 stub): auth gate tests — superseded by Spec 2522 US4.
+
+    Spec 2522 US4 changed citizen_facing_gate from "login" to "read-only"
+    (live evidence: NationalWelfarelistV001 is a public API-key-only catalog).
+    The two auth_required tests below are skipped; new behavior is tested in
+    tests/tools/mohw/test_v4.py::TestMohwV4Description::test_citizen_facing_gate_is_read_only.
+    """
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="Spec 2522 US4: citizen_facing_gate changed to 'read-only'; auth_required gate no longer applies. See tests/tools/mohw/test_v4.py.")
     @respx.mock
     async def test_executor_returns_auth_required(self, mohw_reg_exec) -> None:
-        """lookup(mode='fetch') with session_identity=None returns LookupError(auth_required)."""
+        """[SKIPPED — Spec 2522 US4 supersedes] lookup(mode='fetch') with session_identity=None returns LookupError(auth_required)."""
         _registry, executor = mohw_reg_exec
 
         respx.get(url__regex=r".*apis\.data\.go\.kr.*").respond(200, text="<response/>")
@@ -281,20 +288,18 @@ class TestMohwExecutorAuthGate:
 
 
 class TestMohwScenario3Contract:
-    """T026: auth_required LookupError shape is frozen as Scenario 3 stub contract."""
+    """T026 (pre-US4 stub): Scenario 3 contract — superseded by Spec 2522 US4.
+
+    Spec 2522 US4 replaced the auth_required gate with a real handle() implementation
+    (citizen_facing_gate="read-only"). The auth_required LookupError shape is no longer
+    the Scenario 3 contract. Kept as historical reference; test is skipped.
+    """
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="Spec 2522 US4: citizen_facing_gate='read-only'; auth_required scenario no longer valid. Epic #19 must update E2E contract.")
     @respx.mock
     async def test_executor_auth_required_matches_scenario3_contract(self, mohw_reg_exec) -> None:
-        """LookupError shape for unauthenticated MOHW fetch is the exact Scenario 3 contract.
-
-        Epic #19 E2E replay asserts this exact shape:
-        - reason == "auth_required"
-        - retryable is False
-        - kind == "error"
-
-        This test freezes the interface-only contract so Epic #19 doesn't drift.
-        """
+        """[SKIPPED — Spec 2522 US4 supersedes] LookupError shape for unauthenticated MOHW fetch."""
         _registry, executor = mohw_reg_exec
 
         respx.route().respond(200, json={})
@@ -306,7 +311,7 @@ class TestMohwScenario3Contract:
         )
         result = await lookup(inp, executor=executor)
 
-        # Shape contract for Scenario 3 E2E replay:
+        # Shape contract for Scenario 3 E2E replay (pre-US4):
         assert isinstance(result, LookupError)
         assert result.reason == "auth_required", (
             f"Scenario 3 contract violation: expected reason='auth_required', got {result.reason!r}"

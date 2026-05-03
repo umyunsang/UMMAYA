@@ -1,0 +1,37 @@
+{
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE" },
+    "body": {
+      "pageNo": 1,
+      "numOfRows": 2,
+      "totalCount": 117,
+      "items": [
+        {
+          "sidoHqOgidNm": "대구소방안전본부",
+          "rsacGutFsttOgidNm": "동부소방서",
+          "vhclSeCd": "1",
+          "vhclNo": "85오6571",
+          "vctpCdNm": "물탱크차(기타)",
+          "vhclStatCdNm": "본소출동대기",
+          "gotFrmtAt": "N",
+          "vhcn": "이엔쓰리물탱크소방차",
+          "bdgPcnt": "0",
+          "stde": "20220125"
+        },
+        {
+          "sidoHqOgidNm": "대구소방안전본부",
+          "rsacGutFsttOgidNm": "동부소방서",
+          "vhclSeCd": "1",
+          "vhclNo": "73러2681",
+          "vctpCdNm": "구급차(기타)",
+          "vhclStatCdNm": "기타편성불가능",
+          "gotFrmtAt": "N",
+          "vhcn": "벤츠오텍스프린터 특수구급차",
+          "bdgPcnt": "0",
+          "mdnm": "구급차(기타)",
+          "stde": "20220125"
+        }
+      ]
+    }
+  }
+}

@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
-"""NFA (소방청) 구급정보서비스 adapter — interface-only stub.
+"""NFA (소방청) 구급정보서비스 adapter — live HTTP handler.
 
 Calls the NFA EmergencyInformationService endpoint for historical, anonymized
 EMS statistics by region, fire station, and report year-month.
 
-Epic δ #2295: citizen-facing gate = read-only (public emergency data).
-The Layer 3 auth-gate in ``executor.invoke()`` short-circuits unauthenticated
-calls to ``LookupError(reason="auth_required")`` before handle() is reached
-(FR-025, FR-026, SC-006). handle() raises Layer3GateViolation as defence-in-depth.
+Wire param research: specs/2522-tool-surface-v4/research-nfa-wire.md
 
-# TODO: implement live HTTP handler after Layer 3 auth gate is provisioned
-# (Epic #16 / #20).
+Key wire param rules (NIA-IFT guide v1.0):
+  - Base URL: https://apis.data.go.kr/1661000/EmergencyInformationService
+  - Sub-endpoint suffix: /<operation> — mandatory, e.g. /getEmgencyActivityInfo
+  - Year-month wire param: ``gutYm`` for getEmgencyActivityInfo, ``stmtYm`` for all others
+  - getEmgVehicleInfo: no ym param (vehicle registry snapshot, not time-series)
+  - resultType=json (capital T, lowercase value)
+  - pageNo / numOfRows (camelCase)
+  - response path: response.body.items.item (list or single dict when totalCount=1)
 """
 
 from __future__ import annotations
@@ -20,12 +23,18 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+import httpx
+from pydantic import BaseModel, ConfigDict, Field, RootModel  # noqa: F401 (RootModel kept for compat)
 
-from kosmos.tools.errors import Layer3GateViolation
+from kosmos.tools._description_template import build_description_v4
+from kosmos.tools._outbound_trace import traced_async_client
+from kosmos.tools.errors import ConfigurationError, ToolExecutionError, _require_env
 from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
+from kosmos.tools.nfa119._short_references import NFA_HQ_SHORT_REFERENCE
 
 logger = logging.getLogger(__name__)
+
+_BASE_URL = "https://apis.data.go.kr/1661000/EmergencyInformationService"
 
 # ---------------------------------------------------------------------------
 # T010 — NFA operation enum + input schema
@@ -261,18 +270,228 @@ class NfaEmergencyInfoServiceOutput(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# T012 — Interface-only stub, GovAPITool registration, and handle()
+# T012 — Wire param builder + response parser
+# ---------------------------------------------------------------------------
+
+_ACTIVITY_OP = NfaEmgOperation.activity.value  # "getEmgencyActivityInfo"
+_VEHICLE_INFO_OP = NfaEmgOperation.vehicle_info.value  # "getEmgVehicleInfo"
+
+
+def _build_params(inp: NfaEmergencyInfoServiceInput, api_key: str) -> dict[str, str | int]:
+    """Build the wire query parameter dict for the given operation.
+
+    Wire rules (NIA-IFT guide, research-nfa-wire.md):
+    - getEmgencyActivityInfo: year-month wire param = ``gutYm`` (출동년월)
+    - all others: year-month wire param = ``stmtYm`` (신고년월)
+    - getEmgVehicleInfo: no ym param (vehicle registry snapshot)
+    """
+    params: dict[str, str | int] = {
+        "serviceKey": api_key,
+        "pageNo": inp.page_no,
+        "numOfRows": inp.num_of_rows,
+        "resultType": inp.result_type,
+        "rsacGutFsttOgidNm": inp.rsac_gut_fstt_ogid_nm,
+    }
+
+    if inp.sido_hq_ogid_nm is not None:
+        params["sidoHqOgidNm"] = inp.sido_hq_ogid_nm
+
+    op = inp.operation.value
+    if op == _ACTIVITY_OP:
+        params["gutYm"] = inp.stmt_ym
+    elif op != _VEHICLE_INFO_OP:
+        # transfer / condition / firstaid / vehicle_dispatch: use stmtYm
+        params["stmtYm"] = inp.stmt_ym
+    # vehicle_info: no ym param (vehicle registry, not time-series)
+
+    return params
+
+
+def _parse_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract item list from data.go.kr response envelope.
+
+    Supports two JSON shapes produced by data.go.kr:
+    Shape A (observed): ``response.body.items`` is a direct list.
+    Shape B (XML-to-JSON): ``response.body.items.item`` is a list or single dict.
+
+    Also normalises the single-item-as-dict quirk in shape B.
+    """
+    try:
+        response_body = payload["response"]
+        body = response_body.get("body", {}) or {}
+        items_val = body.get("items")
+        if items_val is None:
+            return []
+        # Shape A: items is a list directly
+        if isinstance(items_val, list):
+            return items_val
+        # Shape B: items is a dict wrapping an "item" key
+        if isinstance(items_val, dict):
+            raw = items_val.get("item")
+            if raw is None:
+                return []
+            if isinstance(raw, dict):
+                return [raw]
+            if isinstance(raw, list):
+                return raw
+    except (KeyError, TypeError):
+        pass
+    return []
+
+
+def _parse_response(
+    payload: dict[str, Any],
+    operation: str,
+) -> NfaEmergencyInfoServiceOutput:
+    """Parse raw JSON response dict into NfaEmergencyInfoServiceOutput.
+
+    Supports two JSON layout variants from data.go.kr:
+    - Variant A (observed): pageNo/numOfRows/totalCount inside ``response.body``
+    - Variant B (alternate): pageNo/numOfRows/totalCount at ``response`` level
+
+    Raises:
+        ToolExecutionError: On resultCode != "00" or missing header.
+    """
+    try:
+        resp = payload["response"]
+        header = resp["header"]
+        result_code: str = str(header["resultCode"])
+        result_msg: str = str(header.get("resultMsg", ""))
+        # Variant A: pagination fields inside body
+        body = resp.get("body", {}) or {}
+        page_no: int = int(body.get("pageNo") or resp.get("pageNo") or 1)
+        num_of_rows: int = int(body.get("numOfRows") or resp.get("numOfRows") or 10)
+        total_count: int = int(body.get("totalCount") or resp.get("totalCount") or 0)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ToolExecutionError(
+            tool_id="nfa_emergency_info_service",
+            message=f"Unexpected response shape from NFA API: {exc}",
+        ) from exc
+
+    if result_code != "00":
+        raise ToolExecutionError(
+            tool_id="nfa_emergency_info_service",
+            message=(
+                f"NFA API error resultCode={result_code!r} resultMsg={result_msg!r}. "
+                "Check rsacGutFsttOgidNm (max 7 chars), stmt_ym format, and serviceKey."
+            ),
+        )
+
+    raw_items = _parse_items(payload)
+
+    # Parse each item with operation-specific model (extra="allow" tolerates drift)
+    _model_map: dict[str, type[BaseModel]] = {
+        NfaEmgOperation.activity.value: NfaActivityItem,
+        NfaEmgOperation.transfer.value: NfaTransferItem,
+        NfaEmgOperation.condition.value: NfaConditionItem,
+        NfaEmgOperation.firstaid.value: NfaFirstaidItem,
+        NfaEmgOperation.vehicle_dispatch.value: NfaVehicleDispatchItem,
+        NfaEmgOperation.vehicle_info.value: NfaVehicleInfoItem,
+    }
+    item_model = _model_map.get(operation, NfaActivityItem)
+    parsed_items: list[NfaItem] = [item_model.model_validate(raw) for raw in raw_items]
+
+    return NfaEmergencyInfoServiceOutput(
+        operation=operation,
+        result_code=result_code,
+        result_msg=result_msg,
+        page_no=page_no,
+        num_of_rows=num_of_rows,
+        total_count=total_count,
+        items=parsed_items,
+    )
+
+
+# ---------------------------------------------------------------------------
+# T031 — Live HTTP handle()
 # ---------------------------------------------------------------------------
 
 
-class _NfaEmergencyInfoServiceOutputStub(RootModel[dict[str, Any]]):
-    """Placeholder output schema for GovAPITool registration.
+async def handle(
+    inp: NfaEmergencyInfoServiceInput,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> dict[str, Any]:
+    """Query the NFA EmergencyInformationService endpoint.
 
-    Real output shape is deferred until Layer 3 auth is provisioned (Epic #16/#20).
+    Args:
+        inp: Validated input parameters.
+        client: Optional injected ``httpx.AsyncClient`` (for testing).
+
+    Returns:
+        A plain dict matching ``NfaEmergencyInfoServiceOutput`` field names.
+
+    Raises:
+        ConfigurationError: If ``KOSMOS_DATA_GO_KR_API_KEY`` is not set.
+        ToolExecutionError: On HTTP errors, unexpected response shapes, or API error codes.
     """
+    api_key = _require_env("KOSMOS_DATA_GO_KR_API_KEY")
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    operation = inp.operation.value
+    url = f"{_BASE_URL}/{operation}"
+    query_params = _build_params(inp, api_key)
 
+    logger.debug(
+        "NFA request: operation=%s station=%s ym=%s page=%d",
+        operation,
+        inp.rsac_gut_fstt_ogid_nm,
+        inp.stmt_ym,
+        inp.page_no,
+    )
+
+    own_client = client is None
+    if own_client:
+        client = traced_async_client(timeout=30.0)
+
+    try:
+        assert client is not None  # noqa: S101
+        response = await client.get(url, params=query_params)
+        response.raise_for_status()
+
+        content_type = response.headers.get("content-type", "")
+        if "xml" in content_type.lower():
+            raise ToolExecutionError(
+                tool_id="nfa_emergency_info_service",
+                message=(
+                    f"Unexpected XML response from NFA API (content-type={content_type!r}). "
+                    "Check serviceKey validity and resultType=json param."
+                ),
+            )
+
+        payload: dict[str, Any] = response.json()
+        output = _parse_response(payload, operation)
+
+        logger.info(
+            "NFA %s: station=%s ym=%s total=%d page=%d/%d",
+            operation,
+            inp.rsac_gut_fstt_ogid_nm,
+            inp.stmt_ym,
+            output.total_count,
+            output.page_no,
+            output.num_of_rows,
+        )
+        return output.model_dump()
+
+    except (ToolExecutionError, ConfigurationError):
+        raise
+    except httpx.HTTPStatusError as exc:
+        raise ToolExecutionError(
+            tool_id="nfa_emergency_info_service",
+            message=f"HTTP {exc.response.status_code} from NFA API: {exc}",
+        ) from exc
+    except httpx.RequestError as exc:
+        raise ToolExecutionError(
+            tool_id="nfa_emergency_info_service",
+            message=f"Network error calling NFA API: {exc}",
+        ) from exc
+    finally:
+        if own_client and client is not None:
+            await client.aclose()
+
+
+# ---------------------------------------------------------------------------
+# T032 — GovAPITool registration with build_description_v4 5-section
+# ---------------------------------------------------------------------------
 
 NFA_EMERGENCY_INFO_SERVICE_TOOL = GovAPITool(
     id="nfa_emergency_info_service",
@@ -282,14 +501,31 @@ NFA_EMERGENCY_INFO_SERVICE_TOOL = GovAPITool(
     endpoint="https://apis.data.go.kr/1661000/EmergencyInformationService",
     auth_type="api_key",
     input_schema=NfaEmergencyInfoServiceInput,
-    output_schema=_NfaEmergencyInfoServiceOutputStub,  # RootModel[dict] stub
-    llm_description=(
-        "Query the NFA (소방청) emergency-activity records service for historical, "
-        "anonymized EMS statistics by region, fire station, and report year-month. "
-        "Returns dispatch distance, patient symptoms, and crew qualifications when "
-        "operation='getEmgencyActivityInfo' (default). This is NOT a real-time 119 dispatch tool "
-        "and does NOT return current-incident or facility-locator data. "
-        "IMPORTANT: This is a read-only emergency info service — public data access."
+    output_schema=NfaEmergencyInfoServiceOutput,
+    llm_description=build_description_v4(
+        purpose=(
+            "소방청(NFA) 구급정보서비스 — 시도본부·출동소방서·신고년월 기준으로 "
+            "구급활동/이송/상태/처치/차량 통계를 조회. "
+            "실시간 출동 조회 불가 — 월별 익명화 통계만 제공."
+        ),
+        input_quirk=(
+            "rsac_gut_fstt_ogid_nm(필수,7자이내), stmt_ym(YYYYMM필수), "
+            "operation(기본=getEmgencyActivityInfo). "
+            "소방서명 확실히 알 때만 호출 — 추측 금지."
+        ),
+        short_reference=(
+            f"[시도본부 17개] {NFA_HQ_SHORT_REFERENCE}"
+        ),
+        domain_quirk=(
+            "wire URL = base/operation(suffix필수). "
+            "activity는 gutYm, 나머지는 stmtYm. "
+            "vehicle_info는 ym파라미터 없음(차량 registry). "
+            "resultType=json 고정."
+        ),
+        self_contained_decl=(
+            "이 도구는 자립적(self-contained). 다른 도구 호출 불필요. "
+            "소방서명 모를 경우 시민에게 직접 질문."
+        ),
     ),
     search_hint=(
         "119 구급 출동 소방청 구급정보 구급활동 구급차 통계 현황 소방서 긴급구조 "
@@ -297,7 +533,7 @@ NFA_EMERGENCY_INFO_SERVICE_TOOL = GovAPITool(
     ),
     policy=AdapterRealDomainPolicy(
         real_classification_url="https://www.nfa.go.kr/nfa/main/contents.do?menuKey=66",
-        real_classification_text="소방청 공공데이터 이용약관 — 119 응급서비스 데이터 비상업적 공공 이용 허가",  # TODO: verify URL  # noqa: E501
+        real_classification_text="소방청 공공데이터 이용약관 — 119 응급서비스 데이터 비상업적 공공 이용 허가",
         citizen_facing_gate="login",  # api_key auth_type — requires serviceKey credential (AAL2)
         last_verified=datetime(2026, 4, 29, tzinfo=UTC),
     ),
@@ -311,21 +547,6 @@ NFA_EMERGENCY_INFO_SERVICE_TOOL = GovAPITool(
         "AED 위치 알려줘",
     ],
 )
-
-
-async def handle(inp: NfaEmergencyInfoServiceInput) -> dict[str, object]:
-    """Defence-in-depth backstop — should never be reached.
-
-    The Layer 3 auth-gate in executor.invoke() short-circuits on
-    Epic δ #2295: auth gate based on policy.citizen_facing_gate (FR-025, FR-026, SC-006).
-
-    # TODO: implement live HTTP handler after Layer 3 auth gate is provisioned
-    # (Epic #16 / #20).
-
-    Raises:
-        Layer3GateViolation: Always — signals a programming error if reached.
-    """
-    raise Layer3GateViolation("nfa_emergency_info_service")
 
 
 def register(registry: object, executor: object) -> None:
@@ -349,6 +570,4 @@ def register(registry: object, executor: object) -> None:
 
     registry.register(NFA_EMERGENCY_INFO_SERVICE_TOOL)
     executor.register_adapter("nfa_emergency_info_service", _adapter)
-    logger.info(
-        "Registered tool: nfa_emergency_info_service (auth_required gate — interface-only stub)"
-    )
+    logger.info("Registered tool: nfa_emergency_info_service (live HTTP handler)")

@@ -1,0 +1,36 @@
+{
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE" },
+    "body": {
+      "pageNo": 1,
+      "numOfRows": 2,
+      "totalCount": 162,
+      "items": [
+        {
+          "sidoHqOgidNm": "충청남도소방본부",
+          "rsacGutFsttOgidNm": "공주소방서",
+          "stmtYm": "202101",
+          "stmtHh": "08",
+          "rlifAcdAsmCdNm": "운전자",
+          "ptntAge": "50~59세",
+          "ptntSdtSeCdNm": "여",
+          "frnrAt": "N",
+          "ptntTyCdNm": "무직",
+          "ruptOccrPlcCdNm": "도로",
+          "rlifOccrTyCdNm": "기타"
+        },
+        {
+          "sidoHqOgidNm": "충청남도소방본부",
+          "rsacGutFsttOgidNm": "공주소방서",
+          "stmtYm": "202101",
+          "stmtHh": "11",
+          "rlifAcdAsmCdNm": "보행자",
+          "ptntAge": "70~79세",
+          "ptntSdtSeCdNm": "남",
+          "frnrAt": "N",
+          "ruptOccrPlcCdNm": "집"
+        }
+      ]
+    }
+  }
+}

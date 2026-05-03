@@ -1,0 +1,40 @@
+{
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE" },
+    "body": {
+      "pageNo": 1,
+      "numOfRows": 2,
+      "totalCount": 1299,
+      "items": [
+        {
+          "sidoHqOgidNm": "경기도소방재난본부",
+          "rsacGutFsttOgidNm": "파주소방서",
+          "stmtYm": "202107",
+          "stmtHh": "06",
+          "ptntAge": "60~69세",
+          "lwsBpsr": "73",
+          "topBpsr": "122",
+          "ptntHbco": "80",
+          "ptntBfco": "16",
+          "ptntOsv": "99",
+          "ptntBht": "36",
+          "ruptSptmCdNm": "어지러움"
+        },
+        {
+          "sidoHqOgidNm": "경기도소방재난본부",
+          "rsacGutFsttOgidNm": "파주소방서",
+          "stmtYm": "202107",
+          "stmtHh": "01",
+          "ptntAge": "40~49세",
+          "lwsBpsr": "80",
+          "topBpsr": "120",
+          "ptntHbco": "80",
+          "ptntBfco": "20",
+          "ptntOsv": "98",
+          "ptntBht": "36",
+          "ruptSptmCdNm": "기타통증"
+        }
+      ]
+    }
+  }
+}

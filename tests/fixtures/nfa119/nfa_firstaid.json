@@ -1,0 +1,30 @@
+{
+  "response": {
+    "header": { "resultCode": "00", "resultMsg": "NORMAL SERVICE" },
+    "body": {
+      "pageNo": 1,
+      "numOfRows": 2,
+      "totalCount": 74,
+      "items": [
+        {
+          "sidoHqOgidNm": "충청남도소방본부",
+          "rsacGutFsttOgidNm": "천안동남소방서",
+          "stmtYm": "202105",
+          "stmtHh": "17",
+          "ptntAge": "60~69세",
+          "ptntSdtSeCdNm": "남",
+          "fstaCdNm": "비관, 기타"
+        },
+        {
+          "sidoHqOgidNm": "충청남도소방본부",
+          "rsacGutFsttOgidNm": "천안동남소방서",
+          "stmtYm": "202105",
+          "stmtHh": "13",
+          "ptntAge": "10~19세",
+          "ptntSdtSeCdNm": "여",
+          "fstaCdNm": "기타"
+        }
+      ]
+    }
+  }
+}
