@@ -3,6 +3,10 @@
 // Updated: Epic #2077 — services/api/claude.ts and client.ts RESTORED (no longer banned).
 //   The files are preserved with CC's full API surface but LLM calls route
 //   through the Spec 1978 stdio bridge (query/deps.ts). See Epic #2077 T001.
+// Updated: Epic #2637 — services/remoteManagedSettings + constants/oauth.ts RESTORED
+//   as KOSMOS no-op stubs for print.ts byte-copy pipeline (R-3-cascade + R-4).
+//   Both carry SWAP/anti-anthropic-1p(2637) headers; Anthropic OAuth/remote-settings
+//   surface is null/no-op in KOSMOS. Removed from banned list; added to stub-exists list.
 //
 // Validates FR-004..FR-006, FR-014, FR-015 — CC telemetry, auth, teleport,
 // policy-limits, and Anthropic MCP surfaces have been removed.
@@ -40,7 +44,8 @@ describe('Epic #1633 T041 — US3 invariant: CC dead-code directories removed', 
     'utils/secureStorage',
     'remote',
     'services/policyLimits',
-    'services/remoteManagedSettings',
+    // 'services/remoteManagedSettings' — RESTORED Epic #2637 as KOSMOS no-op cascade stub
+    //   for print.ts byte-copy (R-3-cascade). SWAP/anti-anthropic-1p(2637) header present.
     'services/analytics/datadog.ts',
     'services/analytics/sink.ts',
     'services/internalLogging.ts',
@@ -48,7 +53,9 @@ describe('Epic #1633 T041 — US3 invariant: CC dead-code directories removed', 
     'utils/teleport.tsx',
     'utils/teleport',
     'utils/model/antModels.ts',
-    'constants/oauth.ts',
+    // 'constants/oauth.ts' — RESTORED Epic #2637 as KOSMOS no-op stub (R-4).
+    //   OAuth CLIENT_IDs → null, MCP_CLIENT_METADATA_URL → null.
+    //   SWAP/anti-anthropic-1p(2637) header present.
     'components/grove',
     'components/TeleportResumeWrapper.tsx',
     'hooks/useTeleportResume.tsx',
