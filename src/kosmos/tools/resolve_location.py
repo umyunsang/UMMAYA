@@ -175,6 +175,11 @@ async def _kakao_adm_cd(
     except (httpx.HTTPError, httpx.HTTPStatusError, ValueError) as exc:
         logger.debug("kakao adm_cd fallback failed for %r: %s", query, exc)
         return None
+    except Exception as exc:  # noqa: BLE001 — Codex P1: KOSMOS_KAKAO_API_KEY 부재
+        # 시 search_address() 가 ConfigurationError raise. JUSO/SGIS 도 없는
+        # 환경에서 hard adapter fail 대신 graceful ResolveError 로 fallback.
+        logger.debug("kakao adm_cd fallback config/unexpected error for %r: %s", query, exc)
+        return None
 
 
 async def _juso_adm_cd(
