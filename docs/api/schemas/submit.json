@@ -1,0 +1,33 @@
+{
+  "$defs": {
+    "_LookupOutput": {
+      "description": "Placeholder output schema for lookup tool registration.",
+      "title": "_LookupOutput"
+    }
+  },
+  "$id": "https://kosmos.example/api/schemas/submit.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "LLM-visible submit input schema — `{tool_id, params}` envelope.\n\nMirrors :class:`kosmos.primitives.submit.SubmitInput` but lives here so the\nOpenAI tool_calls schema published to FriendliAI for the ``submit`` tool\nis the submit envelope, NOT the lookup mode-discriminated union. (Codex\nP1 #2 on PR #2480 caught the original copy-paste bug where SUBMIT_TOOL\nwas declared with ``input_schema=_LookupInput``.)",
+  "properties": {
+    "params": {
+      "additionalProperties": true,
+      "description": "Adapter-defined payload. MUST include 'delegation_context' (the value returned by the prior verify call) plus any adapter-specific filing fields. Adapter validates against its own Pydantic model at invocation time.",
+      "title": "Params",
+      "type": "object"
+    },
+    "tool_id": {
+      "description": "Registered submit adapter id (e.g. mock_submit_module_hometax_taxreturn). MUST match a tool_id from the system prompt's <verify_chain_pattern> 기본 매핑 section.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Tool Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tool_id"
+  ],
+  "title": "submit",
+  "type": "object"
+}

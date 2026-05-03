@@ -1,43 +1,10 @@
 {
   "$defs": {
-    "SubmitOutput": {
-      "additionalProperties": false,
-      "description": "Shape-only submit envelope output.\n\n``adapter_receipt`` is opaque — domain-specific receipt data lives there.\n``transaction_id`` is deterministic per invocation (content-hash, FR-004).",
-      "properties": {
-        "adapter_receipt": {
-          "additionalProperties": true,
-          "description": "Opaque adapter-specific receipt (e.g. 접수번호, authorization code). Main envelope does NOT narrow this shape.",
-          "title": "Adapter Receipt",
-          "type": "object"
-        },
-        "status": {
-          "$ref": "#/$defs/SubmitStatus"
-        },
-        "transaction_id": {
-          "description": "Deterministic per invocation (content-hash of input + adapter_nonce) — FR-004.",
-          "maxLength": 128,
-          "minLength": 1,
-          "title": "Transaction Id",
-          "type": "string"
-        }
-      },
-      "required": [
-        "transaction_id",
-        "status"
-      ],
-      "title": "SubmitOutput",
+    "_OpaqueOutput": {
+      "additionalProperties": true,
+      "description": "Generic envelope wrapper for bridge-registered tools' outputs.",
+      "title": "_OpaqueOutput",
       "type": "object"
-    },
-    "SubmitStatus": {
-      "description": "Terminal / non-terminal disposition from the adapter.\n\nFailed adapter invocations surface as ``failed`` or ``rejected``,\nnever as an unhandled Python exception (FR-005).",
-      "enum": [
-        "pending",
-        "succeeded",
-        "failed",
-        "rejected"
-      ],
-      "title": "SubmitStatus",
-      "type": "string"
     }
   },
   "$id": "https://kosmos.example/api/schemas/mock_welfare_application_submit_v1.json",

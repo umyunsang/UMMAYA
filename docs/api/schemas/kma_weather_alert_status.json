@@ -138,10 +138,11 @@
   },
   "$id": "https://kosmos.example/api/schemas/kma_weather_alert_status.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Input parameters for the kma_weather_alert_status tool.",
+  "description": "Input parameters for the kma_weather_alert_status tool.\n\nAt least one of ``stn_id`` or ``tmFc`` must be provided.  Omitting both\ncauses the KMA API to return resultCode=11 (NO_MANDATORY_REQUEST_PARAMETERS_ERROR).\nTypically ``stn_id`` is obtained from a prior ``kma_pre_warning`` call.",
   "properties": {
     "data_type": {
       "default": "JSON",
+      "description": "응답 형식 (JSON 권장).",
       "enum": [
         "JSON",
         "XML"
@@ -150,16 +151,44 @@
       "type": "string"
     },
     "num_of_rows": {
-      "default": 2000,
+      "default": 100,
+      "description": "결과 행 수 (default 100).",
       "minimum": 1,
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
+      "description": "페이지 번호 (1-based, default 1).",
       "minimum": 1,
       "title": "Page No",
       "type": "integer"
+    },
+    "stn_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "기상청 관서 ID (기상청 station code). kma_pre_warning 응답의 stn_id 값 사용 권장. 예: 서울=108, 부산=159, 대구=143, 인천=112, 광주=156, 대전=133, 울산=152, 제주=184. stn_id 또는 tmFc 중 하나 이상 필수.",
+      "title": "Stn Id"
+    },
+    "tmFc": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "특보 발표 시각 (YYYYMMDDHHMI 형식, integer string). kma_pre_warning 응답의 tmFc 값 사용 권장. stn_id 또는 tmFc 중 하나 이상 필수.",
+      "title": "Tmfc"
     }
   },
   "title": "kma_weather_alert_status",

@@ -77,15 +77,18 @@
   "description": "Input parameters for the KMA ultra-short-term forecast (초단기예보) API.",
   "properties": {
     "base_date": {
+      "description": "발표 날짜 (YYYYMMDD). 보통 오늘. Example: 20260430.",
       "title": "Base Date",
       "type": "string"
     },
     "base_time": {
+      "description": "발표 시각 (HH30 format). 매 시각의 30분 발표만 유효. Example: 0630 / 1130 / 1430. MM != 30 인 값은 reject.",
       "title": "Base Time",
       "type": "string"
     },
     "data_type": {
       "default": "JSON",
+      "description": "응답 형식 (JSON 권장).",
       "enum": [
         "JSON",
         "XML"
@@ -95,17 +98,20 @@
     },
     "num_of_rows": {
       "default": 60,
+      "description": "결과 행 수 (default 60 = 6시간 × ~10 카테고리). 보통 기본값.",
       "minimum": 1,
       "title": "Num Of Rows",
       "type": "integer"
     },
     "nx": {
+      "description": "KMA 격자 X (1-149). resolve_location 으로 받아 그대로 전달.",
       "maximum": 149,
       "minimum": 1,
       "title": "Nx",
       "type": "integer"
     },
     "ny": {
+      "description": "KMA 격자 Y (1-253). nx 와 함께 resolve_location 으로 받음.",
       "maximum": 253,
       "minimum": 1,
       "title": "Ny",
@@ -113,6 +119,7 @@
     },
     "page_no": {
       "default": 1,
+      "description": "페이지 번호 (1-based, default 1).",
       "minimum": 1,
       "title": "Page No",
       "type": "integer"

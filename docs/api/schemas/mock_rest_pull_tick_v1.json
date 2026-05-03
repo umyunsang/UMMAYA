@@ -1,69 +1,17 @@
 {
   "$defs": {
-    "SubscriptionHandle": {
-      "additionalProperties": false,
-      "description": "Synchronous handle returned at subscription open time.",
-      "properties": {
-        "closes_at": {
-          "format": "date-time",
-          "title": "Closes At",
-          "type": "string"
-        },
-        "opened_at": {
-          "format": "date-time",
-          "title": "Opened At",
-          "type": "string"
-        },
-        "subscription_id": {
-          "title": "Subscription Id",
-          "type": "string"
-        },
-        "tool_id": {
-          "title": "Tool Id",
-          "type": "string"
-        }
-      },
-      "required": [
-        "subscription_id",
-        "tool_id",
-        "opened_at",
-        "closes_at"
-      ],
-      "title": "SubscriptionHandle",
+    "_OpaqueOutput": {
+      "additionalProperties": true,
+      "description": "Generic envelope wrapper for bridge-registered tools' outputs.",
+      "title": "_OpaqueOutput",
       "type": "object"
     }
   },
   "$id": "https://kosmos.example/api/schemas/mock_rest_pull_tick_v1.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "additionalProperties": false,
-  "description": "Main-surface input for the ``subscribe`` primitive.\n\nFR-011: ``lifetime_seconds`` ceiling = 31_536_000 (365 days).\nFR-013: No inbound-receiver URL field (no webhook_url / callback_url).",
-  "properties": {
-    "lifetime_seconds": {
-      "description": "Bounded lifetime required (FR-011). Ceiling = 365 days. Harness releases resources on expiry (FR-014).",
-      "maximum": 31536000,
-      "minimum": 1,
-      "title": "Lifetime Seconds",
-      "type": "integer"
-    },
-    "params": {
-      "additionalProperties": true,
-      "description": "Adapter-specific subscription parameters (e.g. region filter for CBS, polling_interval for REST pull, rss_feed_url for RSS 2.0). All URL fields in params are outbound-only (data source URLs).",
-      "title": "Params",
-      "type": "object"
-    },
-    "tool_id": {
-      "description": "Registered mock adapter tool_id.",
-      "maxLength": 128,
-      "minLength": 1,
-      "pattern": "^[a-z][a-z0-9_]*$",
-      "title": "Tool Id",
-      "type": "string"
-    }
-  },
-  "required": [
-    "tool_id",
-    "lifetime_seconds"
-  ],
+  "additionalProperties": true,
+  "description": "LLM-facing subscribe params — opaque per-adapter dict.",
+  "properties": {},
   "title": "mock_rest_pull_tick_v1",
   "type": "object"
 }

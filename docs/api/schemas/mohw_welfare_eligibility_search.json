@@ -90,7 +90,7 @@
         }
       ],
       "default": null,
-      "description": "Citizen age in years. Used to filter age-eligible services. Do NOT request this from the citizen unless they have consented — this field is part of the is_personal_data=True surface.",
+      "description": "Citizen age in years. Used to filter age-eligible services. Do NOT request this from the citizen unless they have consented — this field is part of the login-gated surface (citizen PII).",
       "title": "Age"
     },
     "call_tp": {

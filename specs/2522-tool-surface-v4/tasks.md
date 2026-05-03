@@ -187,7 +187,7 @@ description: "Task list for Tool surface v4 — agency-faithful contracts + desc
 - [ ] T046 [P] TUI PTY smoke scenario 5 — 강남소방서 구급통계 (US5) in `frames-gangnam-119/`. 6 sub-operation 중 `getEmgencyActivityInfo` 검증.
 - [ ] T047 [P] TUI PTY smoke scenario 6 — 서울 강남구 교통사고 (US6) in `frames-gangnam-accident/`. siDo="11"/guGun="680" + geom_json strip 검증.
 - [ ] T048 [P] TUI PTY smoke scenario 7 — chain 독립 자율 호출 (US7) in `frames-chain-independence/`. KOSMOS 가 chain 강요하지 않는지 + LLM autonomous chain 동작 검증.
-- [ ] T049 Sync all docs/api/* 7-section + run `python /Users/um-yunsang/KOSMOS-w-2522/scripts/build_schemas.py --check` PASS — 13 도구 + resolve_location 의 JSON Schema Draft 2020-12 export drift 0 검증. Spec 1637 호환.
+- [X] T049 Sync all docs/api/* 7-section + run `python /Users/um-yunsang/KOSMOS-w-2522/scripts/build_schemas.py --check` PASS — 13 도구 + resolve_location 의 JSON Schema Draft 2020-12 export drift 0 검증. Spec 1637 호환.
 
 ---
 

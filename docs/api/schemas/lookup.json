@@ -1,95 +1,5 @@
 {
   "$defs": {
-    "LookupFetchInput": {
-      "additionalProperties": false,
-      "description": "Input for lookup(mode='fetch'): typed invocation of a specific adapter.",
-      "properties": {
-        "mode": {
-          "const": "fetch",
-          "title": "Mode",
-          "type": "string"
-        },
-        "page": {
-          "anyOf": [
-            {
-              "minimum": 1,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Page"
-        },
-        "params": {
-          "additionalProperties": true,
-          "title": "Params",
-          "type": "object"
-        },
-        "tool_id": {
-          "pattern": "^([a-z][a-z0-9_]*|plugin\\.[a-z][a-z0-9_]*\\.(lookup|submit|verify|subscribe|resolve_location))$",
-          "title": "Tool Id",
-          "type": "string"
-        }
-      },
-      "required": [
-        "mode",
-        "tool_id",
-        "params"
-      ],
-      "title": "LookupFetchInput",
-      "type": "object"
-    },
-    "LookupSearchInput": {
-      "additionalProperties": false,
-      "description": "Input for lookup(mode='search'): BM25 gate over adapter registry.",
-      "properties": {
-        "domain": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Domain"
-        },
-        "mode": {
-          "const": "search",
-          "title": "Mode",
-          "type": "string"
-        },
-        "query": {
-          "maxLength": 200,
-          "minLength": 1,
-          "title": "Query",
-          "type": "string"
-        },
-        "top_k": {
-          "anyOf": [
-            {
-              "maximum": 20,
-              "minimum": 1,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Top K"
-        }
-      },
-      "required": [
-        "mode",
-        "query"
-      ],
-      "title": "LookupSearchInput",
-      "type": "object"
-    },
     "_LookupOutput": {
       "description": "Placeholder output schema for lookup tool registration.",
       "title": "_LookupOutput"
@@ -97,14 +7,40 @@
   },
   "$id": "https://kosmos.example/api/schemas/lookup.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "anyOf": [
-    {
-      "$ref": "#/$defs/LookupSearchInput"
+  "additionalProperties": false,
+  "description": "LLM-visible lookup input — fetch-only ``{tool_id, params}`` envelope.\n\nSpec 2521 (2026-05-01): the previous ``_LookupInput`` (RootModel union of\nLookupSearchInput | LookupFetchInput) exposed BM25 adapter discovery as\na callable mode. That mis-modeled an *internal backend mechanism* as a\nuser-visible tool: the LLM kept emitting ``lookup(mode='search')`` calls\nafter each answer turn, painting a redundant `● lookup(search:)` block\nin the citizen transcript and burning agentic-loop budget.\n\nThe corrected design (per user directive 2026-05-01):\n\n1. BM25 search is a backend-internal *function*, not a tool. The\n   backend runs it automatically against every citizen utterance and\n   injects the top-K candidates into the system prompt's\n   ``<available_adapters>`` dynamic suffix (see ``stdio.py``).\n2. The LLM-visible ``lookup`` tool is fetch-only: pick a ``tool_id``\n   from the injected suffix, supply ``params``, get a typed result.\n3. ``LookupSearchInput`` / ``LookupSearchResults`` survive as\n   internal API consumed by the auto-inject path + the eval harness\n   (``kosmos.eval.retrieval``); they are NOT exposed to the LLM.",
+  "properties": {
+    "page": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional pagination cursor for adapters that return collections.",
+      "title": "Page"
     },
-    {
-      "$ref": "#/$defs/LookupFetchInput"
+    "params": {
+      "additionalProperties": true,
+      "description": "Validated against the target adapter's input_schema at fetch time.",
+      "title": "Params",
+      "type": "object"
+    },
+    "tool_id": {
+      "description": "Adapter identifier picked from the dynamically-injected <available_adapters> block. Must come from the candidate list — never guess.",
+      "pattern": "^([a-z][a-z0-9_]*|plugin\\.[a-z][a-z0-9_]*\\.(lookup|submit|verify|subscribe|resolve_location))$",
+      "title": "Tool Id",
+      "type": "string"
     }
+  },
+  "required": [
+    "tool_id",
+    "params"
   ],
-  "description": "Combined input schema covering both search and fetch modes.",
-  "title": "lookup"
+  "title": "lookup",
+  "type": "object"
 }

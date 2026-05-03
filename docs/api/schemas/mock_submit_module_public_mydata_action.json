@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "DelegationContext": {
+      "additionalProperties": false,
+      "description": "Carries a ``DelegationToken`` plus bilingual purpose strings for the permission UI.\n\nReturned by verify adapters (except ``mock_verify_module_any_id_sso``).\nPassed forward through the LLM's tool-call context to the next adapter.",
+      "properties": {
+        "citizen_did": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Citizen DID if the verify ceremony surfaced one (e.g. 'did:web:mobileid.go.kr' issuance). Optional.",
+          "title": "Citizen Did"
+        },
+        "purpose_en": {
+          "description": "English purpose statement shown in the permission UI.",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Purpose En",
+          "type": "string"
+        },
+        "purpose_ko": {
+          "description": "Korean purpose statement shown in the permission UI.",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Purpose Ko",
+          "type": "string"
+        },
+        "token": {
+          "$ref": "#/$defs/DelegationToken",
+          "description": "The opaque delegation credential."
+        }
+      },
+      "required": [
+        "token",
+        "purpose_ko",
+        "purpose_en"
+      ],
+      "title": "DelegationContext",
+      "type": "object"
+    },
+    "DelegationToken": {
+      "additionalProperties": false,
+      "description": "Opaque, scope-bound, time-bound credential issued by a verify adapter.\n\nIn Mock mode the ``vp_jwt`` header is ``{\"alg\":\"none\",\"typ\":\"vp+jwt\"}``;\nthe signature segment is the literal string ``\"mock-signature-not-cryptographic\"``.\n\nValidators:\n- ``expires_at > issued_at``\n- ``scope`` matches the multi-scope grammar\n- ``delegation_token`` starts with ``del_`` and has >= 24 chars after the prefix",
+      "properties": {
+        "_mode": {
+          "const": "mock",
+          "default": "mock",
+          "description": "Always 'mock' for Epic ε. Reserved for future 'live' value.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "delegation_token": {
+          "description": "Opaque bearer token consumed by submit/lookup adapters. Must start with 'del_' and have >= 24 chars after the prefix.",
+          "minLength": 1,
+          "title": "Delegation Token",
+          "type": "string"
+        },
+        "expires_at": {
+          "description": "UTC tz-aware expiry. Must be > issued_at. 24h max in Mock mode.",
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "issued_at": {
+          "description": "UTC tz-aware token mint time.",
+          "format": "date-time",
+          "title": "Issued At",
+          "type": "string"
+        },
+        "issuer_did": {
+          "description": "DID of the issuing verify adapter, e.g. 'did:web:mobileid.go.kr'.",
+          "minLength": 1,
+          "title": "Issuer Did",
+          "type": "string"
+        },
+        "scope": {
+          "description": "Comma-joined list of scope entries, each matching '<verb>:<adapter_family>.<action>'. Single-scope is also valid.",
+          "minLength": 1,
+          "title": "Scope",
+          "type": "string"
+        },
+        "vp_jwt": {
+          "description": "Verifiable Presentation as JWS (header.payload.signature dot-separated). In Mock mode: header=base64({alg:none,typ:vp+jwt}), signature='mock-signature-not-cryptographic'.",
+          "minLength": 1,
+          "title": "Vp Jwt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "vp_jwt",
+        "delegation_token",
+        "scope",
+        "issuer_did",
+        "issued_at",
+        "expires_at"
+      ],
+      "title": "DelegationToken",
+      "type": "object"
+    },
+    "_OpaqueOutput": {
+      "additionalProperties": true,
+      "description": "Generic envelope wrapper for bridge-registered tools' outputs.",
+      "title": "_OpaqueOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://kosmos.example/api/schemas/mock_submit_module_public_mydata_action.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Typed params for the public MyData action extension adapter.\n\nDomain vocabulary lives HERE, not on the main SubmitInput envelope (SC-002).\nReal-world counterpart: 마이데이터 액션 확장 API (금융보안원 v240930).",
+  "properties": {
+    "action_type": {
+      "description": "MyData action type being invoked.",
+      "enum": [
+        "transfer_consent",
+        "revoke_consent",
+        "update_scope",
+        "request_data_portability"
+      ],
+      "title": "Action Type",
+      "type": "string"
+    },
+    "applicant_di": {
+      "description": "MyData-scoped applicant DI (De-Identification) code.",
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Applicant Di",
+      "type": "string"
+    },
+    "delegation_context": {
+      "$ref": "#/$defs/DelegationContext",
+      "description": "DelegationContext from the prior verify step."
+    },
+    "session_id": {
+      "description": "Consuming session ID (used for delegation session-binding check).",
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Session Id",
+      "type": "string"
+    },
+    "target_institution_code": {
+      "description": "Institution code of the data provider (e.g. KSB001, FSC002).",
+      "maxLength": 20,
+      "minLength": 1,
+      "title": "Target Institution Code",
+      "type": "string"
+    }
+  },
+  "required": [
+    "action_type",
+    "target_institution_code",
+    "applicant_di",
+    "session_id",
+    "delegation_context"
+  ],
+  "title": "mock_submit_module_public_mydata_action",
+  "type": "object"
+}

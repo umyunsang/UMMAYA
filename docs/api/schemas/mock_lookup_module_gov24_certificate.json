@@ -1,0 +1,39 @@
+{
+  "$defs": {
+    "_Gov24CertificateOutput": {
+      "additionalProperties": true,
+      "description": "Placeholder output schema.\n\nReal shape tracks the Gov24 public API certificate endpoint spec. Mock\nreturns a synthetic fixture stamped with the six transparency fields.",
+      "title": "_Gov24CertificateOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://kosmos.example/api/schemas/mock_lookup_module_gov24_certificate.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input schema for mock_lookup_module_gov24_certificate.\n\nPydantic v2 strict model (extra='forbid', frozen=True).",
+  "properties": {
+    "certificate_type": {
+      "description": "Type of certificate to look up. resident_registration: 주민등록등본 (resident registration extract). family_relations: 가족관계증명서 (family relations certificate). business_registration: 사업자등록증 (business registration certificate).",
+      "enum": [
+        "resident_registration",
+        "family_relations",
+        "business_registration"
+      ],
+      "title": "Certificate Type",
+      "type": "string"
+    },
+    "purpose": {
+      "description": "Purpose for which the certificate is requested (제출 목적). Example: '금융기관 제출용', '취업 지원 제출용'.",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Purpose",
+      "type": "string"
+    }
+  },
+  "required": [
+    "certificate_type",
+    "purpose"
+  ],
+  "title": "mock_lookup_module_gov24_certificate",
+  "type": "object"
+}

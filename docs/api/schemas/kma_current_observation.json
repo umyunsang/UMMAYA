@@ -117,15 +117,18 @@
   "description": "Input parameters for the KMA ultra-short-term current observation API.",
   "properties": {
     "base_date": {
+      "description": "관측 기준 날짜 (YYYYMMDD format, no separator). 오늘 날짜 사용. Example: 20260430. 시스템 프롬프트의 '오늘 날짜' context 를 그대로 사용.",
       "title": "Base Date",
       "type": "string"
     },
     "base_time": {
+      "description": "관측 기준 시각 (HHMM format, 24-hour, no separator). 직전 정시로 내림 (예: 14:35 → 1400). 매 시각 40분 이후만 데이터 안정. Example: 1400 (오후 2시 관측), 0900 (오전 9시 관측).",
       "title": "Base Time",
       "type": "string"
     },
     "data_type": {
       "default": "JSON",
+      "description": "응답 형식. JSON 권장 (default).",
       "enum": [
         "JSON",
         "XML"
@@ -135,17 +138,20 @@
     },
     "num_of_rows": {
       "default": 10,
+      "description": "결과 행 수 (default 10). 보통 기본값 사용.",
       "minimum": 1,
       "title": "Num Of Rows",
       "type": "integer"
     },
     "nx": {
+      "description": "KMA grid X coordinate (1-149). 시도/시군구 명칭이 아닌 KMA 격자 좌표. Obtain via resolve_location(query='<지역명>') which returns nx/ny verbatim. Example: 서울 종로구 = 60, 부산 사하구 = 96.",
       "maximum": 149,
       "minimum": 1,
       "title": "Nx",
       "type": "integer"
     },
     "ny": {
+      "description": "KMA grid Y coordinate (1-253). nx와 함께 resolve_location 으로 받음. Example: 서울 종로구 = 127, 부산 사하구 = 73.",
       "maximum": 253,
       "minimum": 1,
       "title": "Ny",
@@ -153,6 +159,7 @@
     },
     "page_no": {
       "default": 1,
+      "description": "페이지 번호 (1-based, default 1). 보통 기본값 사용.",
       "minimum": 1,
       "title": "Page No",
       "type": "integer"

@@ -1,0 +1,1049 @@
+{
+  "$defs": {
+    "DigitalOnepassContext": {
+      "additionalProperties": false,
+      "description": "Digital Onepass Level 1–3 authentication context.",
+      "properties": {
+        "_actual_endpoint_when_live": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Endpoint When Live"
+        },
+        "_international_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "International Reference"
+        },
+        "_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "_policy_authority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Authority"
+        },
+        "_reference_implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Implementation"
+        },
+        "_security_wrapping_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Wrapping Pattern"
+        },
+        "external_session_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Session Ref"
+        },
+        "family": {
+          "const": "digital_onepass",
+          "default": "digital_onepass",
+          "title": "Family",
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "title": "Level",
+          "type": "integer"
+        },
+        "nist_aal_hint": {
+          "enum": [
+            "AAL1",
+            "AAL2",
+            "AAL3"
+          ],
+          "title": "Nist Aal Hint",
+          "type": "string"
+        },
+        "published_tier": {
+          "enum": [
+            "gongdong_injeungseo_personal_aal3",
+            "gongdong_injeungseo_corporate_aal3",
+            "gongdong_injeungseo_bank_only_aal2",
+            "geumyung_injeungseo_personal_aal2",
+            "geumyung_injeungseo_business_aal3",
+            "ganpyeon_injeung_pass_aal2",
+            "ganpyeon_injeung_kakao_aal2",
+            "ganpyeon_injeung_naver_aal2",
+            "ganpyeon_injeung_toss_aal2",
+            "ganpyeon_injeung_bank_aal2",
+            "ganpyeon_injeung_samsung_aal2",
+            "ganpyeon_injeung_payco_aal2",
+            "digital_onepass_level1_aal1",
+            "digital_onepass_level2_aal2",
+            "digital_onepass_level3_aal3",
+            "mobile_id_mdl_aal2",
+            "mobile_id_resident_aal2",
+            "mydata_individual_aal2",
+            "simple_auth_module_aal2",
+            "modid_aal3",
+            "kec_aal3",
+            "geumyung_module_aal3",
+            "any_id_sso_aal2"
+          ],
+          "title": "Published Tier",
+          "type": "string"
+        },
+        "verified_at": {
+          "format": "date-time",
+          "title": "Verified At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "published_tier",
+        "nist_aal_hint",
+        "verified_at",
+        "level"
+      ],
+      "title": "DigitalOnepassContext",
+      "type": "object"
+    },
+    "GanpyeonInjeungContext": {
+      "additionalProperties": false,
+      "description": "간편인증 (Simple/App-cert) — Kakao / Naver / Toss / PASS / etc.",
+      "properties": {
+        "_actual_endpoint_when_live": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Endpoint When Live"
+        },
+        "_international_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "International Reference"
+        },
+        "_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "_policy_authority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Authority"
+        },
+        "_reference_implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Implementation"
+        },
+        "_security_wrapping_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Wrapping Pattern"
+        },
+        "external_session_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Session Ref"
+        },
+        "family": {
+          "const": "ganpyeon_injeung",
+          "default": "ganpyeon_injeung",
+          "title": "Family",
+          "type": "string"
+        },
+        "nist_aal_hint": {
+          "enum": [
+            "AAL1",
+            "AAL2",
+            "AAL3"
+          ],
+          "title": "Nist Aal Hint",
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "pass",
+            "kakao",
+            "naver",
+            "toss",
+            "bank",
+            "samsung",
+            "payco"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "published_tier": {
+          "enum": [
+            "gongdong_injeungseo_personal_aal3",
+            "gongdong_injeungseo_corporate_aal3",
+            "gongdong_injeungseo_bank_only_aal2",
+            "geumyung_injeungseo_personal_aal2",
+            "geumyung_injeungseo_business_aal3",
+            "ganpyeon_injeung_pass_aal2",
+            "ganpyeon_injeung_kakao_aal2",
+            "ganpyeon_injeung_naver_aal2",
+            "ganpyeon_injeung_toss_aal2",
+            "ganpyeon_injeung_bank_aal2",
+            "ganpyeon_injeung_samsung_aal2",
+            "ganpyeon_injeung_payco_aal2",
+            "digital_onepass_level1_aal1",
+            "digital_onepass_level2_aal2",
+            "digital_onepass_level3_aal3",
+            "mobile_id_mdl_aal2",
+            "mobile_id_resident_aal2",
+            "mydata_individual_aal2",
+            "simple_auth_module_aal2",
+            "modid_aal3",
+            "kec_aal3",
+            "geumyung_module_aal3",
+            "any_id_sso_aal2"
+          ],
+          "title": "Published Tier",
+          "type": "string"
+        },
+        "verified_at": {
+          "format": "date-time",
+          "title": "Verified At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "published_tier",
+        "nist_aal_hint",
+        "verified_at",
+        "provider"
+      ],
+      "title": "GanpyeonInjeungContext",
+      "type": "object"
+    },
+    "GeumyungInjeungseoContext": {
+      "additionalProperties": false,
+      "description": "금융인증서 (Financial Certificate, KFTC) authentication context.",
+      "properties": {
+        "_actual_endpoint_when_live": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Endpoint When Live"
+        },
+        "_international_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "International Reference"
+        },
+        "_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "_policy_authority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Authority"
+        },
+        "_reference_implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Implementation"
+        },
+        "_security_wrapping_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Wrapping Pattern"
+        },
+        "bank_cluster": {
+          "const": "kftc",
+          "description": "금융결제원 클라우드 cluster identifier.",
+          "title": "Bank Cluster",
+          "type": "string"
+        },
+        "external_session_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Session Ref"
+        },
+        "family": {
+          "const": "geumyung_injeungseo",
+          "default": "geumyung_injeungseo",
+          "title": "Family",
+          "type": "string"
+        },
+        "nist_aal_hint": {
+          "enum": [
+            "AAL1",
+            "AAL2",
+            "AAL3"
+          ],
+          "title": "Nist Aal Hint",
+          "type": "string"
+        },
+        "published_tier": {
+          "enum": [
+            "gongdong_injeungseo_personal_aal3",
+            "gongdong_injeungseo_corporate_aal3",
+            "gongdong_injeungseo_bank_only_aal2",
+            "geumyung_injeungseo_personal_aal2",
+            "geumyung_injeungseo_business_aal3",
+            "ganpyeon_injeung_pass_aal2",
+            "ganpyeon_injeung_kakao_aal2",
+            "ganpyeon_injeung_naver_aal2",
+            "ganpyeon_injeung_toss_aal2",
+            "ganpyeon_injeung_bank_aal2",
+            "ganpyeon_injeung_samsung_aal2",
+            "ganpyeon_injeung_payco_aal2",
+            "digital_onepass_level1_aal1",
+            "digital_onepass_level2_aal2",
+            "digital_onepass_level3_aal3",
+            "mobile_id_mdl_aal2",
+            "mobile_id_resident_aal2",
+            "mydata_individual_aal2",
+            "simple_auth_module_aal2",
+            "modid_aal3",
+            "kec_aal3",
+            "geumyung_module_aal3",
+            "any_id_sso_aal2"
+          ],
+          "title": "Published Tier",
+          "type": "string"
+        },
+        "verified_at": {
+          "format": "date-time",
+          "title": "Verified At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "published_tier",
+        "nist_aal_hint",
+        "verified_at",
+        "bank_cluster"
+      ],
+      "title": "GeumyungInjeungseoContext",
+      "type": "object"
+    },
+    "GongdongInjeungseoContext": {
+      "additionalProperties": false,
+      "description": "공동인증서 (KOSCOM Joint Certificate) authentication context.",
+      "properties": {
+        "_actual_endpoint_when_live": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Endpoint When Live"
+        },
+        "_international_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "International Reference"
+        },
+        "_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "_policy_authority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Authority"
+        },
+        "_reference_implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Implementation"
+        },
+        "_security_wrapping_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Wrapping Pattern"
+        },
+        "certificate_issuer": {
+          "description": "Issuing CA name, e.g. 'KICA', 'KFTC', 'TradeSign'.",
+          "minLength": 1,
+          "title": "Certificate Issuer",
+          "type": "string"
+        },
+        "external_session_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Session Ref"
+        },
+        "family": {
+          "const": "gongdong_injeungseo",
+          "default": "gongdong_injeungseo",
+          "title": "Family",
+          "type": "string"
+        },
+        "nist_aal_hint": {
+          "enum": [
+            "AAL1",
+            "AAL2",
+            "AAL3"
+          ],
+          "title": "Nist Aal Hint",
+          "type": "string"
+        },
+        "published_tier": {
+          "enum": [
+            "gongdong_injeungseo_personal_aal3",
+            "gongdong_injeungseo_corporate_aal3",
+            "gongdong_injeungseo_bank_only_aal2",
+            "geumyung_injeungseo_personal_aal2",
+            "geumyung_injeungseo_business_aal3",
+            "ganpyeon_injeung_pass_aal2",
+            "ganpyeon_injeung_kakao_aal2",
+            "ganpyeon_injeung_naver_aal2",
+            "ganpyeon_injeung_toss_aal2",
+            "ganpyeon_injeung_bank_aal2",
+            "ganpyeon_injeung_samsung_aal2",
+            "ganpyeon_injeung_payco_aal2",
+            "digital_onepass_level1_aal1",
+            "digital_onepass_level2_aal2",
+            "digital_onepass_level3_aal3",
+            "mobile_id_mdl_aal2",
+            "mobile_id_resident_aal2",
+            "mydata_individual_aal2",
+            "simple_auth_module_aal2",
+            "modid_aal3",
+            "kec_aal3",
+            "geumyung_module_aal3",
+            "any_id_sso_aal2"
+          ],
+          "title": "Published Tier",
+          "type": "string"
+        },
+        "verified_at": {
+          "format": "date-time",
+          "title": "Verified At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "published_tier",
+        "nist_aal_hint",
+        "verified_at",
+        "certificate_issuer"
+      ],
+      "title": "GongdongInjeungseoContext",
+      "type": "object"
+    },
+    "MobileIdContext": {
+      "additionalProperties": false,
+      "description": "모바일 신분증 (Mobile ID) authentication context.",
+      "properties": {
+        "_actual_endpoint_when_live": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Endpoint When Live"
+        },
+        "_international_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "International Reference"
+        },
+        "_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "_policy_authority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Authority"
+        },
+        "_reference_implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Implementation"
+        },
+        "_security_wrapping_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Wrapping Pattern"
+        },
+        "external_session_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Session Ref"
+        },
+        "family": {
+          "const": "mobile_id",
+          "default": "mobile_id",
+          "title": "Family",
+          "type": "string"
+        },
+        "id_type": {
+          "description": "모바일운전면허 | 모바일주민등록증",
+          "enum": [
+            "mdl",
+            "resident"
+          ],
+          "title": "Id Type",
+          "type": "string"
+        },
+        "nist_aal_hint": {
+          "enum": [
+            "AAL1",
+            "AAL2",
+            "AAL3"
+          ],
+          "title": "Nist Aal Hint",
+          "type": "string"
+        },
+        "published_tier": {
+          "enum": [
+            "gongdong_injeungseo_personal_aal3",
+            "gongdong_injeungseo_corporate_aal3",
+            "gongdong_injeungseo_bank_only_aal2",
+            "geumyung_injeungseo_personal_aal2",
+            "geumyung_injeungseo_business_aal3",
+            "ganpyeon_injeung_pass_aal2",
+            "ganpyeon_injeung_kakao_aal2",
+            "ganpyeon_injeung_naver_aal2",
+            "ganpyeon_injeung_toss_aal2",
+            "ganpyeon_injeung_bank_aal2",
+            "ganpyeon_injeung_samsung_aal2",
+            "ganpyeon_injeung_payco_aal2",
+            "digital_onepass_level1_aal1",
+            "digital_onepass_level2_aal2",
+            "digital_onepass_level3_aal3",
+            "mobile_id_mdl_aal2",
+            "mobile_id_resident_aal2",
+            "mydata_individual_aal2",
+            "simple_auth_module_aal2",
+            "modid_aal3",
+            "kec_aal3",
+            "geumyung_module_aal3",
+            "any_id_sso_aal2"
+          ],
+          "title": "Published Tier",
+          "type": "string"
+        },
+        "verified_at": {
+          "format": "date-time",
+          "title": "Verified At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "published_tier",
+        "nist_aal_hint",
+        "verified_at",
+        "id_type"
+      ],
+      "title": "MobileIdContext",
+      "type": "object"
+    },
+    "MyDataContext": {
+      "additionalProperties": false,
+      "description": "마이데이터 OAuth 2.0 + mTLS authentication context.",
+      "properties": {
+        "_actual_endpoint_when_live": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actual Endpoint When Live"
+        },
+        "_international_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "International Reference"
+        },
+        "_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "_policy_authority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Authority"
+        },
+        "_reference_implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Implementation"
+        },
+        "_security_wrapping_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Wrapping Pattern"
+        },
+        "external_session_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Session Ref"
+        },
+        "family": {
+          "const": "mydata",
+          "default": "mydata",
+          "title": "Family",
+          "type": "string"
+        },
+        "nist_aal_hint": {
+          "enum": [
+            "AAL1",
+            "AAL2",
+            "AAL3"
+          ],
+          "title": "Nist Aal Hint",
+          "type": "string"
+        },
+        "provider_id": {
+          "description": "마이데이터 사업자 코드.",
+          "minLength": 1,
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "published_tier": {
+          "enum": [
+            "gongdong_injeungseo_personal_aal3",
+            "gongdong_injeungseo_corporate_aal3",
+            "gongdong_injeungseo_bank_only_aal2",
+            "geumyung_injeungseo_personal_aal2",
+            "geumyung_injeungseo_business_aal3",
+            "ganpyeon_injeung_pass_aal2",
+            "ganpyeon_injeung_kakao_aal2",
+            "ganpyeon_injeung_naver_aal2",
+            "ganpyeon_injeung_toss_aal2",
+            "ganpyeon_injeung_bank_aal2",
+            "ganpyeon_injeung_samsung_aal2",
+            "ganpyeon_injeung_payco_aal2",
+            "digital_onepass_level1_aal1",
+            "digital_onepass_level2_aal2",
+            "digital_onepass_level3_aal3",
+            "mobile_id_mdl_aal2",
+            "mobile_id_resident_aal2",
+            "mydata_individual_aal2",
+            "simple_auth_module_aal2",
+            "modid_aal3",
+            "kec_aal3",
+            "geumyung_module_aal3",
+            "any_id_sso_aal2"
+          ],
+          "title": "Published Tier",
+          "type": "string"
+        },
+        "verified_at": {
+          "format": "date-time",
+          "title": "Verified At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "published_tier",
+        "nist_aal_hint",
+        "verified_at",
+        "provider_id"
+      ],
+      "title": "MyDataContext",
+      "type": "object"
+    },
+    "VerifyMismatchError": {
+      "additionalProperties": false,
+      "description": "Structured result when family_hint disagrees with session evidence (FR-010).\n\n``family`` is fixed to ``\"mismatch_error\"`` so that a discriminated union\nover ``AuthContext | VerifyMismatchError`` can dispatch on the ``family``\nfield without ambiguity.",
+      "properties": {
+        "expected_family": {
+          "title": "Expected Family",
+          "type": "string"
+        },
+        "family": {
+          "const": "mismatch_error",
+          "default": "mismatch_error",
+          "title": "Family",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "observed_family": {
+          "title": "Observed Family",
+          "type": "string"
+        },
+        "reason": {
+          "const": "family_mismatch",
+          "default": "family_mismatch",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "expected_family",
+        "observed_family",
+        "message"
+      ],
+      "title": "VerifyMismatchError",
+      "type": "object"
+    },
+    "VerifyOutput": {
+      "additionalProperties": false,
+      "description": "Top-level output envelope for the verify primitive.",
+      "properties": {
+        "result": {
+          "discriminator": {
+            "mapping": {
+              "digital_onepass": "#/$defs/DigitalOnepassContext",
+              "ganpyeon_injeung": "#/$defs/GanpyeonInjeungContext",
+              "geumyung_injeungseo": "#/$defs/GeumyungInjeungseoContext",
+              "gongdong_injeungseo": "#/$defs/GongdongInjeungseoContext",
+              "mismatch_error": "#/$defs/VerifyMismatchError",
+              "mobile_id": "#/$defs/MobileIdContext",
+              "mydata": "#/$defs/MyDataContext"
+            },
+            "propertyName": "family"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/GongdongInjeungseoContext"
+            },
+            {
+              "$ref": "#/$defs/GeumyungInjeungseoContext"
+            },
+            {
+              "$ref": "#/$defs/GanpyeonInjeungContext"
+            },
+            {
+              "$ref": "#/$defs/DigitalOnepassContext"
+            },
+            {
+              "$ref": "#/$defs/MobileIdContext"
+            },
+            {
+              "$ref": "#/$defs/MyDataContext"
+            },
+            {
+              "$ref": "#/$defs/VerifyMismatchError"
+            }
+          ],
+          "title": "Result"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "VerifyOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://kosmos.example/api/schemas/kec.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Main-surface input for the verify primitive (FR-006).",
+  "properties": {
+    "family_hint": {
+      "enum": [
+        "gongdong_injeungseo",
+        "geumyung_injeungseo",
+        "ganpyeon_injeung",
+        "digital_onepass",
+        "mobile_id",
+        "mydata"
+      ],
+      "title": "Family Hint",
+      "type": "string"
+    },
+    "session_context": {
+      "additionalProperties": true,
+      "title": "Session Context",
+      "type": "object"
+    }
+  },
+  "required": [
+    "family_hint"
+  ],
+  "title": "kec",
+  "type": "object"
+}

@@ -58,6 +58,7 @@
   "properties": {
     "data_type": {
       "default": "JSON",
+      "description": "응답 형식 (JSON 권장).",
       "enum": [
         "JSON",
         "XML"
@@ -67,12 +68,14 @@
     },
     "num_of_rows": {
       "default": 100,
+      "description": "결과 행 수 (default 100, 보통 기본값).",
       "minimum": 1,
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
+      "description": "페이지 번호 (1-based, default 1).",
       "minimum": 1,
       "title": "Page No",
       "type": "integer"
@@ -87,6 +90,7 @@
         }
       ],
       "default": null,
+      "description": "관측소 ID (optional, KMA station code). 없으면 전국 결과. 예: 서울=108, 부산=159, 대구=143, 인천=112. 시민 발화에 명확한 시도/광역시가 있을 때만 명시. 모호하거나 전국 단위면 null.",
       "title": "Stn Id"
     }
   },

@@ -306,10 +306,11 @@
   "properties": {
     "gu_gun": {
       "$ref": "#/$defs/GugunCode",
-      "description": "District/county code (guGun wire parameter). Required by the KOROAD API. MUST be derived from a prior resolve_location geocoding tool call on the user-provided location string — never fill this from model memory. Empirical counter-example: a Korean-domain LLM produced gu_gun=110 (Jongno) instead of gu_gun=680 (Gangnam) for a '강남역' query because it guessed from memory rather than consulting geocoding. Valid codes are defined in the GugunCode enumeration; codes are specific to the paired si_do value."
+      "description": "3-digit 시군구 code for the KOROAD guGun wire parameter. Required by the KOROAD API. MUST be derived from a prior resolve_location geocoding tool call on the user-provided location string — never fill this from model memory. [WIRE FORMAT] siDo is 2-digit (e.g. '11'=서울), guGun is 3-digit (e.g. '680'=강남구). Do NOT use 4-digit 행정구역코드 (e.g. '1100', '1168') — the API rejects them. Empirical counter-example: a Korean-domain LLM produced gu_gun=110 (Jongno) instead of gu_gun=680 (Gangnam) for a '강남역' query because it guessed from memory rather than consulting geocoding. Valid codes are defined in the GugunCode enumeration; codes are specific to the paired si_do value."
     },
     "num_of_rows": {
       "default": 10,
+      "description": "결과 행 수 (default 10, max 100). 보통 기본값.",
       "maximum": 100,
       "minimum": 1,
       "title": "Num Of Rows",
@@ -317,16 +318,18 @@
     },
     "page_no": {
       "default": 1,
+      "description": "페이지 번호 (1-based, default 1).",
       "minimum": 1,
       "title": "Page No",
       "type": "integer"
     },
     "search_year_cd": {
-      "$ref": "#/$defs/SearchYearCd"
+      "$ref": "#/$defs/SearchYearCd",
+      "description": "사고 통계 연도 / 카테고리 코드 (KOROAD searchYearCd wire param). 보통 직전 연도 사용 (당해 데이터는 매년 6월 이후 publish). valid 값은 SearchYearCd enum 참조."
     },
     "si_do": {
       "$ref": "#/$defs/SidoCode",
-      "description": "Province/city code (siDo wire parameter). MUST be derived from a prior resolve_location geocoding tool call on the user-provided location string — never fill this from model memory. Empirical counter-example: a Korean-domain LLM produced gu_gun=110 (Jongno) instead of gu_gun=680 (Gangnam) for a '강남역' query because it guessed from memory rather than consulting geocoding. Valid codes are defined in the SidoCode enumeration."
+      "description": "2-digit 광역시도 code for the KOROAD siDo wire parameter. MUST be derived from a prior resolve_location geocoding tool call on the user-provided location string — never fill this from model memory. [SHORT REFERENCE] 서울=11 부산=12 대구=22 인천=23 광주=24 대전=25 울산=26 세종=27 경기=13 강원=14 충북=15 충남=16 전북=17 전남=18 경북=19 경남=20 제주=21. Empirical counter-example: a Korean-domain LLM produced gu_gun=110 (Jongno) instead of gu_gun=680 (Gangnam) for a '강남역' query because it guessed from memory rather than consulting geocoding. Valid codes are defined in the SidoCode enumeration."
     }
   },
   "required": [

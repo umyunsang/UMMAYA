@@ -1,5 +1,419 @@
 {
   "$defs": {
+    "NfaActivityItem": {
+      "additionalProperties": true,
+      "description": "Single 구급활동정보 record (getEmgencyActivityInfo).",
+      "properties": {
+        "cptcSeCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "관할구분",
+          "title": "Cptcsecdnm"
+        },
+        "egrcSidoCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "긴급구조시",
+          "title": "Egrcsidocdnm"
+        },
+        "egrcSiggCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "긴급구조구",
+          "title": "Egrcsiggcdnm"
+        },
+        "emtpQlcClCd1Nm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "구급대원1 자격",
+          "title": "Emtpqlcclcd1Nm"
+        },
+        "emtpQlcClCd2Nm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "구급대원2 자격",
+          "title": "Emtpqlcclcd2Nm"
+        },
+        "emtpQlcClCd3Nm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "운전요원 자격",
+          "title": "Emtpqlcclcd3Nm"
+        },
+        "frnrAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "외국인여부 Y/N",
+          "title": "Frnrat"
+        },
+        "gutHh": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "출동시 HH (dispatch hour)",
+          "title": "Guthh"
+        },
+        "gutYm": {
+          "description": "출동년월 YYYYMM",
+          "title": "Gutym",
+          "type": "string"
+        },
+        "ptntAge": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "환자연령 bracket (e.g. '60~69세')",
+          "title": "Ptntage"
+        },
+        "ptntSdtSeCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "환자성별 (남/여)",
+          "title": "Ptntsdtsecdnm"
+        },
+        "rcptPathCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "접수경로",
+          "title": "Rcptpathcdnm"
+        },
+        "rsacGutFsttOgidNm": {
+          "description": "출동소방서 (fire station name)",
+          "title": "Rsacgutfsttogidnm",
+          "type": "string"
+        },
+        "ruptOccrPlcCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "구급사고발생장소",
+          "title": "Ruptoccrplccdnm"
+        },
+        "ruptSptmCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "환자증상",
+          "title": "Ruptsptmcdnm"
+        },
+        "sidoHqOgidNm": {
+          "description": "시도본부 (regional HQ name)",
+          "title": "Sidohqogidnm",
+          "type": "string"
+        },
+        "sptMvmnDtc": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "현장과의거리 (metres)",
+          "title": "Sptmvmndtc"
+        }
+      },
+      "required": [
+        "sidoHqOgidNm",
+        "rsacGutFsttOgidNm",
+        "gutYm"
+      ],
+      "title": "NfaActivityItem",
+      "type": "object"
+    },
+    "NfaConditionItem": {
+      "additionalProperties": true,
+      "description": "Single 구급환자상태정보 record (getEmgPatientConditionInfo).",
+      "properties": {
+        "lwsBpsr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "최저혈압",
+          "title": "Lwsbpsr"
+        },
+        "ptntAge": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ptntage"
+        },
+        "ptntBfco": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "호흡수",
+          "title": "Ptntbfco"
+        },
+        "ptntBht": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "체온",
+          "title": "Ptntbht"
+        },
+        "ptntHbco": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "심박수",
+          "title": "Ptnthbco"
+        },
+        "ptntOsv": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "산소포화도",
+          "title": "Ptntosv"
+        },
+        "rsacGutFsttOgidNm": {
+          "title": "Rsacgutfsttogidnm",
+          "type": "string"
+        },
+        "ruptSptmCdNm": {
+          "description": "환자증상",
+          "title": "Ruptsptmcdnm",
+          "type": "string"
+        },
+        "sidoHqOgidNm": {
+          "title": "Sidohqogidnm",
+          "type": "string"
+        },
+        "stmtHh": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stmthh"
+        },
+        "stmtYm": {
+          "title": "Stmtym",
+          "type": "string"
+        },
+        "topBpsr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "최고혈압",
+          "title": "Topbpsr"
+        }
+      },
+      "required": [
+        "ruptSptmCdNm",
+        "sidoHqOgidNm",
+        "rsacGutFsttOgidNm",
+        "stmtYm"
+      ],
+      "title": "NfaConditionItem",
+      "type": "object"
+    },
+    "NfaEmergencyInfoServiceOutput": {
+      "additionalProperties": false,
+      "description": "Normalized upstream response wrapper for EmergencyInformationService.",
+      "properties": {
+        "items": {
+          "description": "List of emergency-info records. Empty list when no records match. Item schema depends on the 'operation' discriminator.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/NfaActivityItem"
+              },
+              {
+                "$ref": "#/$defs/NfaTransferItem"
+              },
+              {
+                "$ref": "#/$defs/NfaConditionItem"
+              },
+              {
+                "$ref": "#/$defs/NfaFirstaidItem"
+              },
+              {
+                "$ref": "#/$defs/NfaVehicleDispatchItem"
+              },
+              {
+                "$ref": "#/$defs/NfaVehicleInfoItem"
+              }
+            ]
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "num_of_rows": {
+          "title": "Num Of Rows",
+          "type": "integer"
+        },
+        "operation": {
+          "description": "Queried operation path (e.g. 'getEmgencyActivityInfo').",
+          "title": "Operation",
+          "type": "string"
+        },
+        "page_no": {
+          "title": "Page No",
+          "type": "integer"
+        },
+        "result_code": {
+          "description": "API resultCode ('00' = NORMAL SERVICE).",
+          "title": "Result Code",
+          "type": "string"
+        },
+        "result_msg": {
+          "description": "API resultMsg.",
+          "title": "Result Msg",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "operation",
+        "result_code",
+        "result_msg",
+        "page_no",
+        "num_of_rows",
+        "total_count",
+        "items"
+      ],
+      "title": "NfaEmergencyInfoServiceOutput",
+      "type": "object"
+    },
     "NfaEmgOperation": {
       "description": "Sub-endpoint selector for EmergencyInformationService.",
       "enum": [
@@ -13,10 +427,594 @@
       "title": "NfaEmgOperation",
       "type": "string"
     },
-    "_NfaEmergencyInfoServiceOutputStub": {
+    "NfaFirstaidItem": {
       "additionalProperties": true,
-      "description": "Placeholder output schema for GovAPITool registration.\n\nReal output shape is deferred until Layer 3 auth is provisioned (Epic #16/#20).",
-      "title": "_NfaEmergencyInfoServiceOutputStub",
+      "description": "Single 구급환자응급처치정보 record (getEmgPatientFirstaidInfo).",
+      "properties": {
+        "fstaCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "응급처치코드",
+          "title": "Fstacdnm"
+        },
+        "ptntAge": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ptntage"
+        },
+        "ptntSdtSeCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ptntsdtsecdnm"
+        },
+        "rsacGutFsttOgidNm": {
+          "title": "Rsacgutfsttogidnm",
+          "type": "string"
+        },
+        "sidoHqOgidNm": {
+          "title": "Sidohqogidnm",
+          "type": "string"
+        },
+        "stmtHh": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stmthh"
+        },
+        "stmtYm": {
+          "title": "Stmtym",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sidoHqOgidNm",
+        "rsacGutFsttOgidNm",
+        "stmtYm"
+      ],
+      "title": "NfaFirstaidItem",
+      "type": "object"
+    },
+    "NfaTransferItem": {
+      "additionalProperties": true,
+      "description": "Single 구급환자이송정보 record (getEmgPatientTransferInfo).",
+      "properties": {
+        "anmlInctCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "동물곤충원인",
+          "title": "Anmlinctcdnm"
+        },
+        "frnrAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "내외국인",
+          "title": "Frnrat"
+        },
+        "ptntAge": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ptntage"
+        },
+        "ptntSdtSeCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "환자성별",
+          "title": "Ptntsdtsecdnm"
+        },
+        "ptntTyCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "환자유형",
+          "title": "Ptnttycdnm"
+        },
+        "rlifAcdAsmCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "구급사고유형",
+          "title": "Rlifacdasmcdnm"
+        },
+        "rlifOccrTyCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "발생유형",
+          "title": "Rlifoccrtycdnm"
+        },
+        "rsacGutFsttOgidNm": {
+          "title": "Rsacgutfsttogidnm",
+          "type": "string"
+        },
+        "ruptOccrPlcCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "구급사고발생장소",
+          "title": "Ruptoccrplccdnm"
+        },
+        "sidoHqOgidNm": {
+          "title": "Sidohqogidnm",
+          "type": "string"
+        },
+        "stmtHh": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stmthh"
+        },
+        "stmtYm": {
+          "title": "Stmtym",
+          "type": "string"
+        },
+        "wmhtDamgCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "온열손상",
+          "title": "Wmhtdamgcdnm"
+        }
+      },
+      "required": [
+        "sidoHqOgidNm",
+        "rsacGutFsttOgidNm",
+        "stmtYm"
+      ],
+      "title": "NfaTransferItem",
+      "type": "object"
+    },
+    "NfaVehicleDispatchItem": {
+      "additionalProperties": true,
+      "description": "Single 구급차량출동정보 record (getEmgVehicleDispatchInfo).",
+      "properties": {
+        "gotFrmtAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "출동대편성여부 Y/N",
+          "title": "Gotfrmtat"
+        },
+        "gutOdr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "출동차수",
+          "title": "Gutodr"
+        },
+        "gutPcnt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "출동인원수",
+          "title": "Gutpcnt"
+        },
+        "mdnm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "기종명",
+          "title": "Mdnm"
+        },
+        "mnm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "제작사",
+          "title": "Mnm"
+        },
+        "rsacGutFsttOgidNm": {
+          "title": "Rsacgutfsttogidnm",
+          "type": "string"
+        },
+        "sidoHqOgidNm": {
+          "title": "Sidohqogidnm",
+          "type": "string"
+        },
+        "stmtHh": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stmthh"
+        },
+        "stmtYm": {
+          "title": "Stmtym",
+          "type": "string"
+        },
+        "tnkCpct": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "탱크용량",
+          "title": "Tnkcpct"
+        },
+        "vctpCdNm": {
+          "description": "차종코드명",
+          "title": "Vctpcdnm",
+          "type": "string"
+        },
+        "vhclGrCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량그룹코드명",
+          "title": "Vhclgrcdnm"
+        },
+        "vhclNo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량번호",
+          "title": "Vhclno"
+        },
+        "vhclSeCd": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량구분",
+          "title": "Vhclsecd"
+        },
+        "vhclStatCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량상태",
+          "title": "Vhclstatcdnm"
+        },
+        "vhcn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량명",
+          "title": "Vhcn"
+        }
+      },
+      "required": [
+        "sidoHqOgidNm",
+        "rsacGutFsttOgidNm",
+        "stmtYm",
+        "vctpCdNm"
+      ],
+      "title": "NfaVehicleDispatchItem",
+      "type": "object"
+    },
+    "NfaVehicleInfoItem": {
+      "additionalProperties": true,
+      "description": "Single 구급차량정보 record (getEmgVehicleInfo).",
+      "properties": {
+        "bdgPcnt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "탑승인원수",
+          "title": "Bdgpcnt"
+        },
+        "gotFrmtAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "출동대편성여부",
+          "title": "Gotfrmtat"
+        },
+        "mdnm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "기종명",
+          "title": "Mdnm"
+        },
+        "mnm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "제작사",
+          "title": "Mnm"
+        },
+        "rsacGutFsttOgidNm": {
+          "description": "소방서",
+          "title": "Rsacgutfsttogidnm",
+          "type": "string"
+        },
+        "sidoHqOgidNm": {
+          "title": "Sidohqogidnm",
+          "type": "string"
+        },
+        "stde": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "기준일자 YYYYMMDD",
+          "title": "Stde"
+        },
+        "tnkCpct": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "탱크용량",
+          "title": "Tnkcpct"
+        },
+        "vctpCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차종코드명",
+          "title": "Vctpcdnm"
+        },
+        "vhclGrCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량그룹코드명",
+          "title": "Vhclgrcdnm"
+        },
+        "vhclNo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량번호",
+          "title": "Vhclno"
+        },
+        "vhclSeCd": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량구분",
+          "title": "Vhclsecd"
+        },
+        "vhclStatCdNm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량상태코드명",
+          "title": "Vhclstatcdnm"
+        },
+        "vhcn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "차량명",
+          "title": "Vhcn"
+        }
+      },
+      "required": [
+        "sidoHqOgidNm",
+        "rsacGutFsttOgidNm"
+      ],
+      "title": "NfaVehicleInfoItem",
       "type": "object"
     }
   },

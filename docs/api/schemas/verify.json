@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "_LookupOutput": {
+      "description": "Placeholder output schema for lookup tool registration.",
+      "title": "_LookupOutput"
+    }
+  },
+  "$id": "https://kosmos.example/api/schemas/verify.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "LLM-visible verify input schema — accepts both citizen-shape and legacy-shape.\n\n**Citizen-facing shape** (emitted by K-EXAONE per ``prompts/system_v1.md``\nv2 ``<verify_chain_pattern>``):\n\n.. code-block:: json\n\n    {\n      \"tool_id\": \"mock_verify_module_modid\",\n      \"params\": {\n        \"scope_list\": [\"lookup:hometax.simplified\", \"submit:hometax.tax-return\"],\n        \"purpose_ko\": \"종합소득세 신고\",\n        \"purpose_en\": \"Comprehensive income tax filing\"\n      }\n    }\n\n**Legacy shape** (used by direct dispatcher callers — backward compat):\n\n.. code-block:: json\n\n    {\"family_hint\": \"modid\", \"session_context\": {...}}\n\nThe ``@model_validator(mode=\"before\")`` pre-validator translates the\ncitizen shape to the legacy shape before field validation.  Direct-dispatcher\ncallers that already supply ``family_hint`` pass through unchanged\n(idempotent guard).\n\nFor the LLM the OpenAI-compat schema published to FriendliAI lists\n``tool_id`` + ``params`` as the primary citizen-facing fields.\n``family_hint`` / ``session_context`` are retained (with ``(legacy)``\ndescription tags) for backward compatibility with existing integration tests.\n\nFix: resolves the schema↔prompt contradiction that caused K-EXAONE to fall\nback to a conversational \"no tool\" response instead of emitting verify().\n(Epic ζ #2297, FR-008 / FR-008a / FR-008b).\n\nReferences\n----------\n- ``specs/2297-zeta-e2e-smoke/contracts/verify-input-shape.md`` — I-V1 … I-V8\n- ``specs/2297-zeta-e2e-smoke/data-model.md § 1``\n- ``specs/2297-zeta-e2e-smoke/research.md § Decision 1 + Decision 2``",
+  "properties": {
+    "family_hint": {
+      "default": "",
+      "description": "(legacy) Authentication family identifier. One of the 10 active values documented in the system prompt's <verify_families> table: gongdong_injeungseo / geumyung_injeungseo / ganpyeon_injeung / mobile_id / mydata / simple_auth_module / modid / kec / geumyung_module / any_id_sso. Set automatically from tool_id by the pre-validator when citizen-shape input is supplied.",
+      "title": "Family Hint",
+      "type": "string"
+    },
+    "params": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Adapter-specific input. Must include scope_list (list[str] of '<verb>:<adapter_family>.<action>' scopes), purpose_ko, purpose_en. Pre-validator packs this into session_context.",
+      "title": "Params"
+    },
+    "session_context": {
+      "additionalProperties": true,
+      "description": "(legacy) Adapter-specific session evidence. For Mock-mode chains the LLM passes scope_list (list[str] of '<verb>:<adapter_family>.<action>' scopes), purpose_ko, purpose_en. Set automatically from params by the pre-validator when citizen-shape input is supplied.",
+      "title": "Session Context",
+      "type": "object"
+    },
+    "tool_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Verify adapter tool_id. MUST match a row in the system prompt's <verify_families> table (e.g. 'mock_verify_module_modid'). Pre-validator translates this to family_hint.",
+      "title": "Tool Id"
+    }
+  },
+  "title": "verify",
+  "type": "object"
+}

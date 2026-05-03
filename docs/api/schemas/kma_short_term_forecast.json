@@ -77,15 +77,18 @@
   "description": "Input parameters for the KMA short-term forecast (단기예보) API.",
   "properties": {
     "base_date": {
+      "description": "예보 발표 날짜 (YYYYMMDD). 보통 오늘. Example: 20260430.",
       "title": "Base Date",
       "type": "string"
     },
     "base_time": {
+      "description": "예보 발표 시각 (HHMM, 24-hour, no separator). 유효 값 8개: 0200 / 0500 / 0800 / 1100 / 1400 / 1700 / 2000 / 2300. 각 발표 시각의 약 +10분 후 데이터 안정. 현재 시각의 직전 발표 시각 사용.",
       "title": "Base Time",
       "type": "string"
     },
     "data_type": {
       "default": "JSON",
+      "description": "응답 형식. JSON 권장 (default).",
       "enum": [
         "JSON",
         "XML"
@@ -95,17 +98,20 @@
     },
     "num_of_rows": {
       "default": 290,
+      "description": "결과 행 수 (default 290 = 1 격자 단기예보 full dataset). 보통 기본값 사용.",
       "minimum": 1,
       "title": "Num Of Rows",
       "type": "integer"
     },
     "nx": {
+      "description": "KMA 격자 X 좌표 (1-149). resolve_location(query='<지역>') 으로 받아 그대로 전달. 예: 서울 종로구=60, 부산 사하구=96.",
       "maximum": 149,
       "minimum": 1,
       "title": "Nx",
       "type": "integer"
     },
     "ny": {
+      "description": "KMA 격자 Y 좌표 (1-253). nx 와 함께 resolve_location 으로 받음. 예: 서울 종로구=127, 부산 사하구=73.",
       "maximum": 253,
       "minimum": 1,
       "title": "Ny",
@@ -113,6 +119,7 @@
     },
     "page_no": {
       "default": 1,
+      "description": "페이지 번호 (1-based, default 1). 보통 기본값.",
       "minimum": 1,
       "title": "Page No",
       "type": "integer"

@@ -1,0 +1,37 @@
+{
+  "$defs": {
+    "_HometaxSimplifiedOutput": {
+      "additionalProperties": true,
+      "description": "Placeholder output schema.\n\nReal shape tracks the 마이데이터 표준동의서 v240930 spec. Mock returns a\nsynthetic fixture stamped with the six transparency fields.",
+      "title": "_HometaxSimplifiedOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://kosmos.example/api/schemas/mock_lookup_module_hometax_simplified.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input schema for mock_lookup_module_hometax_simplified.\n\nPydantic v2 strict model (extra='forbid', frozen=True).",
+  "properties": {
+    "resident_id_prefix": {
+      "description": "주민등록번호 앞 6자리 (first six digits of resident ID). Used to scope the simplified data query in Mock mode.",
+      "maxLength": 6,
+      "minLength": 6,
+      "pattern": "^\\d{6}$",
+      "title": "Resident Id Prefix",
+      "type": "string"
+    },
+    "year": {
+      "description": "귀속 연도 (year of income attribution). Example: 2024 for the 2024 tax year (신고 기한: 2025-05).",
+      "maximum": 2030,
+      "minimum": 2020,
+      "title": "Year",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "year",
+    "resident_id_prefix"
+  ],
+  "title": "mock_lookup_module_hometax_simplified",
+  "type": "object"
+}
