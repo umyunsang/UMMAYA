@@ -210,6 +210,20 @@ These are forbidden — each maps to a memory entry the agent has been corrected
 
 **Bypass**: PRs that do not touch `tui/src/**` (Python backend / spec docs / workflow only) are exempt — declare `TUI no-change` in the PR description.
 
+### Infrastructure insights (2026-05-04 integration-verification)
+
+These four insights are mandatory reading for anyone authoring or fixing TUI verification scenarios. They came out of a 5-layer drill-down that fixed eleven runtime bugs missed by `bun test` + `bun typecheck` and proved the existing tmux-based scenario harness silently masks Esc/keystroke regressions.
+
+1. **vhs `Output ... .txt` (and `.ascii`) is mandatory alongside the GIF.**  vhs supports `.txt` / `.ascii` output for golden-file diffing — these are LLM-readable plain-text snapshots of the final terminal state and are the only artefact an agent can grep at scale.  PNG keyframes are still required for visual review (Layer 4 spec already mandates 3+), but the agent-facing source of truth is the `.txt` golden file.  Every `.tape` MUST emit ALL THREE: `Output ....gif`, `Output ....txt`, `Output ....ascii`.
+
+2. **Bun-native PTY harness (`scripts/bun-pty-capture.ts`) supersedes tmux for keystroke-timing-critical scenarios.**  `tmux send-keys Escape` collides with the default 500 ms `escape-time` timer (Modifier-Keys wiki) — Esc gets batched with the next byte into a Meta- or function-key sequence and never delivered as a standalone keystroke.  Setting `escape-time 0` does NOT bypass it in production.  `Bun.spawn({terminal: {…}})` (Bun ≥ 1.3.5) attaches a real PTY and writes raw `\x1b` bytes immediately, matching what an interactive human keystroke produces.  Use the Bun PTY harness when the scenario sends `Escape` or any control byte that may be interpreted as a sequence prefix.
+
+3. **`setToolJSX({isLocalJSXCommand: true})` deactivates EVERY `useInput` hook in the parent prompt subtree.**  `PromptInput.tsx:244` sets `isModalOverlayActive = useIsModalOverlayActive() || isLocalJSXCommandActive` and gates ~10 `useInput` / `useKeybinding` hooks on `!isModalOverlayActive`.  Setting `isLocalJSXCommand: true` therefore breaks the input plane for every overlay child whose dismiss key races with the parent's tear-down.  When mounting a KOSMOS overlay (e.g. HelpV2Grouped) that needs its own keystrokes, pass `isLocalJSXCommand: false` so PromptInput stays active and the child's `useInput` actually receives stdin events.  This is the literal one-line fix that unblocked the integration-verification frame-33 round-trip — change `true` → `false`.
+
+4. **`useKeybinding(action, handler)` only fires if the chord registry has a default chord for that action.**  KOSMOS' `defaultBindings.ts` covers Tier 1 actions only.  Brand-new actions (e.g. `help:dismiss` outside Tier 1) register a handler but no chord — Esc never resolves to the action and the handler silently never fires.  Until the action is added to `defaultBindings.ts`, every `useKeybinding`-based dismiss MUST be paired with a direct `useInput((_, key) => key.escape && handler())` fallback in the same component (defense-in-depth).
+
+These four insights are referenced by `specs/integration-verification/RUNTIME-BUGS.md`.
+
 ## Do not touch
 `.specify/`, `.claude/skills/` (Spec Kit) · `LICENSE` (Apache-2.0, ADR required) · `docs/vision.md` layer names (ADR required) · `.env`, `secrets/` (never commit).
 
