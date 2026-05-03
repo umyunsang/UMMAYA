@@ -131,6 +131,48 @@ async def _kakao_coords(
         return None
 
 
+async def _kakao_adm_cd(
+    query: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> AdmCodeResult | None:
+    """Spec 2522 T047 fix — Kakao b_code fallback for adm_cd path.
+
+    JUSO/SGIS API 키가 없는 환경에서 adm_cd 를 못 받아 KOROAD chain 이
+    fail 하던 회귀 (frames-gangnam-accident-fix3 evidence). Kakao Local API
+    의 ``address.b_code`` (10-digit 법정동) 을 AdmCodeResult 로 매핑.
+    Kakao 키만 있으면 광역시도 / 시군구 / 동 단위 모두 정상 동작.
+    """
+    try:
+        from kosmos.tools.geocoding.kakao_client import search_address  # noqa: PLC0415
+
+        result = await search_address(query, client=client)
+        if not result.documents:
+            return None
+        doc = result.documents[0]
+        b_code = (doc.address.b_code or "").strip() if doc.address else ""
+        if not b_code or len(b_code) != 10:
+            return None
+        # 행정 단위 추정: 시도 (XX0000000) / 시군구 (XXYY00000) / 동
+        if b_code[2:].rstrip("0") == "":
+            level = "sido"
+        elif b_code[5:].rstrip("0") == "":
+            level = "sigungu"
+        else:
+            level = "eupmyeondong"
+        name = (doc.address.address_name or query).strip()
+        return AdmCodeResult(
+            kind="adm_cd",
+            code=b_code,
+            name=name,
+            level=level,
+            source="kakao",
+        )
+    except (httpx.HTTPError, httpx.HTTPStatusError, ValueError) as exc:
+        logger.debug("kakao adm_cd fallback failed for %r: %s", query, exc)
+        return None
+
+
 async def _juso_adm_cd(
     query: str,
     *,
@@ -247,12 +289,20 @@ async def resolve_location(  # noqa: C901
 
     # --- adm_cd path ---
     if want == "adm_cd":
-        # Chain: juso (has admCd directly) → sgis (coord2region) → kakao+sgis
+        # Spec 2522 T047 — chain reordered.
+        # JUSO (KOSMOS_JUSO_CONFM_KEY) → Kakao b_code fallback (always available
+        # via KOSMOS_KAKAO_API_KEY) → SGIS (KOSMOS_SGIS_KEY).
+        # Kakao 의 address.b_code 가 10-digit 법정동 코드 (geocoding-evidence.md
+        # 검증) 이므로 JUSO/SGIS 키 없어도 시도/시군구/동 단위 모두 동작.
         adm = await _juso_adm_cd(query, client=client)
         if adm:
             return adm
 
-        # Try kakao for coords then sgis for adm_cd
+        adm = await _kakao_adm_cd(query, client=client)
+        if adm:
+            return adm
+
+        # Last fallback: SGIS via kakao coords
         coords = await _kakao_coords(query, client=client)
         adm = await _sgis_adm_cd(query, coords=coords, client=client)
         if adm:
