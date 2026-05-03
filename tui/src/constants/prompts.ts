@@ -266,6 +266,7 @@ function getUsingYourToolsSection(enabledTools: Set<string>): string {
   // In REPL mode, Read/Write/Edit/Glob/Grep/Bash/Agent are hidden from direct
   // use (REPL_ONLY_TOOLS). The "prefer dedicated tools over Bash" guidance is
   // irrelevant — REPL's own prompt covers how to call them from scripts.
+  // SWAP-2-PRESERVE: REPLTool=null chain (Spec 1633 / Epic #2293) — call byte-identical with CC constants/prompts.ts:277, dead-by-design.
   if (isReplModeEnabled()) {
     const items = [
       taskToolName

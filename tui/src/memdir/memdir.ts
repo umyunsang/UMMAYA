@@ -382,6 +382,7 @@ export function buildSearchingPastContextSection(autoMemDir: string): string[] {
   // In REPL mode, both Grep and Bash are hidden from direct use — the model
   // calls them from inside REPL scripts, so the grep shell form is what it
   // will write in the script anyway.
+  // SWAP-2-PRESERVE: REPLTool=null chain (Spec 1633 / Epic #2293) — call byte-identical with CC memdir/memdir.ts:385, dead-by-design.
   const embedded = hasEmbeddedSearchTools() || isReplModeEnabled()
   const memSearch = embedded
     ? `grep -rn "<search term>" ${autoMemDir} --include="*.md"`
