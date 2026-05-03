@@ -38,7 +38,7 @@ from kosmos.tools.nmc.freshness import FreshnessResult
 logger = logging.getLogger(__name__)
 
 # NMC real-time bed availability endpoint (not called from CI — auth required).
-_BASE_URL = "https://api1.odcloud.kr/api/nmc/v1/realtime-beds"
+_BASE_URL = "https://api.odcloud.kr/api/nmc/v1/realtime-beds"
 
 # ---------------------------------------------------------------------------
 # Input schema (T032 — lat/lon/limit, Pydantic v2 strict)

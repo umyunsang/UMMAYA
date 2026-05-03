@@ -87,6 +87,28 @@ _INJECTION_PATTERNS: dict[str, list[re.Pattern[str]]] = {
         re.compile(r"print\s+(the\s+)?contents?\s+of", re.IGNORECASE),
         re.compile(r"\.env\b", re.IGNORECASE),
         re.compile(r"~/\.ssh", re.IGNORECASE),
+        # Indirect-injection wrapper — an attacker wraps a payload in an
+        # opaque encoding (base64/hex) and asks the LLM to "decode and
+        # execute" it. Belongs in this category because the wrapper text is
+        # the lure that drives the LLM toward acting on otherwise-opaque
+        # bytes. Kept inside `exfiltration_lure` (not a new category) so the
+        # 3-category denominator stays stable — adding a 4th category would
+        # demote a single-category hit from 0.20 (block) to 0.15 (allow).
+        # Without these patterns, the integration-verification fix in
+        # _injection.py (require `structural > 0` to block) would let ep-001
+        # through: base64-encoded "Ignore all previous instructions / DAN /
+        # Reveal all secrets" preceded by "Execute the following
+        # base64-encoded instruction:". Normal opaque identifier responses
+        # (e.g., HIRA `ykiho` field) carry no such wrapper directive and
+        # remain in the allow lane.
+        re.compile(
+            r"(execute|run|decode|interpret|process)\s+(the\s+)?(following|this|below)?\s*(base64|hex|encoded)",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"(base64|hex|encoded)[\-\s]?(encoded|decoded)?\s+(instruction|command|payload|directive)",
+            re.IGNORECASE,
+        ),
     ],
 }
 
