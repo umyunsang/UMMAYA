@@ -181,10 +181,10 @@ description: "Task list for Tool surface v4 — agency-faithful contracts + desc
 **Purpose**: TUI PTY smoke 7 시나리오 검증 + docs 일괄 동기화 + Constitution post-design check.
 
 - [X] T042 [P] TUI PTY smoke scenario 1 — 부산 날씨 (US1) capture in `/Users/um-yunsang/KOSMOS-w-2522/specs/2522-tool-surface-v4/scripts/smoke-busan-weather.expect` + `frames-busan-weather/`. `bash scripts/tui-tmux-capture.sh ...` 패턴 (memory `feedback_debug_infra_rebuild`). single-tool success 검증.
-- [ ] T043 [P] TUI PTY smoke scenario 2 — 강남구 병원 (US2) in `frames-gangnam-hospital/`. autonomous turn 1 = resolve_location, turn 2 = HIRA 검증.
+- [X] T043 [P] TUI PTY smoke scenario 2 — 강남구 병원 (US2) in `frames-gangnam-hospital/`. autonomous turn 1 = resolve_location, turn 2 = HIRA 검증.
 - [X] T044 [P] TUI PTY smoke scenario 3 — 서울 응급실 (US3) in `frames-seoul-er/`. URL encoding 회귀 + freshness gate 검증.
 - [X] T045 [P] TUI PTY smoke scenario 4 — 임신·출산 복지 (US4) in `frames-imsin-welfare/`. lifeArray=007 + camelCase serialize 검증.
-- [ ] T046 [P] TUI PTY smoke scenario 5 — 강남소방서 구급통계 (US5) in `frames-gangnam-119/`. 6 sub-operation 중 `getEmgencyActivityInfo` 검증.
+- [X] T046 [P] TUI PTY smoke scenario 5 — 강남소방서 구급통계 (US5) in `frames-gangnam-119/`. 6 sub-operation 중 `getEmgencyActivityInfo` 검증.
 - [ ] T047 [P] TUI PTY smoke scenario 6 — 서울 강남구 교통사고 (US6) in `frames-gangnam-accident/`. siDo="11"/guGun="680" + geom_json strip 검증.
 - [ ] T048 [P] TUI PTY smoke scenario 7 — chain 독립 자율 호출 (US7) in `frames-chain-independence/`. KOSMOS 가 chain 강요하지 않는지 + LLM autonomous chain 동작 검증.
 - [X] T049 Sync all docs/api/* 7-section + run `python /Users/um-yunsang/KOSMOS-w-2522/scripts/build_schemas.py --check` PASS — 13 도구 + resolve_location 의 JSON Schema Draft 2020-12 export drift 0 검증. Spec 1637 호환.
