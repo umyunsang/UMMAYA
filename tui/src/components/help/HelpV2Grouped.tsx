@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
+import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { useTheme } from '../../theme/provider.js';
 import {
   groupCatalog,
@@ -117,6 +118,19 @@ export function HelpV2Grouped({ onDismiss }: HelpV2GroupedProps): React.ReactEle
   const theme = useTheme();
   const i18n = useUiL2I18n();
   const grouped = groupCatalog(UI_L2_SLASH_COMMANDS);
+
+  // Footer claims "Esc · 닫기 (dismiss)" but the original implementation
+  // never wired the keystroke. The CC reference (HelpV2.tsx) registers
+  // dismiss via the keybinding registry (useKeybinding), NOT useInput —
+  // the latter does not fire when the component is mounted via
+  // setToolJSX wrapper because the parent prompt's useInput hook holds
+  // priority on the stdin event. The keybinding registry is dispatched
+  // from the same input layer, so registering "help:dismiss" makes the
+  // footer contract real (verified at integration-verification frame
+  // 19-lang-isolated where useInput approach silently failed).
+  useKeybinding('help:dismiss', () => {
+    onDismiss?.();
+  }, { context: 'Help' });
 
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1}>
