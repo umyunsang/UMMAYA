@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout repository (including .references/ for diff-upstream)"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Full checkout so .references/ is present for diff-upstream.sh
           fetch-depth: 1
