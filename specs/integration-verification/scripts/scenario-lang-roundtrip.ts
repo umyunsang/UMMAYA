@@ -15,7 +15,9 @@ export default async function (h: Harness): Promise<void> {
   await h.waitForPane(/세션|권한|도구|저장/, 10);
   h.snapshot('default-help-ko');
 
-  // Stage B — Escape (raw 0x1b via Bun PTY) to dismiss
+  // Stage B — Escape once to dismiss (after /help wiring fix routes
+  // through PromptInput's setHelpOpen, the help:dismiss keybinding
+  // gated by helpOpen fires on a single Esc).
   h.sendEscape();
   await new Promise((r) => setTimeout(r, 1500));
   h.snapshot('after-escape');
@@ -32,7 +34,7 @@ export default async function (h: Harness): Promise<void> {
   await h.waitForPane(/Session|Permission|Tool|Storage/, 10);
   h.snapshot('help-en-after-switch');
 
-  // Stage D — Escape, switch back to ko, re-open help
+  // Stage D — Escape once to dismiss, switch back to ko, re-open help
   h.sendEscape();
   await new Promise((r) => setTimeout(r, 1500));
   h.snapshot('after-escape-en');
