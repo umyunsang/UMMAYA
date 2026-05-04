@@ -31,6 +31,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from typing import Any, Final, Literal
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
@@ -38,6 +39,10 @@ from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
 from kosmos.tools.transparency import stamp_mock_response
 
 logger = logging.getLogger(__name__)
+
+# KOSMOS canonical citizen-facing timezone (Asia/Seoul). Internal
+# OTEL/audit/IPC paths keep UTC; only envelope-visible timestamps switch.
+_SEOUL_TZ = ZoneInfo("Asia/Seoul")
 
 # ---------------------------------------------------------------------------
 # Per-adapter transparency constants (contracts/mock-adapter-response-shape.md § 3)
@@ -158,7 +163,7 @@ def _build_fixture(inp: Gov24CertificateInput) -> dict[str, Any]:
     return {
         **base,
         "purpose": inp.purpose,
-        "fetched_at": datetime.now(UTC).isoformat(),
+        "fetched_at": datetime.now(_SEOUL_TZ).isoformat(),
         "disclaimer": (
             "Mock fixture — data is synthetic. Real endpoint requires authenticated Gov24 session."
         ),

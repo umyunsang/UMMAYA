@@ -1617,6 +1617,20 @@ async def run(  # noqa: C901
         for _turn in range(_AGENTIC_LOOP_MAX_TURNS):
             message_id = str(uuid.uuid4())
             assistant_text_chunks: list[str] = []
+            # Epic #2766 issue B — render-order fix. K-EXAONE emits the
+            # assistant's prose preamble ("내과 병원을 검색해 보겠습니다.")
+            # BEFORE the structured ``tool_call_delta`` events arrive in the
+            # SAME turn. If we forward those prose chunks immediately, the
+            # citizen sees ``assistant text → tool_call → result``, the
+            # opposite of CC's canonical ``tool_call → result → assistant
+            # text`` order. The fix: buffer prose chunks for this turn; emit
+            # them as a single AssistantChunkFrame ONLY after we know whether
+            # this turn invoked tools. When tools are invoked we suppress the
+            # preamble entirely — the next turn produces the real answer
+            # after the tool result is appended to context. When no tools
+            # are invoked we flush the buffer as a single chunk so the prose
+            # still reaches the citizen.
+            buffered_visible: list[str] = []
             tool_call_buf: dict[int, dict[str, str]] = {}
             stream_error: Exception | None = None
             stream_gate = StreamGate()
@@ -1636,18 +1650,7 @@ async def run(  # noqa: C901
                             assistant_text_chunks.append(delta)
                             visible = stream_gate.feed(delta)
                             if visible:
-                                await write_frame(
-                                    AssistantChunkFrame(
-                                        session_id=frame.session_id,
-                                        correlation_id=frame.correlation_id,
-                                        role="llm",
-                                        ts=_utcnow(),
-                                        kind="assistant_chunk",
-                                        message_id=message_id,
-                                        delta=visible,
-                                        done=False,
-                                    )
-                                )
+                                buffered_visible.append(visible)
                     elif event_type == "thinking_delta":
                         # K-EXAONE chain-of-thought channel — mirrors CC's
                         # Anthropic ``thinking_delta`` content_block_delta
@@ -1706,18 +1709,7 @@ async def run(  # noqa: C901
             # known not to be the start of a ``<tool_call>`` marker).
             tail = stream_gate.flush()
             if tail:
-                await write_frame(
-                    AssistantChunkFrame(
-                        session_id=frame.session_id,
-                        correlation_id=frame.correlation_id,
-                        role="llm",
-                        ts=_utcnow(),
-                        kind="assistant_chunk",
-                        message_id=message_id,
-                        delta=tail,
-                        done=False,
-                    )
-                )
+                buffered_visible.append(tail)
 
             if stream_error is not None:
                 # Schema constraint: ErrorFrame.role ∈ {'backend','tui'} —
@@ -1767,8 +1759,31 @@ async def run(  # noqa: C901
                         len(parsed_calls),
                     )
 
-            # No tool calls this turn → terminal chunk + exit agentic loop.
+            # Epic #2766 issue B — render-order fix flush.
+            # No tool calls this turn → emit the FULL buffered prose as a
+            # single chunk (or empty) before the terminal done=True frame.
+            # The TUI's StreamingMarkdown accumulates `delta` over the
+            # message_id, so emitting the full text in one chunk yields the
+            # same visible result as the per-chunk streaming would have —
+            # only the perceived latency changes (full text appears at
+            # end-of-turn rather than typewriter-streamed). This is the
+            # cost of the ordering guarantee: until end-of-stream we cannot
+            # know whether a tool_call follows in this turn.
             if not tool_call_buf:
+                merged_prose = "".join(buffered_visible)
+                if merged_prose:
+                    await write_frame(
+                        AssistantChunkFrame(
+                            session_id=frame.session_id,
+                            correlation_id=frame.correlation_id,
+                            role="llm",
+                            ts=_utcnow(),
+                            kind="assistant_chunk",
+                            message_id=message_id,
+                            delta=merged_prose,
+                            done=False,
+                        )
+                    )
                 await write_frame(
                     AssistantChunkFrame(
                         session_id=frame.session_id,
@@ -1782,6 +1797,11 @@ async def run(  # noqa: C901
                     )
                 )
                 return
+            # Tool calls present → suppress the prose preamble entirely.
+            # The next agentic-loop turn will produce the real answer after
+            # appending tool_result to context. CC-style ordering preserved:
+            # `tool_call → tool_result → final assistant prose`.
+            buffered_visible.clear()
 
             # ---- T027/T029 — emit tool_call frames + register Futures -----
             loop = asyncio.get_event_loop()

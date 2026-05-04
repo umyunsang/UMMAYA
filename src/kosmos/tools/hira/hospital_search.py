@@ -137,8 +137,14 @@ async def handle(
     )
 
     own_client = client is None
+    # Epic #2766 issue C — HIRA's `getHospBasisList` regularly takes 20-45 s
+    # on cold-cache regional queries. The previous 30 s ceiling tripped on
+    # second-attempt citizen flows ("Baked for 1m 5s" with no result, see
+    # spec.md US3). Bump to 60 s so genuine slow upstreams complete; a real
+    # network outage still surfaces as a clean timeout envelope (executor
+    # _classify_adapter_exception → reason='upstream_unavailable').
     _client: httpx.AsyncClient = (
-        traced_async_client(timeout=30.0) if own_client else client  # type: ignore[assignment]
+        traced_async_client(timeout=60.0) if own_client else client  # type: ignore[assignment]
     )
 
     try:

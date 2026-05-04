@@ -227,9 +227,25 @@ class ToolExecutor:
             )
 
         # --- Handler invocation -------------------------------------------------
+        # Epic #2766 issue C — HIRA / KMA / KOROAD timeout diagnostics.
+        # Annotate the current execute_tool span with `kosmos.tool.stage`
+        # transitions so OTLP / Langfuse traces show whether latency comes
+        # from `lookup` (registry+gate, sub-millisecond), `fetch` (HTTP RTT),
+        # or `parse` (envelope normalisation). Citizens experiencing slow
+        # turns on long-tail HIRA queries can now see where the time went.
+        from opentelemetry import trace as _otel_trace  # noqa: PLC0415
+
+        _stage_span = _otel_trace.get_current_span()
+        _stage_span.set_attribute("kosmos.tool.stage", "fetch")
+        _stage_fetch_start = time.monotonic_ns()
         try:
             raw_output = await adapter(validated_input)
         except Exception as exc:
+            _stage_span.set_attribute("kosmos.tool.stage", "fetch_failed")
+            _stage_span.set_attribute(
+                "kosmos.tool.fetch_ms",
+                (time.monotonic_ns() - _stage_fetch_start) // 1_000_000,
+            )
             logger.warning(
                 "invoke: adapter %s raised %s",
                 tool_id,
@@ -245,6 +261,11 @@ class ToolExecutor:
                 elapsed_ms=_elapsed(),
                 retryable=retryable,
             )
+        _stage_span.set_attribute(
+            "kosmos.tool.fetch_ms",
+            (time.monotonic_ns() - _stage_fetch_start) // 1_000_000,
+        )
+        _stage_span.set_attribute("kosmos.tool.stage", "parse")
 
         # --- Epic #466 Layers A+C: ingress safety (FR-006, FR-013) --------------
         # Detector first, then redactor. BaseModel outputs are dumped to dict so

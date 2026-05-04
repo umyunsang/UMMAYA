@@ -84,6 +84,14 @@ class TestNormalizeHappyPath:
         assert result.meta.request_id == _REQUEST_ID
         assert result.meta.elapsed_ms == 100
         assert isinstance(result.meta.fetched_at, datetime)
+        # Citizen-facing meta MUST stamp Asia/Seoul (KST, UTC+09:00).
+        # Regression guard for Epic #2766 issue A — prior behavior stamped UTC
+        # which made timestamps appear as the previous day in the morning.
+        # Pydantic v2 deserializes ZoneInfo into a fixed-offset TzInfo; assert
+        # by UTC offset (9h) rather than identity.
+        from datetime import timedelta
+
+        assert result.meta.fetched_at.utcoffset() == timedelta(hours=9)
 
     def test_record_dict_injects_meta(self):
         """A raw dict with kind='record' gets meta injected and validated."""

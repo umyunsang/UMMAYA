@@ -16,6 +16,10 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
+# KOSMOS canonical citizen-facing timezone (Asia/Seoul). Internal
+# OTEL/audit/IPC paths keep UTC; only envelope-visible timestamps switch.
+from zoneinfo import ZoneInfo
+
 from opentelemetry import trace
 
 from kosmos.agents.context import AgentContext
@@ -44,6 +48,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
+
+_SEOUL_TZ = ZoneInfo("Asia/Seoul")
 
 # The two facade tool IDs that workers are allowed to see
 _ALLOWED_TOOLS: frozenset[str] = frozenset({"lookup", "resolve_location"})
@@ -242,7 +248,7 @@ class Worker:
 
             meta = LookupMeta(
                 source="worker_text_response",
-                fetched_at=datetime.now(UTC),
+                fetched_at=datetime.now(_SEOUL_TZ),
                 request_id=str(uuid4()),
                 elapsed_ms=0,
             )

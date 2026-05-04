@@ -160,7 +160,12 @@ async def _lookup_fetch(
     # LookupOutput consumers stay unchanged; the bundle's typed fields
     # (coords.lat / coords.lon / adm_cd) are preserved inside record.fields.
     if inp.tool_id == "resolve_location":
-        from datetime import UTC, datetime
+        from datetime import datetime  # noqa: PLC0415
+        from zoneinfo import ZoneInfo  # noqa: PLC0415
+
+        # KOSMOS canonical citizen-facing timezone (Asia/Seoul). Internal
+        # OTEL/audit/IPC paths keep UTC; only envelope-visible stamps switch.
+        seoul_tz = ZoneInfo("Asia/Seoul")
 
         from kosmos.tools.models import (
             LookupMeta,
@@ -207,7 +212,7 @@ async def _lookup_fetch(
             item=resolve_result.model_dump(),
             meta=LookupMeta(
                 source="resolve_location",
-                fetched_at=datetime.now(tz=UTC),
+                fetched_at=datetime.now(tz=seoul_tz),
                 request_id=str(uuid.uuid4()),
                 elapsed_ms=0,
             ),
