@@ -5,36 +5,51 @@
 > Any spec, ADR, or implementation decision must align with this vision. If a later insight contradicts it, update this file in the same pull request.
 >
 > **Migration status (2026-04-26)** — KOSMOS v0.1-alpha shipped. The six-Phase migration (P0 #1632 → P1+P2 #1633 → P3 #1634 → P4 #1847 → P5 #1927 → P6 #1637) completed under Initiative #1631. The harness migration described below is no longer aspirational: the LLM Harness pillar runs through FriendliAI Serverless + K-EXAONE with Claude Code's agent loop preserved; the Tool System pillar exposes 24 registry-bundled adapters across seven Korean ministries through `lookup` / `submit` / `verify` / `subscribe` primitives, all documented in [`docs/api/`](./api/) with Pydantic v2 envelopes and Draft 2020-12 JSON Schemas; the 5-tier plugin DX (Spec 1636) is open for external citizen and ministry contributors. Live API regression and the in-TUI marketplace browser are tracked as deferred follow-ups.
+>
+> **Vision scope correction (2026-05-04)** — `data.go.kr` public APIs are one useful adapter family, not the product boundary. The target is national administrative and public-infrastructure AX: Hometax tax handling, Government24 civil-affairs submission, Wetax/local payments, certificates, mobile ID, simple authentication, public utility bills, welfare, healthcare, housing, education, labor, immigration, safety, and other citizen-facing state infrastructure exposed through one LLM-mediated execution surface.
 
 ## The ambition
 
-Turn the 5,000+ fragmented public APIs on `data.go.kr` into a single conversational interface where a citizen can ask a natural-language question and get an answer backed by live government data — across ministries, across topics, in one session.
+Turn fragmented national administrative and public-infrastructure channels into a single
+conversational execution surface where a citizen can ask for an outcome, not a portal. KOSMOS
+should route, verify, submit, pay, subscribe, or hand off across agencies and infrastructure
+operators without requiring the citizen to know which institution owns each step.
+
+`data.go.kr` is an important source of open and semi-open public data. It is not enough. The
+real target includes transactional and identity-bearing infrastructure: Hometax, Government24,
+Wetax/local tax, mobile ID, simple authentication, certificates, utility billing, public
+payments, welfare portals, health insurance, education administration, labor and employment
+systems, immigration services, disaster response, and local civil-affairs channels.
 
 ```
-Citizen:  "내일 부산에서 서울 가는데, 안전한 경로 추천해줘"
-KOSMOS:   fuses KOROAD accident data + KMA weather alerts + road-risk index
-          → "경부고속도로 대전-천안 구간 위험 등급, 안개 주의보.
-             중부내륙 우회를 추천합니다."
+Citizen:  "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘."
+KOSMOS:   verifies identity + retrieves Hometax tax data + prepares filing
+          + asks final confirmation + submits or hands off with receipt evidence
 
-Citizen:  "아이가 열이 나는데 근처 야간 응급실 어디야?"
-KOSMOS:   fuses 119 emergency service API + HIRA hospital info
-          → location-ranked available ERs with current wait times
+Citizen:  "이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘."
+KOSMOS:   sequences Government24 residence transfer before dependent vehicle,
+          health-insurance, and education address updates
 
-Citizen:  "출산 보조금 신청하고 싶은데"
-KOSMOS:   Ministry of Welfare eligibility API + Gov24 application API
-          → eligibility check, required documents, online submission guide
+Citizen:  "이번 달 재산세랑 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘."
+KOSMOS:   discovers each bill source + itemizes amounts and deadlines
+          + requests payment confirmation + executes only selected payments
+
+Citizen:  "부모님 지역에 폭염, 미세먼지, 정전, 단수 알림을 묶어서 받아보고 싶어."
+KOSMOS:   subscribes to public safety, environment, utility, and local notices
+          while separating public area alerts from delegated personal records
 ```
 
-The citizen does not learn which ministry runs which API. KOSMOS does the routing.
+The citizen does not learn which ministry, portal, certificate rail, payment rail, or utility
+operator owns the work. KOSMOS does the decomposition and routing.
 
 ## The thesis — harness migration from developer to citizen
 
-KOSMOS's deeper claim is not "connect 5,000 APIs." It is: **the Claude Code harness — the tool loop, the permission gauntlet, the context assembly, the TUI — is a general substrate for any domain that reduces to "call the right tools in the right order." Claude Code proved it for software development. KOSMOS migrates that harness from the developer domain to the Korean public-service domain.**
+KOSMOS's deeper claim is not "connect many public APIs." It is: **the Claude Code harness — the tool loop, the permission gauntlet, the context assembly, the TUI — is a general substrate for any domain that reduces to "call the right tools in the right order." Claude Code proved it for software development. KOSMOS migrates that harness from the developer domain to Korean national administrative infrastructure.**
 
 | | Claude Code | KOSMOS |
 |---|---|---|
 | Who is it for? | Software developers | Citizens using national infrastructure |
-| Tool surface | File system, shell, git, editors | `data.go.kr` public APIs, civil-affairs portals |
+| Tool surface | File system, shell, git, editors | National infrastructure channels: APIs, portals, identity rails, certificates, payments, utility operators, and official handoff paths |
 | Primitive verbs | Read, Edit, Bash, Grep, WebFetch | lookup, resolve_location, submit, subscribe, verify |
 | Permission concerns | Dangerous shell commands, file overwrites | PIPA (PII protection), identity verification, legal ordering |
 | Deployment | Developer laptop + IDE | Citizen laptop (TUI) → eventually mobile/web |
@@ -51,9 +66,9 @@ Claude Code's ~5 main tools (Read, Edit, Bash, Grep, Glob, WebFetch) were not de
 
 KOSMOS must apply the identical method to citizen-government interaction — not copy Claude Code's verbs, but copy Claude Code's **discovery method**:
 
-1. **Survey the full space.** All 16 major public-service domains, not cherry-picked demo scenarios. Rare but critical workflows (disaster response, legal disputes) must not be excluded by the survey boundary.
-2. **Extract cross-domain verbs.** What actions recur across ministries regardless of topic? (조회·신청·납부·발급·예약·알림 등)
-3. **Weight by empirical frequency.** Back-of-envelope annual transaction volume per verb, grounded in e-나라지표, ministry statistics, and `data.go.kr` usage metrics — not designer intuition.
+1. **Survey the full space.** Citizen-facing national infrastructure, not only public-data APIs and not cherry-picked demo scenarios. Tax, civil affairs, payments, identity, welfare, health, housing, mobility, business, labor, education, safety, immigration, legal documents, and personal-data rights must all be in scope.
+2. **Extract cross-domain verbs.** What actions recur across institutions regardless of topic? (조회·신청·납부·발급·예약·알림 등)
+3. **Weight by empirical frequency and consequence.** Use annual transaction volume where available, but also weight rare high-consequence workflows such as disaster relief, immigration deadlines, tax submission, and identity issuance. `data.go.kr` usage metrics are only one input.
 4. **Distill to 6–8 always-loaded verbs.** Everything else is lazily discovered via `search_tools`. The upper bound matches Claude Code's cognitive budget for tool schemas in the system prompt.
 
 **Spec 031** executed this method and ratified a small set of domain-agnostic harness primitives — five (`lookup`, `resolve_location`, `submit`, `subscribe`, `verify`), mirroring Claude Code's ~5 always-loaded verbs. An earlier 8-verb proposal (with domain-tinted names such as `pay`, `issue_certificate`, `submit_application`, `reserve_slot`, `subscribe_alert`, `check_eligibility`) has been **retired** for leaking ministry knowledge into the main surface; domain specialization belongs in adapters (`src/kosmos/tools/<ministry>/<adapter>.py`), not in LLM-visible verb names. The method that produced the verb list is what is canonical — if a later survey contradicts a candidate, we re-run the method and update, rather than patching conclusions while keeping stale premises.
@@ -100,9 +115,9 @@ Spec 031 ratifies the 5-primitive surface; see `specs/031-five-primitive-harness
 
 The patterns above are general-purpose. KOSMOS's contribution is adapting them to the government public-service domain, which introduces constraints absent from coding agents:
 
-- **Bilingual tool discovery** over 5,000+ heterogeneous government APIs with inconsistent schemas
+- **Bilingual channel discovery** over heterogeneous public APIs, civil-affairs portals, identity rails, certificate systems, payment rails, utility operators, and official handoff paths
 - **Bypass-immune permission pipeline** for citizen PII protection (governed by Korea's PIPA, not developer convenience)
-- **Multi-ministry agent coordination** where dependency ordering is dictated by law (e.g., residence transfer must precede vehicle registration)
+- **Multi-institution agent coordination** where dependency ordering is dictated by law (e.g., residence transfer must precede vehicle registration)
 - **Prompt cache partitioning** for cost-efficient government AI services (taxpayer-funded budget constraints)
 - **Fail-closed API adapters** where the safe default is deny, not allow
 
@@ -113,11 +128,11 @@ KOSMOS is built around six architectural layers, each adapting a pattern family 
 | # | Layer | Role | Pattern family |
 |---|---|---|---|
 | 1 | **Query Engine** | The `while(True)` tool loop that resolves a civil-affairs request | Async generator state machine |
-| 2 | **Tool System** | Registry and factory for `data.go.kr` API adapters | Schema-driven tool modules |
+| 2 | **Tool System** | Registry and factory for national-infrastructure channel adapters | Schema-driven tool modules |
 | 3 | **Permission Pipeline** | Citizen authentication and personal-data protection gate | Multi-step bypass-immune gauntlet |
 | 4 | **Agent Swarms** | Ministry-specialist agents coordinated by an orchestrator | AsyncLocalStorage in-process coordinator (CC parity) + file-based mailbox IPC for crash resilience (KOSMOS Spec 027 extension) |
 | 5 | **Context Assembly** | The 3-tier context the LLM sees each turn | System + memory + attachments |
-| 6 | **Error Recovery** | Resilience against public API outages, rate limits, maintenance | `withRetry`-style error matrix |
+| 6 | **Error Recovery** | Resilience against public-service channel outages, rate limits, maintenance, and handoff boundaries | `withRetry`-style error matrix |
 
 The rest of this document walks each layer in detail.
 
@@ -133,9 +148,9 @@ The query engine is the heartbeat of a KOSMOS session. It runs an async generato
 async generator query(session):
     while True:
         1. Pre-process: load citizen context → compress prior turns
-                         → identify relevant ministries
+                         → identify relevant institutions and channels
         2. Call LLM: intent analysis + task decomposition
-        3. Post-process: execute selected public API tools,
+        3. Post-process: execute selected channel tools,
                          parse results, handle errors
         4. Decide: more info needed (tool_use) or civil-affairs
                    resolved (end_turn)
@@ -155,15 +170,15 @@ async generator query(session):
 QueryState:
     citizen_session       # auth level, profile, consent flags
     messages              # mutable conversation history
-    active_agents         # currently spawned ministry workers
-    usage_tracker         # per-API call budget and rate-limit accounting
-    pending_api_calls     # in-flight tool invocations
+    active_agents         # currently spawned domain workers
+    usage_tracker         # per-channel call budget and rate-limit accounting
+    pending_channel_calls # in-flight tool invocations
     resolved_tasks        # completed civil-affairs sub-goals
 ```
 
 ### QueryDeps injection boundary
 
-The query loop receives its LLM client, tool registry, permission policy, and telemetry emitter via an explicit `QueryDeps` dataclass at loop construction time — never imported from module scope inside the loop. This boundary is how Claude Code keeps the engine test-isolatable (parity with `src/query/deps.ts`) and how KOSMOS keeps its Phase-1 Scenario 1 E2E runnable without side effects on live `data.go.kr` APIs. Every new coordinator, worker, or replay harness constructs its own `QueryDeps` with the dependencies it needs; nothing implicit crosses the boundary.
+The query loop receives its LLM client, tool registry, permission policy, and telemetry emitter via an explicit `QueryDeps` dataclass at loop construction time — never imported from module scope inside the loop. This boundary is how Claude Code keeps the engine test-isolatable (parity with `src/query/deps.ts`) and how KOSMOS keeps E2E scenarios runnable without side effects on live government, payment, identity, or utility channels. Every new coordinator, worker, or replay harness constructs its own `QueryDeps` with the dependencies it needs; nothing implicit crosses the boundary.
 
 ### Termination conditions
 
@@ -178,7 +193,7 @@ StopReason:
 
 ### Cost accounting as a first-class concern
 
-Every LLM call and every public API call is debited against a session budget. `data.go.kr` APIs have daily per-key quotas; the engine tracks remaining quota per API and can substitute cached results or alternative APIs when approaching the limit. Observability hooks (OpenTelemetry-style counters) emit metrics for model tokens, cache hits, and per-ministry call counts.
+Every LLM call and every infrastructure-channel call is debited against a session budget. Public APIs may have per-key quotas; portals, payment rails, identity providers, and utility operators may have rate limits, maintenance windows, or irreversible transaction semantics. The engine tracks remaining budget per channel and can substitute cached results, alternative channels, reminders, or official handoff guidance when direct execution is unsafe or unavailable. Observability hooks (OpenTelemetry-style counters) emit metrics for model tokens, cache hits, and per-institution call counts.
 
 ### Query ↔ TUI transport
 
@@ -188,7 +203,7 @@ The Python query loop never touches the terminal directly. Every progress event,
 
 ## Layer 2 — Tool System
 
-Each public API is wrapped as a **tool module** with a schema-driven registration and fail-closed defaults.
+Each public-service channel is wrapped as a **tool module** with a schema-driven registration and fail-closed defaults. A channel may be a public API, authenticated API, official portal flow, certificate issuance path, payment rail, utility operator endpoint, fixture-backed mock, or narrative handoff for opaque domains.
 
 ### Tool definition shape
 
@@ -198,8 +213,8 @@ GovAPITool:
     name_ko                   # "교통사고정보"
     provider                  # "도로교통공단"
     category                  # ["교통", "안전"]
-    endpoint                  # API URL
-    auth_type                 # public | api_key | oauth
+    endpoint                  # API, portal, payment, identity, utility, or handoff URL
+    auth_type                 # public | api_key | oauth | delegated_auth | handoff
     input_schema              # Pydantic model
     output_schema             # Pydantic model
     requires_auth             # default True
@@ -210,7 +225,7 @@ GovAPITool:
     search_hint               # Korean + English discovery keywords
 ```
 
-New adapters declare only the fields that deviate from the conservative defaults. This fail-closed posture means a new contributor adding an adapter cannot accidentally expose a personal-data-handling API as public.
+New adapters declare only the fields that deviate from the conservative defaults. This fail-closed posture means a new contributor adding an adapter cannot accidentally expose a personal-data-handling channel as public.
 
 ### Prompt cache partitioning
 
@@ -220,13 +235,14 @@ When a citizen switches from a transport question to a welfare question, the cor
 
 ### Lazy tool discovery
 
-With potentially 5,000+ public APIs, shipping every schema in the prompt is infeasible. The system keeps a small core set (roughly 15 high-frequency tools) always loaded, and exposes a `search_tools(query)` meta-tool that finds additional tools by `search_hint` keywords.
+With a national administrative surface, shipping every schema in the prompt is infeasible. The system keeps a small core set of high-frequency primitives always loaded, and exposes a `search_tools(query)` meta-tool that finds additional channel adapters by `search_hint` keywords and policy metadata.
 
 ```
 Citizen:  "출산 보조금 신청하고 싶어요"
 LLM:      search_tools("출산 보조금 복지부")
-          → discovers ministry-of-welfare childbirth subsidy API
-LLM:      calls the discovered tool
+          → discovers welfare benefit, Government24 submission, local benefit,
+             and payment-voucher channels
+LLM:      calls only the channels that are allowed for the citizen's confirmed intent
 ```
 
 ---
@@ -243,13 +259,13 @@ Layer 3 inherits Claude Code's four-mode `PermissionMode` (`default`, `plan`, `a
 
 Every tool invocation passes through a sequence of checks:
 
-1. **Configuration rules** — per-API access tier (public, authenticated, restricted)
+1. **Configuration rules** — per-channel access tier (public, authenticated, restricted, handoff-only)
 2. **Intent analysis** — does the natural-language request justify this tool?
 3. **Parameter inspection** — do the arguments contain personal identifiers the citizen is not entitled to query?
 4. **Citizen authentication** — is the required identity verification level in place?
-5. **Ministry terms-of-use** — has the citizen consented to this ministry's data usage terms?
-6. **Sandboxed execution** — the API call runs in an isolated context with no ambient credentials
-7. **Audit log** — every call is logged with timestamp, citizen id, API, parameters, and outcome
+5. **Institution terms-of-use** — has the citizen consented to this agency, portal, utility, identity, or payment channel's data usage terms?
+6. **Sandboxed execution** — the channel call runs in an isolated context with no ambient credentials
+7. **Audit log** — every call is logged with timestamp, citizen id, channel, parameters, and outcome
 
 ### Bypass-immune steps
 
@@ -267,7 +283,7 @@ If the same session triggers a configurable number of consecutive refusals, KOSM
 
 ## Layer 4 — Agent Swarms
 
-For multi-ministry requests, a single monolithic agent is insufficient. KOSMOS uses a coordinator-and-workers swarm.
+For multi-institution requests, a single monolithic agent is insufficient. KOSMOS uses a coordinator-and-workers swarm.
 
 ### Mailbox IPC
 
@@ -285,9 +301,9 @@ Citizen: "이사 준비 중인데, 전입신고랑 자동차 주소변경이랑
 
 Coordinator:
   Research (parallel workers):
-    ├─ Civil affairs agent → Gov24 residence transfer requirements
-    ├─ Transport agent     → vehicle registration address change
-    └─ Welfare agent       → health insurance address change
+    ├─ Civil affairs agent → Government24 residence transfer requirements
+    ├─ Mobility agent      → vehicle registration address change
+    └─ Health agent        → health insurance address change
 
   Synthesis (coordinator, never delegated):
     "All three require residence transfer to happen first.
@@ -347,15 +363,15 @@ Long sessions drift. Every N turns the loop injects a reminder: unfinished tasks
 
 ## Layer 6 — Error Recovery
 
-Public APIs fail in predictable ways. The engine routes each failure class to a specific recovery strategy.
+Public-service infrastructure fails in predictable ways. The engine routes each failure class to a specific recovery strategy.
 
 ```
-Public API call → error?
+Channel call → error?
   ├── 429 Rate limited      → exponential backoff (base 1s, cap 60s)
   ├── 503 Maintenance       → search for alternative API → else advise citizen
   ├── 401 Auth expired      → refresh token, retry once
   ├── Timeout               → retry ×3, fall back to cached result
-  ├── Data inconsistency    → cross-verify with a second ministry API
+  ├── Data inconsistency    → cross-verify with a second authoritative channel
   └── Hard failure          → graceful message + in-person service guidance
 ```
 
@@ -373,7 +389,7 @@ First-launch presents a dedicated onboarding sequence derived from Claude Code's
 
 1. **KOSMOS brand splash** — renders the orbital-ring logo (`assets/kosmos-logo-dark.svg` / icon-component equivalent) with the wordmark `KOSMOS` and the subtitle `KOREAN PUBLIC SERVICE MULTI-AGENT OS`. The canonical palette is extracted directly from the SVG assets: background `#0a0e27` → `#1a1040` (gradient); orbital ring `#60a5fa` → `#a78bfa`; core `#818cf8` → `#6366f1`; wordmark `#e0e7ff`; subtitle `#94a3b8`; satellite nodes `#34d399` / `#f472b6` / `#93c5fd` / `#c4b5fd`. The current `tui/src/theme/dark.ts` `background` token (placeholder `rgb(0,204,204)`) is replaced with navy `#0a0e27` in the same PR that ports the onboarding splash.
 2. **PIPA consent** — KOSMOS-original step with no Claude Code analog. Mandatory under PIPA §15 before any Layer-2 adapter executes; records consent version, timestamp, and the authenticated AAL gate.
-3. **Public-API scope acknowledgment** — enumerates the `data.go.kr` ministries the session will query (KOROAD, KMA, HIRA, NMC, …) and their data categories; the citizen must acknowledge before adapters go live.
+3. **Infrastructure scope acknowledgment** — enumerates the agencies, portals, identity providers, payment rails, utility operators, and public-data sources the session may touch, plus their data categories; the citizen must acknowledge before adapters go live.
 4. **Theme picker** — deferred until a light / high-contrast theme ships; Phase 1 runs the `dark` theme only.
 
 ### Keyboard-shortcut migration
@@ -391,7 +407,7 @@ IME safety rule: every binding that mutates the input buffer MUST check `!useKor
 The Ink TUI reads the backend's stdout as an NDJSON stream and validates every line through the Zod discriminated union generated from the same schema the Python side emits (`tui/src/ipc/codec.ts` + `tui/src/ipc/frames.generated.ts`, bootstrapped by Spec 032 T018). Three resilience stories land in Phase 2:
 
 - **Resume on stdio drop (FR-018..025).** The backend keeps a 256-frame `SessionRingBuffer` per session. When the TUI reconnects it emits a `resume_request(last_seen_frame_seq, tui_session_token)`; the backend replies with `resume_response(replay_count, resumed_from_frame_seq)` and replays exactly the missed frames — Spec 032 quickstart § 2 probes this end-to-end (`src/kosmos/ipc/demo/session_backend.py` ↔ `tui/src/ipc/demo/resume_probe.ts`).
-- **Upstream 429 HUD (FR-014..016).** `BackpressureController.emit_upstream_429` converts a ministry Retry-After header into a `backpressure(signal="throttle")` frame with bilingual `hud_copy_ko` / `hud_copy_en` so the citizen sees a calm Korean banner with a live countdown (Spec 032 quickstart § 3, `tui/src/ipc/demo/hud_probe.ts`).
+- **Upstream 429 HUD (FR-014..016).** `BackpressureController.emit_upstream_429` converts an upstream Retry-After header into a `backpressure(signal="throttle")` frame with bilingual `hud_copy_ko` / `hud_copy_en` so the citizen sees a calm Korean banner with a live countdown (Spec 032 quickstart § 3, `tui/src/ipc/demo/hud_probe.ts`).
 - **Critical-lane bypass (FR-017).** CBS 재난문자 and other `severity=critical` frames (notably `notification_push`) skip the pause gate regardless of ring/queue state — a flood-warning push must reach the HUD even when the session is throttled upstream.
 
 Every TUI ↔ backend frame carries the same `correlation_id` the Python query loop already tags to its OpenTelemetry spans, so a "clicked this button" trace maps one-to-one onto the "called this adapter" trace without bespoke plumbing.
@@ -400,21 +416,29 @@ Every TUI ↔ backend frame carries the same `correlation_id` the Python query l
 
 ## Citizen scenarios (design targets)
 
-KOSMOS success means the following conversations work end-to-end on a real citizen's day:
+KOSMOS success means a citizen can ask for real administrative outcomes without first knowing
+the agency map. The target-state eval seed is
+[`eval/scenarios/national_ax_citizen_requests_v1.yaml`](../eval/scenarios/national_ax_citizen_requests_v1.yaml).
+Representative conversations:
 
-1. **Route safety** — "오늘 서울 가는 길 안전해?" → combines KOROAD + KMA + road risk → actionable recommendation
-2. **Emergency care** — "아이가 열이 나는데 근처 야간 응급실 어디야?" → 119 + HIRA → ranked available ERs
-3. **Childbirth benefits** — "출산 보조금 신청하고 싶은데" → MOHW eligibility + Gov24 application guide
-4. **Residence transfer** — "이사 준비 중이야" → Gov24 + vehicle registration + health insurance coordinated
-5. **Disaster response** — "우리 동네 호우경보 떴는데 뭐 준비해야 돼?" → KMA + NEMA + local government notices
+1. **Tax execution** — "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘." → Hometax data retrieval, final review, filing or official handoff, receipt evidence
+2. **Life-event bundle** — "이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘." → legally ordered cross-agency updates
+3. **Payment consolidation** — "재산세, 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘." → itemized bill discovery, explicit payment selection, payment receipt
+4. **Birth and welfare bundle** — "아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘." → family registry, welfare, voucher, and insurance coordination
+5. **Housing transaction** — "전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 처리해줘." → document checks, risk flags, filing, guarantee handoff
+6. **Business start** — "카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로 처리해줘." → business, licensing, training, merchant, and tax sequence
+7. **Emergency and safety** — "집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 도와줘." → crisis-aware reporting, relief, inspection, and alert subscription
+8. **Personal-data rights** — "정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘." → cross-agency data inventory, correction request, consent tracking
 
-These are the acceptance tests. If the platform cannot complete them, the vision is not met.
+These are acceptance tests for the end-state direction. Current-code scenarios may be smaller,
+but they must be justified as stepping stones toward this dataset rather than treated as the
+product boundary.
 
 ## Roadmap
 
-- **Phase 1 — Prototype** — FriendliAI Serverless + 10 high-value APIs + single query engine + CLI. Scenario 1 working end-to-end.
-- **Phase 2 — Swarm** — Ministry-specialist agents, mailbox IPC, multi-API synthesis. Scenarios 1–3 working. Status: **partial** — Spec 027 mailbox IPC shipped (2026-04-14) and Spec 287 TUI port landed (2026-04-19); ministry-specialist agents (출산 보조금, 건강보험, 교통) and the coordinator synthesis pipeline remain open. See Initiative #2 and the CC→KOSMOS Phase 2 Migration meta-Epic (sub-Epics B–F) for the remaining work.
-- **Phase 3 — Production** — Full permission pipeline, identity verification, audit logging, all scenarios working, public beta.
+- **Phase 1 — Harness and public-data baseline** — FriendliAI Serverless + high-value public-data adapters + single query engine + CLI/TUI baseline.
+- **Phase 2 — Transactional national-infrastructure mocks** — Hometax, Government24, Wetax, identity, certificate, payment, welfare, housing, labor, education, safety, immigration, and utility flows represented as mock or handoff channels with target-state shape fidelity.
+- **Phase 3 — Verified live/handoff execution** — Live channels where credentials and public contracts exist; handoff channels where official portals remain opaque; full permission pipeline, identity verification, audit logging, and scorecard-backed acceptance tests.
 
 ## Code scope estimates
 
