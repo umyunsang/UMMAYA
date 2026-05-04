@@ -1657,20 +1657,36 @@ async def run(  # noqa: C901
         if not isinstance(frame, ChatRequestFrame):
             return
 
-        # Epic #2077 T010 — assemble the active tool inventory FIRST so the
-        # system-prompt augmentation (Step 3) and the LLM ``tools`` parameter
-        # (Step 2) consume the same shape. Order: (1) trust the TUI's
-        # ``frame.tools`` if non-empty (citizen authority — Step 2); (2)
-        # fall back to ``ToolRegistry.export_core_tools_openai()`` if the
-        # frame omits tools (Step 4). Backend remains authoritative for
-        # *execution* (FR-005): unknown names are dropped at dispatch time.
-        llm_tools: list[LLMToolDefinition] = []
+        # Tool inventory — backend ToolRegistry is the single source of
+        # truth (donga-univ-poi-bug 2026-05-04: TUI hand-curated 4-primitive
+        # static list dropped resolve_location, the LLM's "도구가 없습니다"
+        # answer was structurally correct because it really had not been
+        # told about resolve_location). The previous TUI-authority fallback
+        # has been retired in favour of always-derive: any tool registered
+        # in the backend reaches the LLM without a TUI-side static list to
+        # synchronise. Adding a new agency adapter or primitive only
+        # touches the backend registry; nothing in the TUI drifts.
+        #
+        # `frame.tools` is still inspected and merged in for forward
+        # compatibility with TUI-only future tools (e.g. UI-side helpers
+        # that have no backend counterpart), but it is additive — backend
+        # tools are never gated by TUI choice. Names appearing in both
+        # sources prefer the backend definition (richer schema + citation).
+        registry = _ensure_tool_registry()
+        backend_tools_raw = list(registry.export_core_tools_openai())  # type: ignore[attr-defined]
+        backend_tool_names = {
+            r.get("function", {}).get("name")  # type: ignore[union-attr]
+            for r in backend_tools_raw
+            if isinstance(r, dict)
+        }
+        llm_tools: list[LLMToolDefinition] = [
+            LLMToolDefinition.model_validate(raw) for raw in backend_tools_raw
+        ]
         for t in frame.tools:
+            tui_name = getattr(getattr(t, "function", None), "name", None)
+            if tui_name and tui_name in backend_tool_names:
+                continue
             llm_tools.append(LLMToolDefinition.model_validate(t.model_dump()))
-        if not llm_tools:
-            registry = _ensure_tool_registry()
-            for raw in registry.export_core_tools_openai():  # type: ignore[attr-defined]
-                llm_tools.append(LLMToolDefinition.model_validate(raw))
 
         # Build LLMClient input from the frame payload. Conversation history
         # lives in the TUI per ADR-0005 — backend receives the full slate.
