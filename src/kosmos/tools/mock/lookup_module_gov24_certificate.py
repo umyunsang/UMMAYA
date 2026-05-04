@@ -30,6 +30,11 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+# KOSMOS canonical citizen-facing timezone (Asia/Seoul). Internal
+# OTEL/audit/IPC paths keep UTC; only envelope-visible timestamps switch.
+from zoneinfo import ZoneInfo
+_SEOUL_TZ = ZoneInfo("Asia/Seoul")
+
 from typing import Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
@@ -158,7 +163,7 @@ def _build_fixture(inp: Gov24CertificateInput) -> dict[str, Any]:
     return {
         **base,
         "purpose": inp.purpose,
-        "fetched_at": datetime.now(UTC).isoformat(),
+        "fetched_at": datetime.now(_SEOUL_TZ).isoformat(),
         "disclaimer": (
             "Mock fixture — data is synthetic. Real endpoint requires authenticated Gov24 session."
         ),

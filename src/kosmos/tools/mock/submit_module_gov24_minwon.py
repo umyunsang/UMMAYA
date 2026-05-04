@@ -23,6 +23,11 @@ from __future__ import annotations
 import logging
 import secrets
 from datetime import UTC, datetime
+# KOSMOS canonical citizen-facing timezone (Asia/Seoul). Internal
+# OTEL/audit/IPC paths keep UTC; only envelope-visible timestamps switch.
+from zoneinfo import ZoneInfo
+_SEOUL_TZ = ZoneInfo("Asia/Seoul")
+
 from typing import Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -153,7 +158,7 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
         append_delegation_used(
             DelegationUsedEvent(
                 kind="delegation_used",
-                ts=datetime.now(UTC),
+                ts=datetime.now(_SEOUL_TZ),
                 session_id=typed.session_id,
                 delegation_token=token_value,
                 consumer_tool_id="mock_submit_module_gov24_minwon",
@@ -180,7 +185,7 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
 
     # Success path — produce synthetic 접수번호
     suffix = secrets.token_hex(4).upper()
-    receipt_id = f"gov24-{datetime.now(UTC).strftime('%Y-%m-%d')}-MW-{suffix}"
+    receipt_id = f"gov24-{datetime.now(_SEOUL_TZ).strftime('%Y-%m-%d')}-MW-{suffix}"
 
     logger.debug(
         "mock_submit_module_gov24_minwon: success, receipt_id=%s minwon_type=%s",
@@ -191,7 +196,7 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
     append_delegation_used(
         DelegationUsedEvent(
             kind="delegation_used",
-            ts=datetime.now(UTC),
+            ts=datetime.now(_SEOUL_TZ),
             session_id=typed.session_id,
             delegation_token=token_value,
             consumer_tool_id="mock_submit_module_gov24_minwon",

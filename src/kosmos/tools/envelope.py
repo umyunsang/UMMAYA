@@ -16,7 +16,15 @@ FR-017: Catch handler exceptions and convert to ``LookupError`` — implemented
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+# KOSMOS canonical timezone for citizen-facing metadata.
+# Backend stores UTC-naive datetime would surprise citizens reading
+# `meta.fetched_at` ("어제 호출했다고? 방금 했는데" — UTC vs KST 9 h gap).
+# All envelope timestamps now anchor to Asia/Seoul; OTEL spans + audit
+# ledger keep their own UTC convention via separate code paths.
+_SEOUL_TZ = ZoneInfo("Asia/Seoul")
 from typing import TYPE_CHECKING
 
 from pydantic import TypeAdapter, ValidationError
@@ -66,7 +74,7 @@ def normalize(
     """
     meta = LookupMeta(
         source=tool.id,
-        fetched_at=datetime.now(tz=UTC),
+        fetched_at=datetime.now(tz=_SEOUL_TZ),
         request_id=request_id,
         elapsed_ms=max(0, elapsed_ms),
     )
@@ -121,7 +129,7 @@ def make_error_envelope(
     """
     meta = LookupMeta(
         source=tool_id,
-        fetched_at=datetime.now(tz=UTC),
+        fetched_at=datetime.now(tz=_SEOUL_TZ),
         request_id=request_id,
         elapsed_ms=max(0, elapsed_ms),
     )

@@ -13,6 +13,11 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import UTC, datetime
+# KOSMOS canonical citizen-facing timezone (Asia/Seoul). Internal
+# OTEL/audit/IPC paths keep UTC; only envelope-visible timestamps switch.
+from zoneinfo import ZoneInfo
+_SEOUL_TZ = ZoneInfo("Asia/Seoul")
+
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -242,7 +247,7 @@ class Worker:
 
             meta = LookupMeta(
                 source="worker_text_response",
-                fetched_at=datetime.now(UTC),
+                fetched_at=datetime.now(_SEOUL_TZ),
                 request_id=str(uuid4()),
                 elapsed_ms=0,
             )

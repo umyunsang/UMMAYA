@@ -780,3 +780,111 @@ async def test_otel_spans_preserved(
         f"Missing: {sorted(missing)}. "
         f"All keys found: {sorted(all_attr_keys)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Epic #2766 issue B — render-order (tool_call BEFORE assistant prose)
+# ---------------------------------------------------------------------------
+
+
+class _PreambleThenToolCallLLMClient(_BaseFakeLLMClient):
+    """LLM that emits prose preamble FIRST, then a tool_call_delta — the K-EXAONE
+    Hermes pattern that produced the citizen-visible bug `assistant text → tool_call`.
+    """
+
+    recorded_calls: list[dict[str, Any]] = []
+    _class_turn: int = 0
+
+    def __init__(self, config: Any) -> None:
+        super().__init__(config)
+
+    async def stream(
+        self,
+        messages: list[Any],
+        *,
+        tools: list[Any] | None = None,
+        tool_choice: Any = None,
+        temperature: float = 1.0,
+        top_p: float = 0.95,
+        presence_penalty: float = 0.0,
+        max_tokens: int = 1024,
+        stop: Any = None,
+    ) -> AsyncIterator[StreamEvent]:
+        type(self)._class_turn += 1
+        turn = type(self)._class_turn
+        type(self).recorded_calls.append({"messages": messages, "tools": tools})
+        if turn == 1:
+            # Prose preamble emitted BEFORE tool_call_delta (K-EXAONE Hermes
+            # ordering). Pre-fix behavior: this prose chunk leaked through to
+            # the citizen as an `assistant_chunk` BEFORE the `tool_call`
+            # frame, producing the inverted render order.
+            yield StreamEvent(type="content_delta", content="병원을 검색해 보겠습니다.")
+            yield StreamEvent(
+                type="tool_call_delta",
+                tool_call_index=0,
+                tool_call_id=f"call-{uuid.uuid4().hex[:8]}",
+                function_name="lookup",
+                function_args_delta='{"mode":"search","query":"내과"}',
+            )
+            yield StreamEvent(type="done")
+        else:
+            yield StreamEvent(type="content_delta", content="가까운 병원입니다.")
+            yield StreamEvent(type="done")
+
+
+@pytest.mark.asyncio
+async def test_render_order_tool_call_emitted_before_preamble_prose(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Epic #2766 issue B — when LLM emits prose then tool_call in the same
+    turn, the citizen-visible frame stream MUST have the tool_call emitted
+    BEFORE any assistant_chunk that carries non-empty prose for that turn's
+    message_id. The preamble is suppressed entirely; the next-turn answer
+    is what reaches the citizen.
+    """
+    frame = _make_chat_request(tools=[])
+
+    buf, _ = await _run_with_frame(
+        frame,
+        _PreambleThenToolCallLLMClient,
+        monkeypatch=monkeypatch,
+        env_overrides={"KOSMOS_TOOL_RESULT_TIMEOUT_SECONDS": "5"},
+    )
+
+    emitted = buf.as_frames()
+
+    # Find indices of the first tool_call frame and any assistant_chunk that
+    # carries the SAME message_id as the tool-call turn (turn 1).
+    tool_call_idx: int | None = None
+    turn1_message_id: str | None = None
+    for i, f in enumerate(emitted):
+        if f.get("kind") == "tool_call" and tool_call_idx is None:
+            tool_call_idx = i
+            # The assistant_chunks emitted BEFORE this tool_call belong to
+            # turn 1 (the preamble). Capture their message_id.
+            for prev in emitted[:i]:
+                if prev.get("kind") == "assistant_chunk":
+                    turn1_message_id = prev.get("message_id")
+                    break
+
+    assert tool_call_idx is not None, (
+        f"No tool_call frame emitted; expected K-EXAONE preamble→tool_call to "
+        f"trigger dispatch. Frames: {[f.get('kind') for f in emitted]}"
+    )
+
+    # Pre-fix bug: turn-1 message_id appeared as assistant_chunk BEFORE
+    # tool_call. Post-fix: no non-empty assistant_chunk for turn-1 message_id
+    # exists at all (preamble suppressed).
+    if turn1_message_id is not None:
+        leaked_preamble = [
+            f
+            for f in emitted[:tool_call_idx]
+            if f.get("kind") == "assistant_chunk"
+            and f.get("message_id") == turn1_message_id
+            and f.get("delta")
+        ]
+        assert not leaked_preamble, (
+            f"Render-order regression: preamble prose for turn-1 message_id "
+            f"{turn1_message_id!r} leaked BEFORE tool_call. "
+            f"Leaked frames: {leaked_preamble}"
+        )

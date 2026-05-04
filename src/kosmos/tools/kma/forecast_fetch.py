@@ -28,6 +28,12 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
+
+# KOSMOS canonical citizen-facing timezone for `meta.fetched_at`.
+# Internal elapsed-time math (`t_start`) keeps UTC; only the citizen-visible
+# stamp switches. See `src/kosmos/tools/envelope.py` for the canonical rule.
+_SEOUL_TZ = ZoneInfo("Asia/Seoul")
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
@@ -321,7 +327,10 @@ async def _fetch(
 
     meta = LookupMeta(
         source="kma_forecast_fetch",
-        fetched_at=t_start,
+        # Citizen-facing stamp: KST. The envelope merger filters out adapter
+        # `fetched_at` from `_SYSTEM_META`, but stamping KST here matches the
+        # convention so any direct consumer (mocks, tests) sees Asia/Seoul.
+        fetched_at=t_start.astimezone(_SEOUL_TZ),
         request_id=request_id,
         elapsed_ms=elapsed_ms,
     )
