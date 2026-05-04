@@ -1,0 +1,1258 @@
+# Target-state citizen demand dataset for KOSMOS national infrastructure AX.
+#
+# This is intentionally not derived from the current ToolRegistry, current adapter IDs,
+# or current fixture inventory. It models what citizens would naturally ask if tax,
+# civil-affairs, identity, welfare, payment, utility, business, housing, mobility,
+# safety, education, labor, immigration, and regulated public-infrastructure channels
+# were exposed through one LLM-mediated administrative interface.
+#
+# Korean request text is domain data. Structural metadata stays in English.
+version: 1
+dataset_id: national_ax_citizen_requests_v1
+created_at: "2026-05-04"
+source_basis: citizen_demand_target_state
+target_system: "One LLM interface for citizen-facing national infrastructure AX"
+scope_note: >
+  The dataset targets end-state KOSMOS: a citizen should not need to know which
+  ministry, portal, certificate, payment rail, or public-infrastructure operator owns
+  a task. KOSMOS should decompose, verify, route, ask for consent, submit, pay,
+  subscribe, or hand off with citations and audit evidence.
+allowed_primitives:
+  - lookup
+  - resolve_location
+  - verify
+  - submit
+  - subscribe
+
+coverage_domains:
+  - tax
+  - civil_affairs
+  - payments
+  - utilities
+  - identity
+  - welfare
+  - healthcare
+  - housing
+  - mobility
+  - business
+  - labor
+  - education
+  - safety
+  - immigration
+  - legal
+  - personal_data
+
+scenarios:
+  - id: TAX-001
+    priority: P0
+    lifecycle_domain: tax
+    citizen_segment: individual_taxpayer
+    request_ko: "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘."
+    request_en: "File last year's comprehensive income tax return and register my refund account if I am owed a refund."
+    agencies_or_infrastructure:
+      - National Tax Service Hometax
+      - simple authentication
+      - bank account verification
+    citizen_intent_verbs:
+      - file_tax
+      - get_refund
+      - register_account
+    expected_ax_chain:
+      - primitive: verify
+        purpose: identity_and_tax_delegation
+      - primitive: lookup
+        purpose: collect_income_withholding_deductions_and_prior_filing_status
+      - primitive: submit
+        purpose: file_tax_return_after_final_citizen_confirmation
+      - primitive: submit
+        purpose: register_refund_account_or_payment_instruction
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - tax_return_submission
+        - refund_account_registration
+      sensitive_data:
+        - income
+        - deductions
+        - resident_registration_number
+        - bank_account
+    expected_system_behavior:
+      - show_tax_basis_and_estimate_before_submission
+      - require_final_confirmation_for_filing
+      - issue_receipt_or_explain_official_handoff
+    evaluation_focus:
+      - multi_step_orchestration
+      - tax_data_privacy
+      - irreversible_submission_guard
+
+  - id: TAX-002
+    priority: P0
+    lifecycle_domain: tax
+    citizen_segment: sole_proprietor
+    request_ko: "개인사업자 부가세 신고해야 하는데 매출 자료 모아서 납부까지 진행해줘."
+    request_en: "Prepare my sole-proprietor VAT filing by collecting sales data and proceed to payment."
+    agencies_or_infrastructure:
+      - National Tax Service Hometax
+      - cash receipt infrastructure
+      - card sales settlement infrastructure
+      - bank/payment gateway
+    citizen_intent_verbs:
+      - file_tax
+      - pay
+      - reconcile_sales
+    expected_ax_chain:
+      - primitive: verify
+        purpose: business_owner_identity_and_tax_authority
+      - primitive: lookup
+        purpose: collect_sales_purchase_cash_receipt_and_card_data
+      - primitive: submit
+        purpose: file_vat_return_after_review
+      - primitive: submit
+        purpose: pay_tax_or_create_payment_deadline_reminder
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - vat_return_submission
+        - tax_payment_execution
+      sensitive_data:
+        - business_revenue
+        - supplier_records
+        - payment_account
+    expected_system_behavior:
+      - separate_deductible_and_non_deductible_items
+      - warn_when_records_are_missing_or_estimated
+      - never_pay_without_explicit_confirmation
+    evaluation_focus:
+      - business_tax_workflow
+      - payment_guardrail
+      - missing_data_clarification
+
+  - id: TAX-003
+    priority: P1
+    lifecycle_domain: tax
+    citizen_segment: homeowner
+    request_ko: "아파트 팔았는데 양도소득세 얼마나 나오는지 계산하고 신고 절차까지 안내해줘."
+    request_en: "I sold an apartment; estimate capital gains tax and guide me through the filing process."
+    agencies_or_infrastructure:
+      - National Tax Service Hometax
+      - real estate transaction reporting infrastructure
+      - land registry
+      - local government property records
+    citizen_intent_verbs:
+      - estimate_tax
+      - file_tax
+      - explain_documents
+    expected_ax_chain:
+      - primitive: verify
+        purpose: owner_identity_and_property_record_access
+      - primitive: lookup
+        purpose: retrieve_sale_purchase_holding_period_and_exemption_context
+      - primitive: submit
+        purpose: prepare_or_file_capital_gains_tax_after_confirmation
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - use_property_records
+        - tax_filing_submission
+      sensitive_data:
+        - property_ownership
+        - sale_price
+        - acquisition_price
+    expected_system_behavior:
+      - distinguish_estimate_from_official_filing_result
+      - ask_about_exemptions_and_residence_period_when_missing
+      - cite_required_documents_and_deadlines
+    evaluation_focus:
+      - uncertain_tax_estimate_handling
+      - document_gap_detection
+      - official_deadline_explanation
+
+  - id: CIV-001
+    priority: P0
+    lifecycle_domain: civil_affairs
+    citizen_segment: household_mover
+    request_ko: "이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘."
+    request_en: "I moved. File my move-in report and update my vehicle, health insurance, and school-related addresses at once."
+    agencies_or_infrastructure:
+      - Government24
+      - resident registration infrastructure
+      - vehicle registration infrastructure
+      - National Health Insurance Service
+      - education office
+    citizen_intent_verbs:
+      - report_move
+      - update_records
+      - coordinate_agencies
+    expected_ax_chain:
+      - primitive: verify
+        purpose: household_identity_and_address_change_authority
+      - primitive: resolve_location
+        purpose: normalize_new_address_to_administrative_codes
+      - primitive: lookup
+        purpose: discover_dependent_records_and_required_sequence
+      - primitive: submit
+        purpose: file_move_in_report
+      - primitive: submit
+        purpose: update_linked_address_records_where_allowed
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - move_in_report_submission
+        - linked_record_updates
+      sensitive_data:
+        - household_members
+        - address
+        - vehicle_record
+        - student_record
+    expected_system_behavior:
+      - explain_legally_ordered_sequence
+      - separate_auto_submittable_items_from_handoff_items
+      - produce_receipts_for_each_submitted_change
+    evaluation_focus:
+      - cross_agency_dependency_ordering
+      - address_resolution
+      - linked_record_consent
+
+  - id: CIV-002
+    priority: P0
+    lifecycle_domain: civil_affairs
+    citizen_segment: new_parent
+    request_ko: "아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘."
+    request_en: "My baby was born. Help with birth registration, child allowance, first-meeting voucher, and health-insurance dependent registration."
+    agencies_or_infrastructure:
+      - Government24
+      - local government family registry
+      - Ministry of Health and Welfare
+      - National Health Insurance Service
+      - voucher payment infrastructure
+    citizen_intent_verbs:
+      - register_birth
+      - apply_benefit
+      - update_insurance
+    expected_ax_chain:
+      - primitive: verify
+        purpose: parent_identity_and_family_registry_authority
+      - primitive: lookup
+        purpose: determine_local_and_national_childbirth_benefits
+      - primitive: submit
+        purpose: file_birth_registration
+      - primitive: submit
+        purpose: apply_child_related_benefits
+      - primitive: submit
+        purpose: register_health_insurance_dependent
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - birth_registration_submission
+        - benefit_applications
+      sensitive_data:
+        - newborn_identity
+        - parent_identity
+        - family_relationship
+        - household_income
+    expected_system_behavior:
+      - ask_for_birth_certificate_or_hospital_confirmation
+      - avoid_duplicate_benefit_applications
+      - show_payment_method_and_expected_schedule
+    evaluation_focus:
+      - life_event_bundle
+      - benefit_discovery
+      - family_pii_protection
+
+  - id: CIV-003
+    priority: P1
+    lifecycle_domain: civil_affairs
+    citizen_segment: bereaved_family
+    request_ko: "아버지가 돌아가셨어. 사망신고, 장례 지원, 국민연금 유족급여, 재산 관련 절차를 순서대로 알려줘."
+    request_en: "My father passed away. Guide death registration, funeral support, survivor pension, and estate-related steps in order."
+    agencies_or_infrastructure:
+      - Government24
+      - family registry
+      - National Pension Service
+      - local welfare office
+      - tax and property registries
+    citizen_intent_verbs:
+      - report_death
+      - apply_benefit
+      - explain_sequence
+    expected_ax_chain:
+      - primitive: verify
+        purpose: family_relationship_and_representative_authority
+      - primitive: lookup
+        purpose: discover_required_death_and_survivor_benefit_steps
+      - primitive: submit
+        purpose: file_or_prepare_death_registration_where_channel_exists
+      - primitive: submit
+        purpose: apply_survivor_or_funeral_benefits_after_confirmation
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - death_registration_or_handoff
+        - benefit_application
+      sensitive_data:
+        - deceased_identity
+        - family_relationship
+        - pension_record
+        - estate_information
+    expected_system_behavior:
+      - use_empathetic_but_actionable_language
+      - clearly_mark_steps_requiring_official_visit_or_court_process
+      - avoid_claiming_completion_without_receipt
+    evaluation_focus:
+      - sensitive_life_event_handling
+      - authority_verification
+      - opaque_domain_handoff
+
+  - id: PAY-001
+    priority: P0
+    lifecycle_domain: payments
+    citizen_segment: household_payer
+    request_ko: "이번 달 재산세랑 자동차세, 과태료 밀린 거 있는지 확인하고 납부 가능한 건 한 번에 처리해줘."
+    request_en: "Check this month's property tax, vehicle tax, and overdue fines, then pay what can be paid together."
+    agencies_or_infrastructure:
+      - Wetax
+      - local tax infrastructure
+      - police traffic fine infrastructure
+      - bank/payment gateway
+    citizen_intent_verbs:
+      - lookup_bill
+      - pay
+      - consolidate_payments
+    expected_ax_chain:
+      - primitive: verify
+        purpose: taxpayer_and_vehicle_owner_identity
+      - primitive: lookup
+        purpose: collect_due_taxes_fines_deadlines_and_penalties
+      - primitive: submit
+        purpose: execute_selected_payments_after_confirmation
+      - primitive: subscribe
+        purpose: create_future_due_date_alerts
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - selected_payment_list
+        - payment_account_or_card
+      sensitive_data:
+        - tax_bills
+        - fine_records
+        - payment_instrument
+    expected_system_behavior:
+      - show_each_bill_source_amount_due_date_and_penalty
+      - allow_partial_payment_selection
+      - never_batch_pay_without_itemized_confirmation
+    evaluation_focus:
+      - payment_itemization
+      - consolidated_bill_routing
+      - irreversible_payment_guard
+
+  - id: UTL-001
+    priority: P0
+    lifecycle_domain: utilities
+    citizen_segment: resident
+    request_ko: "전기, 수도, 도시가스 요금 이번 달 얼마나 나왔는지 보고 자동이체 신청까지 해줘."
+    request_en: "Check this month's electricity, water, and city-gas bills and set up automatic payment."
+    agencies_or_infrastructure:
+      - electric utility billing infrastructure
+      - municipal water billing infrastructure
+      - city gas operator
+      - bank automatic transfer infrastructure
+    citizen_intent_verbs:
+      - lookup_bill
+      - set_autopay
+      - pay
+    expected_ax_chain:
+      - primitive: verify
+        purpose: account_holder_or_household_authority
+      - primitive: lookup
+        purpose: collect_current_utility_bills_and_due_dates
+      - primitive: submit
+        purpose: register_autopay_after_account_confirmation
+      - primitive: subscribe
+        purpose: notify_future_bill_spikes_or_due_dates
+    permission_requirements:
+      identity_assurance: medium
+      user_confirmations:
+        - autopay_registration
+        - payment_account_use
+      sensitive_data:
+        - address
+        - utility_account_numbers
+        - payment_account
+    expected_system_behavior:
+      - distinguish_public_operator_and_private_operator_boundaries
+      - verify_account_ownership_before_autopay
+      - warn_if_a_bill_requires_external_portal_handoff
+    evaluation_focus:
+      - public_infrastructure_scope
+      - operator_boundary_explanation
+      - autopay_consent
+
+  - id: ID-001
+    priority: P0
+    lifecycle_domain: identity
+    citizen_segment: digital_identity_user
+    request_ko: "모바일 신분증 발급하고 정부24랑 홈택스에서 쓸 수 있게 인증 수단도 연결해줘."
+    request_en: "Issue a mobile ID and connect it as an authentication method for Government24 and Hometax."
+    agencies_or_infrastructure:
+      - mobile ID infrastructure
+      - simple authentication providers
+      - Government24
+      - National Tax Service Hometax
+    citizen_intent_verbs:
+      - issue_identity
+      - connect_authentication
+      - verify_identity
+    expected_ax_chain:
+      - primitive: verify
+        purpose: bootstrap_existing_identity_or_in_person_requirement
+      - primitive: lookup
+        purpose: determine_supported_identity_issuance_and_linking_paths
+      - primitive: submit
+        purpose: start_mobile_id_issuance_or_handoff
+      - primitive: submit
+        purpose: register_authentication_method_where_supported
+    permission_requirements:
+      identity_assurance: very_high
+      user_confirmations:
+        - identity_issuance_start
+        - auth_method_linking
+      sensitive_data:
+        - identity_document
+        - biometric_or_device_binding_status
+        - authentication_provider_account
+    expected_system_behavior:
+      - never_claim_identity_issuance_if_channel_requires_official_app_or_visit
+      - explain_recovery_and_revocation_path
+      - require_strong_confirmation_for_linking
+    evaluation_focus:
+      - identity_bootstrap_boundary
+      - high_assurance_handoff
+      - auth_linking_privacy
+
+  - id: WEL-001
+    priority: P0
+    lifecycle_domain: welfare
+    citizen_segment: expectant_parent
+    request_ko: "임신했는데 받을 수 있는 지원금, 진료비 바우처, 출산휴가 관련 신청을 한 번에 정리하고 신청해줘."
+    request_en: "I am pregnant; organize and apply for available subsidies, medical vouchers, and maternity-leave related benefits."
+    agencies_or_infrastructure:
+      - Ministry of Health and Welfare
+      - National Health Insurance Service
+      - Employment Insurance
+      - local government benefit portals
+    citizen_intent_verbs:
+      - check_eligibility
+      - apply_benefit
+      - coordinate_benefits
+    expected_ax_chain:
+      - primitive: verify
+        purpose: identity_household_and_employment_status_access
+      - primitive: lookup
+        purpose: determine_national_local_and_employment_related_benefits
+      - primitive: submit
+        purpose: apply_for_selected_benefits_after_confirmation
+      - primitive: subscribe
+        purpose: notify_followup_milestones_and_document_deadlines
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - benefit_application_selection
+        - medical_or_employment_data_use
+      sensitive_data:
+        - pregnancy_status
+        - household_income
+        - employment_status
+        - health_insurance_status
+    expected_system_behavior:
+      - ask_before_using_health_or_employment_data
+      - separate_automatic_eligibility_from_application_required_benefits
+      - list_documents_and_expected_payment_schedule
+    evaluation_focus:
+      - cross_domain_benefit_discovery
+      - medical_privacy
+      - deadline_subscription
+
+  - id: WEL-002
+    priority: P0
+    lifecycle_domain: welfare
+    citizen_segment: low_income_household
+    request_ko: "생활비가 부족해. 내가 받을 수 있는 기초생활, 주거급여, 긴급복지 지원을 찾아서 신청 가능한 것부터 진행해줘."
+    request_en: "I am short on living expenses. Find basic livelihood, housing, and emergency welfare support and start applications where possible."
+    agencies_or_infrastructure:
+      - Ministry of Health and Welfare
+      - local welfare office
+      - National Health Insurance Service
+      - housing benefit infrastructure
+    citizen_intent_verbs:
+      - check_eligibility
+      - apply_benefit
+      - emergency_support
+    expected_ax_chain:
+      - primitive: verify
+        purpose: household_identity_income_and_assets_authority
+      - primitive: lookup
+        purpose: evaluate_benefit_candidates_and_urgency
+      - primitive: submit
+        purpose: submit_selected_welfare_applications_or_prepare_handoff
+      - primitive: subscribe
+        purpose: track_review_status_and_document_requests
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - household_data_use
+        - welfare_application_submission
+      sensitive_data:
+        - income
+        - assets
+        - household_members
+        - health_insurance_premium
+    expected_system_behavior:
+      - ask_minimum_clarifying_questions_before_sensitive_lookup
+      - prioritize_emergency_support_when_risk_is_high
+      - explain_why_a_benefit_is_or_is_not_available
+    evaluation_focus:
+      - vulnerable_user_support
+      - eligibility_reasoning
+      - minimal_data_principle
+
+  - id: HLT-001
+    priority: P0
+    lifecycle_domain: healthcare
+    citizen_segment: caregiver
+    request_ko: "아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험 적용되는지도 알려줘."
+    request_en: "My child has a high fever at night. Find an ER or night clinic available now and tell me whether health insurance applies."
+    agencies_or_infrastructure:
+      - emergency medical information infrastructure
+      - HIRA hospital information
+      - National Health Insurance Service
+      - location services
+    citizen_intent_verbs:
+      - find_care
+      - check_coverage
+      - navigate
+    expected_ax_chain:
+      - primitive: resolve_location
+        purpose: determine_current_location_or_requested_area
+      - primitive: lookup
+        purpose: find_available_er_or_night_clinic
+      - primitive: lookup
+        purpose: check_insurance_coverage_rules_without_exposing_unneeded_records
+      - primitive: subscribe
+        purpose: monitor_wait_time_or_alert_if_status_changes
+    permission_requirements:
+      identity_assurance: medium
+      user_confirmations:
+        - child_location_use
+      sensitive_data:
+        - child_health_context
+        - location
+        - insurance_status
+    expected_system_behavior:
+      - prioritize_emergency_disclaimer_and_call_119_when_needed
+      - avoid_diagnosis
+      - rank_by_availability_distance_and_pediatric_capability
+    evaluation_focus:
+      - urgent_safety_routing
+      - health_privacy
+      - no_medical_diagnosis
+
+  - id: HLT-002
+    priority: P1
+    lifecycle_domain: healthcare
+    citizen_segment: patient
+    request_ko: "최근 병원비가 많이 나왔는데 실손 말고 국가에서 받을 수 있는 의료비 지원이나 본인부담상한제 대상인지 확인해줘."
+    request_en: "My recent medical bills are high. Check whether I qualify for public medical-cost support or the out-of-pocket cap."
+    agencies_or_infrastructure:
+      - National Health Insurance Service
+      - HIRA
+      - Ministry of Health and Welfare
+      - local welfare office
+    citizen_intent_verbs:
+      - check_eligibility
+      - apply_benefit
+      - explain_reimbursement
+    expected_ax_chain:
+      - primitive: verify
+        purpose: patient_identity_and_health_cost_data_access
+      - primitive: lookup
+        purpose: retrieve_claim_costs_caps_and_support_candidates
+      - primitive: submit
+        purpose: apply_for_selected_public_medical_cost_support
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - health_cost_data_use
+        - reimbursement_application
+      sensitive_data:
+        - diagnosis_related_claims
+        - medical_costs
+        - household_income
+    expected_system_behavior:
+      - request_explicit_consent_before_health_record_lookup
+      - separate_public_support_from_private_insurance
+      - explain_review_timeline_and_documents
+    evaluation_focus:
+      - health_data_consent
+      - eligibility_vs_private_insurance_boundary
+      - reimbursement_workflow
+
+  - id: HOU-001
+    priority: P0
+    lifecycle_domain: housing
+    citizen_segment: tenant
+    request_ko: "전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 위험한 부분까지 체크해서 처리해줘."
+    request_en: "I signed a jeonse lease. Handle fixed-date confirmation, lease reporting, and deposit-guarantee steps while checking risks."
+    agencies_or_infrastructure:
+      - Government24
+      - real estate transaction reporting infrastructure
+      - court registry
+      - housing guarantee infrastructure
+    citizen_intent_verbs:
+      - report_contract
+      - issue_confirmation
+      - check_risk
+      - apply_guarantee
+    expected_ax_chain:
+      - primitive: verify
+        purpose: tenant_identity_and_contract_authority
+      - primitive: lookup
+        purpose: inspect_property_registry_and_required_lease_steps
+      - primitive: submit
+        purpose: file_lease_report_or_fixed_date_request_where_channel_exists
+      - primitive: submit
+        purpose: start_deposit_guarantee_application_after_confirmation
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - lease_report_submission
+        - property_registry_use
+        - guarantee_application
+      sensitive_data:
+        - lease_contract
+        - deposit_amount
+        - address
+        - landlord_information
+    expected_system_behavior:
+      - identify_risk_signals_without_giving_legal_certainty
+      - mark_steps_requiring_external_institution_or_handoff
+      - preserve_document_evidence
+    evaluation_focus:
+      - housing_risk_triage
+      - legal_boundary
+      - document_based_workflow
+
+  - id: HOU-002
+    priority: P1
+    lifecycle_domain: housing
+    citizen_segment: home_buyer
+    request_ko: "생애최초 주택구입인데 대출, 취득세 감면, 등기, 전입까지 빠뜨리지 않게 순서대로 진행해줘."
+    request_en: "I am buying my first home. Coordinate loan, acquisition-tax reduction, registration, and move-in steps in order."
+    agencies_or_infrastructure:
+      - local tax infrastructure
+      - court registry
+      - housing finance infrastructure
+      - Government24
+      - resident registration infrastructure
+    citizen_intent_verbs:
+      - check_eligibility
+      - apply_reduction
+      - register_property
+      - report_move
+    expected_ax_chain:
+      - primitive: verify
+        purpose: buyer_identity_property_and_finance_authority
+      - primitive: lookup
+        purpose: determine_first_home_benefits_and_required_order
+      - primitive: submit
+        purpose: apply_tax_reduction_or_prepare_handoff
+      - primitive: submit
+        purpose: register_or_handoff_property_registration
+      - primitive: submit
+        purpose: file_move_in_report_after_completion
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - property_data_use
+        - tax_reduction_application
+        - move_in_report
+      sensitive_data:
+        - property_contract
+        - financing_status
+        - household_status
+    expected_system_behavior:
+      - enforce_sequence_and_deadline_awareness
+      - avoid_legal_or_financial_advice_overclaim
+      - show_which_steps_are_submit_vs_handoff
+    evaluation_focus:
+      - legally_ordered_workflow
+      - high_value_transaction_guardrail
+      - first_home_benefit_discovery
+
+  - id: MOB-001
+    priority: P0
+    lifecycle_domain: mobility
+    citizen_segment: driver
+    request_ko: "운전면허 갱신해야 하는지 확인하고 적성검사 예약, 과태료, 자동차세까지 같이 봐줘."
+    request_en: "Check whether I need to renew my driver's license, reserve aptitude testing, and review fines and vehicle tax together."
+    agencies_or_infrastructure:
+      - driver license infrastructure
+      - police traffic fine infrastructure
+      - local vehicle tax infrastructure
+      - health exam reservation infrastructure
+    citizen_intent_verbs:
+      - check_status
+      - reserve_slot
+      - lookup_bill
+      - pay
+    expected_ax_chain:
+      - primitive: verify
+        purpose: driver_and_vehicle_owner_identity
+      - primitive: lookup
+        purpose: collect_license_renewal_fine_and_tax_status
+      - primitive: submit
+        purpose: reserve_aptitude_test_or_license_renewal_slot
+      - primitive: submit
+        purpose: pay_selected_fines_or_taxes_after_confirmation
+      - primitive: subscribe
+        purpose: remind_renewal_deadline
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - reservation_submission
+        - selected_payment_execution
+      sensitive_data:
+        - driver_license_status
+        - vehicle_record
+        - fines
+    expected_system_behavior:
+      - distinguish_license_deadline_from_payment_deadline
+      - show_payment_items_separately
+      - confirm_reservation_location_and_time
+    evaluation_focus:
+      - bundled_mobility_request
+      - reservation_and_payment_split
+      - deadline_subscription
+
+  - id: MOB-002
+    priority: P1
+    lifecycle_domain: mobility
+    citizen_segment: traveler
+    request_ko: "내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동 방법 추천해줘."
+    request_en: "I am going from Busan to Seoul tomorrow. Check weather, road risk, and transit delays, then recommend the safest route."
+    agencies_or_infrastructure:
+      - weather infrastructure
+      - road safety infrastructure
+      - rail and bus operations data
+      - disaster alert infrastructure
+    citizen_intent_verbs:
+      - plan_route
+      - assess_risk
+      - subscribe_alert
+    expected_ax_chain:
+      - primitive: resolve_location
+        purpose: normalize_origin_destination_and_time
+      - primitive: lookup
+        purpose: collect_weather_road_hazard_and_transit_status
+      - primitive: subscribe
+        purpose: monitor_weather_or_transport_disruptions_until_departure
+    permission_requirements:
+      identity_assurance: low
+      user_confirmations:
+        - location_use_if_current_location_needed
+      sensitive_data:
+        - travel_plan
+        - location
+    expected_system_behavior:
+      - explain_confidence_and_data_freshness
+      - avoid_overstating_safety_guarantees
+      - provide_fallback_route_and_alert_plan
+    evaluation_focus:
+      - multi_source_lookup
+      - risk_ranking
+      - freshness_disclosure
+
+  - id: BUS-001
+    priority: P0
+    lifecycle_domain: business
+    citizen_segment: new_business_owner
+    request_ko: "카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로 처리해줘."
+    request_en: "I am opening a cafe. Handle business registration, operating notification, hygiene training, card merchant setup, and tax preparation in order."
+    agencies_or_infrastructure:
+      - National Tax Service Hometax
+      - local government licensing infrastructure
+      - food safety education infrastructure
+      - card merchant infrastructure
+      - social insurance infrastructure
+    citizen_intent_verbs:
+      - register_business
+      - submit_permit
+      - reserve_training
+      - setup_tax
+    expected_ax_chain:
+      - primitive: verify
+        purpose: owner_identity_and_business_representative_authority
+      - primitive: lookup
+        purpose: determine_required_permits_training_and_tax_setup
+      - primitive: submit
+        purpose: register_business_or_prepare_hometax_handoff
+      - primitive: submit
+        purpose: submit_local_operating_notification_or_handoff
+      - primitive: subscribe
+        purpose: track_approval_and_training_deadlines
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - business_registration_submission
+        - local_permit_submission
+      sensitive_data:
+        - business_address
+        - owner_identity
+        - tax_registration
+    expected_system_behavior:
+      - enforce_dependency_order_before_opening
+      - mark_private_infrastructure_steps_separately
+      - produce_checklist_and_receipts
+    evaluation_focus:
+      - business_lifecycle_bundle
+      - permit_dependency_ordering
+      - public_private_boundary
+
+  - id: BUS-002
+    priority: P1
+    lifecycle_domain: business
+    citizen_segment: employer
+    request_ko: "직원을 처음 채용했어. 4대보험 신고, 근로계약, 지원금 받을 수 있는지까지 확인해서 진행해줘."
+    request_en: "I hired my first employee. Handle four major social-insurance reporting, employment contract steps, and eligibility for subsidies."
+    agencies_or_infrastructure:
+      - Employment Insurance
+      - National Pension Service
+      - National Health Insurance Service
+      - Workers' Compensation and Welfare Service
+      - employment subsidy infrastructure
+    citizen_intent_verbs:
+      - report_employment
+      - check_eligibility
+      - apply_subsidy
+    expected_ax_chain:
+      - primitive: verify
+        purpose: employer_representative_authority
+      - primitive: lookup
+        purpose: determine_social_insurance_and_subsidy_requirements
+      - primitive: submit
+        purpose: file_employee_social_insurance_reports
+      - primitive: submit
+        purpose: apply_for_eligible_hiring_subsidies
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - employee_data_use
+        - employment_report_submission
+        - subsidy_application
+      sensitive_data:
+        - employee_identity
+        - wages
+        - workplace_information
+    expected_system_behavior:
+      - minimize_employee_personal_data_exposure
+      - separate_required_reporting_from_optional_subsidies
+      - explain employer obligations and deadlines
+    evaluation_focus:
+      - employer_obligation_bundle
+      - third_party_pii_guard
+      - subsidy_discovery
+
+  - id: LAB-001
+    priority: P0
+    lifecycle_domain: labor
+    citizen_segment: unemployed_worker
+    request_ko: "퇴사했는데 실업급여 받을 수 있는지 확인하고 워크넷 등록이랑 고용센터 예약까지 해줘."
+    request_en: "I left my job. Check unemployment-benefit eligibility and handle WorkNet registration and job-center reservation."
+    agencies_or_infrastructure:
+      - Employment Insurance
+      - WorkNet
+      - job center reservation infrastructure
+      - employer separation-report infrastructure
+    citizen_intent_verbs:
+      - check_eligibility
+      - apply_benefit
+      - reserve_slot
+    expected_ax_chain:
+      - primitive: verify
+        purpose: worker_identity_and_employment_record_access
+      - primitive: lookup
+        purpose: check_separation_report_eligibility_and_required_steps
+      - primitive: submit
+        purpose: register_job_seeking_or_prepare_handoff
+      - primitive: submit
+        purpose: reserve_job_center_or_education_session
+      - primitive: subscribe
+        purpose: track_application_and_attendance_deadlines
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - employment_record_use
+        - benefit_application_or_reservation
+      sensitive_data:
+        - employment_history
+        - wage_history
+        - separation_reason
+    expected_system_behavior:
+      - ask_about_resignation_reason_when_missing
+      - explain_if_employer_report_is_absent
+      - avoid_promising_approval
+    evaluation_focus:
+      - labor_benefit_eligibility
+      - prerequisite_detection
+      - reservation_workflow
+
+  - id: EDU-001
+    priority: P1
+    lifecycle_domain: education
+    citizen_segment: parent
+    request_ko: "이사 때문에 아이 학교 전학이 필요해. 전입신고랑 전학 절차, 돌봄 신청까지 같이 해줘."
+    request_en: "Because of a move, my child needs to transfer schools. Handle move-in reporting, school transfer, and after-school care application."
+    agencies_or_infrastructure:
+      - Government24
+      - resident registration infrastructure
+      - education office
+      - school administration infrastructure
+      - childcare or after-school care infrastructure
+    citizen_intent_verbs:
+      - report_move
+      - transfer_school
+      - apply_care
+    expected_ax_chain:
+      - primitive: verify
+        purpose: parent_identity_and_child_guardian_authority
+      - primitive: resolve_location
+        purpose: map_new_address_to_school_district
+      - primitive: submit
+        purpose: file_move_in_report_if_needed
+      - primitive: lookup
+        purpose: determine_school_transfer_and_care_options
+      - primitive: submit
+        purpose: submit_transfer_or_care_application_where_channel_exists
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - child_record_use
+        - school_transfer_application
+      sensitive_data:
+        - child_identity
+        - address
+        - school_record
+        - guardian_relationship
+    expected_system_behavior:
+      - require_guardian_authority
+      - explain_school_assignment_uncertainty
+      - separate mandatory transfer steps from optional care
+    evaluation_focus:
+      - child_data_protection
+      - location_based_education_routing
+      - family_workflow
+
+  - id: EDU-002
+    priority: P1
+    lifecycle_domain: education
+    citizen_segment: college_student
+    request_ko: "등록금이 부담돼. 국가장학금, 학자금대출, 근로장학 중 내가 신청할 수 있는 걸 찾아서 진행해줘."
+    request_en: "Tuition is a burden. Find and start applications for national scholarship, student loan, or work-study aid that I qualify for."
+    agencies_or_infrastructure:
+      - Korea Student Aid Foundation
+      - university enrollment infrastructure
+      - household income verification infrastructure
+      - bank account verification
+    citizen_intent_verbs:
+      - check_eligibility
+      - apply_benefit
+      - apply_loan
+    expected_ax_chain:
+      - primitive: verify
+        purpose: student_identity_and_enrollment_status
+      - primitive: lookup
+        purpose: collect_enrollment_income_and_aid_options
+      - primitive: submit
+        purpose: apply_for_selected_scholarship_or_loan
+      - primitive: subscribe
+        purpose: track_document_deadlines_and_result_notice
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - income_data_use
+        - aid_or_loan_application
+      sensitive_data:
+        - enrollment
+        - household_income
+        - bank_account
+    expected_system_behavior:
+      - distinguish_grant_from_loan
+      - explain_parent_or_household_consent_needs
+      - track_deadlines
+    evaluation_focus:
+      - education_finance_bundle
+      - household_consent_boundary
+      - loan_risk_disclosure
+
+  - id: SAF-001
+    priority: P0
+    lifecycle_domain: safety
+    citizen_segment: disaster_affected_resident
+    request_ko: "집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘."
+    request_en: "My home was flooded. Help immediately with damage reporting, disaster relief, temporary housing, and electricity/gas safety inspection."
+    agencies_or_infrastructure:
+      - local disaster response center
+      - disaster relief infrastructure
+      - temporary housing infrastructure
+      - electric and gas safety operators
+      - emergency alert infrastructure
+    citizen_intent_verbs:
+      - report_damage
+      - apply_benefit
+      - request_inspection
+      - subscribe_alert
+    expected_ax_chain:
+      - primitive: resolve_location
+        purpose: identify_affected_address_and_jurisdiction
+      - primitive: verify
+        purpose: resident_or_property_authority
+      - primitive: submit
+        purpose: file_disaster_damage_report
+      - primitive: submit
+        purpose: request_relief_temporary_housing_or_safety_inspection
+      - primitive: subscribe
+        purpose: monitor_disaster_alerts_and_case_status
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - damage_report_submission
+        - utility_inspection_request
+      sensitive_data:
+        - address
+        - property_damage
+        - household_status
+    expected_system_behavior:
+      - prioritize_immediate_safety_and_emergency_contact
+      - accept_partial_information_in_crisis
+      - preserve_photo_or_document_evidence_reference
+    evaluation_focus:
+      - crisis_mode
+      - partial_information_handling
+      - multi_agency_relief
+
+  - id: SAF-002
+    priority: P1
+    lifecycle_domain: safety
+    citizen_segment: resident
+    request_ko: "동네 공사 소음이 너무 심해. 어디에 민원 넣어야 하는지 찾고 증거 정리해서 접수해줘."
+    request_en: "Construction noise in my neighborhood is severe. Find where to file the complaint, organize evidence, and submit it."
+    agencies_or_infrastructure:
+      - local civil complaint infrastructure
+      - environmental complaint infrastructure
+      - municipal construction permit records
+      - evidence attachment infrastructure
+    citizen_intent_verbs:
+      - submit_petition
+      - lookup_jurisdiction
+      - attach_evidence
+    expected_ax_chain:
+      - primitive: resolve_location
+        purpose: identify_jurisdiction_and_construction_site
+      - primitive: lookup
+        purpose: determine_responsible_office_and_required_evidence
+      - primitive: submit
+        purpose: submit_civil_complaint_with_user_confirmed_evidence
+      - primitive: subscribe
+        purpose: track_response_deadline
+    permission_requirements:
+      identity_assurance: medium
+      user_confirmations:
+        - complaint_submission
+        - evidence_attachment
+      sensitive_data:
+        - address
+        - complainant_identity
+        - attachments
+    expected_system_behavior:
+      - avoid_defamatory_or_speculative_language
+      - separate_fact_evidence_from_opinion
+      - provide_case_number_and_response_deadline
+    evaluation_focus:
+      - civil_petition_routing
+      - evidence_sanitization
+      - response_tracking
+
+  - id: IMM-001
+    priority: P1
+    lifecycle_domain: immigration
+    citizen_segment: foreign_resident
+    request_ko: "외국인등록증 체류기간 연장해야 해. 필요한 서류 확인하고 예약이나 전자민원 가능한 부분 처리해줘."
+    request_en: "I need to extend my alien registration stay period. Check documents and handle reservations or e-petition steps where possible."
+    agencies_or_infrastructure:
+      - immigration e-application infrastructure
+      - appointment reservation infrastructure
+      - employment or school record infrastructure
+      - payment gateway
+    citizen_intent_verbs:
+      - extend_status
+      - reserve_slot
+      - submit_petition
+      - pay_fee
+    expected_ax_chain:
+      - primitive: verify
+        purpose: foreign_resident_identity_and_status_access
+      - primitive: lookup
+        purpose: determine_status_type_documents_fees_and_deadlines
+      - primitive: submit
+        purpose: reserve_appointment_or_submit_e_application
+      - primitive: submit
+        purpose: pay_fee_after_confirmation
+      - primitive: subscribe
+        purpose: monitor_status_and_deadline
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - immigration_record_use
+        - application_or_reservation_submission
+        - fee_payment
+      sensitive_data:
+        - passport
+        - alien_registration_number
+        - visa_status
+        - employment_or_school_record
+    expected_system_behavior:
+      - explain_deadline_risk_and_overstay_consequence_neutrally
+      - support_multilingual_clarification_when_needed
+      - never_submit_if_document_validity_is_uncertain
+    evaluation_focus:
+      - immigration_deadline_handling
+      - high_assurance_identity
+      - document_completeness
+
+  - id: LEG-001
+    priority: P1
+    lifecycle_domain: legal
+    citizen_segment: litigant_or_applicant
+    request_ko: "가족관계증명서랑 주민등록등본이 필요한데 법원 제출용으로 발급하고 제출 가능한지 확인해줘."
+    request_en: "I need family relation and resident registration certificates for court submission. Issue them and check whether they can be submitted."
+    agencies_or_infrastructure:
+      - electronic family relation certificate infrastructure
+      - Government24 certificate issuance
+      - court electronic filing infrastructure
+      - certificate payment infrastructure
+    citizen_intent_verbs:
+      - issue_certificate
+      - submit_document
+      - pay_fee
+    expected_ax_chain:
+      - primitive: verify
+        purpose: certificate_holder_identity_and_relationship_authority
+      - primitive: lookup
+        purpose: determine_required_certificate_variant_and_court_submission_channel
+      - primitive: submit
+        purpose: issue_certificates_after_confirmation
+      - primitive: submit
+        purpose: submit_to_court_or_prepare_handoff_where_channel_requires_external_auth
+    permission_requirements:
+      identity_assurance: high
+      user_confirmations:
+        - certificate_issuance
+        - court_submission_or_handoff
+      sensitive_data:
+        - resident_registration
+        - family_relationship
+        - court_case_context
+    expected_system_behavior:
+      - distinguish_document_issuance_from_legal_advice
+      - verify_exact_certificate_type_before_issue
+      - avoid_claiming_court_filing_completion_without_receipt
+    evaluation_focus:
+      - certificate_precision
+      - legal_boundary
+      - external_submission_handoff
+
+  - id: DAT-001
+    priority: P1
+    lifecycle_domain: personal_data
+    citizen_segment: privacy_conscious_citizen
+    request_ko: "정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘."
+    request_en: "Check how government agencies are using my information and correct wrong address or contact records."
+    agencies_or_infrastructure:
+      - personal data access and correction infrastructure
+      - Government24
+      - National Tax Service Hometax
+      - National Health Insurance Service
+      - local government records
+    citizen_intent_verbs:
+      - audit_personal_data
+      - correct_record
+      - revoke_or_limit_consent
+    expected_ax_chain:
+      - primitive: verify
+        purpose: strong_identity_for_cross_agency_personal_data_access
+      - primitive: lookup
+        purpose: inventory_accessible_personal_records_and_consents
+      - primitive: submit
+        purpose: request_correction_or_consent_change_after_confirmation
+      - primitive: subscribe
+        purpose: notify_record_correction_status
+    permission_requirements:
+      identity_assurance: very_high
+      user_confirmations:
+        - cross_agency_data_inventory
+        - correction_request_submission
+        - consent_change
+      sensitive_data:
+        - cross_agency_personal_records
+        - contact_information
+        - consent_history
+    expected_system_behavior:
+      - minimize_data_display_to_requested_fields
+      - explain_each_agency_record_owner
+      - keep_audit_receipts
+    evaluation_focus:
+      - privacy_rights_workflow
+      - cross_agency_record_mapping
+      - consent_management
+
+  - id: SUB-001
+    priority: P1
+    lifecycle_domain: safety
+    citizen_segment: caregiver
+    request_ko: "부모님 지역에 폭염, 미세먼지, 정전, 단수 알림을 묶어서 받아보고 위험하면 내가 대신 확인할 수 있게 해줘."
+    request_en: "Bundle heatwave, fine-dust, outage, and water-shutdown alerts for my parents' area, and let me check on their behalf if risk is high."
+    agencies_or_infrastructure:
+      - disaster alert infrastructure
+      - environmental alert infrastructure
+      - electric utility outage infrastructure
+      - municipal water notice infrastructure
+      - family or delegated-consent infrastructure
+    citizen_intent_verbs:
+      - subscribe_alert
+      - delegate_monitoring
+      - check_status
+    expected_ax_chain:
+      - primitive: verify
+        purpose: caregiver_identity_and_delegated_monitoring_consent
+      - primitive: resolve_location
+        purpose: normalize_parent_area
+      - primitive: subscribe
+        purpose: create_multi_channel_public_infrastructure_alert_bundle
+      - primitive: lookup
+        purpose: check_active_alerts_when_triggered
+    permission_requirements:
+      identity_assurance: medium
+      user_confirmations:
+        - parental_area_monitoring
+        - delegated_contact_or_status_check
+      sensitive_data:
+        - parent_location
+        - family_relationship_or_delegation
+        - contact_channels
+    expected_system_behavior:
+      - separate_public_area_alerts_from_personal_status_checks
+      - require_delegated_consent_for_parent_specific_records
+      - provide clear alert thresholds
+    evaluation_focus:
+      - subscription_bundle
+      - delegated_consent_boundary
+      - public_vs_personal_data_split
