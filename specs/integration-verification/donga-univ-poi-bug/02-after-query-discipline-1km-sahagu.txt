@@ -1,0 +1,61 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 동아대학교 근처 병원 알려줘
+
+⏺ 동아대학교 근처 병원 정보를 찾아드렸습니다. 동아대학교는 부산 사하구에 위치해 있습니다.
+
+  가장 가까운 병원 (1km 이내):
+
+  큰솔2병원 - 715m
+    - 주소: 부산광역시 사상구 학장로 189 (학장동)
+    - 전화: 051-322-0050
+    - 종류: 병원
+  좋은부산요양병원 - 953m
+    - 주소: 부산광역시 사상구 학감대로39번길 67 (학장동)
+    - 전화: 051-326-0900
+    - 종류: 요양병원
+  부영병원 - 980m
+    - 주소: 부산광역시 사상구 학감대로123번길 76 (학장동)
+    - 전화: 051-320-6800
+    - 종류: 병원
+
+  근처 주요 종합병원 (1-2km):
+  - 좋은삼선병원 (1.5km) - 051-322-0900
+  - 부산보훈병원 (1.6km) - 051-601-6000
+
+  기타 근처 병원:
+  - 사상스마트병원 (1.5km) - 051-322-3000
+  - 큰솔병원 (1.1km) - 051-325-9700
+
+  가장 가까운 병원은 큰솔2병원으로 약 1km 거리에 위치해 있습니다. 응급 상황이 아니시라면 가까운 병원을 먼저 방문하시거나, 필요하신 진료과목이 있으시다면 해당 과목의 전문병원을
+  추가로 검색해드릴 수 있습니다.
+
+⏺ lookup(hira_hospital_search)
+  ⎿  collection — 20건
+       1. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ5OSQyNjE0ODEjODEjJDEjJDYjJDgz","yadmNm":"부산광역시의료원","addr":"
+       2. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ2MiQyNjEwMDIjNDEjJDEjJDgjJDgz","yadmNm":"학교법인)동의병원","addr":
+       3. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkOTkkMzgxMzUxIzIxIyQxIyQ5IyQ4MiQzNjEwMDIjODEjJDEjJDYjJDgz","yadmNm":"거인병원","addr":"부산광역
+
+⏺ lookup(hira_hospital_search)
+  ⎿  collection — 20건
+       1. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ5OSQyNjE0ODEjODEjJDEjJDYjJDgz","yadmNm":"부산광역시의료원","addr":"
+       2. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ4MiQyNjEwMDIjNjEjJDEjJDgjJDgz","yadmNm":"의료법인 온그룹의료재단 온병원",
+       3. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ2MiQyNjEwMDIjNDEjJDEjJDgjJDgz","yadmNm":"학교법인)동의병원","addr":
+
+⏺ lookup(hira_hospital_search)
+  ⎿  collection — 20건
+       1. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ3MiQyNjE0ODEjNDEjJDEjJDgjJDgz","yadmNm":"의료법인 은성의료재단 좋은삼선병원
+       2. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ5OSQ0NjEwMDIjNTEjJDEjJDIjJDgz","yadmNm":"한국보훈복지의료공단 부산보훈병원"
+       3. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkOTkkMzgxMzUxIzIxIyQxIyQ5IyQ2MiQzNjE0ODEjNjEjJDEjJDgjJDgz","yadmNm":"부영병원","addr":"부산광역
+
+✻ Churned for 32s
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+

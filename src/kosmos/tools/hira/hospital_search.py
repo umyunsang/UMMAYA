@@ -72,8 +72,11 @@ class HiraHospitalSearchInput(BaseModel):
         le=10000,
         default=2000,
         description=(
-            "Search radius in meters. Maximum 10 000 m. "
-            "Default 2 000 m (2 km). Increase only if initial results are empty."
+            "Search radius in meters. Default 2000 m (2 km). Max 10 000 m. "
+            "Citizen vocabulary mapping: '근처' / 'nearby' = 1500 m, "
+            "'주변' = 3000 m, '인근' = 2000 m, '한 5km 안' = 5000 m. "
+            "Do NOT inflate radius to grow result count — results are already "
+            "sorted by distance and increasing radius only adds farther matches."
         ),
     )
     pageNo: int = Field(  # noqa: N815
@@ -239,10 +242,10 @@ _HIRA_DESCRIPTION = build_description_v4(
         "institution type, and distance. Use for: nearby hospitals, clinics, healthcare."
     ),
     input_quirk=(
-        "xPos = longitude (lon, 124–132 WGS84 decimal degrees) — agency naming convention. "
-        "yPos = latitude (lat, 33–39 WGS84 decimal degrees) — agency naming convention. "
-        "Always obtain xPos/yPos from resolve_location(want='coords') before calling. "
-        "radius default 2000 m (max 10000 m). Increase if results are empty."
+        "xPos = longitude (lon, 124–132 WGS84). yPos = latitude (lat, 33–39 WGS84). "
+        "Citizen-supplied location → resolve_location(want='coords') first. "
+        "radius: 1500m '근처' / 3000m '주변' / max 10000m. citizen 'X 근처' = 1-2km — "
+        "do not bloat to 5km+ to grow result count; results are ranked by distance."
     ),
     short_reference=(
         "No 17-region table needed — HIRA accepts lat/lon directly (no grid conversion). "
