@@ -4,7 +4,7 @@
 
 ## What KOSMOS is
 
-A conversational multi-agent platform that **migrates the Claude Code harness** (tool loop, permission gauntlet, context assembly, TUI) from the developer domain to the Korean public-service domain. It orchestrates Korean public APIs from `data.go.kr` through a Claude Code-style tool loop, powered by LG AI Research's K-EXAONE. Student portfolio project. Not affiliated with Anthropic, LG AI Research, or the Korean government.
+A conversational multi-agent platform that **migrates the Claude Code harness** (tool loop, permission gauntlet, context assembly, TUI) from the developer domain to Korean national administrative infrastructure. It orchestrates citizen-facing government, identity, payment, certificate, utility, welfare, health, housing, labor, education, safety, immigration, and public-data channels through a Claude Code-style tool loop, powered by LG AI Research's K-EXAONE. Student portfolio project. Not affiliated with Anthropic, LG AI Research, or the Korean government.
 
 ## **CORE THESIS — the unit of work**
 
@@ -21,13 +21,17 @@ Concrete schemas, transparency fields, citation requirements, mock fidelity grad
 - `docs/requirements/kosmos-migration-tree.md` — L1 pillars A/B/C · UI L2 · brand · P0–P6.
 - `.references/claude-code-sourcemap/restored-src/` — Claude Code 2.1.88 byte-identical source-of-truth (research-only, never modify).
 
+**OpenAI/Codex documentation**: When a task concerns OpenAI APIs, Codex, ChatGPT apps, model selection, or GPT-5.x prompting, use the `openaiDeveloperDocs` MCP server first; if unavailable, use only official OpenAI domains as fallback sources.
+
+**Codex continuation setup**: Every Codex session that continues KOSMOS work MUST read `docs/onboarding/codex-continuation.md` before planning, verify `codex mcp list` exposes `openaiDeveloperDocs`, use `.agents/skills/speckit-*` instead of `.claude/skills/`, and treat `eval/scenarios/national_ax_citizen_requests_v1.yaml` as the target-state citizen-demand north star. PR branches and titles follow `docs/conventions.md`, not Codex defaults.
+
 **Active Initiative**: #2290 — see GitHub for the live Epic + Phase sub-issue tree and the `specs/<feature>/` deliverables.
 
 ## L1 pillars (canonical)
 
 - **L1-A LLM Harness** — Single-fixed provider `FriendliAI Serverless + K-EXAONE` (`LGAI-EXAONE/K-EXAONE-236B-A23B` — 236B MoE / 23B active, `enable_thinking=True` is the model-card default; KOSMOS toggles via `KOSMOS_K_EXAONE_THINKING` env, default `false`). CC agentic loop preserved 1:1 (byte-identical with CC restored-src). Native K-EXAONE function calling (Hermes-parser compatible). `prompts/system_v1.md` + compaction + prompt cache. Sessions in `~/.kosmos/memdir/user/sessions/` JSONL. 4-tier OTEL, zero external egress.
-- **L1-B Tool System** — Each Korean agency API wrapped as one `GovAPITool` adapter, registered into `ToolRegistry` at boot. **Live** when we have the data.go.kr key; **Mock** when we don't (fixture replay, byte/shape-mirror per public spec). **OPAQUE** domains (홈택스 신고, 정부24-submit, 모바일ID 발급, KEC/yessign 서명, mydata-live) are never wrapped — LLM hands off via `docs/scenarios/`. Discovery via BM25 + dense `lookup`. Permission UX uses CC `<PermissionRequest>` with adapter's `real_classification_url` citation; **no KOSMOS-invented permission classification**.
-- **L1-C Main-Verb Abstraction** — Four reserved primitives (`lookup · submit · verify · subscribe`) with shared `PrimitiveInput/Output` envelope. System prompt exposes primitive signatures only; BM25 surfaces adapters dynamically. Each adapter declares its real-domain policy by citation, not invention.
+- **L1-B Tool System** — Each Korean national-infrastructure channel is wrapped as one `GovAPITool` adapter, registered into `ToolRegistry` at boot. **Live** when an official callable channel plus credential exists; **Mock** when the channel exists or is policy-mandated but we lack credential/access (fixture replay, byte/shape-mirror per public spec); **Handoff/scenario** when the domain is opaque today. Hometax, Government24 submit, mobile ID, certificates, utility bills, and payments are target-state channels, not out of scope; they remain mock/handoff until an official callable surface exists. Discovery via BM25 + dense `lookup`. Permission UX uses CC `<PermissionRequest>` with adapter's `real_classification_url` citation; **no KOSMOS-invented permission classification**.
+- **L1-C Main-Verb Abstraction** — Five reserved primitives (`lookup · resolve_location · submit · verify · subscribe`) with shared `PrimitiveInput/Output` envelope. System prompt exposes primitive signatures only; BM25 surfaces adapters dynamically. Each adapter declares its real-domain policy by citation, not invention.
 
 ## Execution phases
 
@@ -45,7 +49,7 @@ Stack changes require an ADR under `docs/adr/`.
 - Env vars prefixed `KOSMOS_`. Never commit `.env` or `secrets/`.
 - Stdlib `logging` only; no `print()` outside CLI output layer.
 - Pydantic v2 for all tool I/O. Never `Any`.
-- Never call live `data.go.kr` APIs from CI tests.
+- Never call live `data.go.kr`, government, identity, payment, certificate, utility, or other external citizen-infrastructure channels from CI tests.
 - Never add a dependency outside a spec-driven PR.
 - Never `--force` push `main`, `--no-verify`, or bypass signing.
 - Never create `requirements.txt`, `setup.py`, or `Pipfile`.
