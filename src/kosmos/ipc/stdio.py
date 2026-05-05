@@ -1205,11 +1205,23 @@ async def run(  # noqa: C901
             f"백엔드 BM25 후보 (top {len(candidates)}, 점수 내림차순):",
             "",
         ]
+        # Audit G4 / F-beta-02 fix — emit per-candidate ``[primitive=...]``
+        # label so the LLM cannot silently route a subscribe/verify/submit-
+        # only adapter through ``lookup``. β6 capture (2026-05-05): K-EXAONE
+        # called ``lookup(mock_cbs_disaster_v1)`` because that tool_id appeared
+        # in the BM25 candidate list (it IS registered, primitive='subscribe')
+        # but the suffix did not state which primitive each tool binds to.
+        # The ``primitive`` field on AdapterCandidate is populated by
+        # ``search.py:142`` already; surfacing it costs zero retrieval work.
+        # See ``research/g4-backend.md § 2``.
         for c in candidates:
             hint = (c.search_hint or "").strip()
             if len(hint) > 90:
                 hint = hint[:87] + "..."
-            lines.append(f"- {c.tool_id} [{c.score:.2f}] — {hint or '(설명 없음)'}")
+            prim_label = f" [primitive={c.primitive}]" if c.primitive else ""
+            lines.append(
+                f"- {c.tool_id} [{c.score:.2f}]{prim_label} — {hint or '(설명 없음)'}"
+            )
             # Render the adapter's llm_description (usage prose, ORDERING RULE,
             # prerequisites, worked examples) so the LLM sees the complete
             # "먼저 resolve_location 호출" ordering rule.

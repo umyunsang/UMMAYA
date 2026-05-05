@@ -347,3 +347,75 @@ class TestRegister:
         assert "kma_pre_warning" in registry
         assert registry.lookup("kma_pre_warning") is KMA_PRE_WARNING_TOOL
         assert "kma_pre_warning" in executor._adapters
+
+    @pytest.mark.asyncio
+    async def test_registered_adapter_wraps_envelope_with_collection_kind(self, monkeypatch):
+        """Audit G4 / F-beta-01 — registered adapter MUST return a 5-variant
+        LookupOutput-shaped dict so envelope.normalize() can extract the
+        ``kind`` discriminator. Pre-fix the adapter returned the raw
+        ``KmaPreWarningOutput.model_dump()`` (no ``kind`` field) which surfaced
+        in β6 as ``Unable to extract tag using discr``.
+        """
+        registry = ToolRegistry()
+        executor = ToolExecutor(registry)
+        register(registry, executor)
+        adapter = executor._adapters["kma_pre_warning"]
+
+        async def _fake_call(_inp):
+            return {
+                "total_count": 2,
+                "items": [
+                    {
+                        "stn_id": "108",
+                        "title": "[예비] 호우주의보",
+                        "tm_fc": "202605051200",
+                        "tm_seq": 1,
+                    },
+                    {
+                        "stn_id": "159",
+                        "title": "[예비] 강풍주의보",
+                        "tm_fc": "202605051300",
+                        "tm_seq": 2,
+                    },
+                ],
+            }
+
+        from kosmos.tools.kma import kma_pre_warning as _mod
+
+        monkeypatch.setattr(_mod, "_call", _fake_call)
+
+        result = await adapter(KmaPreWarningInput())
+
+        assert isinstance(result, dict)
+        assert result.get("kind") == "collection"  # discriminator MUST be present
+        assert isinstance(result.get("items"), list)
+        assert len(result["items"]) == 2
+        assert result.get("total_count") == 2
+
+    @pytest.mark.asyncio
+    async def test_registered_adapter_passes_envelope_normalizer(self, monkeypatch):
+        """End-to-end: registered adapter output passes envelope.normalize()."""
+        from kosmos.tools.envelope import normalize
+
+        registry = ToolRegistry()
+        executor = ToolExecutor(registry)
+        register(registry, executor)
+        adapter = executor._adapters["kma_pre_warning"]
+
+        async def _fake_call(_inp):
+            return {"total_count": 0, "items": []}
+
+        from kosmos.tools.kma import kma_pre_warning as _mod
+
+        monkeypatch.setattr(_mod, "_call", _fake_call)
+
+        raw = await adapter(KmaPreWarningInput())
+        validated = normalize(
+            output=raw,
+            tool=KMA_PRE_WARNING_TOOL,
+            request_id="00000000-0000-0000-0000-000000000000",
+            elapsed_ms=10,
+        )
+        # If normalize returned without raising, the discriminator extraction
+        # succeeded. Validated object should be a LookupCollection.
+        assert getattr(validated, "kind", None) == "collection"
