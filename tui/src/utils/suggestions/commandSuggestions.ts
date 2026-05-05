@@ -335,6 +335,33 @@ export function generateCommandSuggestions(
 
   const query = input.slice(1).toLowerCase().trim()
 
+  // KOSMOS Wave-2 G7 (audit specs/realuse-audit-2026-05-05;
+  // F-alpha-03 / F-alpha-14 / F-delta-08): once the citizen has typed at
+  // least one character after `/`, surface ONLY entries whose canonical
+  // name starts with that prefix. The CC Fuse path (still reached for the
+  // bare-`/` branch below) admits fuzzy matches against descriptions and
+  // aliases — that pulled in unrelated commands (`/he` → /branch /fork
+  // /export), and let `/branch`'s `aliases: ['fork']` collide with a typed
+  // `/fork`. matchPrefix() in commands/catalog.ts is the strict SSOT
+  // (UI-B.6 + audit P-B pattern); we replicate it here against the live
+  // citizenCommands array so plugin-installed catalog entries are still
+  // surfaced. Audit ref: specs/realuse-audit-2026-05-05/research/g7-autocomplete.md.
+  if (query !== '') {
+    const prefixCommands = citizenCommands.filter(cmd => {
+      if (cmd.isHidden) return false
+      const name = getCommandName(cmd).toLowerCase()
+      return name.startsWith(query)
+    })
+    // Stable alphabetical ordering so selectedSuggestion=0 is deterministic
+    // for both human and PTY-smoke verification (closes F-alpha-14 selectedIndex
+    // drift — `/fork` Enter dispatched `/branch` because the Fuse sort placed
+    // an alias-matched candidate adjacent to the exact-name match).
+    prefixCommands.sort((a, b) =>
+      getCommandName(a).localeCompare(getCommandName(b)),
+    )
+    return prefixCommands.map(cmd => createCommandSuggestionItem(cmd))
+  }
+
   // When just typing '/' without additional text
   if (query === '') {
     const visibleCommands = citizenCommands.filter(cmd => !cmd.isHidden)

@@ -152,7 +152,12 @@ describe('verifyBootRegistry — missing reserved primitive (Case 4 / Codex P2)'
     expect(result.offendingTool).toBe('<reserved-primitive-set>')
     expect(result.missingMembers).toEqual(['subscribe'])
     expect(result.diagnostic).toContain('subscribe')
-    expect(result.diagnostic).toContain('5-primitive')
+    // Wave-2 G7 (F-alpha-16): TUI-side primitive count is 4 by Spec 2294
+    // contract. The 5th primitive (`resolve_location`) lives backend-side.
+    // Previous assertion checked for "5-primitive", which contradicted the
+    // success-log line `(4 primitives)` and the next line of the same
+    // diagnostic.
+    expect(result.diagnostic).toContain('4-primitive')
   })
 
   test('returns ok === false when ALL primitives are missing (empty registry)', () => {

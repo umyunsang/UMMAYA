@@ -126,10 +126,18 @@ const SuggestionItemRow = memo(function SuggestionItemRow(t0) {
     return t2;
   }
   const maxNameWidth = Math.floor(columns * 0.4);
+  // KOSMOS Wave-2 G7 (F-delta-08) — selected-row caret glyph per UI-B.6.
+  // Two-character prefix keeps column alignment whether or not the row is
+  // selected (`▶ ` vs `  `). The CC reference uses theme-color-only to signal
+  // selection; KOSMOS adds the universal-legible glyph because the theme
+  // color difference is too subtle on dark terminals (audit triage P-B).
+  // Width budget below already adds a +5-char pad for the displayText column,
+  // so the 2-char prefix never pushes the row past `maxNameWidth`.
+  const selectionGlyph = isSelected ? "▶ " : "  ";
   const displayTextWidth = Math.min(maxColumnWidth ?? stringWidth(item.displayText) + 5, maxNameWidth);
   const textColor_0 = item.color || (isSelected ? "suggestion" : undefined);
   const shouldDim = !isSelected;
-  let displayText_0 = item.displayText;
+  let displayText_0 = selectionGlyph + item.displayText;
   if (stringWidth(displayText_0) > displayTextWidth - 2) {
     const t1 = displayTextWidth - 2;
     let t2;
