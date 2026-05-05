@@ -168,7 +168,8 @@ REGISTRATION = AdapterRegistration(
     policy=AdapterRealDomainPolicy(
         real_classification_url=_POLICY_AUTHORITY,
         real_classification_text=(
-            "마이데이터 복지 급여 신청 — 보건복지부 정책 / KFTC MyData v240930 기반 (Spec 1636 mandate)."
+            "마이데이터 복지 급여 신청 — 보건복지부 정책 / KFTC MyData "
+            "v240930 기반 (Spec 1636 mandate)."
         ),
         citizen_facing_gate="submit",
         last_verified=datetime(2026, 5, 4, tzinfo=UTC),

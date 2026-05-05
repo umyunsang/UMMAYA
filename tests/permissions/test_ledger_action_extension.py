@@ -32,7 +32,7 @@ def ledger_env(tmp_path: Path):
     key_path = keys_dir / "ledger.key"
     fd = os.open(str(key_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
     try:
-        os.write(fd, b"\xAB" * 32)
+        os.write(fd, b"\xab" * 32)
     finally:
         os.close(fd)
     ledger_path = tmp_path / "consent_ledger.jsonl"
@@ -147,7 +147,7 @@ def test_backward_compat_no_action_field(ledger_env):
     ledger_path, key_path, registry_path = ledger_env
 
     # First, append a real record to seed the chain hashes.
-    record = append(
+    append(
         tool_id="koroad_accident_hazard_search",
         mode="default",
         granted=True,

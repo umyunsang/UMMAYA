@@ -307,9 +307,8 @@ class TestDescriptionSection5ChainGuidance:
         # "self-contained" AND "resolve_location" in the same section. That
         # combination is what K-EXAONE picked the wrong half of in the
         # donga-univ-poi-bug frame.
-        contradictory = (
-            "resolve_location" in section5
-            and any(tok in section5 for tok in self._SELF_CONTAINED_TOKENS)
+        contradictory = "resolve_location" in section5 and any(
+            tok in section5 for tok in self._SELF_CONTAINED_TOKENS
         )
         assert not contradictory, (
             f"{tool_id}: Section 5 mixes self-contained markers "

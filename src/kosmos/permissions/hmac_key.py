@@ -90,10 +90,7 @@ def load_or_generate_key(path: Path) -> bytes:
         HMACKeyFileModeError: If the file exists but has wrong permissions.
         OSError: If the file cannot be read or written for OS reasons.
     """
-    if path.exists():
-        key = _load_existing_key(path)
-    else:
-        key = _generate_new_key(path)
+    key = _load_existing_key(path) if path.exists() else _generate_new_key(path)
     _logger.info("kosmos.permissions.ledger - initialised at %s", path)
     return key
 

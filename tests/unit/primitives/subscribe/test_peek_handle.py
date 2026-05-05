@@ -36,7 +36,6 @@ This test asserts:
 
 from __future__ import annotations
 
-import asyncio
 import re
 import uuid
 from typing import Any

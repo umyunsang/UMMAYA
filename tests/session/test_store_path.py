@@ -13,10 +13,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import pytest
-
 from kosmos.session.store import _get_default_session_dir, _get_session_dir
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -60,9 +57,9 @@ class TestGetDefaultSessionDir:
         """KOSMOS_MEMDIR_USER is honoured; sessions sub-dir is appended."""
         saved = _clear_env("KOSMOS_MEMDIR_USER", "KOSMOS_SESSION_DIR")
         try:
-            os.environ["KOSMOS_MEMDIR_USER"] = "/tmp/test-memdir/user"
+            os.environ["KOSMOS_MEMDIR_USER"] = "/tmp/test-memdir/user"  # noqa: S108
             result = _get_default_session_dir()
-            assert result == Path("/tmp/test-memdir/user/sessions")
+            assert result == Path("/tmp/test-memdir/user/sessions")  # noqa: S108
         finally:
             _restore_env(saved)
 

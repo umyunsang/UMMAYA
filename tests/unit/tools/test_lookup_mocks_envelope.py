@@ -48,8 +48,8 @@ from kosmos.tools.mock.lookup_module_hometax_simplified import (
 from kosmos.tools.mock.lookup_module_hometax_simplified import (
     handle as hometax_handle,
 )
-from kosmos.tools.models import LookupError, LookupRecord
-
+from kosmos.tools.models import LookupError as KosmosLookupError
+from kosmos.tools.models import LookupRecord
 
 # ---------------------------------------------------------------------------
 # Fixtures — minimal valid inputs for both adapters.
@@ -78,8 +78,7 @@ async def test_gov24_handle_returns_record_envelope() -> None:
 
     assert isinstance(out, dict), f"handle() must return dict, got {type(out).__name__}"
     assert out.get("kind") == "record", (
-        "kind discriminator missing or wrong (snap-S8-002 regression). "
-        f"got: {out!r}"
+        f"kind discriminator missing or wrong (snap-S8-002 regression). got: {out!r}"
     )
     assert isinstance(out.get("item"), dict), "item must be a dict[str, object]"
     # Domain fields survive the wrap.
@@ -96,8 +95,7 @@ async def test_hometax_handle_returns_record_envelope() -> None:
 
     assert isinstance(out, dict), f"handle() must return dict, got {type(out).__name__}"
     assert out.get("kind") == "record", (
-        "kind discriminator missing or wrong (snap-S8-002 regression). "
-        f"got: {out!r}"
+        f"kind discriminator missing or wrong (snap-S8-002 regression). got: {out!r}"
     )
     assert isinstance(out.get("item"), dict), "item must be a dict[str, object]"
     # Domain fields survive the wrap. Note the inner `kind` is the legacy
@@ -215,7 +213,7 @@ async def test_gov24_scope_violation_returns_error_envelope() -> None:
         request_id="test-scope-violation-0001",
         elapsed_ms=3,
     )
-    assert isinstance(validated, LookupError)
+    assert isinstance(validated, KosmosLookupError)
     assert validated.kind == "error"
     assert validated.reason == LookupErrorReason.auth_required
     assert validated.retryable is False
@@ -240,7 +238,7 @@ async def test_hometax_scope_violation_returns_error_envelope() -> None:
         request_id="test-scope-violation-0002",
         elapsed_ms=5,
     )
-    assert isinstance(validated, LookupError)
+    assert isinstance(validated, KosmosLookupError)
     assert validated.kind == "error"
     assert validated.reason == LookupErrorReason.auth_required
     assert validated.retryable is False
@@ -325,8 +323,7 @@ async def test_primitive_lookup_fetch_hometax_returns_typed_record(
     result = await lookup(inp, executor=executor, session_identity="test-session")
 
     assert isinstance(result, LookupRecord), (
-        f"snap-S8-002 regression: expected LookupRecord, got {type(result).__name__}: "
-        f"{result!r}"
+        f"snap-S8-002 regression: expected LookupRecord, got {type(result).__name__}: {result!r}"
     )
     assert result.kind == "record"
     assert result.meta.source == "mock_lookup_module_hometax_simplified"

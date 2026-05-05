@@ -219,13 +219,12 @@ def test_audit4_p0_9_mock_submits_have_policy_url(caplog: pytest.LogCaptureFixtu
     required`` warnings."""
     import logging
 
+    # Eager-import the Mock tree so submit adapters self-register.
+    import kosmos.tools.mock  # noqa: F401
     from kosmos.ipc.adapter_manifest_emitter import _build_entries
     from kosmos.tools.executor import ToolExecutor
     from kosmos.tools.register_all import register_all_tools
     from kosmos.tools.registry import ToolRegistry
-
-    # Eager-import the Mock tree so submit adapters self-register.
-    import kosmos.tools.mock  # noqa: F401
 
     reg = ToolRegistry()
     register_all_tools(reg, ToolExecutor(registry=reg))
@@ -255,9 +254,7 @@ def test_audit4_p0_9_mock_submits_have_policy_url(caplog: pytest.LogCaptureFixtu
         )
 
     # Zero "policy_authority_url is required" warnings during the walk.
-    blocking_warnings = [
-        rec for rec in caplog.records if "no policy URL" in rec.message
-    ]
+    blocking_warnings = [rec for rec in caplog.records if "no policy URL" in rec.message]
     assert blocking_warnings == [], (
         f"Audit-4 P0-9 regression: {len(blocking_warnings)} adapter(s) still missing "
         f"policy URL: {[r.message for r in blocking_warnings]}"

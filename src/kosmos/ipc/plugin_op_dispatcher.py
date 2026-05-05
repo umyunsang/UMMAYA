@@ -324,9 +324,7 @@ async def handle_install(
                 message_en="🔧 Auto-installing slsa-verifier… (~10 MB, first-time only)",
             )
         )
-        bootstrap_result = await loop.run_in_executor(
-            None, _run_slsa_bootstrap
-        )
+        bootstrap_result = await loop.run_in_executor(None, _run_slsa_bootstrap)
         if bootstrap_result == 0:
             # Retry install now that the binary is available.
             try:
@@ -395,6 +393,7 @@ def _run_slsa_bootstrap() -> int:
     if not script.is_file():
         # Fallback: search from CWD
         import os  # noqa: PLC0415
+
         cwd_script = Path(os.getcwd()) / "scripts" / "bootstrap_slsa_verifier.sh"
         if cwd_script.is_file():
             script = cwd_script
@@ -403,7 +402,7 @@ def _run_slsa_bootstrap() -> int:
             return 1
     try:
         completed = subprocess.run(  # noqa: S603
-            ["bash", str(script)],
+            ["/bin/bash", str(script)],
             check=False,
             capture_output=True,
             text=True,

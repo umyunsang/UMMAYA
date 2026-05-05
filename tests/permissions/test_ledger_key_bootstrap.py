@@ -19,7 +19,6 @@ import pytest
 
 from kosmos.permissions.hmac_key import HMACKeyFileModeError, load_or_generate_key
 
-
 # ---------------------------------------------------------------------------
 # Auto-generation
 # ---------------------------------------------------------------------------
@@ -80,7 +79,7 @@ def test_boot_time_log_on_load(tmp_path: Path, caplog):
     key_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     fd = os.open(str(key_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
     try:
-        os.write(fd, b"\xBE" * 32)
+        os.write(fd, b"\xbe" * 32)
     finally:
         os.close(fd)
 

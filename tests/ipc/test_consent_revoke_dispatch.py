@@ -11,7 +11,6 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import uuid
 from pathlib import Path
@@ -71,7 +70,7 @@ def _make_ledger_paths(tmp_path: Path) -> tuple[Path, Path, Path]:
     if not key_path.exists():
         fd = _os.open(str(key_path), _os.O_WRONLY | _os.O_CREAT | _os.O_EXCL, 0o400)
         try:
-            _os.write(fd, b"\xCD" * 32)
+            _os.write(fd, b"\xcd" * 32)
         finally:
             _os.close(fd)
     ledger_path = tmp_path / "consent_ledger.jsonl"
@@ -105,7 +104,8 @@ def _write_receipt(
 # Helper to run the handler in isolation via a minimal run() closure
 # ---------------------------------------------------------------------------
 
-async def _invoke_handler(
+
+async def _invoke_handler(  # noqa: C901
     frame: ConsentRevokeRequestFrame,
     consent_dir: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -125,14 +125,14 @@ async def _invoke_handler(
     import tempfile
     from datetime import datetime as _dt_mod
 
+    from opentelemetry import trace
+
     from kosmos.ipc.frame_schema import ConsentRevokeResponseFrame as _CRRespFrame
     from kosmos.permissions.action_digest import (
         compute_action_digest,
         generate_nonce,
     )
     from kosmos.permissions.ledger import append as _ledger_append
-    from opentelemetry.trace import Status, StatusCode
-    from opentelemetry import trace
 
     sink = _FrameSink()
     tracer = trace.get_tracer(__name__)
@@ -172,7 +172,7 @@ async def _invoke_handler(
         if scope == "session-all":
             try:
                 all_paths = sorted(consent_dir.glob("rcpt-*.json"))
-            except Exception:
+            except Exception:  # noqa: BLE001, S112
                 all_paths = []
             target_paths = []
             for p in all_paths:
@@ -180,7 +180,7 @@ async def _invoke_handler(
                     data = json.loads(p.read_text(encoding="utf-8"))
                     if data.get("session_id") == session_id and not data.get("revoked_at"):
                         target_paths.append(p)
-                except Exception:
+                except Exception:  # noqa: BLE001, S112
                     continue
         else:
             if not receipt_path.exists():
@@ -208,9 +208,7 @@ async def _invoke_handler(
                     data["revoke_reason"] = reason
 
                 # Audit-4 P0-3 — append withdraw via canonical Spec 033 ledger.
-                target_receipt_id = str(
-                    data.get("receipt_id", target_path.stem)
-                )
+                target_receipt_id = str(data.get("receipt_id", target_path.stem))
                 target_tool_id = str(data.get("tool_id", "unknown"))
                 withdraw_args: dict[str, Any] = {
                     "scope_receipt_id": target_receipt_id,
@@ -238,9 +236,7 @@ async def _invoke_handler(
                     raise
 
                 if ledger_paths is None:
-                    raise RuntimeError(
-                        "Test must provide ledger_paths after Audit-4 P0-3 fix."
-                    )
+                    raise RuntimeError("Test must provide ledger_paths after Audit-4 P0-3 fix.")
                 _lp, _kp, _krp = ledger_paths
                 rec = _ledger_append(
                     tool_id=target_tool_id,
@@ -249,9 +245,7 @@ async def _invoke_handler(
                     action_digest=withdraw_digest,
                     action="withdraw",
                     scope_receipt_id=target_receipt_id,
-                    withdrawn_at=_dt_mod.fromisoformat(
-                        revoked_at_ts.replace("Z", "+00:00")
-                    ),
+                    withdrawn_at=_dt_mod.fromisoformat(revoked_at_ts.replace("Z", "+00:00")),
                     session_id=session_id,
                     correlation_id=frame.correlation_id,
                     ledger_path=_lp,
@@ -328,9 +322,7 @@ class TestConsentRevokeDispatch:
     ) -> None:
         """Case 2: already_revoked error when receipt has revoked_at."""
         consent_dir = tmp_path / "consent"
-        _write_receipt(
-            consent_dir, "rcpt-zzz00001", revoked_at="2026-05-01T00:00:00.000Z"
-        )
+        _write_receipt(consent_dir, "rcpt-zzz00001", revoked_at="2026-05-01T00:00:00.000Z")
         frame = _build_revoke_request("rcpt-zzz00001", scope="once")
 
         resp = await _invoke_handler(
@@ -341,9 +333,7 @@ class TestConsentRevokeDispatch:
         assert resp.error == "already_revoked"
 
     @pytest.mark.asyncio
-    async def test_revoke_not_found(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_revoke_not_found(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Case 3: not_found when the receipt file does not exist."""
         consent_dir = tmp_path / "consent"
         consent_dir.mkdir(parents=True, exist_ok=True)
@@ -367,9 +357,7 @@ class TestConsentRevokeDispatch:
         # A receipt from a different session — should NOT be revoked.
         _write_receipt(consent_dir, "rcpt-other111", session_id="sess-other")
 
-        frame = _build_revoke_request(
-            "rcpt-s1a11111", scope="session-all", session_id="sess-group"
-        )
+        frame = _build_revoke_request("rcpt-s1a11111", scope="session-all", session_id="sess-group")
         resp = await _invoke_handler(
             frame, consent_dir, monkeypatch, ledger_paths=_make_ledger_paths(tmp_path)
         )

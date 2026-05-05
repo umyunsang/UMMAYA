@@ -65,9 +65,7 @@ async def test_system_prompt_includes_kst_date(
     label is present (so the LLM cannot interpret it as UTC).
     """
     frame = _make_chat_request(tools=[])
-    _, fake_client = await _run_with_frame(
-        frame, _FakeLLMClientNoTools, monkeypatch=monkeypatch
-    )
+    _, fake_client = await _run_with_frame(frame, _FakeLLMClientNoTools, monkeypatch=monkeypatch)
     system_content = _extract_system_content(fake_client)
 
     # Date label must be KST, NOT UTC (the regression we are guarding against).
@@ -105,9 +103,7 @@ async def test_system_prompt_includes_kst_current_time(
       - HHMM is the KMA ``base_time`` argument format (validator-accepted).
     """
     frame = _make_chat_request(tools=[])
-    _, fake_client = await _run_with_frame(
-        frame, _FakeLLMClientNoTools, monkeypatch=monkeypatch
-    )
+    _, fake_client = await _run_with_frame(frame, _FakeLLMClientNoTools, monkeypatch=monkeypatch)
     system_content = _extract_system_content(fake_client)
 
     # Anchor on the KST label and the HH:MM (HHMM) pattern.
@@ -141,9 +137,7 @@ async def test_system_prompt_includes_kma_base_time_hint(
     '직전 발표' hint (base_date + base_time) for the current KST hour.
     """
     frame = _make_chat_request(tools=[])
-    _, fake_client = await _run_with_frame(
-        frame, _FakeLLMClientNoTools, monkeypatch=monkeypatch
-    )
+    _, fake_client = await _run_with_frame(frame, _FakeLLMClientNoTools, monkeypatch=monkeypatch)
     system_content = _extract_system_content(fake_client)
 
     # All 8 publication slots must appear (one block, separated by '/').
@@ -258,6 +252,5 @@ def test_kma_adapter_cites_kst_time_rule(module_path: str) -> None:
         "prompt's dynamic time hint. Description was:\n" + desc[:500]
     )
     assert "추측 금지" in desc, (
-        f"{module_path} llm_description missing 'base_time 추측 금지' "
-        "directive."
+        f"{module_path} llm_description missing 'base_time 추측 금지' directive."
     )

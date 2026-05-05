@@ -200,8 +200,9 @@ class TestHandleList:
     async def test_list_payload_delta_contains_valid_json(self) -> None:
         """Audit-6 P1: payload delta must carry parseable JSON with 'entries' key."""
         import json
-        from kosmos.ipc.plugin_op_dispatcher import handle_list
+
         from kosmos.ipc.frame_schema import PayloadDeltaFrame
+        from kosmos.ipc.plugin_op_dispatcher import handle_list
 
         class _StubRegistry:
             _tools: dict[str, Any] = {}

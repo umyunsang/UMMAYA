@@ -24,7 +24,7 @@ import json
 import logging
 import os
 import uuid
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from kosmos.session.models import SessionEntry, SessionMetadata
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Default session directory
 # ---------------------------------------------------------------------------
+
 
 def _get_default_session_dir() -> Path:
     """Compute the default session directory.
@@ -391,7 +392,7 @@ class GCResult:
     """Files that could not be read or deleted due to I/O errors."""
 
 
-def _is_empty_stub(path: Path, cutoff_ts: datetime | None) -> bool:
+def _is_empty_stub(path: Path, cutoff_ts: datetime | None) -> bool:  # noqa: C901
     """Return True if *path* is a metadata-only stub with message_count == 0.
 
     The check is conservative:
@@ -402,7 +403,7 @@ def _is_empty_stub(path: Path, cutoff_ts: datetime | None) -> bool:
     """
     try:
         with path.open("r", encoding="utf-8") as fh:
-            lines = [l.rstrip("\n") for l in fh if l.strip()]
+            lines = [line.rstrip("\n") for line in fh if line.strip()]
     except OSError:
         return False
 

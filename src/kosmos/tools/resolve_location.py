@@ -83,9 +83,7 @@ async def _kakao_geocode(
                     kind="address",
                     road_address=road,
                     jibun_address=jibun,
-                    postal_code=(
-                        doc.road_address.zone_no if doc.road_address else None
-                    ),
+                    postal_code=(doc.road_address.zone_no if doc.road_address else None),
                     source="kakao",
                 )
             return CoordResult(
@@ -540,18 +538,20 @@ async def resolve_location(  # noqa: C901
             import asyncio  # noqa: PLC0415
 
             from kosmos.tools.geocoding.kakao_client import (  # noqa: PLC0415
+                KakaoKeywordSearchResult,
+                KakaoSearchResult,
                 search_address,
                 search_keyword,
             )
 
-            async def _addr_call() -> object:
+            async def _addr_call() -> KakaoSearchResult | None:
                 try:
                     return await search_address(query, client=client)
                 except Exception as exc:  # noqa: BLE001
                     logger.debug("kakao address (all) failed for %r: %s", query, exc)
                     return None
 
-            async def _kw_call() -> object:
+            async def _kw_call() -> KakaoKeywordSearchResult | None:
                 try:
                     return await search_keyword(query, client=client)
                 except Exception as exc:  # noqa: BLE001
@@ -562,10 +562,10 @@ async def resolve_location(  # noqa: C901
 
             # Address response → AddressResult + CoordResult.
             if kakao_addr is not None and getattr(kakao_addr, "documents", None):
-                doc = kakao_addr.documents[0]  # type: ignore[union-attr]
+                addr_doc = kakao_addr.documents[0]
                 try:
-                    lat = float(doc.y) if doc.y else None
-                    lon = float(doc.x) if doc.x else None
+                    lat = float(addr_doc.y) if addr_doc.y else None
+                    lon = float(addr_doc.x) if addr_doc.x else None
                 except (ValueError, TypeError):
                     lat = lon = None
                 if lat is not None and lon is not None:
@@ -573,22 +573,18 @@ async def resolve_location(  # noqa: C901
                         kind="coords",
                         lat=lat,
                         lon=lon,
-                        confidence=_confidence_from_total(
-                            kakao_addr.meta.total_count  # type: ignore[union-attr]
-                        ),
+                        confidence=_confidence_from_total(kakao_addr.meta.total_count),
                         source="kakao",
                     )
-                if doc.road_address or doc.address:
+                if addr_doc.road_address or addr_doc.address:
                     address_result = AddressResult(
                         kind="address",
                         road_address=(
-                            doc.road_address.address_name if doc.road_address else None
+                            addr_doc.road_address.address_name if addr_doc.road_address else None
                         ),
-                        jibun_address=(
-                            doc.address.address_name if doc.address else None
-                        ),
+                        jibun_address=(addr_doc.address.address_name if addr_doc.address else None),
                         postal_code=(
-                            doc.road_address.zone_no if doc.road_address else None
+                            addr_doc.road_address.zone_no if addr_doc.road_address else None
                         ),
                         source="kakao",
                     )
@@ -598,7 +594,7 @@ async def resolve_location(  # noqa: C901
             # "동아대학교"). Address coordinates always win when both fire
             # because structured-address matches are more specific.
             if kakao_kw is not None and getattr(kakao_kw, "documents", None):
-                doc_kw = kakao_kw.documents[0]  # type: ignore[union-attr]
+                doc_kw = kakao_kw.documents[0]
                 try:
                     lat_kw = float(doc_kw.y) if doc_kw.y else None
                     lon_kw = float(doc_kw.x) if doc_kw.x else None
@@ -610,9 +606,7 @@ async def resolve_location(  # noqa: C901
                             kind="coords",
                             lat=lat_kw,
                             lon=lon_kw,
-                            confidence=_confidence_from_total(
-                                kakao_kw.meta.total_count  # type: ignore[union-attr]
-                            ),
+                            confidence=_confidence_from_total(kakao_kw.meta.total_count),
                             source="kakao",
                         )
                     poi_result = POIResult(

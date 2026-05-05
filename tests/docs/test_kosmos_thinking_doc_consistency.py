@@ -67,8 +67,7 @@ def test_implementation_default_is_true() -> None:
     # The canonical implementation line:
     #   enable_thinking = os.environ.get("KOSMOS_K_EXAONE_THINKING", "true").lower() in (...)
     assert 'os.environ.get("KOSMOS_K_EXAONE_THINKING", "true")' in content, (
-        f"client.py must use default='true' for KOSMOS_K_EXAONE_THINKING.\n"
-        f"Searched in: {client_py}"
+        f"client.py must use default='true' for KOSMOS_K_EXAONE_THINKING.\nSearched in: {client_py}"
     )
 
 
@@ -98,8 +97,9 @@ def test_doc_does_not_contain_stale_false_default(doc_path: Path) -> None:
     )
 
 
-@pytest.mark.parametrize("doc_path", [_REPO_ROOT / "AGENTS.md", _REPO_ROOT / "README.md"],
-                         ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "doc_path", [_REPO_ROOT / "AGENTS.md", _REPO_ROOT / "README.md"], ids=lambda p: p.name
+)
 def test_canonical_l1a_docs_state_true_default(doc_path: Path) -> None:
     """AGENTS.md and README.md must explicitly state 'default true' for the env var."""
     assert doc_path.exists(), f"Expected {doc_path} to exist"
@@ -107,16 +107,14 @@ def test_canonical_l1a_docs_state_true_default(doc_path: Path) -> None:
     content = doc_path.read_text(encoding="utf-8")
 
     if "KOSMOS_K_EXAONE_THINKING" not in content:
-        pytest.fail(
-            f"{doc_path.name} must mention KOSMOS_K_EXAONE_THINKING (L1-A canonical doc)."
-        )
+        pytest.fail(f"{doc_path.name} must mention KOSMOS_K_EXAONE_THINKING (L1-A canonical doc).")
 
     matches = _CORRECT_PATTERN.findall(content)
     assert matches, (
         f"{doc_path.relative_to(_REPO_ROOT)} must contain 'default true' for "
         f"KOSMOS_K_EXAONE_THINKING.\nContent lines mentioning the env var:\n"
         + "\n".join(
-            f"  {i+1}: {line}"
+            f"  {i + 1}: {line}"
             for i, line in enumerate(content.splitlines())
             if "KOSMOS_K_EXAONE_THINKING" in line
         )

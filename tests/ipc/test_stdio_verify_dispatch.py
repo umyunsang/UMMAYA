@@ -86,9 +86,7 @@ _EXPECTED_PAIRS: dict[str, str] = {
     ("tool_id", "expected_family"),
     list(_EXPECTED_PAIRS.items()),
 )
-def test_resolve_family_covers_all_10_canonical_pairs(
-    tool_id: str, expected_family: str
-) -> None:
+def test_resolve_family_covers_all_10_canonical_pairs(tool_id: str, expected_family: str) -> None:
     """All 10 canonical mock_verify_* tool_ids resolve to the right family_hint.
 
     This is the SOT-mirror assertion: prompt-side
@@ -104,8 +102,7 @@ def test_canonical_map_has_exactly_ten_entries() -> None:
     """FR-008b: the verify_families block must enumerate ≥10 entries."""
     canonical = get_canonical_map()
     assert len(canonical) >= 10, (
-        f"Expected at least 10 verify families, got {len(canonical)}: "
-        f"{dict(canonical)!r}"
+        f"Expected at least 10 verify families, got {len(canonical)}: {dict(canonical)!r}"
     )
 
 
@@ -239,6 +236,7 @@ async def _run_verify_dispatch(
     # GATED_PRIMITIVES to the pre-Gap-B set (submit/subscribe only) so
     # verify auto-allows and the IPC loop doesn't wait 60 s for citizen input.
     import kosmos.primitives as _prims_mod
+
     monkeypatch.setattr(
         _prims_mod,
         "GATED_PRIMITIVES",
@@ -306,9 +304,7 @@ async def _run_verify_dispatch(
     try:
         await asyncio.wait_for(ipc_run(session_id=session_id), timeout=_RUNNER_TIMEOUT)
     except (TimeoutError, Exception) as exc:  # noqa: BLE001
-        _logging.getLogger(__name__).debug(
-            "_run_verify_dispatch: IPC loop exited early: %s", exc
-        )
+        _logging.getLogger(__name__).debug("_run_verify_dispatch: IPC loop exited early: %s", exc)
     finally:
         if not r_file.closed:
             r_file.close()
@@ -320,7 +316,9 @@ def _extract_verify_envelope(frames: list[dict[str, Any]]) -> dict[str, Any]:
     """Pull the inner ``envelope.result`` payload from the first verify
     tool_result frame in ``frames``."""
     tool_results = [f for f in frames if f.get("kind") == "tool_result"]
-    assert tool_results, f"No tool_result frames emitted; got kinds={[f.get('kind') for f in frames]}"
+    assert tool_results, (
+        f"No tool_result frames emitted; got kinds={[f.get('kind') for f in frames]}"
+    )
     envelope = tool_results[0].get("envelope", {})
     inner = envelope.get("result")
     assert isinstance(inner, dict), f"envelope.result must be a dict, got {type(inner)}"
@@ -369,14 +367,12 @@ async def test_dispatch_verify_translates_tool_id_to_family_hint(
     # The envelope's outer ``family`` mirror is set from the resolved
     # family_hint; must equal the expected mapping.
     assert envelope.get("family") == expected_family, (
-        f"Expected envelope.family=={expected_family!r}, got "
-        f"{envelope.get('family')!r}"
+        f"Expected envelope.family=={expected_family!r}, got {envelope.get('family')!r}"
     )
     # The adapter result MUST NOT be a VerifyMismatchError surfaced as
     # ``family == 'mismatch_error'`` — that was the pre-fix symptom.
     assert inner.get("family") != "mismatch_error", (
-        f"verify({tool_id!r}) returned VerifyMismatchError post-fix; "
-        f"inner={inner!r}"
+        f"verify({tool_id!r}) returned VerifyMismatchError post-fix; inner={inner!r}"
     )
     assert inner.get("family") == expected_family, (
         f"Expected adapter to return family={expected_family!r}, got "

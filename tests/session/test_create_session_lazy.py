@@ -19,15 +19,14 @@ from pathlib import Path
 
 import pytest
 
-from kosmos.session.models import SessionEntry, SessionMetadata
+from kosmos.session.models import SessionEntry
 from kosmos.session.store import (
     create_session,
-    load_session,
-    save_entry,
     get_session_metadata,
     list_sessions,
+    load_session,
+    save_entry,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -48,9 +47,7 @@ class TestCreateSessionLazy:
     async def test_no_file_written_on_create(self, tmp_path: Path) -> None:
         meta = await create_session(session_dir=tmp_path)
         jsonl = tmp_path / f"{meta.session_id}.jsonl"
-        assert not jsonl.exists(), (
-            "create_session() must not write a file — lazy creation expected"
-        )
+        assert not jsonl.exists(), "create_session() must not write a file — lazy creation expected"
 
     @pytest.mark.asyncio
     async def test_returns_valid_uuid(self, tmp_path: Path) -> None:
@@ -59,16 +56,12 @@ class TestCreateSessionLazy:
         uuid.UUID(meta.session_id)
 
     @pytest.mark.asyncio
-    async def test_returned_metadata_has_zero_message_count(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_returned_metadata_has_zero_message_count(self, tmp_path: Path) -> None:
         meta = await create_session(session_dir=tmp_path)
         assert meta.message_count == 0
 
     @pytest.mark.asyncio
-    async def test_multiple_creates_produce_unique_ids(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_multiple_creates_produce_unique_ids(self, tmp_path: Path) -> None:
         metas = [await create_session(session_dir=tmp_path) for _ in range(5)]
         ids = [m.session_id for m in metas]
         assert len(set(ids)) == 5, "Each create_session call must produce a unique id"
@@ -80,9 +73,7 @@ class TestCreateSessionLazy:
 
         await asyncio.gather(*[create_session(session_dir=tmp_path) for _ in range(100)])
         stubs = list(tmp_path.glob("*.jsonl"))
-        assert stubs == [], (
-            f"Expected 0 files after 100 lazy creates, found {len(stubs)}"
-        )
+        assert stubs == [], f"Expected 0 files after 100 lazy creates, found {len(stubs)}"
 
 
 # ---------------------------------------------------------------------------
@@ -156,9 +147,7 @@ class TestSaveEntryMaterialisesFile:
         assert entries[1].data["content"] == "world"
 
     @pytest.mark.asyncio
-    async def test_second_save_appends_without_double_metadata(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_second_save_appends_without_double_metadata(self, tmp_path: Path) -> None:
         meta = await create_session(session_dir=tmp_path)
         for i in range(3):
             await save_entry(
@@ -195,9 +184,7 @@ class TestSaveEntryMaterialisesFile:
         assert entries[0].entry_type == "metadata"
 
     @pytest.mark.asyncio
-    async def test_get_session_metadata_after_lazy_materialise(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_get_session_metadata_after_lazy_materialise(self, tmp_path: Path) -> None:
         meta = await create_session(session_dir=tmp_path)
         await save_entry(
             meta.session_id,
@@ -210,9 +197,7 @@ class TestSaveEntryMaterialisesFile:
         assert loaded.session_id == meta.session_id
 
     @pytest.mark.asyncio
-    async def test_list_sessions_includes_materialised_session(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_list_sessions_includes_materialised_session(self, tmp_path: Path) -> None:
         meta = await create_session(session_dir=tmp_path)
         # Before any save_entry, create_session is lazy — no file on disk
         sessions_before = await list_sessions(session_dir=tmp_path)

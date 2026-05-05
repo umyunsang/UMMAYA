@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import json
 import os
-import stat
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -40,7 +39,6 @@ import pytest
 
 from kosmos.permissions.action_digest import compute_action_digest, generate_nonce
 from kosmos.permissions.ledger import append as ledger_append
-
 
 # ---------------------------------------------------------------------------
 # Fixture: isolated ledger + key + registry triple.
@@ -55,7 +53,7 @@ def isolated_ledger(tmp_path: Path) -> tuple[Path, Path, Path]:
     key_path = keys_dir / "ledger.key"
     fd = os.open(str(key_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
     try:
-        os.write(fd, b"\xCD" * 32)
+        os.write(fd, b"\xcd" * 32)
     finally:
         os.close(fd)
     ledger_path = tmp_path / "consent_ledger.jsonl"
@@ -68,7 +66,7 @@ def isolated_ledger(tmp_path: Path) -> tuple[Path, Path, Path]:
 # ---------------------------------------------------------------------------
 
 
-class TestAuditP0_2AllowLedger:
+class TestAuditP02AllowLedger:
     def test_allow_append_creates_sealed_record(
         self, isolated_ledger: tuple[Path, Path, Path]
     ) -> None:
@@ -104,9 +102,7 @@ class TestAuditP0_2AllowLedger:
         assert record.granted is True
         assert record.consent_receipt_id == "rcpt-allow-p0-2-001"
 
-    def test_allow_ledger_file_permissions(
-        self, isolated_ledger: tuple[Path, Path, Path]
-    ) -> None:
+    def test_allow_ledger_file_permissions(self, isolated_ledger: tuple[Path, Path, Path]) -> None:
         """The ledger file must be created with mode 0600 (POSIX hardening)."""
         ledger_path, key_path, registry_path = isolated_ledger
 
@@ -164,10 +160,8 @@ class TestAuditP0_2AllowLedger:
 # ---------------------------------------------------------------------------
 
 
-class TestAuditP0_3RevokeLedger:
-    def test_revoke_chains_from_allow(
-        self, isolated_ledger: tuple[Path, Path, Path]
-    ) -> None:
+class TestAuditP03RevokeLedger:
+    def test_revoke_chains_from_allow(self, isolated_ledger: tuple[Path, Path, Path]) -> None:
         """A withdraw record's prev_hash equals the prior allow record's record_hash."""
         ledger_path, key_path, registry_path = isolated_ledger
 
@@ -220,9 +214,10 @@ class TestAuditP0_3RevokeLedger:
     ) -> None:
         """Tampering the chain (prev_hash) does not invalidate the HMAC seal —
         proving the HMAC layer is independent of the chain layer (Spec 033 L3)."""
-        from kosmos.permissions.canonical_json import canonicalize
         import hashlib
         import hmac as hmac_lib
+
+        from kosmos.permissions.canonical_json import canonicalize
 
         ledger_path, key_path, registry_path = isolated_ledger
 
@@ -244,9 +239,7 @@ class TestAuditP0_3RevokeLedger:
         line = ledger_path.read_text("utf-8").splitlines()[-1]
         parsed = json.loads(line)
         # Strip integrity fields, re-canonicalise + re-hash — must equal record_hash.
-        hashable = {
-            k: v for k, v in parsed.items() if k not in ("record_hash", "hmac_seal")
-        }
+        hashable = {k: v for k, v in parsed.items() if k not in ("record_hash", "hmac_seal")}
         recomputed_hash = hashlib.sha256(canonicalize(hashable)).hexdigest()
         assert recomputed_hash == rec.record_hash
 

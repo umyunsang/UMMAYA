@@ -374,9 +374,7 @@ async def search_keyword(
         response.raise_for_status()
         payload: dict[str, Any] = response.json()
         result = KakaoKeywordSearchResult(**payload)
-        logger.debug(
-            "Kakao keyword search returned %d document(s)", result.meta.total_count
-        )
+        logger.debug("Kakao keyword search returned %d document(s)", result.meta.total_count)
         return result
     except ConfigurationError:
         raise

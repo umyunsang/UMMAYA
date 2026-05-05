@@ -15,8 +15,6 @@ Covers:
 from __future__ import annotations
 
 import json
-import os
-import stat
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -25,13 +23,9 @@ import pytest
 
 from kosmos.session.models import SessionEntry, SessionMetadata
 from kosmos.session.store import (
-    GCResult,
-    create_session,
-    gc_empty_stubs,
-    save_entry,
     _is_empty_stub,
+    gc_empty_stubs,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -133,9 +127,7 @@ class TestIsEmptyStub:
 
         sid = str(uuid.uuid4())
         now = datetime.now(UTC)
-        metadata = SessionMetadata(
-            session_id=sid, created_at=now, updated_at=now, message_count=3
-        )
+        metadata = SessionMetadata(session_id=sid, created_at=now, updated_at=now, message_count=3)
         entry = SessionEntry(
             timestamp=now,
             entry_type="metadata",
@@ -285,9 +277,7 @@ class TestGCAgeFilter:
         recent_ts = datetime.now(UTC) - timedelta(hours=2)
         _write_stub_with_created_at(tmp_path, recent_ts)
 
-        result = await gc_empty_stubs(
-            session_dir=tmp_path, dry_run=False, older_than_days=7
-        )
+        result = await gc_empty_stubs(session_dir=tmp_path, dry_run=False, older_than_days=7)
 
         assert result.deleted == 0
         assert result.scanned == 1
@@ -297,9 +287,7 @@ class TestGCAgeFilter:
         old_ts = datetime.now(UTC) - timedelta(days=30)
         _write_stub_with_created_at(tmp_path, old_ts)
 
-        result = await gc_empty_stubs(
-            session_dir=tmp_path, dry_run=False, older_than_days=7
-        )
+        result = await gc_empty_stubs(session_dir=tmp_path, dry_run=False, older_than_days=7)
 
         assert result.deleted == 1
 
@@ -312,9 +300,7 @@ class TestGCAgeFilter:
             recent_ts = datetime.now(UTC) - timedelta(hours=1)
             _write_stub_with_created_at(tmp_path, recent_ts)
 
-        result = await gc_empty_stubs(
-            session_dir=tmp_path, dry_run=False, older_than_days=7
-        )
+        result = await gc_empty_stubs(session_dir=tmp_path, dry_run=False, older_than_days=7)
 
         assert result.deleted == 3
         assert result.skipped_with_content == 2  # recent stubs treated as "has content"

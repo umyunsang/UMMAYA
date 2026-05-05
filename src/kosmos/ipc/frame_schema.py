@@ -1036,7 +1036,9 @@ class PluginOpFrame(_BaseFrame):
     )
     error_message: str | None = Field(
         default=None,
-        description="Developer-facing English error detail when op='complete' AND result='failure'.",
+        description=(
+            "Developer-facing English error detail when op='complete' AND result='failure'."
+        ),
     )
     was_idempotent_noop: bool | None = Field(
         default=None,
@@ -1106,9 +1108,7 @@ class PluginOpFrame(_BaseFrame):
             if self.result == "failure" and self.receipt_id is not None:
                 raise ValueError("plugin_op.complete result='failure' must not set receipt_id")
             if self.result == "success" and self.error_kind is not None:
-                raise ValueError(
-                    "plugin_op.complete result='success' must not set error_kind"
-                )
+                raise ValueError("plugin_op.complete result='success' must not set error_kind")
             forbidden = {
                 "request_op": self.request_op,
                 "name": self.name,
@@ -1373,8 +1373,7 @@ class ConsentRevokeResponseFrame(_BaseFrame):
     )
     ok: bool = Field(
         description=(
-            "True when at least one receipt was successfully revoked; "
-            "False on error or not-found."
+            "True when at least one receipt was successfully revoked; False on error or not-found."
         ),
     )
     revoked_at: str | None = Field(

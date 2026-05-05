@@ -44,7 +44,6 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from kosmos.tools.errors import LookupErrorReason
 from kosmos.tools.mohw.welfare_eligibility_search import (
     MohwWelfareEligibilitySearchInput,
     _parse_xml_response,
@@ -59,7 +58,6 @@ from kosmos.tools.nfa119.emergency_info_service import (
 )
 from kosmos.tools.nfa119.emergency_info_service import handle as nfa_handle
 
-
 # ---------------------------------------------------------------------------
 # Fix #1: NFA sptMvmnDtc float drift
 # ---------------------------------------------------------------------------
@@ -68,7 +66,7 @@ from kosmos.tools.nfa119.emergency_info_service import handle as nfa_handle
 class TestNfaFloatDrift:
     """Regression: NFA item models accept JSON float for distance / vitals."""
 
-    def test_sptMvmnDtc_accepts_float(self) -> None:
+    def test_spt_mvmn_dtc_accepts_float(self) -> None:
         """0.5 (float) was the exact value that triggered the 2026-05-04 fab."""
         item = NfaActivityItem(
             sidoHqOgidNm="서울소방재난본부",
@@ -78,7 +76,7 @@ class TestNfaFloatDrift:
         )
         assert item.sptMvmnDtc == 0.5
 
-    def test_sptMvmnDtc_accepts_int(self) -> None:
+    def test_spt_mvmn_dtc_accepts_int(self) -> None:
         item = NfaActivityItem(
             sidoHqOgidNm="서울소방재난본부",
             rsacGutFsttOgidNm="강남소방서",
@@ -87,7 +85,7 @@ class TestNfaFloatDrift:
         )
         assert item.sptMvmnDtc == 2
 
-    def test_sptMvmnDtc_accepts_string(self) -> None:
+    def test_spt_mvmn_dtc_accepts_string(self) -> None:
         item = NfaActivityItem(
             sidoHqOgidNm="서울소방재난본부",
             rsacGutFsttOgidNm="강남소방서",
@@ -96,7 +94,7 @@ class TestNfaFloatDrift:
         )
         assert item.sptMvmnDtc == "0.5"
 
-    def test_sptMvmnDtc_accepts_none(self) -> None:
+    def test_spt_mvmn_dtc_accepts_none(self) -> None:
         item = NfaActivityItem(
             sidoHqOgidNm="서울소방재난본부",
             rsacGutFsttOgidNm="강남소방서",
@@ -215,7 +213,7 @@ class TestMohwEnvelopeDrift:
         """
     ).encode("utf-8")
 
-    def test_live_wantedList_envelope_extracts_all_items(self) -> None:
+    def test_live_wanted_list_envelope_extracts_all_items(self) -> None:
         """The exact 2026-05-04 incident shape — must extract 3 items, not 0."""
         parsed = _parse_xml_response(self.LIVE_WANTEDLIST_XML)
         assert parsed["result_code"] == "0"
@@ -417,9 +415,7 @@ class TestSystemPromptFabricationDirective:
     def test_critical_directive_present(self) -> None:
         from pathlib import Path
 
-        prompt_path = (
-            Path(__file__).parent.parent.parent / "prompts" / "system_v1.md"
-        )
+        prompt_path = Path(__file__).parent.parent.parent / "prompts" / "system_v1.md"
         prompt = prompt_path.read_text(encoding="utf-8")
         # The strengthened directive heading
         assert "시민 안전 directive" in prompt
@@ -443,12 +439,8 @@ class TestSystemPromptFabricationDirective:
         prompts_dir = Path(__file__).parent.parent.parent / "prompts"
         manifest_path = prompts_dir / "manifest.yaml"
         manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-        sys_entry = next(
-            e for e in manifest["entries"] if e["prompt_id"] == "system_v1"
-        )
-        actual_sha = hashlib.sha256(
-            (prompts_dir / sys_entry["path"]).read_bytes()
-        ).hexdigest()
+        sys_entry = next(e for e in manifest["entries"] if e["prompt_id"] == "system_v1")
+        actual_sha = hashlib.sha256((prompts_dir / sys_entry["path"]).read_bytes()).hexdigest()
         assert sys_entry["sha256"] == actual_sha
 
 

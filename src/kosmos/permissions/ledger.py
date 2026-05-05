@@ -323,7 +323,7 @@ def append(  # noqa: C901 — linear 4-step WORM append; splitting hides atomici
     correlation_id: str | None = None,
     action: str = "allow",
     scope_receipt_id: str | None = None,
-    withdrawn_at: "datetime | None" = None,
+    withdrawn_at: datetime | None = None,
     ledger_path: Path,
     key_path: Path,
     key_registry_path: Path,

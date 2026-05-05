@@ -31,7 +31,7 @@ def ledger_env(tmp_path: Path):
     key_path = keys_dir / "ledger.key"
     fd = os.open(str(key_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
     try:
-        os.write(fd, b"\xCD" * 32)
+        os.write(fd, b"\xcd" * 32)
     finally:
         os.close(fd)
     ledger_path = tmp_path / "consent_ledger.jsonl"
@@ -84,9 +84,6 @@ def test_withdraw_chains_from_allow(ledger_env):
 
 def test_action_field_is_hashed(ledger_env):
     """Different action values on otherwise identical inputs produce different record_hash."""
-    import hashlib
-
-    from kosmos.permissions.canonical_json import canonicalize
 
     ledger_path, key_path, registry_path = ledger_env
 
@@ -181,7 +178,7 @@ def test_withdraw_jsonl_round_trip(ledger_env):
         key_registry_path=registry_path,
     )
 
-    lines = [l for l in ledger_path.read_bytes().splitlines() if l.strip()]
+    lines = [line for line in ledger_path.read_bytes().splitlines() if line.strip()]
     obj = json.loads(lines[-1])
     assert obj["action"] == "withdraw"
     assert obj["scope_receipt_id"] == target_receipt

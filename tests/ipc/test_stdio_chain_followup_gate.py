@@ -25,9 +25,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from kosmos.ipc.frame_schema import (
-    ChatMessage as IPCChatMessage,
-)
 from kosmos.ipc.stdio import (
     _check_chain_prerequisite,
     _check_resolve_terminated_without_followup,
@@ -42,7 +39,6 @@ from kosmos.llm.models import (
 from kosmos.llm.models import (
     ToolCall as LLMToolCall,
 )
-
 
 # ---------------------------------------------------------------------------
 # _query_implies_followup_lookup
@@ -117,9 +113,7 @@ def test_chain_complete_passes_through() -> None:
     msgs: list[Any] = [
         LLMChatMessage(role="user", content="부산 날씨"),
         _msg_assistant_tool_call("resolve_location", {"query": "부산"}),
-        _msg_tool_result(
-            "resolve_location", {"lat": 35.18, "lon": 129.07, "admcd": "21000"}
-        ),
+        _msg_tool_result("resolve_location", {"lat": 35.18, "lon": 129.07, "admcd": "21000"}),
         _msg_assistant_tool_call(
             "lookup",
             {
@@ -141,20 +135,14 @@ def test_resolve_only_then_terminate_is_rejected() -> None:
             "resolve_location",
             {"query": "부산 사하구 다대1동", "want": "coords_and_admcd"},
         ),
-        _msg_tool_result(
-            "resolve_location", {"lat": 35.05915, "lon": 128.97132}
-        ),
+        _msg_tool_result("resolve_location", {"lat": 35.05915, "lon": 128.97132}),
         _msg_assistant_tool_call(
             "resolve_location",
             {"query": "부산 사하구 다대1동", "want": "all"},
         ),
-        _msg_tool_result(
-            "resolve_location", {"lat": 35.05915, "lon": 128.97132}
-        ),
+        _msg_tool_result("resolve_location", {"lat": 35.05915, "lon": 128.97132}),
     ]
-    msg = _check_resolve_terminated_without_followup(
-        msgs, "지금 부산 사하구 다대1동 날씨 어때"
-    )
+    msg = _check_resolve_terminated_without_followup(msgs, "지금 부산 사하구 다대1동 날씨 어때")
     assert msg is not None
     assert "Chain incomplete" in msg
     assert "lookup" in msg.lower()
@@ -165,19 +153,10 @@ def test_resolve_only_with_non_observable_query_passes() -> None:
     """When the query doesn't imply a follow-up, the gate stays out of the way."""
     msgs: list[Any] = [
         LLMChatMessage(role="user", content="부산 사하구 다대1동 주소"),
-        _msg_assistant_tool_call(
-            "resolve_location", {"query": "부산 사하구 다대1동"}
-        ),
-        _msg_tool_result(
-            "resolve_location", {"lat": 35.05915, "lon": 128.97132}
-        ),
+        _msg_assistant_tool_call("resolve_location", {"query": "부산 사하구 다대1동"}),
+        _msg_tool_result("resolve_location", {"lat": 35.05915, "lon": 128.97132}),
     ]
-    assert (
-        _check_resolve_terminated_without_followup(
-            msgs, "부산 사하구 다대1동 주소"
-        )
-        is None
-    )
+    assert _check_resolve_terminated_without_followup(msgs, "부산 사하구 다대1동 주소") is None
 
 
 def test_no_resolve_call_no_gate() -> None:
@@ -185,9 +164,7 @@ def test_no_resolve_call_no_gate() -> None:
     msgs: list[Any] = [
         LLMChatMessage(role="user", content="강남역 응급실"),
     ]
-    assert (
-        _check_resolve_terminated_without_followup(msgs, "강남역 응급실") is None
-    )
+    assert _check_resolve_terminated_without_followup(msgs, "강남역 응급실") is None
 
 
 def test_lookup_without_fetch_mode_still_counts() -> None:

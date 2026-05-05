@@ -17,6 +17,7 @@ Verifies that:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import io
 import json
 import os
@@ -34,7 +35,6 @@ from kosmos.ipc.frame_schema import (
 )
 from kosmos.ipc.frame_schema import (
     ChatRequestFrame,
-    PermissionRequestFrame,
 )
 from kosmos.llm.models import StreamEvent
 from kosmos.primitives import (
@@ -61,7 +61,7 @@ def test_gated_primitives_includes_verify() -> None:
 
 def test_light_gate_contains_only_verify() -> None:
     """LIGHT_GATE_PRIMITIVES must be exactly {verify}."""
-    assert LIGHT_GATE_PRIMITIVES == frozenset({"verify"}), (
+    assert frozenset({"verify"}) == LIGHT_GATE_PRIMITIVES, (
         f"LIGHT_GATE_PRIMITIVES={LIGHT_GATE_PRIMITIVES!r}, expected {{'verify'}}"
     )
 
@@ -141,10 +141,8 @@ class _CaptureBuf:
         for line in self._buf:
             stripped = line.strip()
             if stripped:
-                try:
+                with contextlib.suppress(json.JSONDecodeError):
                     frames.append(json.loads(stripped))
-                except json.JSONDecodeError:
-                    pass
         return frames
 
 
@@ -294,9 +292,7 @@ async def test_verify_call_emits_permission_request_frame(
     try:
         await asyncio.wait_for(ipc_run(session_id=session_id), timeout=_RUNNER_TIMEOUT)
     except (TimeoutError, Exception) as exc:  # noqa: BLE001
-        _logging.getLogger(__name__).debug(
-            "test_verify_gated: IPC loop exited: %s", exc
-        )
+        _logging.getLogger(__name__).debug("test_verify_gated: IPC loop exited: %s", exc)
     finally:
         if not r_file.closed:
             r_file.close()

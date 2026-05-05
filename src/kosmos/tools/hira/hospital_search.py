@@ -59,83 +59,132 @@ _BASE_URL = "https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"
 # (e.g. "이비인후과" / "ENT" → 24).
 _DGSBJT_CODE_MAP: dict[str, str] = {
     # 01 내과
-    "내과": "01", "internal medicine": "01",
+    "내과": "01",
+    "internal medicine": "01",
     # 02 신경과
-    "신경과": "02", "neurology": "02",
+    "신경과": "02",
+    "neurology": "02",
     # 03 정신건강의학과
-    "정신건강의학과": "03", "정신과": "03", "psychiatry": "03",
+    "정신건강의학과": "03",
+    "정신과": "03",
+    "psychiatry": "03",
     # 04 외과
-    "외과": "04", "surgery": "04",
+    "외과": "04",
+    "surgery": "04",
     # 05 정형외과
-    "정형외과": "05", "orthopedics": "05",
+    "정형외과": "05",
+    "orthopedics": "05",
     # 06 신경외과
-    "신경외과": "06", "neurosurgery": "06",
+    "신경외과": "06",
+    "neurosurgery": "06",
     # 07 흉부외과
-    "흉부외과": "07", "thoracic surgery": "07",
+    "흉부외과": "07",
+    "thoracic surgery": "07",
     # 08 성형외과
-    "성형외과": "08", "plastic surgery": "08",
+    "성형외과": "08",
+    "plastic surgery": "08",
     # 09 마취통증의학과
-    "마취통증의학과": "09", "마취과": "09", "통증의학과": "09", "anesthesiology": "09",
+    "마취통증의학과": "09",
+    "마취과": "09",
+    "통증의학과": "09",
+    "anesthesiology": "09",
     # 10 산부인과
-    "산부인과": "10", "obstetrics": "10", "gynecology": "10", "ob/gyn": "10",
+    "산부인과": "10",
+    "obstetrics": "10",
+    "gynecology": "10",
+    "ob/gyn": "10",
     # 11 소아청소년과
-    "소아청소년과": "11", "소아과": "11", "pediatrics": "11",
+    "소아청소년과": "11",
+    "소아과": "11",
+    "pediatrics": "11",
     # 12 안과
-    "안과": "12", "ophthalmology": "12",
+    "안과": "12",
+    "ophthalmology": "12",
     # 13 이비인후과
-    "이비인후과": "13", "ent": "13", "otolaryngology": "13",
+    "이비인후과": "13",
+    "ent": "13",
+    "otolaryngology": "13",
     # 14 피부과
-    "피부과": "14", "dermatology": "14",
+    "피부과": "14",
+    "dermatology": "14",
     # 15 비뇨의학과
-    "비뇨의학과": "15", "비뇨기과": "15", "urology": "15",
+    "비뇨의학과": "15",
+    "비뇨기과": "15",
+    "urology": "15",
     # 16 영상의학과
-    "영상의학과": "16", "방사선과": "16", "radiology": "16",
+    "영상의학과": "16",
+    "방사선과": "16",
+    "radiology": "16",
     # 17 방사선종양학과
-    "방사선종양학과": "17", "radiation oncology": "17",
+    "방사선종양학과": "17",
+    "radiation oncology": "17",
     # 18 병리과
-    "병리과": "18", "pathology": "18",
+    "병리과": "18",
+    "pathology": "18",
     # 19 진단검사의학과
-    "진단검사의학과": "19", "임상병리과": "19", "laboratory medicine": "19",
+    "진단검사의학과": "19",
+    "임상병리과": "19",
+    "laboratory medicine": "19",
     # 20 결핵과
-    "결핵과": "20", "tuberculosis": "20",
+    "결핵과": "20",
+    "tuberculosis": "20",
     # 21 재활의학과
-    "재활의학과": "21", "rehabilitation": "21",
+    "재활의학과": "21",
+    "rehabilitation": "21",
     # 22 핵의학과
-    "핵의학과": "22", "nuclear medicine": "22",
+    "핵의학과": "22",
+    "nuclear medicine": "22",
     # 23 가정의학과
-    "가정의학과": "23", "family medicine": "23",
+    "가정의학과": "23",
+    "family medicine": "23",
     # 24 응급의학과
-    "응급의학과": "24", "emergency medicine": "24",
+    "응급의학과": "24",
+    "emergency medicine": "24",
     # 25 직업환경의학과
-    "직업환경의학과": "25", "산업의학과": "25", "occupational medicine": "25",
+    "직업환경의학과": "25",
+    "산업의학과": "25",
+    "occupational medicine": "25",
     # 26 예방의학과
-    "예방의학과": "26", "preventive medicine": "26",
+    "예방의학과": "26",
+    "preventive medicine": "26",
     # 80 한방
-    "한의원": "80", "한방": "80", "한의과": "80", "korean medicine": "80",
+    "한의원": "80",
+    "한방": "80",
+    "한의과": "80",
+    "korean medicine": "80",
 }
 
 # 종별코드 — HIRA clCd. Source: HIRA 활용가이드 (병원정보서비스). Verified live
 # 2026-05-04 with clCd=31 returning 673 / clCd=21 returning N (의원/병원 split).
 _CLCD_CODE_MAP: dict[str, str] = {
     # 11 상급종합병원
-    "상급종합": "11", "상급종합병원": "11", "tertiary hospital": "11",
+    "상급종합": "11",
+    "상급종합병원": "11",
+    "tertiary hospital": "11",
     # 21 종합병원
-    "종합병원": "21", "general hospital": "21",
+    "종합병원": "21",
+    "general hospital": "21",
     # 28 병원 (HIRA uses 21 for 종합병원 + 28 for 병원 in some tables; live API
     # accepts 21 broadly — keep canonical 21 for "병원").
-    "병원": "21", "hospital": "21",
+    "병원": "21",
+    "hospital": "21",
     # 29 치과병원
-    "치과병원": "29", "dental hospital": "29",
+    "치과병원": "29",
+    "dental hospital": "29",
     # 31 의원
-    "의원": "31", "clinic": "31",
+    "의원": "31",
+    "clinic": "31",
     # 41 조산원
-    "조산원": "41", "midwifery clinic": "41",
+    "조산원": "41",
+    "midwifery clinic": "41",
     # 51 보건소
-    "보건소": "51", "public health center": "51",
+    "보건소": "51",
+    "public health center": "51",
     # 81 한의원
     "한의원종별": "81",  # disambiguate from 진료과 한의원
     # 92 약국
-    "약국": "92", "pharmacy": "92",
+    "약국": "92",
+    "pharmacy": "92",
 }
 
 # ---------------------------------------------------------------------------
@@ -280,7 +329,7 @@ class HiraHospitalSearchInput(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def handle(
+async def handle(  # noqa: C901
     inp: HiraHospitalSearchInput,
     *,
     client: httpx.AsyncClient | None = None,
@@ -321,8 +370,7 @@ async def handle(
         params["clCd"] = inp.clCd
 
     logger.debug(
-        "hira_hospital_search: xPos=%.5f yPos=%.5f radius=%d page=%d rows=%d "
-        "dgsbjt=%s clCd=%s",
+        "hira_hospital_search: xPos=%.5f yPos=%.5f radius=%d page=%d rows=%d dgsbjt=%s clCd=%s",
         inp.xPos,
         inp.yPos,
         inp.radius,

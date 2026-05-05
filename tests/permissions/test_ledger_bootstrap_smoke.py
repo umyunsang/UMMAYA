@@ -26,7 +26,6 @@ from kosmos.permissions.hmac_key import HMACKeyFileModeError, bootstrap_hmac_key
 from kosmos.permissions.ledger import append as ledger_append
 from kosmos.permissions.ledger_verify import verify_ledger
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -152,7 +151,7 @@ def test_bootstrap_fails_closed_on_wrong_key_mode(tmp_path):
     # Create key with wrong mode (0o644).
     fd = os.open(str(key_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     try:
-        os.write(fd, b"\xAB" * 32)
+        os.write(fd, b"\xab" * 32)
     finally:
         os.close(fd)
 
@@ -245,6 +244,7 @@ def test_second_receipt_extends_chain_and_verifies(bootstrap_env):
 
     report = verify_ledger(ledger_path=ledger_path, key_registry_path=key_registry_path)
     assert report.passed is True, (
-        f"Chain of 2 records must verify. exit_code={report.exit_code} reason={report.broken_reason}"
+        f"Chain of 2 records must verify. exit_code={report.exit_code} "
+        f"reason={report.broken_reason}"
     )
     assert report.total_records == 2

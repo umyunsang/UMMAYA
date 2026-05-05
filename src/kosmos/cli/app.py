@@ -363,8 +363,7 @@ def _gc_stubs_command(
         console.print(f"  Eligible  : {result.eligible}")
         if dry_run:
             console.print(
-                f"  Would delete : {result.eligible} "
-                "(pass --no-dry-run to actually remove)"
+                f"  Would delete : {result.eligible} (pass --no-dry-run to actually remove)"
             )
         else:
             console.print(f"  Deleted   : {result.deleted}")

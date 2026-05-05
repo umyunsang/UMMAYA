@@ -27,7 +27,6 @@ from kosmos.ipc.frame_schema import (
     PermissionResponseFrame,
 )
 
-
 # ---------------------------------------------------------------------------
 # 1. Schema-level tests (no IPC loop)
 # ---------------------------------------------------------------------------
@@ -127,7 +126,7 @@ def _ts() -> str:
 
 
 @pytest.mark.asyncio
-async def test_backend_emits_receipt_id_on_allow_once(
+async def test_backend_emits_receipt_id_on_allow_once(  # noqa: C901
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Any,
 ) -> None:
@@ -138,7 +137,6 @@ async def test_backend_emits_receipt_id_on_allow_once(
     reconstructed closure environment that mocks write_frame and pre-resolves
     the pending_perms future with an allow_once decision.
     """
-    import pathlib
 
     # Redirect consent writes to tmp_path
     monkeypatch.setattr(
@@ -156,8 +154,6 @@ async def test_backend_emits_receipt_id_on_allow_once(
     # Reconstruct the minimal closure state that _check_permission_gate needs.
     pending_perms: dict[str, asyncio.Future[Any]] = {}
     pending_calls: dict[str, asyncio.Future[Any]] = {}
-    session_grants: dict[str, set[str]] = {}
-
     # Build a PermissionResponseFrame for allow_once that will be injected.
     _decision = "allow_once"
     _session_id = str(uuid.uuid4())
@@ -173,7 +169,7 @@ async def test_backend_emits_receipt_id_on_allow_once(
     # closure inside run(), we replicate the minimal logic here via monkeypatching
     # uuid.uuid4 to produce a predictable request_id, then pre-register a
     # future resolution.
-    _PERM_TIMEOUT_S = 5.0
+    perm_timeout_s = 5.0
     _pending_perms_ref = pending_perms
 
     # The gate code calls: _pending_perms[request_id] = loop.create_future()
@@ -191,23 +187,19 @@ async def test_backend_emits_receipt_id_on_allow_once(
 
     # Replicate _check_permission_gate's logic directly with our mocked components.
     # (The full IPC loop integration is covered by test_stdio_verify_dispatch.py.)
-    import uuid as uuid_mod
 
     from kosmos.ipc.frame_schema import (
-        PermissionRequestFrame,
         PermissionResponseFrame,
-        ToolResultEnvelope,
-        ToolResultFrame,
     )
     from kosmos.primitives import GATED_PRIMITIVES
 
-    _PRIM_RISK: dict[str, str] = {"verify": "low", "submit": "high", "subscribe": "medium"}
-    _PRIM_KO: dict[str, str] = {
+    prim_risk: dict[str, str] = {"verify": "low", "submit": "high", "subscribe": "medium"}
+    prim_ko: dict[str, str] = {
         "verify": "신원 확인을 위해 인증 위임을 요청합니다.",
         "submit": "정부 API에 데이터를 제출합니다.",
         "subscribe": "공공 데이터 스트림을 구독합니다.",
     }
-    _PRIM_EN: dict[str, str] = {
+    prim_en: dict[str, str] = {
         "verify": "Request identity delegation.",
         "submit": "Submit data to a government API.",
         "subscribe": "Subscribe to a public data stream.",
@@ -215,7 +207,6 @@ async def test_backend_emits_receipt_id_on_allow_once(
 
     async def _simulated_check_gate(fname: str) -> bool:
         """Minimal replica of _check_permission_gate for unit testing."""
-        from kosmos.ipc.frame_schema import PermissionRequestFrame
         import uuid as _uuid
 
         if fname not in GATED_PRIMITIVES:
@@ -235,16 +226,16 @@ async def test_backend_emits_receipt_id_on_allow_once(
                 request_id=request_id,
                 worker_id="main",
                 primitive_kind=fname,  # type: ignore[arg-type]
-                description_ko=_PRIM_KO.get(fname, "도구를 실행합니다."),
-                description_en=_PRIM_EN.get(fname, "Invoke tool."),
-                risk_level=_PRIM_RISK.get(fname, "medium"),  # type: ignore[arg-type]
+                description_ko=prim_ko.get(fname, "도구를 실행합니다."),
+                description_en=prim_en.get(fname, "Invoke tool."),
+                risk_level=prim_risk.get(fname, "medium"),  # type: ignore[arg-type]
             )
         )
 
         try:
             decision_frame = await asyncio.wait_for(
                 pending_perms[request_id],
-                timeout=_PERM_TIMEOUT_S,
+                timeout=perm_timeout_s,
             )
         except TimeoutError:
             pending_perms.pop(request_id, None)
@@ -266,19 +257,22 @@ async def test_backend_emits_receipt_id_on_allow_once(
             consent_dir.mkdir(parents=True, exist_ok=True)
             receipt_path = consent_dir / f"{receipt_id}.json"
             import json as _j
+
             receipt_path.write_text(
-                _j.dumps({
-                    "receipt_id": receipt_id,
-                    "session_id": _session_id,
-                    "tool_id": fname,
-                    "primitive": fname,
-                    "decision": decision_label,
-                    "granted_at": _ts(),
-                    "revoked_at": None,
-                }),
+                _j.dumps(
+                    {
+                        "receipt_id": receipt_id,
+                        "session_id": _session_id,
+                        "tool_id": fname,
+                        "primitive": fname,
+                        "decision": decision_label,
+                        "granted_at": _ts(),
+                        "revoked_at": None,
+                    }
+                ),
                 encoding="utf-8",
             )
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
 
         # Gap A fix: emit the backend→TUI echo
@@ -327,8 +321,7 @@ async def test_backend_emits_receipt_id_on_allow_once(
 
     # Find the backend echo frame in written_frames
     echo_frames = [
-        f for f in written_frames
-        if isinstance(f, PermissionResponseFrame) and f.role == "backend"
+        f for f in written_frames if isinstance(f, PermissionResponseFrame) and f.role == "backend"
     ]
     assert echo_frames, (
         f"No backend PermissionResponseFrame echo emitted; "
@@ -351,12 +344,11 @@ async def test_backend_emits_receipt_id_on_allow_once(
 
 
 @pytest.mark.asyncio
-async def test_backend_emits_receipt_id_on_allow_session(
+async def test_backend_emits_receipt_id_on_allow_session(  # noqa: C901
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Any,
 ) -> None:
     """On allow_session grant, backend must also emit a receipt echo with receipt_id."""
-    import pathlib
     import uuid as _uuid
 
     monkeypatch.setattr(
@@ -375,14 +367,13 @@ async def test_backend_emits_receipt_id_on_allow_session(
     _correlation_id = str(_uuid.uuid4())
 
     from kosmos.ipc.frame_schema import (
-        PermissionRequestFrame,
         PermissionResponseFrame,
     )
     from kosmos.primitives import GATED_PRIMITIVES
 
-    _PRIM_RISK: dict[str, str] = {"verify": "low", "submit": "high", "subscribe": "medium"}
-    _PRIM_KO: dict[str, str] = {"submit": "정부 API에 데이터를 제출합니다."}
-    _PRIM_EN: dict[str, str] = {"submit": "Submit data to a government API."}
+    prim_risk: dict[str, str] = {"verify": "low", "submit": "high", "subscribe": "medium"}
+    prim_ko: dict[str, str] = {"submit": "정부 API에 데이터를 제출합니다."}
+    prim_en: dict[str, str] = {"submit": "Submit data to a government API."}
 
     async def _simulated_check_gate(fname: str) -> bool:
         if fname not in GATED_PRIMITIVES:
@@ -402,9 +393,9 @@ async def test_backend_emits_receipt_id_on_allow_session(
                 request_id=request_id,
                 worker_id="main",
                 primitive_kind=fname,  # type: ignore[arg-type]
-                description_ko=_PRIM_KO.get(fname, "도구를 실행합니다."),
-                description_en=_PRIM_EN.get(fname, "Invoke tool."),
-                risk_level=_PRIM_RISK.get(fname, "medium"),  # type: ignore[arg-type]
+                description_ko=prim_ko.get(fname, "도구를 실행합니다."),
+                description_en=prim_en.get(fname, "Invoke tool."),
+                risk_level=prim_risk.get(fname, "medium"),  # type: ignore[arg-type]
             )
         )
 
@@ -428,10 +419,11 @@ async def test_backend_emits_receipt_id_on_allow_session(
             consent_dir = pathlib.Path.home() / ".kosmos" / "memdir" / "user" / "consent"
             consent_dir.mkdir(parents=True, exist_ok=True)
             import json as _j
+
             (consent_dir / f"{receipt_id}.json").write_text(
                 _j.dumps({"receipt_id": receipt_id}), encoding="utf-8"
             )
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
 
         await _fake_write_frame(
@@ -477,8 +469,7 @@ async def test_backend_emits_receipt_id_on_allow_session(
     assert result is True
 
     echo_frames = [
-        f for f in written_frames
-        if isinstance(f, PermissionResponseFrame) and f.role == "backend"
+        f for f in written_frames if isinstance(f, PermissionResponseFrame) and f.role == "backend"
     ]
     assert echo_frames, (
         f"No backend PermissionResponseFrame echo on allow_session; "

@@ -53,9 +53,7 @@ def test_verify_mock_envelope_has_status_verified(module_path: str) -> None:
     assert hasattr(mod, "invoke"), f"{module_path}: no invoke() function"
 
     result = mod.invoke({})
-    assert hasattr(result, "model_dump"), (
-        f"{module_path}: invoke() did not return a Pydantic model"
-    )
+    assert hasattr(result, "model_dump"), f"{module_path}: invoke() did not return a Pydantic model"
 
     dumped = result.model_dump(by_alias=True)
     status = dumped.get("status")

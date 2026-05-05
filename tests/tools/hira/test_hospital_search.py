@@ -528,9 +528,7 @@ class TestHiraHospitalSearchSpecialtyFilter:
         fixture = _load_fixture("hospital_search_happy.json")
         mock_client = _make_mock_client(fixture)
 
-        inp = HiraHospitalSearchInput(
-            xPos=127.028, yPos=37.498, radius=2000, dgsbjt="내과"
-        )
+        inp = HiraHospitalSearchInput(xPos=127.028, yPos=37.498, radius=2000, dgsbjt="내과")
         await handle(inp, client=mock_client)
 
         # Inspect the params passed to the mock client's GET call.
@@ -549,9 +547,7 @@ class TestHiraHospitalSearchSpecialtyFilter:
         fixture = _load_fixture("hospital_search_happy.json")
         mock_client = _make_mock_client(fixture)
 
-        inp = HiraHospitalSearchInput(
-            xPos=127.028, yPos=37.498, radius=2000, dgsbjt="pediatrics"
-        )
+        inp = HiraHospitalSearchInput(xPos=127.028, yPos=37.498, radius=2000, dgsbjt="pediatrics")
         await handle(inp, client=mock_client)
 
         params = mock_client.get.call_args.kwargs["params"]
@@ -566,9 +562,7 @@ class TestHiraHospitalSearchSpecialtyFilter:
         fixture = _load_fixture("hospital_search_happy.json")
         mock_client = _make_mock_client(fixture)
 
-        inp = HiraHospitalSearchInput(
-            xPos=127.028, yPos=37.498, radius=2000, dgsbjt="13"
-        )
+        inp = HiraHospitalSearchInput(xPos=127.028, yPos=37.498, radius=2000, dgsbjt="13")
         await handle(inp, client=mock_client)
 
         params = mock_client.get.call_args.kwargs["params"]
@@ -577,9 +571,7 @@ class TestHiraHospitalSearchSpecialtyFilter:
     def test_dgsbjt_unknown_raises_validation_error(self) -> None:
         """Unknown specialty name raises ValueError (→ executor invalid_params)."""
         with pytest.raises(ValueError, match="Unknown medical specialty"):
-            HiraHospitalSearchInput(
-                xPos=127.028, yPos=37.498, radius=2000, dgsbjt="존재하지않는과"
-            )
+            HiraHospitalSearchInput(xPos=127.028, yPos=37.498, radius=2000, dgsbjt="존재하지않는과")
 
     async def test_dgsbjt_omitted_no_param_sent(
         self,
@@ -609,9 +601,7 @@ class TestHiraHospitalSearchClcdFilter:
         fixture = _load_fixture("hospital_search_happy.json")
         mock_client = _make_mock_client(fixture)
 
-        inp = HiraHospitalSearchInput(
-            xPos=127.028, yPos=37.498, radius=2000, clCd="의원"
-        )
+        inp = HiraHospitalSearchInput(xPos=127.028, yPos=37.498, radius=2000, clCd="의원")
         await handle(inp, client=mock_client)
         assert mock_client.get.call_args.kwargs["params"]["clCd"] == "31"
 
@@ -635,6 +625,4 @@ class TestHiraHospitalSearchClcdFilter:
     def test_clcd_unknown_raises_validation_error(self) -> None:
         """Unknown institution type raises ValueError."""
         with pytest.raises(ValueError, match="Unknown institution type"):
-            HiraHospitalSearchInput(
-                xPos=127.028, yPos=37.498, radius=2000, clCd="없는종별"
-            )
+            HiraHospitalSearchInput(xPos=127.028, yPos=37.498, radius=2000, clCd="없는종별")

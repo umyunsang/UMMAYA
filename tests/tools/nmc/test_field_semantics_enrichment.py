@@ -23,15 +23,12 @@ All three operate 24/7 ER per the ``dutyEryn=1`` flag in the sibling
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
+from datetime import datetime
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 import respx
-from zoneinfo import ZoneInfo
-
-from datetime import datetime
 
 from kosmos.tools.executor import ToolExecutor
 from kosmos.tools.nmc.emergency_search import (

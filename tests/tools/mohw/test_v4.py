@@ -459,9 +459,7 @@ class TestMohwV4Description:
 
         assert MOHW_WELFARE_ELIGIBILITY_SEARCH_TOOL.output_schema is _MohwPlaceholderOutput
         # Documentation contract preserved
-        assert (
-            MohwWelfareEligibilitySearchOutput.__name__ == "MohwWelfareEligibilitySearchOutput"
-        )
+        assert MohwWelfareEligibilitySearchOutput.__name__ == "MohwWelfareEligibilitySearchOutput"
 
     def test_citizen_facing_gate_is_read_only(self) -> None:
         """US4 real impl: citizen_facing_gate must be 'read-only' (no auth gate)."""
