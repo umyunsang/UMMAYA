@@ -4,6 +4,7 @@ import React from 'react';
 import { Box, Text } from '../../ink.js';
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
 import { Markdown } from '../Markdown.js';
+import { sanitizeThinking } from './sanitizeThinking.js';
 type Props = {
   // Accept either full ThinkingBlock/ThinkingBlockParam or a minimal shape with just type and thinking
   param: ThinkingBlock | ThinkingBlockParam | {
@@ -36,6 +37,11 @@ export function AssistantThinkingMessage(t0) {
   if (hideInTranscript) {
     return null;
   }
+  // Wave-2 G5 (F-alpha-08) — redact internal scaffolding tokens
+  // ("available_adapters" / "tool_id" / adapter ids) before the citizen
+  // sees the LLM reasoning. The agentic loop's own context (sent back to
+  // the LLM on subsequent turns) is unaffected — only this display path.
+  const sanitizedThinking = sanitizeThinking(thinking);
   const shouldShowFullThinking = isTranscriptMode || verbose;
   if (!shouldShowFullThinking) {
     // SWAP/llm-provider(2521) \u2014 show the first non-empty reasoning line
@@ -55,7 +61,7 @@ export function AssistantThinkingMessage(t0) {
     // 80-char floor ensures the citizen sees a useful summary even when
     // the model's first sentence is a single word. Whitespace collapses
     // to single spaces so word-per-line emissions don't clip the preview.
-    const _flat = thinking.replace(/\s+/g, ' ').trim();
+    const _flat = sanitizedThinking.replace(/\s+/g, ' ').trim();
     let _previewBase = '';
     const _sentenceRe = /[^.。?!]+[.。?!]?\s*/g;
     let _match: RegExpExecArray | null;
@@ -83,9 +89,9 @@ export function AssistantThinkingMessage(t0) {
     t5 = $[3];
   }
   let t6;
-  if ($[4] !== thinking) {
-    t6 = <Box paddingLeft={2}><Markdown dimColor={true}>{thinking}</Markdown></Box>;
-    $[4] = thinking;
+  if ($[4] !== sanitizedThinking) {
+    t6 = <Box paddingLeft={2}><Markdown dimColor={true}>{sanitizedThinking}</Markdown></Box>;
+    $[4] = sanitizedThinking;
     $[5] = t6;
   } else {
     t6 = $[5];

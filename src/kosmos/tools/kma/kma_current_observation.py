@@ -146,14 +146,24 @@ class KmaCurrentObservationOutput(BaseModel):
     reh: float | None = None
     """Relative humidity in percent."""
 
-    pty: int = 0
-    """Precipitation type code.
+    pty: int = Field(
+        default=0,
+        description=(
+            "강수형태 코드 (precipitation type) — "
+            "0='강수 없음', 1='비', 2='비/눈', 3='눈', "
+            "5='이슬비', 6='이슬비/눈', 7='눈날림'. "
+            "시민 답변 시 raw 코드 대신 한국어 자연어로 변환."
+        ),
+    )
 
-    0=none, 1=rain, 2=rain+snow, 3=snow, 5=drizzle, 6=drizzle+snow, 7=snow flurry.
-    """
-
-    vec: float | None = None
-    """Wind direction in degrees (0–360, meteorological convention)."""
+    vec: float | None = Field(
+        default=None,
+        description=(
+            "풍향 (도, 0–360, 기상청 convention). "
+            "0=북, 90=동, 180=남, 270=서. 시민 답변 시 16방위 한국어로 변환 — "
+            "vec=271 → 서풍, vec=315 → 북서풍. 매핑 표는 system 프롬프트 참조."
+        ),
+    )
 
     @field_validator("rn1", mode="before")
     @classmethod
