@@ -54,6 +54,7 @@ def _prefix_without_guidance(config: SystemPromptConfig) -> str:
     sections = [
         assembler._platform_identity_section(config),
         assembler._language_policy_section(config),
+        assembler._pipa_safety_section(),
         assembler._tool_use_policy_section(),
         assembler._trust_hierarchy_section(),
         assembler._turn_order_section(),

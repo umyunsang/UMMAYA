@@ -356,16 +356,16 @@ async def test_preprocessing_triggered_with_small_context_window(
 ) -> None:
     """Preprocessing pipeline runs when token estimate exceeds threshold.
 
-    A context_window=6000 with threshold=0.6 means preprocessing fires when
-    the history exceeds ~3600 tokens. The system prompt is ~4880 tokens after
-    the verify-trigger expansion (인증/본인확인/공동인증서/금융인증서/KEC/
-    모바일ID/마이데이터 인증/Any-ID SSO mappings), pushing baseline past
-    4500. Bumping to 6000 keeps the test invariant — system prompt + room
-    for several turn pairs — while preprocessing still fires once turn-pair
-    accumulation crosses the threshold.
+    context_window=16000 with threshold=0.6 means preprocessing fires when
+    the history exceeds ~9600 tokens.  The integrated system_v1.md (PIPA §22
+    + PTY/SKY/VEC + NO_DATA + verify-PIPA-refer + mock-disclaimer) estimates
+    ~6050 tokens, so there is still room for several user+assistant turn pairs
+    before the threshold fires.  (Old value was context_window=6000 calibrated
+    to the smaller ~4880-token pre-integration prompt; bumped in fixup-2773 to
+    accommodate the canonical 140-line system_v1.md.)
     """
     config = QueryEngineConfig(
-        context_window=6000,
+        context_window=16000,
         preprocessing_threshold=0.6,
         # Aggressive snip/microcompact settings
         snip_turn_age=1,
@@ -438,18 +438,12 @@ async def test_preprocessing_compresses_stale_tool_results(
     """
     config = QueryEngineConfig(
         # context_window must be large enough that the budget guard
-        # (hard_limit=context_window) does not block turns. The XML-tagged
-        # citizen prompt + per-tool trigger inventory introduced by Epic #2152
-        # plus the <turn_order> block added by Spec 2521 (FR-010) push the
-        # baseline past 3000 tokens. Subsequent directives — Lead-C
-        # MUST-NOT-fabricate (NFA/MOHW C-class), Lead-G
-        # resolve→lookup chain enforcement, and the verify-trigger
-        # expansion (인증/본인확인/공동인증서/금융인증서/KEC/모바일ID/
-        # 마이데이터 인증/Any-ID SSO mappings) push the baseline past
-        # 4880; bump to 6000 so the preprocessing threshold (0.05 * 6000
-        # = 300) still fires on typical test message sizes while leaving
-        # headroom for both prompt blocks.
-        context_window=6000,
+        # (hard_limit=context_window) does not block turns. The integrated
+        # system_v1.md (PIPA §22 + PTY/SKY/VEC + NO_DATA + verify-PIPA-refer
+        # + mock-disclaimer, added in fixup-2773) estimates ~6050 tokens;
+        # bump to 16000 so preprocessing threshold (0.05 * 16000 = 800)
+        # still fires on typical test message sizes while leaving headroom.
+        context_window=16000,
         preprocessing_threshold=0.05,
         snip_turn_age=1,
         microcompact_turn_age=1,

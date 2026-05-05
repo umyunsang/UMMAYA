@@ -49,12 +49,14 @@ class TestSystemPromptAssembler:
     def test_omits_personal_data_reminder_when_disabled(self) -> None:
         cfg = SystemPromptConfig(personal_data_warning=False)
         result = self._assembler().assemble(cfg)
-        # The personal-data reminder paragraph (output_style) must be absent
-        # when the config gate disables it; both English and Korean sentinels
-        # tracked.
-        assert "personal data" not in result.lower()
-        assert "PIPA" not in result
-        assert "개인정보" not in result
+        # The <output_style> personal-data reminder paragraph must be absent
+        # when the config gate disables it.  Use the unique opening sentinel of
+        # the <output_style> block as the probe; the heavier <pipa_safety>
+        # section (always-on critical directive) also mentions PIPA and
+        # "개인정보" so those broad terms can no longer serve as absence probes.
+        assert "Handle personal data with care" not in result
+        # Also confirm the <output_style>-specific PIPA line is absent.
+        assert "시민의 개인정보는 PIPA 에 따라 처리합니다" not in result
 
     def test_deterministic_same_instance(self) -> None:
         cfg = SystemPromptConfig()

@@ -24,6 +24,7 @@ Mandatory sections in fixed order:
 from __future__ import annotations
 
 import logging
+import re
 
 from kosmos.context.models import SystemPromptConfig
 from kosmos.context.prompt_loader import PromptLoader, default_manifest_path
@@ -33,17 +34,26 @@ logger = logging.getLogger(__name__)
 # Section separator — two newlines produce paragraph breaks in the LLM view.
 _SECTION_SEP = "\n\n"
 
-# Named indices into the `\n\n`-split system_v1.md paragraphs so the section
-# routing is explicit instead of magic-number indexed.
-# Spec 2521 inserted the <turn_order> block at index 3 between <tool_usage>
-# and <output_style>; the assembler emits it as a dedicated section so the
-# trust-hierarchy + personal-data ordering invariants (FR-016/FR-017/FR-018)
-# remain intact.
-_PARA_PLATFORM_IDENTITY = 0  # <role>
-_PARA_LANGUAGE_POLICY = 1  # <core_rules>
-_PARA_TOOL_USE = 2  # <tool_usage>
-_PARA_TURN_ORDER = 3  # <turn_order> (Spec 2521)
-_PARA_PERSONAL_DATA = 4  # <output_style>
+# XML tag names present in system_v1.md (order matches document order).
+# Resolved by _extract_section() at construction time so the assembler is
+# insensitive to how many \n\n separators live *inside* a section block.
+_TAG_PLATFORM_IDENTITY = "role"
+_TAG_LANGUAGE_POLICY = "core_rules"
+_TAG_PIPA_SAFETY = "pipa_safety"
+_TAG_TOOL_USE = "tool_usage"
+_TAG_TURN_ORDER = "turn_order"
+_TAG_PERSONAL_DATA = "output_style"
+
+
+def _extract_section(text: str, tag: str) -> str:
+    """Return the full ``<tag>...</tag>`` block from *text*, raising on miss."""
+    m = re.search(rf"(<{tag}>.*?</{tag}>)", text, re.DOTALL)
+    if m is None:
+        raise ValueError(
+            f"system_v1.md does not contain a <{tag}> block — "
+            "the manifest SHA gate should have caught any tampering."
+        )
+    return m.group(1)
 
 
 class SystemPromptAssembler:
@@ -72,9 +82,16 @@ class SystemPromptAssembler:
         self._system_template: str = self._loader.load("system_v1")
         self._session_guidance: str = self._loader.load("session_guidance_v1")
 
-        # Split system_v1.md into its four paragraphs once so assemble() can
-        # conditionally include or exclude the personal-data section (§4).
-        self._system_paragraphs: list[str] = self._system_template.rstrip("\n").split(_SECTION_SEP)
+        # Extract named sections by XML tag so the assembler is insensitive to
+        # the number of \n\n separators *inside* any section block.  The PIPA
+        # safety block (added in the G1+G5 integration) splits the old
+        # \n\n-based paragraph index scheme — tag-based extraction is robust.
+        self._sec_platform: str = _extract_section(self._system_template, _TAG_PLATFORM_IDENTITY)
+        self._sec_language: str = _extract_section(self._system_template, _TAG_LANGUAGE_POLICY)
+        self._sec_pipa: str = _extract_section(self._system_template, _TAG_PIPA_SAFETY)
+        self._sec_tool_use: str = _extract_section(self._system_template, _TAG_TOOL_USE)
+        self._sec_turn_order: str = _extract_section(self._system_template, _TAG_TURN_ORDER)
+        self._sec_personal_data: str = _extract_section(self._system_template, _TAG_PERSONAL_DATA)
 
     def assemble(self, config: SystemPromptConfig) -> str:
         """Assemble all mandatory sections into a single system prompt string.
@@ -89,6 +106,7 @@ class SystemPromptAssembler:
         sections = [
             self._platform_identity_section(config),
             self._language_policy_section(config),
+            self._pipa_safety_section(),
             self._tool_use_policy_section(),
             self._trust_hierarchy_section(),
             self._turn_order_section(),
@@ -113,12 +131,12 @@ class SystemPromptAssembler:
     # ------------------------------------------------------------------
 
     def _platform_identity_section(self, config: SystemPromptConfig) -> str:
-        """Section 1: Platform identity (delegated to system_v1.md paragraph 0)."""
-        return self._format_if_templated(self._system_paragraphs[_PARA_PLATFORM_IDENTITY], config)
+        """Section 1: Platform identity (delegated to system_v1.md <role>)."""
+        return self._format_if_templated(self._sec_platform, config)
 
     def _language_policy_section(self, config: SystemPromptConfig) -> str:
-        """Section 2: Language policy (delegated to system_v1.md paragraph 1)."""
-        return self._format_if_templated(self._system_paragraphs[_PARA_LANGUAGE_POLICY], config)
+        """Section 2: Language policy / core rules (delegated to system_v1.md <core_rules>)."""
+        return self._format_if_templated(self._sec_language, config)
 
     @staticmethod
     def _format_if_templated(paragraph: str, config: SystemPromptConfig) -> str:
@@ -129,18 +147,27 @@ class SystemPromptAssembler:
             )
         return paragraph
 
+    def _pipa_safety_section(self) -> str:
+        """PIPA §22 directive (always unconditional — delegated to system_v1.md <pipa_safety>).
+
+        Critical safety block prohibiting sensitive credential collection via chat.
+        Always emitted regardless of ``personal_data_warning`` config flag; the
+        flag gates only the lighter ``<output_style>`` reminder paragraph.
+        """
+        return self._sec_pipa
+
     def _tool_use_policy_section(self) -> str:
-        """Section 3: Tool-use policy (delegated to system_v1.md paragraph 2)."""
-        return self._system_paragraphs[_PARA_TOOL_USE]
+        """Section 3: Tool-use policy (delegated to system_v1.md <tool_usage>)."""
+        return self._sec_tool_use
 
     def _turn_order_section(self) -> str:
         """Section 3b: Turn-order block (Spec 2521, FR-010 / parity-matrix § C.4).
 
-        Mirrors CC `prompts.ts:420` "Lead with the action, no preamble" guidance,
+        Mirrors CC ``prompts.ts:420`` "Lead with the action, no preamble" guidance,
         translated for the citizen-facing harness. Loaded from
-        ``prompts/system_v1.md`` paragraph 3 (``<turn_order>``).
+        ``prompts/system_v1.md`` <turn_order> block.
         """
-        return self._system_paragraphs[_PARA_TURN_ORDER]
+        return self._sec_turn_order
 
     def _trust_hierarchy_section(self) -> str:
         """Section 3a: Trust hierarchy (Epic #466 Layer D, FR-016–FR-018).
@@ -158,11 +185,12 @@ class SystemPromptAssembler:
     def _personal_data_reminder_section(self) -> str:
         """Section 4: Personal-data handling reminder.
 
-        Delegated to ``system_v1.md`` paragraph 4 (``<output_style>``).
-        Spec 2521 inserted ``<turn_order>`` at paragraph 3, shifting this from
-        the historical paragraph-3 slot.
+        Delegated to ``system_v1.md`` <output_style> block.
+        Gated by ``config.personal_data_warning``; omitted when disabled.
+        The heavier PIPA §22 directive (``<pipa_safety>``) is always emitted
+        unconditionally via ``_pipa_safety_section()`` regardless of this gate.
         """
-        return self._system_paragraphs[_PARA_PERSONAL_DATA]
+        return self._sec_personal_data
 
     def _session_guidance_section(self) -> str:
         """Section 5: Session guidance block (delegated to session_guidance_v1.md)."""
