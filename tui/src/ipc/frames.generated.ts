@@ -31,7 +31,9 @@ export type IPCFrame =
   | HeartbeatFrame
   | NotificationPushFrame
   | PluginOpFrame
-  | AdapterManifestSyncFrame;
+  | AdapterManifestSyncFrame
+  | ConsentRevokeRequestFrame
+  | ConsentRevokeResponseFrame;
 /**
  * Opaque session identifier.
  */
@@ -135,13 +137,33 @@ export type Name = string | null;
  */
 export type ToolCallId = string | null;
 /**
+ * OpenAI Chat Completions assistant-turn tool invocations. Set ONLY on role='assistant' messages that requested one or more tool calls. None for every other role. Each entry's ``id`` is the pairing key that the corresponding role='tool' result message MUST set as its ``tool_call_id``.
+ */
+export type ToolCalls = ChatMessageToolCall[] | null;
+/**
+ * Matching ``ToolCallFrame.call_id`` / ``role='tool'.tool_call_id``.
+ */
+export type Id = string;
+/**
  * OpenAI tool envelope; only 'function' is currently supported.
  */
 export type Type = 'function';
 /**
- * Tool name (matches the primitive registry id).
+ * Function/tool name the model requested.
  */
 export type Name1 = string;
+/**
+ * JSON-serialised string of the function arguments (OpenAI spec).
+ */
+export type Arguments = string;
+/**
+ * OpenAI tool envelope; only 'function' is currently supported.
+ */
+export type Type1 = 'function';
+/**
+ * Tool name (matches the primitive registry id).
+ */
+export type Name2 = string;
 /**
  * Human-readable description shown to the model for tool selection.
  */
@@ -253,7 +275,7 @@ export type CallId = string;
 /**
  * Primitive name per Spec 031.
  */
-export type Name2 = 'lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify';
+export type Name3 = 'lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify';
 /**
  * Opaque session identifier.
  */
@@ -435,6 +457,10 @@ export type DescriptionEn = string;
  */
 export type RiskLevel = 'low' | 'medium' | 'high';
 /**
+ * Fully-qualified adapter id (e.g. `mock_verify_mobile_id`). Falls back to worker_id || primitive_kind in the TUI when None. None for legacy callers that have not yet been updated.
+ */
+export type ToolId = string | null;
+/**
  * Opaque session identifier.
  */
 export type SessionId8 = string;
@@ -474,6 +500,20 @@ export type RequestId1 = string;
  * Citizen's permission decision.
  */
 export type Decision = 'granted' | 'allow_once' | 'allow_session' | 'denied' | 'deny';
+/**
+ * Consent receipt UUID written to ~/.kosmos/memdir/user/consent/<id>.json on granted decisions. None on deny / timeout.
+ */
+export type ReceiptId = string | null;
+/**
+ * The primitive that was authorised. The TUI feeds this into `aalToLayer(primitive, isIrreversible)` to recompute the gauntlet layer (1=green / 2=orange / 3=red) for the receipt row. None on deny / timeout / legacy backends.
+ */
+export type PrimitiveKind1 =
+  | ('lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify')
+  | null;
+/**
+ * The fully-qualified adapter id (e.g. `mock_verify_mobile_id`, `mock_submit_welfare_grant`) the citizen authorised. The TUI uses this to render the human-readable Korean adapter name in /consent list and the modal title. None for non-adapter primitives (rare) or legacy backends.
+ */
+export type ToolId1 = string | null;
 /**
  * Opaque session identifier.
  */
@@ -1002,7 +1042,7 @@ export type RequestOp = ('install' | 'uninstall' | 'list') | null;
 /**
  * Plugin catalog name (matches CatalogEntry.name). Required when request_op in {install, uninstall}; None otherwise.
  */
-export type Name3 = string | null;
+export type Name4 = string | null;
 /**
  * Optional SemVer pin for op='request'/install. Renamed from `version` to avoid shadowing the envelope's protocol version.
  */
@@ -1034,7 +1074,19 @@ export type ExitCode = number | null;
 /**
  * Spec 035 consent receipt id when op='complete' AND result='success'.
  */
-export type ReceiptId = string | null;
+export type ReceiptId1 = string | null;
+/**
+ * Machine-readable failure kind (e.g. 'bundle_sha_mismatch', 'slsa_skip_in_production') when op='complete' AND result='failure'. Used by the TUI to map exit codes to citizen-friendly Korean messages.
+ */
+export type ErrorKind = string | null;
+/**
+ * Developer-facing English error detail when op='complete' AND result='failure'.
+ */
+export type ErrorMessage = string | null;
+/**
+ * True when op='complete' + result='success' but the operation was a no-op because the plugin was already in the target state (e.g. uninstall of a plugin that was never installed). TUI uses this to show '이미 제거됨' instead of '제거 완료'.
+ */
+export type WasIdempotentNoop = boolean | null;
 /**
  * Opaque session identifier.
  */
@@ -1076,11 +1128,11 @@ export type Entries = [AdapterManifestEntry, ...AdapterManifestEntry[]];
 /**
  * Globally unique adapter id within the registry, e.g. 'nmc_emergency_search'. Lowercase snake-case; validated by I7.
  */
-export type ToolId = string;
+export type ToolId2 = string;
 /**
  * Human-readable display name; bilingual permitted.
  */
-export type Name4 = string;
+export type Name5 = string;
 /**
  * Primitive verb the adapter is registered under (I6).
  */
@@ -1101,6 +1153,106 @@ export type ManifestHash = string;
  * Python backend PID at boot. Useful for OTEL span cross-correlation.
  */
 export type EmitterPid = number;
+/**
+ * Opaque session identifier.
+ */
+export type SessionId22 = string;
+/**
+ * UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)
+ */
+export type CorrelationId22 = string;
+/**
+ * ISO-8601 UTC timestamp with sub-ms precision.
+ */
+export type Ts22 = string;
+/**
+ * Envelope version. Hard-fail on mismatch (E1, FR-001).
+ */
+export type Version22 = '1.0';
+/**
+ * Origin role. Validated against kind<->role allow-list (E3, FR-004).
+ */
+export type Role23 = 'tui' | 'backend' | 'tool' | 'llm' | 'notification';
+/**
+ * Per-session monotonic sequence number (ge=0). Gap detection uses this.
+ */
+export type FrameSeq22 = number;
+/**
+ * UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).
+ */
+export type TransactionId23 = string | null;
+/**
+ * Frame discriminator — arm 22 of IPCFrame.
+ */
+export type Kind23 = 'consent_revoke_request';
+/**
+ * UUIDv4 round-trip correlation ID; matched in consent_revoke_response.
+ */
+export type RequestId2 = string;
+/**
+ * Target receipt identifier (rcpt-<id>). Must match an existing receipt file at ~/.kosmos/memdir/user/consent/<receipt_id>.json.
+ */
+export type ReceiptId2 = string;
+/**
+ * Revocation scope. 'once' revokes only this receipt; 'session-all' revokes all receipts in the current session.
+ */
+export type Scope = 'once' | 'session-all';
+/**
+ * Optional citizen-provided reason logged to the ledger (PIPA §36 citation).
+ */
+export type Reason1 = string | null;
+/**
+ * Opaque session identifier.
+ */
+export type SessionId23 = string;
+/**
+ * UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)
+ */
+export type CorrelationId23 = string;
+/**
+ * ISO-8601 UTC timestamp with sub-ms precision.
+ */
+export type Ts23 = string;
+/**
+ * Envelope version. Hard-fail on mismatch (E1, FR-001).
+ */
+export type Version23 = '1.0';
+/**
+ * Origin role. Validated against kind<->role allow-list (E3, FR-004).
+ */
+export type Role24 = 'tui' | 'backend' | 'tool' | 'llm' | 'notification';
+/**
+ * Per-session monotonic sequence number (ge=0). Gap detection uses this.
+ */
+export type FrameSeq23 = number;
+/**
+ * UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).
+ */
+export type TransactionId24 = string | null;
+/**
+ * Frame discriminator — arm 23 of IPCFrame.
+ */
+export type Kind24 = 'consent_revoke_response';
+/**
+ * Mirrors consent_revoke_request.request_id for round-trip correlation.
+ */
+export type RequestId3 = string;
+/**
+ * True when at least one receipt was successfully revoked; False on error or not-found.
+ */
+export type Ok = boolean;
+/**
+ * ISO-8601 UTC timestamp of revocation. Populated when ok=True.
+ */
+export type RevokedAt = string | null;
+/**
+ * Hex SHA-256 of the ledger withdrawal record. Populated when ok=True for audit-chain verification.
+ */
+export type RecordHash = string | null;
+/**
+ * Machine-readable error code when ok=False; None on success.
+ */
+export type Error = ('already_revoked' | 'not_found' | 'io_error') | null;
 
 /**
  * TUI -> backend: a citizen's typed input.
@@ -1162,25 +1314,54 @@ export interface ChatRequestFrame {
  * invoked) and ``tool_call_id`` (the originating ``tool_call`` envelope's
  * correlation id). This is the data-model invariant D4 (tool message
  * integrity) enforced by the ``ChatRequestFrame`` validator below.
+ *
+ * Lead-Diag-4 (2026-05-04): added optional ``tool_calls`` for ``role='assistant'``
+ * turns so assistant ``tool_use`` blocks survive the wire round-trip and the
+ * OpenAI Chat Completions multi-turn pairing invariant (every ``role='tool'``
+ * message MUST follow an assistant message whose ``tool_calls[i].id`` matches
+ * the result's ``tool_call_id``) is satisfied. Backward compatible: legacy
+ * senders that omit ``tool_calls`` are unaffected.
  */
 export interface ChatMessage {
   role: Role2;
   content: Content;
   name?: Name;
   tool_call_id?: ToolCallId;
+  tool_calls?: ToolCalls;
+}
+/**
+ * OpenAI-spec ``tool_calls[i]`` entry carried by an assistant ``ChatMessage``.
+ *
+ * OpenAI Chat Completions API spec: every ``role='tool'`` message MUST be
+ * paired (by ``tool_call_id``) with a ``tool_calls[i].id`` from a preceding
+ * assistant turn. The TUI carries this pairing across the wire so multi-turn
+ * conversations replay correctly to FriendliAI / OpenAI-compatible providers
+ * (Lead-Diag-4 fix, 2026-05-04).
+ */
+export interface ChatMessageToolCall {
+  id: Id;
+  type?: Type;
+  function: ChatMessageFunctionCall;
+}
+/**
+ * Inner function name + JSON-serialised arguments.
+ */
+export interface ChatMessageFunctionCall {
+  name: Name1;
+  arguments: Arguments;
 }
 /**
  * OpenAI-style tool definition (function-calling).
  */
 export interface ToolDefinition {
-  type?: Type;
+  type?: Type1;
   function: ToolDefinitionFunction;
 }
 /**
  * Inner function metadata.
  */
 export interface ToolDefinitionFunction {
-  name: Name1;
+  name: Name2;
   description?: Description;
   parameters?: Parameters;
 }
@@ -1238,13 +1419,13 @@ export interface ToolCallFrame {
   trailer?: FrameTrailer | null;
   kind?: Kind3;
   call_id: CallId;
-  name: Name2;
-  arguments: Arguments;
+  name: Name3;
+  arguments: Arguments1;
 }
 /**
  * Primitive-specific arguments; shape per Spec 031 input schemas.
  */
-export interface Arguments {
+export interface Arguments1 {
   [k: string]: any;
 }
 /**
@@ -1334,6 +1515,7 @@ export interface PermissionRequestFrame {
   description_ko: DescriptionKo;
   description_en: DescriptionEn;
   risk_level: RiskLevel;
+  tool_id?: ToolId;
 }
 /**
  * TUI -> backend: citizen's decision on a permission_request.
@@ -1353,6 +1535,9 @@ export interface PermissionResponseFrame {
   kind?: Kind9;
   request_id: RequestId1;
   decision: Decision;
+  receipt_id?: ReceiptId;
+  primitive_kind?: PrimitiveKind1;
+  tool_id?: ToolId1;
 }
 /**
  * Bidirectional: session lifecycle events.
@@ -1663,7 +1848,7 @@ export interface PluginOpFrame {
   kind?: Kind21;
   op: Op;
   request_op?: RequestOp;
-  name?: Name3;
+  name?: Name4;
   requested_version?: RequestedVersion;
   dry_run?: DryRun;
   progress_phase?: ProgressPhase;
@@ -1671,7 +1856,10 @@ export interface PluginOpFrame {
   progress_message_en?: ProgressMessageEn;
   result?: Result;
   exit_code?: ExitCode;
-  receipt_id?: ReceiptId;
+  receipt_id?: ReceiptId1;
+  error_kind?: ErrorKind;
+  error_message?: ErrorMessage;
+  was_idempotent_noop?: WasIdempotentNoop;
 }
 /**
  * Full registry snapshot emitted by the backend exactly once after boot.
@@ -1717,9 +1905,79 @@ export interface AdapterManifestSyncFrame {
  * - ``tool_id`` matches ``^[a-z][a-z0-9_]*$`` (I7).
  */
 export interface AdapterManifestEntry {
-  tool_id: ToolId;
-  name: Name4;
+  tool_id: ToolId2;
+  name: Name5;
   primitive: Primitive;
   policy_authority_url?: PolicyAuthorityUrl;
   source_mode: SourceMode;
+}
+/**
+ * TUI -> backend: citizen requests revocation of a prior consent receipt.
+ *
+ * arm 22 of the ``IPCFrame`` discriminated union (Epic 2).
+ *
+ * Fields:
+ * - ``request_id``: UUIDv4 string; round-trips in the matching
+ *   ``consent_revoke_response`` frame.
+ * - ``receipt_id``: The ``rcpt-<id>`` value referencing the receipt file at
+ *   ``~/.kosmos/memdir/user/consent/<receipt_id>.json``.
+ * - ``scope``: ``"once"`` = revoke this single receipt only;
+ *   ``"session-all"`` = revoke all receipts for the current session.
+ * - ``reason``: Optional free-text reason logged to the audit ledger.
+ *
+ * role allow-list: tui.
+ */
+export interface ConsentRevokeRequestFrame {
+  session_id: SessionId22;
+  correlation_id: CorrelationId22;
+  ts: Ts22;
+  version?: Version22;
+  role: Role23;
+  frame_seq?: FrameSeq22;
+  transaction_id?: TransactionId23;
+  /**
+   * Completion/validation metadata. Populated on terminal frames. (FR-006)
+   */
+  trailer?: FrameTrailer | null;
+  kind?: Kind23;
+  request_id: RequestId2;
+  receipt_id: ReceiptId2;
+  scope: Scope;
+  reason?: Reason1;
+}
+/**
+ * backend -> TUI: outcome of a consent_revoke_request.
+ *
+ * arm 23 of the ``IPCFrame`` discriminated union (Epic 2).
+ *
+ * Fields:
+ * - ``request_id``: Mirrors the originating consent_revoke_request.request_id.
+ * - ``ok``: True when at least one receipt was revoked; False on error or
+ *   not-found.
+ * - ``revoked_at``: ISO-8601 UTC timestamp of the revocation (when ok=True).
+ * - ``record_hash``: Ledger entry SHA-256 for audit chain verification
+ *   (when ok=True; omitted on error).
+ * - ``error``: Machine-readable error code on failure (``already_revoked``,
+ *   ``not_found``, ``io_error``); omitted on success.
+ *
+ * role allow-list: backend.
+ */
+export interface ConsentRevokeResponseFrame {
+  session_id: SessionId23;
+  correlation_id: CorrelationId23;
+  ts: Ts23;
+  version?: Version23;
+  role: Role24;
+  frame_seq?: FrameSeq23;
+  transaction_id?: TransactionId24;
+  /**
+   * Completion/validation metadata. Populated on terminal frames. (FR-006)
+   */
+  trailer?: FrameTrailer | null;
+  kind?: Kind24;
+  request_id: RequestId3;
+  ok: Ok;
+  revoked_at?: RevokedAt;
+  record_hash?: RecordHash;
+  error?: Error;
 }

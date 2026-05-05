@@ -1,0 +1,89 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 강남역 근처 내과 알려줘
+
+✳ Twisting…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ [KOSMOS-QUERY] callModel:enter messages=4
+✽KTwisting…RY] [CHAT_MESSAGES_BUILT] count=1 user_turns=1 tail_role=user tail_first256="강남역 근처 내과 알려줘"────────────────────────────────────────────────────────────────────
+✶KOSMsting…RY] sending chat_request corr=f38da49f-b9f7-46a2-b9e8-5e7f2f1697ba chatMessages=1                                                                      ● high · /effort
+∴ Thinking — 사용자가 (ctrl+o to expand)
+❯ [KOSMOS-QUERY] recv " (ctrl+o to expand)fest_sync corr=e4a67a3a done=undefined delta="" thinking=""
+✶ Twisting…            강남역 (c rl+o to expand)
+                              근처 (ctrl+o to expand)
+                                   내과 (ctrl+o to expand)
+❯ [KOSMOS-QUERY] recv #3 kind=assistant_알려 (ctrl+o to expand)e=false delta="" thinking=" \""
+──[KOSMOS-QUERY] recv #4 kind=assistant_chun줘 (ctrl+o to expand)false delta="" thinking="강남역"───────────────────────────────────────────────────────────────────────────────────
+  [KOSMOS-QUERY] recv #5 kind=assistant_chunk "라고 (ctrl+o to expand) delta="" thinking=" 근처"                                                                  ● high · /effort
+  [KOSMOS-QUERY] recv #6 kind=assistant_chunk corr=2요청 (ctrl+o to expand)a="" thinking=" 내과"
+✻ [KOSMOS-QUERY] recv #7 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 알려"
+  [KOSMOS-QUERY] recv #8 kind=assistant_chunk corr=2f169했습니다. (ctrl+o to expand)king="줘"
+  [KOSMOS-QUERY] recv #9 kind=assistant_chunk corr=2f1697ba done=f이 (ctrl+a=to expand)g="\"라고"
+  [KOSMOS-QUERY] recv #10 kind=assistant_chunk corr=2f1697ba done=fal요청 (ctrl+o to expand)요청"
+  [KOSMOS-QUERY] recv #11 kind=assistant_chunk corr=2f1697ba done=false d을 처리 (ctrl+o to expand)"
+[KOSMOS-QUERY] recv #12 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="."
+✽ [wOStOS-QUERY] recv #13 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 이"
+  [KOSMOS-QUERY] recv #14 kind=assistant_chunk corr=2f1697ba done=false delta=""하기 위해 다음 단계를 (ctrl+o to expand)
+  [KOSMOS-QUERY] recv #15 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="을 처리"
+  TKOsMOS-QUERY] recv #16 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="하기 위해"
+[KOSMOS-QUERY] recv #17 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 다음"
+[KOSMOS-QUERY] recv #18 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 단계를"
+  [KOSMOS-QUERY] recv #19 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 따라야"
+[KOSMOS-QUERY] recv #20 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 합니다"
+[KOSMOS-QUERY] recv #21 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=":"
+[KOSMOS-QUERY] recv #22 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="\n\n"
+[KOSMOS-QUERY] recv #23 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="1"
+[KOSMOS-QUERY] recv #24 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="."
+[KOSMOS-QUERY] recv #25 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 먼저"
+⏺ 강남역 근처에서 가까운 내과를 알려드릴게요. 검색 결과를 거리순으로 정렬해 가장 가까이 있는 내과 3곳을 안내해 드립니다.
+[KOSMOS-QUERY] recv #27 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="resolve"
+ K📍 강남역 근처 내과 (거리순)                                  false delta="" thinking="_location"
+[KOSMOS-QUERY] recv #29 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="`"
+
+  1. 강남라렌의원 ⭐ 가장 가까운 곳
+
+  - 거리: 약 168m (도보 3분)
+  - 주소: 서울특별시 강남구 강남대로 378, 준빌딩 10층 (역삼동)
+  - 전화번호: 02-894-7781
+  - 종류: 의원
+
+  2. 강남박내과의원
+
+  - 거리: 약 214m (도보 4분)
+  - 주소: 서울특별시 강남구 강남대로84길 8, 우인빌딩 2층 (역삼동)
+  - 전화번호: 02-6318-8800
+  - 종류: 의원
+
+  3. 강남스마트신경과의원
+
+  - 거리: 약 232m (도보 4분)
+  - 주소: 서울특별시 서초구 강남대로 373, 홍우빌딩 3층 일부호 (서초동)
+  - 전화번호: 02-6956-1010
+  - 종류: 의원
+  ▎ ⚠️ 참고: '신경과'로 검색되어 내과가 아닐 수 있습니다. 정확한 내과를 원하시면 다른 의원도 검색 가능합니다.
+
+  📝 추가 정보
+
+  - 총 207개의 병원/의원이 검색되었습니다.
+  - 위 3곳은 강남역에서 300m 이내에 위치한 의원들입니다.
+  - 필요하시면 다른 진료과목이나 더 넓은 범위(5km 등)로도 검색해 드릴 수 있습니다.
+
+  혹시 더 가까운 내과를 원하시거나, 다른 정보가 필요하시면 말씀해 주세요!
+
+⏺ resolve_location({"query":"강남역","want":"coords_and_admcd"})
+
+⏺ lookup(hira_hospital_search)
+  ⎿  collection — 20건
+       1. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkNCMkMDAkNTgxOTYxIzExIyQxIyQzIyQxMyQ0NjE0ODEjNjEjJDEjJDAjJDgz","yadmNm":"강남라렌의원","addr":"서울
+       2. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkNCMkMDAkNTgxOTYxIzMxIyQxIyQ3IyQ2MiQzNjE4MzIjODEjJDEjJDIjJDgz","yadmNm":"강남박내과의원","addr":"서
+       3. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkOCMkMDAkMzgxOTYxIzMxIyQxIyQ3IyQ4MiQyNjEyMjIjNDEjJDEjJDgjJDgz","yadmNm":"강남스마트신경과의원","addr"
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+

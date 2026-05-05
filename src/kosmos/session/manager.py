@@ -80,13 +80,32 @@ class SessionManager:
     # ------------------------------------------------------------------
 
     async def new_session(self) -> SessionMetadata:
-        """Create a fresh session and activate it.
+        """Create a fresh session, activate it, and materialise the JSONL file.
+
+        :func:`~kosmos.session.store.create_session` is now lazy — it returns
+        a :class:`SessionMetadata` without writing to disk.  The SessionManager
+        immediately materialises the file by writing the metadata header so
+        that :meth:`resume_session` and :func:`~kosmos.session.store.list_sessions`
+        work as expected for REPL-managed sessions.
 
         Returns:
             :class:`SessionMetadata` for the newly created session.
         """
         self._metadata = await create_session(session_dir=self._session_dir)
         logger.debug("Created new session: %s", self._metadata.session_id)
+
+        # Materialise the JSONL file with the metadata header so the session
+        # is immediately visible to list_sessions() and resume_session().
+        meta_entry = SessionEntry(
+            timestamp=self._metadata.created_at,
+            entry_type="metadata",
+            data=self._metadata.model_dump(mode="json"),
+        )
+        await save_entry(
+            self._metadata.session_id,
+            meta_entry,
+            session_dir=self._session_dir,
+        )
         return self._metadata
 
     async def resume_session(self, session_id: str) -> list[ChatMessage]:

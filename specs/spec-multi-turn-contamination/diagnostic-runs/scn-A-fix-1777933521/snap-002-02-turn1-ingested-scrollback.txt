@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 강남역 근처 내과 알려줘
+
+✳ Accomplishing…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ [KOSMOS-QUERY] callModel:enter messages=4
+✻KAccOS-QUERY] [CHAT_MESSAGES_BUILT] count=1 user_turns=1 tail_role=user tail_first256="강남역 근처 내과 알려줘"────────────────────────────────────────────────────────────────────
+[KOSMOS-QUERY] sending chat_request corr=cedac607-7d48-46f7-b9d7-5d42cc3e01ca chatMessages=1                                                                      ● high · /effort
+[KOSMOS-QUERY] bridge.send returned true
+❯ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -31,6 +31,14 @@ _app = typer.Typer(
     add_completion=False,
 )
 
+# Sub-application: `kosmos session …`
+_session_app = typer.Typer(
+    name="session",
+    help="Session management utilities.",
+    add_completion=False,
+)
+_app.add_typer(_session_app, name="session")
+
 _stderr_console = Console(stderr=True)
 
 
@@ -275,9 +283,115 @@ def _run_repl(resume_session_id: str | None = None) -> None:
         sys.exit(1)
 
 
+@_session_app.command("gc-stubs")
+def _gc_stubs_command(
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run/--no-dry-run",
+            help=(
+                "When --dry-run (default) list eligible stubs but do not delete them. "
+                "Pass --no-dry-run to actually remove files."
+            ),
+        ),
+    ] = True,
+    limit: Annotated[
+        int | None,
+        typer.Option(
+            "--limit",
+            "-n",
+            help="Maximum number of eligible stubs to process.  Default: unlimited.",
+            metavar="N",
+        ),
+    ] = None,
+    older_than: Annotated[
+        int | None,
+        typer.Option(
+            "--older-than",
+            help=(
+                "Only consider stubs whose created_at is older than this many days. "
+                "Default: no age filter."
+            ),
+            metavar="DAYS",
+        ),
+    ] = None,
+    session_dir: Annotated[
+        str | None,
+        typer.Option(
+            "--session-dir",
+            help=(
+                "Override the session directory path. "
+                "Defaults to KOSMOS_MEMDIR_USER/sessions or ~/.kosmos/memdir/user/sessions."
+            ),
+            hidden=True,
+        ),
+    ] = None,
+) -> None:
+    """Garbage-collect metadata-only stub JSONL files from the session store.
+
+    A stub is a session file that contains exactly one JSON line with
+    entry_type='metadata' and message_count=0 — these were created by an older
+    version of KOSMOS at IPC boot before lazy session creation was introduced.
+
+    Run with --dry-run first (the default) to preview eligible files, then
+    re-run with --no-dry-run to delete them.
+
+    Example::
+
+        kosmos session gc-stubs --dry-run
+        kosmos session gc-stubs --no-dry-run --older-than 7
+    """
+    import asyncio as _asyncio  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    from kosmos.session.store import gc_empty_stubs  # noqa: PLC0415
+
+    console = Console()
+    dir_override = Path(session_dir).expanduser() if session_dir else None
+
+    async def _run() -> None:
+        result = await gc_empty_stubs(
+            session_dir=dir_override,
+            dry_run=dry_run,
+            limit=limit,
+            older_than_days=older_than,
+        )
+
+        mode_label = "[yellow]DRY-RUN[/yellow]" if dry_run else "[green]LIVE[/green]"
+        console.print(f"\n[bold]Session GC ({mode_label})[/bold]")
+        console.print(f"  Scanned   : {result.scanned}")
+        console.print(f"  Eligible  : {result.eligible}")
+        if dry_run:
+            console.print(
+                f"  Would delete : {result.eligible} "
+                "(pass --no-dry-run to actually remove)"
+            )
+        else:
+            console.print(f"  Deleted   : {result.deleted}")
+        console.print(f"  Skipped (has content): {result.skipped_with_content}")
+        console.print(f"  Errors    : {result.errors}")
+
+        if result.errors > 0:
+            raise typer.Exit(code=1)
+
+    _asyncio.run(_run())
+
+
 def main() -> None:
     """Public entry point called by ``[project.scripts]`` and ``__main__.py``."""
     load_repo_dotenv()
     verify_startup()  # fail-fast guard — exits 78 if required KOSMOS_* vars missing
     setup_tracing()  # configure global TracerProvider once before any query dispatch
+
+    # Bootstrap HMAC key + registry once before any ledger operation (P1-2/P1-3).
+    # Idempotent: no-op when files already exist with correct permissions.
+    # Fail-closed: HMACKeyFileModeError propagates and aborts startup.
+    from kosmos.permissions.hmac_key import bootstrap_hmac_key  # noqa: PLC0415
+    from kosmos.settings import settings as _kosmos_settings  # noqa: PLC0415
+
+    bootstrap_hmac_key(
+        key_path=_kosmos_settings.permission_key_path,
+        key_registry_path=_kosmos_settings.permission_key_registry_path,
+    )
+
     _app()

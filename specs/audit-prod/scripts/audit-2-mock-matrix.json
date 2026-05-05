@@ -1,0 +1,471 @@
+{
+  "summary": {
+    "total": 100,
+    "passed": 100,
+    "failed": 0,
+    "by_axis": {
+      "V1_envelope": {
+        "pass": 20,
+        "fail": 0
+      },
+      "V2_transparency": {
+        "pass": 20,
+        "fail": 0
+      },
+      "V3_canonical": {
+        "pass": 20,
+        "fail": 0
+      },
+      "V4_discovery": {
+        "pass": 20,
+        "fail": 0
+      },
+      "V5_disclaimer": {
+        "pass": 20,
+        "fail": 0
+      }
+    }
+  },
+  "matrix": {
+    "mock_lookup_module_gov24_certificate": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "lookup mock (probed via discovery axis)"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "stamp constants present"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '정부24 증명서 발급'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_lookup_module_hometax_simplified": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "lookup mock (probed via discovery axis)"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "stamp constants present"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '홈택스 종합소득세 간소화 자료'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_submit_module_gov24_minwon": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "primitive=submit"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "stamp wired"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '정부24 민원 신청 제출'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_submit_module_hometax_taxreturn": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "primitive=submit"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "stamp wired"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '종합소득세 신고서 제출'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_submit_module_public_mydata_action": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "primitive=submit"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "stamp wired"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=6 for '마이데이터 기관 신청'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_traffic_fine_pay_v1": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "primitive=submit"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "stamp wired"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '교통 과태료 납부'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_welfare_application_submit_v1": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "primitive=submit"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "stamp wired"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=2 for '출산 보조금 복지 신청'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_gongdong_injeungseo": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=gongdong_injeungseo"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=gongdong_injeungseo"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=4 for '공동인증서 본인 확인'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_geumyung_injeungseo": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=geumyung_injeungseo"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=geumyung_injeungseo"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=2 for '금융인증서 인증'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_ganpyeon_injeung": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=ganpyeon_injeung"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=ganpyeon_injeung"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '카카오 간편 인증'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_mobile_id": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=mobile_id"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=mobile_id"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '모바일 신분증 인증'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_mydata": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=mydata"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=mydata"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=3 for '마이데이터 인증 동의'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_module_simple_auth": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=simple_auth_module"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=simple_auth_module"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=2 for '간편인증 모듈 PASS'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_module_modid": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=modid"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=modid"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '모바일ID DID 신원 확인'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_module_kec": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=kec"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=kec"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for 'KEC 사업자등록증 인증'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_module_geumyung": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=geumyung_module"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=geumyung_module"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '금융인증서 모듈 마이데이터금융'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_verify_module_any_id_sso": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "family=any_id_sso"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "_mode=mock"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "family=any_id_sso"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for 'SSO 통합 로그인 신원확인'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_cbs_disaster_v1": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "modality=cbs_broadcast"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "metadata complete"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '재난 방송 긴급 재난문자 구독'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_rss_public_notices_v1": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "modality=rss"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "metadata complete"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '공공 공지 정부 RSS 알림'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    },
+    "mock_rest_pull_tick_v1": {
+      "V1_envelope": {
+        "pass": true,
+        "note": "modality=rest_pull"
+      },
+      "V2_transparency": {
+        "pass": true,
+        "note": "metadata complete"
+      },
+      "V3_canonical": {
+        "pass": true,
+        "note": "n/a (non-verify)"
+      },
+      "V4_discovery": {
+        "pass": true,
+        "note": "rank=1 for '데이터고닷케이알 폴링 알림'"
+      },
+      "V5_disclaimer": {
+        "pass": true,
+        "note": "covered by V2 (output _mode=mock stamp)"
+      }
+    }
+  }
+}

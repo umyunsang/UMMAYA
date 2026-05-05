@@ -49,6 +49,7 @@ import { WorkerPendingPermission } from '../components/permissions/WorkerPending
 import { injectUserMessageToTeammate, getAllInProcessTeammateTasks } from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js';
 import { isLocalAgentTask, queuePendingMessage, appendMessageToLocalAgent, type LocalAgentTaskState } from '../tasks/LocalAgentTask/LocalAgentTask.js';
 import { registerLeaderToolUseConfirmQueue, unregisterLeaderToolUseConfirmQueue, registerLeaderSetToolPermissionContext, unregisterLeaderSetToolPermissionContext } from '../utils/swarm/leaderPermissionBridge.js';
+import { registerIpcToolUseConfirmQueue } from '../utils/permissions/ipcPermissionBridge.js';
 // utils/telemetry/sessionTracing removed — KOSMOS telemetry handled by Spec 021 OTEL pipeline.
 const endInteractionSpan = (): void => { /* no-op */ }
 import { useLogMessages } from '../hooks/useLogMessages.js';
@@ -343,29 +344,44 @@ import { PdfInlineViewer } from '../components/messages/PdfInlineViewer.js';
 import { ErrorEnvelope } from '../components/messages/ErrorEnvelope.js';
 import type { ErrorEnvelopeT } from '../schemas/ui-l2/error.js';
 import { ContextQuoteBlock } from '../components/messages/ContextQuoteBlock.js';
-import { SlashCommandSuggestions } from '../components/PromptInput/SlashCommandSuggestions.js';
+// SlashCommandSuggestions import removed (P0-2 single-stack): CC useTypeahead
+// now drives the dropdown via UI_L2_SLASH_COMMANDS catalog.
 // KOSMOS Spec 1979 — KOSMOS-original permission UI imports removed.
 // CC's canonical PermissionRequest pipeline carries permission UX.
 import { useSessionStore } from '../store/session-store.js';
 import { PermissionReceiptProvider, usePermissionReceipts } from '../context/PermissionReceiptContext.js';
+import { usePermissionReceiptWatcher } from '../hooks/usePermissionReceiptWatcher.js';
+import type { PermissionReceiptT } from '../schemas/ui-l2/permission.js';
+import { ConsentListView } from '../components/consent/ConsentListView.js';
+import { ConsentRevokeConfirmDialog } from '../components/consent/ConsentRevokeConfirmDialog.js';
+import { requestRevoke } from '../ipc/consentBridge.js';
 import { AgentVisibilityPanel } from '../components/agents/AgentVisibilityPanel.js';
 import { shouldActivateSwarm } from '../schemas/ui-l2/agent.js';
+// Audit-5 P0-5 (2026-05-04) — citizen-side swarm-activation analyzer that
+// inspects the latest assistant message text for the migration-tree
+// "A + C union" trigger (3+ ministries OR explicit `복잡` / `complex` tag).
+// Wires the existing `shouldActivateSwarm` predicate (UI-D.2) and surfaces
+// the i18n `swarmActivated` toast via `kosmosSwarmMode`.
+import { analyzeSwarmActivation } from '../state/swarmActivation.js';
+import { useUiL2I18n } from '../i18n/uiL2.js';
 import { HelpV2Grouped } from '../components/help/HelpV2Grouped.js';
 import { ConfigOverlay } from '../components/config/ConfigOverlay.js';
 import { EnvSecretIsolatedEditor } from '../components/config/EnvSecretIsolatedEditor.js';
 import { PluginBrowser } from '../components/plugins/PluginBrowser.js';
 import { ExportPdfDialog } from '../components/export/ExportPdfDialog.js';
 import { HistorySearchDialog } from '../components/history/HistorySearchDialog.js';
+import { MigrateSessionsResult } from '../components/MigrateSessionsResult.js';
+import { migrateSessions } from '../utils/migrateSessions.js';
 import { OnboardingFlow, resetOnboardingState } from '../components/onboarding/OnboardingFlow.js';
 import { emitSurfaceActivation } from '../observability/surface.js';
-import { getOrCreateKosmosBridge } from '../ipc/bridgeSingleton.js';
+import { getOrCreateKosmosBridge, getKosmosBridgeSessionId } from '../ipc/bridgeSingleton.js';
 // KOSMOS Spec 1979 — Spec 033 mode cycle import removed.
 import { executeHelp } from '../commands/help.js';
 import { executeConfig, applyConfigChanges } from '../commands/config.js';
 import { executePlugins } from '../commands/plugins.js';
 import { executeExport } from '../commands/export.js';
 import { executeHistory } from '../commands/history.js';
-import { buildConsentListRows, formatConsentListRow } from '../commands/consent.js';
+import { parseConsentArgs } from '../commands/consent.js';
 import { renderAgentsCommand } from '../commands/agents.js';
 import { parseOnboardingCommand } from '../commands/onboarding.js';
 import { loadOnboardingState } from '../utils/uiL2Memdir.js';
@@ -380,6 +396,29 @@ const EMPTY_MCP_CLIENTS: MCPServerConnection[] = [];
 // Stub for useAssistantHistory's non-KAIROS branch.
 // Declared as a function (hoisted) to avoid TDZ in circular import chains.
 function _getHistoryStub() { return { maybeLoadOlder: (_h: ScrollBoxHandle) => {} } }
+
+// Tiny consumer that mirrors PermissionReceiptContext.receipts + revokeReceipt
+// into parent refs so the REPL onSubmit useCallback (defined ABOVE the provider
+// in the JSX tree) can read the live array and call revokeReceipt synchronously.
+// Renders nothing.
+function PermissionReceiptsRefSync({
+  receiptsRef,
+  revokeReceiptRef,
+}: {
+  receiptsRef: React.MutableRefObject<readonly PermissionReceiptT[]>;
+  revokeReceiptRef: React.MutableRefObject<((id: string) => 'revoked' | 'already_revoked' | 'not_found') | null>;
+}): null {
+  const { receipts, revokeReceipt, addReceipt } = usePermissionReceipts();
+  receiptsRef.current = receipts;
+  revokeReceiptRef.current = revokeReceipt;
+  // Epic 1 finish — wire backend permission_response echo → addReceipt().
+  // Gap A: backend emits PermissionResponseFrame{role:"backend", receipt_id}
+  // after writing the consent ledger. This hook intercepts that echo and
+  // updates PermissionReceiptContext so /consent list reflects the new receipt
+  // without a separate round-trip. FR-018 / Spec 033 / Spec 1635.
+  usePermissionReceiptWatcher(addReceipt);
+  return null;
+}
 // Window after a user-initiated scroll during which type-into-empty does NOT
 // repin to bottom. Josh Rosen's workflow: Claude emits long output → scroll
 // up to read the start → start typing → before this fix, snapped to bottom.
@@ -1177,6 +1216,17 @@ export function REPL({
     isImmediate?: boolean;
   } | null>(null);
 
+  // KOSMOS — receipts mirror used by /export + /consent list (FR-019/032).
+  // The PermissionReceiptProvider lives BELOW REPL in the JSX tree, so the
+  // onSubmit useCallback (which fires above the provider) cannot consume it
+  // directly. A tiny consumer component (PermissionReceiptsRefSync, mounted
+  // inside the provider subtree below) writes the live receipt array into
+  // this ref on every change, giving onSubmit a synchronous read path.
+  const permissionReceiptsRef = useRef<readonly PermissionReceiptT[]>([]);
+  // Mirror for revokeReceipt — same pattern as permissionReceiptsRef.
+  // Updated by PermissionReceiptsRefSync on every render.
+  const revokeReceiptRef = useRef<((id: string) => 'revoked' | 'already_revoked' | 'not_found') | null>(null);
+
   // Track local JSX commands separately so tools can't overwrite them.
   // This enables "immediate" commands (like /btw) to persist while Claude is processing.
   const localJSXCommandRef = useRef<{
@@ -1318,6 +1368,15 @@ export function REPL({
     registerLeaderToolUseConfirmQueue(setToolUseConfirmQueue);
     return () => unregisterLeaderToolUseConfirmQueue();
   }, [setToolUseConfirmQueue]);
+
+  // Epic FU-4 — register the IPC permission bridge so backend permission_request
+  // frames synthesize a ToolUseConfirm and push it into toolUseConfirmQueue.
+  // This replaces the KosmosIpcPermissionGauntletModal deleted in Spec 1979
+  // and restores the CC 4-arm permissionComponentForTool switch path.
+  useEffect(() => {
+    registerIpcToolUseConfirmQueue(setToolUseConfirmQueue);
+    return () => registerIpcToolUseConfirmQueue(null);
+  }, [setToolUseConfirmQueue]);
   const [messages, rawSetMessages] = useState<MessageType[]>(initialMessages ?? []);
   const messagesRef = useRef(messages);
   // Stores the willowMode variant that was shown (or false if no hint shown).
@@ -1370,6 +1429,56 @@ export function REPL({
     }
     setUserInputOnProcessingRaw(input);
   }, []);
+
+  // Audit-5 P0-5 (2026-05-04) — citizen-side swarm activation.
+  // Runs `analyzeSwarmActivation` on every new assistant message and
+  // flips `kosmosSwarmMode` true when the migration-tree A+C union
+  // predicate fires (3+ ministries OR explicit `복잡` / `complex` tag).
+  // Surfaces the i18n `swarmActivated` toast as a system message so
+  // the citizen sees `/agents` is now wired to the active swarm.
+  // Idempotent per-turn — a `lastSwarmAnalyzedIndexRef` guard prevents
+  // re-toasting on every render.
+  const uiL2I18nForSwarm = useUiL2I18n();
+  const lastSwarmAnalyzedIndexRef = useRef<number>(-1);
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const lastIdx = messages.length - 1;
+    if (lastSwarmAnalyzedIndexRef.current >= lastIdx) return;
+    const last = messages[lastIdx];
+    if (!last) return;
+    // Only inspect assistant turns — user / tool / system messages don't
+    // tag complexity and don't list ministries from the LLM's POV.
+    if (last.type !== 'assistant') {
+      lastSwarmAnalyzedIndexRef.current = lastIdx;
+      return;
+    }
+    const text = (() => {
+      try {
+        return getContentText(last.message.content);
+      } catch {
+        return null;
+      }
+    })();
+    const result = analyzeSwarmActivation(text);
+    lastSwarmAnalyzedIndexRef.current = lastIdx;
+    if (result.shouldActivate && !kosmosSwarmMode) {
+      setKosmosSwarmMode(true);
+      // Emit a transient system toast so the citizen knows /agents is
+      // now wired and which trigger fired (Korean primary per UI-A.3).
+      const triggerLabel: Record<typeof result.trigger, string> = {
+        none: '',
+        'three-plus-ministries': '(3+ 부처)',
+        'complex-tag': '(복잡 질의)',
+        both: '(3+ 부처 + 복잡 질의)',
+      };
+      const suffix = triggerLabel[result.trigger];
+      const toastText = suffix
+        ? `${uiL2I18nForSwarm.swarmActivated} ${suffix}`
+        : uiL2I18nForSwarm.swarmActivated;
+      setMessages((prev) => [...prev, createSystemMessage(toastText, 'info')]);
+    }
+  }, [messages, kosmosSwarmMode, uiL2I18nForSwarm, setMessages]);
+
   // Fullscreen: track the unseen-divider position. dividerIndex changes
   // only ~twice/scroll-session (first scroll-away + repin). pillVisible
   // and stickyPrompt now live in FullscreenLayout — they subscribe to
@@ -3471,7 +3580,17 @@ export function REPL({
                   requestedVersion: _pluginVersion,
                   dryRun: _pluginDryRun,
                   onComplete: (summary?: string) => {
-                    _kosmosCloseJSX(summary);
+                    // Audit-6 P1: persist plugin op result as a permanent system
+                    // message (receipt + PIPA hash + error detail visible in
+                    // /history). addNotification is transient — the receipt ID
+                    // would be lost once the notification expires.
+                    setToolJSX({ jsx: null, shouldHidePromptInput: false, clearLocalJSX: true });
+                    if (summary) {
+                      setMessages((prev) => [
+                        ...prev,
+                        createSystemMessage(summary, 'info'),
+                      ]);
+                    }
                   },
                 }),
                 shouldHidePromptInput: false,
@@ -3507,7 +3626,11 @@ export function REPL({
             onDismiss: () => _kosmosCloseJSX(),
           }),
           shouldHidePromptInput: false,
-          isLocalJSXCommand: true,
+          // Audit-6 P0-1: isLocalJSXCommand:true → false. AGENTS.md
+          // Infrastructure Insight #3 — :true deactivates EVERY useInput
+          // in the parent prompt subtree, including PluginBrowser's own
+          // Esc-dismiss handler. Same fix pattern as /agents (Lead-Fix4).
+          isLocalJSXCommand: false,
         });
         // Fire-and-forget: when the IPC round-trip resolves, swap the
         // toolJSX with the populated browser. Errors are silently swallowed
@@ -3524,7 +3647,7 @@ export function REPL({
                 onDismiss: () => _kosmosCloseJSX(),
               }),
               shouldHidePromptInput: false,
-              isLocalJSXCommand: true,
+              isLocalJSXCommand: false,
             });
           })
           .catch(() => {
@@ -3557,7 +3680,56 @@ export function REPL({
           const timestamp = ts != null ? new Date(ts).toISOString() : new Date().toISOString();
           return { role: human ? 'citizen' : 'assistant', content, timestamp };
         });
-        const exportResult = executeExport(exportTurns, [], []);
+        // Extract tool_use blocks (assistant) + matching tool_result blocks
+        // (user, with toolUseResult) from the active session's messages so
+        // /export honours its FR-032 contract: "대화 + 도구 + 영수증".
+        const toolUseInputs = new Map<string, { name: string; input: unknown; ts: string }>();
+        const toolResultOutputs = new Map<string, { output: unknown; ts: string }>();
+        for (const m of messages) {
+          const ts = (m as { timestamp?: string | number | Date }).timestamp;
+          const tsIso = ts != null ? new Date(ts).toISOString() : new Date().toISOString();
+          const blocks = (m as { message?: { content?: unknown } }).message?.content;
+          if (!Array.isArray(blocks)) continue;
+          for (const b of blocks) {
+            if (typeof b !== 'object' || b === null) continue;
+            const block = b as { type?: string; name?: string; input?: unknown; tool_use_id?: string; content?: unknown; id?: string };
+            if (block.type === 'tool_use' && typeof block.id === 'string') {
+              toolUseInputs.set(block.id, {
+                name: typeof block.name === 'string' ? block.name : 'unknown',
+                input: block.input,
+                ts: tsIso,
+              });
+            } else if (block.type === 'tool_result' && typeof block.tool_use_id === 'string') {
+              toolResultOutputs.set(block.tool_use_id, { output: block.content, ts: tsIso });
+            }
+          }
+        }
+        const summarize = (v: unknown, max = 200): string => {
+          if (v == null) return '';
+          let s: string;
+          if (typeof v === 'string') s = v;
+          else { try { s = JSON.stringify(v); } catch { s = String(v); } }
+          return s.length > max ? `${s.slice(0, max)}…` : s;
+        };
+        const toolInvocations: ToolInvocationRecord[] = [];
+        for (const [id, use] of toolUseInputs) {
+          const result = toolResultOutputs.get(id);
+          toolInvocations.push({
+            tool_name: use.name,
+            input_summary: summarize(use.input),
+            output_summary: result ? summarize(result.output) : '(pending)',
+            timestamp: use.ts,
+          });
+        }
+        // Receipts come from PermissionReceiptContext via the ref bridge so
+        // /export honours FR-032's third pillar ("권한 영수증").
+        const receipts = [...permissionReceiptsRef.current];
+        const exportResult = executeExport(exportTurns, toolInvocations, receipts);
+        // Mount ExportPdfDialog with `isLocalJSXCommand: false` so the
+        // parent prompt subtree's useInput hooks stay active and the
+        // dialog's own useInput Esc watcher can fire on raw `\x1b`.
+        // ExportPdfDialog now owns Esc → onCancel directly. AGENTS.md
+        // "Infrastructure insights" #3.
         setToolJSX({
           jsx: React.createElement(ExportPdfDialog, {
             turns: exportResult.turns,
@@ -3568,7 +3740,7 @@ export function REPL({
             onCancel: () => _kosmosCloseJSX(),
           }),
           shouldHidePromptInput: false,
-          isLocalJSXCommand: true,
+          isLocalJSXCommand: false,
         });
         return;
       }
@@ -3585,7 +3757,9 @@ export function REPL({
             onCancel: () => _kosmosCloseJSX(),
           }),
           shouldHidePromptInput: false,
-          isLocalJSXCommand: true,
+          // Audit-7 P0-2 fix: isLocalJSXCommand:false (AGENTS.md insight #3
+          // — :true 시 HistorySearchDialog:179 자체 useInput 도 비활성).
+          isLocalJSXCommand: false,
         });
         return;
       }
@@ -3596,17 +3770,89 @@ export function REPL({
         helpers.clearBuffer();
         const subCmd = _kosmosArgs.split(/\s/)[0] ?? '';
         if (subCmd === 'list' || _kosmosArgs === '') {
-          // Show consent list — rendered as plain text notification for now
-          addNotification({
-            key: 'kosmos-consent-list',
-            text: '권한 영수증: /consent list는 이 세션의 PermissionReceiptContext에서 읽습니다. (P5에서 패널 뷰 추가 예정)',
-            priority: 'immediate',
+          // FR-019: render the in-session receipt table inside the toolJSX
+          // overlay slot.  Pull receipts from the ref bridge so the data
+          // matches whatever the PermissionReceiptProvider currently holds.
+          // `isLocalJSXCommand: false` keeps the parent prompt subtree's
+          // useInput hooks active so the dialog's own Esc watcher fires
+          // (AGENTS.md "Infrastructure insights" #3).
+          const receipts = [...permissionReceiptsRef.current];
+          setToolJSX({
+            jsx: React.createElement(ConsentListView, {
+              receipts,
+              onExit: () => _kosmosCloseJSX(),
+            }),
+            shouldHidePromptInput: false,
+            isLocalJSXCommand: false,
           });
         } else if (subCmd === 'revoke') {
-          addNotification({
-            key: 'kosmos-consent-revoke',
-            text: `권한 영수증 철회: ${_kosmosArgs} — 확인 후 consentBridge.resolve()를 통해 처리됩니다. (P5 연동 예정)`,
-            priority: 'immediate',
+          // FR-020: parse /consent revoke rcpt-<id> → show ConsentRevokeConfirmDialog.
+          const parsed = parseConsentArgs(_kosmosArgs);
+          if (parsed.sub !== 'revoke') {
+            addNotification({
+              key: 'kosmos-consent-revoke-invalid',
+              text: '사용법: /consent revoke rcpt-<id>',
+              priority: 'immediate',
+            });
+            return;
+          }
+          const { receiptId } = parsed;
+          // Find the receipt in the current session.
+          const receipts = [...permissionReceiptsRef.current];
+          const receipt = receipts.find((r) => r.receipt_id === receiptId);
+          if (!receipt) {
+            addNotification({
+              key: 'kosmos-consent-revoke-not-found',
+              text: `영수증을 찾을 수 없습니다: ${receiptId}`,
+              priority: 'immediate',
+            });
+            return;
+          }
+          // Mount the confirmation dialog.
+          // `isLocalJSXCommand: false` keeps PromptInput's useInput hooks active
+          // so ConsentRevokeConfirmDialog's own useInput Esc handler fires
+          // (AGENTS.md "Infrastructure insights" #3/#4).
+          setToolJSX({
+            jsx: React.createElement(ConsentRevokeConfirmDialog, {
+              receipt,
+              locale: 'ko',
+              onCancel: () => _kosmosCloseJSX(),
+              onConfirm: (scope) => {
+                _kosmosCloseJSX();
+                // Optimistic in-session revoke.
+                const outcome = revokeReceiptRef.current?.(receiptId);
+                if (outcome === 'already_revoked') {
+                  addNotification({
+                    key: 'kosmos-consent-already-revoked',
+                    text: `이미 철회된 영수증입니다: ${receiptId}`,
+                    priority: 'immediate',
+                  });
+                  return;
+                }
+                // Async IPC revoke — fire and handle result.
+                const bridgeSessionId = getKosmosBridgeSessionId?.() ?? '';
+                void requestRevoke(receiptId, {
+                  scope,
+                  sessionId: bridgeSessionId,
+                }).then((result) => {
+                  if (result.ok) {
+                    addNotification({
+                      key: 'kosmos-consent-revoked',
+                      text: `영수증 철회 완료: ${receiptId}`,
+                      priority: 'immediate',
+                    });
+                  } else {
+                    addNotification({
+                      key: 'kosmos-consent-revoke-error',
+                      text: `철회 오류 (${result.error}): ${receiptId}`,
+                      priority: 'immediate',
+                    });
+                  }
+                });
+              },
+            }),
+            shouldHidePromptInput: false,
+            isLocalJSXCommand: false,
           });
         }
         return;
@@ -3616,11 +3862,19 @@ export function REPL({
         setInputValue('');
         helpers.setCursorOffset(0);
         helpers.clearBuffer();
+        // Mount /agents overlay with `isLocalJSXCommand: false` so
+        // PromptInput.tsx:244's `isLocalJSXCommandActive` flag stays false —
+        // that flag, when true, sets `isModalOverlayActive` to true and
+        // deactivates EVERY useInput hook in the parent prompt subtree,
+        // which previously prevented AgentsCommandView's own Esc handler
+        // from firing. AgentsCommandView now owns a `useInput((_,k)=>k.escape
+        // && onExit())` watcher (defense-in-depth, mirrors HelpV2Grouped).
+        // AGENTS.md "Infrastructure insights" #3.
         const agentsJsx = renderAgentsCommand(_kosmosArgs, () => _kosmosCloseJSX());
         setToolJSX({
           jsx: agentsJsx,
           shouldHidePromptInput: false,
-          isLocalJSXCommand: true,
+          isLocalJSXCommand: false,
         });
         return;
       }
@@ -3665,6 +3919,106 @@ export function REPL({
         } else {
           addNotification({ key: 'kosmos-lang-error', text: langResult.message, priority: 'immediate' });
         }
+        return;
+      }
+
+      // Audit-7 P0-3: /migrate-sessions wiring.
+      // Parses --prune / --filter-cwd / --dry-run / --confirmed flags inline
+      // and dispatches to the migrateSessions utility. Result is rendered
+      // via MigrateSessionsResult overlay so the citizen sees a transient
+      // table; the prompt remains active.
+      if (_kosmosCmd === 'migrate-sessions') {
+        setInputValue('');
+        helpers.setCursorOffset(0);
+        helpers.clearBuffer();
+        // Inline flag parser (mirrors tui/src/commands/migrate-sessions.ts
+        // — duplicated here to avoid an extra IO round-trip via CommandHandler).
+        let _migPrune = false;
+        let _migDryRun = false;
+        let _migConfirmed = false;
+        let _migFilterCwd: string | undefined;
+        const _migParseError: string[] = [];
+        const _migTokens = _kosmosArgs.split(/\s+/).filter((t) => t.length > 0);
+        for (let i = 0; i < _migTokens.length; i += 1) {
+          const tok = _migTokens[i];
+          if (tok === '--prune') _migPrune = true;
+          else if (tok === '--dry-run') _migDryRun = true;
+          else if (tok === '--confirmed') _migConfirmed = true;
+          else if (tok === '--filter-cwd') {
+            const next = _migTokens[i + 1];
+            if (!next || next.startsWith('--')) {
+              _migParseError.push('--filter-cwd requires a regex argument');
+            } else {
+              _migFilterCwd = next;
+              i += 1;
+            }
+          } else if (tok && !tok.startsWith('--')) {
+            _migParseError.push(`unexpected positional argument: ${tok}`);
+          } else if (tok) {
+            _migParseError.push(`unknown flag: ${tok}`);
+          }
+        }
+        if (_migFilterCwd !== undefined) {
+          try { new RegExp(_migFilterCwd); }
+          catch (err) { _migParseError.push(`--filter-cwd: invalid regex "${_migFilterCwd}": ${String(err)}`); }
+        }
+        if (_migParseError.length > 0) {
+          addNotification({
+            key: 'kosmos-migrate-parse-error',
+            text: ['/migrate-sessions: flag parse error(s):',
+                   ..._migParseError.map((e) => `  • ${e}`),
+                   'Usage: /migrate-sessions [--dry-run] [--filter-cwd <regex>] [--prune]'].join('\n'),
+            priority: 'immediate',
+          });
+          return;
+        }
+        // Guard: --prune in non-dry-run mode requires --confirmed.
+        if (_migPrune && !_migDryRun && !_migConfirmed) {
+          addNotification({
+            key: 'kosmos-migrate-confirm-needed',
+            text: ['/migrate-sessions --prune: source files will be deleted after copy.',
+                   '먼저 /migrate-sessions --prune --dry-run 으로 미리보기를 권장합니다.',
+                   '확인 후 /migrate-sessions --prune --confirmed 로 실행하세요.'].join('\n'),
+            priority: 'immediate',
+          });
+          return;
+        }
+        // Run migrateSessions and mount the result overlay.
+        void migrateSessions({
+          prune: _migPrune,
+          filterCwd: _migFilterCwd,
+          dryRun: _migDryRun,
+        }).then((summary) => {
+          setToolJSX({
+            jsx: React.createElement(MigrateSessionsResult, {
+              copied: summary.copied,
+              skipped: summary.skipped,
+              pruned: summary.pruned,
+              bytes: summary.bytes,
+              errors: summary.errors,
+              dryRun: _migDryRun,
+            }),
+            shouldHidePromptInput: false,
+            isLocalJSXCommand: false,
+          });
+          // Add a follow-up hint when dry-run yielded copy candidates.
+          if (_migDryRun && summary.copied > 0) {
+            const hint = _migPrune
+              ? '미리보기 완료. 적용하려면 /migrate-sessions --prune --confirmed 입력.'
+              : '미리보기 완료. 적용하려면 /migrate-sessions 입력.';
+            addNotification({
+              key: 'kosmos-migrate-hint',
+              text: hint,
+              priority: 'immediate',
+            });
+          }
+        }).catch((err) => {
+          addNotification({
+            key: 'kosmos-migrate-error',
+            text: `/migrate-sessions failed: ${String(err)}`,
+            priority: 'immediate',
+          });
+        });
         return;
       }
     }
@@ -5059,7 +5413,9 @@ export function REPL({
   // flexGrow in FullscreenLayout resolves against this Box. The transcript
   // early return above wraps its virtual-scroll branch the same way; only
   // the 30-cap dump branch stays unwrapped for native terminal scrollback.
-  const mainReturn = <KeybindingSetup>
+  const mainReturn = <PermissionReceiptProvider>
+    <PermissionReceiptsRefSync receiptsRef={permissionReceiptsRef} revokeReceiptRef={revokeReceiptRef} />
+    <KeybindingSetup>
       <AnimatedTerminalTitle isAnimating={titleIsAnimating} title={terminalTitle} disabled={titleDisabled} noPrefix={showStatusInTerminalTab} />
       <GlobalKeybindingHandlers {...globalKeybindingProps} />
       {feature('VOICE_MODE') ? <VoiceKeybindingHandler voiceHandleKeyEvent={voice.handleKeyEvent} stripTrailing={voice.stripTrailing} resetAnchor={voice.resetAnchor} isActive={!toolJSX?.isLocalJSXCommand} /> : null}
@@ -5418,12 +5774,9 @@ export function REPL({
             // Works during isLoading — edit cancels first; uuid selection survives appends.
             feature('MESSAGE_ACTIONS') && isFullscreenEnvEnabled() && !disableMessageActions ? enterMessageActions : undefined} mcpClients={mcpClients} pastedContents={pastedContents} setPastedContents={setPastedContents} vimMode={vimMode} setVimMode={setVimMode} showBashesDialog={showBashesDialog} setShowBashesDialog={setShowBashesDialog} onSubmit={onSubmit} onAgentSubmit={onAgentSubmit} isSearchingHistory={isSearchingHistory} setIsSearchingHistory={setIsSearchingHistory} helpOpen={isHelpOpen} setHelpOpen={setIsHelpOpen} insertTextRef={feature('VOICE_MODE') ? insertTextRef : undefined} voiceInterimRange={voice.interimRange} />
                       <SessionBackgroundHint onBackgroundSession={handleBackgroundSession} isLoading={isLoading} />
-                      {/* KOSMOS P4 UI L2 — T022: SlashCommandSuggestions above prompt */}
-                      <SlashCommandSuggestions
-                        inputText={inputValue}
-                        selectedIndex={0}
-                        onSelect={(entry) => setInputValue(entry.name + ' ')}
-                      />
+                      {/* KOSMOS P0-2: SlashCommandSuggestions overlay removed — CC useTypeahead
+                          now sources commands from UI_L2_SLASH_COMMANDS catalog (single stack).
+                          See tui/src/utils/suggestions/commandSuggestions.ts:filterToKosmosCommands */}
                       {/* KOSMOS P4 UI L2 — T022: ErrorEnvelope for network/LLM/tool errors */}
                       {kosmosCurrentError && (
                         <ErrorEnvelope
@@ -5544,7 +5897,8 @@ export function REPL({
               {feature('BUDDY') && !(companionNarrow && isFullscreenEnvEnabled()) && companionVisible ? <CompanionSprite /> : null}
             </Box>} />
       </MCPConnectionManager>
-    </KeybindingSetup>;
+    </KeybindingSetup>
+  </PermissionReceiptProvider>;
   if (isFullscreenEnvEnabled()) {
     return <AlternateScreen mouseTracking={isMouseTrackingEnabled()}>
         {mainReturn}

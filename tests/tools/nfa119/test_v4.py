@@ -338,8 +338,12 @@ class TestHandleHappy:
         )
         result = await handle(inp, client=client)
 
-        assert result["operation"] == "getEmgencyActivityInfo"
-        assert result["result_code"] == "00"
+        # Envelope-ready collection contract (post-2026-05-04 fabrication fix):
+        # handle() returns {"kind": "collection", "items": [...], "total_count": N}
+        # — operation/result_code metadata is logged but no longer surfaced to the
+        # LLM, because the discriminated LookupOutput envelope only carries kind
+        # + items + total_count + meta. See module docstring for the C-class context.
+        assert result["kind"] == "collection"
         assert result["total_count"] == 1
         assert len(result["items"]) == 1
         # Verify correct sub-endpoint URL was called
@@ -366,7 +370,7 @@ class TestHandleHappy:
         )
         result = await handle(inp, client=client)
 
-        assert result["operation"] == "getEmgPatientTransferInfo"
+        assert result["kind"] == "collection"
         assert result["total_count"] == 162
         items = result["items"]
         assert len(items) == 2
@@ -391,7 +395,7 @@ class TestHandleHappy:
         )
         result = await handle(inp, client=client)
 
-        assert result["operation"] == "getEmgPatientConditionInfo"
+        assert result["kind"] == "collection"
         assert result["total_count"] == 1299
         assert result["items"][0]["ruptSptmCdNm"] == "어지러움"
 
@@ -409,7 +413,7 @@ class TestHandleHappy:
         )
         result = await handle(inp, client=client)
 
-        assert result["operation"] == "getEmgPatientFirstaidInfo"
+        assert result["kind"] == "collection"
         assert result["total_count"] == 74
         assert result["items"][0]["fstaCdNm"] == "비관, 기타"
 
@@ -427,7 +431,7 @@ class TestHandleHappy:
         )
         result = await handle(inp, client=client)
 
-        assert result["operation"] == "getEmgVehicleDispatchInfo"
+        assert result["kind"] == "collection"
         assert result["total_count"] == 1199
         assert result["items"][0]["vctpCdNm"] == "구급차특수(중형)"
 
@@ -445,7 +449,7 @@ class TestHandleHappy:
         )
         result = await handle(inp, client=client)
 
-        assert result["operation"] == "getEmgVehicleInfo"
+        assert result["kind"] == "collection"
         assert result["total_count"] == 117
         assert result["items"][0]["stde"] == "20220125"
         # vehicle_info: no ym param in wire call
@@ -574,9 +578,20 @@ class TestToolMetadata:
     def test_tool_id(self) -> None:
         assert NFA_EMERGENCY_INFO_SERVICE_TOOL.id == "nfa_emergency_info_service"
 
-    def test_output_schema_is_real_model(self) -> None:
-        """output_schema must be NfaEmergencyInfoServiceOutput (not the old RootModel stub)."""
-        assert NFA_EMERGENCY_INFO_SERVICE_TOOL.output_schema is NfaEmergencyInfoServiceOutput
+    def test_output_schema_is_envelope_placeholder(self) -> None:
+        """output_schema is an envelope placeholder; handler emits envelope-ready dict.
+
+        Updated 2026-05-04 (C-class fabrication fix): the strict
+        NfaEmergencyInfoServiceOutput remains as the documentation contract,
+        but the wire surface is now a placeholder that lets the
+        envelope-ready ``{"kind": "collection", ...}`` dict flow into
+        envelope.normalize() — see module docstring for context.
+        """
+        from kosmos.tools.nfa119.emergency_info_service import _PlaceholderOutput
+
+        assert NFA_EMERGENCY_INFO_SERVICE_TOOL.output_schema is _PlaceholderOutput
+        # Documentation contract preserved
+        assert NfaEmergencyInfoServiceOutput.__name__ == "NfaEmergencyInfoServiceOutput"
 
     def test_llm_description_not_empty(self) -> None:
         assert len(NFA_EMERGENCY_INFO_SERVICE_TOOL.llm_description) > 100
@@ -631,7 +646,7 @@ class TestHandleLive:
             num_of_rows=2,
         )
         result = await handle(inp)
-        assert result["result_code"] == "00"
+        assert result["kind"] == "collection"
         assert isinstance(result["items"], list)
 
     @pytest.mark.asyncio
@@ -650,5 +665,5 @@ class TestHandleLive:
             num_of_rows=2,
         )
         result = await handle(inp)
-        assert result["result_code"] == "00"
+        assert result["kind"] == "collection"
         assert isinstance(result["items"], list)

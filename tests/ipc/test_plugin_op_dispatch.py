@@ -196,6 +196,246 @@ class TestHandleList:
         assert terminal.result == "success"
         assert terminal.exit_code == 0
 
+    @pytest.mark.asyncio
+    async def test_list_payload_delta_contains_valid_json(self) -> None:
+        """Audit-6 P1: payload delta must carry parseable JSON with 'entries' key."""
+        import json
+        from kosmos.ipc.plugin_op_dispatcher import handle_list
+        from kosmos.ipc.frame_schema import PayloadDeltaFrame
+
+        class _StubRegistry:
+            _tools: dict[str, Any] = {}
+
+            def is_active(self, _tid: str) -> bool:  # noqa: PLR6301
+                return True
+
+        sink = _FrameSink()
+        await handle_list(
+            _build_request("list"),
+            registry=_StubRegistry(),
+            write_frame=sink.write,
+        )
+        delta_frames = [f for f in sink.frames if isinstance(f, PayloadDeltaFrame)]
+        assert len(delta_frames) >= 1, "expected at least one payload_delta frame"
+        full_payload = "".join(f.payload for f in delta_frames)
+        parsed = json.loads(full_payload)
+        assert "entries" in parsed, "payload must have 'entries' key"
+        assert isinstance(parsed["entries"], list), "'entries' must be a list"
+
+
+# ---------------------------------------------------------------------------
+# Audit-6 P1: error_kind + error_message propagation + was_idempotent_noop
+# ---------------------------------------------------------------------------
+
+
+class TestErrorPropagation:
+    """Audit-6 P1 — complete frames propagate error_kind/error_message."""
+
+    def test_build_complete_frame_failure_carries_error_kind(self) -> None:
+        """error_kind + error_message are set on failure complete frames."""
+        from kosmos.ipc.plugin_op_dispatcher import _build_complete_frame
+
+        frame = _build_complete_frame(
+            session_id="sess-1",
+            correlation_id="corr-1",
+            result="failure",
+            exit_code=2,
+            error_kind="bundle_sha_mismatch",
+            error_message="SHA-256 9abc != expected ffff",
+        )
+        assert frame.error_kind == "bundle_sha_mismatch"
+        assert frame.error_message == "SHA-256 9abc != expected ffff"
+        assert frame.receipt_id is None
+
+    def test_build_complete_frame_success_clears_error_kind(self) -> None:
+        """error_kind is stripped (set to None) on success complete frames."""
+        from kosmos.ipc.plugin_op_dispatcher import _build_complete_frame
+
+        frame = _build_complete_frame(
+            session_id="sess-1",
+            correlation_id="corr-1",
+            result="success",
+            exit_code=0,
+            receipt_id="rcpt-abc123",
+            error_kind="should_be_stripped",  # must be ignored for success
+        )
+        assert frame.error_kind is None
+        assert frame.receipt_id == "rcpt-abc123"
+
+    def test_build_complete_frame_idempotent_noop(self) -> None:
+        """was_idempotent_noop=True is propagated on success."""
+        from kosmos.ipc.plugin_op_dispatcher import _build_complete_frame
+
+        frame = _build_complete_frame(
+            session_id="sess-1",
+            correlation_id="corr-1",
+            result="success",
+            exit_code=0,
+            was_idempotent_noop=True,
+        )
+        assert frame.was_idempotent_noop is True
+        assert frame.error_kind is None
+
+    @pytest.mark.asyncio
+    async def test_handle_uninstall_idempotent_noop_propagated(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Audit-6 P1: handle_uninstall propagates was_idempotent_noop to complete frame."""
+        from kosmos.ipc import plugin_op_dispatcher
+        from kosmos.plugins.uninstall import UninstallResult
+
+        # Stub uninstall_plugin to return an idempotent-noop result.
+        def _stub_uninstall(*_args: Any, **_kwargs: Any) -> UninstallResult:
+            return UninstallResult(
+                exit_code=0,
+                plugin_id="never_installed",
+                receipt_id=None,
+                error_kind=None,
+                error_message=None,
+                was_idempotent_noop=True,
+            )
+
+        monkeypatch.setattr(
+            "kosmos.ipc.plugin_op_dispatcher.uninstall_plugin",
+            _stub_uninstall,
+            raising=False,
+        )
+
+        # Also patch the lazy import inside handle_uninstall.
+        import sys
+        import types
+
+        fake_uninstall_mod = types.ModuleType("kosmos.plugins.uninstall")
+        fake_uninstall_mod.uninstall_plugin = _stub_uninstall  # type: ignore[attr-defined]
+        monkeypatch.setitem(sys.modules, "kosmos.plugins.uninstall", fake_uninstall_mod)
+
+        frame = _build_request("uninstall", name="never_installed")
+        sink = _FrameSink()
+        await plugin_op_dispatcher.handle_uninstall(
+            frame,
+            registry=object(),
+            executor=object(),
+            write_frame=sink.write,
+        )
+        complete_frames = [
+            f for f in sink.frames if isinstance(f, PluginOpFrame) and f.op == "complete"
+        ]
+        assert len(complete_frames) == 1
+        cf = complete_frames[0]
+        assert cf.result == "success"
+        assert cf.was_idempotent_noop is True
+
+
+class TestUninstallResultIdempotentField:
+    """Audit-6 P1 — UninstallResult.was_idempotent_noop field correctness."""
+
+    def test_idempotent_noop_defaults_false(self) -> None:
+        from kosmos.plugins.uninstall import UninstallResult
+
+        result = UninstallResult(
+            exit_code=0,
+            plugin_id="test_plugin",
+            receipt_id="rcpt-abc",
+            error_kind=None,
+            error_message=None,
+        )
+        assert result.was_idempotent_noop is False
+
+    def test_idempotent_noop_true_when_set(self) -> None:
+        from kosmos.plugins.uninstall import UninstallResult
+
+        result = UninstallResult(
+            exit_code=0,
+            plugin_id="test_plugin",
+            receipt_id=None,
+            error_kind=None,
+            error_message=None,
+            was_idempotent_noop=True,
+        )
+        assert result.was_idempotent_noop is True
+
+
+# ---------------------------------------------------------------------------
+# Audit-6 P0-2: PluginOpFrame new fields schema compliance
+# ---------------------------------------------------------------------------
+
+
+class TestPluginOpFrameNewFields:
+    """Verify error_kind / error_message / was_idempotent_noop obey shape rules."""
+
+    def test_complete_failure_accepts_error_kind(self) -> None:
+        frame = PluginOpFrame(
+            session_id="s1",
+            correlation_id="c1",
+            ts="2026-05-04T00:00:00.000Z",
+            role="backend",
+            op="complete",
+            result="failure",
+            exit_code=2,
+            error_kind="bundle_sha_mismatch",
+            error_message="SHA mismatch",
+        )
+        assert frame.error_kind == "bundle_sha_mismatch"
+        assert frame.error_message == "SHA mismatch"
+
+    def test_complete_success_forbids_error_kind(self) -> None:
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="must not set error_kind"):
+            PluginOpFrame(
+                session_id="s1",
+                correlation_id="c1",
+                ts="2026-05-04T00:00:00.000Z",
+                role="backend",
+                op="complete",
+                result="success",
+                exit_code=0,
+                error_kind="should_be_rejected",
+            )
+
+    def test_request_forbids_error_kind(self) -> None:
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="must not set progress/complete fields"):
+            PluginOpFrame(
+                session_id="s1",
+                correlation_id="c1",
+                ts="2026-05-04T00:00:00.000Z",
+                role="tui",
+                op="request",
+                request_op="list",
+                error_kind="should_not_be_set",
+            )
+
+    def test_progress_forbids_error_kind(self) -> None:
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="must not set request/complete fields"):
+            PluginOpFrame(
+                session_id="s1",
+                correlation_id="c1",
+                ts="2026-05-04T00:00:00.000Z",
+                role="backend",
+                op="progress",
+                progress_phase=1,
+                progress_message_ko="x",
+                progress_message_en="x",
+                error_kind="should_not_be_set",
+            )
+
+    def test_complete_success_accepts_was_idempotent_noop(self) -> None:
+        frame = PluginOpFrame(
+            session_id="s1",
+            correlation_id="c1",
+            ts="2026-05-04T00:00:00.000Z",
+            role="backend",
+            op="complete",
+            result="success",
+            exit_code=0,
+            was_idempotent_noop=True,
+        )
+        assert frame.was_idempotent_noop is True
+
 
 # ---------------------------------------------------------------------------
 # Concurrent install ledger position (analysis.md C2 / SC-009)

@@ -42,10 +42,14 @@ import type {
   HeartbeatFrame,
   NotificationPushFrame,
   AdapterManifestSyncFrame,
+  ConsentRevokeRequestFrame,
+  ConsentRevokeResponseFrame,
 } from './frames.generated'
 
 // Re-export AdapterManifestSyncFrame so router code imports from codec.
 export type { AdapterManifestSyncFrame }
+// Re-export consent revoke types.
+export type { ConsentRevokeRequestFrame, ConsentRevokeResponseFrame }
 
 // ---------------------------------------------------------------------------
 // Zod schemas (belt-and-braces atop generated TypeScript types)
@@ -167,7 +171,14 @@ const PermissionRequestFrameSchema = BaseFrame.extend({
 const PermissionResponseFrameSchema = BaseFrame.extend({
   kind: z.literal('permission_response'),
   request_id: z.string(),
-  decision: z.enum(['granted', 'denied']),
+  // Spec 1978 ADR-0002 + Spec 033 — 5-value vocabulary (synced with
+  // frame_schema.py:PermissionResponseFrame.decision Literal).
+  // 'granted'/'denied' are Spec 287 legacy aliases kept for backward
+  // compatibility; backend normalises them to allow_once/deny internally.
+  decision: z.enum(['granted', 'allow_once', 'allow_session', 'denied', 'deny']),
+  // Gap A fix — receipt_id emitted by backend on granted decisions.
+  // Optional for backward compat: older backend versions omit this field.
+  receipt_id: z.string().nullable().optional(),
 })
 
 const SessionEventFrameSchema = BaseFrame.extend({
@@ -292,13 +303,32 @@ const AdapterManifestSyncFrameSchema = BaseFrame.extend({
   emitter_pid: z.number().int().positive(),
 })
 
+// Epic 2 — consent_revoke_request (arm 22) / consent_revoke_response (arm 23).
+const ConsentRevokeRequestFrameSchema = BaseFrame.extend({
+  kind: z.literal('consent_revoke_request'),
+  request_id: z.string().min(1),
+  receipt_id: z.string().min(1),
+  scope: z.enum(['once', 'session-all']),
+  reason: z.string().nullable().optional(),
+})
+
+const ConsentRevokeResponseFrameSchema = BaseFrame.extend({
+  kind: z.literal('consent_revoke_response'),
+  request_id: z.string().min(1),
+  ok: z.boolean(),
+  revoked_at: z.string().nullable().optional(),
+  record_hash: z.string().nullable().optional(),
+  error: z.enum(['already_revoked', 'not_found', 'io_error']).nullable().optional(),
+})
+
 // ---------------------------------------------------------------------------
-// Zod discriminated-union validator — all 22 IPCFrame arms
+// Zod discriminated-union validator — all 24 IPCFrame arms
 // (Spec 287 baseline 10 + Spec 032 9 + Epic #1636 plugin_op + Spec 1978
-// chat_request + Epic ε #2296 adapter_manifest_sync)
+// chat_request + Epic ε #2296 adapter_manifest_sync +
+// Epic 2 consent_revoke_request/response)
 // ---------------------------------------------------------------------------
 
-/** Zod discriminated-union validator for all 22 IPCFrame arms. */
+/** Zod discriminated-union validator for all 24 IPCFrame arms. */
 export const IPCFrameSchema = z.discriminatedUnion('kind', [
   // Spec 287 baseline (10)
   UserInputFrameSchema,
@@ -327,6 +357,9 @@ export const IPCFrameSchema = z.discriminatedUnion('kind', [
   ChatRequestFrameSchema,
   // Epic ε #2296 — adapter manifest sync (22nd arm)
   AdapterManifestSyncFrameSchema,
+  // Epic 2 — consent revoke arms (23rd + 24th)
+  ConsentRevokeRequestFrameSchema,
+  ConsentRevokeResponseFrameSchema,
 ])
 
 // ---------------------------------------------------------------------------
@@ -392,6 +425,12 @@ export function isNotificationPush(f: IPCFrame): f is NotificationPushFrame {
 }
 export function isAdapterManifestSync(f: IPCFrame): f is AdapterManifestSyncFrame {
   return f.kind === 'adapter_manifest_sync'
+}
+export function isConsentRevokeRequest(f: IPCFrame): f is ConsentRevokeRequestFrame {
+  return f.kind === 'consent_revoke_request'
+}
+export function isConsentRevokeResponse(f: IPCFrame): f is ConsentRevokeResponseFrame {
+  return f.kind === 'consent_revoke_response'
 }
 
 // ---------------------------------------------------------------------------

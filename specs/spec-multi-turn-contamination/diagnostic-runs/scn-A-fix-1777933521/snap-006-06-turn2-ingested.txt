@@ -1,0 +1,60 @@
+ K가장 가까운 내과 (병원/의원)                                  false delta="" thinking="To"
+[KOSMOS-QUERY] recv #29 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" fulfill"
+
+  1. 선한목자병원 (824m)
+
+  - 주소: 서울특별시 강남구 논현로 507 (역삼동)
+  - 종류: 병원
+  - 전화: 02-557-1004
+  - 특징: 강남역에서 가장 가까운 내과 병원
+
+  2. 열린의료재단 서초열린의원 (1.1km)
+
+  - 주소: 서울특별시 서초구 서초대로 320 (서초동)
+  - 종류: 의원 (일차의료기관)
+  - 전화: 02-522-0872
+  - 특징: 개인 의원 형태, 규모가 작은 일차의료기관
+
+  3. 차의과학대학교 강남차병원 (1.1km)
+
+  - 주소: 서울특별시 강남구 논현로 566 (역삼동)
+  - 종류: 종합병원
+  - 전화: 02-3468-3000
+  - 특징: 대학병원급 의료기관, 다양한 진료과 보유
+
+  기타 주요 병원/의원 (1.2-1.6km)
+
+
+  - 메디움강남요양병원 (1.2km) - 요양병원
+  - 하나이비인후과병원 (1.3km) - 이비인후과 전문 (내과 진료 여부 확인 필요)
+  - 비에비스나무병원 (1.3km) - 종합병원
+  - 365메트로의원 (1.6km) - 의원
+
+  참고사항
+
+  - 검색 결과는 "내과" 진료과목으로 필터링된 318개 의료기관 중 상위 10개입니다.
+  - 각 병원/의원은 내과 외에도 다른 진료과를 함께 운영할 수 있습니다.
+  - 정확한 내과 진료 여부는 병원에 직접 전화하여 확인하시는 것이 가장 좋습니다.
+  - 가장 가까운 선한목자병원(824m)부터 방문해보시는 것을 추천드립니다.
+
+  원하신다면 특정 병원에 대한 더 자세한 정보나 다른 검색 조건으로 다시 찾아드릴 수 있습니다.
+
+⏺ resolve_location({"query":"강남역","want":"coords_and_admcd"})
+
+⏺ lookup(hira_hospital_search)
+  ⎿  collection — 20건
+       1. {"ykiho":"JDQ4MTg4MSM1MSMkMSMkMCMkOTkkMzgxMzUxIzMxIyQyIyQzIyQwMCQyNjE4MzIjNjEjJDEjJDAjJDgz","yadmNm":"선한목자병원","addr":"서울
+       2. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkNCMkMDAkNDgxOTYxIzExIyQxIyQzIyQ2MiQ0NjEwMDIjNjEjJDEjJDAjJDgz","yadmNm":"(의) 열린의료재단 서초열린의원"
+       3. {"ykiho":"JDQ4MTg4MSM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQwMyQzNjE0ODEjNTEjJDEjJDIjJDgz","yadmNm":"차의과학대학교 강남차병원","ad
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 재난 알림 구독해줘[KOSMOS-QUERY] callModel:enter messages=8
+❯ 재난 알림 구독해줘
+      S    R         g chat_request corr=3eaf1aa6-fbd3-499b-aca5-6d54eaf8aaaf chatMessages=5
+✳ Brewing…
+  ⎿  Tip: Create skills by adding .md files to .claude/skills/ in your project or ~/.claude/skills/ for skills that work in any project
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+

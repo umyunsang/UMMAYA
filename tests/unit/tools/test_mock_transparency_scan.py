@@ -329,13 +329,28 @@ async def test_lookup_adapter_response_carries_six_transparency_fields(
     else:
         raise ValueError(f"Unknown lookup adapter: {adapter_id!r}")
 
-    assert result.get("_mode") == "mock", (
-        f"lookup/{adapter_id}: _mode must be 'mock', got {result.get('_mode')!r}"
+    # B1 envelope-contract fix: lookup mocks now return a LookupOutput
+    # ``{"kind": "record", "item": {...}}`` envelope. The six transparency
+    # fields are stamped onto ``item`` (LookupRecord.item is dict[str, object]),
+    # not the outer envelope (LookupRecord uses extra='forbid').
+    assert result.get("kind") == "record", (
+        f"lookup/{adapter_id}: handle() must return a LookupRecord envelope "
+        f"({{'kind': 'record', 'item': ...}}), got kind={result.get('kind')!r}"
+    )
+    item = result.get("item")
+    assert isinstance(item, dict), (
+        f"lookup/{adapter_id}: envelope 'item' must be a dict, got {type(item).__name__}"
+    )
+
+    assert item.get("_mode") == "mock", (
+        f"lookup/{adapter_id}: _mode must be 'mock' (inside envelope.item), "
+        f"got {item.get('_mode')!r}"
     )
     for field in _SIX_FIELDS[1:]:
-        value = result.get(field)
+        value = item.get(field)
         assert value is not None and isinstance(value, str) and value.strip(), (
-            f"lookup/{adapter_id}: transparency field {field!r} is missing or empty. Got: {value!r}"
+            f"lookup/{adapter_id}: transparency field {field!r} is missing or empty "
+            f"(checked inside envelope.item). Got: {value!r}"
         )
 
 

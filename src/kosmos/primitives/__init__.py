@@ -44,10 +44,24 @@ PRIMITIVE_REGISTRY: dict[str, Callable[..., Any]] = {
 }
 
 # Subset of ``PRIMITIVE_REGISTRY`` whose invocation requires a Spec 033
-# permission decision before dispatch (Layer 2/3 — side-effecting). The
-# complement (``PRIMITIVE_REGISTRY.keys() - GATED_PRIMITIVES``) is the
-# Layer 1 read-only set: lookup / resolve_location / verify.
-GATED_PRIMITIVES: frozenset[str] = frozenset({"submit", "subscribe"})
+# permission decision before dispatch.
+#
+# ``GATED_PRIMITIVES`` — full set of primitives that enter the permission
+# bridge (all three: verify / submit / subscribe).
+#
+# ``LIGHT_GATE_PRIMITIVES`` — subset that gets *light* permission treatment
+# (single-decision, risk_level="low"): verify, because it is a delegation-
+# only identity binding (read-only from the citizen's data perspective, but
+# still requires explicit consent per Spec 031 § US2).
+#
+# ``HEAVY_GATE_PRIMITIVES`` — side-effecting primitives (Layer 2/3):
+# submit (irreversible write) and subscribe (persistent stream).
+#
+# The complement (``PRIMITIVE_REGISTRY.keys() - GATED_PRIMITIVES``) is the
+# fully auto-allowed set: lookup / resolve_location.
+GATED_PRIMITIVES: frozenset[str] = frozenset({"verify", "submit", "subscribe"})
+LIGHT_GATE_PRIMITIVES: frozenset[str] = frozenset({"verify"})
+HEAVY_GATE_PRIMITIVES: frozenset[str] = frozenset({"submit", "subscribe"})
 
 # ``__all__`` enumerates the LLM-visible primitive *surface* — the five root
 # verbs (Migration Tree § L1-C.C1). The metadata constants ``PRIMITIVE_REGISTRY``
@@ -55,4 +69,16 @@ GATED_PRIMITIVES: frozenset[str] = frozenset({"submit", "subscribe"})
 # from downstream callers (``from kosmos.primitives import PRIMITIVE_REGISTRY``);
 # they intentionally stay out of ``__all__`` so ``test_primitive_count_is_five``
 # (Spec 031 SC-001 invariant) keeps the surface canonical.
-__all__ = ["lookup", "resolve_location", "submit", "subscribe", "verify"]
+__all__ = [
+    "lookup",
+    "resolve_location",
+    "submit",
+    "subscribe",
+    "verify",
+]
+# Metadata constants (GATED_PRIMITIVES / LIGHT_GATE_PRIMITIVES /
+# HEAVY_GATE_PRIMITIVES / PRIMITIVE_REGISTRY) are intentionally NOT in __all__
+# — they are imported by name from downstream callers
+# (``from kosmos.primitives import PRIMITIVE_REGISTRY``) and the Spec 031
+# SC-001 invariant requires the LLM-visible surface to expose exactly the
+# 5 root verbs. ``test_primitive_count_is_five`` enforces this.

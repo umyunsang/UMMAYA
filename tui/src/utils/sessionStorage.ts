@@ -75,6 +75,7 @@ import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getKosmosSessionsDir } from './kosmosPaths.js'
 import { isFsInaccessible } from './errors.js'
 import type { FileHistorySnapshot } from './fileHistory.js'
 import { formatFileSize } from './format.js'
@@ -200,7 +201,24 @@ export function isEphemeralToolProgress(dataType: unknown): boolean {
   return typeof dataType === 'string' && EPHEMERAL_PROGRESS_TYPES.has(dataType)
 }
 
+/**
+ * KOSMOS canonical session storage root.
+ *
+ * Returns `~/.kosmos/memdir/user/sessions/` (or the KOSMOS_MEMDIR_USER
+ * override). This replaces the CC-legacy `~/.claude/projects/` path for
+ * all KOSMOS session writes (Spec 027 / Initiative #2290).
+ */
 export function getProjectsDir(): string {
+  return getKosmosSessionsDir()
+}
+
+/**
+ * CC-legacy projects directory — `~/.claude/projects/`.
+ *
+ * Kept for read-only backwards-compat access (e.g. migrating old sessions or
+ * during transition). New session writes go through `getProjectsDir()`.
+ */
+export function getCCLegacyProjectsDir(): string {
   return join(getClaudeConfigHomeDir(), 'projects')
 }
 

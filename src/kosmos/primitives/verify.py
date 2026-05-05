@@ -116,9 +116,21 @@ class _AuthContextBase(BaseModel):
     data-model.md § 8. Mock adapters populate these via ``stamp_mock_response``.
     Live adapters leave them ``None`` (the regression test only asserts non-None
     for ``source_mode == 'mock'`` adapters).
+
+    Lead-S3 #2659 (2026-05-04): adds a ``status`` discriminator stamped at the
+    envelope top-level so the TUI's ``VerifyPrimitive.renderToolResultMessage``
+    can render the green ``인증 완료`` label instead of falling back to the
+    ambiguous ``결과 수신됨`` else-branch. Reaching an ``AuthContext`` instance
+    means delegation succeeded — ``verify()`` rejects all failure paths through
+    ``VerifyMismatchError`` (which carries ``status="failed"``). This is the
+    last layer of the citizen-facing success/failure cascade.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
+
+    # Status discriminator — every AuthContext implies delegation success.
+    # Failure is signalled by ``VerifyMismatchError`` (sister model below).
+    status: Literal["verified"] = "verified"
 
     published_tier: PublishedTier
     nist_aal_hint: NistAalHint
@@ -374,6 +386,14 @@ class VerifyMismatchError(BaseModel):
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
+
+    # Status discriminator — sister field to ``_AuthContextBase.status``. The
+    # dispatchPrimitive ([H1] branch, 2026-05-04) classifies ``family ==
+    # "mismatch_error"`` as ``ok: false``, so the TUI's renderer normally enters
+    # the failure branch directly. ``status="failed"`` is defense-in-depth so
+    # any caller that bypasses the dispatcher classification (older fixtures,
+    # raw envelope inspection) still reads explicit failure.
+    status: Literal["failed"] = "failed"
 
     family: Literal["mismatch_error"] = "mismatch_error"
     reason: Literal["family_mismatch"] = "family_mismatch"

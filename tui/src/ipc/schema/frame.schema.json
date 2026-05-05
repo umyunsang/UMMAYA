@@ -445,7 +445,7 @@
     },
     "ChatMessage": {
       "additionalProperties": false,
-      "description": "One conversation-history entry carried by ``ChatRequestFrame.messages``.\n\n``role=\"tool\"`` messages MUST also set ``name`` (the tool name that was\ninvoked) and ``tool_call_id`` (the originating ``tool_call`` envelope's\ncorrelation id). This is the data-model invariant D4 (tool message\nintegrity) enforced by the ``ChatRequestFrame`` validator below.",
+      "description": "One conversation-history entry carried by ``ChatRequestFrame.messages``.\n\n``role=\"tool\"`` messages MUST also set ``name`` (the tool name that was\ninvoked) and ``tool_call_id`` (the originating ``tool_call`` envelope's\ncorrelation id). This is the data-model invariant D4 (tool message\nintegrity) enforced by the ``ChatRequestFrame`` validator below.\n\nLead-Diag-4 (2026-05-04): added optional ``tool_calls`` for ``role='assistant'``\nturns so assistant ``tool_use`` blocks survive the wire round-trip and the\nOpenAI Chat Completions multi-turn pairing invariant (every ``role='tool'``\nmessage MUST follow an assistant message whose ``tool_calls[i].id`` matches\nthe result's ``tool_call_id``) is satisfied. Backward compatible: legacy\nsenders that omit ``tool_calls`` are unaffected.",
       "properties": {
         "content": {
           "description": "UTF-8 message body.",
@@ -488,6 +488,22 @@
           "default": null,
           "description": "Matching ``ToolCallFrame.call_id`` when role='tool'; None otherwise.",
           "title": "Tool Call Id"
+        },
+        "tool_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChatMessageToolCall"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "OpenAI Chat Completions assistant-turn tool invocations. Set ONLY on role='assistant' messages that requested one or more tool calls. None for every other role. Each entry's ``id`` is the pairing key that the corresponding role='tool' result message MUST set as its ``tool_call_id``.",
+          "title": "Tool Calls"
         }
       },
       "required": [
@@ -495,6 +511,56 @@
         "content"
       ],
       "title": "ChatMessage",
+      "type": "object"
+    },
+    "ChatMessageFunctionCall": {
+      "additionalProperties": false,
+      "description": "OpenAI-spec ``function`` block carried inside ``ChatMessageToolCall``.\n\nMirrors ``kosmos.llm.models.FunctionCall`` (the LLM-client-internal model)\nbut lives on the *wire* so the TUI can transmit assistant ``tool_use``\nblocks across multi-turn boundaries (Lead-Diag-4, role='tool' wire fix).",
+      "properties": {
+        "arguments": {
+          "description": "JSON-serialised string of the function arguments (OpenAI spec).",
+          "title": "Arguments",
+          "type": "string"
+        },
+        "name": {
+          "description": "Function/tool name the model requested.",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "title": "ChatMessageFunctionCall",
+      "type": "object"
+    },
+    "ChatMessageToolCall": {
+      "additionalProperties": false,
+      "description": "OpenAI-spec ``tool_calls[i]`` entry carried by an assistant ``ChatMessage``.\n\nOpenAI Chat Completions API spec: every ``role='tool'`` message MUST be\npaired (by ``tool_call_id``) with a ``tool_calls[i].id`` from a preceding\nassistant turn. The TUI carries this pairing across the wire so multi-turn\nconversations replay correctly to FriendliAI / OpenAI-compatible providers\n(Lead-Diag-4 fix, 2026-05-04).",
+      "properties": {
+        "function": {
+          "$ref": "#/$defs/ChatMessageFunctionCall",
+          "description": "Inner function name + JSON-serialised arguments."
+        },
+        "id": {
+          "description": "Matching ``ToolCallFrame.call_id`` / ``role='tool'.tool_call_id``.",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "function",
+          "default": "function",
+          "description": "OpenAI tool envelope; only 'function' is currently supported.",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "function"
+      ],
+      "title": "ChatMessageToolCall",
       "type": "object"
     },
     "ChatRequestFrame": {
@@ -639,6 +705,278 @@
         "messages"
       ],
       "title": "ChatRequestFrame",
+      "type": "object"
+    },
+    "ConsentRevokeRequestFrame": {
+      "additionalProperties": false,
+      "description": "TUI -> backend: citizen requests revocation of a prior consent receipt.\n\narm 22 of the ``IPCFrame`` discriminated union (Epic 2).\n\nFields:\n- ``request_id``: UUIDv4 string; round-trips in the matching\n  ``consent_revoke_response`` frame.\n- ``receipt_id``: The ``rcpt-<id>`` value referencing the receipt file at\n  ``~/.kosmos/memdir/user/consent/<receipt_id>.json``.\n- ``scope``: ``\"once\"`` = revoke this single receipt only;\n  ``\"session-all\"`` = revoke all receipts for the current session.\n- ``reason``: Optional free-text reason logged to the audit ledger.\n\nrole allow-list: tui.",
+      "properties": {
+        "correlation_id": {
+          "description": "UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)",
+          "minLength": 1,
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "frame_seq": {
+          "default": 0,
+          "description": "Per-session monotonic sequence number (ge=0). Gap detection uses this.",
+          "minimum": 0,
+          "title": "Frame Seq",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "consent_revoke_request",
+          "default": "consent_revoke_request",
+          "description": "Frame discriminator — arm 22 of IPCFrame.",
+          "title": "Kind",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional citizen-provided reason logged to the ledger (PIPA §36 citation).",
+          "title": "Reason"
+        },
+        "receipt_id": {
+          "description": "Target receipt identifier (rcpt-<id>). Must match an existing receipt file at ~/.kosmos/memdir/user/consent/<receipt_id>.json.",
+          "minLength": 1,
+          "title": "Receipt Id",
+          "type": "string"
+        },
+        "request_id": {
+          "description": "UUIDv4 round-trip correlation ID; matched in consent_revoke_response.",
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "role": {
+          "description": "Origin role. Validated against kind<->role allow-list (E3, FR-004).",
+          "enum": [
+            "tui",
+            "backend",
+            "tool",
+            "llm",
+            "notification"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "scope": {
+          "description": "Revocation scope. 'once' revokes only this receipt; 'session-all' revokes all receipts in the current session.",
+          "enum": [
+            "once",
+            "session-all"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "session_id": {
+          "description": "Opaque session identifier.",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "trailer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FrameTrailer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Completion/validation metadata. Populated on terminal frames. (FR-006)"
+        },
+        "transaction_id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).",
+          "title": "Transaction Id"
+        },
+        "ts": {
+          "description": "ISO-8601 UTC timestamp with sub-ms precision.",
+          "title": "Ts",
+          "type": "string"
+        },
+        "version": {
+          "const": "1.0",
+          "default": "1.0",
+          "description": "Envelope version. Hard-fail on mismatch (E1, FR-001).",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id",
+        "correlation_id",
+        "ts",
+        "role",
+        "request_id",
+        "receipt_id",
+        "scope"
+      ],
+      "title": "ConsentRevokeRequestFrame",
+      "type": "object"
+    },
+    "ConsentRevokeResponseFrame": {
+      "additionalProperties": false,
+      "description": "backend -> TUI: outcome of a consent_revoke_request.\n\narm 23 of the ``IPCFrame`` discriminated union (Epic 2).\n\nFields:\n- ``request_id``: Mirrors the originating consent_revoke_request.request_id.\n- ``ok``: True when at least one receipt was revoked; False on error or\n  not-found.\n- ``revoked_at``: ISO-8601 UTC timestamp of the revocation (when ok=True).\n- ``record_hash``: Ledger entry SHA-256 for audit chain verification\n  (when ok=True; omitted on error).\n- ``error``: Machine-readable error code on failure (``already_revoked``,\n  ``not_found``, ``io_error``); omitted on success.\n\nrole allow-list: backend.",
+      "properties": {
+        "correlation_id": {
+          "description": "UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)",
+          "minLength": 1,
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "enum": [
+                "already_revoked",
+                "not_found",
+                "io_error"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Machine-readable error code when ok=False; None on success.",
+          "title": "Error"
+        },
+        "frame_seq": {
+          "default": 0,
+          "description": "Per-session monotonic sequence number (ge=0). Gap detection uses this.",
+          "minimum": 0,
+          "title": "Frame Seq",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "consent_revoke_response",
+          "default": "consent_revoke_response",
+          "description": "Frame discriminator — arm 23 of IPCFrame.",
+          "title": "Kind",
+          "type": "string"
+        },
+        "ok": {
+          "description": "True when at least one receipt was successfully revoked; False on error or not-found.",
+          "title": "Ok",
+          "type": "boolean"
+        },
+        "record_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hex SHA-256 of the ledger withdrawal record. Populated when ok=True for audit-chain verification.",
+          "title": "Record Hash"
+        },
+        "request_id": {
+          "description": "Mirrors consent_revoke_request.request_id for round-trip correlation.",
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "revoked_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO-8601 UTC timestamp of revocation. Populated when ok=True.",
+          "title": "Revoked At"
+        },
+        "role": {
+          "description": "Origin role. Validated against kind<->role allow-list (E3, FR-004).",
+          "enum": [
+            "tui",
+            "backend",
+            "tool",
+            "llm",
+            "notification"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "session_id": {
+          "description": "Opaque session identifier.",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "trailer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FrameTrailer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Completion/validation metadata. Populated on terminal frames. (FR-006)"
+        },
+        "transaction_id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).",
+          "title": "Transaction Id"
+        },
+        "ts": {
+          "description": "ISO-8601 UTC timestamp with sub-ms precision.",
+          "title": "Ts",
+          "type": "string"
+        },
+        "version": {
+          "const": "1.0",
+          "default": "1.0",
+          "description": "Envelope version. Hard-fail on mismatch (E1, FR-001).",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id",
+        "correlation_id",
+        "ts",
+        "role",
+        "request_id",
+        "ok"
+      ],
+      "title": "ConsentRevokeResponseFrame",
       "type": "object"
     },
     "CoordinatorPhaseFrame": {
@@ -1522,6 +1860,19 @@
           "title": "Session Id",
           "type": "string"
         },
+        "tool_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Fully-qualified adapter id (e.g. `mock_verify_mobile_id`). Falls back to worker_id || primitive_kind in the TUI when None. None for legacy callers that have not yet been updated.",
+          "title": "Tool Id"
+        },
         "trailer": {
           "anyOf": [
             {
@@ -1617,6 +1968,39 @@
           "title": "Kind",
           "type": "string"
         },
+        "primitive_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "lookup",
+                "resolve_location",
+                "submit",
+                "subscribe",
+                "verify"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primitive that was authorised. The TUI feeds this into `aalToLayer(primitive, isIrreversible)` to recompute the gauntlet layer (1=green / 2=orange / 3=red) for the receipt row. None on deny / timeout / legacy backends.",
+          "title": "Primitive Kind"
+        },
+        "receipt_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Consent receipt UUID written to ~/.kosmos/memdir/user/consent/<id>.json on granted decisions. None on deny / timeout.",
+          "title": "Receipt Id"
+        },
         "request_id": {
           "description": "ULID matching the originating permission_request.request_id.",
           "title": "Request Id",
@@ -1638,6 +2022,19 @@
           "description": "Opaque session identifier.",
           "title": "Session Id",
           "type": "string"
+        },
+        "tool_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The fully-qualified adapter id (e.g. `mock_verify_mobile_id`, `mock_submit_welfare_grant`) the citizen authorised. The TUI uses this to render the human-readable Korean adapter name in /consent list and the modal title. None for non-adapter primitives (rare) or legacy backends.",
+          "title": "Tool Id"
         },
         "trailer": {
           "anyOf": [
@@ -1711,6 +2108,32 @@
           "default": null,
           "description": "When True, install verifies but writes nothing (op='request').",
           "title": "Dry Run"
+        },
+        "error_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Machine-readable failure kind (e.g. 'bundle_sha_mismatch', 'slsa_skip_in_production') when op='complete' AND result='failure'. Used by the TUI to map exit codes to citizen-friendly Korean messages.",
+          "title": "Error Kind"
+        },
+        "error_message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Developer-facing English error detail when op='complete' AND result='failure'.",
+          "title": "Error Message"
         },
         "exit_code": {
           "anyOf": [
@@ -1916,6 +2339,19 @@
           "description": "Envelope version. Hard-fail on mismatch (E1, FR-001).",
           "title": "Version",
           "type": "string"
+        },
+        "was_idempotent_noop": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "True when op='complete' + result='success' but the operation was a no-op because the plugin was already in the target state (e.g. uninstall of a plugin that was never installed). TUI uses this to show '이미 제거됨' instead of '제거 완료'.",
+          "title": "Was Idempotent Noop"
         }
       },
       "required": [
@@ -2908,6 +3344,8 @@
       "assistant_chunk": "#/$defs/AssistantChunkFrame",
       "backpressure": "#/$defs/BackpressureSignalFrame",
       "chat_request": "#/$defs/ChatRequestFrame",
+      "consent_revoke_request": "#/$defs/ConsentRevokeRequestFrame",
+      "consent_revoke_response": "#/$defs/ConsentRevokeResponseFrame",
       "coordinator_phase": "#/$defs/CoordinatorPhaseFrame",
       "error": "#/$defs/ErrorFrame",
       "heartbeat": "#/$defs/HeartbeatFrame",
@@ -2995,6 +3433,12 @@
     },
     {
       "$ref": "#/$defs/AdapterManifestSyncFrame"
+    },
+    {
+      "$ref": "#/$defs/ConsentRevokeRequestFrame"
+    },
+    {
+      "$ref": "#/$defs/ConsentRevokeResponseFrame"
     }
   ]
 }

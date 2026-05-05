@@ -3,9 +3,10 @@ import { APIUserAbortError } from 'src/sdk-compat.js'
 import { autoCompactIfNeeded } from '../services/compact/autoCompact.js'
 import { microcompactMessages } from '../services/compact/microCompact.js'
 import { getOrCreateKosmosBridge, getKosmosBridgeSessionId } from '../ipc/bridgeSingleton.js'
-import type { ChatMessage, ChatRequestFrame, IPCFrame } from '../ipc/frames.generated.js'
+import type { ChatRequestFrame, IPCFrame } from '../ipc/frames.generated.js'
 import { getToolDefinitionsForFrame } from './toolSerialization.js'
 import { createAssistantMessage, createSystemMessage, createUserMessage, SYNTHETIC_MODEL } from '../utils/messages.js'
+import { buildChatMessagesFromTranscript } from './chatMessagesBuilder.js'
 
 // SWAP/llm-provider(2521) — frontend deps.ts typewriter REVERTED.
 //
@@ -117,19 +118,44 @@ async function* queryModelWithStreaming(params: {
   __t(`callModel:enter messages=${messages.length}`)
 
   // Convert CC `Message[]` → ChatRequestFrame.messages.
-  // Tolerates the loose stub-typed Message shape; only user/assistant turns
-  // with extractable text are forwarded. Tool messages stay server-side.
-  const chatMessages: ChatMessage[] = []
-  for (const m of messages) {
-    const ma = m as { type?: string; message?: { role?: string; content?: unknown } }
-    if (!ma || (ma.type !== 'user' && ma.type !== 'assistant')) continue
-    const role: 'user' | 'assistant' = ma.type === 'user' ? 'user' : 'assistant'
-    const content = extractText(ma.message?.content)
-    if (!content) continue
-    chatMessages.push({ role, content })
-  }
-  if (chatMessages.length === 0) {
-    chatMessages.push({ role: 'user', content: '' })
+  //
+  // Lead-Diag-4 (2026-05-04, role='tool' wire conversion): the CC transcript
+  // shape is the Anthropic Messages API native shape — tool_result blocks
+  // live INSIDE role='user' messages and tool_use blocks live INSIDE
+  // role='assistant' messages. K-EXAONE on FriendliAI is OpenAI Chat
+  // Completions spec, which requires tool_result as its own role='tool'
+  // message keyed by tool_call_id, and assistant tool invocations carried in
+  // the tool_calls[] array on the assistant message. ``buildChatMessagesFromTranscript``
+  // is the conversion seam — see ``chatMessagesBuilder.ts`` for the
+  // promotion rules + OpenAI-spec ordering invariants.
+  //
+  // Backward compat: legacy transcripts where assistant/user content is a
+  // raw string (no structured blocks) flow through unchanged — the converter
+  // matches the legacy ``extractText``-based behaviour for the string-content
+  // fast path, including the ``min_length=1`` empty-input fallback.
+  const chatMessages = buildChatMessagesFromTranscript(messages)
+
+  // ---- spec-multi-turn-contamination diagnostic emit (FR-003)
+  // Log the chatMessages tail so we can prove which user turn the TUI
+  // serialised onto the wire BEFORE the bridge.send. If the
+  // `[CHAT_MESSAGES_BUILT]` line shows a stale tail, H1 (frontend race)
+  // is confirmed — the React store snapshot was taken before the new
+  // user message landed. Off by default; gated by KOSMOS_QUERY_TRACE=1
+  // to share the existing flag (no new env var introduced).
+  if (process.env.KOSMOS_QUERY_TRACE === '1') {
+    try {
+      const tail = chatMessages[chatMessages.length - 1]
+      const tailRole = tail?.role ?? '(empty)'
+      const tailContent = (tail?.content ?? '').slice(0, 256)
+      const userTurns = chatMessages.filter((m) => m.role === 'user').length
+      __t(
+        `[CHAT_MESSAGES_BUILT] count=${chatMessages.length} ` +
+          `user_turns=${userTurns} tail_role=${tailRole} ` +
+          `tail_first256=${JSON.stringify(tailContent)}`,
+      )
+    } catch {
+      // Diagnostic must never raise.
+    }
   }
 
   // KOSMOS hotfix #2519 (post-vhs verification, 2026-04-30 — dev-mode answer):
@@ -509,20 +535,45 @@ async function* queryModelWithStreaming(params: {
       // fail-closed (Constitution §II + FR-017).
       const fp = f as {
         request_id?: string
-        primitive_kind?: 'submit' | 'subscribe'
+        primitive_kind?: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe'
         description_ko?: string
         description_en?: string
         risk_level?: 'low' | 'medium' | 'high'
         receipt_id?: string
+        worker_id?: string
+        session_id?: string
+        correlation_id?: string
       }
       // Lazy import to avoid pulling the React store into modules that don't
       // need it; deps.ts is the only IPC↔store seam for this surface.
       const { setPendingPermission } = await import('../store/pendingPermissionSlot.js')
       const { dispatchSessionAction } = await import('../store/session-store.js')
+      // Epic FU-4 — bridge the frame into toolUseConfirmQueue so the CC
+      // 4-arm permissionComponentForTool switch auto-mounts the correct
+      // adapter (VerifyPermissionRequestAdapter etc.).
+      // This must run BEFORE setPendingPermission so the modal is visible
+      // when the user arrives at the permission prompt.
+      const { pushIpcPermissionRequest } = await import('../utils/permissions/ipcPermissionBridge.js')
+      pushIpcPermissionRequest({
+        request_id: fp.request_id ?? '',
+        primitive_kind: fp.primitive_kind ?? 'submit',
+        description_ko: fp.description_ko ?? '',
+        description_en: fp.description_en ?? '',
+        risk_level: fp.risk_level ?? 'medium',
+        worker_id: fp.worker_id ?? '',
+        session_id: fp.session_id ?? sessionId,
+        correlation_id: fp.correlation_id ?? correlationId,
+        // carry-through base frame fields required by PermissionRequestFrame
+        ts: new Date().toISOString(),
+        version: '1.0',
+        role: 'backend',
+        frame_seq: 0,
+        kind: 'permission_request',
+      } as import('../ipc/frames.generated.js').PermissionRequestFrame)
       // Mirror the request into the reducer's pending_permission field so
-      // KosmosIpcPermissionGauntletModal — which reads `s.pending_permission`
-      // — actually paints. The pendingPermissionSlot owns the Promise +
-      // FIFO queue lifecycle; the reducer field is a render-only mirror.
+      // any remaining subscribers of `s.pending_permission` still receive
+      // the notification. The pendingPermissionSlot owns the Promise + FIFO
+      // queue lifecycle; the reducer field is a render-only mirror.
       const reducerRequest = {
         request_id: fp.request_id ?? '',
         correlation_id: correlationId,

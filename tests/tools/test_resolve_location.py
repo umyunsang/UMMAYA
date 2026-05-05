@@ -224,42 +224,42 @@ class TestResolveAddress:
 class TestResolvePOI:
     @pytest.mark.asyncio
     async def test_poi_success(self):
-        inp = ResolveLocationInput(query="강남역", want="poi")
-        # search_address is imported locally inside resolve_location.py; patch at source.
-        # Use MagicMock (not AsyncMock) for attribute-bag mocks: AsyncMock auto-wraps
-        # every child attribute as an awaitable coroutine factory, and Pydantic's
-        # introspection during POIResult construction triggers unittest.mock's
-        # _mock_set_magics, leaving unawaited coroutines that leak sockets/event
-        # loops. Python 3.13's stricter unraisable handler surfaces those as
-        # ResourceWarning sub-exceptions that fail the filterwarnings=["error"] gate.
+        # POI path now uses Kakao keyword endpoint (search_keyword), not the
+        # address endpoint. Address endpoint returns empty for POI queries
+        # like "강남역" / "동아대학교"; routing want='poi' through it was a
+        # structural bug retired in the keyword-fanout fix. Mock the keyword
+        # response shape (place_name + category_name + x/y).
         mock_doc = MagicMock()
         mock_doc.y = "37.4979"
         mock_doc.x = "127.0276"
-        mock_doc.address_name = "강남역"
-        mock_doc.address_type = "REGION_ADDR"  # must be a plain string for Pydantic validation
-        mock_doc.road_address = None
-        mock_doc.address = None
+        mock_doc.place_name = "강남역"
+        mock_doc.category_name = "교통,수송 > 지하철역"
+        mock_doc.address_name = "서울 강남구 역삼동"
+        mock_doc.road_address_name = "서울 강남구 강남대로 396"
 
         mock_result = MagicMock()
         mock_result.documents = [mock_doc]
+        mock_result.meta.total_count = 1
 
+        inp = ResolveLocationInput(query="강남역", want="poi")
         with patch(
-            "kosmos.tools.geocoding.kakao_client.search_address",
+            "kosmos.tools.geocoding.kakao_client.search_keyword",
             new=AsyncMock(return_value=mock_result),
         ):
             result = await resolve_location(inp)
         assert isinstance(result, POIResult)
         assert result.name == "강남역"
-        assert result.category == "REGION_ADDR"
+        assert result.category == "교통,수송 > 지하철역"
 
     @pytest.mark.asyncio
     async def test_poi_no_documents_returns_error(self):
         inp = ResolveLocationInput(query="알수없는POI", want="poi")
         mock_result = MagicMock()
         mock_result.documents = []
+        mock_result.meta.total_count = 0
 
         with patch(
-            "kosmos.tools.geocoding.kakao_client.search_address",
+            "kosmos.tools.geocoding.kakao_client.search_keyword",
             new=AsyncMock(return_value=mock_result),
         ):
             result = await resolve_location(inp)
@@ -343,42 +343,61 @@ class TestResolveCoordsAndAdmCd:
 class TestResolveAll:
     @pytest.mark.asyncio
     async def test_all_bundle_includes_address_and_poi(self):
-        # want="all" now makes a single consolidated Kakao call instead of three
-        # separate calls.  _kakao_geocode is no longer invoked for this path.
+        # want="all" now fans out across both Kakao endpoints in parallel
+        # (asyncio.gather): search_address populates AddressResult +
+        # CoordResult; search_keyword populates POIResult. The address
+        # coordinates win when both fire because structured-address matches
+        # are more specific. See _kakao_coords for the rationale.
         inp = ResolveLocationInput(query="강남역", want="all")
 
-        mock_road_address = AsyncMock()
+        # search_address response — must use plain Mocks (not AsyncMock) for
+        # nested attribute bags to avoid Pydantic serialising coroutines.
+        mock_road_address = MagicMock()
         mock_road_address.address_name = "서울 강남구 테헤란로 152"
         mock_road_address.zone_no = "06236"
 
-        mock_doc = AsyncMock()
-        mock_doc.y = "37.4979"
-        mock_doc.x = "127.0276"
-        mock_doc.address_name = "강남역"
-        mock_doc.address_type = "ROAD_ADDR"  # plain string required for Pydantic
-        mock_doc.road_address = mock_road_address
-        mock_doc.address = None
+        mock_addr_doc = MagicMock()
+        mock_addr_doc.y = "37.4979"
+        mock_addr_doc.x = "127.0276"
+        mock_addr_doc.address_name = "강남역"
+        mock_addr_doc.road_address = mock_road_address
+        mock_addr_doc.address = None
 
-        mock_search_result = AsyncMock()
-        mock_search_result.documents = [mock_doc]
-        mock_search_result.meta = AsyncMock()
-        mock_search_result.meta.total_count = 1
+        mock_addr_result = MagicMock()
+        mock_addr_result.documents = [mock_addr_doc]
+        mock_addr_result.meta.total_count = 1
+
+        # search_keyword response — POIResult fields (place_name + category_name).
+        mock_kw_doc = MagicMock()
+        mock_kw_doc.y = "37.4979"
+        mock_kw_doc.x = "127.0276"
+        mock_kw_doc.place_name = "강남역 2호선"
+        mock_kw_doc.category_name = "교통,수송 > 지하철역"
+        mock_kw_doc.address_name = "서울 강남구 역삼동"
+
+        mock_kw_result = MagicMock()
+        mock_kw_result.documents = [mock_kw_doc]
+        mock_kw_result.meta.total_count = 1
 
         with (
-            patch(
-                "kosmos.tools.resolve_location._kakao_coords",
-                new=AsyncMock(return_value=_COORD),
-            ),
             patch(
                 "kosmos.tools.resolve_location._juso_adm_cd",
                 new=AsyncMock(return_value=_ADM),
             ),
             patch(
                 "kosmos.tools.geocoding.kakao_client.search_address",
-                new=AsyncMock(return_value=mock_search_result),
+                new=AsyncMock(return_value=mock_addr_result),
+            ),
+            patch(
+                "kosmos.tools.geocoding.kakao_client.search_keyword",
+                new=AsyncMock(return_value=mock_kw_result),
             ),
         ):
             result = await resolve_location(inp)
         assert isinstance(result, ResolveBundle)
+        assert result.coords is not None
         assert result.address is not None
+        assert result.address.road_address == "서울 강남구 테헤란로 152"
         assert result.poi is not None
+        assert result.poi.name == "강남역 2호선"
+        assert result.poi.category == "교통,수송 > 지하철역"

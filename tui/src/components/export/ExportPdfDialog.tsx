@@ -15,11 +15,40 @@
 // CC ExportDialog pattern (Box + Text stream + done message).
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Text } from 'ink';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname as pathDirnameSync, join as pathJoin } from 'node:path';
+import { Box, Text, useInput } from 'ink';
+import { PDFDocument, rgb, type PDFFont } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import { useTheme } from '../../theme/provider.js';
 import { useUiL2I18n } from '../../i18n/uiL2.js';
 import type { PermissionReceiptT } from '../../schemas/ui-l2/permission.js';
+
+// ---------------------------------------------------------------------------
+// Korean PDF support — Audit-7 P0-1 fix
+// ---------------------------------------------------------------------------
+//
+// pdf-lib's StandardFonts.Helvetica uses WinAnsi 8-bit encoding and CANNOT
+// represent Korean characters (any codepoint above 0xFF — e.g. 대 0xb300 —
+// triggers an "encoding error" inside `font.encodeText()` and fails the PDF
+// write silently with a corrupt zero-byte file).
+//
+// Fix: register @pdf-lib/fontkit and embed the bundled NotoSansKR-Hangul-subset
+// TTF (~952 KB, OFL-1.1, common Hangul + ASCII + KR punctuation, see
+// `tui/src/assets/fonts/SOURCE.md`). pdf-lib's `subset: true` further trims
+// the embedded font to only the glyphs actually drawn in this PDF.
+//
+// The font path is resolved relative to this module via import.meta.url so it
+// works in both `bun run` and bundled-binary deployment modes.
+
+function _resolveKoreanFontPath(): string {
+  // Walk up from this module's directory to the tui/src root, then into
+  // assets/fonts/. The compiled JS lives at tui/src/components/export/, so
+  // 3 levels up reaches tui/src/.
+  const here = pathDirnameSync(fileURLToPath(import.meta.url));
+  return pathJoin(here, '..', '..', 'assets', 'fonts', 'NotoSansKR-Hangul-subset.ttf');
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,6 +106,45 @@ export function sanitizeForExport(text: string): string {
   return out;
 }
 
+/**
+ * Replace any character outside the bundled NotoSansKR-Hangul-subset coverage
+ * with '?'. This is the last line of defense against pdf-lib's fontkit raising
+ * a "missing glyph" error mid-write. Coverage:
+ *   - ASCII U+0020..U+007E
+ *   - Latin-1 supplement U+00A0..U+00FF
+ *   - CJK punctuation U+3000..U+303F (subset)
+ *   - Hangul Compatibility Jamo U+3130..U+318F (subset)
+ *   - Hangul Syllables U+AC00..U+D7A3 (common-Korean subset, ~6,000 chars)
+ *   - General punctuation U+2010..U+2027, U+2030..U+203F (subset)
+ */
+export function _sanitizeForKoreanFont(text: string): string {
+  let out = '';
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0;
+    const isAscii = cp >= 0x0020 && cp <= 0x007e;
+    const isLatin1 = cp >= 0x00a0 && cp <= 0x00ff;
+    const isHangul = cp >= 0xac00 && cp <= 0xd7a3;
+    const isCjkPunct = cp >= 0x3000 && cp <= 0x303f;
+    const isGenPunct = cp >= 0x2010 && cp <= 0x205f;
+    const isJamo = cp >= 0x3130 && cp <= 0x318f;
+    if (isAscii || isLatin1 || isHangul || isCjkPunct || isGenPunct || isJamo) {
+      out += ch;
+    } else if (cp === 0x2026 || cp === 0x2027) {
+      out += ch;
+    } else if (cp === 0x2500 || cp === 0x2501 || (cp >= 0x2014 && cp <= 0x2015)) {
+      // Box-drawing dashes — pdf-lib falls back gracefully if missing
+      out += '-';
+    } else if (cp === 0x2192 || cp === 0x2190 || cp === 0x21d2) {
+      // Common arrows (often appear in tool descriptions)
+      out += '->';
+    } else {
+      // Outside coverage — replace with '?' to avoid encode-time crash.
+      out += '?';
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // PDF assembly
 // ---------------------------------------------------------------------------
@@ -94,8 +162,18 @@ async function assemblePdf(
   receipts: PermissionReceiptT[],
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  // Audit-7 P0-1: register fontkit BEFORE any embedFont(custom_bytes) call.
+  // The bundled NotoSansKR-Hangul-subset.ttf covers Hangul + ASCII so a single
+  // font handles both '대화' and 'KOSMOS' / 'Tool Invocations'. pdf-lib's
+  // `subset: true` strips unused glyphs from the embedded font — final PDF
+  // typically <100 KB even with thousands of Korean syllables in scope.
+  pdfDoc.registerFontkit(fontkit);
+  const koreanFontBytes = readFileSync(_resolveKoreanFontPath());
+  const font: PDFFont = await pdfDoc.embedFont(koreanFontBytes, { subset: true });
+  // No separate bold variant in the subset — re-use the same font for bold
+  // text but rely on color/section markers to distinguish hierarchy.
+  const boldFont: PDFFont = font;
 
   let page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   let y = PAGE_HEIGHT - MARGIN;
@@ -107,8 +185,14 @@ async function assemblePdf(
     }
     const sanitized = sanitizeForExport(text);
     const f = bold ? boldFont : font;
-    // Truncate long lines at TEXT_WIDTH
+    // Truncate long lines at TEXT_WIDTH (slice at character level — pdf-lib
+    // measures correctly for Hangul codepoints once the Korean font is loaded).
     let displayText = sanitized;
+    // Strip any character outside the embedded subset to prevent fontkit's
+    // "WinAnsi cannot encode" / "missing glyph" errors. The Korean font covers
+    // Hangul Syllables (U+AC00..U+D7A3) + ASCII + common punctuation; anything
+    // else gets replaced with '?'.
+    displayText = _sanitizeForKoreanFont(displayText);
     while (displayText.length > 0) {
       const textWidth = f.widthOfTextAtSize(displayText, FONT_SIZE);
       if (textWidth <= TEXT_WIDTH) break;
@@ -203,11 +287,24 @@ export function ExportPdfDialog({
   receipts,
   outputPath,
   onDone,
+  onCancel,
 }: ExportPdfDialogProps): React.ReactElement {
   const theme = useTheme();
   const i18n = useUiL2I18n();
   const [state, setState] = useState<ExportState>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // Defense-in-depth Esc dismiss — mirrors HelpV2Grouped + AgentsCommandView.
+  // The dialog assembles + writes immediately on mount, so Esc only fires
+  // onCancel during the brief idle/writing window or on the terminal error
+  // frame. Once `done` fires, onDone has already been invoked and the parent
+  // tears the overlay down — Esc here becomes a no-op (no `onCancel` call
+  // after success). AGENTS.md "Infrastructure insights" #3 + #4.
+  useInput((_input, key) => {
+    if (!key.escape) return;
+    if (state === 'done') return;
+    onCancel();
+  });
 
   const runExport = useCallback(async () => {
     setState('writing');

@@ -37,14 +37,35 @@ def _now() -> datetime:
 
 class TestCreateSession:
     @pytest.mark.asyncio
-    async def test_creates_jsonl_file(self, tmp_path: Path) -> None:
+    async def test_does_not_create_jsonl_file(self, tmp_path: Path) -> None:
+        """create_session() is now lazy — it must NOT write to disk."""
         meta = await create_session(session_dir=tmp_path)
         path = tmp_path / f"{meta.session_id}.jsonl"
-        assert path.exists(), "JSONL file should be created"
+        assert not path.exists(), "create_session() must not write a file (lazy)"
 
     @pytest.mark.asyncio
-    async def test_first_line_is_metadata_entry(self, tmp_path: Path) -> None:
+    async def test_file_created_after_first_save_entry(self, tmp_path: Path) -> None:
+        """The JSONL file must be materialised on the first save_entry() call."""
         meta = await create_session(session_dir=tmp_path)
+        path = tmp_path / f"{meta.session_id}.jsonl"
+        assert not path.exists()
+
+        await save_entry(
+            meta.session_id,
+            SessionEntry(entry_type="message", data={"role": "user", "content": "hi"}),
+            session_dir=tmp_path,
+        )
+        assert path.exists(), "File should be created after first save_entry()"
+
+    @pytest.mark.asyncio
+    async def test_first_line_is_metadata_after_save(self, tmp_path: Path) -> None:
+        """After the first save_entry() the leading line must be a metadata entry."""
+        meta = await create_session(session_dir=tmp_path)
+        await save_entry(
+            meta.session_id,
+            SessionEntry(entry_type="message", data={"role": "user", "content": "hi"}),
+            session_dir=tmp_path,
+        )
         path = tmp_path / f"{meta.session_id}.jsonl"
         first_line = path.read_text(encoding="utf-8").strip().splitlines()[0]
         obj = json.loads(first_line)
@@ -59,12 +80,20 @@ class TestCreateSession:
         uuid.UUID(meta.session_id)
 
     @pytest.mark.asyncio
-    async def test_creates_directory_if_missing(self, tmp_path: Path) -> None:
+    async def test_creates_directory_on_save_entry(self, tmp_path: Path) -> None:
+        """save_entry() must create the directory when it materialises the file."""
         nested = tmp_path / "deep" / "sessions"
         # Directory does not exist yet
         assert not nested.exists()
         meta = await create_session(session_dir=nested)
-        assert nested.exists()
+        assert not nested.exists(), "create_session() must not create directory (lazy)"
+
+        await save_entry(
+            meta.session_id,
+            SessionEntry(entry_type="message", data={"role": "user", "content": "hi"}),
+            session_dir=nested,
+        )
+        assert nested.exists(), "Directory must be created by save_entry()"
         assert (nested / f"{meta.session_id}.jsonl").exists()
 
 
@@ -112,8 +141,14 @@ class TestSaveAndLoadSession:
         import logging  # noqa: PLC0415
 
         meta = await create_session(session_dir=tmp_path)
+        # Materialise the file first so we have something to corrupt
+        await save_entry(
+            meta.session_id,
+            SessionEntry(entry_type="message", data={"setup": True}),
+            session_dir=tmp_path,
+        )
         path = tmp_path / f"{meta.session_id}.jsonl"
-        # Inject a corrupt line
+        # Inject a corrupt line after the existing content
         with path.open("a", encoding="utf-8") as fh:
             fh.write("NOT_VALID_JSON\n")
         # Append a valid entry after the corrupt line
@@ -146,24 +181,44 @@ class TestSaveAndLoadSession:
 
 class TestListSessions:
     @pytest.mark.asyncio
-    async def test_lists_created_sessions(self, tmp_path: Path) -> None:
+    async def test_lists_materialised_sessions(self, tmp_path: Path) -> None:
+        """Only sessions with at least one save_entry() call appear in list."""
+        m1 = await create_session(session_dir=tmp_path)
+        m2 = await create_session(session_dir=tmp_path)
+        # Materialise both sessions
+        for meta in (m1, m2):
+            await save_entry(
+                meta.session_id,
+                SessionEntry(entry_type="message", data={"role": "user", "content": "hi"}),
+                session_dir=tmp_path,
+            )
+        sessions = await list_sessions(session_dir=tmp_path)
+        assert len(sessions) == 2
+
+    @pytest.mark.asyncio
+    async def test_lazy_sessions_not_listed(self, tmp_path: Path) -> None:
+        """Sessions that were created but never had save_entry() called are invisible."""
         await create_session(session_dir=tmp_path)
         await create_session(session_dir=tmp_path)
         sessions = await list_sessions(session_dir=tmp_path)
-        assert len(sessions) == 2
+        assert sessions == [], "Lazy (un-materialised) sessions must not appear in list"
 
     @pytest.mark.asyncio
     async def test_sorted_newest_first(self, tmp_path: Path) -> None:
         import asyncio  # noqa: PLC0415
 
         m1 = await create_session(session_dir=tmp_path)
-        # Small sleep is not possible but we can touch updated_at via
-        # update_session_metadata to create different timestamps
         await asyncio.sleep(0)  # yield to event loop
         m2 = await create_session(session_dir=tmp_path)
+        # Materialise both
+        for meta in (m1, m2):
+            await save_entry(
+                meta.session_id,
+                SessionEntry(entry_type="message", data={"role": "user", "content": "hi"}),
+                session_dir=tmp_path,
+            )
         sessions = await list_sessions(session_dir=tmp_path)
         ids = [s.session_id for s in sessions]
-        # m2 was created after m1; it should appear first (or equal in fast CI)
         assert m2.session_id in ids
         assert m1.session_id in ids
 
@@ -188,6 +243,12 @@ class TestDeleteSession:
     @pytest.mark.asyncio
     async def test_deletes_file(self, tmp_path: Path) -> None:
         meta = await create_session(session_dir=tmp_path)
+        # Materialise the file first so there is something to delete
+        await save_entry(
+            meta.session_id,
+            SessionEntry(entry_type="message", data={"role": "user", "content": "hi"}),
+            session_dir=tmp_path,
+        )
         path = tmp_path / f"{meta.session_id}.jsonl"
         assert path.exists()
         await delete_session(meta.session_id, session_dir=tmp_path)
@@ -208,6 +269,13 @@ class TestGetSessionMetadata:
     @pytest.mark.asyncio
     async def test_returns_correct_metadata(self, tmp_path: Path) -> None:
         meta = await create_session(session_dir=tmp_path)
+        # Materialise the file so get_session_metadata can find it
+        await save_entry(
+            meta.session_id,
+            SessionEntry(entry_type="message", data={"role": "user", "content": "hi"}),
+            session_dir=tmp_path,
+            session_metadata=meta,
+        )
         loaded = await get_session_metadata(meta.session_id, session_dir=tmp_path)
         assert loaded.session_id == meta.session_id
 

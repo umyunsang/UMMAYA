@@ -1,0 +1,21 @@
+[0m[2m[35m$[0m [2m[1mbun run src/entrypoints/cli.tsx[0m
+tool_registry: 14 entries verified (4 primitives) in 0ms
+[?2004h[?1004h[?25l]0;✳ Claude Code[?2026h[38;2;167;139;250m [3C▛███▜[6C[39m[1mKOSMOS[1C[22m[38;2;153;153;153mv0.1.0-alpha+1978[39m
+[38;2;167;139;250m▗▟█████████▙▖[2C[38;2;153;153;153mK-EXAONE[1Cwith[1Chigh[1Ceffort[1C·[1CAPI[1CUsage[1CBilling[39m
+[38;2;167;139;250m [2C▘[1C▘[1C▘[1C▘[5C[38;2;153;153;153m~/KOSMOS/tui[39m
+
+[38;2;136;136;136m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+❯ [7m [27m
+[38;2;136;136;136m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[2C[38;2;153;153;153m?[1Cfor[1Cshortcuts[145C●[1Chigh[1C·[1C/effort[39m
+[2C[3A[?2026l[>0q[c[?2026h[2D[3B[2C[3A[38;2;177;185;249m/help[39m[7m [2C[2B[27m               
+[1m/help[22m[38;2;153;153;153m —[1C명령[1C목록을[1C4개[1C그룹으로[1C묶어[1C표시합니다[39m
+[7C[4A[?2026l[?2026h[7D[4B[2C[2A[38;2;177;185;249m/help                                      Show help and available commands[85C[39m                [1B  [38;2;153;153;153m/wandb-primary   [1C   [1C        [1C    [1C       Comprehensive primary skill for agents working with Weights & Biases. Covers both the W&B SDK (training runs, metrics, artifacts, sw…[39m
+[2C[38;2;153;153;153m/debug[37CEnable[1Cdebug[1Clogging[1Cfor[1Cthis[1Csession[1Cand[1Chelp[1Cdiagnose[1Cissues[1C(bundled)[39m
+[1m/help[22m[38;2;153;153;153m —[1C명령[1C목록을[1C4개[1C그룹으로[1C묶어[1C표시합니다[39m
+[7C[6A[?2026l[?2026h[7D[6B[2C[6A[7m [27m     [2C[2B[38;2;153;153;153m! for bash mode[39m         [38;2;153;153;153mdouble tap esc to clear input[39m      [38;2;153;153;153mctrl + _ to undo[3C[1B for commands[39m          [38;2;153;153;153mshift[1C+[1Ctab[1Cto[1Cauto-accept ed[1Cts[39m   [38;2;153;153;153mctrl + z to[1Csuspend[39m                                                                                                  [2C[1B[38;2;153;153;153m@ for file[1Cpaths[39m        [38;2;153;153;153mctrl[1C+[1Co[1Cfor[1Cverbose output[39m        [38;2;153;153;153mctrl[1C+ v[2Co pa[1Cte [1Cmages[39m                                [1B  [38;2;153;153;153m& for[1Cbackground[39m        [38;2;153;153;153mctrl +[1Ct to[1Ctoggle tasks[11Calt + p to switch model[39m
+[2C[38;2;153;153;153m/btw[1Cfor[1Cside[1Cquestion[2Cshift[1C+[1C⏎[1Cfor[1Cnewline[14Calt[1C+[1Co[1Cto[1Ctoggle[1Cfast[1Cmode[39m
+[61C[38;2;153;153;153mctrl[1C+[1Cs[1Cto[1Cstash[1Cprompt[39m
+[61C[38;2;153;153;153mctrl[1C+[1Cg[1Cto[1Cedit[1Cin[1C$EDITOR[39m
+[61C[38;2;153;153;153m/keybindings[1Cto[1Ccustomize[39m
+[2C[10A[?2026l

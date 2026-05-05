@@ -340,7 +340,13 @@ class TestHandleMocked:
         inp = MohwWelfareEligibilitySearchInput.model_validate({"life_array": "007"})
         result = await handle(inp)
 
-        assert result["result_code"] == "0"
+        # Envelope-ready collection contract (post-2026-05-04 fabrication fix):
+        # handle() returns {"kind": "collection", "items": [...], "total_count": N}
+        # — result_code / result_message / page_no / num_of_rows are still
+        # logged by the parser but no longer exposed via the LLM-facing
+        # surface, because the discriminated LookupOutput envelope only
+        # carries kind + items + total_count + meta.
+        assert result["kind"] == "collection"
         assert result["total_count"] == 1
         items = result["items"]
         assert len(items) == 1
@@ -440,10 +446,21 @@ class TestMohwV4Description:
         """MOHW_WELFARE_ELIGIBILITY_SEARCH_TOOL.llm_description equals _MOHW_DESCRIPTION."""
         assert MOHW_WELFARE_ELIGIBILITY_SEARCH_TOOL.llm_description == _MOHW_DESCRIPTION
 
-    def test_output_schema_is_real_model(self) -> None:
-        """output_schema is MohwWelfareEligibilitySearchOutput (not a RootModel stub)."""
+    def test_output_schema_is_envelope_placeholder(self) -> None:
+        """output_schema is an envelope placeholder; handler emits envelope-ready dict.
+
+        Updated 2026-05-04 (C-class fabrication fix): the strict
+        MohwWelfareEligibilitySearchOutput remains as the documentation
+        contract, but the wire surface is now ``_MohwPlaceholderOutput``
+        so the envelope-ready ``{"kind": "collection", ...}`` dict can
+        flow into envelope.normalize() — see module docstring for context.
+        """
+        from kosmos.tools.mohw.welfare_eligibility_search import _MohwPlaceholderOutput
+
+        assert MOHW_WELFARE_ELIGIBILITY_SEARCH_TOOL.output_schema is _MohwPlaceholderOutput
+        # Documentation contract preserved
         assert (
-            MOHW_WELFARE_ELIGIBILITY_SEARCH_TOOL.output_schema is MohwWelfareEligibilitySearchOutput
+            MohwWelfareEligibilitySearchOutput.__name__ == "MohwWelfareEligibilitySearchOutput"
         )
 
     def test_citizen_facing_gate_is_read_only(self) -> None:

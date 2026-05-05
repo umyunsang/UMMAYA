@@ -89,11 +89,18 @@ def _make_delegation_context(scope: str) -> object:
 async def test_handle_happy_path_carries_six_transparency_fields(
     inp: Gov24CertificateInput,
 ) -> None:
-    """handle() without delegation context returns all six transparency fields."""
+    """handle() without delegation context returns all six transparency fields.
+
+    LookupOutput envelope fix — transparency fields live inside ``item`` so
+    the outer envelope passes ``LookupRecord`` (``extra='forbid'``) validation.
+    """
     result = await handle(inp)
+    assert result["kind"] == "record", f"expected LookupRecord envelope, got {result!r}"
+    item = result["item"]
+    assert isinstance(item, dict)
 
     for field in _TRANSPARENCY_FIELDS:
-        value = result.get(field)
+        value = item.get(field)
         assert value is not None, (
             f"Missing transparency field: {field!r} (cert={inp.certificate_type})"
         )  # noqa: E501
@@ -103,50 +110,53 @@ async def test_handle_happy_path_carries_six_transparency_fields(
 
 @pytest.mark.asyncio
 async def test_handle_mode_is_mock() -> None:
-    """_mode is always 'mock' for Epic ε mock adapters."""
+    """_mode is always 'mock' for Epic ε mock adapters (lives inside item)."""
     result = await handle(_VALID_INPUT_RESIDENT)
-    assert result["_mode"] == "mock"
+    assert result["item"]["_mode"] == "mock"
 
 
 @pytest.mark.asyncio
 async def test_handle_reference_impl() -> None:
     """_reference_implementation is 'public-mydata-read-v240930' per spec catalog."""
     result = await handle(_VALID_INPUT_FAMILY)
-    assert result["_reference_implementation"] == "public-mydata-read-v240930"
+    assert result["item"]["_reference_implementation"] == "public-mydata-read-v240930"
 
 
 @pytest.mark.asyncio
 async def test_handle_international_ref() -> None:
     """_international_reference is 'Estonia X-Road' per spec catalog."""
     result = await handle(_VALID_INPUT_BUSINESS)
-    assert result["_international_reference"] == "Estonia X-Road"
+    assert result["item"]["_international_reference"] == "Estonia X-Road"
 
 
 @pytest.mark.asyncio
 async def test_handle_resident_registration_domain_payload() -> None:
     """Resident registration returns the correct certificate_type_ko."""
     result = await handle(_VALID_INPUT_RESIDENT)
-    assert result.get("certificate_type") == "resident_registration"
-    assert result.get("certificate_type_ko") == "주민등록등본"
-    assert isinstance(result.get("household_members"), list)
+    item = result["item"]
+    assert item.get("certificate_type") == "resident_registration"
+    assert item.get("certificate_type_ko") == "주민등록등본"
+    assert isinstance(item.get("household_members"), list)
 
 
 @pytest.mark.asyncio
 async def test_handle_family_relations_domain_payload() -> None:
     """Family relations returns the correct certificate_type_ko."""
     result = await handle(_VALID_INPUT_FAMILY)
-    assert result.get("certificate_type") == "family_relations"
-    assert result.get("certificate_type_ko") == "가족관계증명서"
-    assert isinstance(result.get("family_members"), list)
+    item = result["item"]
+    assert item.get("certificate_type") == "family_relations"
+    assert item.get("certificate_type_ko") == "가족관계증명서"
+    assert isinstance(item.get("family_members"), list)
 
 
 @pytest.mark.asyncio
 async def test_handle_business_registration_domain_payload() -> None:
     """Business registration returns the correct certificate_type_ko."""
     result = await handle(_VALID_INPUT_BUSINESS)
-    assert result.get("certificate_type") == "business_registration"
-    assert result.get("certificate_type_ko") == "사업자등록증"
-    assert "registration_number" in result
+    item = result["item"]
+    assert item.get("certificate_type") == "business_registration"
+    assert item.get("certificate_type_ko") == "사업자등록증"
+    assert "registration_number" in item
 
 
 # ---------------------------------------------------------------------------
@@ -213,25 +223,33 @@ async def test_handle_with_matching_scope_succeeds() -> None:
     delegation = _make_delegation_context("lookup:gov24.certificate")
     result = await handle(_VALID_INPUT_RESIDENT, delegation_context=delegation)
 
-    assert result.get("_mode") == "mock"
-    assert result.get("kind") != "error", f"Expected success, got error: {result.get('message')}"
+    assert result.get("kind") == "record", f"Expected success record, got {result!r}"
+    item = result["item"]
+    assert item.get("_mode") == "mock"
     for field in _TRANSPARENCY_FIELDS:
-        assert result.get(field), f"Missing field {field!r} after successful delegation"
+        assert item.get(field), f"Missing field {field!r} after successful delegation"
 
 
 @pytest.mark.asyncio
 async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
-    """Wrong scope 'submit:hometax.tax-return' triggers scope_violation error."""
+    """Wrong scope 'submit:hometax.tax-return' triggers a LookupError envelope.
+
+    Scope-violation maps to the closed-set ``LookupErrorReason.auth_required``
+    (the closed enum has no ``scope_violation`` member). Transparency fields
+    are not present on error envelopes — ``LookupError`` schema is
+    ``extra='forbid'``; ``meta.source`` (injected later by ``normalize()``)
+    carries adapter identity instead.
+    """
     delegation = _make_delegation_context("submit:hometax.tax-return")
     result = await handle(_VALID_INPUT_FAMILY, delegation_context=delegation)
 
     assert result.get("kind") == "error"
-    assert result.get("reason") == "scope_violation"
+    assert result.get("reason") == "auth_required"
     assert result.get("retryable") is False
-
-    # Even error responses carry six transparency fields.
-    for field in _TRANSPARENCY_FIELDS:
-        assert result.get(field), f"Missing field {field!r} in scope-violation response"
+    # Scope context is preserved in the message for citizen-facing diagnostics.
+    msg = result.get("message", "")
+    assert "lookup:gov24.certificate" in msg
+    assert "submit:hometax.tax-return" in msg
 
 
 @pytest.mark.asyncio
@@ -240,10 +258,10 @@ async def test_handle_with_multi_scope_containing_required_passes() -> None:
     delegation = _make_delegation_context("lookup:gov24.certificate,submit:gov24.minwon")
     result = await handle(_VALID_INPUT_BUSINESS, delegation_context=delegation)
 
-    assert result.get("kind") != "error", (
+    assert result.get("kind") == "record", (
         f"Multi-scope with required scope should succeed: {result}"
     )
-    assert result.get("_mode") == "mock"
+    assert result["item"].get("_mode") == "mock"
 
 
 # ---------------------------------------------------------------------------
@@ -255,8 +273,10 @@ async def test_handle_with_multi_scope_containing_required_passes() -> None:
 async def test_handle_without_delegation_context_proceeds() -> None:
     """Adapter proceeds without DelegationContext (lookups are read-only)."""
     result = await handle(_VALID_INPUT_RESIDENT, delegation_context=None)
-    assert result.get("_mode") == "mock"
-    assert result.get("certificate_type") == "resident_registration"
+    assert result.get("kind") == "record"
+    item = result["item"]
+    assert item.get("_mode") == "mock"
+    assert item.get("certificate_type") == "resident_registration"
 
 
 # ---------------------------------------------------------------------------

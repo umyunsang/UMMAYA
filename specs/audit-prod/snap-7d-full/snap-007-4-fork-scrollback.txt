@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 서울 강남구 좌표 알려줘
+
+⏺ 서울 강남구의 좌표는 다음과 같습니다:
+
+  위도(Latitude): 37.517331925853°
+  경도(Longitude): 127.047377408384°
+
+  이 좌표는 카카오맵 기준으로 강남구 전체 영역의 중심점에 해당합니다. 강남구는 행정동 코드가 별도로 부여되지 않은 자치구 수준이므로 행정동 코드(adm_cd)는 제공되지 않았습니다.
+
+  추가로 궁금하신 점이 있으시면 말씀해 주세요! 예를 들어:
+  - 특정 동(예: 역삼동, 삼성동)의 좌표
+  - 강남구 내 특정 건물이나 지점의 좌표
+  - 강남구의 도로명 주소나 지번 주소
+
+  등을 확인해 드릴 수 있습니다.
+
+⏺ resolve_location({"query":"서울 강남구","want":"coords_and_admcd"})
+
+❯ Unknown skill: migrate-sessions
+
+⏺ Args from unknown skill: --dry-run
+
+❯ /branch audit-fork
+  ⎿  Branched conversation "audit-fork". You are now in the branch.
+     To resume the original: claude -r 66d1ea39-fd32-4e2a-b331-47d5fc5de1b2
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

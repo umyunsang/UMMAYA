@@ -193,7 +193,17 @@ def _read_ledger_events(ledger_root: Path) -> list:
 
 
 def _has_all_transparency_fields(d: dict) -> bool:
-    """Return True if the dict contains all six transparency fields with non-empty values."""
+    """Return True if the dict contains all six transparency fields with non-empty values.
+
+    Also accepts the LookupOutput envelope shape ``{"kind": "record", "item": {...}}``
+    (B1 envelope-contract fix, 2026-05-04) — the six transparency fields live
+    inside ``item`` because the outer LookupRecord envelope is ``extra='forbid'``.
+    """
+    # Lookup envelope variant — fields live inside `item`.
+    if d.get("kind") == "record" and isinstance(d.get("item"), dict):
+        return all(d["item"].get(k, "") for k in _TRANSPARENCY_KEYS)
+    # Verify (typed AuthContext.model_dump) / submit (adapter_receipt dict) shapes
+    # still stamp at the top level.
     return all(d.get(k, "") for k in _TRANSPARENCY_KEYS)
 
 

@@ -510,11 +510,27 @@ class TestNmcDescriptionV4:
         assert "hvidate" in desc, "NMC description must reference hvidate freshness field"
         assert "stale" in desc.lower(), "NMC description must mention stale_data behavior"
 
-    def test_description_mentions_self_contained(self) -> None:
-        """NMC description must declare self-contained (Spec 2522 chain independence)."""
+    def test_description_declares_resolve_location_chain(self) -> None:
+        """NMC description must declare the resolve_location → this-tool chain.
+
+        The previous variant of this test required the description to assert
+        "단독 호출로 완결" / "self-contained" — but NMC's emergency-bed lookup
+        REQUIRES lat/lon coordinates that the citizen never types directly.
+        Asserting self-containment encouraged the description to lie to the
+        LLM, which then refused to call resolve_location and surfaced the
+        "no resolve_location available" hallucination (frame
+        ``specs/integration-verification/donga-univ-poi-bug/``, 2026-05-04).
+
+        The corrected assertion: the description MUST reference
+        ``resolve_location`` and an ordering signal so K-EXAONE has
+        unambiguous chain guidance.
+        """
         from kosmos.tools.nmc.emergency_search import NMC_EMERGENCY_SEARCH_TOOL
 
         desc = NMC_EMERGENCY_SEARCH_TOOL.llm_description
-        assert "완결" in desc or "self-contained" in desc.lower(), (
-            "NMC description must declare self-contained operation"
+        assert "resolve_location" in desc, (
+            "NMC description must reference resolve_location explicitly"
+        )
+        assert any(tok in desc for tok in ("turn1", "turn 1", "ORDERING", "ordering")), (
+            "NMC description must declare resolve_location → this-tool turn ordering"
         )

@@ -18,6 +18,7 @@ Reference: NIST SP 800-107 / RFC 2104 HMAC + data-model.md § 1.9.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import secrets
@@ -25,6 +26,7 @@ from pathlib import Path
 
 __all__ = [
     "HMACKeyFileModeError",
+    "bootstrap_hmac_key",
     "load_or_generate_key",
 ]
 
@@ -89,8 +91,11 @@ def load_or_generate_key(path: Path) -> bytes:
         OSError: If the file cannot be read or written for OS reasons.
     """
     if path.exists():
-        return _load_existing_key(path)
-    return _generate_new_key(path)
+        key = _load_existing_key(path)
+    else:
+        key = _generate_new_key(path)
+    _logger.info("kosmos.permissions.ledger - initialised at %s", path)
+    return key
 
 
 def _load_existing_key(path: Path) -> bytes:
@@ -139,3 +144,54 @@ def _generate_new_key(path: Path) -> bytes:
 
     _logger.info("Generated new HMAC key at %s (mode 0400)", path)
     return key_bytes
+
+
+def bootstrap_hmac_key(
+    key_path: Path,
+    key_registry_path: Path,
+) -> None:
+    """Idempotent boot-time bootstrap: ensure key + registry exist.
+
+    Called once during process startup (e.g. ``cli/app.py::main()``) so that
+    the first ledger ``append()`` never encounters a missing key.
+
+    Behaviour:
+    - Ensures the 32-byte HMAC key exists at *key_path* (auto-generates if
+      absent, validates mode if present).
+    - Ensures *key_registry_path* exists with an entry for ``"k0001"``
+      pointing to ``"ledger.key"``.  If the registry already exists it is
+      left untouched (idempotent).
+
+    Args:
+        key_path: Absolute path to the HMAC key file (``~/.kosmos/keys/ledger.key``).
+        key_registry_path: Absolute path to the key registry JSON
+            (``~/.kosmos/keys/registry.json``).
+
+    Raises:
+        HMACKeyFileModeError: If the key file exists with wrong permissions.
+        OSError: On unexpected filesystem errors.
+    """
+    # Step 1: Ensure the HMAC key exists (auto-generates with 0o400 + 0o700 dir).
+    load_or_generate_key(key_path)
+
+    # Step 2: Ensure the key registry exists with the initial k0001 entry.
+    if not key_registry_path.exists():
+        key_registry_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        initial_registry = [
+            {
+                "key_id": "k0001",
+                "retired_at": None,
+                "file_path": key_path.name,
+            }
+        ]
+        key_registry_path.write_text(
+            json.dumps(initial_registry, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        _logger.info(
+            "Initialised HMAC key registry at %s (key_id=k0001, file=%s)",
+            key_registry_path,
+            key_path.name,
+        )
+    else:
+        _logger.debug("HMAC key registry already exists at %s; skipping init.", key_registry_path)

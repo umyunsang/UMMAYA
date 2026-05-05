@@ -152,6 +152,14 @@ class SsisWelfareServiceItem(BaseModel):
 
 
 class MohwWelfareEligibilitySearchOutput(BaseModel):
+    """Documentation contract for the SSIS welfare-list response shape.
+
+    Note: this strict schema is no longer the wire surface — the handler emits
+    an envelope-ready ``{"kind": "collection", "items": [...], ...}`` dict so
+    ``envelope.normalize()`` can wrap it as ``LookupCollection``. See module
+    docstring + ``MOHW_WELFARE_ELIGIBILITY_SEARCH_TOOL.output_schema``.
+    """
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     result_code: str = Field(description="결과코드 ('0' = SUCCESS in SSIS v2.0)")
@@ -162,6 +170,17 @@ class MohwWelfareEligibilitySearchOutput(BaseModel):
     items: list[SsisWelfareServiceItem] = Field(
         description="List of welfare services matching the query."
     )
+
+
+class _MohwPlaceholderOutput(BaseModel):
+    """Placeholder GovAPITool.output_schema — handler returns envelope-ready dict.
+
+    Permits any dict to flow through GovAPITool.output_schema validation; the
+    real envelope check happens inside ``envelope.normalize`` against the
+    discriminated ``LookupOutput`` union (FR-015).
+    """
+
+    model_config = ConfigDict(extra="allow")
 
 
 # ---------------------------------------------------------------------------
@@ -190,61 +209,88 @@ _TEXT_FIELDS = {
 def _parse_xml_response(xml_bytes: bytes) -> dict[str, Any]:
     """Parse SSIS NationalWelfarelistV001 UTF-8 XML response.
 
-    SSIS envelope:
-        <response>
-          <resultCode>0</resultCode>
-          <resultMessage>정상</resultMessage>
-          <totalCount>21</totalCount>
+    Live SSIS envelope (verified 2026-05-04 with KOSMOS_DATA_GO_KR_API_KEY):
+        <wantedList>
+          <totalCount>15</totalCount>
           <pageNo>1</pageNo>
-          <numOfRows>10</numOfRows>
+          <numOfRows>3</numOfRows>
+          <resultCode>0</resultCode>
+          <resultMessage>SUCCESS</resultMessage>
+          <servList>            <!-- one per record, sibling of metadata -->
+            <servId>WLF00000061</servId>
+            <servNm>의료급여임신.출산진료비지원</servNm>
+            ...
+          </servList>
+          <servList>...</servList>
+        </wantedList>
+
+    Historical envelope (older docs / NIA-IFT v2.2 §1.1, kept as fallback):
+        <response>
           <servList>
-            <servList>  <!-- repeated item wrapper reuses tag name -->
+            <servList>  <!-- nested wrapper -->
               <servId>…</servId>
-              …
             </servList>
           </servList>
         </response>
+
+    Critical: the wrong-envelope assumption was the documented C-class root
+    cause for citizen welfare mis-info on 2026-05-04 — the parser found
+    ``totalCount=15`` but extracted zero items, the empty list flowed through
+    output validation, the executor masked the resulting envelope mismatch as
+    "Response processing failed.", and the LLM fabricated a 12-service welfare
+    catalog including bokjiro.go.kr URLs that pointed at the wrong service IDs.
     """
     root = ET.fromstring(xml_bytes)  # noqa: S314 — SSIS is a trusted government source
 
-    def _text(tag: str) -> str:
-        el = root.find(tag)
-        return (el.text or "").strip() if el is not None else ""
+    def _text_in(parent: ET.Element, tag: str) -> str:
+        el = parent.find(tag)
+        return (el.text or "").strip() if el is not None and el.text else ""
 
-    result_code = _text("resultCode")
-    result_message = _text("resultMessage")
+    result_code = _text_in(root, "resultCode")
+    result_message = _text_in(root, "resultMessage")
 
     try:
-        total_count = int(_text("totalCount") or "0")
+        total_count = int(_text_in(root, "totalCount") or "0")
     except ValueError:
         total_count = 0
-
     try:
-        page_no = int(_text("pageNo") or "1")
+        page_no = int(_text_in(root, "pageNo") or "1")
     except ValueError:
         page_no = 1
-
     try:
-        num_of_rows = int(_text("numOfRows") or "10")
+        num_of_rows = int(_text_in(root, "numOfRows") or "10")
     except ValueError:
         num_of_rows = 10
 
+    # Item discovery: support both the live live-envelope (servList siblings of
+    # metadata under <wantedList>) and the legacy nested envelope where each
+    # outer <servList> wraps an inner <servList>. The condition is "outer
+    # contains an inner servList" → drill in; otherwise treat each direct
+    # <servList> child of root as an item record.
+    direct_serv_lists = root.findall("servList")
+    item_elements: list[ET.Element]
+    if direct_serv_lists and direct_serv_lists[0].find("servList") is not None:
+        # Legacy nested shape — first outer wraps inner items.
+        outer = direct_serv_lists[0]
+        item_elements = outer.findall("servList")
+    else:
+        # Live flat shape — each direct <servList> is one record.
+        item_elements = direct_serv_lists
+
     items: list[dict[str, Any]] = []
-    serv_list_outer = root.find("servList")
-    if serv_list_outer is not None:
-        for item_el in serv_list_outer.findall("servList"):
-            item: dict[str, Any] = {}
-            for field in _TEXT_FIELDS:
-                el = item_el.find(field)
-                if el is not None and el.text:
-                    item[field] = el.text.strip()
-                else:
-                    item[field] = None
-            # servId and servNm are required — skip malformed items
-            if item.get("servId") and item.get("servNm"):
-                # Ensure required fields are non-None strings
-                item["jurMnofNm"] = item.get("jurMnofNm") or ""
-                items.append(item)
+    for item_el in item_elements:
+        item: dict[str, Any] = {}
+        for field in _TEXT_FIELDS:
+            el = item_el.find(field)
+            if el is not None and el.text:
+                item[field] = el.text.strip()
+            else:
+                item[field] = None
+        # servId and servNm are required — skip malformed items
+        if item.get("servId") and item.get("servNm"):
+            # Ensure required fields are non-None strings
+            item["jurMnofNm"] = item.get("jurMnofNm") or ""
+            items.append(item)
 
     return {
         "result_code": result_code,
@@ -363,7 +409,16 @@ async def handle(
             f"SSIS API error: resultCode={result_code!r} resultMessage={result_msg!r}",
         )
 
-    return parsed
+    # Envelope-ready dict for envelope.normalize() — kind="collection" matches
+    # the LookupCollection variant of LookupOutput. Without the discriminator
+    # the executor raises EnvelopeNormalizationError, masked as "Response
+    # processing failed." to the LLM, triggering the C-class fabrication path
+    # documented in the 2026-05-04 mis-info incident.
+    return {
+        "kind": "collection",
+        "items": parsed.get("items", []),
+        "total_count": parsed.get("total_count", 0),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -411,7 +466,7 @@ MOHW_WELFARE_ELIGIBILITY_SEARCH_TOOL = GovAPITool(
     endpoint=_BASE_URL,
     auth_type="api_key",
     input_schema=MohwWelfareEligibilitySearchInput,
-    output_schema=MohwWelfareEligibilitySearchOutput,
+    output_schema=_MohwPlaceholderOutput,
     llm_description=_MOHW_DESCRIPTION,
     search_hint=(
         "복지서비스 출산 보조금 복지혜택 신청 사회보장정보원 보건복지부 임산부 지원 "

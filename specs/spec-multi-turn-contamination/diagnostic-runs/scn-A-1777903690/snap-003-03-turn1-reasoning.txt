@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 강남역 근처 내과 알려줘
+
+✳ Twisting…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ [KOSMOS-QUERY] callModel:enter messages=4
+✽KTwisting…RY] [CHAT_MESSAGES_BUILT] count=1 user_turns=1 tail_role=user tail_first256="강남역 근처 내과 알려줘"────────────────────────────────────────────────────────────────────
+✶KOSMsting…RY] sending chat_request corr=f38da49f-b9f7-46a2-b9e8-5e7f2f1697ba chatMessages=1                                                                      ● high · /effort
+∴ Thinking — 사용자가 (ctrl+o to expand)
+❯ [KOSMOS-QUERY] recv " (ctrl+o to expand)fest_sync corr=e4a67a3a done=undefined delta="" thinking=""
+✶ Twisting…            강남역 (c rl+o to expand)
+                              근처 (ctrl+o to expand)
+                                   내과 (ctrl+o to expand)
+❯ [KOSMOS-QUERY] recv #3 kind=assistant_알려 (ctrl+o to expand)e=false delta="" thinking=" \""
+──[KOSMOS-QUERY] recv #4 kind=assistant_chun줘 (ctrl+o to expand)false delta="" thinking="강남역"───────────────────────────────────────────────────────────────────────────────────
+  [KOSMOS-QUERY] recv #5 kind=assistant_chunk "라고 (ctrl+o to expand) delta="" thinking=" 근처"                                                                  ● high · /effort
+  [KOSMOS-QUERY] recv #6 kind=assistant_chunk corr=2요청 (ctrl+o to expand)a="" thinking=" 내과"
+✻ [KOSMOS-QUERY] recv #7 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 알려"
+  [KOSMOS-QUERY] recv #8 kind=assistant_chunk corr=2f169했습니다. (ctrl+o to expand)king="줘"
+  [KOSMOS-QUERY] recv #9 kind=assistant_chunk corr=2f1697ba done=f이 (ctrl+a=to expand)g="\"라고"
+  [KOSMOS-QUERY] recv #10 kind=assistant_chunk corr=2f1697ba done=fal요청 (ctrl+o to expand)요청"
+  [KOSMOS-QUERY] recv #11 kind=assistant_chunk corr=2f1697ba done=false d을 처리 (ctrl+o to expand)"
+[KOSMOS-QUERY] recv #12 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="."
+✽ [wOStOS-QUERY] recv #13 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 이"
+  [KOSMOS-QUERY] recv #14 kind=assistant_chunk corr=2f1697ba done=false delta=""하기 위해 다음 단계를 (ctrl+o to expand)
+  [KOSMOS-QUERY] recv #15 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="을 처리"
+  TKOsMOS-QUERY] recv #16 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="하기 위해"
+[KOSMOS-QUERY] recv #17 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 다음"
+[KOSMOS-QUERY] recv #18 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 단계를"
+  [KOSMOS-QUERY] recv #19 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 따라야"
+[KOSMOS-QUERY] recv #20 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 합니다"
+[KOSMOS-QUERY] recv #21 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=":"
+[KOSMOS-QUERY] recv #22 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="\n\n"
+[KOSMOS-QUERY] recv #23 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="1"
+[KOSMOS-QUERY] recv #24 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="."
+[KOSMOS-QUERY] recv #25 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" 먼저"
+[KOSMOS-QUERY] recv #26 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking=" `"          따라야 합니다: 1. (ctrl+o to expand)
+[KOSMOS-QUERY] recv #27 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="resolve"
+⏺Kresolve_location({"query":"강남역","want":"coords_and_admcd"})false delta="" thinking="_location"
+[KOSMOS-QUERY] recv #29 kind=assistant_chunk corr=2f1697ba done=false delta="" thinking="`"
+✶ Twisting…
+
+
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                                                  ● high · /effort
+
+
+
+
+
+
+
+

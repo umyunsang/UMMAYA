@@ -118,6 +118,12 @@ class _FakeStdout:
     def __init__(self) -> None:
         self.buffer = _CaptureBuf()
 
+    def write(self, data: str) -> int:
+        return len(data)
+
+    def flush(self) -> None:
+        pass
+
 
 # ---------------------------------------------------------------------------
 # Minimal fake LLM client base
@@ -677,7 +683,9 @@ class _ThreeToolsInOneTurnLLMClient(_BaseFakeLLMClient):
 
         if turn == 1:
             # Emit three parallel tool_call_deltas with indices 0, 1, 2.
-            queries = ["응급실 강남", "응급실 서초", "응급실 송파"]
+            # Use nfa_emergency_info_service (no coord/admcd fields) so the
+            # chain gate does not reject these calls before lookup is reached.
+            queries = ["강남 구급출동", "서초 구급출동", "송파 구급출동"]
             for idx, (call_id, query) in enumerate(zip(type(self)._call_ids, queries, strict=True)):
                 yield StreamEvent(
                     type="tool_call_delta",
@@ -687,7 +695,7 @@ class _ThreeToolsInOneTurnLLMClient(_BaseFakeLLMClient):
                     function_args_delta=json.dumps(
                         {
                             "mode": "fetch",
-                            "tool_id": "nmc_emergency_search",
+                            "tool_id": "nfa_emergency_info_service",
                             "params": {"query": query},
                         },
                         ensure_ascii=False,
@@ -703,8 +711,8 @@ class _ThreeToolsInOneTurnLLMClient(_BaseFakeLLMClient):
                 function_args_delta=json.dumps(
                     {
                         "mode": "fetch",
-                        "tool_id": "nmc_emergency_search",
-                        "params": {"query": "응급실 서초"},
+                        "tool_id": "nfa_emergency_info_service",
+                        "params": {"query": "서초 구급출동"},
                     },
                     ensure_ascii=False,
                 ),
@@ -765,11 +773,11 @@ async def test_multi_tool_turn_is_coerced_to_one_visible_dispatch(
             kind="search",
             candidates=[
                 AdapterCandidate(
-                    tool_id="nmc_emergency_search",
+                    tool_id="nfa_emergency_info_service",
                     score=0.95 - n * 0.01,
                     required_params=["query"],
-                    search_hint=f"{district} 응급실",
-                    why_matched=f"query matches {district} emergency room context",
+                    search_hint=f"{district} 구급출동",
+                    why_matched=f"query matches {district} fire/emergency dispatch context",
                     requires_auth=False,
                     is_personal_data=False,
                 )

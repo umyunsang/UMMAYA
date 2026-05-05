@@ -1,0 +1,14 @@
+# Citizen scenario frame — 도로안전/02-query-engine-search
+# 도로 안전 — 쿼리엔진 RAG 검색 (4 부처 후보)
+# Captured 2026-04-26T16:08:04.463Z via ink-testing-library render()
+# KOSMOS v0.1-alpha · K-EXAONE-236B-A23B + FriendliAI Serverless
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  ⏺ 단계 2/5 · K-EXAONE → RAG 검색 (BM25 + dense hybrid)                                          │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+   1. koroad_accident_search 교통사고 잦은 곳 (KOROAD)
+   2. koroad_accident_hazard_search 교통사고 위험구간 (KOROAD)
+   3. kma_weather_alert_status 도로 기상 특보 (KMA)
+   4. kma_short_term_forecast 단기 예보 시간별 (KMA)
+   5. resolve_location 경로 좌표화 (juso/sgis/kakao)

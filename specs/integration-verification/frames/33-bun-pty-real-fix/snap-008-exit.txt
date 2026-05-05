@@ -1,0 +1,89 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+  ▛███▜ KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖ K-EXAONE with high effort · API Usage Billing
+  ▘ ▘ ▘ ▘ ~/KOSMOS/tui
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ? for shortcuts ● high · /effort
+  [>0q    /help                  
+/help — 명령 목록을 4개 그룹으로 묶어 표시합니다
+      /help                                      Show help and available commands                    /wandb-primary                             Comprehensive primary skill for agents working with Weights & Biases. Covers both the W&B SDK (training runs, metrics, artifacts, sw…
+ /debug Enable debug logging for this session and help diagnose issues (bundled)
+/help — 명령 목록을 4개 그룹으로 묶어 표시합니다
+      ✻ KOSMOS · 도움말 / Help                                                                                                                                                                       ─── 세션 ───                                                                                                                                                                         /help                       명령 목록을 4개 그룹으로 묶어 표시합니다         /lang ko|en                 언어를 한국어/영어로 전환합니다                                                                                                                       /onboarding [step-name]     온보딩 시퀀스를 처음부터 다시 진행합니다                                                                                               
+ ─── 권한 ───
+ /consent list 본 세션의 권한 영수증 목록을 표시합니다
+ /consent revoke rcpt-<id> 발급된 권한 영수증을 철회합니다
+
+ ─── 도구 ───
+ /agents [--detail] 활성 부처 에이전트 상태를 표시합니다
+ /plugins 플러그인 브라우저를 엽니다
+
+ ─── 저장 ───
+ /config 설정 오버레이를 엽니다 (.env 비밀값은 격리 편집)
+ /export 대화·도구·영수증을 PDF로 내보냅니다
+ /history [--date FROM..TO] 과거 세션을 날짜·세션·Layer 필터로 검색합니다
+ [--session <id>] [--layer
+ <n>]
+
+
+ Esc · 닫기 (dismiss)
+
+
+──────────────────────────────────────────────────────────────────────────────���─────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ? for shortcuts ● high · /effort
+      PR #2754       
+      /lang en 
+
+
+                               ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ❯   ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  PR #2754                                          Language changed to English.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         /help 
+
+
+/help — Show commands grouped into four sections
+      /help                                      Show help and available commands                                /wandb-primary                             Comprehensive primary skill for agents working with Weights & Biases. Covers both the W&B SDK (training runs, metrics, artifacts, sw…
+ /debug Enable debug logging for this session and help diagnose issues (bundled)
+/help — Show commands grouped into four sections
+      ✻ KOSMOS · 도움말 / Help                                                                                                                                                                       ─── Session ───                                                                                                                                                                      /help                       Show commands grouped into four sections         /lang ko|en                 Switch language between Korean and English                                                                                                            /onboarding [step-name]     Restart onboarding from step 1                                                                                                         
+ ─── Permission ───
+ /consent list List permission receipts for the current session
+ /consent revoke rcpt-<id> Revoke a previously granted permission receipt
+
+ ─── Tool ───
+ /agents [--detail] Show active ministry agent status
+ /plugins Open the plugin browser
+
+ ─── Storage ───
+ /config Open configuration overlay (.env secrets isolated)
+ /export Export conversation + tools + receipts to PDF
+ /history [--date FROM..TO] Search past sessions by date / session / layer filter
+ [--session <id>] [--layer
+ <n>]
+
+
+ Esc · 닫기 (dismiss)
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ? for shortcuts Language changed to English.
+      PR #2754       
+      /lang ko 
+
+
+                               ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ❯   ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  PR #2754                                          언어가 한국어로 변경되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         /help 
+
+
+/help — 명령 목록을 4개 그룹으로 묶어 표시합니다
+      /help                                      Show help and available commands                                   /wandb-primary                             Comprehensive primary skill for agents working with Weights & Biases. Covers both the W&B SDK (training runs, metrics, artifacts, sw…
+ /debug Enable debug logging for this session and help diagnose issues (bundled)
+/help — 명령 목록을 4개 그룹으로 묶어 표시합니다
+                                                                                                                                                                                             ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  /help                                      Show help and available commands                                                                                                       wandb-primary Compr hensive primary skill for agents working w th Weight  & Biases. Covers both the W&B SDK (training runs, metrics, artifacts, sw…   /debug                                     Enable debug logging for this session and help diagnose issues (bundled)
+                                                                                    언어가 한국어로 변경되었습니다.                                                                                                                                                                                                                                                                                                                                                                                       ctrl+g to edit in VS Code
+             ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────   Press Ctrl-C again to exit                                                                                                                                      ● high · /effort                                                                                                                                                                                             ? for shortcuts           
+  

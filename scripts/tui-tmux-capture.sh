@@ -95,9 +95,15 @@ wait_for_pane() {
 snapshot_pane() {
   local label="${1:?snapshot_pane <label>}"
   local file="$OUTDIR/snap-$(printf '%03d' "${SNAP_SEQ:-0}")-${label}.txt"
+  local scrollback_file="$OUTDIR/snap-$(printf '%03d' "${SNAP_SEQ:-0}")-${label}-scrollback.txt"
   SNAP_SEQ=$(( ${SNAP_SEQ:-0} + 1 ))
   tmux capture-pane -t "$TMUX_SESSION" -p > "$file"
-  echo "[snapshot_pane $file]"
+  # Also dump the scrollback buffer so prior turns of the conversation are
+  # preserved even when the viewport has scrolled past them. -S -10000
+  # captures the last 10k history lines (tmux default history-limit is
+  # 2000; that's what the session uses unless tmux.conf overrides it).
+  tmux capture-pane -t "$TMUX_SESSION" -p -S -10000 > "$scrollback_file" 2>/dev/null || true
+  echo "[snapshot_pane $file (+ scrollback)]"
 }
 
 send_keys_pane() {

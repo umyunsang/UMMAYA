@@ -25,7 +25,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json as _stdlib_json
 import logging
+import os
 import signal
 import sys
 import time
@@ -82,6 +84,30 @@ def _serialize_primitive_result(raw: object) -> dict[str, Any]:
 # Module-level stdout lock — prevents interleaved JSON if multiple async tasks
 # write simultaneously (guards the flush-after-every-frame invariant).
 _stdout_lock: asyncio.Lock | None = None
+
+
+# ---------------------------------------------------------------------------
+# Spec spec-multi-turn-contamination — diagnostic instrumentation (DIAGNOSTIC
+# ONLY, gated by KOSMOS_CHAT_REQUEST_DUMP=1; off by default — production
+# behavior is unchanged when the env var is unset).
+#
+# Per-session turn counter; rebuilt at process boot, in-memory only.
+# Increments at the entry of `_handle_chat_request` for every ChatRequestFrame
+# whose session_id matches. Lets the diagnostic cross-correlate three layers
+# (chat_messages_built / chat_request_dump / latest_user_utt / reasoning_preview)
+# by `(session_id, turn_index)`.
+# ---------------------------------------------------------------------------
+
+_session_turn_counter: dict[str, int] = {}
+
+
+def _diag_chat_request_enabled() -> bool:
+    """Return True when KOSMOS_CHAT_REQUEST_DUMP env var is set to '1'.
+
+    Helper exists so the env-var lookup is centralised and the call sites
+    stay one-liners that are easy to grep / remove later.
+    """
+    return os.getenv("KOSMOS_CHAT_REQUEST_DUMP") == "1"
 
 
 def _get_stdout_lock() -> asyncio.Lock:
@@ -216,6 +242,328 @@ async def _reader_loop(
 # ---------------------------------------------------------------------------
 # Shutdown helpers
 # ---------------------------------------------------------------------------
+
+
+# Coordinate / admin-code field names that signal a downstream tool needs
+# resolve_location to have run first (Epic #2766 chain prerequisite gate).
+# The literal field set is intentionally broader than what any single
+# adapter accepts so the gate catches every variant the LLM might pick.
+_COORD_INPUT_FIELDS: frozenset[str] = frozenset({
+    "xPos",
+    "yPos",
+    "lat",
+    "lon",
+    "latitude",
+    "longitude",
+    "nx",
+    "ny",
+    "x",
+    "y",
+})
+_ADMCD_INPUT_FIELDS: frozenset[str] = frozenset({
+    "adm_cd",
+    "siGunGuCd",
+    "sgg_cd",
+    "h_code",
+    "b_code",
+})
+
+
+def _check_chain_prerequisite(
+    fname: str,
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    registry: Any = None,
+) -> str | None:
+    """Return chain-recovery error message when a prerequisite is missing.
+
+    CC reference: ``Tool.validateInput?(input, context)`` in
+    ``.references/claude-code-sourcemap/restored-src/src/Tool.ts:489``.
+    The CC hook is tool-scoped; KOSMOS centralises the equivalent
+    pre-dispatch check here because every coord-input adapter has the
+    identical prerequisite (resolve_location must have been called in
+    a prior turn of the same conversation). Adapter-scoped overrides can
+    be added later by extending this function to dispatch on tool_id.
+
+    Returns ``None`` when the call is allowed; returns a descriptive
+    error message when the call should be rejected. The caller emits
+    that message verbatim to the LLM via a tool_result envelope so the
+    next agentic-loop turn can recover.
+    """
+    # Only the `lookup` primitive carries adapter calls (mode='fetch'
+    # routes to a registered GovAPITool). All other primitives are
+    # either coord-free (verify) or carry their own param schema
+    # (submit, subscribe, resolve_location).
+    if fname != "lookup":
+        return None
+    if not isinstance(args_obj, dict):
+        return None
+    # Accept both shapes the LLM emits: full {mode:'fetch', tool_id, params}
+    # AND the abbreviated {tool_id, params} where mode is implicit. K-EXAONE
+    # frequently omits mode when tool_id is set; treating those as fetch
+    # closes the bypass that lets a tool_id=hira_* call slip past the gate
+    # just because mode was unset.
+    mode = args_obj.get("mode")
+    tool_id = args_obj.get("tool_id")
+    if mode not in (None, "fetch"):
+        return None
+    if not isinstance(tool_id, str) or not tool_id:
+        return None
+    params = args_obj.get("params") if isinstance(args_obj.get("params"), dict) else {}
+
+    # Two ways to recognise a coord-input adapter call:
+    # 1. The supplied params already carry coordinate/admcd fields — the
+    #    LLM filled them in (possibly from prior knowledge). This is the
+    #    primary failure mode the gate exists to catch.
+    # 2. The supplied params are empty / coord-free, but the tool_id's
+    #    registered input_schema declares coord/admcd fields. The LLM is
+    #    about to hit invalid_params; getting here gives the chain hint
+    #    one turn earlier and saves the round-trip.
+    has_coord = any(k in params for k in _COORD_INPUT_FIELDS)
+    has_admcd = any(k in params for k in _ADMCD_INPUT_FIELDS)
+    schema_coord_fields: set[str] = set()
+    schema_admcd_fields: set[str] = set()
+    if not (has_coord or has_admcd):
+        # Inspect the adapter's declared input schema to find out whether
+        # this is a coord/admcd tool that simply has not been parameterised
+        # yet. Best-effort — adapter lookup failures fall through as
+        # "unknown shape, allow".
+        if registry is None:
+            return None
+        try:
+            tool = registry.lookup(tool_id)
+            schema = tool.input_schema.model_json_schema()
+            props = schema.get("properties", {})
+            schema_coord_fields = set(props) & _COORD_INPUT_FIELDS
+            schema_admcd_fields = set(props) & _ADMCD_INPUT_FIELDS
+            if not (schema_coord_fields or schema_admcd_fields):
+                return None
+        except Exception:  # noqa: BLE001
+            # Unknown tool / registry not booted — let the dispatcher
+            # produce its own unknown_tool error instead of guessing.
+            return None
+
+    # Walk prior turns for a resolve_location invocation. Both function-
+    # call envelopes (assistant.tool_calls[*].function.name) and the
+    # textual <tool_call> markers (assistant.content) count — K-EXAONE
+    # uses both. We accept either as evidence the citizen's location
+    # was canonicalised through the registered resolver.
+    for m in llm_messages:
+        # LLMChatMessage instance OR dict — handle both.
+        role = getattr(m, "role", None) or (
+            m.get("role") if isinstance(m, dict) else None
+        )
+        if role != "assistant":
+            continue
+        tool_calls = getattr(m, "tool_calls", None) or (
+            m.get("tool_calls") if isinstance(m, dict) else None
+        )
+        if tool_calls:
+            for tc in tool_calls:
+                call_fn = (
+                    getattr(getattr(tc, "function", None), "name", None)
+                    or (
+                        tc.get("function", {}).get("name")
+                        if isinstance(tc, dict)
+                        else None
+                    )
+                )
+                if call_fn == "resolve_location":
+                    return None
+        content = getattr(m, "content", None) or (
+            m.get("content") if isinstance(m, dict) else None
+        )
+        if isinstance(content, str) and "resolve_location" in content:
+            # Textual <tool_call> marker fallback for K-EXAONE inline form.
+            return None
+
+    # Field naming: prefer the actually-supplied params (the LLM tipped its
+    # hand on which fields it tried to fill), otherwise fall back to the
+    # schema-introspected field set so the recovery message names something
+    # the LLM can actually produce.
+    missing_coord = (set(params.keys()) & _COORD_INPUT_FIELDS) or schema_coord_fields
+    missing_admcd = (set(params.keys()) & _ADMCD_INPUT_FIELDS) or schema_admcd_fields
+    missing_fields = sorted(missing_coord | missing_admcd)
+    if has_coord or schema_coord_fields:
+        field_kind = "coordinates"
+    elif has_admcd or schema_admcd_fields:
+        field_kind = "administrative code"
+    else:
+        field_kind = "location parameters"
+    return (
+        f"Chain prerequisite missing: this tool requires {field_kind} "
+        f"({', '.join(missing_fields) if missing_fields else 'see input schema'}) "
+        f"that MUST come from a prior resolve_location call in the same "
+        f"conversation. No resolve_location turn precedes the current call — "
+        f"that means the values would be guessed from prior knowledge instead "
+        f"of being resolved against Kakao Local API. "
+        f"RECOVERY: in the next turn call resolve_location(query='<지역명>', "
+        f"want='coords') to obtain the canonical lat/lon for the citizen's "
+        f"location, then re-invoke this tool with the returned values. Do NOT "
+        f"guess coordinates."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Follow-up lookup gate (G-class fabrication countermeasure — 2026-05-04)
+# ---------------------------------------------------------------------------
+# Citizen query keywords that signal "the LLM needs to call a follow-up
+# adapter (lookup mode='fetch') after resolve_location returns coordinates
+# or admcd". Without the follow-up, LLM fabricates the data from parametric
+# memory (the donga-univ-poi-bug 1-day-newer regression: snap-001 captured
+# 4.7°C drift / 61%p humidity drift between LLM-claimed values and the raw
+# KMA observation).  This list is the policy hint — adapter_id is decided
+# by BM25 from the available_adapters suffix.
+_FOLLOWUP_REQUIRED_KEYWORDS_KO: frozenset[str] = frozenset({
+    "날씨", "기온", "온도", "습도", "강수", "비", "눈", "바람", "풍속",
+    "예보", "특보", "폭염", "한파", "황사", "미세먼지",
+    "병원", "응급실", "응급의료", "의료기관", "약국",
+    "사고", "교통사고", "위험", "스쿨존", "어린이보호구역",
+    "구급", "119", "소방서", "재해",
+    "복지", "급여", "보조금", "지원금",
+})
+_FOLLOWUP_REQUIRED_KEYWORDS_EN: frozenset[str] = frozenset({
+    "weather", "temperature", "humidity", "rainfall", "wind",
+    "forecast", "warning",
+    "hospital", "er", "emergency", "pharmacy",
+    "accident", "traffic", "hazard",
+    "ambulance", "fire", "disaster",
+    "welfare", "benefit", "subsidy",
+})
+
+
+def _query_implies_followup_lookup(user_query: str) -> bool:
+    """Return True when the citizen query semantics require a follow-up
+    ``lookup(mode='fetch', tool_id=...)`` after ``resolve_location`` resolves
+    coordinates.
+
+    G-class chain enforcement: the integration-verification capture
+    ``snap-001-01-kma-now`` showed K-EXAONE calling ``resolve_location`` twice
+    and then producing a fabricated weather answer (16°C / 84% humidity vs
+    raw KMA 20.7°C / 23%) without ever invoking ``lookup(kma_current_observation)``.
+    The fabrication mode is deterministic when the citizen query mentions a
+    location-bound observable (weather / hospital / accident / 119) — no
+    adapter shipped today answers those purely from coordinates.
+    """
+    if not user_query:
+        return False
+    q = user_query.lower()
+    for kw in _FOLLOWUP_REQUIRED_KEYWORDS_KO:
+        if kw in user_query:  # Korean — case is irrelevant
+            return True
+    for kw in _FOLLOWUP_REQUIRED_KEYWORDS_EN:
+        if kw in q:
+            return True
+    return False
+
+
+def _check_resolve_terminated_without_followup(
+    llm_messages: list[Any],
+    user_query: str,
+) -> str | None:
+    """Return chain-recovery error message when the LLM is about to terminate
+    a turn without invoking a follow-up ``lookup`` after ``resolve_location``.
+
+    Triggers when ALL of the following hold:
+    1. The conversation contains at least one assistant turn that called
+       ``resolve_location`` AND the corresponding ``role='tool'`` result.
+    2. The conversation contains NO assistant turn that called
+       ``lookup`` with ``mode='fetch'`` (or shape-equivalent bare
+       ``{tool_id, params}``) on a coord/admcd-input adapter.
+    3. The user query mentions a location-bound observable that demands a
+       follow-up lookup (weather / hospital / ER / accident / 119 / welfare).
+
+    Returns ``None`` when the call is allowed; returns a descriptive
+    error message that the caller injects as a synthetic tool_result so the
+    next agentic-loop turn produces the missing ``lookup`` call.
+
+    CC reference parallel: ``Tool.validateInput`` rejection on missing
+    prerequisite. The KOSMOS port runs at the *terminal-turn* boundary
+    (``if not tool_call_buf:``) because the failure mode here is the inverse
+    of the ``_check_chain_prerequisite`` pattern — instead of "called
+    coord-input tool too early", this is "stopped after resolve and never
+    called the coord-input tool at all".
+    """
+    if not _query_implies_followup_lookup(user_query):
+        return None
+
+    saw_resolve_result = False
+    saw_followup_lookup = False
+    for m in llm_messages:
+        role = getattr(m, "role", None) or (
+            m.get("role") if isinstance(m, dict) else None
+        )
+        # Detect resolve_location tool result message
+        if role == "tool":
+            name = getattr(m, "name", None) or (
+                m.get("name") if isinstance(m, dict) else None
+            )
+            if name == "resolve_location":
+                saw_resolve_result = True
+            continue
+        if role != "assistant":
+            continue
+        tool_calls = getattr(m, "tool_calls", None) or (
+            m.get("tool_calls") if isinstance(m, dict) else None
+        )
+        if not tool_calls:
+            continue
+        for tc in tool_calls:
+            call_fn = (
+                getattr(getattr(tc, "function", None), "name", None)
+                or (
+                    tc.get("function", {}).get("name")
+                    if isinstance(tc, dict)
+                    else None
+                )
+            )
+            if call_fn != "lookup":
+                continue
+            # Inspect arguments to confirm fetch-mode against an adapter.
+            raw_args = (
+                getattr(getattr(tc, "function", None), "arguments", None)
+                or (
+                    tc.get("function", {}).get("arguments")
+                    if isinstance(tc, dict)
+                    else None
+                )
+            )
+            if isinstance(raw_args, str):
+                try:
+                    import json as _j  # noqa: PLC0415
+
+                    parsed_args: object = _j.loads(raw_args)
+                except Exception:  # noqa: BLE001
+                    parsed_args = {}
+            else:
+                parsed_args = raw_args or {}
+            if not isinstance(parsed_args, dict):
+                continue
+            mode = parsed_args.get("mode")
+            tool_id = parsed_args.get("tool_id")
+            if mode in (None, "fetch") and isinstance(tool_id, str) and tool_id:
+                saw_followup_lookup = True
+                break
+        if saw_followup_lookup:
+            break
+
+    if not saw_resolve_result:
+        return None
+    if saw_followup_lookup:
+        return None
+    return (
+        "Chain incomplete: this conversation invoked resolve_location but did NOT "
+        "follow up with lookup(mode='fetch', tool_id=<adapter>, params={...}) on "
+        "any coord/admcd-input adapter. The citizen query asks about an "
+        "observable (weather / hospital / accident / 119 / welfare) whose "
+        "authoritative value lives in an external agency API — answering from "
+        "coordinates alone IS fabrication (citizen-safety violation per "
+        "system_v1.md CRITICAL directive). RECOVERY: in the next turn, choose "
+        "the correct adapter from the <available_adapters> block and call "
+        "lookup(mode='fetch', tool_id='<adapter>', params={lat: <resolved>, "
+        "lon: <resolved>, ...}) using the coordinates returned by the prior "
+        "resolve_location turn. Do NOT produce a final answer this turn."
+    )
 
 
 def _utcnow() -> str:
@@ -407,6 +755,44 @@ async def run(  # noqa: C901
     from kosmos.session.manager import SessionManager as _SessionManager
 
     sid = session_id or str(uuid.uuid4())
+
+    # ---- spec-multi-turn-contamination diagnostic — optional log file
+    # The TUI bridge spawns this process with `stderr: 'pipe'` and never
+    # drains the pipe, so `logger.info(...)` lines are invisible to any
+    # external observer (tmux pane, asciinema cast). When the operator
+    # sets KOSMOS_BACKEND_LOG_FILE=<path>, attach a FileHandler at INFO
+    # so the diagnostic [CHAT_REQUEST_DUMP] / [LATEST_USER_UTT] /
+    # [REASONING_PREVIEW] lines persist to disk for post-hoc analysis.
+    # Off by default — production behaviour is unchanged when the env
+    # var is unset.
+    _log_path = os.getenv("KOSMOS_BACKEND_LOG_FILE")
+    if _log_path:
+        try:
+            _root = logging.getLogger()
+            _already = any(
+                isinstance(h, logging.FileHandler)
+                and getattr(h, "baseFilename", "") == os.path.abspath(_log_path)
+                for h in _root.handlers
+            )
+            if not _already:
+                _fh = logging.FileHandler(_log_path, mode="a", encoding="utf-8")
+                _fh.setLevel(logging.INFO)
+                _fh.setFormatter(
+                    logging.Formatter(
+                        "%(asctime)s %(levelname)s %(name)s %(message)s"
+                    )
+                )
+                _root.addHandler(_fh)
+                _root.setLevel(min(_root.level or logging.INFO, logging.INFO))
+                logger.info(
+                    "spec-multi-turn-contamination: attached FileHandler -> %s",
+                    _log_path,
+                )
+        except Exception:  # noqa: BLE001 — telemetry must never raise
+            sys.stderr.write(
+                f"[KOSMOS BACKEND] failed to attach log file {_log_path}\n"
+            )
+
     logger.info("IPC stdio loop starting — session_id=%s", sid)
 
     # Resolve session manager; always non-None inside this coroutine.
@@ -1026,13 +1412,21 @@ async def run(  # noqa: C901
             logger.debug("permission: session_grant hit for %s session=%s", tool_key, session_id)
             return True
 
-        # Determine risk level and description from primitive type
-        _PRIM_RISK: dict[str, str] = {"submit": "high", "subscribe": "medium"}  # noqa: N806
+        # Determine risk level and description from primitive type.
+        # verify is LIGHT_GATE (low risk, identity delegation read-only).
+        # submit/subscribe are HEAVY_GATE (medium/high risk, side-effecting).
+        _PRIM_RISK: dict[str, str] = {  # noqa: N806
+            "verify": "low",
+            "submit": "high",
+            "subscribe": "medium",
+        }
         _PRIM_KO: dict[str, str] = {  # noqa: N806
+            "verify": "신원 확인을 위해 인증 위임을 요청합니다.",
             "submit": "정부 API에 데이터를 제출합니다. 이 작업은 되돌릴 수 없습니다.",
             "subscribe": "공공 데이터 스트림을 구독합니다.",
         }
         _PRIM_EN: dict[str, str] = {  # noqa: N806
+            "verify": "Request identity delegation for verification.",
             "submit": "Submit data to a government API. This action is irreversible.",
             "subscribe": "Subscribe to a public data stream.",
         }
@@ -1045,6 +1439,13 @@ async def run(  # noqa: C901
             perm_span.set_attribute("kosmos.permission.mode", "ask")
             perm_span.set_attribute("kosmos.tool.dispatched", fname)
 
+            # Audit-4 P0-10 fix — propagate the resolving adapter id
+            # (e.g. `mock_verify_mobile_id`) as both `worker_id` and the new
+            # `tool_id` field. Without this the TUI rendered the literal
+            # `"main"` in every permission modal title because
+            # `pushIpcPermissionRequest` (ipcPermissionBridge.ts:153) read
+            # `frame.worker_id || frame.primitive_kind`.
+            _resolved_tool_id = str(args_obj.get("tool_id", fname))
             try:
                 await write_frame(
                     PermissionRequestFrame(
@@ -1054,11 +1455,12 @@ async def run(  # noqa: C901
                         ts=_utcnow(),
                         kind="permission_request",
                         request_id=request_id,
-                        worker_id="main",
+                        worker_id=_resolved_tool_id,
                         primitive_kind=fname,  # type: ignore[arg-type]
                         description_ko=_PRIM_KO.get(fname, "도구를 실행합니다."),
                         description_en=_PRIM_EN.get(fname, "Invoke tool."),
                         risk_level=_PRIM_RISK.get(fname, "medium"),  # type: ignore[arg-type]
+                        tool_id=_resolved_tool_id,
                     )
                 )
             except Exception as exc:  # noqa: BLE001
@@ -1111,6 +1513,48 @@ async def run(  # noqa: C901
             is_allow_session = raw_decision == "allow_session"
             if is_deny:
                 perm_span.set_attribute("kosmos.permission.decision", "deny")
+                # Audit-4 P0-2 — append HMAC-sealed deny record so the audit
+                # trail captures BOTH the request emission and the citizen's
+                # negative decision. Without this, "permission_denied" tool
+                # results have no integrity-verified provenance in the ledger.
+                try:
+                    from kosmos.permissions.action_digest import (  # noqa: PLC0415
+                        compute_action_digest,
+                        generate_nonce,
+                    )
+                    from kosmos.permissions.ledger import (  # noqa: PLC0415
+                        append as _ledger_append_deny,
+                    )
+                    from kosmos.settings import (  # noqa: PLC0415
+                        settings as _kosmos_settings_deny,
+                    )
+
+                    _deny_args = {
+                        k: v
+                        for k, v in args_obj.items()
+                        if k != "delegation_context"
+                    }
+                    _deny_digest = compute_action_digest(
+                        str(args_obj.get("tool_id", fname)),
+                        _deny_args,
+                        generate_nonce(),
+                    )
+                    _ledger_append_deny(
+                        tool_id=str(args_obj.get("tool_id", fname)),
+                        mode="default",
+                        granted=False,
+                        action_digest=_deny_digest,
+                        action="deny",
+                        session_id=session_id,
+                        correlation_id=correlation_id,
+                        ledger_path=_kosmos_settings_deny.permission_ledger_path,
+                        key_path=_kosmos_settings_deny.permission_key_path,
+                        key_registry_path=_kosmos_settings_deny.permission_key_registry_path,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "permission: ledger.append(deny) failed: %s", exc
+                    )
                 # Emit synthetic denied tool_result.
                 denied_env2 = ToolResultEnvelope(
                     kind=cast("Any", fname),
@@ -1131,17 +1575,30 @@ async def run(  # noqa: C901
                 return False
 
             # Granted — write consent receipt + optionally update session grant cache.
-            receipt_id = str(uuid.uuid4())
+            # Audit-4 P0-4 fix — emit `rcpt-<8-char-hex>` so the format matches the
+            # TUI regex `^rcpt-[A-Za-z0-9_-]{8,}$` (schemas/ui-l2/permission.ts:26)
+            # AND the executeConsentRevoke validator (commands/consent.ts:90).
+            # Without the prefix every backend-issued receipt was rejected by the
+            # citizen-facing /consent revoke flow with `invalid_id`.
+            receipt_id = f"rcpt-{uuid.uuid4().hex[:8]}"
             decision_label = "allow_session" if is_allow_session else "allow_once"
             perm_span.set_attribute("kosmos.permission.decision", decision_label)
             perm_span.set_attribute("kosmos.consent.receipt_id", receipt_id)
 
-            # Spec 1978 T049 — allow_session caches the tool_id so subsequent
-            # same-session same-tool calls bypass the bridge entirely (handled
-            # at the top of this function via _session_grants lookup).
+            # Spec 1978 T049 — allow_session caches the (primitive, tool_id)
+            # pair so subsequent same-session same-tool calls bypass the
+            # bridge entirely (lookup at the top of this function via
+            # _session_grants). Audit-4 alignment fix (2026-05-04): the
+            # storage key MUST match the lookup key. The lookup at line
+            # 1406 uses `f"{fname}:{tool_id}"`; the prior storage stored
+            # only `tool_id` → cache miss on every "allow_session" call.
             if is_allow_session:
-                tool_id_for_cache = str(args_obj.get("tool_id", fname))
-                _session_grants.setdefault(session_id, set()).add(tool_id_for_cache)
+                tool_key_for_cache = (
+                    f"{fname}:{args_obj.get('tool_id', fname)}"
+                )
+                _session_grants.setdefault(session_id, set()).add(
+                    tool_key_for_cache
+                )
             try:
                 import json as _json_receipt  # noqa: PLC0415
                 from pathlib import Path as _Path  # noqa: PLC0415
@@ -1165,6 +1622,95 @@ async def run(  # noqa: C901
                 logger.debug("permission: wrote consent receipt %s", receipt_id)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("permission: failed to write consent receipt: %s", exc)
+
+            # Audit-4 P0-2 — append HMAC-sealed, hash-chained ledger record so the
+            # consent receipt JSON in the memdir layer is BACKED by an integrity-
+            # verified entry in the canonical Spec 033 PIPA ledger
+            # (~/.kosmos/consent_ledger.jsonl). Without this append, allow paths
+            # left receipts forgeable: no HMAC seal, no chain prev_hash, no key_id.
+            #
+            # Failures are logged-only — the citizen has already approved the
+            # action and the synthetic tool_result must still be emitted. A
+            # follow-up `kosmos permissions verify` run will surface any drift.
+            try:
+                from kosmos.permissions.action_digest import (  # noqa: PLC0415
+                    compute_action_digest,
+                    generate_nonce,
+                )
+                from kosmos.permissions.ledger import (  # noqa: PLC0415
+                    append as _ledger_append,
+                )
+                from kosmos.settings import settings as _kosmos_settings  # noqa: PLC0415
+
+                _ledger_args = {
+                    k: v
+                    for k, v in args_obj.items()
+                    if k != "delegation_context"
+                }
+                _digest = compute_action_digest(
+                    str(args_obj.get("tool_id", fname)),
+                    _ledger_args,
+                    generate_nonce(),
+                )
+                _ledger_append(
+                    tool_id=str(args_obj.get("tool_id", fname)),
+                    mode="default",
+                    granted=True,
+                    action_digest=_digest,
+                    action="allow",
+                    consent_receipt_id=receipt_id,
+                    session_id=session_id,
+                    correlation_id=correlation_id,
+                    ledger_path=_kosmos_settings.permission_ledger_path,
+                    key_path=_kosmos_settings.permission_key_path,
+                    key_registry_path=_kosmos_settings.permission_key_registry_path,
+                )
+                logger.debug(
+                    "permission: ledger.append(allow) ok receipt_id=%s tool=%s",
+                    receipt_id,
+                    args_obj.get("tool_id", fname),
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "permission: ledger.append(allow) failed (receipt_id=%s): %s",
+                    receipt_id,
+                    exc,
+                )
+
+            # Gap A fix — emit PermissionResponseFrame echo back to TUI so
+            # that addReceipt() callsites can capture the receipt_id without
+            # a separate /consent list round-trip. This is a backend→TUI
+            # echo, not a new request; the TUI ignores it safely if it
+            # doesn't recognise the receipt_id field (backward-compat via
+            # Optional default=None in frame_schema.py).
+            from kosmos.ipc.frame_schema import PermissionResponseFrame as _PRF  # noqa: PLC0415
+
+            try:
+                await write_frame(
+                    _PRF(
+                        session_id=session_id,
+                        correlation_id=correlation_id,
+                        role="backend",
+                        ts=_utcnow(),
+                        kind="permission_response",
+                        request_id=request_id,
+                        decision=decision_label,  # type: ignore[arg-type]
+                        receipt_id=receipt_id,
+                        # Audit-4 P0-6 / P0-7 — propagate enough context for the
+                        # TUI's usePermissionReceiptWatcher to recompute the
+                        # gauntlet layer (1=green / 2=orange / 3=red) and render
+                        # the human-readable adapter name in /consent list.
+                        # Without these the TUI hardcoded layer=1 and tool_name=
+                        # 'unknown' for every receipt regardless of primitive.
+                        primitive_kind=fname,  # type: ignore[arg-type]
+                        tool_id=_resolved_tool_id,
+                    )
+                )
+                logger.debug(
+                    "permission: emitted receipt echo (receipt_id=%s)", receipt_id
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("permission: failed to emit receipt echo: %s", exc)
 
             return True
 
@@ -1264,11 +1810,28 @@ async def run(  # noqa: C901
                     from kosmos.primitives.verify import (  # noqa: PLC0415
                         verify,
                     )
+                    from kosmos.tools.verify_canonical_map import (  # noqa: PLC0415
+                        resolve_family,
+                    )
 
-                    # Accept both `family` (citizen-facing tool schema) and
-                    # `family_hint` (primitive's internal arg name) — KOSMOS
-                    # tools-bridge tolerates both.
-                    family_hint = str(args_obj.get("family_hint") or args_obj.get("family") or "")
+                    # Spec 2297 / Issue #C1 (2026-05-04) — translate
+                    # ``tool_id`` → ``family_hint`` via the canonical map
+                    # parsed from ``prompts/system_v1.md`` ``<verify_families>``.
+                    # The mvp_surface ``_VerifyInputForLLM.translate_tool_id_shape``
+                    # validator only fires when the LLM call goes through Pydantic
+                    # schema validation; the IPC stdio dispatcher bypasses that
+                    # path and historically read ``family_hint`` directly from
+                    # the args dict, leaving every K-EXAONE-emitted
+                    # ``verify({tool_id: …})`` call resolving to ``family_hint=""``
+                    # → "No verify adapter registered for family ''".
+                    # Accept both ``family`` (citizen-facing tool schema) and
+                    # ``family_hint`` (primitive's internal arg name) for
+                    # legacy / tools-bridge compatibility.
+                    tool_id = str(args_obj.get("tool_id") or "")
+                    family_hint = (
+                        resolve_family(tool_id)
+                        or str(args_obj.get("family_hint") or args_obj.get("family") or "")
+                    )
                     session_ctx = cast("dict[str, object]", args_obj.get("session_context") or {})
                     raw = await verify(family_hint=family_hint, session_context=session_ctx)
                     result_payload = {
@@ -1367,8 +1930,12 @@ async def run(  # noqa: C901
 
                 elif fname == "subscribe":
                     # T069 streaming events are deferred. Return the SubscriptionHandle.
+                    from kosmos.ipc.frame_schema import (  # noqa: PLC0415
+                        WorkerStatusFrame,
+                    )
                     from kosmos.primitives.subscribe import (  # noqa: PLC0415
                         SubscribeInput,
+                        _SubscribeIterator,
                         subscribe,
                     )
 
@@ -1378,17 +1945,52 @@ async def run(  # noqa: C901
                         lifetime_seconds=int(cast("Any", args_obj.get("lifetime_seconds", 300))),
                     )
                     iterator_or_error = subscribe(inp_sub)
-                    if hasattr(iterator_or_error, "_handle"):
-                        # T069 deferred — keep handle attribute reachable for
-                        # future streaming wiring; for now we only confirm
-                        # iterator construction and emit a synthetic envelope.
+                    if isinstance(iterator_or_error, _SubscribeIterator):
+                        # Audit-5 P0-2 fix (2026-05-04): use the canonical
+                        # subscription_id from the real ``SubscriptionHandle``
+                        # so the TUI ``subscriptionRegistry`` key matches every
+                        # subsequent OTEL span / drop event / consent ledger
+                        # entry. Synthetic ``uuid.uuid4()`` removed.
+                        handle = iterator_or_error.peek_handle()
                         result_payload = {
                             "kind": "subscribe",
-                            "subscription_id": str(uuid.uuid4()),
+                            "subscription_id": handle.subscription_id,
+                            "handle_id": handle.subscription_id,  # alias for TS-side
                             "tool_id": inp_sub.tool_id,
+                            "opened_at": handle.opened_at.isoformat(),
+                            "closes_at": handle.closes_at.isoformat(),
+                            "lifetime_seconds": int(inp_sub.lifetime_seconds),
                             "status": "opened",
                             "note": "Streaming events deferred (T069).",
                         }
+
+                        # Audit-5 P0-4 fix (2026-05-04): emit a WorkerStatusFrame
+                        # so the TUI ``AgentVisibilityPanel`` (subscribed via
+                        # ``bridge.frames()``) records the active subscription
+                        # channel as a "running" ministry agent. The panel maps
+                        # ``role_id`` → display label; we pass the adapter
+                        # ``tool_id`` so the citizen sees the real source name.
+                        # The frontend ``subscriptionRegistry`` (TS-side) and
+                        # this ``worker_status`` IPC stream now agree on the
+                        # same ``worker_id`` (``subscribe:<subscription_id>``).
+                        try:
+                            ws_frame = WorkerStatusFrame(
+                                session_id=session_id,
+                                correlation_id=correlation_id,
+                                ts=_utcnow(),
+                                role="backend",
+                                kind="worker_status",
+                                worker_id=f"subscribe:{handle.subscription_id}",
+                                role_id=inp_sub.tool_id,
+                                current_primitive="subscribe",
+                                status="running",
+                            )
+                            await write_frame(ws_frame)
+                        except Exception as _ws_exc:  # noqa: BLE001
+                            logger.warning(
+                                "subscribe: failed to emit worker_status frame: %s",
+                                _ws_exc,
+                            )
                     else:
                         # AdapterNotFoundError or similar
                         result_payload = {
@@ -1497,20 +2099,95 @@ async def run(  # noqa: C901
         if not isinstance(frame, ChatRequestFrame):
             return
 
-        # Epic #2077 T010 — assemble the active tool inventory FIRST so the
-        # system-prompt augmentation (Step 3) and the LLM ``tools`` parameter
-        # (Step 2) consume the same shape. Order: (1) trust the TUI's
-        # ``frame.tools`` if non-empty (citizen authority — Step 2); (2)
-        # fall back to ``ToolRegistry.export_core_tools_openai()`` if the
-        # frame omits tools (Step 4). Backend remains authoritative for
-        # *execution* (FR-005): unknown names are dropped at dispatch time.
-        llm_tools: list[LLMToolDefinition] = []
+        # ---- spec-multi-turn-contamination diagnostic emit (FR-001/FR-002)
+        # Increment the per-session turn counter and dump the inbound
+        # ChatRequestFrame.messages tail so we can prove which user turn
+        # K-EXAONE actually saw on the wire. Off by default; gated by
+        # KOSMOS_CHAT_REQUEST_DUMP=1. Truncates each message content to
+        # 256 chars to keep the log line bounded.
+        # Always increment the counter so OTEL `kosmos.chat.turn_index`
+        # works regardless of the env-gated stderr dump.
+        _diag_turn_idx = _session_turn_counter.get(frame.session_id, 0) + 1
+        _session_turn_counter[frame.session_id] = _diag_turn_idx
+        # Additive Spec 021 OTEL extension — annotate the parent
+        # `kosmos.ipc.frame` span (opened by the reader loop) with the
+        # turn index so Langfuse traces can group multi-turn flows.
+        try:
+            _current_span = trace.get_current_span()
+            if _current_span is not None:
+                _current_span.set_attribute(
+                    "kosmos.chat.turn_index", _diag_turn_idx
+                )
+        except Exception:  # noqa: BLE001 — telemetry must never raise
+            pass
+        if _diag_chat_request_enabled():
+            try:
+                _dump_payload = [
+                    {
+                        "role": m.role,
+                        "content": (m.content or "")[:256],
+                        "name": m.name,
+                        "tool_call_id": m.tool_call_id,
+                    }
+                    for m in frame.messages
+                ]
+                logger.info(
+                    "[CHAT_REQUEST_DUMP] turn=%d session=%s correlation=%s "
+                    "messages_count=%d messages=%s",
+                    _diag_turn_idx,
+                    frame.session_id,
+                    frame.correlation_id,
+                    len(frame.messages),
+                    _stdlib_json.dumps(_dump_payload, ensure_ascii=False),
+                )
+            except Exception:  # noqa: BLE001 — diagnostic must never raise
+                logger.exception("[CHAT_REQUEST_DUMP] failed to serialise")
+
+        # Tool inventory — backend ToolRegistry is the single source of
+        # truth, BUT only the five LLM-callable primitives go into the
+        # ``tools`` parameter the model sees. KOSMOS architecture
+        # (docs/vision.md L1-C): `system prompt exposes primitive
+        # signatures only; BM25 surfaces adapters dynamically`. Adapter
+        # tools (kma_*, hira_*, nmc_*, koroad_*, mohw_*, nfa_*) are
+        # invoked via `lookup(tool_id="<adapter_id>", params={...})`,
+        # never directly. The previous version of this block
+        # (commit 5050417f) emitted every core_tool — primitive AND
+        # adapter — into the tools[] parameter, which let K-EXAONE call
+        # adapter ids directly (e.g. `kma_current_observation()` instead
+        # of `lookup(tool_id="kma_current_observation", params=...)`).
+        # The dispatcher then rejected the call with "Model requested
+        # unknown tool 'kma_current_observation'" because PRIMITIVE_REGISTRY
+        # only contains the five primitives. Captured live in
+        # specs/integration-verification/donga-univ-poi-bug/
+        # snap-001-01-kma-now (2026-05-04).
+        #
+        # Filtering by `ministry == "KOSMOS"` AND id in the primitive
+        # whitelist matches the intent of mvp_surface.py — the five
+        # GovAPITool entries with `primitive=` field set are exactly
+        # the LLM-callable surface. Adapters (every other ministry) flow
+        # through the `<available_adapters>` system-prompt suffix that
+        # `_build_available_adapters_suffix` emits below.
+        registry = _ensure_tool_registry()
+        from kosmos.primitives import PRIMITIVE_REGISTRY  # noqa: PLC0415
+
+        backend_tools_raw = [
+            t.to_openai_tool()
+            for t in registry.core_tools()  # type: ignore[attr-defined]
+            if t.ministry == "KOSMOS" and t.id in PRIMITIVE_REGISTRY
+        ]
+        backend_tool_names = {
+            r.get("function", {}).get("name")  # type: ignore[union-attr]
+            for r in backend_tools_raw
+            if isinstance(r, dict)
+        }
+        llm_tools: list[LLMToolDefinition] = [
+            LLMToolDefinition.model_validate(raw) for raw in backend_tools_raw
+        ]
         for t in frame.tools:
+            tui_name = getattr(getattr(t, "function", None), "name", None)
+            if tui_name and tui_name in backend_tool_names:
+                continue
             llm_tools.append(LLMToolDefinition.model_validate(t.model_dump()))
-        if not llm_tools:
-            registry = _ensure_tool_registry()
-            for raw in registry.export_core_tools_openai():  # type: ignore[attr-defined]
-                llm_tools.append(LLMToolDefinition.model_validate(raw))
 
         # Build LLMClient input from the frame payload. Conversation history
         # lives in the TUI per ADR-0005 — backend receives the full slate.
@@ -1528,6 +2205,15 @@ async def run(  # noqa: C901
             wrap_citizen_request,
         )
 
+        # G-class chain enforcement (2026-05-04) — top-level scope so the
+        # follow-up-lookup gate inside the agentic loop can read the original
+        # citizen utterance to decide whether the conversation must end with a
+        # `lookup(mode='fetch', ...)` call (weather / hospital / accident /
+        # 119 / welfare queries) before the LLM is allowed to produce a final
+        # answer. Lifted out of the BM25 try-block so the variable survives
+        # the suffix-builder failure path.
+        latest_user_utt = ""
+
         base_system = frame.system
         if not base_system:
             loaded = await _ensure_system_prompt()
@@ -1543,17 +2229,55 @@ async def run(  # noqa: C901
             # 답변 → "현재 날짜인 2026년 3월 5일 기준으로 부산 사하구의 날씨 정보"
             # 같은 hallucination. _DYNAMIC_BOUNDARY_MARKER 뒤는 prompt-cache의
             # dynamic-context section 이므로 여기에 today 주입해도 cache prefix
+            #
+            # KOSMOS hotfix (2026-05-04, KMA base_time hallucination 차단):
+            # `오늘 날짜 (UTC)` 만 inject 하면 LLM 이 KMA `base_time` (KST HHMM)
+            # 을 추측 (e.g. `0700`). KMA 단기예보/실황 발표 시각은 KST
+            # 0200/0500/0800/1100/1400/1700/2000/2300 — 잘못된 base_time 은
+            # 4-9 시간 시차의 fabrication 으로 이어짐. 시민 안전 directive 위반.
+            # 따라서 KST 날짜 + KST 현재 시각 (HH:MM, HHMM) 둘 다 inject —
+            # 도구 description 이 "직전 정시" 를 참조할 수 있도록.
             # invariant 유지. ISO 8601 date format (YYYY-MM-DD) 으로 표기.
-            from datetime import UTC, datetime  # noqa: PLC0415
+            from datetime import datetime  # noqa: PLC0415
+            from zoneinfo import ZoneInfo  # noqa: PLC0415
 
-            today_iso = datetime.now(UTC).strftime("%Y-%m-%d")
+            _kst = ZoneInfo("Asia/Seoul")
+            _now_kst = datetime.now(tz=_kst)
+            today_kst_iso = _now_kst.strftime("%Y-%m-%d")
+            now_kst_hm = _now_kst.strftime("%H:%M")
+            now_kst_hhmm = _now_kst.strftime("%H%M")
+            # KMA base_time 은 KST 정시 발표 (0200/0500/0800/1100/1400/
+            # 1700/2000/2300). 현재 KST 시각의 직전 정시 hint 도 함께 emit
+            # — LLM 이 추측하지 않도록.
+            _valid_base_times = (2, 5, 8, 11, 14, 17, 20, 23)
+            _h = _now_kst.hour
+            _prev = max(
+                (b for b in _valid_base_times if b <= _h),
+                default=_valid_base_times[-1],
+            )
+            # 오늘 시각이 첫 발표(0200) 이전이면 어제 2300 사용
+            if _h < _valid_base_times[0]:
+                _kma_base_date = (_now_kst.replace(hour=23, minute=0)).strftime("%Y%m%d")
+                _kma_base_time = "2300"
+                _kma_hint_note = "어제"
+            else:
+                _kma_base_date = _now_kst.strftime("%Y%m%d")
+                _kma_base_time = f"{_prev:02d}00"
+                _kma_hint_note = "오늘"
             augmented_system = (
                 augmented_system
-                + f"\n\n## Current session context\n\n오늘 날짜: {today_iso} (UTC).\n"
-                "이 날짜를 기준으로 시간 표현을 해석합니다. "
-                "날짜 / 시간 정보를 추측 또는 fabricate 하지 말고, "
+                + f"\n\n## Current session context\n\n"
+                f"오늘 날짜 (KST): {today_kst_iso}.\n"
+                f"현재 시각 (KST): {now_kst_hm} ({now_kst_hhmm}).\n"
+                "이 날짜/시각을 기준으로 시간 표현을 해석합니다. "
+                "날짜/시간 정보를 추측 또는 fabricate 하지 말고, "
                 "필요하면 도구 (예: kma_short_term_forecast) 를 호출해서 "
                 "실제 데이터를 받아 응답에 인용합니다.\n"
+                "KMA 단기예보/실황 발표 시각은 KST 정시 8회: "
+                "0200/0500/0800/1100/1400/1700/2000/2300. "
+                f"현재 KST 시각의 직전 발표는 {_kma_hint_note} "
+                f"base_date={_kma_base_date}, base_time={_kma_base_time}. "
+                "base_time 추측 금지 — 위 hint 또는 그 이전 정시 사용.\n"
             )
 
             # Spec 2521 (2026-05-01) — BM25 adapter discovery is a backend
@@ -1565,11 +2289,22 @@ async def run(  # noqa: C901
             # phantom tool-UI noise that user surfaced via Layer 5 frame
             # capture (specs/2521 frames/raw.cast frame_0160 onwards).
             try:
-                latest_user_utt = ""
                 for m in reversed(frame.messages):
                     if m.role == "user" and m.content:
                         latest_user_utt = m.content
                         break
+                # spec-multi-turn-contamination diagnostic emit — log the
+                # extracted latest user utterance BEFORE the BM25 suffix
+                # builder runs. If this string disagrees with the wire-level
+                # tail in [CHAT_REQUEST_DUMP] above, the bug is in the
+                # extraction loop; if both agree but the model reasons over
+                # an older turn, the bug is in K-EXAONE / Hermes (H2/H3).
+                if _diag_chat_request_enabled():
+                    logger.info(
+                        "[LATEST_USER_UTT] turn=%d utt_first256=%s",
+                        _diag_turn_idx,
+                        (latest_user_utt or "")[:256],
+                    )
                 if latest_user_utt:
                     suffix_block = _build_available_adapters_suffix(latest_user_utt)
                     if suffix_block:
@@ -1588,12 +2323,34 @@ async def run(  # noqa: C901
             content = m.content
             if m.role == "user" and content:
                 content = wrap_citizen_request(content)
+            # Lead-Diag-4 (2026-05-04, role='tool' wire conversion) — forward
+            # the wire-side ``tool_calls`` array (assistant turns that
+            # requested one or more tool invocations) into the LLMClient
+            # message so the OpenAI multi-turn pairing invariant survives the
+            # round-trip. Backward compat: ``m.tool_calls`` is ``None`` for
+            # legacy senders that pre-date the wire-format extension, in
+            # which case we omit the field entirely (LLMChatMessage default
+            # is ``None``).
+            llm_tool_calls: list[LLMToolCall] | None = None
+            if m.tool_calls:
+                llm_tool_calls = [
+                    LLMToolCall(
+                        id=tc.id,
+                        type=tc.type,
+                        function=LLMFunctionCall(
+                            name=tc.function.name,
+                            arguments=tc.function.arguments,
+                        ),
+                    )
+                    for tc in m.tool_calls
+                ]
             llm_messages.append(
                 LLMChatMessage(
                     role=m.role,
                     content=content,
                     name=m.name,
                     tool_call_id=m.tool_call_id,
+                    tool_calls=llm_tool_calls,
                 )
             )
 
@@ -1613,6 +2370,19 @@ async def run(  # noqa: C901
         # to synthesise tool_call_buf entries when the structured form is
         # absent.
         from kosmos.llm.tool_call_parser import StreamGate  # noqa: PLC0415
+
+        # Neurosymbolic constraint flag — set when the chain-prerequisite
+        # gate rejected a coord-input tool call earlier in the loop. The
+        # next LLM turn forces tool_choice=resolve_location, removing the
+        # bypass path the LLM used in donga-univ-poi-bug captures
+        # (the LLM read the chain hint and then refused the tool anyway,
+        # answering "I don't have a location resolver" — a documented
+        # failure mode in the 2026 hallucination literature: business
+        # rules in prompts are interpreted as suggestions, not constraints,
+        # so the constraint must move to the API layer where the model
+        # cannot bypass it). Once a turn fires resolve_location the flag
+        # clears so the agentic loop returns to free tool_choice.
+        force_resolve_location_next_turn = False
 
         for _turn in range(_AGENTIC_LOOP_MAX_TURNS):
             message_id = str(uuid.uuid4())
@@ -1635,6 +2405,31 @@ async def run(  # noqa: C901
             stream_error: Exception | None = None
             stream_gate = StreamGate()
 
+            # spec-multi-turn-contamination diagnostic — accumulate the K-EXAONE
+            # reasoning_content stream so we can compare its first 1024 bytes
+            # against [LATEST_USER_UTT]. If reasoning starts with text that
+            # paraphrases an earlier turn, H2 (model-side state contamination)
+            # is confirmed even when the wire-level messages are correct.
+            # Off by default; gated by KOSMOS_CHAT_REQUEST_DUMP=1.
+            _diag_reasoning_buf: list[str] = []
+            _diag_reasoning_emitted = False
+
+            # Materialise the tool_choice for this turn from the gate flag.
+            # When forced, OpenAI/FriendliAI accept the explicit-function
+            # form (verified live against FriendliAI Serverless 2026-05-04);
+            # K-EXAONE on FriendliAI honours it as a hard constraint at the
+            # decoding boundary rather than a system-prompt hint.
+            stream_tool_choice: str | dict[str, object] | None = None
+            if force_resolve_location_next_turn:
+                stream_tool_choice = {
+                    "type": "function",
+                    "function": {"name": "resolve_location"},
+                }
+                logger.warning(
+                    "_handle_chat_request: forcing tool_choice=resolve_location for "
+                    "turn %d (chain gate previously rejected a coord-input call)",
+                    _turn,
+                )
             try:
                 async for event in client.stream(  # type: ignore[attr-defined]
                     messages=llm_messages,
@@ -1642,6 +2437,7 @@ async def run(  # noqa: C901
                     temperature=frame.temperature,
                     top_p=frame.top_p,
                     max_tokens=frame.max_tokens,
+                    tool_choice=stream_tool_choice,
                 ):
                     event_type = getattr(event, "type", None)
                     if event_type == "content_delta":
@@ -1668,6 +2464,26 @@ async def run(  # noqa: C901
                         # the LLM context.
                         thinking_text = getattr(event, "thinking", "") or ""
                         if thinking_text:
+                            # spec-multi-turn-contamination diagnostic —
+                            # accumulate reasoning until 1024 bytes, then
+                            # emit once per turn. Bounded buffer (cap at 4096
+                            # so a runaway CoT can't eat memory).
+                            if (
+                                _diag_chat_request_enabled()
+                                and not _diag_reasoning_emitted
+                                and sum(len(s) for s in _diag_reasoning_buf) < 4096
+                            ):
+                                _diag_reasoning_buf.append(thinking_text)
+                                _running_len = sum(len(s) for s in _diag_reasoning_buf)
+                                if _running_len >= 1024:
+                                    _preview = "".join(_diag_reasoning_buf)[:1024]
+                                    logger.info(
+                                        "[REASONING_PREVIEW] turn=%d "
+                                        "first1024=%s",
+                                        _diag_turn_idx,
+                                        _preview,
+                                    )
+                                    _diag_reasoning_emitted = True
                             await write_frame(
                                 AssistantChunkFrame(
                                     session_id=frame.session_id,
@@ -1694,6 +2510,23 @@ async def run(  # noqa: C901
                         if fargs:
                             slot["args"] += fargs
                     elif event_type == "done":
+                        # spec-multi-turn-contamination diagnostic — flush a
+                        # short reasoning buffer (<1024 bytes) on stream
+                        # completion so the [REASONING_PREVIEW] line is
+                        # emitted exactly once per turn even when the model
+                        # produced little CoT.
+                        if (
+                            _diag_chat_request_enabled()
+                            and not _diag_reasoning_emitted
+                            and _diag_reasoning_buf
+                        ):
+                            _preview = "".join(_diag_reasoning_buf)[:1024]
+                            logger.info(
+                                "[REASONING_PREVIEW] turn=%d first1024=%s",
+                                _diag_turn_idx,
+                                _preview,
+                            )
+                            _diag_reasoning_emitted = True
                         break
                     elif event_type == "error":
                         stream_error = RuntimeError(
@@ -1770,6 +2603,76 @@ async def run(  # noqa: C901
             # cost of the ordering guarantee: until end-of-stream we cannot
             # know whether a tool_call follows in this turn.
             if not tool_call_buf:
+                # ---- G-class fabrication gate (2026-05-04) ---------------
+                # Before emitting a final-answer turn, check whether the
+                # conversation invoked resolve_location but never followed up
+                # with a coord/admcd-input lookup despite the citizen query
+                # demanding one (weather / hospital / accident / 119 /
+                # welfare). The donga-univ-poi-bug snap-001-01-kma-now
+                # capture (2026-05-04) showed K-EXAONE producing 16°C / 84%
+                # humidity by parametric memory — 4.7°C / 61%p drift versus
+                # the raw KMA observation — because the agentic loop allowed
+                # the answer turn to fire without a tool result in scope.
+                # Inject a synthetic chain-recovery tool_result and continue
+                # the loop so the next turn produces the missing lookup call.
+                chain_followup_msg = _check_resolve_terminated_without_followup(
+                    llm_messages, latest_user_utt
+                )
+                if chain_followup_msg is not None:
+                    synth_call_id = str(uuid.uuid4())
+                    # Synthesise an assistant turn that appears to have
+                    # called a sentinel "chain_gate" — keeps the message
+                    # ordering invariant (assistant tool_calls precede the
+                    # role='tool' content). The model will not see this
+                    # call_id again — only the role='tool' content matters.
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="assistant",
+                            content="",
+                            tool_calls=[
+                                LLMToolCall(
+                                    id=synth_call_id,
+                                    type="function",
+                                    function=LLMFunctionCall(
+                                        name="lookup",
+                                        arguments=_json.dumps(
+                                            {
+                                                "mode": "fetch",
+                                                "tool_id": "<chain-gate-pending>",
+                                                "params": {},
+                                            }
+                                        ),
+                                    ),
+                                )
+                            ],
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="tool",
+                            content=_json.dumps(
+                                {
+                                    "kind": "error",
+                                    "reason": "chain_followup_missing",
+                                    "message": chain_followup_msg,
+                                },
+                                ensure_ascii=False,
+                            ),
+                            name="lookup",
+                            tool_call_id=synth_call_id,
+                        )
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected final-answer turn — "
+                        "resolve_location ran but follow-up lookup was never "
+                        "invoked despite citizen query implying it. "
+                        "Re-entering loop with chain-recovery hint."
+                    )
+                    # Drop the buffered prose so the citizen never sees the
+                    # fabrication that the LLM was about to emit.
+                    buffered_visible.clear()
+                    continue
+
                 merged_prose = "".join(buffered_visible)
                 if merged_prose:
                     await write_frame(
@@ -1852,6 +2755,119 @@ async def run(  # noqa: C901
                     )
                     continue
 
+                # Chain prerequisite gate — donga-univ-poi-bug Epic #2766.
+                # CC mirror: ``Tool.validateInput?(input, context)`` from
+                # ``.references/claude-code-sourcemap/restored-src/src/Tool.ts:489``
+                # — tool-scoped prerequisite hook that inspects the
+                # surrounding ToolUseContext and may reject with a
+                # message the LLM sees in the tool_result. KOSMOS port:
+                # we run the check here, before issuing the ToolCallFrame
+                # and before the dispatch task starts, so a rejected call
+                # never burns an outbound HTTP request and the LLM gets
+                # a deterministic chain-recovery instruction in the same
+                # turn it tried to skip the prerequisite.
+                #
+                # Concretely: when fname == "lookup" + the chosen tool_id
+                # is a coordinate/admcd-input adapter (kma_*, hira_*, nmc_*,
+                # koroad_*) AND the citizen-supplied params already carry
+                # the coordinates AND no prior turn in llm_messages
+                # invoked resolve_location, that means the LLM guessed
+                # the coordinates from prior knowledge instead of routing
+                # through the canonical resolver. Three live captures
+                # under specs/integration-verification/donga-univ-poi-bug/
+                # showed this exact pattern producing wrong-region
+                # hospital lists. Rejecting here forces the next turn
+                # through resolve_location.
+                chain_error_msg = _check_chain_prerequisite(
+                    fname, args_obj, llm_messages, registry=_ensure_tool_registry()
+                )
+                if chain_error_msg is not None:
+                    from kosmos.ipc.frame_schema import (  # noqa: PLC0415
+                        ToolResultEnvelope,
+                        ToolResultFrame,
+                    )
+                    # Emit a ToolCallFrame first so the TUI registers the
+                    # call_id in seenToolUseIds (deps.ts L420). Without it
+                    # the subsequent ToolResultFrame surfaces as a
+                    # `tool_result_orphan` system error in the transcript.
+                    await write_frame(
+                        ToolCallFrame(
+                            session_id=frame.session_id,
+                            correlation_id=frame.correlation_id,
+                            role="backend",
+                            ts=_utcnow(),
+                            kind="tool_call",
+                            call_id=call_id,
+                            name=fname,  # type: ignore[arg-type]
+                            arguments=args_obj,
+                        )
+                    )
+                    err_envelope = ToolResultEnvelope(
+                        kind=cast("Any", fname),
+                        result={
+                            "kind": "error",
+                            "reason": "chain_prerequisite_missing",
+                            "message": chain_error_msg,
+                            "retryable": False,
+                        },
+                    )
+                    await write_frame(
+                        ToolResultFrame(
+                            session_id=frame.session_id,
+                            correlation_id=frame.correlation_id,
+                            role="backend",
+                            ts=_utcnow(),
+                            kind="tool_result",
+                            call_id=call_id,
+                            envelope=err_envelope,
+                        )
+                    )
+                    # Inject a synthetic tool message into history so the
+                    # next LLM turn sees the chain hint and follows it.
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="assistant",
+                            content="",
+                            tool_calls=[
+                                LLMToolCall(
+                                    id=call_id,
+                                    type="function",
+                                    function=LLMFunctionCall(
+                                        name=fname,
+                                        arguments=_json.dumps(args_obj),
+                                    ),
+                                )
+                            ],
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="tool",
+                            content=_json.dumps(
+                                {
+                                    "kind": "error",
+                                    "reason": "chain_prerequisite_missing",
+                                    "message": chain_error_msg,
+                                },
+                                ensure_ascii=False,
+                            ),
+                            name=fname,
+                            tool_call_id=call_id,
+                        )
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected %s call_id=%s — chain prerequisite missing",
+                        fname,
+                        call_id[:12],
+                    )
+                    # Neurosymbolic constraint — the next LLM turn must
+                    # call resolve_location before any other tool. Set the
+                    # flag here so the next loop iteration's tool_choice
+                    # forces the model down the chain. See the flag
+                    # comment at the loop start for the full rationale.
+                    force_resolve_location_next_turn = True
+                    continue
+
                 _pending_calls[call_id] = loop.create_future()
                 issued_calls.append((call_id, fname))
                 assistant_tool_calls.append(
@@ -1892,8 +2908,26 @@ async def run(  # noqa: C901
                     name=f"primitive-{fname}-{call_id[:8]}",
                 )
 
+                # Neurosymbolic constraint — clear the force flag once a
+                # resolve_location turn has actually been dispatched. Any
+                # subsequent turn returns to free tool_choice so the LLM
+                # can route to the actual coord-input adapter (KMA/HIRA/
+                # NMC) with the resolved coordinates.
+                if fname == "resolve_location":
+                    force_resolve_location_next_turn = False
+
             # If every tool call was rejected (whitelist), terminate.
+            # Exception: when the chain gate fired (force flag set) we
+            # MUST continue to the next iteration so the forced
+            # tool_choice=resolve_location actually gets a chance to run.
+            # Returning here would leave the citizen with the chain-error
+            # tool_result frame as the only visible output.
             if not issued_calls:
+                if force_resolve_location_next_turn:
+                    # Synthetic tool_result already injected into
+                    # llm_messages; the next loop iteration will fire the
+                    # LLM again with tool_choice forced to resolve_location.
+                    continue
                 await write_frame(
                     AssistantChunkFrame(
                         session_id=frame.session_id,
@@ -2144,6 +3178,26 @@ async def run(  # noqa: C901
                     )
                     await write_frame(err)
 
+            elif frame.kind == "consent_revoke_request":
+                # Epic 2 — consent revoke IPC arm (arm 22).
+                try:
+                    await _handle_consent_revoke_request(frame)
+                except Exception as exc:  # noqa: BLE001
+                    logger.exception("consent_revoke_request handler failed: %s", exc)
+                    from kosmos.ipc.frame_schema import ConsentRevokeResponseFrame as _CRRFE  # noqa: PLC0415
+
+                    err_resp = _CRRFE(
+                        session_id=frame.session_id,
+                        correlation_id=frame.correlation_id or str(uuid.uuid4()),
+                        role="backend",
+                        ts=_utcnow(),
+                        kind="consent_revoke_response",
+                        request_id=getattr(frame, "request_id", ""),
+                        ok=False,
+                        error="io_error",
+                    )
+                    await write_frame(err_resp)
+
             elif frame.kind == "plugin_op":
                 # Spec 1979 — plugin_op IPC dispatcher arm. Routes citizen
                 # /plugin install / uninstall / list slash commands to the
@@ -2185,6 +3239,225 @@ async def run(  # noqa: C901
                         details={"request_op": getattr(frame, "request_op", None)},
                     )
                     await write_frame(err)
+
+        async def _handle_consent_revoke_request(frame: IPCFrame) -> None:  # noqa: C901, PLR0912
+            """Epic 2 — consent revoke request handler (arm 22).
+
+            Reads the target receipt JSON from
+            ``~/.kosmos/memdir/user/consent/<receipt_id>.json``, marks it
+            revoked (atomic temp+rename write), appends a withdrawal entry to
+            the canonical Spec 033 PIPA ledger via
+            ``kosmos.permissions.ledger.append`` (HMAC-sealed, hash-chained,
+            fcntl-locked), emits an OTEL span, and responds with a
+            ``consent_revoke_response`` frame.
+
+            Audit-4 P0-3 (2026-05-04): Replaced ad-hoc unsealed
+            ``hashlib.sha256(json.dumps(entry))`` + parallel
+            ``~/.kosmos/memdir/user/consent/ledger.jsonl`` path with
+            ``kosmos.permissions.ledger.append(action="withdraw", ...)``.
+            The ad-hoc path lacked HMAC, hash-chain prev_hash, key_id, and
+            fcntl lock — entries were forgeable and could not be verified by
+            ``kosmos permissions verify``. The unified path writes to the
+            canonical ledger configured by ``settings.permission_ledger_path``
+            (default ``~/.kosmos/consent_ledger.jsonl``).
+
+            Error cases:
+            - ``not_found``:   receipt file does not exist.
+            - ``already_revoked``: receipt already has ``revoked_at`` set.
+            - ``io_error``:    any filesystem / JSON parse error.
+            """
+            import json as _json_revoke  # noqa: PLC0415
+            import os as _os_revoke  # noqa: PLC0415
+            import tempfile as _tempfile  # noqa: PLC0415
+            from datetime import datetime as _dt_revoke  # noqa: PLC0415
+            from pathlib import Path as _Path  # noqa: PLC0415
+
+            from kosmos.ipc.frame_schema import (  # noqa: PLC0415
+                ConsentRevokeResponseFrame as _CRRespFrame,
+            )
+            from kosmos.permissions.action_digest import (  # noqa: PLC0415
+                compute_action_digest as _compute_action_digest,
+            )
+            from kosmos.permissions.action_digest import (  # noqa: PLC0415
+                generate_nonce as _generate_nonce,
+            )
+            from kosmos.permissions.ledger import (  # noqa: PLC0415
+                append as _ledger_append_withdraw,
+            )
+            from kosmos.settings import (  # noqa: PLC0415
+                settings as _kosmos_settings_revoke,
+            )
+
+            request_id: str = getattr(frame, "request_id", "")
+            receipt_id: str = getattr(frame, "receipt_id", "")
+            scope: str = getattr(frame, "scope", "once")
+            reason: str | None = getattr(frame, "reason", None)
+            session_id: str = frame.session_id
+
+            with _tracer.start_as_current_span("kosmos.consent.revoke") as revoke_span:
+                revoke_span.set_attribute("kosmos.consent.receipt_id", receipt_id)
+                revoke_span.set_attribute("kosmos.consent.scope", scope)
+                revoke_span.set_attribute("kosmos.session.id", session_id)
+
+                consent_dir = _Path.home() / ".kosmos" / "memdir" / "user" / "consent"
+                receipt_path = consent_dir / f"{receipt_id}.json"
+
+                async def _emit_response(
+                    ok: bool,
+                    revoked_at: str | None = None,
+                    record_hash: str | None = None,
+                    error: str | None = None,
+                ) -> None:
+                    resp = _CRRespFrame(
+                        session_id=session_id,
+                        correlation_id=frame.correlation_id or str(uuid.uuid4()),
+                        role="backend",
+                        ts=_utcnow(),
+                        kind="consent_revoke_response",
+                        request_id=request_id,
+                        ok=ok,
+                        revoked_at=revoked_at,
+                        record_hash=record_hash,
+                        error=error,  # type: ignore[arg-type]
+                    )
+                    await write_frame(resp)
+
+                # Determine which receipts to revoke.
+                if scope == "session-all":
+                    # Collect all receipt files for the current session.
+                    try:
+                        all_paths = sorted(consent_dir.glob("rcpt-*.json"))
+                    except Exception:
+                        all_paths = []
+                    target_paths = []
+                    for p in all_paths:
+                        try:
+                            raw = p.read_text(encoding="utf-8")
+                            data = _json_revoke.loads(raw)
+                            if data.get("session_id") == session_id and not data.get("revoked_at"):
+                                target_paths.append(p)
+                        except Exception:  # noqa: BLE001
+                            continue
+                else:
+                    # scope == "once" — single receipt.
+                    if not receipt_path.exists():
+                        revoke_span.set_attribute("kosmos.consent.revoke_error", "not_found")
+                        revoke_span.set_status(Status(StatusCode.ERROR, "not_found"))
+                        await _emit_response(ok=False, error="not_found")
+                        return
+                    target_paths = [receipt_path]
+
+                if not target_paths:
+                    # Nothing to revoke — either empty session or single path already handled.
+                    revoke_span.set_attribute("kosmos.consent.revoke_error", "already_revoked")
+                    revoke_span.set_status(Status(StatusCode.ERROR, "already_revoked"))
+                    await _emit_response(ok=False, error="already_revoked")
+                    return
+
+                # Revoke each target receipt atomically.
+                revoked_at_ts = _utcnow()
+                last_record_hash: str | None = None
+                any_error = False
+                for target_path in target_paths:
+                    try:
+                        raw = target_path.read_text(encoding="utf-8")
+                        data = _json_revoke.loads(raw)
+                        if data.get("revoked_at") and scope != "session-all":
+                            # Single-receipt revoke on already-revoked receipt.
+                            revoke_span.set_attribute("kosmos.consent.revoke_error", "already_revoked")
+                            revoke_span.set_status(Status(StatusCode.ERROR, "already_revoked"))
+                            await _emit_response(ok=False, error="already_revoked")
+                            return
+                        if data.get("revoked_at"):
+                            # session-all: skip already-revoked receipts silently.
+                            continue
+
+                        data["revoked_at"] = revoked_at_ts
+                        if reason:
+                            data["revoke_reason"] = reason
+
+                        # Atomic write: write to temp file then rename.
+                        updated_json = _json_revoke.dumps(data, ensure_ascii=False, indent=2)
+                        fd, tmp_path_str = _tempfile.mkstemp(
+                            dir=str(consent_dir), suffix=".tmp", prefix="rcpt_"
+                        )
+                        try:
+                            with _os_revoke.fdopen(fd, "w", encoding="utf-8") as fh:
+                                fh.write(updated_json)
+                            _os_revoke.replace(tmp_path_str, str(target_path))
+                        except Exception:
+                            _os_revoke.unlink(tmp_path_str)
+                            raise
+
+                        # Audit-4 P0-3 — append withdraw record to the canonical
+                        # Spec 033 PIPA ledger via kosmos.permissions.ledger.
+                        # Replaces the prior ad-hoc unsealed hashlib path:
+                        # this call computes prev_hash from the prior record,
+                        # SHA-256 record_hash over canonical JCS, and seals
+                        # with HMAC-SHA-256 under the key_id from registry.json.
+                        target_receipt_id = str(
+                            data.get("receipt_id", target_path.stem)
+                        )
+                        target_tool_id = str(data.get("tool_id", "unknown"))
+                        withdraw_args: dict[str, object] = {
+                            "scope_receipt_id": target_receipt_id,
+                            "scope": scope,
+                            "session_id": session_id,
+                        }
+                        if reason:
+                            withdraw_args["reason"] = reason
+                        withdraw_digest = _compute_action_digest(
+                            target_tool_id,
+                            withdraw_args,
+                            _generate_nonce(),
+                        )
+                        withdraw_record = _ledger_append_withdraw(
+                            tool_id=target_tool_id,
+                            mode="default",
+                            granted=False,
+                            action_digest=withdraw_digest,
+                            action="withdraw",
+                            scope_receipt_id=target_receipt_id,
+                            withdrawn_at=_dt_revoke.fromisoformat(
+                                revoked_at_ts.replace("Z", "+00:00")
+                            )
+                            if revoked_at_ts.endswith("Z")
+                            else _dt_revoke.fromisoformat(revoked_at_ts),
+                            session_id=session_id,
+                            correlation_id=frame.correlation_id,
+                            ledger_path=_kosmos_settings_revoke.permission_ledger_path,
+                            key_path=_kosmos_settings_revoke.permission_key_path,
+                            key_registry_path=(
+                                _kosmos_settings_revoke.permission_key_registry_path
+                            ),
+                        )
+                        record_hash = withdraw_record.record_hash
+                        last_record_hash = record_hash
+
+                        revoke_span.set_attribute(
+                            "kosmos.consent.record_hash", record_hash
+                        )
+                        logger.debug(
+                            "consent_revoke: revoked %s sealed_hash=%s seq=%d",
+                            target_path.name,
+                            record_hash[:16],
+                            withdraw_record.sequence,
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning("consent_revoke: io_error on %s: %s", target_path.name, exc)
+                        any_error = True
+
+                if any_error and last_record_hash is None:
+                    revoke_span.set_status(Status(StatusCode.ERROR, "io_error"))
+                    await _emit_response(ok=False, error="io_error")
+                    return
+
+                revoke_span.set_status(Status(StatusCode.OK))
+                await _emit_response(
+                    ok=True,
+                    revoked_at=revoked_at_ts,
+                    record_hash=last_record_hash,
+                )
 
         on_frame = _handle_frame
 

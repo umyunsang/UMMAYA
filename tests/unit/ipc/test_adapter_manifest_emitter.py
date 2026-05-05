@@ -202,3 +202,63 @@ def test_emit_manifest_exits_78_when_no_entries() -> None:
         assert exc_info.value.code == 78, (
             f"Expected SystemExit(78), got SystemExit({exc_info.value.code})"
         )
+
+
+# ---------------------------------------------------------------------------
+# Audit-4 P0-9 — every Mock submit adapter now emits a non-null
+# policy_authority_url; manifest emitter logs ZERO "policy_authority_url is
+# required" warnings for the full registry walk.
+# ---------------------------------------------------------------------------
+
+
+def test_audit4_p0_9_mock_submits_have_policy_url(caplog: pytest.LogCaptureFixture) -> None:
+    """Pre-Audit-4: 5 Mock submit adapters lacked an AdapterRealDomainPolicy
+    citation, dropping them from the manifest with 10 warnings on every boot.
+    Post-Audit-4: each REGISTRATION carries a populated ``policy=`` block, so
+    the emitter walks them cleanly and emits zero ``policy_authority_url is
+    required`` warnings."""
+    import logging
+
+    from kosmos.ipc.adapter_manifest_emitter import _build_entries
+    from kosmos.tools.executor import ToolExecutor
+    from kosmos.tools.register_all import register_all_tools
+    from kosmos.tools.registry import ToolRegistry
+
+    # Eager-import the Mock tree so submit adapters self-register.
+    import kosmos.tools.mock  # noqa: F401
+
+    reg = ToolRegistry()
+    register_all_tools(reg, ToolExecutor(registry=reg))
+
+    with caplog.at_level(logging.WARNING, logger="kosmos.ipc.adapter_manifest_emitter"):
+        entries = _build_entries(reg, warn_on_missing=True)
+
+    # Five Mock submit adapters MUST surface with policy_authority_url populated.
+    expected_mock_submits = {
+        "mock_submit_module_gov24_minwon",
+        "mock_submit_module_hometax_taxreturn",
+        "mock_submit_module_public_mydata_action",
+        "mock_traffic_fine_pay_v1",
+        "mock_welfare_application_submit_v1",
+    }
+    by_id = {e.tool_id: e for e in entries}
+
+    for mock_id in expected_mock_submits:
+        assert mock_id in by_id, f"Mock submit {mock_id} missing from manifest"
+        entry = by_id[mock_id]
+        assert entry.source_mode == "mock", f"{mock_id} expected source_mode=mock"
+        assert entry.policy_authority_url, (
+            f"{mock_id} must declare policy_authority_url (Audit-4 P0-9)"
+        )
+        assert entry.policy_authority_url.startswith("https://"), (
+            f"{mock_id} policy_authority_url must be HTTPS, got {entry.policy_authority_url!r}"
+        )
+
+    # Zero "policy_authority_url is required" warnings during the walk.
+    blocking_warnings = [
+        rec for rec in caplog.records if "no policy URL" in rec.message
+    ]
+    assert blocking_warnings == [], (
+        f"Audit-4 P0-9 regression: {len(blocking_warnings)} adapter(s) still missing "
+        f"policy URL: {[r.message for r in blocking_warnings]}"
+    )

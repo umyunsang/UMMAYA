@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 강남역 근처 내과 알려줘
+
+✳ Accomplishing…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ [KOSMOS-QUERY] callModel:enter messages=4
+✶KAccomplishing…CHAT_MESSAGES_BUILT] count=1 user_turns=1 tail_role=user tail_first256="강남역 근처 내과 알려줘"────────────────────────────────────────────────────────────────────
+✢KAccomplishing…ending chat_request corr=cedac607-7d48-46f7-b9d7-5d42cc3e01ca chatMessages=1                                                                      ● high · /effort
+∴ Thinking — The (ctrl+o to expand) true
+❯ [KOSMOS-QUERY] recv #1 kind=adapter_manifest_sync corr=b98e0d75 done=undefined delta="" thinking=""
+✢ Accomplishing…
+
+
+❯ [KOSMOS-QUERY] recv #3 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" user is"
+[KOSMOS-QUERY] recv #4 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" asking for"────────────────────────────────────────────────────────────────────────────────
+[KOSMOS-QUERY] recv #5 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" \""                                                                      ● high · /effort
+[KOSMOS-QUERY] reuse# isiasking for "near Gangnam Station internal (ctrl+o to expand)g="near"
+[KOSMOS-QUERY] recv #7 kind=assistant_chunk corr=cc3e01ca done=falsmedicine (ctrl+o to expand)
+✳KOSMOS-QUERY] recv #8 kind=assistant_chunk corr=cc3e01ca done=false delta=" (ctrl+o to expand)
+✶KOSMOS-QiERi] recv #9 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" Station"
+[KOSMOS-QUERY] recv #10 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" internal"
+  [KOSMOS-QUERY] recv #11 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" medicine"
+  [KOSMOS-QUERY] recv #12 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking="\""
+  [KOSMOS-QUERY] recv #13 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" in"
+[KOSMOS-QUERY] recv #14 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" Korean"
+[KOSMOS-QUERY] recv #15 kind=assistant_chunk corr=cc3e01ca done=false delta="in Korean.=(ctrl+o to expand)
+[KOSMOS-QUERY] recv #16 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" They"
+[KOSMOS-QUERY] recv #17 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" want to"
+[KOSMOS-QUERY] recv #18 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" find"
+[KOSMOS-QUERY] recv #19 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" internal"
+  [KOSMOS-QUERY] recv #20 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" medicine"
+[KOSMOS-QUERY] recv #21 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" clinics"
+[KOSMOS-QUERY] recv #22 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" near"
+[KOSMOS-QUERY] recv #23 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" Gang"
+[KOSMOS-QUERY] recv #24 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking="nam"
+[KOSMOS-QUERY] recv #25 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" Station"
+[KOSMOS-QUERY] recv #26 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking="."
+[KOSMOS-QUERY] recv #27 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking="\n\n"
+⏺Kresolve_location({"query":"강남역","want":"coords_and_admcd"})false delta="" thinking="To"
+[KOSMOS-QUERY] recv #29 kind=assistant_chunk corr=cc3e01ca done=false delta="" thinking=" fulfill"
+· Accomplishing…
+
+
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                                                  ● high · /effort
+
+
+
+
+
+
+
+

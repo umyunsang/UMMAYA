@@ -124,6 +124,18 @@ class KosmosSettings(BaseSettings):
     Default: ``~/.kosmos/keys/ledger.key``.
     """
 
+    permission_key_registry_path: Path = Field(
+        default_factory=lambda: Path.home() / ".kosmos" / "keys" / "registry.json",
+    )
+    """Path to the HMAC key rotation registry (KOSMOS_PERMISSION_KEY_REGISTRY_PATH).
+
+    JSON array; one entry per key version with ``key_id`` + ``retired_at`` fields.
+    Written by ``kosmos-permissions rotate-key``.  If absent, the ledger uses the
+    default key_id ``"k0001"`` (Spec 033 FR-D04).
+    Must be an absolute path.
+    Default: ``~/.kosmos/keys/registry.json``.
+    """
+
     permission_ledger_path: Path = Field(
         default_factory=lambda: Path.home() / ".kosmos" / "consent_ledger.jsonl",
     )
@@ -146,6 +158,7 @@ class KosmosSettings(BaseSettings):
 
     @field_validator(
         "permission_key_path",
+        "permission_key_registry_path",
         "permission_ledger_path",
         "permission_rule_store_path",
         mode="after",

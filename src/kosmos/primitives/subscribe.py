@@ -365,6 +365,31 @@ class _SubscribeIterator:
     def __aiter__(self) -> _SubscribeIterator:
         return self
 
+    def peek_handle(self) -> SubscriptionHandle:
+        """Return (creating on first call) the SubscriptionHandle synchronously.
+
+        Audit-5 P0-2 fix (2026-05-04): the IPC stdio dispatcher needs the
+        canonical ``subscription_id`` *before* the driver task starts so the
+        backend → frontend correlation is deterministic. Previously
+        ``stdio.py:_dispatch_primitive`` invented a synthetic ``uuid.uuid4()``
+        envelope id, which the TUI ``subscriptionRegistry`` then used as the
+        handle key — so the real ``SubscriptionHandle.subscription_id`` (the
+        one carried by every ``SubscriptionBackpressureDrop`` /
+        ``RssGuidTracker`` / OTEL span) and the TUI-visible id never matched.
+
+        Idempotent: subsequent calls return the same handle. ``_start()``
+        observes the pre-created handle when invoked from ``__anext__``.
+        """
+        if self._handle is None:
+            now = datetime.now(UTC)
+            self._handle = SubscriptionHandle(
+                subscription_id=str(uuid.uuid4()),
+                tool_id=self._inp.tool_id,
+                opened_at=now,
+                closes_at=now + timedelta(seconds=self._inp.lifetime_seconds),
+            )
+        return self._handle
+
     async def __anext__(self) -> Any:
         if not self._started:
             await self._start()
@@ -414,16 +439,24 @@ class _SubscribeIterator:
         return item
 
     async def _start(self) -> None:
-        """Create the handle and start the driver task."""
+        """Create the handle (if not pre-created) and start the driver task.
+
+        Audit-5 P0-2 (2026-05-04): when ``peek_handle()`` was called by the
+        IPC dispatcher before the iterator was awaited, ``self._handle`` is
+        already populated — reuse it so the ``subscription_id`` printed to
+        the TUI matches every subsequent OTEL span / drop event / consent
+        ledger entry.
+        """
         self._started = True
         inp = self._inp
-        now = datetime.now(UTC)
-        self._handle = SubscriptionHandle(
-            subscription_id=str(uuid.uuid4()),
-            tool_id=inp.tool_id,
-            opened_at=now,
-            closes_at=now + timedelta(seconds=inp.lifetime_seconds),
-        )
+        if self._handle is None:
+            now = datetime.now(UTC)
+            self._handle = SubscriptionHandle(
+                subscription_id=str(uuid.uuid4()),
+                tool_id=inp.tool_id,
+                opened_at=now,
+                closes_at=now + timedelta(seconds=inp.lifetime_seconds),
+            )
 
         # FR-031: emit a single gen_ai.tool_loop.iteration span at handle-open
         # to mirror submit/verify parity. Subsequent event delivery happens on

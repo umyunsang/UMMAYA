@@ -1,0 +1,13 @@
+# Citizen scenario frame — 병원검색/02-query-engine-search
+# 병원 검색 — 쿼리엔진 RAG 검색
+# Captured 2026-04-26T16:08:04.487Z via ink-testing-library render()
+# KOSMOS v0.1-alpha · K-EXAONE-236B-A23B + FriendliAI Serverless
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  ⏺ 단계 2/5 · K-EXAONE → RAG 검색 (BM25 + dense hybrid)                                          │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+   1. hira_hospital_search 병의원 + 진료과 검색 (HIRA)
+   2. resolve_location 시민 위치 → 좌표 (kakao)
+   3. kma_current_observation 현재 기온 / 강수 (KMA)
+   4. kma_pre_warning 한파/폭염 예비특보 (KMA)

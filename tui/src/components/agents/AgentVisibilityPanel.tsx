@@ -229,8 +229,9 @@ export function AgentVisibilityPanel({
         <Text color="#4fd1c5" bold>{label}</Text>
       </Box>
 
-      {/* Detail column header */}
-      {showDetail && entries.length > 0 && (
+      {/* Detail column header — Lead-FU-5: render even when empty so
+          --detail mode is visually distinguishable from the simple list. */}
+      {showDetail && (
         <Box marginBottom={1}>
           <Text color="#5c5c5c">
             {'  '}
@@ -245,8 +246,13 @@ export function AgentVisibilityPanel({
 
       {/* Agent rows */}
       {entries.length === 0 ? (
-        <Box>
+        <Box flexDirection="column">
           <Text color="#5c5c5c">{'  활성 부처 에이전트 없음'}</Text>
+          {showDetail && (
+            <Text color="#5c5c5c" dimColor>
+              {'  subscribe 도구 호출 시 여기에 활성 채널이 표시됩니다.'}
+            </Text>
+          )}
         </Box>
       ) : (
         entries.map((entry) => (
@@ -254,7 +260,10 @@ export function AgentVisibilityPanel({
             key={entry.agent_id}
             entry={entry}
             showDetail={showDetail}
-            currentPrimitive={primitiveByWorker[entry.agent_id] ?? 'lookup'}
+            currentPrimitive={
+              primitiveByWorker[entry.agent_id]
+                ?? (entry.agent_id.startsWith('subscribe:') ? 'subscribe' : 'lookup')
+            }
           />
         ))
       )}

@@ -293,6 +293,9 @@ def test_schema_has_all_21_kinds() -> None:
         "chat_request",
         # Epic ε #2296
         "adapter_manifest_sync",
+        # Spec 2767 consent revoke
+        "consent_revoke_request",
+        "consent_revoke_response",
     }
 
     # Pydantic generates a oneOf + discriminator schema

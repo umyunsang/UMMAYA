@@ -149,3 +149,99 @@ describe('executeExport — command result (FR-032)', () => {
     expect(result.turns[0]?.content).toBe('hello');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Audit-7 P0-1 — Korean PDF font sanitizer tests
+// ---------------------------------------------------------------------------
+
+describe('_sanitizeForKoreanFont — Korean PDF Audit-7 P0-1', () => {
+  it('preserves ASCII characters unchanged', async () => {
+    const { _sanitizeForKoreanFont } = await import('../../../src/components/export/ExportPdfDialog.js');
+    const input = 'Hello, KOSMOS! 1234567890';
+    expect(_sanitizeForKoreanFont(input)).toBe(input);
+  });
+
+  it('preserves Hangul Syllables (U+AC00..U+D7A3)', async () => {
+    const { _sanitizeForKoreanFont } = await import('../../../src/components/export/ExportPdfDialog.js');
+    const input = '안녕하세요 대화 내보내기 권한 영수증';
+    expect(_sanitizeForKoreanFont(input)).toBe(input);
+  });
+
+  it('preserves common KOSMOS agency names without mangling', async () => {
+    const { _sanitizeForKoreanFont } = await import('../../../src/components/export/ExportPdfDialog.js');
+    const tests = [
+      '도로교통공단 교통사고 다발지역',
+      '기상청 단기예보',
+      '건강보험심사평가원',
+      '국립중앙의료원 응급의료센터',
+      '시민, 어린이집, 보건소',
+    ];
+    for (const t of tests) {
+      expect(_sanitizeForKoreanFont(t)).toBe(t);
+    }
+  });
+
+  it('replaces box-drawing dashes with ASCII hyphen', async () => {
+    const { _sanitizeForKoreanFont } = await import('../../../src/components/export/ExportPdfDialog.js');
+    // U+2500 = ─
+    expect(_sanitizeForKoreanFont('─'.repeat(3))).toBe('---');
+  });
+
+  it('replaces unsupported codepoints with ?', async () => {
+    const { _sanitizeForKoreanFont } = await import('../../../src/components/export/ExportPdfDialog.js');
+    // U+1F600 (emoji) is outside Hangul/ASCII/CJK-punct ranges
+    const input = 'Hello 😀 world';
+    const output = _sanitizeForKoreanFont(input);
+    expect(output).toContain('Hello');
+    expect(output).toContain('world');
+    expect(output).toContain('?');
+  });
+
+  it('preserves CJK punctuation U+3000-U+303F', async () => {
+    const { _sanitizeForKoreanFont } = await import('../../../src/components/export/ExportPdfDialog.js');
+    const input = '「자료 출처」'; // U+300C, U+300D
+    expect(_sanitizeForKoreanFont(input)).toBe(input);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Audit-7 P0-1 — End-to-end Korean PDF generation
+// ---------------------------------------------------------------------------
+
+describe('Audit-7 P0-1: Korean PDF end-to-end generation', () => {
+  it('writes a non-empty PDF with Korean header text without crashing', async () => {
+    // Defer the dynamic import so the test isolates pdf-lib + fontkit + bundled font discovery.
+    const pdfLib = await import('pdf-lib');
+    const fontkitMod = (await import('@pdf-lib/fontkit')) as { default?: unknown };
+    const fontkit = (fontkitMod.default ?? fontkitMod) as Parameters<typeof pdfLib.PDFDocument.prototype.registerFontkit>[0];
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+
+    // Resolve the bundled font from the source tree (mirrors the runtime resolver).
+    const here = dirname(fileURLToPath(import.meta.url));
+    // tests/components/export/ → src/assets/fonts/
+    const fontPath = join(here, '..', '..', '..', 'src', 'assets', 'fonts', 'NotoSansKR-Hangul-subset.ttf');
+    const fontBytes = readFileSync(fontPath);
+    expect(fontBytes.byteLength).toBeGreaterThan(50_000);
+    expect(fontBytes.byteLength).toBeLessThan(1_048_576); // <1 MB AGENTS.md hard rule
+
+    const pdfDoc = await pdfLib.PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+    const font = await pdfDoc.embedFont(fontBytes, { subset: true });
+    const page = pdfDoc.addPage([595.28, 841.89]);
+
+    page.drawText('대화 내보내기 / Conversation Export', {
+      x: 50, y: 800, size: 14, font, color: pdfLib.rgb(0, 0, 0),
+    });
+    page.drawText('안녕하세요 KOSMOS — Audit-7 P0-1 fix', {
+      x: 50, y: 770, size: 11, font, color: pdfLib.rgb(0, 0, 0),
+    });
+
+    const bytes = await pdfDoc.save();
+    expect(bytes.byteLength).toBeGreaterThan(2000); // real PDF, not zero-byte fail
+    // PDF files start with "%PDF-"
+    const header = new TextDecoder('latin1').decode(bytes.slice(0, 5));
+    expect(header).toBe('%PDF-');
+  });
+});

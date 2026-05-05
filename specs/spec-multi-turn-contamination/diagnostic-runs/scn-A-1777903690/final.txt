@@ -1,0 +1,60 @@
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 강남역 근처 내과 알려줘
+
+⏺ 강남역 근처에서 가까운 내과를 알려드릴게요. 검색 결과를 거리순으로 정렬해 가장 가까이 있는 내과 3곳을 안내해 드립니다.
+
+  📍 강남역 근처 내과 (거리순)
+
+
+  1. 강남라렌의원 ⭐ 가장 가까운 곳
+
+  - 거리: 약 168m (도보 3분)
+  - 주소: 서울특별시 강남구 강남대로 378, 준빌딩 10층 (역삼동)
+  - 전화번호: 02-894-7781
+  - 종류: 의원
+
+  2. 강남박내과의원
+
+  - 거리: 약 214m (도보 4분)
+  - 주소: 서울특별시 강남구 강남대로84길 8, 우인빌딩 2층 (역삼동)
+  - 전화번호: 02-6318-8800
+  - 종류: 의원
+
+  3. 강남스마트신경과의원
+
+  - 거리: 약 232m (도보 4분)
+  - 주소: 서울특별시 서초구 강남대로 373, 홍우빌딩 3층 일부호 (서초동)
+  - 전화번호: 02-6956-1010
+  - 종류: 의원
+  ▎ ⚠️ 참고: '신경과'로 검색되어 내과가 아닐 수 있습니다. 정확한 내과를 원하시면 다른 의원도 검색 가능합니다.
+
+  📝 추가 정보
+
+  - 총 207개의 병원/의원이 검색되었습니다.
+  - 위 3곳은 강남역에서 300m 이내에 위치한 의원들입니다.
+  - 필요하시면 다른 진료과목이나 더 넓은 범위(5km 등)로도 검색해 드릴 수 있습니다.
+
+  혹시 더 가까운 내과를 원하시거나, 다른 정보가 필요하시면 말씀해 주세요!
+
+⏺ resolve_location({"query":"강남역","want":"coords_and_admcd"})
+
+⏺ lookup(hira_hospital_search)
+  ⎿  collection — 20건
+       1. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkNCMkMDAkNTgxOTYxIzExIyQxIyQzIyQxMyQ0NjE0ODEjNjEjJDEjJDAjJDgz","yadmNm":"강남라렌의원","addr":"서울
+       2. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkNCMkMDAkNTgxOTYxIzMxIyQxIyQ3IyQ2MiQzNjE4MzIjODEjJDEjJDIjJDgz","yadmNm":"강남박내과의원","addr":"서
+       3. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkOCMkMDAkMzgxOTYxIzMxIyQxIyQ3IyQ4MiQyNjEyMjIjNDEjJDEjJDgjJDgz","yadmNm":"강남스마트신경과의원","addr"
+
+❯ 재난 알림 구독해줘
+
+∴ Thinking — 사용자가 "재난 알림 구독해줘"라고 요청했습니다. 앞서 제공된 available_adapters 목록을 보면 재난 알림 구독과 관련된 여러... (ctrl+o to expand)
+
+✶ Enchanting… (1m 5s · ↓ 486 tokens)
+  ⎿  Tip: Hit shift+tab to cycle between default mode, auto-accept edit mode, and plan mode
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Press Ctrl-C again to exit
+

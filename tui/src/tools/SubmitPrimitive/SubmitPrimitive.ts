@@ -21,6 +21,7 @@ import {
   type AdapterCitation,
   type AdapterWithPolicy,
 } from '../shared/primitiveCitation.js'
+import { extractMockMeta, mockLabel } from '../shared/mockDisclaimer.js'
 import { SUBMIT_TOOL_NAME, DESCRIPTION, SUBMIT_TOOL_PROMPT } from './prompt.js'
 import {
   isManifestSynced,
@@ -281,6 +282,15 @@ export const SubmitPrimitive = buildTool({
               : status
 
       // KOSMOS hotfix #2519 — wrap in <MessageResponse> for the CC ⎿ prefix.
+      // Audit-2 P0: check _mode === 'mock' from transparency stamp (Spec 024).
+      const mockMeta = extractMockMeta(output)
+      const isMock = mockMeta.isMock
+
+      const successLabel = isMock
+        ? mockLabel('제출 접수')
+        : `✓ ${ministry ? `[${ministry}] ` : ''}제출이 접수되었습니다.`
+      const successColor = isMock ? ('cyan' as const) : ('green' as const)
+
       return React.createElement(
         MessageResponse,
         null,
@@ -289,9 +299,18 @@ export const SubmitPrimitive = buildTool({
           { flexDirection: 'column' },
           React.createElement(
             Text,
-            { color: 'green' },
-            `✓ ${ministry ? `[${ministry}] ` : ''}제출이 접수되었습니다.`,
+            { color: successColor, dimColor: isMock },
+            isMock
+              ? `${successLabel}${ministry ? ` — [${ministry}]` : ''}`
+              : successLabel,
           ),
+          isMock
+            ? React.createElement(
+                Text,
+                { dimColor: true },
+                '실제 행정 영향 없는 시연 결과입니다.',
+              )
+            : null,
           receiptId
             ? React.createElement(Text, { dimColor: true }, `접수 번호: ${receiptId}`)
             : null,
@@ -300,6 +319,13 @@ export const SubmitPrimitive = buildTool({
             : null,
           handoffUrl
             ? React.createElement(Text, { dimColor: true }, `기관 확인: ${handoffUrl}`)
+            : null,
+          isMock && mockMeta.actualEndpointWhenLive
+            ? React.createElement(
+                Text,
+                { dimColor: true },
+                `실제 엔드포인트 (운영 시): ${mockMeta.actualEndpointWhenLive}`,
+              )
             : null,
         ),
       )
@@ -324,6 +350,19 @@ export const SubmitPrimitive = buildTool({
           : null,
       ),
     )
+  },
+
+  /**
+   * submit is a side-effecting citizen action (신청, 신고, etc.) that may
+   * be irreversible. Always ask for citizen permission before proceeding.
+   * Spec 024 invariant: adapters cite agency policy; the permission gauntlet
+   * surfaces that citation via context.kosmosCitations (set in validateInput).
+   */
+  async checkPermissions(_input) {
+    return {
+      behavior: 'ask' as const,
+      message: '권한 위임 필요: 행정 기관에 제출 요청을 전송합니다. 진행하시겠습니까?',
+    }
   },
 
   /**

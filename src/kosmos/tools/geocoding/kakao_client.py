@@ -1,9 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Kakao Local API HTTP client for address geocoding.
+"""Kakao Local API HTTP client for address + POI geocoding.
 
-Wraps the ``GET https://dapi.kakao.com/v2/local/search/address.json``
-endpoint used to convert free-form Korean address strings into structured
-coordinate and administrative region data.
+Wraps two of Kakao Local API's six endpoints:
+  - ``GET /v2/local/search/address.json`` — structured address (도로명/지번)
+  - ``GET /v2/local/search/keyword.json`` — POI / landmark / business name
+
+The two endpoints cover Kakao's two location-semantic dimensions; they are
+NOT a primary/fallback pair. The address endpoint returns empty for POI
+queries like "동아대학교", and the keyword endpoint returns the nearest POI
+when given a structured address string. Callers that only know "the user
+gave a free-form location query" need to issue both calls in parallel and
+merge — see :func:`kosmos.tools.resolve_location._kakao_coords_fanout`.
+
+This file is the source-of-truth shape mirror; it does not synthesise any
+business logic. Reference: PyKakao 1.x ``Local`` class
+(`https://github.com/WooilJeong/PyKakao`), which exposes the same six
+endpoints as six methods on a single facade — the industry-standard
+Korean wrapper for this API. KOSMOS originally shipped only
+``search_address`` (Spec 022); ``search_keyword`` is added here to close
+the POI-coverage gap captured in
+``specs/integration-verification/donga-univ-poi-bug/``.
 
 Authentication: REST API key via ``Authorization: KakaoAK {key}`` header.
 Key source: ``KOSMOS_KAKAO_API_KEY`` environment variable.
@@ -28,7 +44,11 @@ from kosmos.tools.errors import ConfigurationError, _require_env
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = "https://dapi.kakao.com/v2/local/search/address.json"
+_ADDRESS_BASE_URL = "https://dapi.kakao.com/v2/local/search/address.json"
+_KEYWORD_BASE_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
+# Retained for backwards compatibility with callers that imported the
+# original module-level constant; aliases the address endpoint.
+_BASE_URL = _ADDRESS_BASE_URL
 _DEFAULT_TIMEOUT = 5.0  # seconds
 
 
@@ -237,6 +257,129 @@ async def search_address(
         raise
     # Let httpx exceptions (TimeoutException, HTTPStatusError, RequestError)
     # propagate directly so the recovery classifier can recognise them.
+    finally:
+        if own_client and client is not None:
+            await client.aclose()
+
+
+# ---------------------------------------------------------------------------
+# Pydantic v2 models — keyword (POI) endpoint
+# ---------------------------------------------------------------------------
+
+
+class KakaoPlaceDocument(BaseModel):
+    """A single place document returned by the Kakao search/keyword endpoint.
+
+    Field set is intentionally narrower than ``KakaoAddressDocument`` because
+    the keyword endpoint's response does not carry the structured
+    address/road_address sub-blocks. Callers that need structured address
+    fields should also issue a search/address call and merge — see
+    :func:`kosmos.tools.resolve_location._kakao_coords_fanout`.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = ""
+    """Kakao place id."""
+
+    place_name: str
+    """POI / business / landmark name (e.g. "동아대학교 승학캠퍼스")."""
+
+    category_name: str = ""
+    """Category breadcrumb (e.g. "교육,학문 > 학교 > 대학교")."""
+
+    category_group_code: str = ""
+    """Category group code (e.g. "SC4" for school)."""
+
+    category_group_name: str = ""
+    """Human-readable category group name (e.g. "학교")."""
+
+    phone: str = ""
+    """Place phone number, may be empty."""
+
+    address_name: str = ""
+    """Jibun-format address string (구주소)."""
+
+    road_address_name: str = ""
+    """Road-format address string (도로명주소), may be empty."""
+
+    x: str
+    """Longitude (경도) as string."""
+
+    y: str
+    """Latitude (위도) as string."""
+
+    place_url: str = ""
+    """Kakao Map detail page URL."""
+
+    distance: str = ""
+    """Distance from search anchor in meters, present only when x/y supplied."""
+
+
+class KakaoKeywordSearchResult(BaseModel):
+    """Top-level response envelope from the Kakao keyword search API.
+
+    Mirrors :class:`KakaoSearchResult` so callers can consume both endpoints
+    through structurally compatible code paths (``meta.total_count`` +
+    ``documents`` iteration), even though the document shapes differ.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    meta: KakaoSearchMeta
+    documents: list[KakaoPlaceDocument]
+
+
+async def search_keyword(
+    query: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> KakaoKeywordSearchResult:
+    """Search Kakao Local API for a Korean POI / landmark / business name.
+
+    The keyword endpoint covers the POI half of Kakao's location semantic
+    space: queries that name a place rather than describe a structured
+    address (e.g. "동아대학교", "스타벅스 강남역점", "남대문"). For
+    structured-address queries, prefer :func:`search_address`; the two
+    endpoints are NOT a primary/fallback pair, and a wrapper that needs
+    both should call them in parallel and merge.
+
+    Args:
+        query: Free-form Korean place name to search for.
+        client: Optional injected ``httpx.AsyncClient`` for testing.
+
+    Returns:
+        A :class:`KakaoKeywordSearchResult` with matched place documents
+        (may be empty when no place matches the query).
+
+    Raises: same as :func:`search_address`.
+    """
+    api_key = _require_env("KOSMOS_KAKAO_API_KEY")
+
+    headers = {
+        "Authorization": f"KakaoAK {api_key}",
+        "Accept": "application/json",
+    }
+    request_params: dict[str, str | int] = {"query": query, "size": 2}
+
+    logger.debug("Kakao keyword search: query=%r", query)
+
+    own_client = client is None
+    if own_client:
+        client = traced_async_client(timeout=_DEFAULT_TIMEOUT)
+
+    try:
+        assert client is not None
+        response = await client.get(_KEYWORD_BASE_URL, headers=headers, params=request_params)
+        response.raise_for_status()
+        payload: dict[str, Any] = response.json()
+        result = KakaoKeywordSearchResult(**payload)
+        logger.debug(
+            "Kakao keyword search returned %d document(s)", result.meta.total_count
+        )
+        return result
+    except ConfigurationError:
+        raise
     finally:
         if own_client and client is not None:
             await client.aclose()

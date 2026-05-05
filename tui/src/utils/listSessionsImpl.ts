@@ -18,6 +18,7 @@ import {
   extractJsonStringField,
   extractLastJsonStringField,
   findProjectDir,
+  getCCLegacyProjectsDir,
   getProjectsDir,
   MAX_SANITIZED_LENGTH,
   readSessionLite,
@@ -402,13 +403,36 @@ async function gatherProjectCandidates(
 
 /**
  * Gathers candidate session files across all project directories.
+ *
+ * Walks both KOSMOS-native path (`~/.kosmos/memdir/user/sessions/`) and
+ * CC-legacy path (`~/.claude/projects/`). Results are deduped by sessionId
+ * with KOSMOS sessions taking priority over CC-legacy sessions for the same
+ * sessionId (last-active-at ordering within KOSMOS is preserved).
  */
 async function gatherAllCandidates(doStat: boolean): Promise<Candidate[]> {
-  const projectsDir = getProjectsDir()
+  // Walk KOSMOS-native sessions root first (higher priority).
+  const kosmosCandidates = await gatherFromRoot(getProjectsDir(), doStat)
+  // Walk CC-legacy projects root, excluding any sessionId already seen.
+  const kosmosIds = new Set(kosmosCandidates.map(c => c.sessionId))
+  const legacyCandidates = await gatherFromRoot(
+    getCCLegacyProjectsDir(),
+    doStat,
+  )
+  const deduped = legacyCandidates.filter(c => !kosmosIds.has(c.sessionId))
 
+  return [...kosmosCandidates, ...deduped]
+}
+
+/**
+ * Gathers candidates from a single sessions root directory (all sub-directories).
+ */
+async function gatherFromRoot(
+  rootDir: string,
+  doStat: boolean,
+): Promise<Candidate[]> {
   let dirents: Dirent[]
   try {
-    dirents = await readdir(projectsDir, { withFileTypes: true })
+    dirents = await readdir(rootDir, { withFileTypes: true })
   } catch {
     return []
   }
@@ -416,7 +440,7 @@ async function gatherAllCandidates(doStat: boolean): Promise<Candidate[]> {
   const perProject = await Promise.all(
     dirents
       .filter(d => d.isDirectory())
-      .map(d => listCandidates(join(projectsDir, d.name), doStat)),
+      .map(d => listCandidates(join(rootDir, d.name), doStat)),
   )
 
   return perProject.flat()

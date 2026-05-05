@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+ ✻ KOSMOS · 도움말 / Help
+
+  ─── Session ───
+   /help                       Show commands grouped into four sections
+   /lang ko|en                 Switch language between Korean and English
+   /onboarding [step-name]     Restart onboarding from step 1
+
+  ─── Permission ───
+   /consent list               List permission receipts for the current session
+   /consent revoke rcpt-<id>   Revoke a previously granted permission receipt
+
+  ─── Tool ───
+   /agents [--detail]          Show active ministry agent status
+   /plugins                    Open the plugin browser
+
+  ─── Storage ───
+   /config                     Open configuration overlay (.env secrets isolated)
+   /export                     Export conversation + tools + receipts to PDF
+   /history [--date FROM..TO]  Search past sessions by date / session / layer filter
+   [--session <id>] [--layer
+   <n>]
+
+
+ Esc · 닫기 (dismiss)
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                                                      언어가 en로 변경되었습니다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

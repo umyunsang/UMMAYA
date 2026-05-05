@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from datetime import UTC, datetime
 from typing import Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,6 +33,7 @@ from kosmos.primitives.submit import (
     derive_transaction_id,
     register_submit_adapter,
 )
+from kosmos.tools.models import AdapterRealDomainPolicy
 from kosmos.tools.registry import AdapterPrimitive, AdapterRegistration, AdapterSourceMode
 from kosmos.tools.transparency import stamp_mock_response
 
@@ -159,6 +161,18 @@ REGISTRATION = AdapterRegistration(
     },
     auth_type="oauth",
     nonce=_ADAPTER_NONCE,
+    # Audit-4 P0-9 — agency-published policy citation (Constitution § II cite-only).
+    # Required by AdapterManifestEntry I4 (mock entries must declare a policy URL
+    # so the citizen sees the citation in the permission UI). The values mirror
+    # the per-call transparency constants emitted via stamp_mock_response().
+    policy=AdapterRealDomainPolicy(
+        real_classification_url=_POLICY_AUTHORITY,
+        real_classification_text=(
+            "마이데이터 복지 급여 신청 — 보건복지부 정책 / KFTC MyData v240930 기반 (Spec 1636 mandate)."
+        ),
+        citizen_facing_gate="submit",
+        last_verified=datetime(2026, 5, 4, tzinfo=UTC),
+    ),
 )
 
 # Register in the submit dispatcher's in-process table

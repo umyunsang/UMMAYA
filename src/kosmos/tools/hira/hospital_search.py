@@ -4,8 +4,9 @@
 Wraps the ``getHospBasisList`` endpoint from HIRA
 (건강보험심사평가원, Health Insurance Review and Assessment Service).
 
-Input: WGS84 coordinates (xPos, yPos) + radius in meters.
-Output: LookupCollection of hospital records.
+Input: WGS84 coordinates (xPos, yPos) + radius in meters,
+       optional medical specialty (dgsbjt) + institution type (clCd).
+Output: LookupCollection of hospital records, sorted by distance ASC client-side.
 
 Endpoint: https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList
 
@@ -14,6 +15,19 @@ FR-023: Ships happy-path AND error-path tests with recorded fixtures.
 FR-024: Fail-closed defaults (non-auth tool — read-only gate per Epic δ #2295,
         is_concurrency_safe=True, cache_ttl_seconds=0).
 FR-037: Adapter is an async coroutine.
+
+D + E fix (2026-05-04, snap-009 강남역 내과 lookup regression):
+  D — HIRA's getHospBasisList returns ``distance`` (a high-precision decimal
+      string in meters from the query xPos/yPos) but does NOT sort by it.
+      Live verification 2026-05-04: baseline call near 강남역 returned
+      d=829, 760, 479, 610, 757 (registration order, not distance ASC).
+      We now sort items by distance ascending client-side after deserializing
+      the upstream response.
+  E — Add ``dgsbjt`` (medical specialty natural-language input → 진료과목코드
+      mapping; e.g. "내과" → "01") and ``clCd`` (종별코드, e.g. "31"=의원,
+      "21"=병원, "11"=상급종합) so the citizen's "근처 내과" query becomes
+      ``dgsbjt='내과'`` server-side filter (118 results, not 907) instead of
+      a generic radius search returning every clinic and hospital mixed.
 """
 
 from __future__ import annotations
@@ -23,7 +37,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 from kosmos.tools._description_template import build_description_v4
 from kosmos.tools._outbound_trace import traced_async_client
@@ -33,6 +47,96 @@ from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
 logger = logging.getLogger(__name__)
 
 _BASE_URL = "https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"
+
+# ---------------------------------------------------------------------------
+# Code maps (HIRA canonical 진료과목코드 + 종별코드, verified live 2026-05-04)
+# ---------------------------------------------------------------------------
+
+# 진료과목코드 — HIRA dgsbjtCd. Source: 한국사회보장정보원 보건기관 진료과목 코드정보
+# (data.go.kr 15049696) cross-checked against live getHospBasisList probe near
+# 강남역 (37.498, 127.028, r=500) returning non-zero totals for 01–16, 19, 21,
+# 23, 24, 26, 80 on 2026-05-04. Aliases include common citizen vocabulary
+# (e.g. "이비인후과" / "ENT" → 24).
+_DGSBJT_CODE_MAP: dict[str, str] = {
+    # 01 내과
+    "내과": "01", "internal medicine": "01",
+    # 02 신경과
+    "신경과": "02", "neurology": "02",
+    # 03 정신건강의학과
+    "정신건강의학과": "03", "정신과": "03", "psychiatry": "03",
+    # 04 외과
+    "외과": "04", "surgery": "04",
+    # 05 정형외과
+    "정형외과": "05", "orthopedics": "05",
+    # 06 신경외과
+    "신경외과": "06", "neurosurgery": "06",
+    # 07 흉부외과
+    "흉부외과": "07", "thoracic surgery": "07",
+    # 08 성형외과
+    "성형외과": "08", "plastic surgery": "08",
+    # 09 마취통증의학과
+    "마취통증의학과": "09", "마취과": "09", "통증의학과": "09", "anesthesiology": "09",
+    # 10 산부인과
+    "산부인과": "10", "obstetrics": "10", "gynecology": "10", "ob/gyn": "10",
+    # 11 소아청소년과
+    "소아청소년과": "11", "소아과": "11", "pediatrics": "11",
+    # 12 안과
+    "안과": "12", "ophthalmology": "12",
+    # 13 이비인후과
+    "이비인후과": "13", "ent": "13", "otolaryngology": "13",
+    # 14 피부과
+    "피부과": "14", "dermatology": "14",
+    # 15 비뇨의학과
+    "비뇨의학과": "15", "비뇨기과": "15", "urology": "15",
+    # 16 영상의학과
+    "영상의학과": "16", "방사선과": "16", "radiology": "16",
+    # 17 방사선종양학과
+    "방사선종양학과": "17", "radiation oncology": "17",
+    # 18 병리과
+    "병리과": "18", "pathology": "18",
+    # 19 진단검사의학과
+    "진단검사의학과": "19", "임상병리과": "19", "laboratory medicine": "19",
+    # 20 결핵과
+    "결핵과": "20", "tuberculosis": "20",
+    # 21 재활의학과
+    "재활의학과": "21", "rehabilitation": "21",
+    # 22 핵의학과
+    "핵의학과": "22", "nuclear medicine": "22",
+    # 23 가정의학과
+    "가정의학과": "23", "family medicine": "23",
+    # 24 응급의학과
+    "응급의학과": "24", "emergency medicine": "24",
+    # 25 직업환경의학과
+    "직업환경의학과": "25", "산업의학과": "25", "occupational medicine": "25",
+    # 26 예방의학과
+    "예방의학과": "26", "preventive medicine": "26",
+    # 80 한방
+    "한의원": "80", "한방": "80", "한의과": "80", "korean medicine": "80",
+}
+
+# 종별코드 — HIRA clCd. Source: HIRA 활용가이드 (병원정보서비스). Verified live
+# 2026-05-04 with clCd=31 returning 673 / clCd=21 returning N (의원/병원 split).
+_CLCD_CODE_MAP: dict[str, str] = {
+    # 11 상급종합병원
+    "상급종합": "11", "상급종합병원": "11", "tertiary hospital": "11",
+    # 21 종합병원
+    "종합병원": "21", "general hospital": "21",
+    # 28 병원 (HIRA uses 21 for 종합병원 + 28 for 병원 in some tables; live API
+    # accepts 21 broadly — keep canonical 21 for "병원").
+    "병원": "21", "hospital": "21",
+    # 29 치과병원
+    "치과병원": "29", "dental hospital": "29",
+    # 31 의원
+    "의원": "31", "clinic": "31",
+    # 41 조산원
+    "조산원": "41", "midwifery clinic": "41",
+    # 51 보건소
+    "보건소": "51", "public health center": "51",
+    # 81 한의원
+    "한의원종별": "81",  # disambiguate from 진료과 한의원
+    # 92 약국
+    "약국": "92", "pharmacy": "92",
+}
 
 # ---------------------------------------------------------------------------
 # Input schema (T054 — xPos + yPos + radius)
@@ -72,8 +176,42 @@ class HiraHospitalSearchInput(BaseModel):
         le=10000,
         default=2000,
         description=(
-            "Search radius in meters. Maximum 10 000 m. "
-            "Default 2 000 m (2 km). Increase only if initial results are empty."
+            "Search radius in meters. Default 2000 m (2 km). Max 10 000 m. "
+            "Citizen vocabulary mapping: '근처' / 'nearby' = 1500 m, "
+            "'주변' = 3000 m, '인근' = 2000 m, '한 5km 안' = 5000 m. "
+            "Do NOT inflate radius to grow result count — KOSMOS sorts results "
+            "client-side by distance ascending, so a tighter radius is more "
+            "relevant. Increasing radius only adds farther matches."
+        ),
+    )
+    dgsbjt: str | None = Field(
+        default=None,
+        description=(
+            "Optional medical-specialty filter (HIRA 진료과목코드). "
+            "Accepts either the natural-language Korean name or the 2-digit "
+            "code. Examples: '내과' → 01, '소아과' → 11, '안과' → 12, "
+            "'이비인후과' → 13, '피부과' → 14, '정형외과' → 05, "
+            "'산부인과' → 10, '치과' (use clCd=치과병원 instead). "
+            "ENGLISH aliases: 'internal medicine' / 'pediatrics' / 'ENT' / "
+            "'dermatology' / 'orthopedics'. WHEN TO USE: citizen mentions a "
+            "specific 진료과 ('근처 내과 알려줘' → dgsbjt='내과'). When omitted, "
+            "all specialties returned. Without this filter '근처 병원' returns "
+            "성형외과, 안과, 정형외과 etc. mixed — usually NOT what citizens want."
+        ),
+    )
+    clCd: str | None = Field(  # noqa: N815
+        default=None,
+        description=(
+            "Optional institution-type filter (HIRA 종별코드). "
+            "Accepts natural-language Korean or the 2-digit code. "
+            "'의원' / 'clinic' → 31 (small primary care, single-specialty), "
+            "'병원' / 'hospital' → 21 (mid-size), '종합병원' → 21, "
+            "'상급종합' / 'tertiary hospital' → 11 (large university hospitals "
+            "like 서울대병원, 세브란스), '치과병원' → 29, '한의원' → 81, "
+            "'약국' / 'pharmacy' → 92, '보건소' → 51. WHEN TO USE: citizen "
+            "specifies institution scale ('근처 종합병원', '큰 병원'). When "
+            "omitted, all types returned mixed. Combine with dgsbjt for "
+            "best precision: dgsbjt='내과' + clCd='의원' = '내과의원'."
         ),
     )
     pageNo: int = Field(  # noqa: N815
@@ -87,6 +225,54 @@ class HiraHospitalSearchInput(BaseModel):
         le=100,
         description="Number of rows per page (1–100). Default 20.",
     )
+
+    @field_validator("dgsbjt")
+    @classmethod
+    def _resolve_dgsbjt(cls, v: str | None) -> str | None:
+        """Map natural-language specialty → 2-digit dgsbjtCd, or pass through code."""
+        if v is None:
+            return None
+        v = v.strip()
+        if not v:
+            return None
+        # If it's already a 2-digit code, accept as-is.
+        if v.isdigit() and len(v) == 2:
+            return v
+        # Lowercase for English-alias lookup, raw Korean for Korean lookup.
+        lookup_key = v.lower()
+        if lookup_key in _DGSBJT_CODE_MAP:
+            return _DGSBJT_CODE_MAP[lookup_key]
+        if v in _DGSBJT_CODE_MAP:
+            return _DGSBJT_CODE_MAP[v]
+        # Unrecognized — raise so the executor returns invalid_params with a
+        # clear hint rather than silently dropping the filter.
+        valid_examples = "내과 / 소아과 / 안과 / 이비인후과 / 정형외과 / 피부과"
+        raise ValueError(
+            f"Unknown medical specialty '{v}'. Pass either the Korean name "
+            f"(e.g. {valid_examples}) or a 2-digit dgsbjtCd (01–26, 80)."
+        )
+
+    @field_validator("clCd")
+    @classmethod
+    def _resolve_clcd(cls, v: str | None) -> str | None:
+        """Map natural-language institution type → 2-digit clCd, or pass through code."""
+        if v is None:
+            return None
+        v = v.strip()
+        if not v:
+            return None
+        if v.isdigit() and len(v) == 2:
+            return v
+        lookup_key = v.lower()
+        if lookup_key in _CLCD_CODE_MAP:
+            return _CLCD_CODE_MAP[lookup_key]
+        if v in _CLCD_CODE_MAP:
+            return _CLCD_CODE_MAP[v]
+        valid_examples = "의원 / 병원 / 종합병원 / 상급종합 / 치과병원 / 약국"
+        raise ValueError(
+            f"Unknown institution type '{v}'. Pass either the Korean name "
+            f"(e.g. {valid_examples}) or a 2-digit clCd."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -126,14 +312,24 @@ async def handle(
         "numOfRows": inp.numOfRows,
         "_type": "json",
     }
+    # E-fix: forward server-side filters when the citizen specified a
+    # specialty / institution type. Validators have already mapped natural-
+    # language input to the canonical 2-digit codes.
+    if inp.dgsbjt is not None:
+        params["dgsbjtCd"] = inp.dgsbjt
+    if inp.clCd is not None:
+        params["clCd"] = inp.clCd
 
     logger.debug(
-        "hira_hospital_search: xPos=%.5f yPos=%.5f radius=%d page=%d rows=%d",
+        "hira_hospital_search: xPos=%.5f yPos=%.5f radius=%d page=%d rows=%d "
+        "dgsbjt=%s clCd=%s",
         inp.xPos,
         inp.yPos,
         inp.radius,
         inp.pageNo,
         inp.numOfRows,
+        inp.dgsbjt,
+        inp.clCd,
     )
 
     own_client = client is None
@@ -214,6 +410,23 @@ async def handle(
         for item in item_list
     ]
 
+    # D-fix: HIRA does NOT sort by distance server-side. Verified live
+    # 2026-05-04: baseline call near 강남역 (37.498, 127.028) returned
+    # d=829, 760, 479, 610, 757 (registration order). Citizens expect
+    # "근처 X" to mean the actually-closest match. Sort ascending by the
+    # `distance` string parsed as float; entries with missing/invalid
+    # distance sink to the end deterministically.
+    def _distance_key(rec: dict[str, Any]) -> tuple[int, float]:
+        raw = rec.get("distance")
+        if raw is None or raw == "":
+            return (1, 0.0)  # missing distance → sort last
+        try:
+            return (0, float(raw))
+        except (TypeError, ValueError):
+            return (1, 0.0)
+
+    items.sort(key=_distance_key)
+
     return {
         "kind": "collection",
         "items": items,
@@ -235,31 +448,40 @@ class _HiraHospitalSearchOutput(RootModel[dict[str, Any]]):
 _HIRA_DESCRIPTION = build_description_v4(
     purpose=(
         "Search HIRA (건강보험심사평가원) hospital registry for medical facilities "
-        "within a WGS84 coordinate radius. Returns hospital name, address, phone, "
-        "institution type, and distance. Use for: nearby hospitals, clinics, healthcare."
+        "within a WGS84 coordinate radius, optionally filtered by medical "
+        "specialty (진료과목) and/or institution type (종별). Returns hospital "
+        "name, address, phone, institution type, and distance — sorted by "
+        "distance ascending (closest first). "
+        "Use for: nearby hospitals, clinics, specialty-specific search "
+        "(내과/소아과/안과/이비인후과/etc.), specific institution scale "
+        "(의원 vs 종합병원 vs 상급종합)."
     ),
     input_quirk=(
-        "xPos = longitude (lon, 124–132 WGS84 decimal degrees) — agency naming convention. "
-        "yPos = latitude (lat, 33–39 WGS84 decimal degrees) — agency naming convention. "
-        "Always obtain xPos/yPos from resolve_location(want='coords') before calling. "
-        "radius default 2000 m (max 10000 m). Increase if results are empty."
+        "xPos = longitude (124–132). yPos = latitude (33–39). "
+        "Citizen location → resolve_location(want='coords') first. "
+        "radius: 1500m '근처' / 3000m '주변' / max 10000m. "
+        "dgsbjt + clCd are optional natural-language filters (see short_reference)."
     ),
     short_reference=(
-        "No 17-region table needed — HIRA accepts lat/lon directly (no grid conversion). "
-        "Unlike KMA, no nx/ny grid step is required. "
-        "Response fields: yadmNm (name), addr, telno, clCdNm (type), ykiho (ID), distance."
+        "Lat/lon direct (no grid). Response: yadmNm, addr, telno, clCdNm, ykiho, distance.\n"
+        "DGSBJT pass Korean: 내과→01, 신경과→02, 정신과→03, 외과→04, 정형외과→05, "
+        "신경외과→06, 흉부외과→07, 성형외과→08, 산부인과→10, 소아과→11, 안과→12, "
+        "이비인후과→13, 피부과→14, 비뇨기과→15, 영상의학과→16, 재활의학과→21, "
+        "가정의학과→23, 응급의학과→24, 한의원→80. English: pediatrics/ENT/dermatology.\n"
+        "CLCD: 의원→31, 병원/종합병원→21, 상급종합→11, 치과병원→29, 약국→92, 보건소→51.\n"
+        "Without dgsbjt result mixes 성형/안과/내과 — citizen rarely wants that."
     ),
     domain_quirk=(
-        "JSON format requires '_type=json' (underscore prefix). "
-        "'type=json' and 'dataType=JSON' are silently ignored — API returns XML. "
-        "Response 'distance' is a high-precision decimal string, not a float. "
-        "Response coord fields are uppercase: XPos/YPos (capital X and Y)."
+        "JSON requires '_type=json' (underscore prefix). 'type=json' silently "
+        "returns XML. Response coord fields uppercase: XPos/YPos. "
+        "HIRA does NOT sort — KOSMOS sorts client-side by distance ASC, so the "
+        "first item is the closest. Response does NOT echo dgsbjtCd back."
     ),
     self_contained_decl=(
-        "Self-contained: call resolve_location(want='coords') first, then this tool. "
-        "No follow-up tool required for basic hospital listing. "
-        "Use ykiho for HIRA detail queries. "
-        "Do not guess coordinates — always resolve from user-supplied location text."
+        "REQUIRED: xPos/yPos. Citizen location ('동아대학교', '강남역') needs "
+        "resolve_location(want='coords') first. ORDERING: turn1=resolve_location, "
+        "turn2=this tool. When citizen says '근처 내과' / '강남역 소아과' / "
+        "'큰 종합병원', map specialty/type to dgsbjt / clCd in the SAME call."
     ),
 )
 
@@ -293,8 +515,10 @@ HIRA_HOSPITAL_SEARCH_TOOL = GovAPITool(
     nist_aal_hint=None,
     trigger_examples=[
         "근처 내과 병원",
+        "강남역 소아과",
         "이비인후과 추천",
-        "야간 진료 병원",
+        "동아대 근처 종합병원",
+        "성형외과 의원",
     ],
 )
 

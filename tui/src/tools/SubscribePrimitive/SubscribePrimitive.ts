@@ -21,6 +21,7 @@ import {
   type AdapterCitation,
   type AdapterWithPolicy,
 } from '../shared/primitiveCitation.js'
+import { extractMockMeta, mockLabel } from '../shared/mockDisclaimer.js'
 import { SUBSCRIBE_TOOL_NAME, DESCRIPTION, SUBSCRIBE_TOOL_PROMPT } from './prompt.js'
 import {
   isManifestSynced,
@@ -33,6 +34,10 @@ import {
 } from '../_shared/verboseRender.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
+import {
+  getOrCreateSubscriptionRegistry,
+  deriveMinistryFromToolId,
+} from '../../state/subscriptionRegistry.js'
 
 // ---------------------------------------------------------------------------
 // KOSMOS citation extension — augments context at runtime for permission UI.
@@ -265,6 +270,13 @@ export const SubscribePrimitive = buildTool({
         ? `유지 시간: ${String(lifetime)}`
         : undefined
 
+      // Audit-2 P0: check _mode === 'mock' from transparency stamp (Spec 024).
+      const mockMeta = extractMockMeta(output)
+      const isMock = mockMeta.isMock
+
+      const subscribeHeading = isMock ? mockLabel('구독 시작') : '구독 완료:'
+      const subscribeColor = isMock ? ('cyan' as never) : (undefined as never)
+
       // KOSMOS hotfix #2519 — wrap in <MessageResponse> for the CC ⎿ prefix.
       // Drop the explicit "⎿ 실시간 스트림은…" line since MessageResponse now
       // owns the leading "  ⎿  " glyph; restating it produced a doubled tree.
@@ -277,9 +289,20 @@ export const SubscribePrimitive = buildTool({
           React.createElement(
             Text,
             null,
-            React.createElement(Text, { bold: true }, '구독 완료: '),
+            React.createElement(
+              Text,
+              { bold: true, color: subscribeColor, dimColor: isMock },
+              subscribeHeading + ' ',
+            ),
             React.createElement(Text, null, `${handleLabel} ${kindLabel}`.trim()),
           ),
+          isMock
+            ? React.createElement(
+                Text,
+                { dimColor: true },
+                '실제 행정 영향 없는 시연 결과입니다.',
+              )
+            : null,
           lifetimeLabel
             ? React.createElement(Text, { dimColor: true }, lifetimeLabel)
             : null,
@@ -288,6 +311,13 @@ export const SubscribePrimitive = buildTool({
             { dimColor: true },
             '실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.',
           ),
+          isMock && mockMeta.actualEndpointWhenLive
+            ? React.createElement(
+                Text,
+                { dimColor: true },
+                `실제 엔드포인트 (운영 시): ${mockMeta.actualEndpointWhenLive}`,
+              )
+            : null,
         ),
       )
     }
@@ -306,6 +336,20 @@ export const SubscribePrimitive = buildTool({
   },
 
   /**
+   * subscribe registers a session-lifetime event stream from a government
+   * source (재난 문자, 교통 이벤트, etc.). Always ask for citizen permission
+   * so the stream is explicitly authorized before it opens.
+   * Spec 024 invariant: adapters cite agency policy; the permission gauntlet
+   * surfaces that citation via context.kosmosCitations (set in validateInput).
+   */
+  async checkPermissions(_input) {
+    return {
+      behavior: 'ask' as const,
+      message: '권한 위임 필요: 실시간 구독 채널을 열어 알림을 수신합니다. 진행하시겠습니까?',
+    }
+  },
+
+  /**
    * Dispatch subscribe call via real IPC bridge (T012 — stub replaced).
    *
    * I-D9: returns the first tool_result frame's envelope as a
@@ -313,12 +357,53 @@ export const SubscribePrimitive = buildTool({
    * are deferred (spec.md Deferred Items — out of scope for Phase 0).
    */
   async call(input, context) {
-    return dispatchPrimitive<Output>({
+    const result = await dispatchPrimitive<Output>({
       primitive: 'subscribe',
       args: input as Record<string, unknown>,
       context,
       registry: getOrCreatePendingCallRegistry(),
       bridge: getOrCreateKosmosBridge(),
     })
+
+    // Lead-FU-5 (S7 /agents data wire) — on a successful subscription open,
+    // record the handle into the TUI-side registry so /agents can show the
+    // citizen the live channels they have opened. Best-effort: any shape
+    // mismatch is silently ignored (the dispatcher result is the contract;
+    // this is a UI mirror only).
+    try {
+      const data = result.data as Output | undefined
+      if (data && data.ok === true) {
+        const payload = (data.result ?? {}) as Record<string, unknown>
+        // Backend stdio.py:1825 emits { subscription_id, tool_id, status }
+        // Future streaming-wired backend may emit { handle_id, lifetime, kind }
+        const handleId =
+          (typeof payload['handle_id'] === 'string' && (payload['handle_id'] as string)) ||
+          (typeof payload['subscription_id'] === 'string' && (payload['subscription_id'] as string)) ||
+          ''
+        const toolId = (typeof input.tool_id === 'string' && input.tool_id) || ''
+        if (handleId && toolId) {
+          const kind =
+            typeof payload['kind'] === 'string'
+              ? (payload['kind'] as string)
+              : 'subscription'
+          const lifetime =
+            typeof payload['lifetime'] === 'string'
+              ? (payload['lifetime'] as string)
+              : (typeof input.lifetime_hint === 'string' ? input.lifetime_hint : undefined)
+          getOrCreateSubscriptionRegistry().record({
+            handleId,
+            toolId,
+            ministry: deriveMinistryFromToolId(toolId),
+            kind,
+            lifetime,
+            openedAt: new Date().toISOString(),
+          })
+        }
+      }
+    } catch {
+      // Non-fatal — UI mirror is best-effort.
+    }
+
+    return result
   },
 } satisfies ToolDef<InputSchema, Output>)

@@ -63,6 +63,7 @@ class UninstallResult:
     receipt_id: str | None
     error_kind: str | None
     error_message: str | None
+    was_idempotent_noop: bool = False
 
 
 def _enumerate_plugin_tool_ids(registry: ToolRegistry, plugin_id: str) -> list[str]:
@@ -123,6 +124,7 @@ def uninstall_plugin(
             receipt_id=None,
             error_kind=None,
             error_message=None,
+            was_idempotent_noop=True,
         )
 
     for tool_id in deregistered:

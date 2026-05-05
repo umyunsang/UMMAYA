@@ -40,6 +40,7 @@ from kosmos.primitives.submit import (
     derive_transaction_id,
     register_submit_adapter,
 )
+from kosmos.tools.models import AdapterRealDomainPolicy
 from kosmos.tools.registry import AdapterPrimitive, AdapterRegistration, AdapterSourceMode
 from kosmos.tools.transparency import stamp_mock_response
 
@@ -255,6 +256,18 @@ REGISTRATION = AdapterRegistration(
     },
     auth_type="oauth",
     nonce=_ADAPTER_NONCE,
+    # Audit-4 P0-9 — agency-published policy citation (Constitution § II cite-only).
+    # Required by AdapterManifestEntry I4 (mock entries must declare a policy URL
+    # so the citizen sees the citation in the permission UI). The values mirror
+    # the per-call transparency constants emitted via stamp_mock_response().
+    policy=AdapterRealDomainPolicy(
+        real_classification_url=_POLICY_AUTHORITY,
+        real_classification_text=(
+            "홈택스 종합소득세 신고 — 국세청 공식 정책 페이지 (Spec 1636 Live-channel mandate)."
+        ),
+        citizen_facing_gate="submit",
+        last_verified=datetime(2026, 5, 4, tzinfo=UTC),
+    ),
 )
 
 # Register in the submit dispatcher's in-process table

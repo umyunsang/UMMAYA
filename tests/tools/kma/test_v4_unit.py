@@ -259,20 +259,63 @@ class TestGridShortReferenceInline:
 
 
 class TestDescriptionSection5ChainGuidance:
-    """Section 5 must contain guidance about self-contained or autonomous chain."""
+    """Section 5 must declare the tool's chain ordering requirement.
 
-    # At least one of these keywords should appear in section 5
-    _CHAIN_KEYWORDS = ["chain", "cross", "단독", "autonomous", "self"]
+    The previous variant of this test asserted that section 5 contained one of
+    ['chain', 'cross', '단독', 'autonomous', 'self'] — a wording that included
+    the anti-pattern "단독 호출로 완결" / "self-contained". KMA / HIRA / NMC
+    coordinate-input tools are NOT self-contained: they REQUIRE a prior
+    resolve_location turn to obtain nx/ny or lat/lon. Asserting "self-contained"
+    encouraged tool descriptions to lie to the LLM ("이 도구 단독 호출로 완결"
+    contradicting "시민이 좌표 모르면 turn 1 = resolve_location"), and K-EXAONE
+    picked the first half — refusing to call resolve_location and hallucinating
+    coordinates ("동아대학교 → 부산 동래구 hospitals" frame, 2026-05-04).
+
+    The corrected assertion: section 5 MUST mention ``resolve_location`` AND
+    a turn-ordering signal so the LLM gets unambiguous chain guidance.
+    """
+
+    _ORDERING_TOKENS = ("turn1", "turn 1", "ORDERING", "ordering", "first", "FIRST")
+    _SELF_CONTAINED_TOKENS = ("단독", "self-contained")
 
     def _check_tool(self, tool_id: str, tool: Any) -> None:
         desc = tool.llm_description
         sections = desc.split("\n\n")
         assert len(sections) == 5, f"{tool_id}: expected 5 sections"
-        section5 = sections[4].lower()
-        assert any(kw in section5 for kw in self._CHAIN_KEYWORDS), (
-            f"{tool_id}: Section 5 (self_contained_decl) must contain chain/cross-domain "
-            f"guidance. Keywords searched: {self._CHAIN_KEYWORDS}. "
-            f"Section 5 text: {sections[4][:120]!r}"
+        section5 = sections[4]
+        # Two valid shapes: (a) chain-required tool — must reference
+        # resolve_location AND a turn-ordering signal; (b) chain-free tool —
+        # must explicitly declare self-contained (단독 / self-contained) so
+        # the LLM knows it can be invoked without prior steps. Tools that
+        # take no coordinate input (e.g. kma_pre_warning, which queries by
+        # 관서코드 stn_id) fall into shape (b); tools that need lat/lon or
+        # nx/ny (kma_current_observation, _short_term, _ultra, forecast_fetch)
+        # fall into shape (a). Asserting one OR the other prevents the
+        # 2026-05-04 anti-pattern where a chain-required tool also claimed
+        # to be self-contained, contradicting itself in the same paragraph.
+        is_chain_required = "resolve_location" in section5 and any(
+            tok in section5 for tok in self._ORDERING_TOKENS
+        )
+        is_chain_free = any(tok in section5 for tok in self._SELF_CONTAINED_TOKENS)
+        assert is_chain_required or is_chain_free, (
+            f"{tool_id}: Section 5 must EITHER (a) reference resolve_location + an "
+            f"ordering token {self._ORDERING_TOKENS} for chain-required tools, "
+            f"OR (b) contain a self-contained marker {self._SELF_CONTAINED_TOKENS} "
+            f"for chain-free tools. Section 5 text: {section5[:200]!r}"
+        )
+        # Forbid the contradictory shape: a tool that claims BOTH "단독 호출" /
+        # "self-contained" AND "resolve_location" in the same section. That
+        # combination is what K-EXAONE picked the wrong half of in the
+        # donga-univ-poi-bug frame.
+        contradictory = (
+            "resolve_location" in section5
+            and any(tok in section5 for tok in self._SELF_CONTAINED_TOKENS)
+        )
+        assert not contradictory, (
+            f"{tool_id}: Section 5 mixes self-contained markers "
+            f"{self._SELF_CONTAINED_TOKENS} with a resolve_location reference. "
+            f"Pick one shape — see the 2026-05-04 donga-univ-poi-bug for the "
+            f"failure mode this guard prevents. Section 5 text: {section5[:200]!r}"
         )
 
     def test_kma_current_observation_section5(self, kma_tools) -> None:

@@ -161,7 +161,14 @@ async def handle(
     error if not. When absent, proceeds without delegation enforcement (the
     lookup is read-only).
 
-    Returns a transparent, stamped synthetic fixture.
+    Returns a ``LookupOutput``-shaped envelope (``{"kind": "record", "item": …}``
+    or ``{"kind": "error", …}``) so the response passes the executor's
+    discriminated-union validator (``kosmos.tools.envelope.normalize``). The
+    six transparency fields are stamped onto the inner ``item`` payload (or the
+    error envelope itself, for error variants).
+
+    The outer ``meta`` block is injected by ``normalize()`` — adapters MUST NOT
+    pre-populate ``meta`` themselves (system-reserved keys are dropped).
     """
     # Optional delegation scope check (fail-closed when context is present).
     if delegation_context is not None:
@@ -177,32 +184,38 @@ async def handle(
                     token_scope,
                     _REQUIRED_SCOPE,
                 )
-                return stamp_mock_response(
-                    {
-                        "kind": "error",
-                        "reason": "scope_violation",
-                        "message": (
-                            f"Delegation token scope {token_scope!r} does not "
-                            f"grant {_REQUIRED_SCOPE!r}."
-                        ),
-                        "retryable": False,
-                    },
-                    reference_implementation=_REFERENCE_IMPL,
-                    actual_endpoint_when_live=_ACTUAL_ENDPOINT,
-                    security_wrapping_pattern=_SECURITY_WRAPPING,
-                    policy_authority=_POLICY_AUTHORITY,
-                    international_reference=_INTERNATIONAL_REF,
-                )
+                # LookupError envelope variant — `kind="error"` is the
+                # discriminator. ``reason`` MUST be a member of
+                # ``LookupErrorReason`` (envelope ``extra='forbid'``); a
+                # missing-scope delegation maps to ``auth_required`` (the
+                # closest semantic match in the closed enum). Transparency
+                # fields are NOT stamped here — the LookupError schema
+                # forbids extra keys; ``meta.source`` (injected by
+                # ``envelope.normalize()``) carries the tool_id instead.
+                return {
+                    "kind": "error",
+                    "reason": "auth_required",
+                    "message": (
+                        f"Delegation token scope {token_scope!r} does not "
+                        f"grant {_REQUIRED_SCOPE!r}."
+                    ),
+                    "retryable": False,
+                }
 
-    domain_payload = _build_fixture(inp)
-    return stamp_mock_response(
-        domain_payload,
+    # LookupRecord envelope variant — domain payload + transparency stamp
+    # live inside `item`; `meta` is filled by `envelope.normalize()`.
+    stamped_item = stamp_mock_response(
+        _build_fixture(inp),
         reference_implementation=_REFERENCE_IMPL,
         actual_endpoint_when_live=_ACTUAL_ENDPOINT,
         security_wrapping_pattern=_SECURITY_WRAPPING,
         policy_authority=_POLICY_AUTHORITY,
         international_reference=_INTERNATIONAL_REF,
     )
+    return {
+        "kind": "record",
+        "item": stamped_item,
+    }
 
 
 # ---------------------------------------------------------------------------

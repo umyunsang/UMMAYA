@@ -61,7 +61,11 @@ _ROLE_KIND_ALLOW_LIST: dict[str, frozenset[str]] = {
     "coordinator_phase": frozenset({"backend"}),
     "worker_status": frozenset({"backend"}),
     "permission_request": frozenset({"backend"}),
-    "permission_response": frozenset({"tui"}),
+    # Gap A fix: backend echoes permission_response back to TUI with
+    # receipt_id attached (role="backend"). The TUI origin (role="tui")
+    # is preserved for the citizen-decision direction. Both directions are
+    # valid; consumers discriminate on ``role`` to distinguish the echo.
+    "permission_response": frozenset({"tui", "backend"}),
     "session_event": frozenset({"tui", "backend"}),
     "error": frozenset({"backend", "tui"}),
     # Spec 032 new arms
@@ -78,6 +82,11 @@ _ROLE_KIND_ALLOW_LIST: dict[str, frozenset[str]] = {
     "plugin_op": frozenset({"tui", "backend"}),
     # Epic ε #2296 — adapter manifest sync from backend on boot
     "adapter_manifest_sync": frozenset({"backend"}),
+    # Epic 2 — consent revoke IPC round-trip (arms 22-23)
+    # arm 22: TUI initiates revoke
+    "consent_revoke_request": frozenset({"tui"}),
+    # arm 23: backend responds with revoke outcome
+    "consent_revoke_response": frozenset({"backend"}),
 }
 
 # Kinds on which trailer.final=true is permitted (invariant E6).
@@ -223,6 +232,46 @@ class UserInputFrame(_BaseFrame):
 # ---------------------------------------------------------------------------
 
 
+class ChatMessageFunctionCall(BaseModel):
+    """OpenAI-spec ``function`` block carried inside ``ChatMessageToolCall``.
+
+    Mirrors ``kosmos.llm.models.FunctionCall`` (the LLM-client-internal model)
+    but lives on the *wire* so the TUI can transmit assistant ``tool_use``
+    blocks across multi-turn boundaries (Lead-Diag-4, role='tool' wire fix).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
+
+    name: str = Field(description="Function/tool name the model requested.")
+    arguments: str = Field(
+        description="JSON-serialised string of the function arguments (OpenAI spec)."
+    )
+
+
+class ChatMessageToolCall(BaseModel):
+    """OpenAI-spec ``tool_calls[i]`` entry carried by an assistant ``ChatMessage``.
+
+    OpenAI Chat Completions API spec: every ``role='tool'`` message MUST be
+    paired (by ``tool_call_id``) with a ``tool_calls[i].id`` from a preceding
+    assistant turn. The TUI carries this pairing across the wire so multi-turn
+    conversations replay correctly to FriendliAI / OpenAI-compatible providers
+    (Lead-Diag-4 fix, 2026-05-04).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
+
+    id: str = Field(
+        description="Matching ``ToolCallFrame.call_id`` / ``role='tool'.tool_call_id``."
+    )
+    type: Literal["function"] = Field(
+        default="function",
+        description="OpenAI tool envelope; only 'function' is currently supported.",
+    )
+    function: ChatMessageFunctionCall = Field(
+        description="Inner function name + JSON-serialised arguments."
+    )
+
+
 class ChatMessage(BaseModel):
     """One conversation-history entry carried by ``ChatRequestFrame.messages``.
 
@@ -230,6 +279,13 @@ class ChatMessage(BaseModel):
     invoked) and ``tool_call_id`` (the originating ``tool_call`` envelope's
     correlation id). This is the data-model invariant D4 (tool message
     integrity) enforced by the ``ChatRequestFrame`` validator below.
+
+    Lead-Diag-4 (2026-05-04): added optional ``tool_calls`` for ``role='assistant'``
+    turns so assistant ``tool_use`` blocks survive the wire round-trip and the
+    OpenAI Chat Completions multi-turn pairing invariant (every ``role='tool'``
+    message MUST follow an assistant message whose ``tool_calls[i].id`` matches
+    the result's ``tool_call_id``) is satisfied. Backward compatible: legacy
+    senders that omit ``tool_calls`` are unaffected.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
@@ -245,6 +301,15 @@ class ChatMessage(BaseModel):
     tool_call_id: str | None = Field(
         default=None,
         description="Matching ``ToolCallFrame.call_id`` when role='tool'; None otherwise.",
+    )
+    tool_calls: list[ChatMessageToolCall] | None = Field(
+        default=None,
+        description=(
+            "OpenAI Chat Completions assistant-turn tool invocations. Set ONLY on "
+            "role='assistant' messages that requested one or more tool calls. None "
+            "for every other role. Each entry's ``id`` is the pairing key that the "
+            "corresponding role='tool' result message MUST set as its ``tool_call_id``."
+        ),
     )
 
 
@@ -323,7 +388,14 @@ class ChatRequestFrame(_BaseFrame):
 
     @model_validator(mode="after")
     def _v_tool_message_integrity(self) -> ChatRequestFrame:
-        """Invariant D4: tool messages require both name and tool_call_id."""
+        """Invariant D4: tool messages require both name and tool_call_id.
+
+        Lead-Diag-4 extension: ``tool_calls`` is only valid on role='assistant'
+        messages (OpenAI Chat Completions spec). Every ``role='tool'`` message's
+        ``tool_call_id`` MUST match an ``id`` from a preceding assistant
+        ``tool_calls`` entry — pairing is positional/by-id, not by adjacency,
+        because parallel tool calls are allowed.
+        """
         for i, msg in enumerate(self.messages):
             if msg.role == "tool":
                 if not msg.name:
@@ -332,6 +404,11 @@ class ChatRequestFrame(_BaseFrame):
                     raise ValueError(
                         f"messages[{i}]: role='tool' requires non-empty 'tool_call_id'"
                     )
+            if msg.tool_calls is not None and msg.role != "assistant":
+                raise ValueError(
+                    f"messages[{i}]: tool_calls is only valid on role='assistant' "
+                    f"(got role='{msg.role}')"
+                )
         return self
 
 
@@ -479,6 +556,21 @@ class PermissionRequestFrame(_BaseFrame):
     risk_level: Literal["low", "medium", "high"] = Field(
         description="Risk classification of the requested operation."
     )
+    # Audit-4 P0-10 fix — the fully-qualified adapter id the citizen sees in
+    # the modal title and `/consent list` row. Optional for backward-compat:
+    # legacy callers that only set `worker_id="main"` continue to work; the
+    # TUI falls back to `worker_id || primitive_kind` when this is null. New
+    # call sites (stdio.py:_check_permission_gate) MUST populate this with
+    # `args_obj.get("tool_id", fname)` so the modal title becomes
+    # `"mock_verify_mobile_id" 도구가 신원 확인을 …` rather than `"main" …`.
+    tool_id: str | None = Field(
+        default=None,
+        description=(
+            "Fully-qualified adapter id (e.g. `mock_verify_mobile_id`). Falls "
+            "back to worker_id || primitive_kind in the TUI when None. None for "
+            "legacy callers that have not yet been updated."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -507,6 +599,44 @@ class PermissionResponseFrame(_BaseFrame):
         "denied",
         "deny",
     ] = Field(description="Citizen's permission decision.")
+    # Gap A fix — backend attaches the consent receipt_id to the echo-back
+    # so the TUI addReceipt() callsite can record it without a second round-
+    # trip. ``None`` on deny / timeout paths (no receipt written). Backward-
+    # compatible: TUI parsers that don't yet read this field ignore it safely.
+    receipt_id: str | None = Field(
+        default=None,
+        description=(
+            "Consent receipt UUID written to ~/.kosmos/memdir/user/consent/<id>.json "
+            "on granted decisions. None on deny / timeout."
+        ),
+    )
+    # Audit-4 P0-6 / P0-7 / P0-10 fix — the backend echo MUST carry enough
+    # context for the TUI to render a meaningful receipt row. Without these
+    # fields the TUI's usePermissionReceiptWatcher hardcoded
+    # `layer: 1, tool_name: 'unknown'` (UI-C-1 spec violation: Layer 2/3
+    # submits / subscribes were colour-coded green like a Layer 1 verify).
+    # Both fields are optional so legacy backends remain wire-compatible.
+    primitive_kind: (
+        Literal["lookup", "resolve_location", "submit", "subscribe", "verify"] | None
+    ) = Field(
+        default=None,
+        description=(
+            "The primitive that was authorised. The TUI feeds this into "
+            "`aalToLayer(primitive, isIrreversible)` to recompute the gauntlet "
+            "layer (1=green / 2=orange / 3=red) for the receipt row. None on "
+            "deny / timeout / legacy backends."
+        ),
+    )
+    tool_id: str | None = Field(
+        default=None,
+        description=(
+            "The fully-qualified adapter id (e.g. `mock_verify_mobile_id`, "
+            "`mock_submit_welfare_grant`) the citizen authorised. The TUI uses "
+            "this to render the human-readable Korean adapter name in "
+            "/consent list and the modal title. None for non-adapter primitives "
+            "(rare) or legacy backends."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -896,6 +1026,27 @@ class PluginOpFrame(_BaseFrame):
         default=None,
         description="Spec 035 consent receipt id when op='complete' AND result='success'.",
     )
+    error_kind: str | None = Field(
+        default=None,
+        description=(
+            "Machine-readable failure kind (e.g. 'bundle_sha_mismatch', "
+            "'slsa_skip_in_production') when op='complete' AND result='failure'. "
+            "Used by the TUI to map exit codes to citizen-friendly Korean messages."
+        ),
+    )
+    error_message: str | None = Field(
+        default=None,
+        description="Developer-facing English error detail when op='complete' AND result='failure'.",
+    )
+    was_idempotent_noop: bool | None = Field(
+        default=None,
+        description=(
+            "True when op='complete' + result='success' but the operation was a no-op "
+            "because the plugin was already in the target state (e.g. uninstall of "
+            "a plugin that was never installed). TUI uses this to show '이미 제거됨' "
+            "instead of '제거 완료'."
+        ),
+    )
 
     @model_validator(mode="after")
     def _v_plugin_op_shape(self) -> PluginOpFrame:  # noqa: C901 — discriminated union shape
@@ -914,6 +1065,9 @@ class PluginOpFrame(_BaseFrame):
                 "result": self.result,
                 "exit_code": self.exit_code,
                 "receipt_id": self.receipt_id,
+                "error_kind": self.error_kind,
+                "error_message": self.error_message,
+                "was_idempotent_noop": self.was_idempotent_noop,
             }
             extras = [k for k, v in forbidden.items() if v is not None]
             if extras:
@@ -935,6 +1089,9 @@ class PluginOpFrame(_BaseFrame):
                 "result": self.result,
                 "exit_code": self.exit_code,
                 "receipt_id": self.receipt_id,
+                "error_kind": self.error_kind,
+                "error_message": self.error_message,
+                "was_idempotent_noop": self.was_idempotent_noop,
             }
             extras = [k for k, v in forbidden.items() if v is not None]
             if extras:
@@ -948,6 +1105,10 @@ class PluginOpFrame(_BaseFrame):
                 raise ValueError("plugin_op.complete requires exit_code")
             if self.result == "failure" and self.receipt_id is not None:
                 raise ValueError("plugin_op.complete result='failure' must not set receipt_id")
+            if self.result == "success" and self.error_kind is not None:
+                raise ValueError(
+                    "plugin_op.complete result='success' must not set error_kind"
+                )
             forbidden = {
                 "request_op": self.request_op,
                 "name": self.name,
@@ -1131,7 +1292,110 @@ class AdapterManifestSyncFrame(_BaseFrame):
 
 
 # ---------------------------------------------------------------------------
-# Discriminated union — 21 kinds (Epic ε #2296 adds adapter_manifest_sync)
+# Arm: consent_revoke_request  (Epic 2 — arm 22, TUI → backend)
+# ---------------------------------------------------------------------------
+
+
+class ConsentRevokeRequestFrame(_BaseFrame):
+    """TUI -> backend: citizen requests revocation of a prior consent receipt.
+
+    arm 22 of the ``IPCFrame`` discriminated union (Epic 2).
+
+    Fields:
+    - ``request_id``: UUIDv4 string; round-trips in the matching
+      ``consent_revoke_response`` frame.
+    - ``receipt_id``: The ``rcpt-<id>`` value referencing the receipt file at
+      ``~/.kosmos/memdir/user/consent/<receipt_id>.json``.
+    - ``scope``: ``"once"`` = revoke this single receipt only;
+      ``"session-all"`` = revoke all receipts for the current session.
+    - ``reason``: Optional free-text reason logged to the audit ledger.
+
+    role allow-list: tui.
+    """
+
+    kind: Literal["consent_revoke_request"] = Field(
+        default="consent_revoke_request",
+        description="Frame discriminator — arm 22 of IPCFrame.",
+    )
+    request_id: str = Field(
+        min_length=1,
+        description="UUIDv4 round-trip correlation ID; matched in consent_revoke_response.",
+    )
+    receipt_id: str = Field(
+        min_length=1,
+        description=(
+            "Target receipt identifier (rcpt-<id>). Must match an existing receipt file at "
+            "~/.kosmos/memdir/user/consent/<receipt_id>.json."
+        ),
+    )
+    scope: Literal["once", "session-all"] = Field(
+        description=(
+            "Revocation scope. 'once' revokes only this receipt; "
+            "'session-all' revokes all receipts in the current session."
+        ),
+    )
+    reason: str | None = Field(
+        default=None,
+        description="Optional citizen-provided reason logged to the ledger (PIPA §36 citation).",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Arm: consent_revoke_response  (Epic 2 — arm 23, backend → TUI)
+# ---------------------------------------------------------------------------
+
+
+class ConsentRevokeResponseFrame(_BaseFrame):
+    """backend -> TUI: outcome of a consent_revoke_request.
+
+    arm 23 of the ``IPCFrame`` discriminated union (Epic 2).
+
+    Fields:
+    - ``request_id``: Mirrors the originating consent_revoke_request.request_id.
+    - ``ok``: True when at least one receipt was revoked; False on error or
+      not-found.
+    - ``revoked_at``: ISO-8601 UTC timestamp of the revocation (when ok=True).
+    - ``record_hash``: Ledger entry SHA-256 for audit chain verification
+      (when ok=True; omitted on error).
+    - ``error``: Machine-readable error code on failure (``already_revoked``,
+      ``not_found``, ``io_error``); omitted on success.
+
+    role allow-list: backend.
+    """
+
+    kind: Literal["consent_revoke_response"] = Field(
+        default="consent_revoke_response",
+        description="Frame discriminator — arm 23 of IPCFrame.",
+    )
+    request_id: str = Field(
+        min_length=1,
+        description="Mirrors consent_revoke_request.request_id for round-trip correlation.",
+    )
+    ok: bool = Field(
+        description=(
+            "True when at least one receipt was successfully revoked; "
+            "False on error or not-found."
+        ),
+    )
+    revoked_at: str | None = Field(
+        default=None,
+        description="ISO-8601 UTC timestamp of revocation. Populated when ok=True.",
+    )
+    record_hash: str | None = Field(
+        default=None,
+        description=(
+            "Hex SHA-256 of the ledger withdrawal record. Populated when ok=True "
+            "for audit-chain verification."
+        ),
+    )
+    error: Literal["already_revoked", "not_found", "io_error"] | None = Field(
+        default=None,
+        description="Machine-readable error code when ok=False; None on success.",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Discriminated union — 23 kinds (Epic 2 adds consent_revoke_request/response)
 # ---------------------------------------------------------------------------
 
 IPCFrame = Annotated[
@@ -1156,16 +1420,19 @@ IPCFrame = Annotated[
     | HeartbeatFrame
     | NotificationPushFrame
     | PluginOpFrame
-    | AdapterManifestSyncFrame,  # NEW — 21st arm (Epic ε #2296)
+    | AdapterManifestSyncFrame  # 21st arm (Epic ε #2296)
+    | ConsentRevokeRequestFrame  # 22nd arm (Epic 2)
+    | ConsentRevokeResponseFrame,  # 23rd arm (Epic 2)
     Field(discriminator="kind"),
 ]
-"""Discriminated union of all 21 IPC frame arms.
+"""Discriminated union of all 23 IPC frame arms.
 
 Spec 287 baseline: 10 arms (user_input .. error).
 Spec 032 additions: 9 arms (payload_start .. notification_push).
 Epic #1636 P5 addition: plugin_op (1 arm with internal op discriminator).
 Spec 1978 ADR-0001 addition: chat_request (tools-aware chat from TUI).
 Epic ε #2296 addition: adapter_manifest_sync (backend boot manifest).
+Epic 2 additions: consent_revoke_request (arm 22), consent_revoke_response (arm 23).
 
 Usage::
 
@@ -1199,6 +1466,8 @@ __all__ = [
     # Spec 1978 ADR-0001 — chat_request + sub-models
     "ChatRequestFrame",
     "ChatMessage",
+    "ChatMessageToolCall",
+    "ChatMessageFunctionCall",
     "ToolDefinition",
     "ToolDefinitionFunction",
     "AssistantChunkFrame",
@@ -1223,6 +1492,12 @@ __all__ = [
     "NotificationPushFrame",
     # Epic #1636 P5 addition
     "PluginOpFrame",
+    # Epic ε #2296 addition
+    "AdapterManifestSyncFrame",
+    "AdapterManifestEntry",
+    # Epic 2 — consent revoke arms 22-23
+    "ConsentRevokeRequestFrame",
+    "ConsentRevokeResponseFrame",
     # Schema helper
     "ipc_frame_json_schema",
 ]

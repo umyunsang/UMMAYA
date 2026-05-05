@@ -88,8 +88,37 @@ export function AssistantToolUseMessage(t0) {
   }
   const parsed = t1;
   if (!parsed) {
-    logError(new Error(tools ? `Tool ${param.name} not found` : `Tools array is undefined for tool ${param.name}`));
-    return null;
+    // donga-univ-poi-bug 후속 — backend 가 PRIMITIVE_REGISTRY +
+    // ToolRegistry 를 dynamic 으로 LLM 에 emit 한 이후, TUI 의 정적
+    // ``getAllBaseTools()`` 에 없는 tool (예: ``resolve_location``,
+    // 새 agency adapter) 의 ``tool_call`` frame 도 도착함. 이전 코드는
+    // ``return null`` 로 silent drop → 화면에 ``⏺ resolve_location``
+    // 라인 자체가 안 보이고 logError 만 발생 → 시민이 chain 의 어떤
+    // 단계에서 좌표가 resolve 됐는지 모름. Generic placeholder render 로
+    // 변경: tool name + raw JSON input 만 표시. CC 의 byte-identical
+    // shape (``⏺ name(arg)`` + indented input) 유지.
+    if (!tools) {
+      // 부트 단계 race — render 0 보다는 generic 표시가 information loss
+      // 적음. tools 동기화 후 다시 mount 되면 정상 render 회복.
+      logError(new Error(`Tools array is undefined for tool ${param.name}`));
+    }
+    const inputPreview = (() => {
+      try {
+        const json = JSON.stringify(param.input ?? {})
+        return json.length > 200 ? json.slice(0, 197) + '…' : json
+      } catch {
+        return '<invalid input>'
+      }
+    })();
+    return (
+      <Box flexDirection="column" marginTop={addMargin ? 1 : 0}>
+        <Text>
+          <Text color={theme.kosmosCore ?? theme.text}>{shouldShowDot ? '⏺ ' : '  '}</Text>
+          <Text bold={true}>{param.name}</Text>
+          <Text dimColor={true}>{`(${inputPreview})`}</Text>
+        </Text>
+      </Box>
+    );
   }
   const {
     tool: tool_0,

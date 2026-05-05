@@ -4,7 +4,7 @@ primitive: lookup
 tier: live
 permission_tier: 3
 spec_version: v4
-last_updated: 2026-05-02
+last_updated: 2026-05-04
 ---
 
 # nmc_emergency_search
@@ -44,9 +44,49 @@ Queries the National Medical Center (국립중앙의료원) real-time emergency 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `kind` | `str` ("collection") | yes | Envelope type discriminator. |
-| `items` | `list[dict]` | yes | Emergency room records from NMC, including bed counts and `hvidate` freshness timestamp. Key fields: `dutyName` (ER name), `hvec` (general beds), `hvgc` (neonatal ICU), `hvicc` (ICU), `hvidate` (data timestamp KST). |
+| `items` | `list[dict]` | yes | ER records — see "Item-level field semantics" below for the enriched per-record schema. |
 | `total_count` | `int` | yes | Total matching ER records from NMC. |
-| `meta` | `dict` | yes | Freshness metadata. `{"freshness_status": "fresh"}` when data is within threshold. |
+| `meta` | `dict` | yes | Freshness metadata. `{"freshness_status": "fresh"}` when data is within threshold (or `"not_applicable"` when the location-static endpoint variant is used and `hvidate` is uniformly absent). |
+
+### Item-level field semantics (Spec 2637 Epic F)
+
+The upstream `getEgytLcinfoInqire` endpoint returns abbreviated fields whose names invite the LLM to render them as ER hours. The adapter rewrites every item via `_enrich_item` BEFORE the LLM ever sees the response.
+
+**Removed (safety-critical)** — these raw upstream fields are stripped:
+
+| Raw field | Why stripped |
+|---|---|
+| `startTime` | Means *outpatient (외래) consultation start time* (typically Monday's `dutyTime1s` from `getEgytBassInfoInqire`), NOT the emergency-room operating window. Live evidence (Jongno-gu, 2026-05-04): all five returned hospitals (incl. SNUH권역응급의료센터 + NMC지역응급의료센터 — both 24/7 ER) have startTime ∈ {0800, 0830, 0900}. Surfacing as "운영시간 08:30" produced the snap-010 mis-info. |
+| `endTime` | Same reason — the institution's outpatient close time (e.g. 1700, 1800), NOT ER close time. ER never closes. |
+
+**Added (LLM-visible enriched fields)**:
+
+| Field | Type | Description |
+|---|---|---|
+| `er_24h_operating` | `bool` (always `True`) | Every record from this endpoint is a registered 응급의료기관 per 응급의료에 관한 법률 §31 = 365-day 24-hour ER operation. |
+| `er_operating_hours_note` | `str` | Korean explanatory note instructing the LLM that `outpatient_*_time` ≠ ER hours. |
+| `outpatient_open_time` | `str | None` | Outpatient (외래) clinic open time, `HH:MM` format. Derived from raw `startTime`. Example: `"08:30"`. |
+| `outpatient_close_time` | `str | None` | Outpatient (외래) clinic close time, `HH:MM` format. Derived from raw `endTime`. Example: `"17:00"`. |
+| `outpatient_hours_display` | `str | None` | Human-readable display string with the literal `(외래진료)` label. Example: `"08:30~17:00 (외래진료)"`. |
+| `hospital_main_phone` | `str` | Aliased from `dutyTel1`. The hospital's **main switchboard**, NOT the ER hotline (`dutyTel3` is omitted by this endpoint variant). |
+| `er_phone_note` | `str` | Korean note clarifying that `dutyTel1` is not the ER direct number; recommends 119 or the sibling `getEgytBassInfoInqire` for ER hotline lookups. |
+| `hospital_type` | `str` | Aliased from `dutyDivName`. The institution's **hospital classification** (종합병원 / 병원 / 의원). |
+| `hospital_type_note` | `str` | Korean note clarifying that `dutyDivName` is hospital type, NOT ER tier (`dutyEmclsName` from `getEgytListInfoInqire` carries the 권역/지역/시설 tier). |
+| `_raw_outpatient_start_hhmm` | `str | int` | The raw upstream `startTime` value, preserved for explicit-access consumers. Underscore prefix signals "internal — do not surface". |
+| `_raw_outpatient_end_hhmm` | `str | int` | The raw upstream `endTime` value, preserved similarly. |
+
+**Passed through unchanged** (safe to surface):
+
+| Field | Type | Description |
+|---|---|---|
+| `dutyName` | `str` | Institution name. |
+| `dutyAddr` | `str` | Street address. |
+| `distance` | `float` | Distance from search origin in kilometres. |
+| `hpid` | `str` | NMC institution ID (e.g. `"A1100017"`). |
+| `latitude` / `longitude` | `float` | WGS-84 coordinates of the institution. |
+| `dutyDiv` | `str` | Hospital classification code (`"A"` = 종합병원). |
+| `dutyTel1` / `dutyDivName` | `str` | Original upstream values — preserved for backward compatibility but new consumers should use the aliased `hospital_main_phone` / `hospital_type` fields. |
+| `cnt`, `rnum`, `dutyFax` | various | Upstream metadata; not LLM-relevant. |
 
 **Output model (stale data — fail-closed)**:
 
@@ -120,7 +160,7 @@ This adapter is classified as Permission tier 3 because real-time emergency room
 }
 ```
 
-### Output envelope (success — authenticated, fresh data)
+### Output envelope (success — enriched item shape from the location endpoint)
 
 ```json
 {
@@ -129,20 +169,32 @@ This adapter is classified as Permission tier 3 because real-time emergency room
     "kind": "collection",
     "items": [
       {
-        "dutyName": "서울특별시 중앙응급의료센터",
-        "hvidate": "2026-04-26 09:45:00",
-        "hvgc": 4,
-        "hvec": 2,
-        "hvicc": 1
+        "dutyName": "서울대학교병원",
+        "dutyAddr": "서울특별시 종로구 대학로 101 (연건동)",
+        "distance": 1.88,
+        "hpid": "A1100017",
+        "latitude": 37.57966608924356,
+        "longitude": 126.99896308412191,
+        "er_24h_operating": true,
+        "er_operating_hours_note": "응급실은 365일 24시간 운영 (응급의료에 관한 법률 §31). outpatient_open_time/outpatient_close_time 은 외래진료(=일반 외래) 시간이며 응급실 운영시간이 아님.",
+        "outpatient_open_time": "08:00",
+        "outpatient_close_time": "18:00",
+        "outpatient_hours_display": "08:00~18:00 (외래진료)",
+        "hospital_main_phone": "02-1588-5700",
+        "er_phone_note": "dutyTel1 = 병원 대표번호. 응급실 직통(dutyTel3) 은 본 endpoint 에서 미제공 — 의료기관 기본정보(getEgytBassInfoInqire) 또는 119 안내 권장.",
+        "hospital_type": "종합병원",
+        "hospital_type_note": "dutyDivName 은 의료기관 종별(종합병원/병원/의원), 응급의료센터 등급 아님. 본 endpoint 의 모든 결과는 응급의료기관 등록 시설 (24시간 응급실 운영)."
       }
     ],
-    "total_count": 1,
+    "total_count": 76,
     "meta": {
-      "freshness_status": "fresh"
+      "freshness_status": "not_applicable"
     }
   }
 }
 ```
+
+> Note: `startTime` / `endTime` are **never** present in the LLM-visible items — they are stripped by `_enrich_item` and replaced by the explicitly-labelled outpatient fields above. This is the safety-critical behaviour that prevents an "응급실 운영시간 08:30~17:00" mis-rendering during an emergency. See `tests/tools/nmc/test_field_semantics_enrichment.py` for the regression suite.
 
 ### Output envelope (unauthenticated — fail-closed)
 
@@ -174,12 +226,19 @@ When the caller has no valid session identity, the Layer 3 auth-gate rejects the
 }
 ```
 
-### Conversation snippet
+### Conversation snippet (correct rendering — Spec 2637 Epic F)
 
 ```text
-Citizen: 지금 근처 응급실 병상 현황을 알려주세요.
-KOSMOS: 현재 위치(서울 중심부) 기준 가장 가까운 응급실 정보를 조회했습니다. '서울특별시 중앙응급의료센터'에 일반 병상 2개, 중환자 병상 1개, 신생아 중환자 병상 4개가 가용 중입니다. 데이터는 09시 45분 기준으로 신선합니다. (주의: 이 기능은 본인 인증이 필요합니다.)
+Citizen: 지금 종로구에서 가까운 응급실 알려줘.
+KOSMOS: 종로구 인근 응급실 (모두 24시간 운영):
+  1. 강북삼성병원 — 1.12km · 02-2001-2001 (대표번호)
+  2. 서울적십자병원 — 1.27km · 02-2002-8000 (대표번호)
+  3. 서울대학교병원 (권역응급의료센터) — 1.88km · 02-1588-5700 (대표번호)
+응급 상황은 119에 직접 전화하시는 것이 가장 빠릅니다. (위 병원들의 외래진료 시간은 08:00~18:00 정도이지만 응급실은 365일 24시간 열려 있습니다.)
 ```
+
+> **Anti-pattern** (the snap-010 mis-rendering this Epic fixes — DO NOT emit):
+> ~~"강북삼성병원 - 운영시간: 08:30~17:00"~~ — this conflates the institution's outpatient (외래) clinic hours with the ER, putting a citizen at risk during a real emergency.
 
 ## Constraints
 

@@ -301,7 +301,9 @@ KMA_ULTRA_SHORT_TERM_FORECAST_TOOL = GovAPITool(
             "nx (1-149), ny (1-253) Lambert 5 km 격자. "
             "base_date=YYYYMMDD (오늘). "
             "base_time=HH30 format (매 시각 30분 발표만 유효). "
-            "예: 0630, 1130, 1430. MM != 30 인 값은 validator reject."
+            "예: 0630, 1130, 1430. MM != 30 인 값은 validator reject. "
+            "base_time 은 시스템 프롬프트의 '현재 KST 시각' 의 직전 HH30 사용. "
+            "추측 금지 — 16:30 이면 1630, 16:50 이면 1630, 17:25 이면 1630."
         ),
         short_reference=kma_grid_short_reference(),
         domain_quirk=(
@@ -310,9 +312,9 @@ KMA_ULTRA_SHORT_TERM_FORECAST_TOOL = GovAPITool(
             "HTTP 200 이어도 resultCode != '00' 이면 에러. dataType=JSON 권장."
         ),
         self_contained_decl=(
-            "이 도구 단독 호출로 완결. resolve_location 등 cross-domain chain 불필요. "
-            "시민이 nx/ny 모르면 LLM 이 자율적으로 "
-            "turn 1 = resolve_location(query='<지역명>'), turn 2 = 이 도구."
+            "REQUIRED: nx/ny 입력 필수. 지역명 ('동아대학교', '부산 사하구 다대1동') 은 "
+            "resolve_location 으로 nx/ny 받은 후 본 도구 호출. "
+            "ORDERING: turn1=resolve_location(query), turn2=이 도구. 좌표 추측 금지."
         ),
     ),
     ministry="KMA",

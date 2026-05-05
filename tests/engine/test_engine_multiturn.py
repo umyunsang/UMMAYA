@@ -356,16 +356,16 @@ async def test_preprocessing_triggered_with_small_context_window(
 ) -> None:
     """Preprocessing pipeline runs when token estimate exceeds threshold.
 
-    A context_window=4500 with threshold=0.6 means preprocessing fires when
-    the history exceeds ~2700 tokens. The system prompt is ~2500 tokens after
-    Epic η #2298 chain teaching expansion (was ~700 pre-Epic-η), so a few
-    turns of text accumulation push the estimate over the threshold and the
-    pipeline must run. The window MUST exceed the system prompt + room for
-    several turn pairs; 4500 with 0.6 threshold preserves the test invariant
-    while accommodating the larger system prompt.
+    A context_window=6000 with threshold=0.6 means preprocessing fires when
+    the history exceeds ~3600 tokens. The system prompt is ~4880 tokens after
+    the verify-trigger expansion (인증/본인확인/공동인증서/금융인증서/KEC/
+    모바일ID/마이데이터 인증/Any-ID SSO mappings), pushing baseline past
+    4500. Bumping to 6000 keeps the test invariant — system prompt + room
+    for several turn pairs — while preprocessing still fires once turn-pair
+    accumulation crosses the threshold.
     """
     config = QueryEngineConfig(
-        context_window=4500,
+        context_window=6000,
         preprocessing_threshold=0.6,
         # Aggressive snip/microcompact settings
         snip_turn_age=1,
@@ -441,10 +441,15 @@ async def test_preprocessing_compresses_stale_tool_results(
         # (hard_limit=context_window) does not block turns. The XML-tagged
         # citizen prompt + per-tool trigger inventory introduced by Epic #2152
         # plus the <turn_order> block added by Spec 2521 (FR-010) push the
-        # baseline past 3000 tokens; bump to 4000 so the preprocessing
-        # threshold (0.05 * 4000 = 200) still fires on typical test message
-        # sizes while leaving headroom for both prompt blocks.
-        context_window=4000,
+        # baseline past 3000 tokens. Subsequent directives — Lead-C
+        # MUST-NOT-fabricate (NFA/MOHW C-class), Lead-G
+        # resolve→lookup chain enforcement, and the verify-trigger
+        # expansion (인증/본인확인/공동인증서/금융인증서/KEC/모바일ID/
+        # 마이데이터 인증/Any-ID SSO mappings) push the baseline past
+        # 4880; bump to 6000 so the preprocessing threshold (0.05 * 6000
+        # = 300) still fires on typical test message sizes while leaving
+        # headroom for both prompt blocks.
+        context_window=6000,
         preprocessing_threshold=0.05,
         snip_turn_age=1,
         microcompact_turn_age=1,

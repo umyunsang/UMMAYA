@@ -1,0 +1,60 @@
+
+  - 거리: 약 214m (도보 4분)
+  - 주소: 서울특별시 강남구 강남대로84길 8, 우인빌딩 2층 (역삼동)
+  - 전화번호: 02-6318-8800
+  - 종류: 의원
+
+  3. 강남스마트신경과의원
+
+  - 거리: 약 232m (도보 4분)
+  - 주소: 서울특별시 서초구 강남대로 373, 홍우빌딩 3층 일부호 (서초동)
+  - 전화번호: 02-6956-1010
+  - 종류: 의원
+  ▎ ⚠️ 참고: '신경과'로 검색되어 내과가 아닐 수 있습니다. 정확한 내과를 원하시면 다른 의원도 검색 가능합니다.
+
+  📝 추가 정보
+
+  - 총 207개의 병원/의원이 검색되었습니다.
+  - 위 3곳은 강남역에서 300m 이내에 위치한 의원들입니다.
+  - 필요하시면 다른 진료과목이나 더 넓은 범위(5km 등)로도 검색해 드릴 수 있습니다.
+
+  혹시 더 가까운 내과를 원하시거나, 다른 정보가 필요하시면 말씀해 주세요!
+
+⏺ resolve_location({"query":"강남역","want":"coords_and_admcd"})
+
+⏺ lookup(hira_hospital_search)
+  ⎿  collection — 20건
+       1. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkNCMkMDAkNTgxOTYxIzExIyQxIyQzIyQxMyQ0NjE0ODEjNjEjJDEjJDAjJDgz","yadmNm":"강남라렌의원","addr":"서울
+       2. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkNCMkMDAkNTgxOTYxIzMxIyQxIyQ3IyQ2MiQzNjE4MzIjODEjJDEjJDIjJDgz","yadmNm":"강남박내과의원","addr":"서
+       3. {"ykiho":"JDQ4MTg4MSM1MSMkMiMkOCMkMDAkMzgxOTYxIzMxIyQxIyQ3IyQ4MiQyNjEyMjIjNDEjJDEjJDgjJDgz","yadmNm":"강남스마트신경과의원","addr"
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 재난 알림 구독해줘[KOSMOS-QUERY] callModel:enter messages=8
+❯ 재난 알림 구독해줘
+      S    R         g chat_request corr=b9256472-2aab-4fc9-91d1-487985642dd4 chatMessages=5
+∴ Thinking — 사용자가 "재난 알림 구독해줘"라고 요청했습니다. (ctrl+o to expand)
+
+✽ Enchanting…
+  ⎿  Tip: Hit shift+tab to cycle between default mode, auto-accept edit mode, and plan mode
+   KOSMOS-QUERY] recv #1 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="사용자가"
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ [KOSMOS-QUERY] recv #12 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" 앞서"
+[KOSMOS-QUERY] recv #13 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" 제공된""──────────────────────────────────────────────────────────────────────────────────
+[KOSMOS-QUERY] recv #14 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" available"
+[KOSMOS-QUERY] recv #15 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="_ad"
+[KOSMOS-QUERY] recv #16 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="ap"
+[KOSMOS-QUERY] recv #17 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="ters"
+[KOSMOS-QUERY] recv #18 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" 목록"
+[KOSMOS-QUERY] recv #19 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="을 보면"
+[KOSMOS-QUERY] recv #20 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" 재난"
+[KOSMOS-QUERY] recv #21 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" 알림"
+[KOSMOS-QUERY] recv #22 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" 구독"
+[KOSMOS-QUERY] recv #23 kind=assistant_chunk corr=85642dd4 do앞서 제공된 av=ilable_adapters 목록을 보면 재난 알림 구독과 관련된 여러... (ctrl+o to expand)
+[KOSMOS-QUERY] recv #24 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=" 여러"
+·KEnchanting… (1m 4s · ↓ 486 tokens)nt_chunk corr=85642dd4 done=false delta="" thinking=" adapter"
+[KOSMOS-QUERY] recv #26 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="가 있습니다"
+[KOSMOS-QUERY] recv #27 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking=":"
+[KOSMOS-QUERY] recv #28 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="\n\n"
+[KOSMOS-QUERY] recv #29 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="1"
+[KOSMOS-QUERY] recv #30 kind=assistant_chunk corr=85642dd4 done=false delta="" thinking="."
+

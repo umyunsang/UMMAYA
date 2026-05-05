@@ -30,6 +30,43 @@ import {
   type MinistryScopeAcknowledgment,
 } from './ministry-scope'
 
+// ---------------------------------------------------------------------------
+// P0-3: lazy user-tier root — env-override aware
+//
+// `DEFAULT_MEMDIR_ROOT` was a module-load constant, so `writeConsentRecord`
+// and `writeScopeRecord` always wrote to `~/.kosmos/memdir/user/` even when
+// `KOSMOS_MEMDIR_USER` was set (as `uiL2Memdir.ts:25` already handles).
+//
+// `getDefaultUserTierRoot()` returns the USER-tier directory (the directory
+// that contains `consent/`, `ministry-scope/`, etc.) using the same priority
+// order as `uiL2Memdir.ts:25` and `ExportPDFTool.ts:89`:
+//
+//   1. KOSMOS_MEMDIR_USER  — direct user-tier root override (mirrors uiL2Memdir)
+//   2. KOSMOS_MEMDIR_ROOT  — full memdir root override → appends `/user`
+//   3. ~/.kosmos/memdir/user — production default
+//
+// The function is intentionally call-time (no module-level memoize) so test
+// suites can change the env variable between test cases without cache leakage.
+// ---------------------------------------------------------------------------
+export function getDefaultUserTierRoot(): string {
+  const userOverride = process.env['KOSMOS_MEMDIR_USER']
+  if (userOverride) {
+    return userOverride
+  }
+  const rootOverride = process.env['KOSMOS_MEMDIR_ROOT']
+  if (rootOverride) {
+    return join(rootOverride, 'user')
+  }
+  return join(homedir(), '.kosmos', 'memdir', 'user')
+}
+
+/**
+ * @deprecated Use `getDefaultUserTierRoot()` for env-aware resolution.
+ * Kept for backward compatibility with external callers that import the
+ * named export.  The value is evaluated once at module-load time and does
+ * NOT respect runtime env changes — new callers should use
+ * `getDefaultUserTierRoot()`.
+ */
 export const DEFAULT_MEMDIR_ROOT = join(homedir(), '.kosmos', 'memdir')
 
 // ---------------------------------------------------------------------------
@@ -61,26 +98,28 @@ function atomicWriteJson(path: string, bodyText: string): void {
 // Consent records
 // ---------------------------------------------------------------------------
 
-export function consentDir(root: string = DEFAULT_MEMDIR_ROOT): string {
-  return join(root, 'user', 'consent')
+// P0-3: `userTierRoot` is the USER-tier directory (contains consent/, ministry-scope/).
+// Default uses the lazy env-aware getter so KOSMOS_MEMDIR_USER is respected.
+export function consentDir(userTierRoot: string = getDefaultUserTierRoot()): string {
+  return join(userTierRoot, 'consent')
 }
 
 export function writeConsentRecord(
   record: PIPAConsentRecord,
-  root: string = DEFAULT_MEMDIR_ROOT,
+  userTierRoot: string = getDefaultUserTierRoot(),
 ): string {
   const parsed = PIPAConsentRecordSchema.parse(record)
   const ts = formatIsoForFilename(parsed.timestamp)
   const filename = `${ts}-${parsed.session_id}.json`
-  const fullPath = join(consentDir(root), filename)
+  const fullPath = join(consentDir(userTierRoot), filename)
   atomicWriteJson(fullPath, JSON.stringify(parsed))
   return fullPath
 }
 
 export function latestConsentRecord(
-  root: string = DEFAULT_MEMDIR_ROOT,
+  userTierRoot: string = getDefaultUserTierRoot(),
 ): PIPAConsentRecord | null {
-  return latestRecord(consentDir(root), (body) =>
+  return latestRecord(consentDir(userTierRoot), (body) =>
     PIPAConsentRecordSchema.safeParse(JSON.parse(body)),
   )
 }
@@ -89,26 +128,26 @@ export function latestConsentRecord(
 // Ministry-scope records
 // ---------------------------------------------------------------------------
 
-export function scopeDir(root: string = DEFAULT_MEMDIR_ROOT): string {
-  return join(root, 'user', 'ministry-scope')
+export function scopeDir(userTierRoot: string = getDefaultUserTierRoot()): string {
+  return join(userTierRoot, 'ministry-scope')
 }
 
 export function writeScopeRecord(
   record: MinistryScopeAcknowledgment,
-  root: string = DEFAULT_MEMDIR_ROOT,
+  userTierRoot: string = getDefaultUserTierRoot(),
 ): string {
   const parsed = MinistryScopeAcknowledgmentSchema.parse(record)
   const ts = formatIsoForFilename(parsed.timestamp)
   const filename = `${ts}-${parsed.session_id}.json`
-  const fullPath = join(scopeDir(root), filename)
+  const fullPath = join(scopeDir(userTierRoot), filename)
   atomicWriteJson(fullPath, JSON.stringify(parsed))
   return fullPath
 }
 
 export function latestScopeRecord(
-  root: string = DEFAULT_MEMDIR_ROOT,
+  userTierRoot: string = getDefaultUserTierRoot(),
 ): MinistryScopeAcknowledgment | null {
-  return latestRecord(scopeDir(root), (body) =>
+  return latestRecord(scopeDir(userTierRoot), (body) =>
     MinistryScopeAcknowledgmentSchema.safeParse(JSON.parse(body)),
   )
 }

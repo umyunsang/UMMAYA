@@ -217,10 +217,47 @@ class ToolExecutor:
                 exc.error_count(),
                 ", ".join(field_paths),
             )
+            # Build a chain-recovery message that names the missing fields and,
+            # when the missing fields look like coordinates / admin codes /
+            # grid points, points the LLM at resolve_location explicitly.
+            # Generic "Invalid parameters" silently failed K-EXAONE — the
+            # model interpreted it as "tool unavailable" and either
+            # hallucinated coordinates or refused to use the tool. Naming
+            # the missing fields + the recovery action keeps the agentic
+            # loop on a deterministic chain instead of guessing.
+            coord_fields = {
+                "xPos",
+                "yPos",
+                "lat",
+                "lon",
+                "latitude",
+                "longitude",
+                "nx",
+                "ny",
+                "x",
+                "y",
+            }
+            admcd_fields = {"adm_cd", "siGunGuCd", "siGunGu_cd", "sgg_cd", "h_code", "b_code"}
+            need_resolve = any(
+                fp.split(".")[-1] in coord_fields or fp.split(".")[-1] in admcd_fields
+                for fp in field_paths
+            )
+            recovery_hint = ""
+            if need_resolve:
+                recovery_hint = (
+                    " RESOLVE_LOCATION FIRST: call resolve_location(query='<지역명>',"
+                    " want='coords') to obtain the missing coordinates / admin code,"
+                    " then re-invoke this tool with the returned values."
+                    " Do NOT guess coordinates from prior knowledge."
+                )
+            field_summary = ", ".join(field_paths) if field_paths else "(no field info)"
             return make_error_envelope(
                 tool_id=tool_id,
                 reason=LookupErrorReason.invalid_params,
-                message="Invalid parameters for tool.",
+                message=(
+                    f"Invalid parameters for tool {tool_id!r}. "
+                    f"Missing or invalid fields: {field_summary}.{recovery_hint}"
+                ),
                 request_id=request_id,
                 elapsed_ms=_elapsed(),
                 retryable=False,
@@ -253,10 +290,27 @@ class ToolExecutor:
                 exc_info=True,
             )
             reason, retryable = _classify_adapter_exception(exc)
+            # Anthropic tool-use guidance (https://platform.claude.com/docs/en/
+            # agents-and-tools/tool-use/handle-tool-calls#handling-errors-with-is_error):
+            # "Write instructive error messages. Instead of generic errors like
+            #  'failed', include what went wrong and what Claude should try
+            #  next." The previous "Tool execution failed." string was a
+            # documented citizen-mis-info trigger (2026-05-04) — K-EXAONE
+            # treated the opaque message as "tool unavailable" and fabricated
+            # a fire-station statistic from prior knowledge. Surface the
+            # concrete exception class + message so the LLM has enough context
+            # to either retry, switch tools, or refuse with a citation.
+            _exc_summary = f"{type(exc).__name__}: {str(exc)[:240]}"
             return make_error_envelope(
                 tool_id=tool_id,
                 reason=reason,
-                message="Tool execution failed.",
+                message=(
+                    f"Adapter '{tool_id}' raised an exception during upstream call. "
+                    f"Detail: {_exc_summary}. "
+                    "Do NOT fabricate a response from prior knowledge — tell the citizen "
+                    "the lookup failed, cite the official agency channel, and offer to "
+                    "retry or try a different tool."
+                ),
                 request_id=request_id,
                 elapsed_ms=_elapsed(),
                 retryable=retryable,
@@ -309,10 +363,24 @@ class ToolExecutor:
             )
         except EnvelopeNormalizationError as exc:
             logger.error("invoke: envelope normalisation failed for %s: %s", tool_id, exc)
+            # Anthropic tool-use guidance — instructive error messages (see
+            # adapter-exception block above for the full citation). The old
+            # "Response processing failed." string was the second documented
+            # citizen-mis-info trigger (2026-05-04 MOHW welfare fabrication
+            # of 12 services + bokjiro.go.kr URLs), because K-EXAONE could
+            # not distinguish "envelope mismatch" from "no data available"
+            # and defaulted to the catalog it had seen during training.
+            _exc_detail = str(exc)[:240]
             return make_error_envelope(
                 tool_id=tool_id,
                 reason=LookupErrorReason.upstream_unavailable,
-                message="Response processing failed.",
+                message=(
+                    f"Adapter '{tool_id}' returned a response that did not match the "
+                    f"expected envelope schema. Detail: {_exc_detail}. "
+                    "Do NOT fabricate a response from prior knowledge — tell the citizen "
+                    "the data could not be parsed, cite the official agency channel, and "
+                    "offer to retry or try a different tool."
+                ),
                 request_id=request_id,
                 elapsed_ms=_elapsed(),
                 retryable=False,

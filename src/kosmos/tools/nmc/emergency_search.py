@@ -133,6 +133,130 @@ def _normalize_items(raw_items: object) -> list[dict[str, Any]]:
     return []
 
 
+# ---------------------------------------------------------------------------
+# Field-semantics enrichment (safety-critical — Spec 2637 Epic F)
+# ---------------------------------------------------------------------------
+#
+# `getEgytLcinfoInqire` returns abbreviated fields whose names mislead a
+# downstream LLM into rendering them as ER hours. The location endpoint's
+# `startTime`/`endTime` are the institution's *representative outpatient
+# (외래) consultation* open/close time — typically Monday's `dutyTime1s` /
+# `dutyTime1c` from the sibling `getEgytBassInfoInqire` endpoint — NOT the
+# emergency-room operating window. Every record returned by this endpoint
+# is by definition a registered 응급의료기관 (emergency medical institution)
+# whose ER itself runs **365일 24시간** continuously. Surfacing the raw
+# `startTime: "0830", endTime: 1700` as "운영시간: 08:30~17:00" is a
+# safety-critical mis-info pattern observed during integration verification
+# (snap-010, 2026-05-04) that risks a citizen being told the ER closes at
+# 5pm during an actual emergency.
+#
+# Live evidence (Jongno-gu coordinates, 2026-05-04):
+#   - 강북삼성병원 (지역응급의료센터, G006): startTime=0830, endTime=1700
+#   - 서울대학교병원 (권역응급의료센터, G001): startTime=0800, endTime=1800
+#   - 국립중앙의료원 (지역응급의료센터, G006): startTime=0830, endTime=1700
+# All three operate 24/7 ER per the dutyEryn=1 flag in the sibling
+# getEgytBassInfoInqire endpoint and per the 응급의료에 관한 법률 §31.
+# ---------------------------------------------------------------------------
+
+
+def _format_hhmm(value: object) -> str | None:
+    """Normalize raw HHMM scalar into a `HH:MM` display string.
+
+    The location endpoint returns `startTime` as a string ("0830") and
+    `endTime` as an integer (1700) — the JSON shape is inconsistent across
+    fields. We accept both and emit a normalized `HH:MM` string. Anything
+    unparseable returns None so the LLM does not render a bogus value.
+    """
+    if value is None or value == "":
+        return None
+    try:
+        digits = str(value).strip()
+        if not digits.isdigit():
+            return None
+        # Pad with leading zeros (e.g. 830 → "0830", 0 → "0000")
+        padded = digits.rjust(4, "0")
+        if len(padded) != 4:
+            return None
+        hh = int(padded[:2])
+        mm = int(padded[2:])
+        if 0 <= hh <= 24 and 0 <= mm <= 59:
+            return f"{hh:02d}:{mm:02d}"
+    except (ValueError, TypeError):
+        return None
+    return None
+
+
+def _enrich_item(raw: dict[str, Any]) -> dict[str, Any]:
+    """Rewrite raw NMC location item into safety-clear semantic fields.
+
+    Replaces the misleading `startTime`/`endTime` (institutional outpatient
+    hours, mistaken for ER hours by the LLM) with explicit semantic field
+    names AND adds an `er_24h_operating: True` flag so the LLM cannot
+    surface the wrong operating window in an emergency context.
+
+    The original raw fields are preserved under `_raw_outpatient_*` keys so
+    that any downstream consumer that explicitly wants the upstream value
+    can still access it — but the canonical field names no longer collide
+    with the safety-critical "응급실 운영시간" semantics.
+    """
+    # Copy so we never mutate the caller's dict.
+    item: dict[str, Any] = dict(raw)
+
+    raw_start = item.pop("startTime", None)
+    raw_end = item.pop("endTime", None)
+    open_time = _format_hhmm(raw_start)
+    close_time = _format_hhmm(raw_end)
+
+    # Canonical safety-critical fields (LLM-visible).
+    item["er_24h_operating"] = True
+    item["er_operating_hours_note"] = (
+        "응급실은 365일 24시간 운영 (응급의료에 관한 법률 §31). "
+        "outpatient_open_time/outpatient_close_time 은 외래진료(=일반 외래) 시간이며 응급실 운영시간이 아님."
+    )
+    item["outpatient_open_time"] = open_time
+    item["outpatient_close_time"] = close_time
+    if open_time and close_time:
+        item["outpatient_hours_display"] = f"{open_time}~{close_time} (외래진료)"
+    elif open_time or close_time:
+        item["outpatient_hours_display"] = (
+            f"{open_time or '미상'}~{close_time or '미상'} (외래진료)"
+        )
+    else:
+        item["outpatient_hours_display"] = None
+
+    # Preserve raw values for explicit-access consumers.
+    if raw_start is not None:
+        item["_raw_outpatient_start_hhmm"] = raw_start
+    if raw_end is not None:
+        item["_raw_outpatient_end_hhmm"] = raw_end
+
+    # Phone field clarification: dutyTel1 is the hospital main switchboard,
+    # NOT the ER hotline. The location endpoint omits dutyTel3 (ER direct);
+    # we surface dutyTel1 under a more accurate alias and tell the LLM not
+    # to advertise it as the ER number.
+    duty_tel1 = item.get("dutyTel1")
+    if duty_tel1:
+        item["hospital_main_phone"] = duty_tel1
+    item["er_phone_note"] = (
+        "dutyTel1 = 병원 대표번호. 응급실 직통(dutyTel3) 은 본 endpoint 에서 미제공 — "
+        "의료기관 기본정보(getEgytBassInfoInqire) 또는 119 안내 권장."
+    )
+
+    # Hospital-type vs ER-classification clarification: dutyDivName ('종합병원')
+    # is the institution's hospital classification (general hospital), NOT the
+    # ER tier (지역응급의료센터/권역응급의료센터/응급의료시설 — that is
+    # `dutyEmclsName` from getEgytListInfoInqire). Make this explicit.
+    duty_div_name = item.get("dutyDivName")
+    if duty_div_name:
+        item["hospital_type"] = duty_div_name
+        item["hospital_type_note"] = (
+            "dutyDivName 은 의료기관 종별(종합병원/병원/의원), 응급의료센터 등급 아님. "
+            "본 endpoint 의 모든 결과는 응급의료기관 등록 시설 (24시간 응급실 운영)."
+        )
+
+    return item
+
+
 def _evaluate_freshness(items: list[dict[str, Any]]) -> FreshnessResult:
     """Return the worst-case freshness across all items (fail-closed).
 
@@ -259,8 +383,14 @@ async def handle(inp: NmcEmergencySearchInput) -> dict[str, Any]:
         }
 
     body = data.get("response", {}).get("body", {})
-    items = _normalize_items(body.get("items", []))
+    raw_items = _normalize_items(body.get("items", []))
     upstream_total = body.get("totalCount")
+
+    # Enrich every record with safety-critical semantic fields BEFORE the
+    # freshness check so downstream serialization always sees the corrected
+    # field names. _enrich_item is pure (returns a fresh dict) so the
+    # enriched copy is what the LLM sees.
+    items = [_enrich_item(item) for item in raw_items if isinstance(item, dict)]
 
     if not items:
         return {
@@ -324,31 +454,32 @@ NMC_EMERGENCY_SEARCH_TOOL = GovAPITool(
     output_schema=_NmcEmergencySearchOutput,
     llm_description=build_description_v4(
         purpose=(
-            "NMC (국립중앙의료원) 응급실 실시간 병상 조회 — 좌표 기준 가장 가까운 응급실의 "
-            "현재 가용 병상 수 (hvec=일반, hvgc=신생아중환자, hvicc=중환자) 반환. "
-            "시민이 '근처 응급실', '가용 병상', '응급의료센터' 묻는 경우 호출."
+            "NMC 응급의료기관 위치 조회 — 좌표 기준 가까운 응급실 목록. "
+            "결과는 모두 등록 응급의료기관 = 응급실 365일 24시간 운영. "
+            "실시간 병상은 본 endpoint 미제공 (별도 getEmrrmRltmUsefulSckbdInfoInqire)."
         ),
         input_quirk=(
-            "lat (-90~90), lon (-180~180): WGS-84 소수점 좌표. resolve_location(want='coords') 선행 호출로 획득. "
-            "limit (1~100): 반환할 응급실 최대 수. "
-            "URL encoding 주의: httpx params={} dict 사용 — 한국어 query param (STAGE1/STAGE2 등) 을 "
-            "URL 직접 interpolation 하면 HTTP 400. 이 adapter 는 params dict 자동 인코딩."
+            "lat/lon (WGS-84) + limit (1~100). resolve_location(want='coords') 선행. "
+            "한국어 query param 직접 URL interpolation 금지 (HTTP 400) — params dict 자동 인코딩."
         ),
         short_reference=(
-            "주요 응급의료센터 위치: 서울(37.5665, 126.9780) 부산(35.1796, 129.0756) "
+            "주요 응급의료센터: 서울(37.5665, 126.9780) 부산(35.1796, 129.0756) "
             "대구(35.8714, 128.6014) 인천(37.4563, 126.7052) 광주(35.1595, 126.8526) "
             "대전(36.3504, 127.3845) 울산(35.5384, 129.3114) 세종(36.4800, 127.2890). "
-            "hvidate 필드 포맷: YYYY-MM-DD HH:MM:SS (KST). freshness threshold = KOSMOS_NMC_FRESHNESS_MINUTES."
+            "분류: G001 권역, G002 지역, G003 시설. "
+            "원본 startTime/endTime = 외래진료 시간 — adapter 가 outpatient_*_time 재매핑."
         ),
         domain_quirk=(
-            "freshness SLO: hvidate 가 threshold 초과 시 stale_data 에러 반환 (fail-closed). "
-            "hvidate 누락·미래 값도 stale 처리. "
-            "auth gate: 비인증 호출은 auth_required 에러 (Layer 3 단락, handle() 미호출). "
-            "resultCode '00' = 정상; 그 외는 upstream_unavailable."
+            "★응급실 = 365일 24시간★. outpatient_open_time/outpatient_close_time 은 "
+            "외래진료 시간이며 응급실 시간 아님 — '응급실 운영시간' 으로 노출 금지. "
+            "dutyTel1 = 병원 대표번호. freshness SLO: hvidate stale 시 stale_data 단락. "
+            "비인증 시 auth_required."
         ),
         self_contained_decl=(
-            "이 도구 단독 호출로 완결. resolve_location 으로 lat/lon 획득 후 이 도구 호출 권장. "
-            "KOSMOS 가 cross-domain chain 강제하지 않음 — LLM 자율 2턴 (turn1=resolve, turn2=이 도구)."
+            "REQUIRED: lat/lon. 지역명은 resolve_location(want='coords') 후. "
+            "ORDERING: turn1 resolve_location, turn2 본 도구. "
+            "응급실 시간 답변 시 반드시 '24시간 운영'. "
+            "outpatient_hours_display 는 '외래진료' 단서와 함께만."
         ),
     ),
     search_hint=(

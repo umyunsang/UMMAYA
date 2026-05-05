@@ -204,3 +204,158 @@ describe.skip('dispatchPrimitive (server-side-ack) — superseded by register-an
     expect(elapsed).toBeLessThan(1000)
   })
 })
+
+// ---------------------------------------------------------------------------
+// [H1] (2026-05-04) — inner-payload error classification
+//
+// dispatchPrimitive must flip ``ok: false`` when the unwrapped
+// ``envelope.result`` looks like a primitive-level error sentinel:
+//   - VerifyMismatchError dump      → result.family === "mismatch_error"
+//   - LookupError / mock errors     → result.kind   === "error"
+//   - Defense-in-depth fatal reason → result.reason ∈ {family_mismatch,
+//                                       scope_violation, coercion_violation}
+//
+// Without this classification, the renderer for each primitive falls
+// through to its success path and citizens see e.g. "결과 수신됨" for what
+// is actually an auth-module rejection. Citizen-safety guard.
+// ---------------------------------------------------------------------------
+
+describe('dispatchPrimitive — [H1] inner-payload error classification', () => {
+  let registry: PendingCallRegistry
+
+  beforeEach(() => {
+    registry = new PendingCallRegistry()
+  })
+
+  // Helper: drive a fake ToolResultFrame through the dispatcher by resolving
+  // the pending call's promise mid-flight. We bypass the IPC bridge entirely
+  // — only the unwrap path under test matters here.
+  async function dispatchAndInjectFrame(
+    primitive: 'lookup' | 'verify' | 'submit' | 'subscribe',
+    envelope: Record<string, unknown>,
+    toolUseId = `${primitive}-h1-1`,
+  ): Promise<{ data: { ok: boolean; result?: unknown; error?: { kind: string; message: string } } }> {
+    const promise = dispatchPrimitive({
+      primitive,
+      args: {},
+      context: fakeContext(toolUseId),
+      registry,
+      bridge: fakeBridge(),
+    }) as unknown as Promise<{
+      data: { ok: boolean; result?: unknown; error?: { kind: string; message: string } }
+    }>
+
+    // Wait one microtask for register() to land, then resolve from outside.
+    await Promise.resolve()
+    const fakeFrame = {
+      session_id: 'test-session',
+      correlation_id: 'test-corr',
+      ts: '2026-05-04T00:00:00Z',
+      role: 'backend',
+      kind: 'tool_result',
+      call_id: toolUseId,
+      envelope,
+    } as unknown as Parameters<typeof registry.resolve>[1]
+    registry.resolve(toolUseId, fakeFrame)
+    return promise
+  }
+
+  test('verify: inner family=mismatch_error → ok=false, error.kind=mismatch_error', async () => {
+    const envelope = {
+      kind: 'verify',
+      family: '',
+      result: {
+        family: 'mismatch_error',
+        reason: 'family_mismatch',
+        expected_family: 'gongdong_injeungseo',
+        observed_family: '<no_adapter>',
+        message:
+          "No verify adapter registered for family 'gongdong_injeungseo'.",
+      },
+    }
+    const result = await dispatchAndInjectFrame('verify', envelope)
+    expect(result.data.ok).toBe(false)
+    expect(result.data.error?.kind).toBe('mismatch_error')
+    expect(result.data.error?.message).toContain('No verify adapter registered')
+    // Inner payload preserved so the renderer can surface structured fields.
+    expect((result.data.result as Record<string, unknown>)?.['expected_family']).toBe(
+      'gongdong_injeungseo',
+    )
+  })
+
+  test('lookup: inner kind=error with reason=scope_violation → ok=false, error.kind=scope_violation', async () => {
+    const envelope = {
+      kind: 'lookup',
+      result: {
+        kind: 'error',
+        reason: 'scope_violation',
+        message:
+          "Delegation token scope 'lookup:other' does not grant 'lookup:hometax.simplified'.",
+        retryable: false,
+      },
+    }
+    const result = await dispatchAndInjectFrame('lookup', envelope)
+    expect(result.data.ok).toBe(false)
+    // ``reason`` (more specific) wins over ``kind === error`` (generic) in
+    // the kind-precedence rules, but we accept either as a citizen-safe
+    // classification — both surface as ok=false.
+    expect(['scope_violation', 'tool_error']).toContain(result.data.error?.kind)
+    expect(result.data.error?.message).toContain('Delegation token scope')
+  })
+
+  test('submit: inner kind=error → ok=false, error.kind=tool_error', async () => {
+    const envelope = {
+      kind: 'submit',
+      result: {
+        kind: 'error',
+        message: 'Hometax 신고 모듈 OPAQUE — submit 불가.',
+      },
+    }
+    const result = await dispatchAndInjectFrame('submit', envelope)
+    expect(result.data.ok).toBe(false)
+    expect(result.data.error?.kind).toBe('tool_error')
+    expect(result.data.error?.message).toContain('OPAQUE')
+  })
+
+  test('subscribe: inner reason=coercion_violation alone → ok=false', async () => {
+    // Defense-in-depth: even if family/kind are missing, a known-fatal
+    // ``reason`` must trigger the failure classification.
+    const envelope = {
+      kind: 'subscribe',
+      result: {
+        reason: 'coercion_violation',
+        message: 'Adapter return type disagrees with declared family.',
+      },
+    }
+    const result = await dispatchAndInjectFrame('subscribe', envelope)
+    expect(result.data.ok).toBe(false)
+    expect(result.data.error?.kind).toBe('coercion_violation')
+  })
+
+  test('lookup: success envelope with normal result still flips ok=true (regression guard)', async () => {
+    // The classifier must NOT over-trigger — a benign result with no
+    // family/kind/reason fields should pass through as ok=true.
+    const envelope = {
+      kind: 'lookup',
+      result: {
+        items: [{ name: 'Sample', value: 42 }],
+        count: 1,
+      },
+    }
+    const result = await dispatchAndInjectFrame('lookup', envelope)
+    expect(result.data.ok).toBe(true)
+    expect((result.data.result as Record<string, unknown>)?.['count']).toBe(1)
+  })
+
+  test('top-level envelope.error still classified as ok=false (legacy path preserved)', async () => {
+    const envelope = {
+      kind: 'verify',
+      error: 'IPC bridge crashed mid-dispatch.',
+      tool_id: 'verify_module_modid',
+    }
+    const result = await dispatchAndInjectFrame('verify', envelope)
+    expect(result.data.ok).toBe(false)
+    expect(result.data.error?.kind).toBe('dispatch_error')
+    expect(result.data.error?.message).toContain('IPC bridge crashed')
+  })
+})

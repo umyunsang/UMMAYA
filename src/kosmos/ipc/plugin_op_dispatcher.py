@@ -120,6 +120,9 @@ def _build_complete_frame(
     result: str,
     exit_code: int,
     receipt_id: str | None = None,
+    error_kind: str | None = None,
+    error_message: str | None = None,
+    was_idempotent_noop: bool | None = None,
 ) -> PluginOpFrame:
     # Pydantic Literal coercion expects "success" | "failure"
     if result not in ("success", "failure"):
@@ -134,6 +137,9 @@ def _build_complete_frame(
         result=result,  # type: ignore[arg-type]
         exit_code=exit_code,
         receipt_id=receipt_id,
+        error_kind=error_kind if result == "failure" else None,
+        error_message=error_message if result == "failure" else None,
+        was_idempotent_noop=was_idempotent_noop,
     )
 
 
@@ -298,10 +304,74 @@ async def handle_install(
                 correlation_id=frame.correlation_id,
                 result="failure",
                 exit_code=6,
-                receipt_id=None,
+                error_kind="installer_exception",
+                error_message=str(exc),
             )
         )
         return
+
+    # Auto-bootstrap slsa-verifier binary when it is missing (exit_code=7).
+    # The installer cannot self-bootstrap inside run_in_executor because the
+    # bootstrap script is a blocking shell invocation. We do it here in the
+    # async handler so the TUI sees a progress frame before the bootstrap runs.
+    if result.exit_code == 7 and result.error_kind == "binary_not_found":
+        await write_frame(
+            _build_progress_frame(
+                session_id=frame.session_id,
+                correlation_id=frame.correlation_id,
+                phase=3,
+                message_ko="🔧 slsa-verifier 자동 설치 중… (첫 설치 시 ~10 MB)",
+                message_en="🔧 Auto-installing slsa-verifier… (~10 MB, first-time only)",
+            )
+        )
+        bootstrap_result = await loop.run_in_executor(
+            None, _run_slsa_bootstrap
+        )
+        if bootstrap_result == 0:
+            # Retry install now that the binary is available.
+            try:
+                result = await loop.run_in_executor(
+                    None,
+                    lambda: install_plugin(
+                        plugin_name,
+                        registry=registry,  # type: ignore[arg-type]
+                        executor=executor,  # type: ignore[arg-type]
+                        requested_version=frame.requested_version,
+                        consent_prompt=consent_bridge,  # type: ignore[arg-type]
+                        yes=False,
+                        dry_run=bool(frame.dry_run),
+                        progress_emitter=_sync_progress,
+                    ),
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("install_plugin (post-bootstrap retry) raised: %s", exc)
+                await write_frame(
+                    _build_complete_frame(
+                        session_id=frame.session_id,
+                        correlation_id=frame.correlation_id,
+                        result="failure",
+                        exit_code=6,
+                        error_kind="installer_exception",
+                        error_message=str(exc),
+                    )
+                )
+                return
+        else:
+            await write_frame(
+                _build_complete_frame(
+                    session_id=frame.session_id,
+                    correlation_id=frame.correlation_id,
+                    result="failure",
+                    exit_code=7,
+                    error_kind="slsa_bootstrap_failed",
+                    error_message=(
+                        "scripts/bootstrap_slsa_verifier.sh 실행 실패 "
+                        f"(exit={bootstrap_result}). "
+                        "수동으로 'bash scripts/bootstrap_slsa_verifier.sh' 실행 후 재시도."
+                    ),
+                )
+            )
+            return
 
     await write_frame(
         _build_complete_frame(
@@ -310,8 +380,47 @@ async def handle_install(
             result="success" if result.exit_code == 0 else "failure",
             exit_code=result.exit_code,
             receipt_id=result.receipt_id if result.exit_code == 0 else None,
+            error_kind=result.error_kind,
+            error_message=result.error_message,
         )
     )
+
+
+def _run_slsa_bootstrap() -> int:
+    """Blocking: shell out to bootstrap_slsa_verifier.sh. Returns exit code."""
+    import subprocess  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    script = Path(__file__).parent.parent.parent.parent / "scripts" / "bootstrap_slsa_verifier.sh"
+    if not script.is_file():
+        # Fallback: search from CWD
+        import os  # noqa: PLC0415
+        cwd_script = Path(os.getcwd()) / "scripts" / "bootstrap_slsa_verifier.sh"
+        if cwd_script.is_file():
+            script = cwd_script
+        else:
+            logger.error("bootstrap_slsa_verifier.sh not found at %s or %s", script, cwd_script)
+            return 1
+    try:
+        completed = subprocess.run(  # noqa: S603
+            ["bash", str(script)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120.0,
+        )
+        if completed.returncode != 0:
+            logger.error(
+                "bootstrap_slsa_verifier.sh exited %d: %s",
+                completed.returncode,
+                completed.stderr[-2000:],
+            )
+        else:
+            logger.info("bootstrap_slsa_verifier.sh succeeded: %s", completed.stdout[:500])
+        return completed.returncode
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("bootstrap_slsa_verifier.sh invocation failed: %s", exc)
+        return 1
 
 
 # ---------------------------------------------------------------------------
@@ -389,7 +498,8 @@ async def handle_uninstall(
                 correlation_id=frame.correlation_id,
                 result="failure",
                 exit_code=6,
-                receipt_id=None,
+                error_kind="uninstaller_exception",
+                error_message=str(exc),
             )
         )
         return
@@ -401,6 +511,9 @@ async def handle_uninstall(
             result="success" if result.exit_code == 0 else "failure",
             exit_code=result.exit_code,
             receipt_id=result.receipt_id if result.exit_code == 0 else None,
+            error_kind=result.error_kind,
+            error_message=result.error_message,
+            was_idempotent_noop=result.was_idempotent_noop if result.exit_code == 0 else None,
         )
     )
 

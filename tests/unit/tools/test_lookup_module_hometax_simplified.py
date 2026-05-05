@@ -68,11 +68,18 @@ def _make_delegation_context(scope: str) -> object:
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_carries_six_transparency_fields() -> None:
-    """handle() without delegation context returns all six transparency fields."""
+    """handle() without delegation context returns all six transparency fields.
+
+    LookupOutput envelope fix — transparency fields live inside ``item`` so
+    the outer envelope passes ``LookupRecord`` (``extra='forbid'``) validation.
+    """
     result = await handle(_VALID_INPUT)
+    assert result["kind"] == "record", f"expected LookupRecord envelope, got {result!r}"
+    item = result["item"]
+    assert isinstance(item, dict)
 
     for field in _TRANSPARENCY_FIELDS:
-        value = result.get(field)
+        value = item.get(field)
         assert value is not None, f"Missing transparency field: {field!r}"
         assert isinstance(value, str), f"Field {field!r} is not a string"
         assert value.strip(), f"Field {field!r} is empty or whitespace-only"
@@ -80,33 +87,37 @@ async def test_handle_happy_path_carries_six_transparency_fields() -> None:
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_mode_is_mock() -> None:
-    """_mode is always 'mock' for Epic ε mock adapters."""
+    """_mode is always 'mock' for Epic ε mock adapters (lives inside item)."""
     result = await handle(_VALID_INPUT)
-    assert result["_mode"] == "mock"
+    assert result["item"]["_mode"] == "mock"
 
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_reference_impl() -> None:
     """_reference_implementation is 'public-mydata-read-v240930' per spec catalog."""
     result = await handle(_VALID_INPUT)
-    assert result["_reference_implementation"] == "public-mydata-read-v240930"
+    assert result["item"]["_reference_implementation"] == "public-mydata-read-v240930"
 
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_international_ref() -> None:
     """_international_reference is 'UK HMRC Making Tax Digital' per spec catalog."""
     result = await handle(_VALID_INPUT)
-    assert result["_international_reference"] == "UK HMRC Making Tax Digital"
+    assert result["item"]["_international_reference"] == "UK HMRC Making Tax Digital"
 
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_domain_payload() -> None:
-    """Happy path returns a domain payload with expected keys."""
+    """Happy path returns a domain payload with expected keys (inside item)."""
     result = await handle(_VALID_INPUT)
-    assert result.get("year") == 2024
-    assert result.get("kind") == "simplified_data_summary"
-    assert isinstance(result.get("items"), list)
-    assert len(result["items"]) > 0
+    item = result["item"]
+    assert item.get("year") == 2024
+    # The domain fixture's internal `kind` (legacy field name from the
+    # 마이데이터 read v240930 shape) lives inside `item`. The outer envelope's
+    # `kind` is "record" (the LookupOutput discriminator).
+    assert item.get("kind") == "simplified_data_summary"
+    assert isinstance(item.get("items"), list)
+    assert len(item["items"]) > 0
 
 
 # ---------------------------------------------------------------------------
@@ -173,26 +184,34 @@ async def test_handle_with_matching_scope_succeeds() -> None:
     delegation = _make_delegation_context("lookup:hometax.simplified")
     result = await handle(_VALID_INPUT, delegation_context=delegation)
 
-    # Happy path — transparency fields present, no scope_violation error.
-    assert result.get("_mode") == "mock"
-    assert result.get("kind") != "error", f"Expected success, got error: {result.get('message')}"
+    # Happy path — record envelope with transparency stamped inside item.
+    assert result.get("kind") == "record", f"Expected success record, got {result!r}"
+    item = result["item"]
+    assert item.get("_mode") == "mock"
     for field in _TRANSPARENCY_FIELDS:
-        assert result.get(field), f"Missing field {field!r} after successful delegation"
+        assert item.get(field), f"Missing field {field!r} after successful delegation"
 
 
 @pytest.mark.asyncio
 async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
-    """Wrong scope 'submit:gov24.minwon' triggers scope_violation error."""
+    """Wrong scope 'submit:gov24.minwon' triggers a LookupError envelope.
+
+    Scope-violation maps to the closed-set ``LookupErrorReason.auth_required``
+    (the closed enum has no ``scope_violation`` member). Transparency fields
+    are not present on error envelopes — ``LookupError`` schema is
+    ``extra='forbid'``; ``meta.source`` (injected later by ``normalize()``)
+    carries adapter identity instead.
+    """
     delegation = _make_delegation_context("submit:gov24.minwon")
     result = await handle(_VALID_INPUT, delegation_context=delegation)
 
     assert result.get("kind") == "error"
-    assert result.get("reason") == "scope_violation"
+    assert result.get("reason") == "auth_required"
     assert result.get("retryable") is False
-
-    # Even error responses carry six transparency fields (stamp on error path).
-    for field in _TRANSPARENCY_FIELDS:
-        assert result.get(field), f"Missing field {field!r} in scope-violation response"
+    # Scope context is preserved in the message for citizen-facing diagnostics.
+    msg = result.get("message", "")
+    assert "lookup:hometax.simplified" in msg
+    assert "submit:gov24.minwon" in msg
 
 
 @pytest.mark.asyncio
@@ -201,10 +220,10 @@ async def test_handle_with_multi_scope_containing_required_passes() -> None:
     delegation = _make_delegation_context("lookup:hometax.simplified,submit:hometax.tax-return")
     result = await handle(_VALID_INPUT, delegation_context=delegation)
 
-    assert result.get("kind") != "error", (
+    assert result.get("kind") == "record", (
         f"Multi-scope with required scope should succeed: {result}"
     )
-    assert result.get("_mode") == "mock"
+    assert result["item"].get("_mode") == "mock"
 
 
 # ---------------------------------------------------------------------------
@@ -216,8 +235,12 @@ async def test_handle_with_multi_scope_containing_required_passes() -> None:
 async def test_handle_without_delegation_context_proceeds() -> None:
     """Adapter proceeds without DelegationContext (lookups are read-only)."""
     result = await handle(_VALID_INPUT, delegation_context=None)
-    assert result.get("_mode") == "mock"
-    assert result.get("kind") == "simplified_data_summary"
+    assert result.get("kind") == "record"
+    item = result["item"]
+    assert item.get("_mode") == "mock"
+    # The fixture's internal kind (마이데이터 read v240930 legacy shape) is
+    # inside `item`; the outer envelope kind is "record".
+    assert item.get("kind") == "simplified_data_summary"
 
 
 # ---------------------------------------------------------------------------

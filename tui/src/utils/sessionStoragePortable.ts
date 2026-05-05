@@ -10,6 +10,7 @@ import type { UUID } from 'crypto'
 import { open as fsOpen, readdir, realpath, stat } from 'fs/promises'
 import { join } from 'path'
 import { getClaudeConfigHomeDir } from './envUtils.js'
+import { getKosmosSessionsDir } from './kosmosPaths.js'
 import { getWorktreePathsPortable } from './getWorktreePathsPortable.js'
 import { djb2Hash } from './hash.js'
 
@@ -322,7 +323,23 @@ export function sanitizePath(name: string): string {
 // Project directory discovery (shared by listSessions & getSessionMessages)
 // ---------------------------------------------------------------------------
 
+/**
+ * KOSMOS canonical session storage root.
+ *
+ * Returns `~/.kosmos/memdir/user/sessions/` (or the KOSMOS_MEMDIR_USER
+ * override). Mirrors `sessionStorage.ts:getProjectsDir` — both must stay
+ * in sync (Spec 027 / Initiative #2290).
+ */
 export function getProjectsDir(): string {
+  return getKosmosSessionsDir()
+}
+
+/**
+ * CC-legacy projects directory — `~/.claude/projects/`.
+ *
+ * Kept for read-only backwards-compat access only.
+ */
+export function getCCLegacyProjectsDir(): string {
   return join(getClaudeConfigHomeDir(), 'projects')
 }
 
@@ -350,33 +367,43 @@ export async function canonicalizePath(dir: string): Promise<string> {
  * Node.js uses simpleHash — for paths that exceed MAX_SANITIZED_LENGTH,
  * these produce different directory suffixes. This function falls back to
  * prefix-based scanning when the exact match doesn't exist.
+ *
+ * Dual-path: checks KOSMOS-native path first, then CC-legacy path as a
+ * read-only fallback.  KOSMOS takes priority; if neither root has the
+ * directory, returns undefined.
  */
 export async function findProjectDir(
   projectPath: string,
 ): Promise<string | undefined> {
-  const exact = getProjectDir(projectPath)
-  try {
-    await readdir(exact)
-    return exact
-  } catch {
-    // Exact match failed — for short paths this means no sessions exist.
-    // For long paths, try prefix matching to handle hash mismatches.
+  // Helper: look for project directory inside a given root.
+  async function findInRoot(rootDir: string): Promise<string | undefined> {
     const sanitized = sanitizePath(projectPath)
-    if (sanitized.length <= MAX_SANITIZED_LENGTH) {
-      return undefined
-    }
-    const prefix = sanitized.slice(0, MAX_SANITIZED_LENGTH)
-    const projectsDir = getProjectsDir()
+    const exact = join(rootDir, sanitized)
     try {
-      const dirents = await readdir(projectsDir, { withFileTypes: true })
-      const match = dirents.find(
-        d => d.isDirectory() && d.name.startsWith(prefix + '-'),
-      )
-      return match ? join(projectsDir, match.name) : undefined
+      await readdir(exact)
+      return exact
     } catch {
-      return undefined
+      // Exact match failed — for long paths try prefix match (hash mismatch).
+      if (sanitized.length <= MAX_SANITIZED_LENGTH) return undefined
+      const prefix = sanitized.slice(0, MAX_SANITIZED_LENGTH)
+      try {
+        const dirents = await readdir(rootDir, { withFileTypes: true })
+        const match = dirents.find(
+          d => d.isDirectory() && d.name.startsWith(prefix + '-'),
+        )
+        return match ? join(rootDir, match.name) : undefined
+      } catch {
+        return undefined
+      }
     }
   }
+
+  // KOSMOS-native path first (canonical, highest priority).
+  const kosmosResult = await findInRoot(getProjectsDir())
+  if (kosmosResult) return kosmosResult
+
+  // CC-legacy fallback (read-only backwards-compat).
+  return findInRoot(getCCLegacyProjectsDir())
 }
 
 /**
@@ -444,25 +471,39 @@ export async function resolveSessionFilePath(
     return undefined
   }
 
-  // No dir — scan all project directories
-  const projectsDir = getProjectsDir()
-  let dirents: string[]
-  try {
-    dirents = await readdir(projectsDir)
-  } catch {
+  // No dir — scan all project directories.
+  // Walk KOSMOS-native root first (canonical, highest priority), then
+  // CC-legacy root as a read-only fallback.
+  async function scanRoot(
+    rootDir: string,
+  ): Promise<
+    { filePath: string; projectPath: undefined; fileSize: number } | undefined
+  > {
+    let dirents: string[]
+    try {
+      dirents = await readdir(rootDir)
+    } catch {
+      return undefined
+    }
+    for (const name of dirents) {
+      const filePath = join(rootDir, name, fileName)
+      try {
+        const s = await stat(filePath)
+        if (s.size > 0)
+          return { filePath, projectPath: undefined, fileSize: s.size }
+      } catch {
+        // ENOENT/ENOTDIR — not in this project, keep scanning
+      }
+    }
     return undefined
   }
-  for (const name of dirents) {
-    const filePath = join(projectsDir, name, fileName)
-    try {
-      const s = await stat(filePath)
-      if (s.size > 0)
-        return { filePath, projectPath: undefined, fileSize: s.size }
-    } catch {
-      // ENOENT/ENOTDIR — not in this project, keep scanning
-    }
-  }
-  return undefined
+
+  // KOSMOS-native root: highest priority.
+  const kosmosHit = await scanRoot(getProjectsDir())
+  if (kosmosHit) return kosmosHit
+
+  // CC-legacy root: read-only backwards-compat fallback.
+  return scanRoot(getCCLegacyProjectsDir())
 }
 
 // ---------------------------------------------------------------------------

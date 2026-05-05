@@ -1,0 +1,40 @@
+=== Audit-2 — 20 Mock adapters × 5 axes = 100 cells ===
+
+Registry size after boot: 37 tools
+Discovery bridge: 21 non-core mocks bridged
+
+tool_id                                          V1_env   V2_trsp  V3_can   V4_disc  V5_dscl 
+--------------------------------------------------------------------------------------------------------------
+mock_lookup_module_gov24_certificate             PASS     PASS     PASS     PASS     PASS    
+mock_lookup_module_hometax_simplified            PASS     PASS     PASS     PASS     PASS    
+mock_submit_module_gov24_minwon                  PASS     PASS     PASS     PASS     PASS    
+mock_submit_module_hometax_taxreturn             PASS     PASS     PASS     PASS     PASS    
+mock_submit_module_public_mydata_action          PASS     PASS     PASS     PASS     PASS    
+mock_traffic_fine_pay_v1                         PASS     PASS     PASS     PASS     PASS    
+mock_welfare_application_submit_v1               PASS     PASS     PASS     PASS     PASS    
+mock_verify_gongdong_injeungseo                  PASS     PASS     PASS     PASS     PASS    
+mock_verify_geumyung_injeungseo                  PASS     PASS     PASS     PASS     PASS    
+mock_verify_ganpyeon_injeung                     PASS     PASS     PASS     PASS     PASS    
+mock_verify_mobile_id                            PASS     PASS     PASS     PASS     PASS    
+mock_verify_mydata                               PASS     PASS     PASS     PASS     PASS    
+mock_verify_module_simple_auth                   PASS     PASS     PASS     PASS     PASS    
+mock_verify_module_modid                         PASS     PASS     PASS     PASS     PASS    
+mock_verify_module_kec                           PASS     PASS     PASS     PASS     PASS    
+mock_verify_module_geumyung                      PASS     PASS     PASS     PASS     PASS    
+mock_verify_module_any_id_sso                    PASS     PASS     PASS     PASS     PASS    
+mock_cbs_disaster_v1                             PASS     PASS     PASS     PASS     PASS    
+mock_rss_public_notices_v1                       PASS     PASS     PASS     PASS     PASS    
+mock_rest_pull_tick_v1                           PASS     PASS     PASS     PASS     PASS    
+
+=== Summary ===
+Total: 100/100 cells PASS (0 fail)
+  V1_envelope: 20/20 pass
+  V2_transparency: 20/20 pass
+  V3_canonical: 20/20 pass
+  V4_discovery: 20/20 pass
+  V5_disclaimer: 20/20 pass
+
+=== FAIL details ===
+  (none — all 125 cells PASS)
+
+JSON appendix → /tmp/audit-2-mock-matrix.json

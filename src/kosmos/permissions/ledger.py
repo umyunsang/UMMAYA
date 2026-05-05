@@ -321,6 +321,9 @@ def append(  # noqa: C901 — linear 4-step WORM append; splitting hides atomici
     auth_level: str | None = None,
     session_id: str | None = None,
     correlation_id: str | None = None,
+    action: str = "allow",
+    scope_receipt_id: str | None = None,
+    withdrawn_at: "datetime | None" = None,
     ledger_path: Path,
     key_path: Path,
     key_registry_path: Path,
@@ -343,6 +346,9 @@ def append(  # noqa: C901 — linear 4-step WORM append; splitting hides atomici
         version: Schema version (default ``"1.0.0"``).
         sequence: Record sequence number.  If ``None``, derived from prev record + 1.
         consent_receipt_id: Optional Kantara CR receipt UUID.
+        action: One of ``"allow"`` / ``"deny"`` / ``"withdraw"`` (default ``"allow"``).
+        scope_receipt_id: Receipt ID being revoked (non-null when action=="withdraw").
+        withdrawn_at: UTC timestamp of withdrawal decision (non-null when action=="withdraw").
         ledger_path: Absolute path to the consent ledger JSONL file.
         key_path: Absolute path to the HMAC key file (mode 0o400).
         key_registry_path: Absolute path to ``keys/registry.json``.
@@ -429,6 +435,13 @@ def append(  # noqa: C901 — linear 4-step WORM append; splitting hides atomici
                 record_dict["session_id"] = session_id
             if correlation_id is not None:
                 record_dict["correlation_id"] = correlation_id
+            # Withdrawal action fields (WS3 extension — always include action so
+            # the field participates in the hash even for "allow"/"deny" records).
+            record_dict["action"] = action
+            if scope_receipt_id is not None:
+                record_dict["scope_receipt_id"] = scope_receipt_id
+            if withdrawn_at is not None:
+                record_dict["withdrawn_at"] = withdrawn_at.isoformat()
 
             # Step 8: Compute record_hash over record_dict with
             #         record_hash + hmac_seal excluded (L2).

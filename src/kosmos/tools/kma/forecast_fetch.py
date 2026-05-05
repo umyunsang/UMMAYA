@@ -380,6 +380,8 @@ KMA_FORECAST_FETCH_TOOL = GovAPITool(
             "lat (WGS-84 위도, 한국 33-38), lon (WGS-84 경도, 한국 126-130). "
             "base_date=YYYYMMDD, "
             "base_time 유효값 8개: 0200/0500/0800/1100/1400/1700/2000/2300 (KST). "
+            "base_time 은 시스템 프롬프트의 '현재 KST 시각' 의 직전 정시 (HH00) 사용. "
+            "base_time 추측 금지 — 현재 KST 시각이 16:30 이면 1400, 11:50 이면 1100. "
             "nx/ny 를 직접 입력하지 않음 — 어댑터가 내부에서 투영 변환."
         ),
         short_reference=(
@@ -393,9 +395,9 @@ KMA_FORECAST_FETCH_TOOL = GovAPITool(
             "응답은 LookupTimeseries (hourly points) 형식."
         ),
         self_contained_decl=(
-            "이 도구 단독 호출로 완결. "
-            "lat/lon 은 resolve_location(want='coords') 로 받거나 LLM 이 추정 가능. "
-            "nx/ny 변환은 어댑터 내부 자동 처리 — LLM 이 직접 계산 불필요."
+            "REQUIRED: lat/lon 입력 필수. 지역명은 resolve_location(want='coords') 로 "
+            "lat/lon 받은 후 본 도구 호출. ORDERING: turn1=resolve_location, turn2=이 도구. "
+            "좌표 추측 금지. nx/ny 변환은 어댑터 내부 자동 처리."
         ),
     ),
     search_hint="단기예보 날씨 기온 강수 short-term weather forecast temperature precipitation",

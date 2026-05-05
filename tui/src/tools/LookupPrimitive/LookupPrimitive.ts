@@ -22,6 +22,7 @@ import {
   type AdapterCitation,
   type AdapterWithPolicy,
 } from '../shared/primitiveCitation.js'
+import { extractMockMeta, mockLabel } from '../shared/mockDisclaimer.js'
 import {
   isManifestSynced,
   resolveAdapter,
@@ -403,6 +404,13 @@ export const LookupPrimitive = buildTool({
       summaryRows = [React.createElement(Text, { key: 0, dimColor: true }, `  ${summary}`)]
     }
 
+    // Audit-2 P0: check _mode === 'mock' from transparency stamp (Spec 024).
+    const mockMeta = extractMockMeta(output)
+    const isMock = mockMeta.isMock
+
+    const lookupHeading = isMock ? mockLabel('검색 결과') : toolId
+    const headingColor = isMock ? ('cyan' as const) : undefined
+
     return React.createElement(
       MessageResponse,
       null,
@@ -412,12 +420,40 @@ export const LookupPrimitive = buildTool({
         React.createElement(
           Text,
           null,
-          React.createElement(Text, { bold: true }, toolId),
-          countText ? ` — ${countText}` : '',
+          React.createElement(
+            Text,
+            { bold: true, color: headingColor, dimColor: isMock },
+            lookupHeading,
+          ),
+          !isMock && countText ? ` — ${countText}` : '',
+          isMock && countText ? ` (${toolId} — ${countText})` : '',
         ),
+        isMock
+          ? React.createElement(
+              Text,
+              { dimColor: true },
+              '실제 행정 영향 없는 시연 결과입니다.',
+            )
+          : null,
         ...summaryRows,
+        isMock && mockMeta.actualEndpointWhenLive
+          ? React.createElement(
+              Text,
+              { dimColor: true },
+              `실제 엔드포인트 (운영 시): ${mockMeta.actualEndpointWhenLive}`,
+            )
+          : null,
       ),
     )
+  },
+
+  /**
+   * lookup is read-only — always allow, defer to the general permission system.
+   * Explicit declaration avoids relying on the buildTool default and makes the
+   * intent clear at the primitive surface (Spec 031 / Spec 024).
+   */
+  async checkPermissions(input) {
+    return { behavior: 'allow' as const, updatedInput: input }
   },
 
   /**

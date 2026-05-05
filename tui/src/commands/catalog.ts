@@ -61,6 +61,43 @@ export const UI_L2_SLASH_COMMANDS: readonly SlashCommandCatalogEntryT[] = [
     arg_signature: null,
     hidden: false,
   },
+  // Session lifecycle commands — kosmos-migration-tree.md § L1-A · A5
+  // promises four distinct citizen-facing modes: --continue / --resume /
+  // --fork / new. Surfaced in the autocomplete dropdown (FR-014) so the
+  // citizen can discover them without reading docs. Decision:
+  // docs/decisions/fork-command-decision.md (2026-05-04).
+  {
+    name: '/resume',
+    group: 'session',
+    description_ko: '이전 대화를 검색하여 이어서 진행합니다',
+    description_en: 'Resume a previous conversation',
+    arg_signature: '[id|search]',
+    hidden: false,
+  },
+  {
+    name: '/continue',
+    group: 'session',
+    description_ko: '가장 최근 대화를 즉시 이어서 진행합니다',
+    description_en: 'Continue the most recent conversation',
+    arg_signature: null,
+    hidden: false,
+  },
+  {
+    name: '/fork',
+    group: 'session',
+    description_ko: '현재 대화를 새 세션으로 분기합니다 (메시지 보존)',
+    description_en: 'Fork the current conversation into a new session',
+    arg_signature: '[name]',
+    hidden: false,
+  },
+  {
+    name: '/branch',
+    group: 'session',
+    description_ko: '현재 대화를 분기합니다 (/fork 의 별칭)',
+    description_en: 'Alias for /fork — branch the current conversation',
+    arg_signature: '[name]',
+    hidden: false,
+  },
   {
     name: '/config',
     group: 'storage',
@@ -91,6 +128,14 @@ export const UI_L2_SLASH_COMMANDS: readonly SlashCommandCatalogEntryT[] = [
     description_ko: '과거 세션을 날짜·세션·Layer 필터로 검색합니다',
     description_en: 'Search past sessions by date / session / layer filter',
     arg_signature: '[--date FROM..TO] [--session <id>] [--layer <n>]',
+    hidden: false,
+  },
+  {
+    name: '/migrate-sessions',
+    group: 'storage',
+    description_ko: 'CC 워크스페이스 JSONL 세션을 KOSMOS memdir로 마이그레이션합니다',
+    description_en: 'Migrate CC-workspace JSONL sessions to the KOSMOS memdir sessions directory',
+    arg_signature: '[--dry-run] [--filter-cwd <regex>] [--prune]',
     hidden: false,
   },
 ];

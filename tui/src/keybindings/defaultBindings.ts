@@ -189,4 +189,21 @@ export const DEFAULT_BINDING_BLOCKS: KeybindingBlock[] = [
       'ctrl+d': 'permission:toggleDebug',
     },
   },
+  // Audit-4 P0-1 fix — Select context navigation chords. CC's Select
+  // component (tui/src/components/CustomSelect/use-select-input.ts) is
+  // entirely keybinding-driven: Enter/Up/Down/Escape resolve via
+  // useKeybindings({ 'select:accept': ..., 'select:next': ..., ... }).
+  // Without these chords the Permission Gauntlet Select stays frozen on
+  // the first option. This block is consumed by
+  // loadKeybindingsSyncWithWarnings (loadUserBindings.ts) and merged
+  // into the runtime ChordInterceptor binding set.
+  {
+    context: 'Select',
+    bindings: {
+      enter: 'select:accept',
+      escape: 'select:cancel',
+      up: 'select:previous',
+      down: 'select:next',
+    },
+  },
 ]

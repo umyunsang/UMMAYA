@@ -109,11 +109,16 @@ const peersCmd = feature('UDS_INBOX')
       require('./commands/peers/index.js') as typeof import('./commands/peers/index.js')
     ).default
   : null
-const forkCmd = feature('FORK_SUBAGENT')
-  ? (
-      require('./commands/fork/index.js') as typeof import('./commands/fork/index.js')
-    ).default
-  : null
+// KOSMOS: `/fork` is a first-class session-fork command (delegates to
+// branch.ts at runtime). The CC `FORK_SUBAGENT` feature flag gates a
+// different concept (subagent fork) and is permanently `false` per
+// tui/src/stubs/bun-bundle.ts; keeping the feature() check here would
+// suppress the citizen-facing /fork promised by docs/requirements/
+// kosmos-migration-tree.md § A5. Decision: docs/decisions/
+// fork-command-decision.md (2026-05-04).
+const forkCmd = (
+  require('./commands/fork/index.js') as typeof import('./commands/fork/index.js')
+).default
 const buddy = feature('BUDDY')
   ? (
       require('./commands/buddy/index.js') as typeof import('./commands/buddy/index.js')

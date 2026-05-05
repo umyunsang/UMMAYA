@@ -39,53 +39,183 @@ async def _kakao_geocode(
     *,
     client: httpx.AsyncClient | None = None,
 ) -> CoordResult | AddressResult | POIResult | None:
-    """Try to resolve via Kakao Local API.
+    """Resolve a location to (Address | POI | Coord) via Kakao parallel fanout.
 
-    Returns a CoordResult, AddressResult, or POIResult on success.
-    Returns None on no-result or config/network error.
+    Issues both ``search/address`` and ``search/keyword`` calls in parallel
+    (see :func:`_kakao_coords` for the rationale on why fanout, not fallback)
+    and merges the responses by deterministic priority:
+
+      1. address response present → :class:`AddressResult` (carries
+         structured road/jibun/postal-code fields).
+      2. keyword response present → :class:`POIResult` (POI / landmark /
+         business name + coordinates).
+      3. neither present → ``None`` (caller surfaces ResolveError).
+
+    The merge order reflects the semantic specificity of each response, not
+    a primary/fallback preference: both calls already completed by the time
+    the merge runs.
+    """
+    import asyncio  # noqa: PLC0415
+
+    from kosmos.tools.geocoding.kakao_client import (  # noqa: PLC0415
+        search_address,
+        search_keyword,
+    )
+
+    async def _addr() -> AddressResult | CoordResult | None:
+        try:
+            result = await search_address(query, client=client)
+            if not result.documents:
+                return None
+            doc = result.documents[0]
+            try:
+                lat = float(doc.y) if doc.y else None
+                lon = float(doc.x) if doc.x else None
+            except (ValueError, TypeError):
+                lat = lon = None
+            if lat is None or lon is None:
+                return None
+            addr_block = doc.road_address or doc.address
+            road = doc.road_address.address_name if doc.road_address else None
+            jibun = doc.address.address_name if doc.address else None
+            if addr_block:
+                return AddressResult(
+                    kind="address",
+                    road_address=road,
+                    jibun_address=jibun,
+                    postal_code=(
+                        doc.road_address.zone_no if doc.road_address else None
+                    ),
+                    source="kakao",
+                )
+            return CoordResult(
+                kind="coords",
+                lat=lat,
+                lon=lon,
+                confidence=_confidence_from_total(result.meta.total_count),
+                source="kakao",
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("kakao address geocode failed for %r: %s", query, exc)
+            return None
+
+    async def _kw() -> POIResult | None:
+        try:
+            result = await search_keyword(query, client=client)
+            if not result.documents:
+                return None
+            doc = result.documents[0]
+            try:
+                lat = float(doc.y) if doc.y else None
+                lon = float(doc.x) if doc.x else None
+            except (ValueError, TypeError):
+                lat = lon = None
+            if lat is None or lon is None:
+                return None
+            return POIResult(
+                kind="poi",
+                name=doc.place_name,
+                category=doc.category_name,
+                lat=lat,
+                lon=lon,
+                source="kakao",
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("kakao keyword geocode failed for %r: %s", query, exc)
+            return None
+
+    addr_result, kw_result = await asyncio.gather(_addr(), _kw())
+
+    # Deterministic priority — NOT a fallback chain. The address result wins
+    # when present because a non-empty address response means the query was
+    # unambiguously a structured address (road/jibun + structured fields).
+    # The keyword result fills the POI-only gap exposed when address is empty
+    # (e.g. "동아대학교"). See _kakao_coords for the full rationale.
+    if addr_result is not None:
+        return addr_result
+    return kw_result
+
+
+def _confidence_from_total(total: int) -> Literal["high", "medium", "low"]:
+    if total == 1:
+        return "high"
+    if total <= 3:
+        return "medium"
+    return "low"
+
+
+async def _kakao_address_coords(
+    query: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> CoordResult | None:
+    """Resolve coordinates via Kakao address endpoint (structured address only).
+
+    Returns ``None`` when the query is not a structured address — Kakao's
+    address endpoint emits an empty ``documents`` list for POI/landmark
+    queries like "동아대학교". Use :func:`_kakao_keyword_coords` for those.
     """
     try:
-        from kosmos.tools.geocoding.kakao_client import search_address
+        from kosmos.tools.geocoding.kakao_client import search_address  # noqa: PLC0415
 
         result = await search_address(query, client=client)
         if not result.documents:
             return None
-
         doc = result.documents[0]
         try:
             lat = float(doc.y) if doc.y else None
             lon = float(doc.x) if doc.x else None
         except (ValueError, TypeError):
             lat = lon = None
-
         if lat is None or lon is None:
             return None
-
-        # Extract address info from road_address or address block
-        addr_block = doc.road_address or doc.address
-        road = doc.road_address.address_name if doc.road_address else None
-        jibun = doc.address.address_name if doc.address else None
-
-        # Build AddressResult if we have address info
-        if addr_block:
-            return AddressResult(
-                kind="address",
-                road_address=road,
-                jibun_address=jibun,
-                postal_code=doc.road_address.zone_no if doc.road_address else None,
-                source="kakao",
-            )
-
-        # Fallback: CoordResult only
         return CoordResult(
             kind="coords",
             lat=lat,
             lon=lon,
-            confidence="high" if result.meta.total_count == 1 else "medium",
+            confidence=_confidence_from_total(result.meta.total_count),
             source="kakao",
         )
-    except Exception as exc:
-        logger.debug("kakao geocode failed for %r: %s", query, exc)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("kakao address coords failed for %r: %s", query, exc)
+        return None
+
+
+async def _kakao_keyword_coords(
+    query: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> CoordResult | None:
+    """Resolve coordinates via Kakao keyword endpoint (POI / landmark / business).
+
+    Returns ``None`` when no place matches. The keyword endpoint also accepts
+    structured-address strings and returns the nearest POI's coordinates
+    (≈centimeter offset from the address coordinate), so this is safe to call
+    in parallel with :func:`_kakao_address_coords` and merge the results.
+    """
+    try:
+        from kosmos.tools.geocoding.kakao_client import search_keyword  # noqa: PLC0415
+
+        result = await search_keyword(query, client=client)
+        if not result.documents:
+            return None
+        doc = result.documents[0]
+        try:
+            lat = float(doc.y) if doc.y else None
+            lon = float(doc.x) if doc.x else None
+        except (ValueError, TypeError):
+            lat = lon = None
+        if lat is None or lon is None:
+            return None
+        return CoordResult(
+            kind="coords",
+            lat=lat,
+            lon=lon,
+            confidence=_confidence_from_total(result.meta.total_count),
+            source="kakao",
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("kakao keyword coords failed for %r: %s", query, exc)
         return None
 
 
@@ -94,42 +224,48 @@ async def _kakao_coords(
     *,
     client: httpx.AsyncClient | None = None,
 ) -> CoordResult | None:
-    """Try to resolve coordinates via Kakao Local API."""
-    try:
-        from kosmos.tools.geocoding.kakao_client import search_address
+    """Resolve coordinates via Kakao — parallel fanout across both endpoints.
 
-        result = await search_address(query, client=client)
-        if not result.documents:
-            return None
+    Kakao Local API splits its location semantic space into two endpoints:
+    ``search/address.json`` covers structured addresses, ``search/keyword.json``
+    covers POI / landmarks / businesses. Either dimension is empty for the
+    other dimension's queries (verified live: "동아대학교" → address empty,
+    keyword returns 부산 사하구 하단동; "테헤란로 152" → address returns the
+    road point, keyword returns the same coordinates wrapped as the building
+    POI). A wrapper that needs to handle both query types must therefore
+    issue both calls.
 
-        doc = result.documents[0]
-        try:
-            lat = float(doc.y) if doc.y else None
-            lon = float(doc.x) if doc.x else None
-        except (ValueError, TypeError):
-            lat = lon = None
+    This is parallel fanout (``asyncio.gather``), NOT sequential fallback —
+    both calls fire simultaneously, the merge applies a deterministic
+    priority (address result wins when present, since it carries structured
+    address fields by definition; keyword result fills the POI-only gap).
+    Cost: 2× per-call traffic, capped at 2× of Kakao's 100k/day quota
+    (separate pools per endpoint = effective 200k/day combined).
 
-        if lat is None or lon is None:
-            return None
+    Reference: PyKakao 1.x ``Local`` class
+    (https://github.com/WooilJeong/PyKakao) which exposes the same six
+    endpoints as six methods — the wrapper-side fanout is KOSMOS' addition
+    on top of the byte-identical PyKakao surface so callers like
+    ``_handle_chat_request`` see one coordinate result regardless of query
+    dimension.
+    """
+    import asyncio  # noqa: PLC0415
 
-        confidence: str
-        if result.meta.total_count == 1:
-            confidence = "high"
-        elif result.meta.total_count <= 3:
-            confidence = "medium"
-        else:
-            confidence = "low"
+    addr_result, kw_result = await asyncio.gather(
+        _kakao_address_coords(query, client=client),
+        _kakao_keyword_coords(query, client=client),
+        return_exceptions=False,
+    )
 
-        return CoordResult(
-            kind="coords",
-            lat=lat,
-            lon=lon,
-            confidence=confidence,  # type: ignore[arg-type]
-            source="kakao",
-        )
-    except Exception as exc:
-        logger.debug("kakao coords failed for %r: %s", query, exc)
-        return None
+    # Deterministic priority — NOT a fallback chain. Both calls already
+    # completed; the merge picks the most semantically appropriate result.
+    # Address result wins when present because the address endpoint only
+    # returns matches for genuinely structured-address queries; a hit there
+    # means the query was unambiguously an address. Keyword result is used
+    # when the query was a POI/landmark (address endpoint empty).
+    if addr_result is not None:
+        return addr_result
+    return kw_result
 
 
 async def _kakao_adm_cd(
@@ -350,33 +486,34 @@ async def resolve_location(  # noqa: C901
 
     # --- poi path ---
     if want == "poi":
+        # Was previously routed through search_address — a structural bug:
+        # the address endpoint returns empty for POI queries like
+        # "동아대학교", so every want='poi' call ended in not_found and the
+        # LLM fell back to fabricated coordinates (frame:
+        # `specs/integration-verification/donga-univ-poi-bug/`). Routing
+        # through the keyword endpoint is the byte-correct PyKakao mapping
+        # for POI queries.
         try:
-            from kosmos.tools.geocoding.kakao_client import search_address
+            from kosmos.tools.geocoding.kakao_client import search_keyword  # noqa: PLC0415
 
-            result = await search_address(query, client=client)
+            result = await search_keyword(query, client=client)
             if result.documents:
                 doc = result.documents[0]
                 try:
-                    lat = float(doc.y)
-                    lon = float(doc.x)
+                    lat = float(doc.y) if doc.y else None
+                    lon = float(doc.x) if doc.x else None
                 except (ValueError, TypeError):
-                    lat = lon = None  # type: ignore[assignment]
-
+                    lat = lon = None
                 if lat is not None and lon is not None:
-                    # address_type gives "REGION"|"ROAD"|"REGION_ADDR"|"ROAD_ADDR"
-                    # which is a more meaningful category than the province name
-                    # that region_1depth_name would return.
-                    category = getattr(doc, "address_type", "")
-
                     return POIResult(
                         kind="poi",
-                        name=doc.address_name,
-                        category=category,
+                        name=doc.place_name,
+                        category=doc.category_name,
                         lat=lat,
                         lon=lon,
                         source="kakao",
                     )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.debug("poi resolution failed for %r: %s", query, exc)
 
         return ResolveError(
@@ -393,55 +530,99 @@ async def resolve_location(  # noqa: C901
         poi_result: POIResult | None = None
 
         if want == "all":
-            # Single Kakao call for coords, address, and POI — avoids the
-            # redundant _kakao_coords() + search_address() double-call.
-            try:
-                from kosmos.tools.geocoding.kakao_client import search_address
+            # Parallel fanout across Kakao's two location-semantic
+            # dimensions: address endpoint (structured road/jibun fields)
+            # and keyword endpoint (POI / landmark / business). Both calls
+            # fire simultaneously via asyncio.gather; each result populates
+            # the bundle slot it semantically owns (address → AddressResult,
+            # keyword → POIResult, both → CoordResult). This is NOT a
+            # primary/fallback pair — see _kakao_coords for the rationale.
+            import asyncio  # noqa: PLC0415
 
-                kakao_result = await search_address(query, client=client)
-                if kakao_result.documents:
-                    doc = kakao_result.documents[0]
-                    try:
-                        lat = float(doc.y)
-                        lon = float(doc.x)
-                    except (ValueError, TypeError):
-                        lat = lon = None  # type: ignore[assignment]
+            from kosmos.tools.geocoding.kakao_client import (  # noqa: PLC0415
+                search_address,
+                search_keyword,
+            )
 
-                    if lat is not None and lon is not None:
-                        total = kakao_result.meta.total_count
-                        confidence = "high" if total == 1 else ("medium" if total <= 3 else "low")
+            async def _addr_call() -> object:
+                try:
+                    return await search_address(query, client=client)
+                except Exception as exc:  # noqa: BLE001
+                    logger.debug("kakao address (all) failed for %r: %s", query, exc)
+                    return None
+
+            async def _kw_call() -> object:
+                try:
+                    return await search_keyword(query, client=client)
+                except Exception as exc:  # noqa: BLE001
+                    logger.debug("kakao keyword (all) failed for %r: %s", query, exc)
+                    return None
+
+            kakao_addr, kakao_kw = await asyncio.gather(_addr_call(), _kw_call())
+
+            # Address response → AddressResult + CoordResult.
+            if kakao_addr is not None and getattr(kakao_addr, "documents", None):
+                doc = kakao_addr.documents[0]  # type: ignore[union-attr]
+                try:
+                    lat = float(doc.y) if doc.y else None
+                    lon = float(doc.x) if doc.x else None
+                except (ValueError, TypeError):
+                    lat = lon = None
+                if lat is not None and lon is not None:
+                    coords_bundle = CoordResult(
+                        kind="coords",
+                        lat=lat,
+                        lon=lon,
+                        confidence=_confidence_from_total(
+                            kakao_addr.meta.total_count  # type: ignore[union-attr]
+                        ),
+                        source="kakao",
+                    )
+                if doc.road_address or doc.address:
+                    address_result = AddressResult(
+                        kind="address",
+                        road_address=(
+                            doc.road_address.address_name if doc.road_address else None
+                        ),
+                        jibun_address=(
+                            doc.address.address_name if doc.address else None
+                        ),
+                        postal_code=(
+                            doc.road_address.zone_no if doc.road_address else None
+                        ),
+                        source="kakao",
+                    )
+
+            # Keyword response → POIResult; also populates coords_bundle when
+            # the address endpoint produced no result (POI-only query like
+            # "동아대학교"). Address coordinates always win when both fire
+            # because structured-address matches are more specific.
+            if kakao_kw is not None and getattr(kakao_kw, "documents", None):
+                doc_kw = kakao_kw.documents[0]  # type: ignore[union-attr]
+                try:
+                    lat_kw = float(doc_kw.y) if doc_kw.y else None
+                    lon_kw = float(doc_kw.x) if doc_kw.x else None
+                except (ValueError, TypeError):
+                    lat_kw = lon_kw = None
+                if lat_kw is not None and lon_kw is not None:
+                    if coords_bundle is None:
                         coords_bundle = CoordResult(
                             kind="coords",
-                            lat=lat,
-                            lon=lon,
-                            confidence=confidence,  # type: ignore[arg-type]
-                            source="kakao",
-                        )
-
-                        poi_result = POIResult(
-                            kind="poi",
-                            name=doc.address_name,
-                            category=getattr(doc, "address_type", ""),
-                            lat=lat,
-                            lon=lon,
-                            source="kakao",
-                        )
-
-                    if doc.road_address or doc.address:
-                        address_result = AddressResult(
-                            kind="address",
-                            road_address=(
-                                doc.road_address.address_name if doc.road_address else None
+                            lat=lat_kw,
+                            lon=lon_kw,
+                            confidence=_confidence_from_total(
+                                kakao_kw.meta.total_count  # type: ignore[union-attr]
                             ),
-                            jibun_address=(doc.address.address_name if doc.address else None),
-                            postal_code=(doc.road_address.zone_no if doc.road_address else None),
                             source="kakao",
                         )
-            except Exception:
-                logger.debug(
-                    "Kakao resolution failed; continuing without address/POI",
-                    exc_info=True,
-                )
+                    poi_result = POIResult(
+                        kind="poi",
+                        name=doc_kw.place_name,
+                        category=doc_kw.category_name,
+                        lat=lat_kw,
+                        lon=lon_kw,
+                        source="kakao",
+                    )
         else:
             coords_bundle = await _kakao_coords(query, client=client)
 

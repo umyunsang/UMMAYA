@@ -21,6 +21,7 @@ import {
   type AdapterCitation,
   type AdapterWithPolicy,
 } from '../shared/primitiveCitation.js'
+import { extractMockMeta, mockLabel } from '../shared/mockDisclaimer.js'
 import { VERIFY_TOOL_NAME, DESCRIPTION, VERIFY_TOOL_PROMPT } from './prompt.js'
 import {
   isManifestSynced,
@@ -248,6 +249,38 @@ export const VerifyPrimitive = buildTool({
         result && typeof result === 'object' ? result['status'] : undefined
       const rawAuthority =
         result && typeof result === 'object' ? result['policy_authority'] : undefined
+      const rawFamily =
+        result && typeof result === 'object' ? result['family'] : undefined
+      const rawReason =
+        result && typeof result === 'object' ? result['reason'] : undefined
+
+      // [H1] (2026-05-04) — Defense-in-depth mismatch_error branch.
+      //
+      // The dispatcher (`tui/src/tools/_shared/dispatchPrimitive.ts`)
+      // already flips ``ok: false`` when the inner payload looks like a
+      // ``VerifyMismatchError`` (family === "mismatch_error"). This branch
+      // is the second line of defense: if any caller path bypasses the
+      // dispatcher classification (older fixture, manual envelope, etc.),
+      // we MUST NOT fall through to the ``String(rawStatus ?? '결과
+      // 수신됨')`` else-clause and render a mismatch as success. Citizen
+      // mis-info is the explicit guard target.
+      const isMismatchHere =
+        rawFamily === 'mismatch_error' || rawReason === 'family_mismatch'
+      if (isMismatchHere) {
+        const message =
+          (result && typeof result === 'object' && typeof result['message'] === 'string'
+            ? (result['message'] as string)
+            : null) ?? '인증 모듈이 요청을 거부했습니다.'
+        return React.createElement(
+          MessageResponse,
+          { height: 1 },
+          React.createElement(
+            Text,
+            { color: 'red' as never },
+            `❌ 인증 모듈 거부: ${message}`,
+          ),
+        )
+      }
 
       // Map status to citizen-facing Korean label.
       let statusLabel: string
@@ -270,6 +303,13 @@ export const VerifyPrimitive = buildTool({
         ? `출처: ${String(rawAuthority)}`
         : undefined
 
+      // Audit-2 P0: check _mode === 'mock' from transparency stamp (Spec 024).
+      const mockMeta = extractMockMeta(output)
+      const isMock = mockMeta.isMock
+
+      const verifyLabel = isMock ? mockLabel(statusLabel) : statusLabel
+      const verifyColor = isMock ? ('cyan' as never) : (statusColor as never)
+
       // KOSMOS hotfix #2519 — wrap in <MessageResponse> for the CC ⎿ prefix.
       return React.createElement(
         MessageResponse,
@@ -281,8 +321,15 @@ export const VerifyPrimitive = buildTool({
             Text,
             null,
             React.createElement(Text, { bold: true }, '검증 결과: '),
-            React.createElement(Text, { color: statusColor as never }, statusLabel),
+            React.createElement(Text, { color: verifyColor, dimColor: isMock }, verifyLabel),
           ),
+          isMock
+            ? React.createElement(
+                Text,
+                { dimColor: true },
+                '실제 행정 영향 없는 시연 결과입니다.',
+              )
+            : null,
           authorityText
             ? React.createElement(
                 Text,
@@ -290,21 +337,46 @@ export const VerifyPrimitive = buildTool({
                 authorityText,
               )
             : null,
+          isMock && mockMeta.actualEndpointWhenLive
+            ? React.createElement(
+                Text,
+                { dimColor: true },
+                `실제 엔드포인트 (운영 시): ${mockMeta.actualEndpointWhenLive}`,
+              )
+            : null,
         ),
       )
     }
 
     // output.ok === false: render rejection reason in Korean.
+    // [H1] — When the dispatcher classified inner.family === "mismatch_error"
+    // as ok=false, render the dedicated 인증 모듈 거부 prefix so citizens see
+    // an explicit auth-module rejection (not a generic dispatch error).
     const errorMsg = output.error?.message ?? '검증 요청이 거부되었습니다.'
+    const errorKind = output.error?.kind
+    const isMismatchKind = errorKind === 'mismatch_error' || errorKind === 'family_mismatch'
     return React.createElement(
       MessageResponse,
       { height: 1 },
       React.createElement(
         Text,
         { color: 'red' as never },
-        `인증 거부: ${errorMsg}`,
+        isMismatchKind ? `❌ 인증 모듈 거부: ${errorMsg}` : `인증 거부: ${errorMsg}`,
       ),
     )
+  },
+
+  /**
+   * verify delegates to an external auth vendor (credentials, 공인인증서,
+   * 간편인증). Always ask for citizen permission before proceeding.
+   * Spec 024 invariant: adapters cite agency policy; the permission gauntlet
+   * surfaces that citation via context.kosmosCitations (set in validateInput).
+   */
+  async checkPermissions(_input) {
+    return {
+      behavior: 'ask' as const,
+      message: '권한 위임 필요: 인증 기관에 본인 정보를 전달합니다. 진행하시겠습니까?',
+    }
   },
 
   /**

@@ -263,6 +263,71 @@ export async function dispatchPrimitive<O = unknown>(
   // Each primitive's renderToolResultMessage knows its own result shape.
   const inner = 'result' in env ? env.result : env
 
+  // [H1] (2026-05-04) — Inner-payload error classification.
+  //
+  // The legacy unwrap above only flips ``ok=false`` when the envelope has a
+  // top-level ``error: string`` field. But the verify primitive (and several
+  // mock adapters) signals failure inside ``result`` instead — for example
+  // ``VerifyMismatchError`` from ``kosmos.primitives.verify`` is dumped as
+  // ``{ family: "mismatch_error", reason: "family_mismatch", message: ... }``
+  // and the lookup mocks emit ``{ kind: "error", reason: "scope_violation",
+  // message: ... }``. Without this branch, the dispatcher returns
+  // ``{ok: true, result: <error payload>}`` and the per-primitive renderer
+  // falls back to ``String(rawStatus ?? '결과 수신됨')`` — citizens AND the
+  // LLM both read it as success. That mis-info is safety-critical for verify
+  // (auth module rejection rendered as "verified") and breaks LLM cascade
+  // accuracy for lookup (scope violation rendered as data).
+  //
+  // Classification rules (all OR'd, evaluated against ``inner`` only):
+  //   - ``inner.family === "mismatch_error"`` — VerifyMismatchError dump.
+  //   - ``inner.kind === "error"`` — lookup / submit / subscribe error sentinel.
+  //   - ``inner.reason ∈ {family_mismatch, scope_violation, coercion_violation}``
+  //     — defense-in-depth: any adapter that emits a known-fatal reason code
+  //     is classified as failure even if it forgot to set ``kind``/``family``.
+  const FATAL_REASONS = new Set(['family_mismatch', 'scope_violation', 'coercion_violation'])
+  const innerObj = (inner && typeof inner === 'object') ? (inner as Record<string, unknown>) : null
+  if (innerObj) {
+    const innerFamily = typeof innerObj['family'] === 'string' ? (innerObj['family'] as string) : null
+    const innerKind = typeof innerObj['kind'] === 'string' ? (innerObj['kind'] as string) : null
+    const innerReason = typeof innerObj['reason'] === 'string' ? (innerObj['reason'] as string) : null
+    const isMismatchError = innerFamily === 'mismatch_error'
+    const isErrorKind = innerKind === 'error'
+    const isFatalReason = innerReason !== null && FATAL_REASONS.has(innerReason)
+    if (isMismatchError || isErrorKind || isFatalReason) {
+      const innerMessage = typeof innerObj['message'] === 'string'
+        ? (innerObj['message'] as string)
+        : (isMismatchError
+            ? '인증 모듈이 요청을 거부했습니다.'
+            : '도구 호출이 거부되었습니다.')
+      // Pick the most-specific kind label so renderers + audit logs can
+      // distinguish dispatcher-level failure (envelope.error) from
+      // primitive-payload failure (mismatch_error / scope_violation / ...).
+      let errorKind = 'primitive_error'
+      if (isMismatchError) errorKind = 'mismatch_error'
+      else if (isFatalReason) errorKind = innerReason as string
+      else if (isErrorKind) errorKind = 'tool_error'
+      const errorData: Record<string, unknown> = {
+        ok: false,
+        error: {
+          kind: errorKind,
+          message: innerMessage,
+        },
+        // Preserve the original inner payload so renderers can surface the
+        // structured fields (expected_family / observed_family / retryable).
+        result: inner,
+      }
+      if (
+        Array.isArray(env['outbound_traces']) &&
+        (env['outbound_traces'] as unknown[]).length > 0
+      ) {
+        errorData['outbound_traces'] = env['outbound_traces']
+      }
+      return {
+        data: errorData as unknown as O,
+      }
+    }
+  }
+
   // Spec 2521 (2026-05-02) — surface envelope-level ``outbound_traces``
   // (populated by ``kosmos.tools._outbound_trace`` on the backend) so the
   // 4 primitives' ``renderToolResultMessage`` can render the verbose

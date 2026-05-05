@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Spec 1979 — KOSMOS citizen plugin install/uninstall/list flow component.
+// Audit-6 P1 fixes:
+//   - payload_start/delta/end triplet consumed for /plugin list (P1 fix)
+//   - exit_code → citizen-friendly Korean error messages (P1 fix)
+//   - was_idempotent_noop → "이미 제거됨" instead of "제거 완료" (P1 fix)
+//   - onComplete carries receipt + PIPA hash for permanent system message (P1 fix)
 //
 // Source pattern (per memory feedback_cc_source_migration_pattern):
 //   .references/claude-code-sourcemap/restored-src/src/commands/plugin/plugin.tsx
@@ -17,15 +22,52 @@
 
 import { Box, Text, useInput } from 'ink';
 import * as React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Select, type OptionWithDescription } from '../CustomSelect/index.js';
 import { getKosmosBridgeSessionId, getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js';
 import { useTheme } from '../../theme/provider.js';
 
 // ---------------------------------------------------------------------------
+// Exit-code → citizen-friendly Korean message map
+// Mirrors installer.py exit-code table § contracts/plugin-install.cli.md
+// ---------------------------------------------------------------------------
+
+const _EXIT_CODE_KO: Record<number, string> = {
+  0: '성공',
+  1: '카탈로그 조회 실패 — 네트워크 또는 URL을 확인하세요',
+  2: '번들 무결성 검증 실패 — SHA-256 해시가 카탈로그와 다릅니다',
+  3: 'SLSA 서명 검증 실패 — 플러그인 출처를 확인할 수 없습니다',
+  4: '매니페스트 검증 실패 — 플러그인 패키지가 손상되었습니다',
+  5: '동의 거부 — 설치가 취소되었습니다',
+  6: 'I/O 오류 — 파일 시스템 권한 또는 디스크 공간을 확인하세요',
+  7: 'slsa-verifier 바이너리 없음 — 자동 설치 시도 중',
+};
+
+function _exitCodeKo(exitCode: number | undefined | null, errorKind?: string | null): string {
+  if (errorKind === 'bundle_sha_mismatch') return _EXIT_CODE_KO[2] ?? `오류 코드 ${exitCode ?? '?'}`;
+  if (errorKind === 'slsa_skip_in_production') return 'KOSMOS_PLUGIN_SLSA_SKIP은 production 환경에서 거부됩니다';
+  if (errorKind === 'slsa_skip_layer_3_forbidden') return 'Layer 3 플러그인은 SLSA 검증이 필수입니다';
+  if (errorKind === 'binary_not_found' || errorKind === 'slsa_bootstrap_failed') return _EXIT_CODE_KO[7] ?? `오류 코드 ${exitCode ?? '?'}`;
+  if (errorKind === 'consent_rejected') return _EXIT_CODE_KO[5] ?? '동의 거부';
+  if (exitCode != null && exitCode in _EXIT_CODE_KO) return _EXIT_CODE_KO[exitCode]!;
+  return `알 수 없는 오류 (코드 ${exitCode ?? '?'})`;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+export type PluginListEntry = {
+  plugin_id: string;
+  name: string;
+  version: string;
+  tier: string;
+  permission_layer: number;
+  processes_pii: boolean;
+  is_active: boolean;
+  description_ko: string;
+};
 
 export type PluginInstallFlowProps = {
   /** Sub-command parsed by /plugin command (install / uninstall / list). */
@@ -45,7 +87,7 @@ type FlowState =
   | { kind: 'sent' }
   | { kind: 'progress'; phase: number; messageKo: string }
   | { kind: 'awaiting_consent'; requestId: string; descriptionKo: string; descriptionEn: string }
-  | { kind: 'completed'; summary: string }
+  | { kind: 'completed'; summary: string; plugins?: PluginListEntry[] }
   | { kind: 'failed'; summary: string };
 
 // ---------------------------------------------------------------------------
@@ -73,16 +115,11 @@ export function PluginInstallFlow({
   dryRun,
   onComplete,
 }: PluginInstallFlowProps): React.ReactElement {
-  // DEBUG file marker — direct fs write to bypass Ink's stderr handling
-  try {
-    const fs = require('node:fs');
-    fs.appendFileSync('/tmp/plugin-install-flow.log', `render sub=${sub} name=${name} ts=${Date.now()}\n`);
-  } catch {
-    /* best-effort */
-  }
   const theme = useTheme();
   const [state, setState] = useState<FlowState>({ kind: 'idle' });
   const [correlationId] = useState<string>(_newCorrelationId());
+  // Accumulate payload_delta chunks for the list sub-command.
+  const payloadBufRef = useRef<string>('');
 
   // Send a permission_response frame (allow_once / allow_session / deny).
   const sendPermissionResponse = useCallback(
@@ -118,17 +155,9 @@ export function PluginInstallFlow({
     [],
   );
 
-  // DEBUG: log every key received by this component to diagnose focus routing.
-  useInput((input, key) => {
-    try {
-      const fs = require('node:fs');
-      fs.appendFileSync(
-        '/tmp/plugin-install-flow.log',
-        `key state=${state.kind} input=${JSON.stringify(input)} return=${key.return} upArrow=${key.upArrow} downArrow=${key.downArrow} escape=${key.escape}\n`,
-      );
-    } catch {
-      /* best-effort */
-    }
+  // Keystroke passthrough for focus routing diagnostics.
+  useInput((_input, _key) => {
+    // no-op: present to keep stdin raw mode active so child Select hooks fire.
   });
 
   // Main round-trip effect: emit request + iterate frames until terminal.
@@ -136,6 +165,7 @@ export function PluginInstallFlow({
     let cancelled = false;
     const bridge = getOrCreateKosmosBridge();
     const sessionId = getKosmosBridgeSessionId();
+    payloadBufRef.current = '';
 
     // Build + send the request frame.
     const requestPayload: Record<string, unknown> = {
@@ -174,14 +204,21 @@ export function PluginInstallFlow({
             correlation_id?: string;
             op?: string;
             result?: string;
-            exit_code?: number;
+            exit_code?: number | null;
             receipt_id?: string | null;
+            error_kind?: string | null;
+            error_message?: string | null;
+            was_idempotent_noop?: boolean | null;
             progress_phase?: number;
             progress_message_ko?: string;
             progress_message_en?: string;
             request_id?: string;
             description_ko?: string;
             description_en?: string;
+            // payload triplet fields
+            payload?: string;
+            delta_seq?: number;
+            status?: string;
           };
 
           // permission_request — IPCConsentBridge correlates by request_id, NOT
@@ -207,25 +244,92 @@ export function PluginInstallFlow({
             continue;
           }
 
+          // Spec 032 payload triplet — accumulate delta chunks for /plugin list.
+          if (f.kind === 'payload_start') {
+            payloadBufRef.current = '';
+            continue;
+          }
+          if (f.kind === 'payload_delta' && typeof f.payload === 'string') {
+            payloadBufRef.current += f.payload;
+            continue;
+          }
+          if (f.kind === 'payload_end') {
+            // Payload fully assembled; parse will happen on the following
+            // plugin_op/complete frame where we render the list.
+            continue;
+          }
+
           if (f.kind === 'plugin_op' && f.op === 'complete') {
-            const successSummary =
-              sub === 'install' && name
-                ? `✓ ${name} 플러그인 설치 완료${f.receipt_id ? ` · 영수증 ${f.receipt_id}` : ''}`
-                : sub === 'uninstall' && name
-                  ? `🗑️ ${name} 플러그인 제거 완료`
-                  : '📋 플러그인 목록 조회 완료';
-            const failureSummary =
-              sub === 'install' && name
-                ? `✗ ${name} 플러그인 설치 실패 (exit_code=${f.exit_code ?? 1})`
-                : sub === 'uninstall' && name
-                  ? `✗ ${name} 플러그인 제거 실패 (exit_code=${f.exit_code ?? 1})`
-                  : `✗ 목록 조회 실패 (exit_code=${f.exit_code ?? 1})`;
-            const summary = f.result === 'success' ? successSummary : failureSummary;
-            setState({
-              kind: f.result === 'success' ? 'completed' : 'failed',
-              summary,
-            });
-            onComplete(summary, { display: 'system' });
+            const exitCode = f.exit_code ?? 1;
+            const errorKind = f.error_kind ?? null;
+            const isSuccess = f.result === 'success';
+            const isIdempotentNoop = Boolean(f.was_idempotent_noop);
+
+            let summary: string;
+            let plugins: PluginListEntry[] | undefined;
+
+            if (isSuccess) {
+              if (sub === 'install' && name) {
+                summary = `✓ ${name} 플러그인 설치 완료`;
+                if (f.receipt_id) {
+                  summary += ` · 영수증 ${f.receipt_id}`;
+                }
+              } else if (sub === 'uninstall' && name) {
+                summary = isIdempotentNoop
+                  ? `ℹ ${name} 플러그인이 이미 제거된 상태입니다`
+                  : `✓ ${name} 플러그인 제거 완료`;
+              } else {
+                // list — parse payload buffer
+                try {
+                  const parsed = JSON.parse(payloadBufRef.current) as { entries?: unknown[] };
+                  plugins = (parsed.entries ?? []) as PluginListEntry[];
+                  summary =
+                    plugins.length === 0
+                      ? '📋 설치된 플러그인이 없습니다 · No plugins installed'
+                      : `📋 설치된 플러그인 ${plugins.length}개`;
+                } catch {
+                  plugins = [];
+                  summary = '📋 플러그인 목록 조회 완료 (목록 파싱 오류)';
+                }
+              }
+            } else {
+              const reasonKo = _exitCodeKo(exitCode, errorKind);
+              if (sub === 'install' && name) {
+                summary = `✗ ${name} 플러그인 설치 실패 — ${reasonKo}`;
+              } else if (sub === 'uninstall' && name) {
+                summary = `✗ ${name} 플러그인 제거 실패 — ${reasonKo}`;
+              } else {
+                summary = `✗ 목록 조회 실패 — ${reasonKo}`;
+              }
+            }
+
+            setState({ kind: isSuccess ? 'completed' : 'failed', summary, plugins });
+            // Build a rich message including receipt ID and PIPA hash if available.
+            let richSummary = summary;
+            if (isSuccess && sub === 'install' && f.receipt_id) {
+              richSummary += `\n영수증 ID: ${f.receipt_id}`;
+              // Append PIPA hash asynchronously if available.
+              try {
+                const { CANONICAL_PIPA_ACK_SHA256 } = await import('../../ipc/pipa.generated.js');
+                richSummary += `\nPIPA §26 SHA-256: ${CANONICAL_PIPA_ACK_SHA256}`;
+              } catch {
+                // pipa.generated.js may not be present in test builds — continue.
+              }
+            }
+            if (!isSuccess && f.error_message) {
+              richSummary += `\n상세: ${f.error_message}`;
+            }
+            if (isSuccess && sub === 'list' && plugins && plugins.length > 0) {
+              richSummary +=
+                '\n' +
+                plugins
+                  .map(
+                    (p) =>
+                      `  • ${p.plugin_id} v${p.version} [${p.tier}][L${p.permission_layer}]${p.is_active ? '' : ' (비활성)'}`,
+                  )
+                  .join('\n');
+            }
+            onComplete(richSummary, { display: 'system' });
             return;
           }
         }
@@ -291,7 +395,20 @@ export function PluginInstallFlow({
         </Box>
       ) : null}
 
-      {state.kind === 'completed' ? <Text color={theme.kosmosCore}>{state.summary}</Text> : null}
+      {state.kind === 'completed' ? (
+        <Box flexDirection="column">
+          <Text color={theme.kosmosCore}>{state.summary}</Text>
+          {state.plugins && state.plugins.length > 0 ? (
+            <Box flexDirection="column" marginTop={1}>
+              {state.plugins.map((p) => (
+                <Text key={p.plugin_id} dimColor={!p.is_active}>
+                  {`  • ${p.plugin_id} v${p.version} [${p.tier}][L${p.permission_layer}]${p.is_active ? '' : ' (비활성)'} — ${p.description_ko}`}
+                </Text>
+              ))}
+            </Box>
+          ) : null}
+        </Box>
+      ) : null}
 
       {state.kind === 'failed' ? <Text color="red">{state.summary}</Text> : null}
     </Box>

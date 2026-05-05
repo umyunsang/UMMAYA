@@ -131,7 +131,17 @@ class NfaEmergencyInfoServiceInput(BaseModel):
 
 
 class NfaActivityItem(BaseModel):
-    """Single 구급활동정보 record (getEmgencyActivityInfo)."""
+    """Single 구급활동정보 record (getEmgencyActivityInfo).
+
+    Note: numeric fields (sptMvmnDtc — distance, etc.) are typed as
+    ``str | float | int | None`` because the live data.go.kr endpoint
+    returns them inconsistently (observed: ``0.5`` as JSON float, ``"0.5"``
+    as string in other regions). Strict ``str``-only validation here was the
+    documented C-class root cause for citizen mis-info on 2026-05-04 — when
+    pydantic raised ValidationError, the executor masked the error as
+    "Tool execution failed." and the LLM fabricated a plausible-looking
+    fire-station statistic instead of refusing.
+    """
 
     model_config = ConfigDict(extra="allow", frozen=True)
 
@@ -139,7 +149,9 @@ class NfaActivityItem(BaseModel):
     rsacGutFsttOgidNm: str = Field(description="출동소방서 (fire station name)")  # noqa: N815
     gutYm: str = Field(description="출동년월 YYYYMM")  # noqa: N815
     gutHh: str | None = Field(default=None, description="출동시 HH (dispatch hour)")  # noqa: N815
-    sptMvmnDtc: str | None = Field(default=None, description="현장과의거리 (metres)")  # noqa: N815
+    sptMvmnDtc: str | float | int | None = Field(  # noqa: N815
+        default=None, description="현장과의거리 (km, may be float or string)"
+    )
     ptntAge: str | None = Field(default=None, description="환자연령 bracket (e.g. '60~69세')")  # noqa: N815
     ptntSdtSeCdNm: str | None = Field(default=None, description="환자성별 (남/여)")  # noqa: N815
     egrcSidoCdNm: str | None = Field(default=None, description="긴급구조시")  # noqa: N815
@@ -175,7 +187,13 @@ class NfaTransferItem(BaseModel):
 
 
 class NfaConditionItem(BaseModel):
-    """Single 구급환자상태정보 record (getEmgPatientConditionInfo)."""
+    """Single 구급환자상태정보 record (getEmgPatientConditionInfo).
+
+    Vital-sign fields use ``str | float | int | None`` because temperature,
+    saturation, and other measurements arrive as JSON numbers from the live
+    endpoint while age brackets and codes arrive as strings. See
+    NfaActivityItem docstring for the C-class fabrication context.
+    """
 
     model_config = ConfigDict(extra="allow", frozen=True)
 
@@ -185,12 +203,12 @@ class NfaConditionItem(BaseModel):
     stmtYm: str  # noqa: N815
     stmtHh: str | None = None  # noqa: N815
     ptntAge: str | None = None  # noqa: N815
-    lwsBpsr: str | None = Field(default=None, description="최저혈압")  # noqa: N815
-    topBpsr: str | None = Field(default=None, description="최고혈압")  # noqa: N815
-    ptntHbco: str | None = Field(default=None, description="심박수")  # noqa: N815
-    ptntBfco: str | None = Field(default=None, description="호흡수")  # noqa: N815
-    ptntOsv: str | None = Field(default=None, description="산소포화도")  # noqa: N815
-    ptntBht: str | None = Field(default=None, description="체온")  # noqa: N815
+    lwsBpsr: str | float | int | None = Field(default=None, description="최저혈압")  # noqa: N815
+    topBpsr: str | float | int | None = Field(default=None, description="최고혈압")  # noqa: N815
+    ptntHbco: str | float | int | None = Field(default=None, description="심박수")  # noqa: N815
+    ptntBfco: str | float | int | None = Field(default=None, description="호흡수")  # noqa: N815
+    ptntOsv: str | float | int | None = Field(default=None, description="산소포화도")  # noqa: N815
+    ptntBht: str | float | int | None = Field(default=None, description="체온")  # noqa: N815
 
 
 class NfaFirstaidItem(BaseModel):
@@ -259,6 +277,18 @@ NfaItem = (
     | NfaVehicleDispatchItem
     | NfaVehicleInfoItem
 )
+
+
+class _PlaceholderOutput(RootModel[dict[str, Any]]):
+    """Placeholder GovAPITool.output_schema — handler returns envelope-ready dict.
+
+    The handler emits ``{"kind": "collection", "items": [...], "total_count": N}``
+    which is normalized by ``envelope.normalize`` into ``LookupCollection``.
+    The strict per-item ``NfaEmergencyInfoServiceOutput`` schema below stays
+    as the documentation contract for the response shape.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class NfaEmergencyInfoServiceOutput(BaseModel):
@@ -433,9 +463,34 @@ def _parse_response(
         NfaEmgOperation.vehicle_info.value: NfaVehicleInfoItem,
     }
     item_model = _model_map.get(operation, NfaActivityItem)
-    parsed_items: list[NfaItem] = [
-        cast("NfaItem", item_model.model_validate(raw)) for raw in raw_items
-    ]
+
+    # Per-item validation: skip malformed records rather than failing the whole
+    # call. The C-class fabrication (2026-05-04) was triggered by a single
+    # ``sptMvmnDtc=0.5`` (float) record that broke ``str``-only validation,
+    # masked the entire response as "Tool execution failed.", and left the
+    # LLM free to invent fire-station statistics. Fail-soft on individual
+    # rows so the citizen at least sees what the API actually returned —
+    # never zero rows for a bad row in the middle.
+    parsed_items: list[NfaItem] = []
+    skipped = 0
+    for raw in raw_items:
+        try:
+            parsed_items.append(cast("NfaItem", item_model.model_validate(raw)))
+        except Exception as exc:  # noqa: BLE001
+            skipped += 1
+            logger.warning(
+                "NFA item dropped (operation=%s): %s | raw_keys=%s",
+                operation,
+                exc,
+                list(raw.keys())[:8] if isinstance(raw, dict) else "<non-dict>",
+            )
+    if skipped:
+        logger.info(
+            "NFA %s: %d items parsed / %d skipped due to schema drift",
+            operation,
+            len(parsed_items),
+            skipped,
+        )
 
     return NfaEmergencyInfoServiceOutput(
         operation=operation,
@@ -516,7 +571,16 @@ async def handle(
             output.page_no,
             output.num_of_rows,
         )
-        return output.model_dump()
+        # Envelope-ready dict for envelope.normalize() — kind="collection"
+        # matches the LookupCollection variant of LookupOutput. Without the
+        # discriminator the executor raises EnvelopeNormalizationError, which
+        # is masked as "Response processing failed." to the LLM and triggers
+        # the C-class fabrication path. Mirror the HIRA / KOROAD / NMC pattern.
+        return {
+            "kind": "collection",
+            "items": [item.model_dump() for item in output.items],
+            "total_count": output.total_count,
+        }
 
     except (ToolExecutionError, ConfigurationError):
         raise
@@ -547,7 +611,12 @@ NFA_EMERGENCY_INFO_SERVICE_TOOL = GovAPITool(
     endpoint="https://apis.data.go.kr/1661000/EmergencyInformationService",
     auth_type="api_key",
     input_schema=NfaEmergencyInfoServiceInput,
-    output_schema=NfaEmergencyInfoServiceOutput,
+    # Envelope-ready RootModel placeholder. The handler emits a
+    # ``{"kind": "collection", "items": [...], "total_count": N}`` dict that
+    # is normalized into ``LookupCollection`` by ``envelope.normalize``.
+    # The detailed per-item ``NfaEmergencyInfoServiceOutput`` schema is kept
+    # as a documentation contract above but is no longer the wire surface.
+    output_schema=cast("type[BaseModel]", _PlaceholderOutput),
     llm_description=build_description_v4(
         purpose=(
             "소방청(NFA) 구급정보서비스 — 시도본부·출동소방서·신고년월 기준으로 "

@@ -261,6 +261,35 @@ class ConsentLedgerRecord(BaseModel):
     correlation_id: StrictStr | None = None
     """Correlation id joining this record to the tool-call audit trail."""
 
+    # Withdrawal / action metadata (Spec 033 WS3 closure)
+    action: Literal["allow", "deny", "withdraw"] = "allow"
+    """Ledger action type.
+
+    - ``"allow"``    — citizen granted consent (default; backward-compat sentinel).
+    - ``"deny"``     — citizen denied consent.
+    - ``"withdraw"`` — citizen revoked a prior consent receipt.
+
+    Defaults to ``"allow"`` so pre-WS3 ledger lines that lack this field
+    parse correctly (``extra="forbid"`` is preserved; ``action`` is not
+    missing — the model default fills it in when deserialising from JSON that
+    omits the key).
+    """
+
+    scope_receipt_id: StrictStr | None = None
+    """Receipt ID that this record revokes (non-null iff ``action=="withdraw"``).
+
+    Set to the ``consent_receipt_id`` of the target allow/deny record.
+    ``None`` for ``allow`` and ``deny`` records.
+    """
+
+    withdrawn_at: datetime | None = None
+    """UTC tz-aware timestamp when the withdrawal was processed.
+
+    Non-null iff ``action=="withdraw"``.  Distinct from ``recorded_at`` so
+    the audit trail can distinguish "when was the withdraw decision made"
+    from "when was it durably committed to the ledger".
+    """
+
 
 class LedgerVerifyReport(BaseModel):
     """Output of ``kosmos permissions verify`` (Spec 033 FR-D05).

@@ -351,6 +351,32 @@ _MINIMAL_EXAMPLES: dict[str, dict[str, Any]] = {
         "manifest_hash": _compute_manifest_hash_for_test(),
         "emitter_pid": 47823,
     },
+    # --- Epic 2 — consent revoke IPC (arms 22-23) ---
+    "consent_revoke_request": {
+        "kind": "consent_revoke_request",
+        "version": "1.0",
+        "session_id": _SESSION_ID,
+        "correlation_id": _CORR_ID,
+        "role": "tui",
+        "frame_seq": 20,
+        "ts": _TS,
+        "request_id": "req-test-001",
+        "receipt_id": "rcpt-abcdefgh",
+        "scope": "once",
+    },
+    "consent_revoke_response": {
+        "kind": "consent_revoke_response",
+        "version": "1.0",
+        "session_id": _SESSION_ID,
+        "correlation_id": _CORR_ID,
+        "role": "backend",
+        "frame_seq": 21,
+        "ts": _TS,
+        "request_id": "req-test-001",
+        "ok": True,
+        "revoked_at": _TS,
+        "record_hash": "a" * 64,
+    },
 }
 
 _EXPECTED_ARMS = frozenset(_MINIMAL_EXAMPLES.keys())
@@ -494,3 +520,163 @@ def test_correlation_id_string_accepted() -> None:
     payload = dict(_MINIMAL_EXAMPLES["assistant_chunk"])
     payload["correlation_id"] = "01HNMJ5Z000000000000000099"
     _validate_roundtrip(payload)
+
+
+# ---------------------------------------------------------------------------
+# Lead-Diag-4 (2026-05-04, role='tool' wire conversion) — ChatMessage.tool_calls
+# ---------------------------------------------------------------------------
+
+
+def _make_chat_request(messages: list[dict[str, object]]) -> dict[str, object]:
+    base = dict(_MINIMAL_EXAMPLES["chat_request"])
+    base["messages"] = messages
+    return base
+
+
+def test_chat_message_tool_calls_accepted_on_assistant() -> None:
+    """Assistant message carrying ``tool_calls`` round-trips cleanly."""
+    payload = _make_chat_request([
+        {"role": "user", "content": "서울 날씨"},
+        {
+            "role": "assistant",
+            "content": "잠시만요",
+            "tool_calls": [
+                {
+                    "id": "call_001",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": '{"q":"서울"}'},
+                }
+            ],
+        },
+        {
+            "role": "tool",
+            "content": '{"ok":true}',
+            "name": "lookup",
+            "tool_call_id": "call_001",
+        },
+    ])
+    _validate_roundtrip(payload)
+
+
+def test_chat_message_tool_calls_rejected_on_user() -> None:
+    """Wire validator rejects ``tool_calls`` on non-assistant roles (D4 ext.)."""
+    payload = _make_chat_request([
+        {
+            "role": "user",
+            "content": "hi",
+            "tool_calls": [
+                {
+                    "id": "call_x",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": "{}"},
+                }
+            ],
+        },
+    ])
+    with pytest.raises(ValidationError, match="tool_calls is only valid"):
+        _ADAPTER.validate_json(json.dumps(payload))
+
+
+def test_chat_message_tool_calls_rejected_on_tool() -> None:
+    """Wire validator rejects ``tool_calls`` on role='tool' messages."""
+    payload = _make_chat_request([
+        {"role": "user", "content": "hi"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_x",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": "{}"},
+                }
+            ],
+        },
+        {
+            "role": "tool",
+            "content": "result",
+            "name": "lookup",
+            "tool_call_id": "call_x",
+            "tool_calls": [
+                {
+                    "id": "call_y",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": "{}"},
+                }
+            ],
+        },
+    ])
+    with pytest.raises(ValidationError, match="tool_calls is only valid"):
+        _ADAPTER.validate_json(json.dumps(payload))
+
+
+def test_chat_message_tool_calls_omitted_is_backward_compat() -> None:
+    """Legacy senders that omit ``tool_calls`` continue to validate."""
+    payload = _make_chat_request([
+        {"role": "user", "content": "안녕하세요"},
+        {"role": "assistant", "content": "반갑습니다"},
+    ])
+    _validate_roundtrip(payload)
+
+
+def test_chat_message_tool_calls_arguments_must_be_string() -> None:
+    """OpenAI spec — ``tool_calls[i].function.arguments`` is a JSON STRING."""
+    # Pydantic v2 will accept dict-typed arguments only if we declare them
+    # as dict. We declared ``arguments: str``, so a dict here MUST raise.
+    payload = _make_chat_request([
+        {"role": "user", "content": "hi"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_x",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": {"q": "obj"}},
+                }
+            ],
+        },
+    ])
+    with pytest.raises(ValidationError):
+        _ADAPTER.validate_json(json.dumps(payload))
+
+
+def test_chat_message_role_tool_still_requires_name_and_call_id() -> None:
+    """D4 invariant unchanged — role='tool' requires both name and tool_call_id."""
+    # Missing name
+    bad_no_name = _make_chat_request([
+        {"role": "user", "content": "hi"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_x",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": "{}"},
+                }
+            ],
+        },
+        {"role": "tool", "content": "r", "tool_call_id": "call_x"},
+    ])
+    with pytest.raises(ValidationError, match="non-empty 'name'"):
+        _ADAPTER.validate_json(json.dumps(bad_no_name))
+
+    # Missing tool_call_id
+    bad_no_id = _make_chat_request([
+        {"role": "user", "content": "hi"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_x",
+                    "type": "function",
+                    "function": {"name": "lookup", "arguments": "{}"},
+                }
+            ],
+        },
+        {"role": "tool", "content": "r", "name": "lookup"},
+    ])
+    with pytest.raises(ValidationError, match="non-empty 'tool_call_id'"):
+        _ADAPTER.validate_json(json.dumps(bad_no_id))
