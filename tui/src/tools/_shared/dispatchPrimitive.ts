@@ -191,24 +191,89 @@ export async function dispatchPrimitive<O = unknown>(
   // Register-and-await. The backend has already started _dispatch_primitive
   // as a parallel task; we wait for the matching ToolResultFrame to arrive
   // via llmClient.ts → pendingCallRegistry.resolve().
+  //
+  // Wave-4 G9 (F-beta-04 UX) — permission-aware watchdog timer.
+  //
+  // The default timeoutMs (30 s, FR-006 Spec 2297) is correct for happy-path
+  // mock dispatches but races against the gauntlet path: when the backend
+  // emits a `permission_request` frame for a login-gated adapter (NMC L3,
+  // HIRA L3), the citizen typically takes >30 s to read + decide, especially
+  // if K-EXAONE was mid-reasoning when the frame arrived. The watchdog below
+  // checks every `tickMs` whether any permission modal is currently active
+  // (in the `pendingPermissionSlot` head OR FIFO queue); if so, the deadline
+  // is reset by `tickMs` so the timer effectively pauses while a citizen
+  // decision is in-flight. The original FR-006 30 s budget is preserved for
+  // stuck-backend dispatches that have NO modal in flight.
+  //
+  // Lazy-imported to avoid a hard cycle dispatchPrimitive → store → React.
+  const { getActivePermission, getPermissionQueueDepth } = await import(
+    '../../store/pendingPermissionSlot.js'
+  )
   let resultFrame: ToolResultFrame
   try {
     resultFrame = await new Promise<ToolResultFrame>((resolve, reject) => {
-      const timeoutHandle = setTimeout(() => {
-        opts.registry.reject(
-          toolUseId,
-          new Error(
-            `${opts.primitive} 요청 시간 초과 (${timeoutMs}ms) — 백엔드 처리가 지연되고 있습니다.`,
-          ),
-        )
-      }, timeoutMs)
-
+      const tickMs = Math.max(1_000, Math.floor(timeoutMs / 5))
+      let deadline = Date.now() + timeoutMs
+      // Seed `lastModalSeen=true` if a modal is already active at dispatch
+      // time so the next-tick "modal-just-resolved" branch grants a fresh
+      // budget even if the citizen grants before the first tick fires.
+      let lastModalSeen =
+        getActivePermission() !== null || getPermissionQueueDepth() > 0
+      let activeHandle: ReturnType<typeof setTimeout> | null = null
+      // Wrap resolve/reject so the watchdog stops as soon as the registry
+      // settles (the registry's stored `timeoutHandle` is the LATEST handle
+      // we set, kept current via `_setRegistryHandle`).
+      const wrappedResolve = (frame: ToolResultFrame): void => {
+        if (activeHandle !== null) clearTimeout(activeHandle)
+        activeHandle = null
+        resolve(frame)
+      }
+      const wrappedReject = (err: Error): void => {
+        if (activeHandle !== null) clearTimeout(activeHandle)
+        activeHandle = null
+        reject(err)
+      }
+      const tick = (): void => {
+        const now = Date.now()
+        const modalActive =
+          getActivePermission() !== null || getPermissionQueueDepth() > 0
+        if (modalActive) {
+          // Permission modal in-flight — extend deadline by one tick so the
+          // citizen has at minimum (timeoutMs) of post-grant runway. The
+          // backend already enforces its own permission TTL
+          // (KOSMOS_PERMISSION_TIMEOUT_SECONDS=60); this watchdog just
+          // needs to outlive the modal-grant decision so the citizen sees
+          // the modal instead of a 30s spinner timeout.
+          deadline = now + timeoutMs
+          lastModalSeen = true
+          span.setAttribute('kosmos.tui.primitive.timeout_paused', true)
+        } else if (lastModalSeen) {
+          // Modal just resolved — give the backend a fresh full budget
+          // to dispatch the gated tool (NMC HTTP, etc.) before timing out.
+          deadline = now + timeoutMs
+          lastModalSeen = false
+        }
+        if (now >= deadline) {
+          opts.registry.reject(
+            toolUseId,
+            new Error(
+              `${opts.primitive} 요청 시간 초과 (${timeoutMs}ms) — 백엔드 처리가 지연되고 있습니다.`,
+            ),
+          )
+          return
+        }
+        activeHandle = setTimeout(tick, Math.min(tickMs, deadline - now))
+      }
+      activeHandle = setTimeout(tick, Math.min(tickMs, timeoutMs))
       opts.registry.register({
         callId: toolUseId,
         primitive: opts.primitive,
-        resolve,
-        reject,
-        timeoutHandle,
+        resolve: wrappedResolve,
+        reject: wrappedReject,
+        // Registry calls clearTimeout(timeoutHandle) on resolve/reject; we
+        // pass a no-op timer so the registry's clear is harmless and the
+        // wrapped resolve/reject above clear our actual `activeHandle`.
+        timeoutHandle: setTimeout(() => {}, 0),
       })
     })
   } catch (err) {

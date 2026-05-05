@@ -33,6 +33,7 @@ mock.module('../../../src/ipc/bridgeSingleton.js', () => ({
 import {
   registerIpcToolUseConfirmQueue,
   pushIpcPermissionRequest,
+  _resetPermissionBridgeForTest,
 } from '../../../src/utils/permissions/ipcPermissionBridge'
 import { LookupPrimitive } from '../../../src/tools/LookupPrimitive/LookupPrimitive'
 import { VerifyPrimitive } from '../../../src/tools/VerifyPrimitive/VerifyPrimitive'
@@ -85,8 +86,8 @@ function captureQueue(): {
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  // Clear any registered setter between tests.
-  registerIpcToolUseConfirmQueue(null)
+  // Wave-4 G9 — full reset (setter + replay queue + decision stash).
+  _resetPermissionBridgeForTest()
   sentFrames.length = 0
   stderrLines.length = 0
 })

@@ -22,6 +22,7 @@ import { describe, it, expect, beforeEach, mock } from 'bun:test'
 import {
   registerIpcToolUseConfirmQueue,
   pushIpcPermissionRequest,
+  _resetPermissionBridgeForTest,
   type SetToolUseConfirmQueueFn,
 } from '../../../src/utils/permissions/ipcPermissionBridge'
 import { VerifyPrimitive } from '../../../src/tools/VerifyPrimitive/VerifyPrimitive'
@@ -76,7 +77,8 @@ function makeAccumulatingSetter(): {
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  registerIpcToolUseConfirmQueue(null)
+  // Wave-4 G9 — full reset (clears setter AND replay queue + decision stash).
+  _resetPermissionBridgeForTest()
 })
 
 // ---------------------------------------------------------------------------
@@ -118,7 +120,7 @@ describe('REPL permission-bridge — register+push integration', () => {
     expect(received[1]?.toolUseID).toBe('req-rb-t2b')
   })
 
-  it('Test 3 — unregister → subsequent push is silent (setter not called again)', () => {
+  it('Test 3 — Wave-4 G9 — push during unregister is queued, replayed on next register', () => {
     const { received, setter } = makeAccumulatingSetter()
     registerIpcToolUseConfirmQueue(setter)
 
@@ -140,8 +142,18 @@ describe('REPL permission-bridge — register+push integration', () => {
     } finally {
       process.stdout.write = origWrite
     }
-    // Still only 1 — the second push was silently dropped.
+    // While unregistered, the second push is QUEUED (Wave-4 G9 fix —
+    // F-beta-04 UX) so the citizen still sees the modal once the REPL
+    // re-mounts. The setter has not been invoked yet because no setter
+    // is currently registered.
     expect(received.length).toBe(1)
+
+    // Re-register (mirrors REPL re-mount during --continue / suspense swap).
+    const { received: received2, setter: setter2 } = makeAccumulatingSetter()
+    registerIpcToolUseConfirmQueue(setter2)
+    // Drain replays the queued frame onto the new setter.
+    expect(received2.length).toBe(1)
+    expect(received2[0]?.toolUseID).toBe('req-rb-t3b')
   })
 
   it('Test 4 — setter receives [...prev, confirm] accumulator pattern', () => {
