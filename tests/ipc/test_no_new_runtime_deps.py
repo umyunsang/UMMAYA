@@ -124,6 +124,8 @@ _TUI_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
         "pdf-to-img",
         # Spec 1635 P4 UI L2 — FR-032 /export PDF assembly (MIT)
         "pdf-lib",
+        # Spec audit-prod — Korean PDF export embeds a bundled Hangul font via pdf-lib.
+        "@pdf-lib/fontkit",
         "proper-lockfile",
         "qrcode",
         "react",
