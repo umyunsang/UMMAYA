@@ -107,7 +107,7 @@ export const UI_L2_SLASH_COMMANDS: readonly SlashCommandCatalogEntryT[] = [
     hidden: false,
   },
   {
-    name: '/plugins',
+    name: '/plugin',
     group: 'tool',
     description_ko: '플러그인 브라우저를 엽니다',
     description_en: 'Open the plugin browser',

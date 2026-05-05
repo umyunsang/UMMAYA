@@ -3522,14 +3522,45 @@ async def run(  # noqa: C901
                         session_id=frame.session_id,
                     )
                     _registry = _ensure_tool_registry()
-                    await handle_plugin_op_request(
-                        frame,
-                        registry=_registry,
-                        executor=ToolExecutor(registry=_registry),  # type: ignore[arg-type]
-                        write_frame=write_frame,
-                        consent_bridge=consent_bridge,
-                        session_id=frame.session_id,
-                    )
+                    # Wave-5 (F-ε-03 micro-fix): outer timeout so a stuck
+                    # catalog fetch / SLSA verifier / unknown plugin id never
+                    # leaves the citizen with a silent placeholder. Spec 1636
+                    # SC-005 SLO is 30s; we cap at 90s (3× SLO) to allow real
+                    # network slowness while still surfacing a terminal error
+                    # frame instead of indefinite spinner.
+                    try:
+                        await asyncio.wait_for(
+                            handle_plugin_op_request(
+                                frame,
+                                registry=_registry,
+                                executor=ToolExecutor(registry=_registry),  # type: ignore[arg-type]
+                                write_frame=write_frame,
+                                consent_bridge=consent_bridge,
+                                session_id=frame.session_id,
+                            ),
+                            timeout=90.0,
+                        )
+                    except asyncio.TimeoutError:
+                        timeout_err = ErrorFrame(
+                            session_id=frame.session_id,
+                            correlation_id=frame.correlation_id or str(uuid.uuid4()),
+                            role="backend",
+                            ts=_utcnow(),
+                            kind="error",
+                            code="plugin_op_timeout",
+                            message=(
+                                "plugin_op 처리가 90초를 초과해 중단되었습니다. "
+                                "카탈로그 조회 / 번들 다운로드 / SLSA 검증 단계 "
+                                "중 하나가 응답하지 않습니다. 다시 시도하시거나 "
+                                "다른 플러그인 id 를 사용해주세요."
+                            ),
+                            details={
+                                "request_op": getattr(frame, "request_op", None),
+                                "slo_30s": True,
+                                "cap_90s": True,
+                            },
+                        )
+                        await write_frame(timeout_err)
                 except Exception as exc:  # noqa: BLE001
                     logger.exception("plugin_op handler failed: %s", exc)
                     err = ErrorFrame(

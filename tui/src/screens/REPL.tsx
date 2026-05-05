@@ -353,6 +353,7 @@ import { PermissionReceiptProvider, usePermissionReceipts } from '../context/Per
 import { usePermissionReceiptWatcher } from '../hooks/usePermissionReceiptWatcher.js';
 import type { PermissionReceiptT } from '../schemas/ui-l2/permission.js';
 import { ConsentListView } from '../components/consent/ConsentListView.js';
+import { loadReceiptsFromDisk, mergeReceipts } from '../memdir/loadReceiptsFromDisk.js';
 import { ConsentRevokeConfirmDialog } from '../components/consent/ConsentRevokeConfirmDialog.js';
 import { requestRevoke } from '../ipc/consentBridge.js';
 import { AgentVisibilityPanel } from '../components/agents/AgentVisibilityPanel.js';
@@ -3784,7 +3785,13 @@ export function REPL({
           // `isLocalJSXCommand: false` keeps the parent prompt subtree's
           // useInput hooks active so the dialog's own Esc watcher fires
           // (AGENTS.md "Infrastructure insights" #3).
-          const receipts = [...permissionReceiptsRef.current];
+          // Wave-5 (F-gamma-04): merge disk-persisted prior-session receipts
+          // with the in-session ref so /consent list shows the full history,
+          // not just receipts granted since this REPL boot.
+          const receipts = mergeReceipts(
+            permissionReceiptsRef.current,
+            loadReceiptsFromDisk(),
+          );
           setToolJSX({
             jsx: React.createElement(ConsentListView, {
               receipts,
