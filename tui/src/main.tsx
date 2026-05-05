@@ -48,7 +48,7 @@ import { getCommands } from './commands.js';
 import type { StatsStore } from './context/stats.js';
 import { launchInvalidSettingsDialog, launchResumeChooser } from './dialogLaunchers.js';
 import { SHOW_CURSOR } from './ink/termio/dec.js';
-import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens, showDialog } from './interactiveHelpers.js';
+import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens, showDialog, showSetupDialog } from './interactiveHelpers.js';
 import { initBuiltinPlugins } from './plugins/bundled/index.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { getMcpToolsCommandsAndResources, prefetchAllMcpResources } from './services/mcp/client.js';
@@ -1510,8 +1510,22 @@ async function run(): Promise<CommanderCommand> {
           // SWAP: KOSMOS-integration-verification — `require()` of OnboardingFlow.tsx
           // fails on Bun because the module's transitive deps include top-level
           // await; switch to dynamic `await import()` (already async-safe context).
+          //
+          // realuse-audit-2026-05-05 § G2 (PR #2773) — replaced
+          // `showDialog(root, ...)` with `showSetupDialog(root, ...)` so the
+          // OnboardingFlow mounts inside `<AppStateProvider><KeybindingSetup>`
+          // wrappers (CC restored-src parity, line 120 of interactiveHelpers).
+          // Without these the chord registry is unwired and PreflightStep's
+          // `useInput((_, k) => k.return && onAdvance())` never resolves to
+          // any registered action — Enter goes through the bare hook but the
+          // surrounding effects (useApp().exit, surface emission, locale) all
+          // expect provider context. F-delta-03 PASS evidence: the same
+          // OnboardingFlow component re-mounted from inside REPL.tsx
+          // (kosmosOnboardingMode state, where KeybindingSetup is in scope)
+          // works end-to-end. AGENTS.md infra-insight #3 + #4. Closes
+          // F-alpha-02 / F-delta-01 / F-delta-02.
           const { OnboardingFlow } = await import('./components/onboarding/OnboardingFlow.js');
-          await showDialog(root, (done) => {
+          await showSetupDialog(root, (done) => {
             return React.createElement(OnboardingFlow, {
               sessionId: getKosmosBridgeSessionId(),
               onComplete: () => done(),

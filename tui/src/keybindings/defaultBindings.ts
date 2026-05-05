@@ -206,4 +206,38 @@ export const DEFAULT_BINDING_BLOCKS: KeybindingBlock[] = [
       down: 'select:next',
     },
   },
+  // G2 fix (PR #2773 — realuse-audit-2026-05-05 § G2) — Autocomplete
+  // context chords. AGENTS.md infra-insight #4: useTypeahead.tsx:1276
+  // calls `useKeybindings(autocompleteHandlers, { context: 'Autocomplete' })`
+  // and registers handlers for `autocomplete:dismiss / accept / previous /
+  // next`, but the chord registry never resolved Esc/Tab/Up/Down to those
+  // actions (the chord block was missing, so resolveKeyWithChordState
+  // returned `none`). Esc then fell through to PromptInput's main useInput
+  // which has no autocomplete-clear branch — citizens reported Esc as a
+  // no-op while suggestions were visible (F-alpha-04). Mirrors CC
+  // restored-src defaultBindings.ts line 100.
+  {
+    context: 'Autocomplete',
+    bindings: {
+      tab: 'autocomplete:accept',
+      escape: 'autocomplete:dismiss',
+      up: 'autocomplete:previous',
+      down: 'autocomplete:next',
+    },
+  },
+  // G2 fix (PR #2773) — Help overlay dismiss chord. HelpV2Grouped.tsx:132
+  // calls `useKeybinding('help:dismiss', ..., { context: 'Help' })` to
+  // honour the CC HelpV2 keybinding-registry contract; without an
+  // Esc-bound chord the keybinding path was a no-op. The component already
+  // pairs the `useKeybinding` with a direct `useInput((_, k) => k.escape
+  // && onDismiss())` fallback (defense-in-depth, AGENTS.md insight #4),
+  // but adding the chord here aligns the registry path with CC and stops
+  // Esc from leaking into the Chat-context `draft-cancel` action while
+  // /help is open (F-alpha-05, F-delta-04). Mirrors CC line 215.
+  {
+    context: 'Help',
+    bindings: {
+      escape: 'help:dismiss',
+    },
+  },
 ]
