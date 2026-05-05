@@ -14,6 +14,11 @@ export type SerializedMessage = Message & {
   version: string
   gitBranch?: string
   slug?: string // Session slug for files like plans (used for resume)
+  // KOSMOS shell-context isolation for `--continue` resolver scoping.
+  // Spec: specs/realuse-audit-2026-05-05/research/g6-session.md (F-alpha-13).
+  // Optional — legacy sessions written before the field was introduced
+  // omit it and fall through to global cwd-scoped recency.
+  originalShellId?: string
 }
 
 export type LogOption = {
@@ -50,6 +55,13 @@ export type LogOption = {
   mode?: 'coordinator' | 'normal' // Session mode for coordinator/normal detection
   worktreeSession?: PersistedWorktreeSession | null // Worktree state at session end (null = exited, undefined = never entered)
   contentReplacements?: ContentReplacementRecord[] // Replacement decisions for resume reconstruction
+  /**
+   * Shell-context id stamped on the session's first JSONL line at write
+   * time. Read by the `--continue` resolver to filter cwd-scoped logs by
+   * the originating shell (Spec: g6-session.md, F-alpha-13). Optional —
+   * legacy sessions omit it and fall through to global cwd-scoped recency.
+   */
+  originalShellId?: string
 }
 
 export type SummaryMessage = {

@@ -73,6 +73,8 @@ import { registerCleanup } from './cleanupRegistry.js'
 import { updateSessionName } from './concurrentSessions.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
+// G6 — shell-context-scoped `--continue` (specs/realuse-audit-2026-05-05/research/g6-session.md).
+import { getShellContextId } from './shellContext.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { getKosmosSessionsDir } from './kosmosPaths.js'
@@ -1084,6 +1086,10 @@ class Project {
           version: VERSION,
           gitBranch,
           slug,
+          // G6 (F-alpha-13): shell-context id for `--continue` resolver scoping.
+          // Stable for the lifetime of the TUI process; differs across
+          // side-by-side terminals. Read at resume time by `pickByShellContextId`.
+          originalShellId: getShellContextId(),
         }
         await this.appendEntry(transcriptMessage)
         if (isChainParticipant(message)) {
@@ -4612,6 +4618,12 @@ type LiteMetadata = {
   prNumber?: number
   prUrl?: string
   prRepository?: string
+  /**
+   * G6 — shell-context id stamped on the session's first JSONL line.
+   * Read by `pickByShellContextId` in the `--continue` resolver. Undefined
+   * for legacy sessions written before the field was introduced.
+   */
+  originalShellId?: string
 }
 
 /**
@@ -4774,6 +4786,10 @@ async function readLiteMetadata(
   const projectPath = extractJsonStringField(head, 'cwd')
   const teamName = extractJsonStringField(head, 'teamName')
   const agentSetting = extractJsonStringField(head, 'agentSetting')
+  // G6 (F-alpha-13): shell-context id stamped at write time on the first line
+  // alongside `cwd`. Used by `pickByShellContextId` in the `--continue` resolver
+  // to filter out cross-shell pollution. Optional — legacy sessions omit it.
+  const originalShellId = extractJsonStringField(head, 'originalShellId')
 
   // Prefer the last-prompt tail entry — captured by extractFirstPrompt at
   // write time (filtered, authoritative) and shows what the user was most
@@ -4832,6 +4848,7 @@ async function readLiteMetadata(
     prNumber,
     prUrl,
     prRepository,
+    originalShellId,
   }
 }
 
@@ -5066,6 +5083,8 @@ async function enrichLog(
     prUrl: meta.prUrl,
     prRepository: meta.prRepository,
     projectPath: meta.projectPath ?? log.projectPath,
+    // G6 (F-alpha-13) — surface shell-context id for resolver filtering.
+    originalShellId: meta.originalShellId,
   }
 
   // Provide a fallback title for sessions where we couldn't extract the first

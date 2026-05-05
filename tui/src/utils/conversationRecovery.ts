@@ -36,6 +36,8 @@ import {
 } from './messages.js'
 import { copyPlanForResume } from './plans.js'
 import { processSessionStartHooks } from './sessionStart.js'
+// G6 (F-alpha-13) — shell-context-scoped `--continue` resolver.
+import { getShellContextId, pickByShellContextId } from './shellContext.js'
 import {
   buildConversationChain,
   checkResumeConsistency,
@@ -505,11 +507,19 @@ export async function loadConversationForResume(
         }
       }
       const logs = await logsPromise
-      log =
-        logs.find(l => {
-          const id = getSessionIdFromLog(l)
-          return !id || !skip.has(id)
-        }) ?? null
+      const candidates = logs.filter(l => {
+        const id = getSessionIdFromLog(l)
+        return !id || !skip.has(id)
+      })
+
+      // G6 (F-alpha-13): prefer the most recent log whose `originalShellId`
+      // matches the current shell context. Falls through to the global
+      // recent winner when no shell-id-scoped match exists — preserves the
+      // common-case "single shell, exit, --continue" UX while filtering
+      // out cross-shell pollution from parallel agents and audit drills.
+      // Spec: specs/realuse-audit-2026-05-05/research/g6-session.md.
+      const currentShellId = getShellContextId()
+      log = pickByShellContextId(candidates, currentShellId) ?? candidates[0] ?? null
     } else if (sourceJsonlFile) {
       // --resume with a .jsonl path (cli/print.ts routes on suffix).
       // Same chain walk as the sid branch below — only the starting
