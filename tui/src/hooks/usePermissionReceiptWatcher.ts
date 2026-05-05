@@ -141,6 +141,10 @@ export function usePermissionReceiptWatcher(addReceipt: AddReceiptFn): void {
         revoked_at: null,
       }
 
+      // Wave-4 G11 / F-gamma-04 instrumentation.
+      process.stderr.write(
+        `RECEIPT_CTX state=ipc-echo source=ipc-echo receipt_id=${receipt.receipt_id} tool=${toolName}\n`,
+      )
       // Call addReceipt via ref — safe from async closures.
       addReceiptRef.current(receipt)
     }

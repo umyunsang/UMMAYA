@@ -53,8 +53,8 @@ describe('G2 — HelpV2Grouped Esc dismiss (F-alpha-05, F-delta-04)', () => {
   })
 })
 
-describe('G2 — AgentsCommandView Esc dismiss (F-ε-05)', () => {
-  it('calls onExit when Esc is pressed in /agents overlay', async () => {
+describe('G2/G10 — AgentsCommandView Esc dismiss (F-ε-05)', () => {
+  it('calls onExit when Esc is pressed in /agents overlay (useInput fallback path)', async () => {
     let exitCount = 0
     const node = renderAgentsCommand('', () => (exitCount += 1))
     const result = render(
@@ -63,6 +63,31 @@ describe('G2 — AgentsCommandView Esc dismiss (F-ε-05)', () => {
           handlerOverrides={noopHandlers}
           announcer={noopAnnouncer}
           activeContexts={['Chat', 'Global']}
+        >
+          {node}
+        </KeybindingProviderSetup>
+      </ThemeProvider>,
+    )
+    await tick()
+    expect(result.lastFrame()).toContain('ESC 종료')
+
+    result.stdin.write(ESC)
+    await tick(40)
+    expect(exitCount).toBeGreaterThanOrEqual(1)
+    result.unmount()
+  })
+
+  it('G10a — calls onExit when Agents context chord block routes Esc to agents:dismiss', async () => {
+    // G10a fix: Agents context is now registered via useKeybinding so ChordInterceptor
+    // resolves Esc → agents:dismiss before Chat→draft-cancel/chat:cancel can claim it.
+    let exitCount = 0
+    const node = renderAgentsCommand('', () => (exitCount += 1))
+    const result = render(
+      <ThemeProvider>
+        <KeybindingProviderSetup
+          handlerOverrides={noopHandlers}
+          announcer={noopAnnouncer}
+          activeContexts={['Agents', 'Chat', 'Global']}
         >
           {node}
         </KeybindingProviderSetup>

@@ -750,7 +750,24 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
     switch (message.type) {
       case 'assistant': {
         isNewChain = isNewChain || message.message.content.length > 1
-        return message.message.content.map((_, index) => {
+        // G10b fix (PR #2773 — realuse-audit-2026-05-05 § G10b, F-alpha-09):
+        // K-EXAONE on FriendliAI occasionally delivers thinking blocks with
+        // later stream-end timestamps than tool_use blocks — the content array
+        // then has [tool_use, thinking] instead of CC's canonical [thinking, tool_use].
+        // normalizeMessages splits the array into one-per-block messages; without
+        // stable ordering the thinking row appears AFTER the tool_result row in
+        // Ctrl-O transcript view. Stable sort: thinking/redacted_thinking always
+        // before any other block type (preserving relative order within each group).
+        const isThinkingBlock = (b: (typeof message.message.content)[number]) =>
+          b.type === 'thinking' || b.type === 'redacted_thinking'
+        const orderedContent =
+          message.message.content.length > 1
+            ? [
+                ...message.message.content.filter(isThinkingBlock),
+                ...message.message.content.filter(b => !isThinkingBlock(b)),
+              ]
+            : message.message.content
+        return orderedContent.map((_, index) => {
           const uuid = isNewChain
             ? deriveUUID(message.uuid, index)
             : message.uuid

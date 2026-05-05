@@ -2492,13 +2492,46 @@ async def run(  # noqa: C901
         _seen_calls: dict[str, str] = {}  # hash → outcome ('no_data' | 'error' | 'ok')
 
         def _hash_call(tool_id: str, params: dict[str, object]) -> str:
+            # Wave-4 G11 / F-beta-03 — param normalization before hashing.
+            # K-EXAONE varies whitespace in string values, emits whole-number
+            # floats (1.0 instead of 1), and varies pagination fields across
+            # retries. All produce different hashes for semantically identical
+            # calls, circumventing the dedup gate. Normalize before hashing:
+            #   1. Strip high-cardinality pagination keys (page_no / num_of_rows /
+            #      order_by / pageNo / numOfRows) — paginating the same query is
+            #      the same semantic call; a prior NO_DATA on page 1 means page 2
+            #      will also be empty for that query scope.
+            #   2. Collapse internal whitespace in string values.
+            #   3. Coerce whole-number floats to int (1.0 → 1).
             import hashlib as _hashlib  # noqa: PLC0415
             import json as _json_dedup  # noqa: PLC0415
 
+            _PAGINATION_KEYS: frozenset[str] = frozenset(
+                {"page_no", "num_of_rows", "order_by", "pageNo", "numOfRows", "pageSize"}
+            )
+
+            def _norm_val(v: object) -> object:
+                if isinstance(v, str):
+                    return " ".join(v.split())  # collapse internal whitespace
+                if isinstance(v, float) and v == int(v):
+                    return int(v)  # 1.0 → 1
+                return v
+
+            normalized = {
+                k: _norm_val(v) for k, v in params.items() if k not in _PAGINATION_KEYS
+            }
             try:
-                canonical = _json_dedup.dumps(params, sort_keys=True, ensure_ascii=False)
+                canonical = _json_dedup.dumps(
+                    normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                )
             except (TypeError, ValueError):
-                canonical = repr(params)
+                canonical = repr(normalized)
+            logger.debug(
+                "DEDUP key=%s tool_id=%s params_canonical=%s",
+                _hashlib.sha256(f"{tool_id}|{canonical}".encode()).hexdigest()[:16],
+                tool_id,
+                canonical[:120],
+            )
             return _hashlib.sha256(f"{tool_id}|{canonical}".encode()).hexdigest()[:16]
 
         def _classify_envelope_outcome(env: dict[str, object]) -> str:

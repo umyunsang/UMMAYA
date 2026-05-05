@@ -240,4 +240,18 @@ export const DEFAULT_BINDING_BLOCKS: KeybindingBlock[] = [
       escape: 'help:dismiss',
     },
   },
+  // G10 fix (PR #2773 — realuse-audit-2026-05-05 § G10a) — Agents overlay
+  // dismiss chord (F-ε-05). ChordInterceptor matches `chat:cancel` / `draft-cancel`
+  // for Esc before AgentsCommandView's raw useInput fallback can fire —
+  // `isLocalJSXCommand: false` keeps PromptInput active, so the Chat context
+  // Esc bindings are always in scope. Adding an `Agents` chord block here
+  // makes `agents:dismiss` win over `chat:cancel` when AgentsCommandView
+  // registers its `useKeybinding('agents:dismiss', ..., { context: 'Agents' })`.
+  // Pattern is identical to the Help block above (AGENTS.md insight #4).
+  {
+    context: 'Agents',
+    bindings: {
+      escape: 'agents:dismiss',
+    },
+  },
 ]

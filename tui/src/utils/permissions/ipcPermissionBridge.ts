@@ -35,6 +35,13 @@ import type { Tool } from '../../Tool.js'
 import { createAssistantMessage } from '../../utils/messages.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { resolvePermissionDecision } from '../../store/pendingPermissionSlot.js'
+import type { PermissionReceiptT } from '../../schemas/ui-l2/permission.js'
+import {
+  aalToLayer,
+  type KosmosPrimitive,
+} from './aalToLayer.js'
+import { resolveAdapter } from '../../services/api/adapterManifest.js'
+import { getKosmosBridgeSessionId } from '../../ipc/bridgeSingleton.js'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,6 +56,56 @@ export type SetToolUseConfirmQueueFn = (
 // ---------------------------------------------------------------------------
 
 let _registeredSetter: SetToolUseConfirmQueueFn | null = null
+
+// ---------------------------------------------------------------------------
+// Wave-4 G11 / F-gamma-04 — optimistic receipt writer.
+//
+// When the citizen presses Y in the permission modal, `onAllow` fires and
+// the backend receipt is written + echoed back within ~1s. But `/consent list`
+// invocations that happen in that brief window see 0 receipts because the
+// watcher has not yet received the echo.  Registering an optimistic writer
+// here lets `onAllow` immediately add a placeholder receipt to the context,
+// giving `/consent list` instant feedback with source="optimistic".  The real
+// backend echo (with the canonical rcpt-* id) arrives shortly after and is
+// added as a second entry; the context allows multiple receipts per tool.
+// ---------------------------------------------------------------------------
+
+/** Callback injected by REPL to eagerly add an optimistic receipt. */
+let _optimisticAddReceipt: ((r: PermissionReceiptT) => void) | null = null
+
+/**
+ * Register the addReceipt callback for optimistic (pre-echo) receipt writes.
+ * Call with null on REPL unmount.
+ */
+export function registerOptimisticAddReceipt(
+  fn: ((r: PermissionReceiptT) => void) | null,
+): void {
+  _optimisticAddReceipt = fn
+}
+
+// ---------------------------------------------------------------------------
+// Wave-4 G9 (F-beta-04 UX) — setter-null replay queue.
+//
+// Backend `permission_request` frames can arrive at ANY moment, including
+// during REPL mount/unmount transitions when `_registeredSetter` is briefly
+// null (e.g., `--continue` warm-up, suspense boundary swap, error-boundary
+// remount). The prior behaviour silently dropped the frame with a warning,
+// leaving the citizen with a frozen spinner that timed out at 30 s with no
+// modal ever rendered.
+//
+// Fix: buffer the inbound `PermissionRequestFrame` payloads in this queue
+// when no setter is registered. As soon as `registerIpcToolUseConfirmQueue`
+// is called with a non-null setter (REPL mount), drain the queue by calling
+// `pushIpcPermissionRequest` once per buffered frame. Idempotent on
+// duplicate request_id (the slot's `isDuplicate` guard handles re-entry).
+//
+// Bound the queue at 16 entries — beyond that the backend has clearly lost
+// the citizen-facing flow and additional frames are not actionable; we drop
+// the oldest with a stderr warning so the audit trail surfaces the loss.
+// ---------------------------------------------------------------------------
+
+const _MAX_QUEUED_FRAMES = 16
+const _pendingFrames: PermissionRequestFrame[] = []
 
 // ---------------------------------------------------------------------------
 // Audit-4 P0-5 fix — per-request decision stash so the KOSMOS adapter can
@@ -80,11 +137,34 @@ export function setPendingPermissionDecision(
 /**
  * Register the REPL's setToolUseConfirmQueue.
  * Call with null on REPL unmount to avoid stale references.
+ *
+ * Wave-4 G9 (F-beta-04 UX): on transition from null → non-null, drain any
+ * `permission_request` frames that arrived while the REPL was unmounted so
+ * the citizen sees the modal instead of a 30 s timeout. Replay is
+ * synchronous — the slot's idempotency guard (`isDuplicate`) absorbs any
+ * duplicate the backend may resend.
  */
 export function registerIpcToolUseConfirmQueue(
   setter: SetToolUseConfirmQueueFn | null,
 ): void {
+  const wasNull = _registeredSetter === null
   _registeredSetter = setter
+  if (setter !== null && wasNull && _pendingFrames.length > 0) {
+    const drained = _pendingFrames.splice(0, _pendingFrames.length)
+    for (const frame of drained) {
+      pushIpcPermissionRequest(frame)
+    }
+  }
+}
+
+/**
+ * Test-only helper: clear the replay queue. Production code never calls this.
+ */
+export function _resetPermissionBridgeForTest(): void {
+  _registeredSetter = null
+  _pendingFrames.length = 0
+  _pendingPermissionDecisions.clear()
+  _optimisticAddReceipt = null
 }
 
 // ---------------------------------------------------------------------------
@@ -132,8 +212,19 @@ function primitiveKindToTool(kind: PrimitiveKind): Tool {
 export function pushIpcPermissionRequest(frame: PermissionRequestFrame): void {
   const setter = _registeredSetter
   if (setter === null) {
-    console.warn(
-      `[kosmos.ipc.permission] no setter registered — cannot present permission modal for request_id=${frame.request_id}. Is REPL mounted?`,
+    // Wave-4 G9 (F-beta-04 UX) — buffer instead of dropping. The frame is
+    // replayed synchronously the moment a setter is registered (REPL mount).
+    if (_pendingFrames.length >= _MAX_QUEUED_FRAMES) {
+      const evicted = _pendingFrames.shift()
+      process.stderr.write(
+        `[KOSMOS permissionBridge WARN] replay queue full (${_MAX_QUEUED_FRAMES}); ` +
+          `evicting oldest request_id=${evicted?.request_id ?? '(unknown)'}\n`,
+      )
+    }
+    _pendingFrames.push(frame)
+    process.stderr.write(
+      `[kosmos.ipc.permission] setter not registered yet; queued request_id=${frame.request_id} ` +
+        `(queue depth=${_pendingFrames.length})\n`,
     )
     return
   }
@@ -183,6 +274,43 @@ export function pushIpcPermissionRequest(frame: PermissionRequestFrame): void {
     // and is what the backend's `_check_permission_gate` uses to populate the
     // consent ledger.
     resolvePermissionDecision(frame.request_id, 'granted')
+    // Wave-4 G11 / F-gamma-04 — optimistic receipt write.
+    // Write a placeholder receipt immediately so `/consent list` shows the
+    // grant BEFORE the backend echo arrives (~1s later).  The watcher in
+    // `usePermissionReceiptWatcher` will add the canonical receipt when the
+    // echo frame arrives; both coexist in the context (distinct receipt_ids).
+    // The optimistic id uses prefix `rcpt-opt-` which satisfies the schema
+    // regex /^rcpt-[A-Za-z0-9_-]{8,}$/ (9 + 12 = 21 chars).
+    if (_optimisticAddReceipt !== null) {
+      const toolId =
+        (frame as { tool_id?: string | null }).tool_id ||
+        frame.worker_id ||
+        frame.primitive_kind
+      const manifestEntry = toolId ? resolveAdapter(toolId) : undefined
+      const toolName: string = manifestEntry?.name ?? toolId ?? 'unknown'
+      const isIrreversible: boolean =
+        (manifestEntry as unknown as { is_irreversible?: boolean } | undefined)
+          ?.is_irreversible ?? false
+      const primitiveKind = frame.primitive_kind
+      const layer: 1 | 2 | 3 = primitiveKind
+        ? (aalToLayer(primitiveKind as KosmosPrimitive, isIrreversible) ?? 1)
+        : 1
+      // Build a stable alphanum suffix from request_id (trim to 12 chars)
+      const suffix = frame.request_id.replace(/[^A-Za-z0-9]/g, '').slice(0, 12).padEnd(8, '0')
+      const optimisticReceipt: PermissionReceiptT = {
+        receipt_id: `rcpt-opt-${suffix}` as PermissionReceiptT['receipt_id'],
+        layer,
+        tool_name: toolName,
+        decision: decision as PermissionReceiptT['decision'],
+        decided_at: new Date().toISOString(),
+        session_id: getKosmosBridgeSessionId() ?? 'unknown',
+        revoked_at: null,
+      }
+      process.stderr.write(
+        `RECEIPT_CTX state=optimistic source=optimistic receipt_id=${optimisticReceipt.receipt_id}\n`,
+      )
+      _optimisticAddReceipt(optimisticReceipt)
+    }
     setter!((prev) => prev.filter((item) => item.toolUseID !== toolUseID))
   }
 

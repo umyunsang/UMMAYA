@@ -14,6 +14,7 @@
 
 import * as React from 'react'
 import { Box, Text, useInput } from 'ink'
+import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { AgentVisibilityPanel } from '../components/agents/AgentVisibilityPanel.js'
 import type { AgentVisibilityEntryT } from '../schemas/ui-l2/agent.js'
 import { AgentVisibilityEntry } from '../schemas/ui-l2/agent.js'
@@ -106,14 +107,19 @@ function AgentsCommandView({
     emitSurfaceActivation('agents', { 'kosmos.agents.detail': showDetail })
   }, [showDetail])
 
-  // Defense-in-depth Esc dismiss — mirrors HelpV2Grouped (REPL.tsx:3344-3355
-  // comment block). The /agents command mounts via setToolJSX, and even with
-  // `isLocalJSXCommand: false` the parent prompt's Esc handlers may not route
-  // back here. Owning Esc directly via `useInput` guarantees the overlay can
-  // always be dismissed. AGENTS.md "Infrastructure insights" #3 + #4: every
-  // overlay whose dismiss key races with parent tear-down MUST own its own
-  // useInput Esc fallback (the chord registry covers Tier 1 only — `agents:dismiss`
-  // is not Tier 1 in defaultBindings.ts, so a `useKeybinding` alone never fires).
+  // G10 fix (PR #2773 — realuse-audit-2026-05-05 § G10a, F-ε-05):
+  // Two-layer Esc dismiss — mirrors HelpV2Grouped (AGENTS.md insight #4):
+  //   Layer 1: useKeybinding with context: 'Agents' so ChordInterceptor
+  //            resolves Esc → agents:dismiss (via the Agents block in
+  //            defaultBindings.ts) before Chat→draft-cancel/chat:cancel
+  //            can claim it. Without this, the Chat context Esc bindings
+  //            (always active because isLocalJSXCommand: false keeps
+  //            PromptInput live) absorbed Esc before the raw useInput
+  //            fallback below ever received it (F-ε-05 NOT_CLOSED root cause).
+  //   Layer 2: raw useInput fallback covers Bun-PTY raw \x1b delivery
+  //            (integration-verification frame 28+ pattern) and any
+  //            ChordInterceptor mount-order edge cases.
+  useKeybinding('agents:dismiss', () => { onExit?.() }, { context: 'Agents' })
   useInput((_input, key) => {
     if (!onExit) return
     if (key.escape) {

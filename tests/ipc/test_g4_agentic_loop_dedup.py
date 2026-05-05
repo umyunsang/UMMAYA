@@ -74,23 +74,100 @@ def test_g4_classify_envelope_outcome_collection_empty() -> None:
     assert _classify({"kind": "record", "item": {"found": True, "data": "x"}}) == "ok"
 
 
-def test_g4_hash_call_stable_for_identical_params() -> None:
-    """`_hash_call` must produce identical hashes for identical (tool_id, params)."""
+def _make_hash_call():
+    """Return the normalized _hash_call implementation (mirrors stdio.py G11 fix)."""
     import hashlib
     import json as _json
 
+    _PAGINATION_KEYS: frozenset[str] = frozenset(
+        {"page_no", "num_of_rows", "order_by", "pageNo", "numOfRows", "pageSize"}
+    )
+
+    def _norm_val(v: object) -> object:
+        if isinstance(v, str):
+            return " ".join(v.split())
+        if isinstance(v, float) and v == int(v):
+            return int(v)
+        return v
+
     def _hash_call(tool_id: str, params: dict) -> str:
+        normalized = {k: _norm_val(v) for k, v in params.items() if k not in _PAGINATION_KEYS}
         try:
-            canonical = _json.dumps(params, sort_keys=True, ensure_ascii=False)
+            canonical = _json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         except (TypeError, ValueError):
-            canonical = repr(params)
+            canonical = repr(normalized)
         return hashlib.sha256(f"{tool_id}|{canonical}".encode()).hexdigest()[:16]
+
+    return _hash_call
+
+
+def test_g4_hash_call_stable_for_identical_params() -> None:
+    """`_hash_call` must produce identical hashes for identical (tool_id, params)."""
+    _hash_call = _make_hash_call()
 
     a = _hash_call("mohw_welfare_eligibility_search", {"region": "전국", "category": "소상공인"})
     b = _hash_call("mohw_welfare_eligibility_search", {"category": "소상공인", "region": "전국"})
     c = _hash_call("mohw_welfare_eligibility_search", {"region": "전국", "category": "다른"})
     assert a == b, "Different key order MUST produce identical hash (sort_keys=True)"
     assert a != c, "Different param values MUST produce different hashes"
+
+
+def test_g11a_hash_normalizes_string_whitespace() -> None:
+    """Wave-4 G11a: whitespace variations in string params must hash identically.
+
+    K-EXAONE sometimes emits double-space in Korean keywords across retries.
+    """
+    _hash_call = _make_hash_call()
+    base = _hash_call("mohw_welfare_eligibility_search", {"search_wrd": "소상공인 지원"})
+    double_space = _hash_call("mohw_welfare_eligibility_search", {"search_wrd": "소상공인  지원"})
+    leading_space = _hash_call("mohw_welfare_eligibility_search", {"search_wrd": " 소상공인 지원"})
+    assert base == double_space, "Double-space in string value MUST hash same (whitespace normalization)"
+    assert base == leading_space, "Leading space in string value MUST hash same (whitespace normalization)"
+
+
+def test_g11a_hash_normalizes_float_integers() -> None:
+    """Wave-4 G11a: whole-number floats hash identically to ints.
+
+    K-EXAONE occasionally emits page_no as 1.0 (float) instead of 1 (int).
+    After pagination-key stripping, numeric normalization covers remaining fields.
+    """
+    _hash_call = _make_hash_call()
+    # age is NOT a pagination key — but float coercion should still normalize it
+    int_age = _hash_call("mohw_welfare_eligibility_search", {"search_wrd": "복지", "age": 35})
+    float_age = _hash_call("mohw_welfare_eligibility_search", {"search_wrd": "복지", "age": 35.0})
+    assert int_age == float_age, "Whole-number float 35.0 MUST hash same as int 35"
+
+
+def test_g11a_hash_ignores_pagination_keys() -> None:
+    """Wave-4 G11a: page_no / num_of_rows / order_by are stripped before hashing.
+
+    K-EXAONE increments page_no hoping next page has data; this must still
+    trigger the dedup gate because the semantic query scope is identical.
+    """
+    _hash_call = _make_hash_call()
+    base = _hash_call("mohw_welfare_eligibility_search", {"search_wrd": "소상공인"})
+    page2 = _hash_call("mohw_welfare_eligibility_search", {"search_wrd": "소상공인", "page_no": 2})
+    page3_diff_rows = _hash_call(
+        "mohw_welfare_eligibility_search",
+        {"search_wrd": "소상공인", "page_no": 3, "num_of_rows": 20, "order_by": "date"},
+    )
+    assert base == page2, "page_no=2 MUST hash same as no page_no (pagination key stripped)"
+    assert base == page3_diff_rows, "page_no/num_of_rows/order_by all stripped before hash"
+
+
+def test_g11a_hash_source_contains_normalization() -> None:
+    """Wave-4 G11a — source-level guard: stdio.py _hash_call must carry normalization code."""
+    stdio_src = pathlib.Path(__file__).resolve().parents[2] / "src" / "kosmos" / "ipc" / "stdio.py"
+    text = stdio_src.read_text(encoding="utf-8")
+    assert "_PAGINATION_KEYS" in text, (
+        "stdio.py _hash_call must define _PAGINATION_KEYS frozenset (Wave-4 G11a normalization)."
+    )
+    assert "_norm_val" in text, (
+        "stdio.py _hash_call must define _norm_val helper (Wave-4 G11a normalization)."
+    )
+    assert 'separators=(",", ":")' in text or "separators=(',', ':')" in text, (
+        "stdio.py _hash_call must use compact JSON separators for canonical form."
+    )
 
 
 def test_g4_system_prompt_dedup_directive() -> None:

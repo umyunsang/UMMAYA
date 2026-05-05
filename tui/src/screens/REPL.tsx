@@ -49,7 +49,7 @@ import { WorkerPendingPermission } from '../components/permissions/WorkerPending
 import { injectUserMessageToTeammate, getAllInProcessTeammateTasks } from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js';
 import { isLocalAgentTask, queuePendingMessage, appendMessageToLocalAgent, type LocalAgentTaskState } from '../tasks/LocalAgentTask/LocalAgentTask.js';
 import { registerLeaderToolUseConfirmQueue, unregisterLeaderToolUseConfirmQueue, registerLeaderSetToolPermissionContext, unregisterLeaderSetToolPermissionContext } from '../utils/swarm/leaderPermissionBridge.js';
-import { registerIpcToolUseConfirmQueue } from '../utils/permissions/ipcPermissionBridge.js';
+import { registerIpcToolUseConfirmQueue, registerOptimisticAddReceipt } from '../utils/permissions/ipcPermissionBridge.js';
 // utils/telemetry/sessionTracing removed — KOSMOS telemetry handled by Spec 021 OTEL pipeline.
 const endInteractionSpan = (): void => { /* no-op */ }
 import { useLogMessages } from '../hooks/useLogMessages.js';
@@ -417,6 +417,14 @@ function PermissionReceiptsRefSync({
   // updates PermissionReceiptContext so /consent list reflects the new receipt
   // without a separate round-trip. FR-018 / Spec 033 / Spec 1635.
   usePermissionReceiptWatcher(addReceipt);
+  // Wave-4 G11 / F-gamma-04 — optimistic receipt write.
+  // Register addReceipt in the bridge so onAllow() can eagerly write a
+  // placeholder receipt before the backend echo arrives (~1s delay).
+  // This makes `/consent list` show the grant immediately on Y-press.
+  useEffect(() => {
+    registerOptimisticAddReceipt(addReceipt);
+    return () => registerOptimisticAddReceipt(null);
+  }, [addReceipt]);
   return null;
 }
 // Window after a user-initiated scroll during which type-into-empty does NOT

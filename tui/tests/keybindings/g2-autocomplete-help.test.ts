@@ -181,4 +181,40 @@ describe('G2 — DEFAULT_BINDING_BLOCKS catalogue invariants', () => {
     expect(ctx).toBeDefined()
     expect(ctx!.bindings['escape']).toBe('help:dismiss')
   })
+
+  test('contains an Agents context block with escape→agents:dismiss (G10a, F-ε-05)', () => {
+    const ctx = DEFAULT_BINDING_BLOCKS.find((b) => b.context === 'Agents')
+    expect(ctx).toBeDefined()
+    expect(ctx!.bindings['escape']).toBe('agents:dismiss')
+  })
+})
+
+describe('G10 — Agents context chords (F-ε-05)', () => {
+  test('Escape resolves to agents:dismiss when Agents in active list', () => {
+    const result = resolveKeyWithChordState(
+      '',
+      key({ escape: true }),
+      ['Agents', 'Chat', 'Global'],
+      PROD_BINDINGS,
+      null,
+    )
+    // Agents chord block is declared after Help in DEFAULT_BINDING_BLOCKS
+    // (last-match-wins) so agents:dismiss wins over chat:cancel/draft-cancel.
+    expect(result.type).toBe('match')
+    if (result.type !== 'match') throw new Error('unreachable')
+    expect(result.action).toBe('agents:dismiss')
+  })
+
+  test('Without Agents in active list, Esc still resolves to chat:cancel/draft-cancel', () => {
+    const result = resolveKeyWithChordState(
+      '',
+      key({ escape: true }),
+      ['Chat', 'Global'],
+      PROD_BINDINGS,
+      null,
+    )
+    expect(result.type).toBe('match')
+    if (result.type !== 'match') throw new Error('unreachable')
+    expect(['draft-cancel', 'chat:cancel']).toContain(result.action)
+  })
 })

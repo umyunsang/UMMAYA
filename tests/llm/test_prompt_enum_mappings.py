@@ -112,3 +112,43 @@ def test_critical_directive_to_convert_raw_codes(system_prompt_text: str) -> Non
         "system_v1.md missing the CRITICAL directive that forbids raw "
         "enum exposure in citizen-facing answers"
     )
+
+
+def test_no_fabrication_derived_value_directive_present(system_prompt_text: str) -> None:
+    """G10c (F-W3-beta-A) — system_v1.md has the no-fabrication directive
+    forbidding LLM-computed distances, ETAs, and other derived values not
+    present in the tool payload.
+
+    Root cause: β5 LLM emitted '약 288m' computed from HIRA xPos/yPos
+    coords even though distance was available in the payload (but was not
+    cited directly). The directive anchors the rule unambiguously.
+    """
+    text = system_prompt_text
+    assert "payload 에 없는 derived value 추측 금지" in text, (
+        "system_v1.md missing the no-fabrication directive for derived values "
+        "(거리/ETA/이동시간 추측 금지) — G10c fix required"
+    )
+    # Must enumerate key forbidden patterns
+    for phrase in ("거리", "이동 시간", "ETA"):
+        assert phrase in text, (
+            f"No-fabrication directive missing '{phrase}' example — "
+            "citizens may receive fabricated derived values"
+        )
+
+
+def test_hira_dgsbjt_mandatory_directive_present(system_prompt_text: str) -> None:
+    """G10d (F-W3-beta-B) — system_v1.md has the HIRA dgsbjt usage directive.
+
+    Root cause: β5 LLM called hira_hospital_search without dgsbjt when
+    citizen asked for a nearby specialty clinic ('서울 응급실 어디?').
+    The first call returned ~900 mixed-type results instead of the targeted
+    subset, causing the LLM to fabricate distance rankings.
+    """
+    text = system_prompt_text
+    assert "dgsbjt" in text, (
+        "system_v1.md missing HIRA dgsbjt field directive — "
+        "LLM will omit the specialty filter and receive unfiltered 900-item results"
+    )
+    assert "hira_hospital_search" in text, (
+        "system_v1.md missing hira_hospital_search reference in dgsbjt directive"
+    )
