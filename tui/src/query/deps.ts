@@ -375,13 +375,15 @@ async function* queryModelWithStreaming(params: {
         // before yielding); empty text + no tool blocks falls through to the
         // string path and createAssistantMessage substitutes NO_CONTENT_MESSAGE.
         const trimmedText = accumulated.trimStart()
-        // Spec 2521 — assemble the terminal AssistantMessage content array
-        // in CC ReAct order: thinking → text → tool_use. K-EXAONE streams
-        // these channels sequentially (probe verified: 1438 chunks, 0 with
-        // both reasoning + tool_calls in same chunk). Persisting the
-        // thinking block on the transcript preserves the citizen-visible
-        // reasoning trail after the live streamingThinking buffer clears.
-        // CC reference: services/api/claude.ts:1995 + messages.ts:normalizeContentFromAPI.
+        // PR #2768 / Render-order fix — assemble content array in transcript
+        // visual order: thinking → tool_use[] → text (final synthesis last).
+        // CC's normalizeContentFromAPI emits BetaContentBlock[] in stream
+        // arrival order, but K-EXAONE streams text deltas BEFORE tool_use
+        // emit, so naive arrival order produces "answer above tool call"
+        // visual regression. Citizen-correct order: tool calls render at
+        // top, final synthesis below — matches mental model "도구 호출 →
+        // 결과 → 답변". Probe verified: K-EXAONE streams reasoning,
+        // text, tool_calls sequentially (1438 chunks, 0 mixed).
         type _AssistantBlock =
           | { type: 'thinking'; thinking: string }
           | { type: 'text'; text: string }
@@ -390,11 +392,11 @@ async function* queryModelWithStreaming(params: {
         if (accumulatedThinking.length > 0) {
           blocks.push({ type: 'thinking', thinking: accumulatedThinking })
         }
-        if (trimmedText.length > 0) {
-          blocks.push({ type: 'text', text: trimmedText })
-        }
         for (const tu of pendingContentBlocks) {
           blocks.push(tu)
+        }
+        if (trimmedText.length > 0) {
+          blocks.push({ type: 'text', text: trimmedText })
         }
         const finalContent =
           blocks.length > 0
