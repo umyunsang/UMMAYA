@@ -10,13 +10,5 @@ entries:
   path: session_guidance_v1.md
 - prompt_id: system_v1
   version: 1
-<<<<<<< HEAD
-<<<<<<< HEAD
-  sha256: 20c75edea21d71450221b533adacd7a51b5aff9b449f633012480bdb9f73107a
-=======
-  sha256: c67d2b0b2365ea5098659302e7d8a79660974cd2ac21153a411fad80b173eb72
->>>>>>> fix/2773-g5-render-ctrlo
-=======
-  sha256: b8e5ad11e074ac8602ba5f9b9759dcdcc9a938c4033aaf68eb1a766e37ef2b3a
->>>>>>> fix/2773-g1-pipa-fail-closed
+  sha256: 718a812b958d32f9956743fff30115c2290c4d6852b6e40b6d60f2ccddd9c129
   path: system_v1.md
