@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+ 테마 미리보기
+ ● ◉ ○ ○ ○     2 / 5
+
+     ▛███▜                    KOSMOS
+ ▗▟█████████▙▖                K-EXAONE · FriendliAI
+    ▘ ▘ ▘ ▘
+ KOSMOS UFO 마스코트 (대기)   ✻ 보라 팔레트 · purple palette
+                              body #a78bfa · bg #4c1d95
+
+   [선택] ▸ dark    어두운 배경 (기본)
+           light   밝은 배경
+           system  시스템 따름
+
+ ↑↓ 선택  ·  다음 (Enter)  ·  /theme 로 나중 변경
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

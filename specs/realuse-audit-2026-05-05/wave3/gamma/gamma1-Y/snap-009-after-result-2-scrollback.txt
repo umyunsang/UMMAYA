@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 신분증으로 본인 확인 부탁해
+
+∴ Thinking — The user wants to verify their identity using a mobile ID. Looking at the ava... (ctrl+o to expand)
+
+⏺ verify(mock_verify_mobile_id)
+
+· Beaming…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                                                  ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

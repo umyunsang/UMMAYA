@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 지금 재난문자 있어? 기상 특보도 알려줘
+
+∴ Thinking — The user is asking about current disaster messages (재난문자) and weather alerts ... (ctrl+o to expand)
+
+⏺ lookup(kma_pre_warning)
+  ⎿  검색 오류: Adapter 'kma_pre_warning' raised an exception during upstream call. Detail: ToolExecutionError: KMA API returned error: code='02' msg='DB_ERROR'. Do NOT
+     fabricate a response from prior knowledge — tell the citizen the lookup failed, cite the official agency channel, and offer to retry or try a different tool.
+
+✽ Nucleating…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                                                  ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

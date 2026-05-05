@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 서울 현재 날씨 알려줘
+
+∴ Thinking…
+
+  사용자가 "서울 현재 날씨 알려줘"라고 요청했습니다. 현재 날씨를 알려달라는 요청이므로, 현재 관측값을 얻는 것이 적절합니다.
+
+  <⟨내부⟩>를 보면 현재 날씨 관련 도구는 두 가지가 있습니다:
+  1. ⟨adapter⟩ - 현재 날씨 기온 강수 습도 풍속 초단기
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Showing detailed transcript · ctrl+o to toggle · ctrl+e to show all
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

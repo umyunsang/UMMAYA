@@ -1,0 +1,54 @@
+{
+  "fixtures": [
+    {
+      "match": {
+        "userMessageContains": "g12c-verify-test"
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "name": "verify",
+            "arguments": {
+              "tool_id": "mock_verify_mobile_id",
+              "params": {
+                "citizen_request": "ID 확인 테스트"
+              }
+            }
+          }
+        ]
+      },
+      "streaming": {
+        "ttft": 100,
+        "tps": 80,
+        "jitter": 10
+      }
+    },
+    {
+      "match": {
+        "userMessageContains": "g12c-lookup-test"
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "name": "lookup",
+            "arguments": {
+              "mode": "fetch",
+              "tool_id": "kma_short_term_forecast",
+              "params": {
+                "nx": 55,
+                "ny": 127,
+                "base_date": "20260505",
+                "base_time": "0500"
+              }
+            }
+          }
+        ]
+      },
+      "streaming": {
+        "ttft": 100,
+        "tps": 80,
+        "jitter": 10
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+⏺ lookup(kma_short_term_forecast)
+  ⎿  검색 오류: Chain prerequisite missing: this tool requires coordinates (nx, ny) that MUST come from a prior resolve_location call in the same conversation. No
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+⏺ lookup(kma_short_term_forecast)
+  ⎿  검색 오류: Chain prerequisite missing: this tool requires coordinates (nx, ny) that MUST come from a prior resolve_location call in the same conversation. No
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+⏺ lookup(kma_short_term_forecast)
+  ⎿  검색 오류: Chain prerequisite missing: this tool requires coordinates (nx, ny) that MUST come from a prior resolve_location call in the same conversation. No
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+⏺ lookup(kma_short_term_forecast)
+  ⎿  검색 오류: Chain prerequisite missing: this tool requires coordinates (nx, ny) that MUST come from a prior resolve_location call in the same conversation. No
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+⏺ lookup(kma_short_term_forecast)
+  ⎿  검색 오류: Chain prerequisite missing: this tool requires coordinates (nx, ny) that MUST come from a prior resolve_location call in the same conversation. No
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+⏺ lookup(kma_short_term_forecast)
+  ⎿  검색 오류: Chain prerequisite missing: this tool requires coordinates (nx, ny) that MUST come from a prior resolve_location call in the same conversation. No
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+⏺ lookup(kma_short_term_forecast)
+  ⎿  검색 오류: Chain prerequisite missing: this tool requires coordinates (nx, ny) that MUST come from a prior resolve_location call in the same conversation. No
+     resolve_location turn precedes the current call — that means the values would be guessed from prior knowledge instead of being resolved against Kakao Local API. RECOVERY:
+      in the next turn call resolve_location(query='<지역명>', want='coords') to obtain the canonical lat/lon for the citizen's location, then re-invoke this tool with the
+     returned values. Do NOT guess coordinates.
+
+ ✻ KOSMOS · 권한 영수증 / Consent receipts
+
+   아직 발급된 영수증이 없습니다 · No receipts issued yet
+
+
+ 총 0건 · 0 receipts
+ Esc · 닫기 (dismiss)
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                                                  ● high · /effort
+
