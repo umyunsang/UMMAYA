@@ -704,7 +704,7 @@ def _mock_delegation_context_for_tool(
 ) -> dict[str, object] | None:
     """Build a scope-bound mock DelegationContext for mock-only MyData actions."""
     scope = _required_scope_for_registry_tool(registry, tool_id)
-    if not _is_valid_delegation_scope(scope):
+    if not isinstance(scope, str) or not _is_valid_delegation_scope(scope):
         return None
     issued_at = datetime.now(UTC)
     delegation_token = f"del_{uuid.uuid4().hex}"
@@ -992,9 +992,9 @@ def _schema_enum_values(meta: object, schema: dict[str, object] | None) -> list[
     if isinstance(ref, str) and ref.startswith("#/$defs/") and isinstance(defs, dict):
         target = defs.get(ref.removeprefix("#/$defs/"))
         if isinstance(target, dict):
-            values = target.get("enum")
-            if isinstance(values, list):
-                return list(values)
+            target_values = target.get("enum")
+            if isinstance(target_values, list):
+                return list(target_values)
     return []
 
 
@@ -1289,7 +1289,7 @@ def _search_relevant_candidates(user_query: str, registry: Any, top_k: int = 12)
 
         candidates = search(
             query=q,
-            bm25_index=registry.bm25_index,  # type: ignore[attr-defined]
+            bm25_index=registry.bm25_index,
             registry=registry,
             top_k=top_k,
         )
@@ -2224,7 +2224,7 @@ def _delegation_plan_from_candidates(  # noqa: C901
             registry,
             str(getattr(candidate, "tool_id", "")),
         )
-        if _is_valid_delegation_scope(scope):
+        if isinstance(scope, str) and _is_valid_delegation_scope(scope):
             source_has_scope[source] = True
             scope_scores[scope] = max(
                 scope_scores.get(scope, 0.0),
@@ -2429,7 +2429,7 @@ def _submit_result_from_tool_message(message: Any) -> dict[str, object] | None:
         return None
     result = _tool_payload_result(payload)
     if isinstance(result, dict) and result.get("status") == "succeeded":
-        return cast("dict[str, object]", result)
+        return result
     return None
 
 
@@ -3539,7 +3539,7 @@ def _item_display_fields(item: object) -> tuple[str, str, str, str]:
     tel = str(item.get("telno") or item.get("dutyTel1") or item.get("phone") or "")
     distance_raw = item.get("distance")
     distance = ""
-    if distance_raw not in (None, ""):
+    if distance_raw is not None and distance_raw != "":
         try:
             distance = f"{float(distance_raw):.0f}m"
         except (TypeError, ValueError):
@@ -5591,7 +5591,10 @@ async def run(  # noqa: C901
 
                     submit_params = cast("dict[str, object]", args_obj.get("params") or {})
                     _submit_tool_id = str(args_obj.get("tool_id", ""))
-                    _schema_args = {"tool_id": _submit_tool_id, "params": submit_params}
+                    _schema_args: dict[str, object] = {
+                        "tool_id": _submit_tool_id,
+                        "params": submit_params,
+                    }
                     _submit_schema = _schema_for_adapter_args(_schema_args, _ensure_tool_registry())
                     _submit_props = _schema_properties(_submit_schema)
                     if "session_id" in _submit_props and "session_id" not in submit_params:
@@ -6973,7 +6976,7 @@ async def run(  # noqa: C901
                     continue
 
                 if malformed_json_args:
-                    recovery_args = {
+                    recovery_args: dict[str, object] = {
                         "_malformed_json": True,
                         "raw_length": len(str(slot["args"] or "")),
                     }

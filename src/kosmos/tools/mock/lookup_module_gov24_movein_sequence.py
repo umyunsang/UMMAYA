@@ -175,7 +175,7 @@ class Gov24MoveInSequenceInput(BaseModel):
                 continue
             item = raw_item.strip()
             if item in _UPDATE_ROWS:
-                normalized.append(item)  # type: ignore[arg-type]
+                normalized.append(item)
                 continue
             item_lower = item.lower()
             for needle, canonical in _UPDATE_ALIASES.items():
