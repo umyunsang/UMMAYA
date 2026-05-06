@@ -20,10 +20,10 @@ Running `kosmos.eval.retrieval._evaluate()` against the committed 30-query set i
 | Metric | Value |
 |---|---|
 | `recall_at_5` | **1.0000** (30/30) |
-| `recall_at_1` | **0.9333** (28/30) |
+| `recall_at_1` | **0.9667** (29/30) |
 | KOROAD | 10/10/10 |
 | KMA (kma_forecast_fetch) | 7/7 @ 5, 6/7 @ 1 |
-| HIRA | 7/7 @ 5, 6/7 @ 1 |
+| HIRA | 7/7 @ 5, 7/7 @ 1 |
 | NMC | 6/6/6 |
 | `registry_size` | 4 |
 | `warnings` | [] |
@@ -32,7 +32,7 @@ Gate thresholds from `docs/design/mvp-tools.md §5.5.1`: pass ≥ 0.80, warn 0.6
 
 ### 3. Why Epic #585's "+10%p" SC must be re-anchored
 
-The Epic body specifies "recall@5 ≥ 0.90 (+10%p vs BM25 baseline)". Against the 30-query set this is **unmeasurable** — recall@5 is already 1.0, and the only room left is recall@1 (0.9333, two misses to close). A spec that advances on the current set would produce A/B numbers whose differences are noise, not signal.
+The Epic body specifies "recall@5 ≥ 0.90 (+10%p vs BM25 baseline)". Against the 30-query set this is **unmeasurable** — recall@5 is already 1.0, and the only room left is recall@1 (0.9667, one miss to close). A spec that advances on the current set would produce A/B numbers whose differences are noise, not signal.
 
 This spec therefore re-anchors Success Criteria to a **new eval methodology** that makes any dense-backed uplift measurable:
 
@@ -67,11 +67,11 @@ Existing callers (the tool loop, E2E tests, `lookup(mode="search")` consumers) M
 
 **Why this priority**: Parent Epic #507 (CLOSED) owns the byte-level contract. Breaking the default path invalidates #507's acceptance evidence and the 30-query gate committed with Spec 022.
 
-**Independent Test**: Can be fully tested by running `tests/eval/test_retrieval_gate.py` with `KOSMOS_RETRIEVAL_BACKEND` unset and asserting `recall_at_5 == 1.0`, `recall_at_1 == 0.9333`, plus a JSON-schema snapshot regression test over `LookupSearchInput` / `LookupSearchResult`.
+**Independent Test**: Can be fully tested by running `tests/eval/test_retrieval_gate.py` with `KOSMOS_RETRIEVAL_BACKEND` unset and asserting `recall_at_5 == 1.0`, `recall_at_1 == 0.9667`, plus a JSON-schema snapshot regression test over `LookupSearchInput` / `LookupSearchResult`.
 
 **Acceptance Scenarios**:
 
-1. **Given** `KOSMOS_RETRIEVAL_BACKEND` unset, **When** the 30-query gate runs, **Then** `recall_at_5 == 1.0` and `recall_at_1 == 0.9333` exactly (byte-for-byte baseline preservation).
+1. **Given** `KOSMOS_RETRIEVAL_BACKEND` unset, **When** the 30-query gate runs, **Then** `recall_at_5 == 1.0` and `recall_at_1 == 0.9667` exactly (byte-for-byte baseline preservation).
 2. **Given** the committed pydantic schemas for `LookupSearchInput` and `LookupSearchResult`, **When** `model_json_schema()` is exported and compared against a snapshot file, **Then** the diff is empty.
 3. **Given** `KOSMOS_RETRIEVAL_BACKEND=dense` and a simulated model-load failure (patched import raises `RuntimeError`), **When** the registry boots, **Then** it degrades to BM25, emits exactly one structured WARN line, and continues to serve the 30-query gate at `recall_at_5 == 1.0`.
 
@@ -166,7 +166,7 @@ A synthetic 100-adapter registry (padded by cloning seed adapters with suffixed 
 - **SC-001 (Extended-corpus recall uplift)**: On the Epic-#22-extended query set (≥ 50 queries over ≥ 8 adapters), `backend=hybrid` MUST achieve recall@5 ≥ 0.90 AND recall@1 ≥ (bm25_recall@1 + 0.05). If #22 has not landed at merge time, this SC is `PENDING_#22` and MUST NOT be marked green.
 - **SC-002 (Adversarial paraphrase robustness)**: On `eval/retrieval_queries_adversarial.yaml` (≥ 20 queries, zero lexical overlap with `search_hint` tokens), `backend=hybrid` MUST achieve recall@5 ≥ 0.80 AND `backend=bm25` MUST remain < 0.50 — demonstrating the synonym-robustness hypothesis that motivated the epic.
 - **SC-003 (Performance envelope)**: On a synthetic 100-adapter padded registry, `backend=hybrid` p99 per-query search latency MUST stay < 50 ms. `backend=bm25` p99 MUST stay within ±10% of the pre-#585 baseline on the same padded registry.
-- **SC-004 (Contract preservation)**: With `KOSMOS_RETRIEVAL_BACKEND` unset (default `bm25`), 100% of the committed schema snapshot test and 100% of the existing `tests/eval/test_retrieval_gate.py` suite MUST pass. `recall_at_5 == 1.0`, `recall_at_1 == 0.9333` byte-for-byte on the committed 30-query set.
+- **SC-004 (Contract preservation)**: With `KOSMOS_RETRIEVAL_BACKEND` unset (default `bm25`), 100% of the committed schema snapshot test and 100% of the existing `tests/eval/test_retrieval_gate.py` suite MUST pass. `recall_at_5 == 1.0`, `recall_at_1 == 0.9667` byte-for-byte on the committed 30-query set.
 - **SC-005 (Graceful degradation)**: With `KOSMOS_RETRIEVAL_BACKEND=dense` and a forced model-load failure, the registry MUST serve zero 5xx, emit exactly one structured WARN line with `event=retrieval.degraded`, and continue to satisfy SC-004 thresholds via the BM25 fallback.
 
 ---
@@ -226,7 +226,7 @@ Excluded (unless licence confirmation arrives before `/speckit-plan`):
 
 ## Cross-Epic Dependencies
 
-- **#507 (CLOSED, parent Epic)** — Owns the byte-level lookup contract. This spec guarantees zero diff on `LookupSearchInput`/`LookupSearchResult` JSON schema snapshots and on `recall_at_5 == 1.0, recall_at_1 == 0.9333` for the committed 30-query set. Evidence: schema-snapshot regression test + unchanged gate test.
+- **#507 (CLOSED, parent Epic)** — Owns the byte-level lookup contract. This spec guarantees zero diff on `LookupSearchInput`/`LookupSearchResult` JSON schema snapshots and on `recall_at_5 == 1.0, recall_at_1 == 0.9667` for the committed 30-query set. Evidence: schema-snapshot regression test + unchanged gate test.
 - **#22 (OPEN, Phase 3 Adapters)** — Corpus extension. Adds ≥ 4 adapters (Gov24, MOLTM vehicle, NHIS, NEMA) and ≥ 20 queries to `eval/retrieval_queries.yaml`. SC-01 becomes measurable only after #22 lands; FR-013 requires `PENDING_#22` status in the interim. Absorbs the closed #579.
 - **#501 (OPEN, OTEL spans)** — Owns `gen_ai.tool.execute`, `gen_ai.tool_loop.iteration`, `gen_ai.resolve_location`, `gen_ai.adapter.request` attribute sets. This spec emits telemetry via stdlib logging only (FR-007). Any new OTEL attribute names require an ADR under #501.
 - **#467 (OPEN, release manifest)** — Weight SHA-256, tokenizer version, and embedding dim enter the manifest. This spec proposes the fields; #467 owns their final names.
@@ -287,12 +287,12 @@ Excluded (unless licence confirmation arrives before `/speckit-plan`):
 ```json
 {
   "total_queries": 30,
-  "recall_at_1": 0.9333333333333333,
+  "recall_at_1": 0.9666666666666667,
   "recall_at_5": 1.0,
   "per_adapter": {
     "koroad_accident_hazard_search": {"total_queries": 10, "hits_at_1": 10, "hits_at_5": 10},
     "kma_forecast_fetch":            {"total_queries": 7,  "hits_at_1": 6,  "hits_at_5": 7},
-    "hira_hospital_search":          {"total_queries": 7,  "hits_at_1": 6,  "hits_at_5": 7},
+    "hira_hospital_search":          {"total_queries": 7,  "hits_at_1": 7,  "hits_at_5": 7},
     "nmc_emergency_search":          {"total_queries": 6,  "hits_at_1": 6,  "hits_at_5": 6}
   },
   "registry_size": 4,

@@ -53,13 +53,51 @@ const inputSchema = lazySchema(() =>
     tool_id: z
       .string()
       .min(1)
-      .describe('Auth adapter identifier, e.g. "gongdong_injeungseo", "mobile_id"'),
+      .describe(
+        'Verify adapter tool_id selected from <verify_families> or delegation_source_tool_id metadata.',
+      ),
     params: z
-      .record(z.string(), z.unknown())
-      .describe('Adapter-defined credential parameter body'),
+      .strictObject({
+        scope_list: z
+          .array(
+            z
+              .string()
+              .regex(/^(lookup|resolve_location|verify|submit|subscribe):[a-z0-9_.-]+$/),
+          )
+          .min(1)
+          .describe(
+            'All downstream primitive scopes covered by this ceremony, e.g. lookup:hometax.simplified and submit:hometax.tax-return.',
+          ),
+        purpose_ko: z
+          .string()
+          .min(1)
+          .describe('Citizen-visible Korean purpose for the consent ledger.'),
+        purpose_en: z
+          .string()
+          .min(1)
+          .describe('English audit-purpose mirror for the consent ledger.'),
+      })
+      .describe('Scope-bound delegation request payload.'),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
+
+function isScopeBoundVerifyParams(params: unknown): boolean {
+  if (typeof params !== 'object' || params === null) {
+    return false
+  }
+  const record = params as Record<string, unknown>
+  const scopeList = record['scope_list']
+  return (
+    Array.isArray(scopeList) &&
+    scopeList.length > 0 &&
+    scopeList.every(scope => typeof scope === 'string' && scope.trim().length > 0) &&
+    typeof record['purpose_ko'] === 'string' &&
+    record['purpose_ko'].trim().length > 0 &&
+    typeof record['purpose_en'] === 'string' &&
+    record['purpose_en'].trim().length > 0
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Output schema — discriminated union on "ok"
@@ -102,6 +140,7 @@ export const VerifyPrimitive = buildTool({
   searchHint: '인증 검증 verify credential auth 공인인증서 간편인증 본인확인',
 
   maxResultSizeChars: 50_000,
+  strict: true,
 
   get inputSchema(): InputSchema {
     return inputSchema()
@@ -122,6 +161,10 @@ export const VerifyPrimitive = buildTool({
 
   isReadOnly() {
     return true
+  },
+
+  userFacingName() {
+    return 'auth'
   },
 
   async description() {
@@ -169,6 +212,14 @@ export const VerifyPrimitive = buildTool({
   ) {
     // Epic ε #2296 T013 — two-tier resolution (FR-017 / FR-018 / FR-019 / FR-020).
     // Spec 2521 (2026-05-01) — citation-missing branch added (1002).
+    if (!isScopeBoundVerifyParams(input.params)) {
+      return {
+        result: false as const,
+        message:
+          "verify requires params.scope_list (non-empty list), params.purpose_ko, and params.purpose_en; never call verify with params={}.",
+        errorCode: PrimitiveErrorCode.InvalidParams,
+      }
+    }
 
     // Tier 1 — synced backend manifest (FR-017).
     if (isManifestSynced()) {
@@ -367,16 +418,22 @@ export const VerifyPrimitive = buildTool({
   },
 
   /**
-   * verify delegates to an external auth vendor (credentials, 공인인증서,
-   * 간편인증). Always ask for citizen permission before proceeding.
-   * Spec 024 invariant: adapters cite agency policy; the permission gauntlet
-   * surfaces that citation via context.kosmosCitations (set in validateInput).
+   * Backend owns the KOSMOS permission gauntlet for backend-dispatched
+   * primitives. Verify is in Python GATED_PRIMITIVES, so the stdio dispatcher
+   * emits the canonical PermissionRequestFrame before invoking the adapter.
+   * Returning ask here creates a second, client-side CC prompt that pauses the
+   * SDK stream before deps.ts can consume the backend permission_request frame.
    */
-  async checkPermissions(_input) {
-    return {
-      behavior: 'ask' as const,
-      message: '권한 위임 필요: 인증 기관에 본인 정보를 전달합니다. 진행하시겠습니까?',
+  async checkPermissions(input) {
+    if (!isScopeBoundVerifyParams(input.params)) {
+      return {
+        behavior: 'deny' as const,
+        message:
+          "verify requires params.scope_list (non-empty list), params.purpose_ko, and params.purpose_en; never call verify with params={}.",
+        decisionReason: { type: 'mode' as const, mode: 'default' as const },
+      }
     }
+    return { behavior: 'allow' as const, updatedInput: input }
   },
 
   /**

@@ -112,6 +112,8 @@ async def test_mydata_action_happy_path_returns_succeeded() -> None:
     assert str(receipt.get("receipt_id", "")).startswith("mydata-")
     assert receipt.get("mock") is True
     assert receipt.get("action_type") == "update_scope"
+    assert receipt["consent_action"]["bundle_policy"] == "minimum_items_for_declared_purpose"
+    assert "distribution_trace_ref" in receipt["audit_refs"]
 
     mock_append.assert_called_once()
     call_event = mock_append.call_args[0][0]
@@ -145,6 +147,10 @@ async def test_mydata_action_transparency_fields_present() -> None:
     assert receipt["_mode"] == "mock"
     assert receipt["_international_reference"] == "Estonia X-Road"
     assert receipt["_reference_implementation"] == "public-mydata-action-extension"
+    assert receipt["_mock_fidelity_grade"] == (
+        "B-official-public-mydata-flow-action-extension-inferred"
+    )
+    assert receipt["_mock_evidence"]["credential_status"] == "student_no_live_authority"
 
 
 @pytest.mark.asyncio

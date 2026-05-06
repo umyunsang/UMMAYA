@@ -13,6 +13,7 @@
 import { createBridge, type IPCBridge } from './bridge.js'
 import { ingestManifestFrame } from '../services/api/adapterManifest.js'
 import { isAdapterManifestSync } from './codec.js'
+import { appendFileSync } from 'node:fs'
 
 let _bridge: IPCBridge | null = null
 let _sessionId: string | null = null
@@ -34,6 +35,23 @@ export function getOrCreateKosmosBridge(): IPCBridge {
     // FR-015: fires once per backend lifecycle; FR-016: replace-on-frame
     // semantics are enforced inside ingestManifestFrame().
     onFrame: (frame, direction) => {
+      const tracePath = process.env['KOSMOS_IPC_TRACE_FILE']
+      if (tracePath) {
+        try {
+          appendFileSync(
+            tracePath,
+            JSON.stringify({
+              ts: new Date().toISOString(),
+              direction,
+              frame,
+            }) + '\n',
+            'utf8',
+          )
+        } catch {
+          // Best-effort diagnostics only. Never break the citizen flow because
+          // a local trace path is unavailable or full.
+        }
+      }
       if (direction === 'recv' && isAdapterManifestSync(frame)) {
         ingestManifestFrame(frame)
       }

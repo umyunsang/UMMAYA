@@ -36,6 +36,32 @@ _POLICY_AUTHORITY: Final = (
     "?bbsId=BBSMSTR_000000000016&nttId=104637"
 )
 _INTERNATIONAL_REF: Final = "EU EUDI Wallet"
+_MOCK_FIDELITY_GRADE: Final = "A-official-mobile-id-verifier-api-published"
+_MOCK_EVIDENCE: Final[dict[str, Any]] = {
+    "credential_status": "student_no_live_authority",
+    "basis_urls": [
+        "https://dev.mobileid.go.kr/mip/dfs/apiuse/apiusestep.do",
+        "https://dev.mobileid.go.kr/mip/dfs/useguide/apiusemethod.do",
+        "https://dev.mobileid.go.kr/mip/dfs/useguide/mdGuide.do?guide=demonapiguide",
+        "https://digital-strategy.ec.europa.eu/en/library/european-digital-identity-wallet-architecture-and-reference-framework",
+    ],
+    "supports": [
+        "official Mobile ID onboarding, DID registration, test credential, and operation approval",
+        "official verifier daemon HTTP APIs for transaction start, profile, VP "
+        "verification, status, and re-verification",
+        "EUDI Wallet interoperable wallet specification analog",
+    ],
+    "inference_boundary": (
+        "KOSMOS does not perform cryptographic VP verification; it mirrors the ceremony "
+        "envelope and delegation token expected after verifier success."
+    ),
+    "live_swap_requirements": [
+        "KOMSCO/MOIS service-provider approval",
+        "development and operation DID registration",
+        "service code and blockchain account",
+        "verifier daemon or library integration",
+    ],
+}
 
 _TOOL_ID: Final = "mock_verify_module_modid"
 _ISSUER_DID: Final = "did:web:mobileid.go.kr"
@@ -144,6 +170,8 @@ def invoke(session_context: dict[str, Any]) -> ModidContext:
         security_wrapping_pattern=_SECURITY_WRAPPING,
         policy_authority=_POLICY_AUTHORITY,
         international_reference=_INTERNATIONAL_REF,
+        mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+        mock_evidence=_MOCK_EVIDENCE,
     )
 
     # Return a typed AuthContext variant so verify(family_hint=...) accepts it

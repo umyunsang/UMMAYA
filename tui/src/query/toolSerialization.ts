@@ -53,6 +53,7 @@ function isPublishedToLLM(tool: Tool): boolean {
  * - `function.description` = description() + "\n\n" + prompt().slice(0, 200)
  *                            (either part omitted when absent/empty)
  * - `function.parameters`  = z.toJSONSchema(tool.inputSchema) — Draft 2020-12
+ * - `function.strict`      = true when Tool.strict is true
  */
 export async function toolToFunctionSchema(tool: Tool): Promise<ToolDefinition> {
   // KOSMOS primitives implement description() and prompt() as zero-arg constants.
@@ -90,6 +91,7 @@ export async function toolToFunctionSchema(tool: Tool): Promise<ToolDefinition> 
       name: tool.name,
       description,
       parameters,
+      ...(tool.strict === true ? { strict: true } : {}),
     },
   }
 }

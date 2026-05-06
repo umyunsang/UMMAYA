@@ -71,10 +71,10 @@ export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<
   KeybindingContext,
   string
 > = {
-  Global: '전역 — 상위 컨텍스트에 의해 클레임되지 않은 경우 항상 활성',
-  Chat: 'InputBar 포커스 상태',
-  HistorySearch: 'ctrl+r 이력 검색 오버레이 열림 상태',
-  Confirmation: 'PermissionGauntletModal 또는 ConsentPrompt 열림 상태',
+  Global: 'Always active unless claimed by a higher-priority context',
+  Chat: 'Input bar focused',
+  HistorySearch: 'Ctrl+R history search overlay open',
+  Confirmation: 'Permission or consent prompt open',
 }
 
 // -----------------------------------------------------------------------------

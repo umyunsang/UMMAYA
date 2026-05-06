@@ -236,7 +236,7 @@ export const DEFAULT_BINDING_BLOCKS: KeybindingBlock[] = [
       down: 'autocomplete:next',
     },
   },
-  // G2 fix (PR #2773) — Help overlay dismiss chord. HelpV2Grouped.tsx:132
+  // G2 fix (PR #2773) — Help overlay dismiss chord. CC HelpV2
   // calls `useKeybinding('help:dismiss', ..., { context: 'Help' })` to
   // honour the CC HelpV2 keybinding-registry contract; without an
   // Esc-bound chord the keybinding path was a no-op. The component already
@@ -251,14 +251,8 @@ export const DEFAULT_BINDING_BLOCKS: KeybindingBlock[] = [
       escape: 'help:dismiss',
     },
   },
-  // G10 fix (PR #2773 — realuse-audit-2026-05-05 § G10a) — Agents overlay
-  // dismiss chord (F-ε-05). ChordInterceptor matches `chat:cancel` / `draft-cancel`
-  // for Esc before AgentsCommandView's raw useInput fallback can fire —
-  // `isLocalJSXCommand: false` keeps PromptInput active, so the Chat context
-  // Esc bindings are always in scope. Adding an `Agents` chord block here
-  // makes `agents:dismiss` win over `chat:cancel` when AgentsCommandView
-  // registers its `useKeybinding('agents:dismiss', ..., { context: 'Agents' })`.
-  // Pattern is identical to the Help block above (AGENTS.md insight #4).
+  // Agents overlay dismiss chord. Pattern is identical to the Help block
+  // above and matches CC's overlay-context keybinding route.
   {
     context: 'Agents',
     bindings: {

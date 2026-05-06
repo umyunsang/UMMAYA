@@ -388,7 +388,7 @@ KOROAD_ACCIDENT_SEARCH_TOOL = GovAPITool(
         "zones, or road safety in a named location."
     ),
     search_hint=(
-        "교통사고 위험지역 조회 사고다발구역 지자체별 위험지점 "
+        "교통사고 도로위험 도로안전 사고다발구역 지자체별 사고지점 "
         "accident hotspot dangerous zone traffic safety municipality"
     ),
     policy=AdapterRealDomainPolicy(

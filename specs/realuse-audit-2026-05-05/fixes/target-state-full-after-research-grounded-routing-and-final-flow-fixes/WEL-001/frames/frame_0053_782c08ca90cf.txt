@@ -1,0 +1,34 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 임신했는데 받을 수 있는 지원금, 진료비 바우처, 출산휴가 관련 신청을 한 번에 정리하고 신청해줘.
+
+⏺ auth(mock_verify_mydata)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mohw_welfare_eligibility_search)
+  ⎿  collection — 10건
+       1. {"onapPsbltYn":"Y","servId":"WL<PASSPORT_KR>","servNm":"산모·신생아 건강관리 지원사업","inqNum":"1645241","lifeArray":"영유아,임신 · 출산",…
+       2. {"onapPsbltYn":"Y","servId":"WL<PASSPORT_KR>","servNm":"의료급여임신.출산진료비지원","inqNum":"286232","lifeArray":"영유아,임신 · 출산","ju…
+       3. {"onapPsbltYn":"N","servId":"WL<PASSPORT_KR>","servNm":"고위험 임산부 의료비 지원","inqNum":"119065","lifeArray":"임신 · 출산","jurOrg…
+
+⏺ send(mock_welfare_application_submit_v1)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: urn:kosmos:submit:1503c448583a0dff39ced49335c5739a9d04a96a114c3394058a6f3ebe703f4c
+     상태: 성공
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/welfare/application
+
+⏺ watch(mock_rest_pull_tick_v1)
+  ⎿  구독 완료: f8ecbf39-9e89-41b6-a318-0c2fed53680f (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+✽ Harmonizing…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

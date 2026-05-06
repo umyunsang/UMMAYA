@@ -7,7 +7,7 @@
 //
 // Architecture: This module is a standalone imperative state machine that
 // lives outside the reducer.  The reducer's existing pending_permission field
-// (PermissionRequest, used by PermissionGauntletModal subscriptions) is separate
+// (PermissionRequest, used by CC permission prompt subscriptions) is separate
 // from this layer.  The queue here owns the Promise lifecycle and the timeout
 // handle; the reducer is notified via callbacks when the active slot changes so
 // that React components can subscribe.
@@ -23,7 +23,7 @@ import type { PermissionDecision } from '../ipc/codec.js'
 // Public types
 // ---------------------------------------------------------------------------
 
-/** The shape exposed to PermissionGauntletModal (no resolver, no enqueued_at) */
+/** The shape mirrored to the reducer (no resolver, no enqueued_at) */
 export interface PendingPermissionRequest {
   request_id: string
   primitive_kind: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe'

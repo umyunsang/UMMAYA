@@ -161,6 +161,21 @@ Live adapters (when they ship in a future epic) MUST NOT call `stamp_mock_respon
 
 The retrofit on existing context types adds the six fields as `Optional[str] = None`. Live adapters leave them `None`; the regression test filters by `source_mode == "mock"` before asserting non-None.
 
+## 7a. Evidence-grade extension
+
+Privileged channels whose public API exists but is institution-gated MAY attach two extra fields through `stamp_mock_response()`:
+
+| Field | Type | Semantics |
+|---|---|---|
+| `_mock_fidelity_grade` | `str` | Human-readable evidence grade, e.g. `A-official-api-published`, `B-official-flow-private-spec-inferred`, `C-policy-mandated-inferred`. |
+| `_mock_evidence` | `dict` | Evidence object with `credential_status`, `basis_urls`, `supports`, `inference_boundary`, and `live_swap_requirements`. |
+
+These fields are additive. They do not replace the six mandatory transparency fields and they do not claim that KOSMOS knows a private agency schema. The required pattern is:
+
+1. Record the official or policy source that proves the channel/flow exists.
+2. State exactly which private payload details are inferred.
+3. State which credentials or approvals would let the adapter swap from Mock to Live without changing the public primitive envelope.
+
 ## 8. Failure modes
 
 | Mode | Trigger | Behaviour |

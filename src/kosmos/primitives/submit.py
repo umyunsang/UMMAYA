@@ -144,6 +144,8 @@ class SubmitOutput(BaseModel):
 
 # Maps tool_id → (AdapterRegistration, invoke_callable)
 _ADAPTER_REGISTRY: dict[str, tuple[AdapterRegistration, Any]] = {}
+_SESSION_SINGLETON_SUBMIT_TOOL_IDS = frozenset({"mock_traffic_fine_pay_v1"})
+_SUCCESSFUL_SESSION_SINGLETON_SUBMITS: set[tuple[str, str]] = set()
 
 
 def register_submit_adapter(registration: AdapterRegistration, invoke_fn: Any) -> None:
@@ -251,11 +253,16 @@ _TIER_ORDER: list[str] = [
     "mobile_id_mdl_aal2",
     "mobile_id_resident_aal2",
     "mydata_individual_aal2",
+    "simple_auth_module_aal2",
+    "any_id_sso_aal2",
     # AAL3 tiers
     "gongdong_injeungseo_personal_aal3",
     "gongdong_injeungseo_corporate_aal3",
     "geumyung_injeungseo_business_aal3",
     "digital_onepass_level3_aal3",
+    "modid_aal3",
+    "kec_aal3",
+    "geumyung_module_aal3",
 ]
 
 
@@ -488,6 +495,31 @@ async def submit(
         transaction_id = derive_transaction_id(tool_id, params, adapter_nonce=registration.nonce)
         span.set_attribute("kosmos.submit.transaction_id", transaction_id)
 
+        singleton_key = (session_id, tool_id)
+        singleton_guard_active = (
+            session_id not in {"", "unknown"}
+            and tool_id in _SESSION_SINGLETON_SUBMIT_TOOL_IDS
+        )
+        if singleton_guard_active and singleton_key in _SUCCESSFUL_SESSION_SINGLETON_SUBMITS:
+            logger.warning(
+                "submit: duplicate singleton write blocked for session_id=%s tool_id=%s",
+                session_id,
+                tool_id,
+            )
+            span.set_attribute("error.type", "duplicate_singleton_submit")
+            return SubmitOutput(
+                transaction_id=transaction_id,
+                status=SubmitStatus.rejected,
+                adapter_receipt={
+                    "reason": "duplicate_singleton_submit",
+                    "message": (
+                        "This singleton submit adapter already succeeded in the "
+                        "current session; repeated execution was blocked to "
+                        "avoid duplicate receipt/payment side effects."
+                    ),
+                },
+            )
+
         # Step 4 + 5 — Validate params (best-effort) and invoke adapter
         try:
             result = await invoke_fn(params)
@@ -513,6 +545,8 @@ async def submit(
         if isinstance(result, SubmitOutput):
             # Ensure transaction_id matches derived value (adapters may override)
             span.set_attribute("kosmos.submit.status", result.status.value)
+            if singleton_guard_active and result.status == SubmitStatus.succeeded:
+                _SUCCESSFUL_SESSION_SINGLETON_SUBMITS.add(singleton_key)
             return result
 
         # Adapter returned something unexpected — wrap as failure (FR-005)

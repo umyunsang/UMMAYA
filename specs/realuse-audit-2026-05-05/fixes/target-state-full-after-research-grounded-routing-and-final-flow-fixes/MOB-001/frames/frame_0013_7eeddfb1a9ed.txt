@@ -1,0 +1,34 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 운전면허 갱신해야 하는지 확인하고 적성검사 예약, 과태료, 자동차세까지 같이 봐줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   auth(
+   {
+     "tool_id": "mock_verify_ganpyeon_injeung",
+     "params": {
+       "scope_list": [
+         "verify:ganpyeon_injeung.identity"
+       ],
+       "purpose_ko": "운전면허 갱신해야 하는지 확인하고 적성검사 예약, 과태료, 자동차세까지 같이 봐줘.",
+       "purpose_en": "Citizen-requested delegated government service workflow."
+     }
+   }
+   )
+   Request identity delegation for verification.
+   신원 확인을 위해 인증 위임을 요청합니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for auth commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

@@ -54,11 +54,16 @@ def stamp_mock_response(
     security_wrapping_pattern: str,
     policy_authority: str,
     international_reference: str,
+    mock_fidelity_grade: str | None = None,
+    mock_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Stamp the six transparency fields onto a Mock adapter response payload.
 
     Pure function — caller passes a dict, receives a new dict.  The original
     ``payload`` is NOT mutated; the six transparency fields are merged on top.
+    Adapters may also attach evidence-grade metadata when their private-domain
+    shape is inferred from official flow documentation rather than a public
+    callable API schema.
 
     Args:
         payload: Domain-specific response payload from the Mock adapter.
@@ -74,6 +79,10 @@ def stamp_mock_response(
         policy_authority: Non-empty; URL of the agency-published policy.
         international_reference: Non-empty; closest international-analog system,
             e.g. ``"Singapore APEX"``, ``"Estonia X-Road"``, ``"EU EUDI Wallet"``.
+        mock_fidelity_grade: Optional non-empty evidence grade for the mock shape.
+        mock_evidence: Optional non-empty evidence object. Intended keys include
+            ``credential_status``, ``basis_urls``, ``inference_boundary``, and
+            ``live_swap_requirements``.
 
     Returns:
         New dict with ``payload`` keys plus the six transparency fields.
@@ -99,8 +108,12 @@ def stamp_mock_response(
             f"policy_authority={policy_authority!r}, "
             f"international_reference={international_reference!r}."
         )
+    if mock_fidelity_grade is not None and not mock_fidelity_grade.strip():
+        raise ValueError("stamp_mock_response: mock_fidelity_grade must be non-empty.")
+    if mock_evidence is not None and not mock_evidence:
+        raise ValueError("stamp_mock_response: mock_evidence must be a non-empty dict.")
 
-    return {
+    stamped: dict[str, Any] = {
         **payload,
         "_mode": _MODE_VALUE,
         "_reference_implementation": reference_implementation,
@@ -109,3 +122,8 @@ def stamp_mock_response(
         "_policy_authority": policy_authority,
         "_international_reference": international_reference,
     }
+    if mock_fidelity_grade is not None:
+        stamped["_mock_fidelity_grade"] = mock_fidelity_grade
+    if mock_evidence is not None:
+        stamped["_mock_evidence"] = mock_evidence
+    return stamped

@@ -1,0 +1,65 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/MOB-002",
+  "status": "pass",
+  "files_scanned": 258,
+  "frame_count": 242,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "resolve_location",
+      "argument": "부산 사하구 다대1동 → coords_and_admcd",
+      "path": "final-scrollback.txt",
+      "line": 7,
+      "evidence": "⎿ 위치 해석 결과"
+    },
+    {
+      "name": "lookup",
+      "argument": "kma_forecast_fetch",
+      "path": "final-scrollback.txt",
+      "line": 11,
+      "evidence": "⎿ timeseries — 24건"
+    },
+    {
+      "name": "resolve_location",
+      "argument": "부산 사하구 → coords_and_admcd",
+      "path": "final-scrollback.txt",
+      "line": 17,
+      "evidence": "⎿ 위치 해석 결과"
+    },
+    {
+      "name": "lookup",
+      "argument": "koroad_accident_hazard_search",
+      "path": "final-scrollback.txt",
+      "line": 22,
+      "evidence": "⎿ collection — 3건"
+    },
+    {
+      "name": "resolve_location",
+      "argument": "서울 강남구 → coords_and_admcd",
+      "path": "final-scrollback.txt",
+      "line": 28,
+      "evidence": "⎿ 위치 해석 결과"
+    },
+    {
+      "name": "lookup",
+      "argument": "kma_forecast_fetch",
+      "path": "final-scrollback.txt",
+      "line": 33,
+      "evidence": "⎿ timeseries — 24건"
+    },
+    {
+      "name": "lookup",
+      "argument": "koroad_accident_hazard_search",
+      "path": "final-scrollback.txt",
+      "line": 39,
+      "evidence": "⎿ collection — 3건"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_cbs_disaster_v1",
+      "path": "final-scrollback.txt",
+      "line": 45,
+      "evidence": "⎿ 구독 완료: 59342023-3efe-4d9b-8c7f-4bd6cfbbd83f (subscribe) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다."
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/CIV-001",
+  "status": "pass",
+  "files_scanned": 61,
+  "frame_count": 33,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "verify",
+      "argument": "mock_verify_ganpyeon_injeung",
+      "path": "final-scrollback.txt",
+      "line": 9,
+      "evidence": "⎿ 검증 결과: 인증 완료"
+    },
+    {
+      "name": "resolve_location",
+      "argument": "부산 사하구 다대1동 → coords_and_admcd",
+      "path": "final-scrollback.txt",
+      "line": 12,
+      "evidence": "⎿ 위치 해석 결과"
+    },
+    {
+      "name": "lookup",
+      "argument": "mock_lookup_module_gov24_movein_sequence",
+      "path": "final-scrollback.txt",
+      "line": 16,
+      "evidence": "⎿ record — 1건"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_gov24_minwon",
+      "path": "final-scrollback.txt",
+      "line": 21,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 접수 번호: gov24-2026-05-06-MW-C114B588 | 상태: 접수완료"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_gov24_minwon",
+      "path": "final-scrollback.txt",
+      "line": 29,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 접수 번호: gov24-2026-05-06-MW-758A7E01 | 상태: 접수완료"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_rest_pull_tick_v1",
+      "path": "final-scrollback.txt",
+      "line": 37,
+      "evidence": "⎿ 구독 완료: e5459ea5-553a-4310-9844-0181cede816a (subscribe) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다."
+    }
+  ]
+}

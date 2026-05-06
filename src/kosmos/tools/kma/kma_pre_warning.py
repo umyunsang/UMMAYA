@@ -293,6 +293,7 @@ KMA_PRE_WARNING_TOOL = GovAPITool(
     output_schema=KmaPreWarningOutput,
     search_hint=(
         "기상예비특보 예비특보 태풍예고 호우예고 대설예고 한파예고 폭염예고 강풍예고 "
+        "미세먼지 지역 알림 부모님 확인 "
         "weather pre-warning preliminary alert typhoon heavy-rain snow cold-wave heat wind"
     ),
     policy=AdapterRealDomainPolicy(

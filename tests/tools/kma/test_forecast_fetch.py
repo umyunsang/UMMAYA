@@ -239,6 +239,32 @@ class TestFetch:
         assert result.reason == "upstream_unavailable"
         assert result.upstream_code == "10"
 
+    @pytest.mark.asyncio
+    async def test_no_data_result_code_returns_empty_timeseries(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """KMA resultCode=03 is a legitimate empty forecast response."""
+        monkeypatch.setenv("KOSMOS_DATA_GO_KR_API_KEY", "test-key")
+        no_data_payload = {
+            "response": {
+                "header": {"resultCode": "03", "resultMsg": "NO_DATA"},
+                "body": {},
+            }
+        }
+        mock_client = _make_mock_client(no_data_payload)
+
+        inp = KmaForecastFetchInput(
+            lat=37.5665,
+            lon=127.0495,
+            base_date="20260416",
+            base_time="0800",
+        )
+        result = await _fetch(inp, client=mock_client)
+
+        assert isinstance(result, LookupTimeseries)
+        assert result.kind == "timeseries"
+        assert result.points == []
+
 
 # ---------------------------------------------------------------------------
 # Tool definition & registration

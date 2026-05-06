@@ -1,0 +1,44 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 외국인등록증 체류기간 연장해야 해. 필요한 서류 확인하고 예약이나 전자민원 가능한 부분 처리해줘.
+
+∴ Thinking — Verify를 통해 위임 컨텍스트를 발급받았고, 이를 바탕으로 외국인등록증 체류기간 연장에 필요한 서류 및 처리 절차를 확인했습니다. (ctrl+o to expand)
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"외국인등록증 체류기간 연장해야 해.
+     필요한 서류 확인하고 예약이나 전자민원 가능한 부분 처리해줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-E1564A42
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:2dff343a10d4f12f4f17c69a2803ffda23aa313344ce5f6ccd2887498d6d43bd
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-A0159203
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:8c51c7d4644ae34a6ff859f5d0e175019e2003497d9dbacb2a6bd10b33acd09d
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ watch(mock_rest_pull_tick_v1)
+  ⎿  구독 완료: 025de301-122f-4c7f-8055-8e45ae369078 (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+✽ Deliberating…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

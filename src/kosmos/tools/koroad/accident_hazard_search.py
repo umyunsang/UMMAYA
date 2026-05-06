@@ -924,7 +924,7 @@ KOROAD_ACCIDENT_HAZARD_SEARCH_TOOL = GovAPITool(
         "location in Korea."
     ),
     search_hint=(
-        "교통사고 위험지점 사고다발구역 행정동코드 연도별 위험지역 "
+        "교통사고 위험지점 안전취약지점 사고다발구역 행정동코드 연도별 사고지점 "
         "accident hazard spot dangerous zone adm_cd year traffic safety Korea"
     ),
     policy=AdapterRealDomainPolicy(

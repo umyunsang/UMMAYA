@@ -31,17 +31,6 @@ import { NotebookEditPermissionRequest } from './NotebookEditPermissionRequest/N
 import { PowerShellPermissionRequest } from './PowerShellPermissionRequest/PowerShellPermissionRequest.js';
 import { SkillPermissionRequest } from './SkillPermissionRequest/SkillPermissionRequest.js';
 import { WebFetchPermissionRequest } from './WebFetchPermissionRequest/WebFetchPermissionRequest.js';
-// KOSMOS Epic 1 finish — 4 primitive arms wired into permissionComponentForTool.
-import {
-  LookupPermissionRequestAdapter,
-  VerifyPermissionRequestAdapter,
-  SubmitPermissionRequestAdapter,
-  SubscribePermissionRequestAdapter,
-} from './KosmosPrimitivePermissionRequest/KosmosPermissionRequestAdapter.js';
-import { LookupPrimitive } from '../../tools/LookupPrimitive/LookupPrimitive.js';
-import { VerifyPrimitive } from '../../tools/VerifyPrimitive/VerifyPrimitive.js';
-import { SubmitPrimitive } from '../../tools/SubmitPrimitive/SubmitPrimitive.js';
-import { SubscribePrimitive } from '../../tools/SubscribePrimitive/SubscribePrimitive.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const ReviewArtifactTool = feature('REVIEW_ARTIFACT') ? (require('../../tools/ReviewArtifactTool/ReviewArtifactTool.js') as typeof import('../../tools/ReviewArtifactTool/ReviewArtifactTool.js')).ReviewArtifactTool : null;
@@ -87,19 +76,6 @@ function permissionComponentForTool(tool: Tool): React.ComponentType<PermissionR
     case GrepTool:
     case FileReadTool:
       return FilesystemPermissionRequest;
-    // KOSMOS Epic 1 finish — 4 primitive arms (FR-012 spec).
-    // lookup: read-only, bypass via checkPermissions allow. Adapter returns null.
-    case LookupPrimitive:
-      return LookupPermissionRequestAdapter;
-    // verify: Layer 1 (green ⓵) — delegates to external auth vendor.
-    case VerifyPrimitive:
-      return VerifyPermissionRequestAdapter;
-    // submit: Layer 2 (reversible) / Layer 3 (irreversible) — side-effecting citizen action.
-    case SubmitPrimitive:
-      return SubmitPermissionRequestAdapter;
-    // subscribe: Layer 2 (orange ⓶) — session-lifetime subscription.
-    case SubscribePrimitive:
-      return SubscribePermissionRequestAdapter;
     default:
       return FallbackPermissionRequest;
   }

@@ -6,8 +6,9 @@
 // setter(filter). The Promise returned by `setPendingPermission(...)` (which
 // `tui/src/query/deps.ts:590` awaits) was never resolved by any production
 // path — the slot's only resolver was the 300-second `setTimeout` inside
-// `activateHead`. Citizens experienced a frozen spinner after Y/A/N for the
-// full 5-minute TTL, then a synthetic 'denied' arrived too late.
+// `activateHead`. Citizens experienced a frozen spinner after approving or
+// rejecting the prompt for the full 5-minute TTL, then a synthetic 'denied'
+// arrived too late.
 //
 // Post-fix: onAllow / onReject / onAbort each call
 // `resolvePermissionDecision(request_id, ...)` so the slot resolves in

@@ -1,0 +1,26 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 현재 위치는 부산 사하구 다대1동입니다. 내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동 방법 추천해줘.
+
+∴ Thinking — The user wants to go from Busan Sa-ha-gu Da-dae 1-dong to Seoul tomorrow. (ctrl+o to expand)
+
+⏺ locate(부산 사하구 다대1동 → coords_and_admcd)
+  ⎿  위치 해석 결과
+     좌표: 35.059152 / 128.971316 (kakao)
+
+⏺ find(kma_forecast_fetch)
+  ⎿  timeseries — 24건
+       1. {"timestamp_iso":"2026-05-06T12:00:00","temperature_c":20,"pop_pct":0,"precipitation_mm":"강수없음","sky_code":"1","interva…
+       2. {"timestamp_iso":"2026-05-06T13:00:00","temperature_c":21,"pop_pct":0,"precipitation_mm":"강수없음","sky_code":"1","interva…
+       3. {"timestamp_iso":"2026-05-06T14:00:00","temperature_c":21,"pop_pct":0,"precipitation_mm":"강수없음","sky_code":"1","interva…
+
+✳ Bunning…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

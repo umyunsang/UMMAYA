@@ -88,6 +88,49 @@ type OutputSchema = ReturnType<typeof outputSchema>
 
 export type Output = z.infer<OutputSchema>
 
+type JsonObject = Record<string, unknown>
+
+function asJsonObject(value: unknown): JsonObject | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as JsonObject)
+    : null
+}
+
+function stringValue(record: JsonObject | null | undefined, key: string): string | null {
+  if (!record) return null
+  const value = record[key]
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function submitActionLabel(actionType: string | null): string | null {
+  if (actionType === 'file_return') return '신고 제출'
+  if (actionType === 'create_payment_deadline_reminder') return '납부기한 알림 생성'
+  if (actionType === 'mock_payment_after_confirmation') return '모의 납부 완료'
+  return actionType
+}
+
+function paymentStepLabel(paymentState: string | null): string | null {
+  if (paymentState === 'separate_submit_required_before_payment') {
+    return '별도 납부 확인 필요'
+  }
+  if (paymentState === 'deadline_reminder_created') {
+    return '납부기한 알림 생성됨'
+  }
+  if (paymentState === 'mock_payment_executed_after_confirmation') {
+    return '모의 납부 완료'
+  }
+  return paymentState
+}
+
+function submitStatusLabel(status: string | null): string | null {
+  if (status === 'accepted') return '접수됨'
+  if (status === 'pending') return '처리 중'
+  if (status === 'rejected') return '반려됨'
+  if (status === 'succeeded') return '성공'
+  if (status === 'failed') return '실패'
+  return status
+}
+
 // ---------------------------------------------------------------------------
 // Tool definition
 // ---------------------------------------------------------------------------
@@ -124,6 +167,10 @@ export const SubmitPrimitive = buildTool({
   isDestructive() {
     // submit can be irreversible (e.g., form submission, report filing).
     return true
+  },
+
+  userFacingName() {
+    return 'send'
   },
 
   async description() {
@@ -256,40 +303,72 @@ export const SubmitPrimitive = buildTool({
     // (transaction_id / ministry / status / agency_handoff_url) unwrapped
     // from ToolResultEnvelope.result.
     if (output.ok) {
-      const result = output.result as Record<string, unknown> | undefined
+      const result = asJsonObject(output.result)
+      const resultKind = stringValue(result, 'kind')
+      const resultReason = stringValue(result, 'reason')
+      const resultMessage = stringValue(result, 'message')
+      if (resultKind === 'error' || resultReason === 'adapter_invocation_failed') {
+        return React.createElement(
+          MessageResponse,
+          null,
+          React.createElement(
+            Box,
+            { flexDirection: 'column' },
+            React.createElement(
+              Text,
+              { color: 'red' },
+              `✗ ${resultMessage ?? resultReason ?? '제출 처리 중 오류가 발생했습니다.'}`,
+            ),
+            resultReason
+              ? React.createElement(Text, { dimColor: true }, `사유: ${resultReason}`)
+              : null,
+          ),
+        )
+      }
+      const adapterReceipt = asJsonObject(result?.adapter_receipt)
+      const preflightValidation = asJsonObject(adapterReceipt?.preflight_validation)
       const receiptId =
-        typeof result?.transaction_id === 'string'
-          ? result.transaction_id
-          : typeof result?.receipt_id === 'string'
-            ? result.receipt_id
-            : null
-      const ministry =
-        typeof result?.ministry === 'string' ? result.ministry : null
-      const status =
-        typeof result?.status === 'string' ? result.status : null
-      const handoffUrl =
-        typeof result?.agency_handoff_url === 'string'
-          ? result.agency_handoff_url
-          : null
-
-      const statusLabel =
-        status === 'accepted'
-          ? '접수됨'
-          : status === 'pending'
-            ? '처리 중'
-            : status === 'rejected'
-              ? '반려됨'
-              : status
+        stringValue(adapterReceipt, 'receipt_id') ??
+        stringValue(adapterReceipt, 'receipt_number') ??
+        stringValue(adapterReceipt, '접수번호') ??
+        stringValue(result, 'receipt_id') ??
+        stringValue(result, 'transaction_id')
+      const transactionId = stringValue(result, 'transaction_id')
+      const ministry = stringValue(result, 'ministry')
+      const receiptStatus =
+        stringValue(adapterReceipt, 'status') ?? stringValue(result, 'status')
+      const statusLabel = submitStatusLabel(receiptStatus)
+      const actionLabel = submitActionLabel(stringValue(adapterReceipt, 'action_type'))
+      const paymentLabel = paymentStepLabel(stringValue(preflightValidation, 'payment'))
+      const handoffUrl = stringValue(result, 'agency_handoff_url')
+      const rejectionReason =
+        stringValue(adapterReceipt, 'reason') ?? stringValue(adapterReceipt, 'error')
+      const isRejected = receiptStatus === 'rejected' || receiptStatus === 'failed'
+      const isPending = receiptStatus === 'pending'
 
       // KOSMOS hotfix #2519 — wrap in <MessageResponse> for the CC ⎿ prefix.
       // Audit-2 P0: check _mode === 'mock' from transparency stamp (Spec 024).
       const mockMeta = extractMockMeta(output)
       const isMock = mockMeta.isMock
 
-      const successLabel = isMock
-        ? mockLabel('제출 접수')
-        : `✓ ${ministry ? `[${ministry}] ` : ''}제출이 접수되었습니다.`
-      const successColor = isMock ? ('cyan' as const) : ('green' as const)
+      const resultLabel = isRejected
+        ? isMock
+          ? mockLabel('제출 반려')
+          : `✗ ${ministry ? `[${ministry}] ` : ''}제출이 반려되었습니다.`
+        : isPending
+          ? isMock
+            ? mockLabel('제출 처리 중')
+            : `… ${ministry ? `[${ministry}] ` : ''}제출 처리 중입니다.`
+          : isMock
+            ? mockLabel('제출 접수')
+            : `✓ ${ministry ? `[${ministry}] ` : ''}제출이 접수되었습니다.`
+      const resultColor = isRejected
+        ? ('red' as const)
+        : isPending
+          ? ('yellow' as const)
+          : isMock
+            ? ('cyan' as const)
+            : ('green' as const)
 
       return React.createElement(
         MessageResponse,
@@ -299,10 +378,8 @@ export const SubmitPrimitive = buildTool({
           { flexDirection: 'column' },
           React.createElement(
             Text,
-            { color: successColor, dimColor: isMock },
-            isMock
-              ? `${successLabel}${ministry ? ` — [${ministry}]` : ''}`
-              : successLabel,
+            { color: resultColor, dimColor: isMock && !isRejected },
+            isMock ? `${resultLabel}${ministry ? ` — [${ministry}]` : ''}` : resultLabel,
           ),
           isMock
             ? React.createElement(
@@ -311,11 +388,23 @@ export const SubmitPrimitive = buildTool({
                 '실제 행정 영향 없는 시연 결과입니다.',
               )
             : null,
+          actionLabel
+            ? React.createElement(Text, { dimColor: true }, `처리: ${actionLabel}`)
+            : null,
           receiptId
             ? React.createElement(Text, { dimColor: true }, `접수 번호: ${receiptId}`)
             : null,
-          status
+          receiptStatus
             ? React.createElement(Text, { dimColor: true }, `상태: ${statusLabel}`)
+            : null,
+          rejectionReason
+            ? React.createElement(Text, { dimColor: true }, `반려 사유: ${rejectionReason}`)
+            : null,
+          paymentLabel
+            ? React.createElement(Text, { dimColor: true }, `납부 단계: ${paymentLabel}`)
+            : null,
+          transactionId && transactionId !== receiptId
+            ? React.createElement(Text, { dimColor: true }, `트랜잭션: ${transactionId}`)
             : null,
           handoffUrl
             ? React.createElement(Text, { dimColor: true }, `기관 확인: ${handoffUrl}`)
@@ -353,16 +442,15 @@ export const SubmitPrimitive = buildTool({
   },
 
   /**
-   * submit is a side-effecting citizen action (신청, 신고, etc.) that may
-   * be irreversible. Always ask for citizen permission before proceeding.
-   * Spec 024 invariant: adapters cite agency policy; the permission gauntlet
-   * surfaces that citation via context.kosmosCitations (set in validateInput).
+   * Backend owns the KOSMOS permission gauntlet for backend-dispatched
+   * primitives. Submit is side-effecting and remains gated in Python
+   * GATED_PRIMITIVES; the stdio dispatcher emits the canonical
+   * PermissionRequestFrame before adapter invocation. A second client-side
+   * prompt here deadlocks the frame consumer before that backend request can
+   * be observed.
    */
-  async checkPermissions(_input) {
-    return {
-      behavior: 'ask' as const,
-      message: '권한 위임 필요: 행정 기관에 제출 요청을 전송합니다. 진행하시겠습니까?',
-    }
+  async checkPermissions(input) {
+    return { behavior: 'allow' as const, updatedInput: input }
   },
 
   /**

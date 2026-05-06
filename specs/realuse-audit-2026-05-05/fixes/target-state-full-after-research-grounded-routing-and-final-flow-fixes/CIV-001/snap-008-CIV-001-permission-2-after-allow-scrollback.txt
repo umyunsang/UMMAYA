@@ -1,0 +1,57 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 현재 위치는 부산 사하구 다대1동입니다. 이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ locate(부산 사하구 다대1동 → coords_and_admcd)
+  ⎿  위치 해석 결과
+     좌표: 35.059152 / 128.971316 (kakao)
+
+⏺ find(mock_lookup_module_gov24_movein_sequence)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"gov24_movein_dependent_sequence","lookup_ref":"mock-gov24-movein-sequence-20260505-001","purpose":"전입신고 및 이사 관련
+     주소변경 절차 조회","new_address":"부산 사하구 다대1동","adm_cd":null,"required_sequence":[{"step":1,…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-C114B588
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:f932824321f8d7ec6f6580547d4ec16de6a48f57dd833a7a2438b74b223cfc3e
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-758A7E01
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:f800a78cd88aa98a7219c3f546770779832b5ed61a25d6c05c2b3a39a2593f9c
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ watch(mock_rest_pull_tick_v1)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   watch(
+   {
+     "tool_id": "mock_rest_pull_tick_v1",
+     "params": {},
+     "lifetime_seconds": 300
+   }
+   )
+   Subscribe to a public data stream.
+   공공 데이터 스트림을 구독합니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for watch commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

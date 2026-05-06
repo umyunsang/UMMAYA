@@ -21,6 +21,7 @@ class LLMClientConfig(BaseSettings):
         env_prefix="",  # each field uses an explicit validation_alias
         case_sensitive=False,
         extra="ignore",
+        populate_by_name=True,
     )
 
     token: SecretStr = Field(
@@ -50,8 +51,12 @@ class LLMClientConfig(BaseSettings):
         description="Maximum tokens allowed per session.",
     )
     timeout: float = Field(
-        default=60.0,
-        description="HTTP request timeout in seconds.",
+        default=180.0,
+        validation_alias="KOSMOS_LLM_TIMEOUT_SECONDS",
+        description=(
+            "HTTP request timeout in seconds. K-EXAONE reasoning streams can stay "
+            "silent for over 60 seconds on high-effort turns."
+        ),
     )
     max_retries: int = Field(
         default=3,

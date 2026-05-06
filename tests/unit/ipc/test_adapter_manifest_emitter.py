@@ -232,11 +232,12 @@ def test_audit4_p0_9_mock_submits_have_policy_url(caplog: pytest.LogCaptureFixtu
     with caplog.at_level(logging.WARNING, logger="kosmos.ipc.adapter_manifest_emitter"):
         entries = _build_entries(reg, warn_on_missing=True)
 
-    # Five Mock submit adapters MUST surface with policy_authority_url populated.
+    # Mock submit adapters MUST surface with policy_authority_url populated.
     expected_mock_submits = {
         "mock_submit_module_gov24_minwon",
         "mock_submit_module_hometax_taxreturn",
         "mock_submit_module_public_mydata_action",
+        "mock_koroad_driver_fitness_reservation_v1",
         "mock_traffic_fine_pay_v1",
         "mock_welfare_application_submit_v1",
     }

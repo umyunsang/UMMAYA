@@ -1,0 +1,37 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/WEL-001",
+  "status": "pass",
+  "files_scanned": 143,
+  "frame_count": 119,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "verify",
+      "argument": "mock_verify_mydata",
+      "path": "final-scrollback.txt",
+      "line": 9,
+      "evidence": "⎿ 검증 결과: 인증 완료"
+    },
+    {
+      "name": "lookup",
+      "argument": "mohw_welfare_eligibility_search",
+      "path": "final-scrollback.txt",
+      "line": 12,
+      "evidence": "⎿ collection — 10건"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_welfare_application_submit_v1",
+      "path": "final-scrollback.txt",
+      "line": 18,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 접수 번호: urn:kosmos:submit:1503c448583a0dff39ced49335c5739a9d04a96a114c3394058a6f3ebe703f4c | 상태: 성공"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_rest_pull_tick_v1",
+      "path": "final-scrollback.txt",
+      "line": 25,
+      "evidence": "⎿ 구독 완료: f8ecbf39-9e89-41b6-a318-0c2fed53680f (subscribe) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다."
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+
+⏺ auth(mock_verify_mydata)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"정부기관들이 내 정보를 어디에 쓰고
+     있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_service_…
+
+⏺ send(mock_submit_module_public_mydata_action)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     처리: transfer_consent
+     접수 번호: mydata-2026-05-06-ACT-2D922DA6
+     상태: 처리완료
+     트랜잭션: urn:kosmos:submit:74ada64e2dc8975a1f8f7b6436ad4b0ecc5653a55f6870b914620fd9be5060fb
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/public-mydata/action
+
+⏺ watch(mock_rss_public_notices_v1)
+  ⎿  구독 완료: ee3d4914-bf5e-45f2-bc1b-6192d9fa1404 (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+✳ Meandering…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773                                                                                                                                                        ● high · /effort

@@ -1,0 +1,58 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/SAF-002",
+  "status": "pass",
+  "files_scanned": 157,
+  "frame_count": 129,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "resolve_location",
+      "argument": "부산 사하구 다대1동 → coords_and_admcd",
+      "path": "final-scrollback.txt",
+      "line": 7,
+      "evidence": "⎿ 위치 해석 결과"
+    },
+    {
+      "name": "verify",
+      "argument": "mock_verify_ganpyeon_injeung",
+      "path": "final-scrollback.txt",
+      "line": 11,
+      "evidence": "⎿ 검증 결과: 인증 완료"
+    },
+    {
+      "name": "lookup",
+      "argument": "nmc_emergency_search",
+      "path": "final-scrollback.txt",
+      "line": 14,
+      "evidence": "⎿ collection — 5건"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_gov24_minwon",
+      "path": "final-scrollback.txt",
+      "line": 20,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 접수 번호: gov24-2026-05-06-MW-A7174D13 | 상태: 접수완료"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_rss_public_notices_v1",
+      "path": "final-scrollback.txt",
+      "line": 28,
+      "evidence": "⎿ 구독 완료: 핸들 ID 없음 (error) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다."
+    },
+    {
+      "name": "submit",
+      "argument": "mock_koroad_driver_fitness_reservation_v1",
+      "path": "final-scrollback.txt",
+      "line": 32,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 접수 번호: koroad-resv-fb674b334338 | 상태: 성공"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_rss_public_notices_v1",
+      "path": "final-scrollback.txt",
+      "line": 40,
+      "evidence": "⎿ 구독 완료: 38cfd1c7-9ab1-445f-8164-0d51b60dc261 (subscribe) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다."
+    }
+  ]
+}

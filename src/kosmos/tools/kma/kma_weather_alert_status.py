@@ -295,7 +295,7 @@ async def _call(
                 client is created for this call.
 
     Returns:
-        A plain dict matching KmaWeatherAlertStatusOutput schema.
+        A plain dict matching the lookup collection envelope schema.
 
     Raises:
         ConfigurationError: If KOSMOS_DATA_GO_KR_API_KEY is not set.
@@ -342,7 +342,14 @@ async def _call(
 
         raw = response.json()
         output = _parse_response(raw)
-        return output.model_dump()
+        return {
+            "kind": "collection",
+            "items": [
+                warning.model_dump(mode="json")
+                for warning in output.warnings
+            ],
+            "total_count": output.total_count,
+        }
 
     finally:
         if own_client:
@@ -384,6 +391,7 @@ KMA_WEATHER_ALERT_STATUS_TOOL = GovAPITool(
     output_schema=KmaWeatherAlertStatusOutput,
     search_hint=(
         "기상특보 기상경보 태풍 호우 대설 한파 폭염 강풍 특보발표문 상세 "
+        "미세먼지 지역 알림 부모님 확인 "
         "weather warning alert typhoon heavy rain snow cold wave heat wind bulletin"
     ),
     policy=AdapterRealDomainPolicy(

@@ -39,15 +39,15 @@ def loaded_registry() -> tuple[ToolRegistry, ToolExecutor]:
 def test_b1_total_tool_count_includes_mocks(
     loaded_registry: tuple[ToolRegistry, ToolExecutor],
 ) -> None:
-    """Path B-1: bridge registers 18 non-core mock adapters into main registry.
+    """Path B-1: bridge registers non-core mock adapters into main registry.
 
-    Expected total: 19 (lookup-class + 5 primitives) + 10 verify + 5 submit + 3 subscribe = 37.
+    Expected total: 21 (lookup-class + 5 primitives) + 10 verify + 6 submit + 3 subscribe = 40.
     """
     r, _ = loaded_registry
     total = len(r.all_tools())
-    assert total == 37, (
-        f"Expected 37 total tools after discovery_bridge runs; got {total}. "
-        f"Verify the bridge registered all 18 mock adapters."
+    assert total == 40, (
+        f"Expected 40 total tools after discovery_bridge runs; got {total}. "
+        f"Verify the bridge registered all 19 mock adapters."
     )
 
 
@@ -76,13 +76,14 @@ def test_b1_verify_mocks_in_registry(
 def test_b1_submit_mocks_in_registry(
     loaded_registry: tuple[ToolRegistry, ToolExecutor],
 ) -> None:
-    """All 5 submit mock tool_ids are registered (3 ε + 2 Spec 031)."""
+    """All 6 submit mock tool_ids are registered (3 ε + 3 real-use/Spec 031)."""
     r, _ = loaded_registry
     ids = {t.id for t in r.all_tools()}
     expected = {
         "mock_submit_module_hometax_taxreturn",
         "mock_submit_module_gov24_minwon",
         "mock_submit_module_public_mydata_action",
+        "mock_koroad_driver_fitness_reservation_v1",
         "mock_traffic_fine_pay_v1",
         "mock_welfare_application_submit_v1",
     }
@@ -169,6 +170,72 @@ def test_b2_hometax_taxreturn_schema_fields_have_descriptions(
         assert fdef.get("description"), (
             f"Field {fname!r} has no description — LLM cannot judge what to fill."
         )
+
+
+def test_b2_submit_candidate_declares_delegation_source_and_scope_instruction(
+    loaded_registry: tuple[ToolRegistry, ToolExecutor],
+) -> None:
+    """Submit candidates must tell the model which verify adapter + scope unlocks them."""
+    r, _ = loaded_registry
+    target = r.lookup("mock_submit_module_hometax_taxreturn")
+
+    assert target.delegation_source_tool_id == "mock_verify_module_modid"
+    assert target.llm_description is not None
+    assert "mock_verify_module_modid" in target.llm_description
+    assert "submit:hometax.tax-return" in target.llm_description
+
+
+def test_b2_gov24_minwon_declares_ganpyeon_delegation_source(
+    loaded_registry: tuple[ToolRegistry, ToolExecutor],
+) -> None:
+    """Gov24 submit accepts 간편인증-family delegation, not simple_auth_module."""
+    r, _ = loaded_registry
+    target = r.lookup("mock_submit_module_gov24_minwon")
+
+    assert target.delegation_source_tool_id == "mock_verify_ganpyeon_injeung"
+    assert target.llm_description is not None
+    assert "mock_verify_ganpyeon_injeung" in target.llm_description
+    assert "submit:gov24.minwon" in target.llm_description
+
+
+def test_b1_civil_movein_query_surfaces_gov24_sequence_candidates(
+    loaded_registry: tuple[ToolRegistry, ToolExecutor],
+) -> None:
+    """CIV-001 wording must retrieve the move-in lookup before submit."""
+    r, e = loaded_registry
+
+    async def _run():  # noqa: ANN202
+        inp = LookupSearchInput(
+            mode="search",
+            query="이사 전입신고 자동차 건강보험 학교 주소 변경",
+            top_k=8,
+        )
+        return await lookup(inp, registry=r, executor=e, session_identity="test")
+
+    result = asyncio.run(_run())
+    top_ids = [c.tool_id for c in result.candidates[:5]]
+    assert "mock_lookup_module_gov24_movein_sequence" in top_ids
+    assert "mock_submit_module_gov24_minwon" in top_ids
+
+
+def test_b1_vat_sales_query_surfaces_hometax_chain_candidates(
+    loaded_registry: tuple[ToolRegistry, ToolExecutor],
+) -> None:
+    """TAX-002 wording (부가세/매출자료/납부) should not be hijacked by generic pay tools."""
+    r, e = loaded_registry
+
+    async def _run():  # noqa: ANN202
+        inp = LookupSearchInput(
+            mode="search",
+            query="개인사업자 부가세 매출 자료 모아서 납부",
+            top_k=5,
+        )
+        return await lookup(inp, registry=r, executor=e, session_identity="test")
+
+    result = asyncio.run(_run())
+    top_ids = [c.tool_id for c in result.candidates[:3]]
+    assert "mock_submit_module_hometax_taxreturn" in top_ids
+    assert "mock_lookup_module_hometax_simplified" in top_ids
 
 
 def test_b1_cross_domain_search_returns_correct_candidates(

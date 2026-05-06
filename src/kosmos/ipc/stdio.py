@@ -28,14 +28,16 @@ import contextlib
 import json as _stdlib_json
 import logging
 import os
+import re
 import signal
 import sys
 import time
 import uuid
 from collections.abc import Callable
-from datetime import UTC
-from types import FrameType
-from typing import TYPE_CHECKING, Any, Literal, cast
+from datetime import UTC, datetime, timedelta
+from types import FrameType, SimpleNamespace
+from typing import TYPE_CHECKING, Any, Final, Literal, cast
+from zoneinfo import ZoneInfo
 
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
@@ -56,6 +58,27 @@ logger = logging.getLogger(__name__)
 # Module-level tracer — follows the same pattern as kosmos.tools.executor and
 # kosmos.engine.query (trace.get_tracer(__name__) at module load time).
 _tracer = trace.get_tracer(__name__)
+
+_CORE_PRIMITIVE_TOOL_IDS: set[str] = {
+    "lookup",
+    "resolve_location",
+    "verify",
+    "submit",
+    "subscribe",
+}
+_DELEGATION_SCOPE_RE = re.compile(
+    r"^(lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+$"
+)
+_KMA_FORECAST_BASE_TIMES: Final[tuple[str, ...]] = (
+    "0200",
+    "0500",
+    "0800",
+    "1100",
+    "1400",
+    "1700",
+    "2000",
+    "2300",
+)
 
 # ---------------------------------------------------------------------------
 # Internal state
@@ -272,6 +295,8 @@ _ADMCD_INPUT_FIELDS: frozenset[str] = frozenset(
         "adm_cd",
         "siGunGuCd",
         "sgg_cd",
+        "si_do",
+        "gu_gun",
         "h_code",
         "b_code",
     }
@@ -408,101 +433,3347 @@ def _check_chain_prerequisite(  # noqa: C901
 # ---------------------------------------------------------------------------
 # Follow-up lookup gate (G-class fabrication countermeasure — 2026-05-04)
 # ---------------------------------------------------------------------------
-# Citizen query keywords that signal "the LLM needs to call a follow-up
-# adapter (lookup mode='fetch') after resolve_location returns coordinates
-# or admcd". Without the follow-up, LLM fabricates the data from parametric
-# memory (the donga-univ-poi-bug 1-day-newer regression: snap-001 captured
-# 4.7°C drift / 61%p humidity drift between LLM-claimed values and the raw
-# KMA observation).  This list is the policy hint — adapter_id is decided
-# by BM25 from the available_adapters suffix.
-_FOLLOWUP_REQUIRED_KEYWORDS_KO: frozenset[str] = frozenset(
-    {
-        "날씨",
-        "기온",
-        "온도",
-        "습도",
-        "강수",
-        "비",
-        "눈",
-        "바람",
-        "풍속",
-        "예보",
-        "특보",
-        "폭염",
-        "한파",
-        "황사",
-        "미세먼지",
-        "병원",
-        "응급실",
-        "응급의료",
-        "의료기관",
-        "약국",
-        "사고",
-        "교통사고",
-        "위험",
-        "스쿨존",
-        "어린이보호구역",
-        "구급",
-        "119",
-        "소방서",
-        "재해",
-        "복지",
-        "급여",
-        "보조금",
-        "지원금",
-    }
-)
-_FOLLOWUP_REQUIRED_KEYWORDS_EN: frozenset[str] = frozenset(
-    {
-        "weather",
-        "temperature",
-        "humidity",
-        "rainfall",
-        "wind",
-        "forecast",
-        "warning",
-        "hospital",
-        "er",
-        "emergency",
-        "pharmacy",
-        "accident",
-        "traffic",
-        "hazard",
-        "ambulance",
-        "fire",
-        "disaster",
-        "welfare",
-        "benefit",
-        "subsidy",
-    }
-)
+def _candidate_requires_resolved_location(candidate: object) -> bool:
+    """Return True when a retrieved adapter declares location-derived inputs.
+
+    The signal is the adapter's exported Pydantic input schema, not a query
+    keyword list. This keeps the final-answer gate aligned with the live tool
+    registry: if a future agency adapter stops requiring coordinates, this
+    gate stops requiring a resolve → lookup chain without any router edit.
+    """
+    tool_id = getattr(candidate, "tool_id", "")
+    primitive = getattr(candidate, "primitive", None)
+    if tool_id == "resolve_location" or primitive != "lookup":
+        return False
+    schema = getattr(candidate, "input_schema_json", None)
+    if not isinstance(schema, dict):
+        return False
+    props = schema.get("properties")
+    if not isinstance(props, dict):
+        return False
+    field_names = set(props)
+    return bool(field_names & (_COORD_INPUT_FIELDS | _ADMCD_INPUT_FIELDS))
 
 
-def _query_implies_followup_lookup(user_query: str) -> bool:
-    """Return True when the citizen query semantics require a follow-up
-    ``lookup(mode='fetch', tool_id=...)`` after ``resolve_location`` resolves
-    coordinates.
+def _query_implies_followup_lookup(
+    user_query: str,
+    *,
+    registry: object | None = None,
+    top_k: int = 12,
+) -> bool:
+    """Derive the resolve → lookup requirement from live adapter metadata.
 
     G-class chain enforcement: the integration-verification capture
     ``snap-001-01-kma-now`` showed K-EXAONE calling ``resolve_location`` twice
     and then producing a fabricated weather answer (16°C / 84% humidity vs
-    raw KMA 20.7°C / 23%) without ever invoking ``lookup(kma_current_observation)``.
-    The fabrication mode is deterministic when the citizen query mentions a
-    location-bound observable (weather / hospital / accident / 119) — no
-    adapter shipped today answers those purely from coordinates.
+    raw KMA 20.7°C / 23%) without ever invoking a data adapter. The fix is
+    no longer a keyword table. We run the same registry retrieval used for
+    ``<available_adapters>`` and require a follow-up only when the top positive
+    candidate is a lookup adapter whose schema declares coordinate or
+    administrative-code inputs.
     """
-    if not user_query:
+    q = (user_query or "").strip()
+    if not q or registry is None:
         return False
-    q = user_query.lower()
-    for kw in _FOLLOWUP_REQUIRED_KEYWORDS_KO:
-        if kw in user_query:  # Korean — case is irrelevant
+    try:
+        from kosmos.tools.search import search  # noqa: PLC0415
+
+        candidates = search(
+            query=q,
+            bm25_index=registry.bm25_index,  # type: ignore[attr-defined]
+            registry=registry,  # type: ignore[arg-type]
+            top_k=top_k,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("follow-up lookup policy retrieval failed for '%s'", q[:80])
+        return False
+    positive_candidates = _relevant_positive_candidates(candidates)
+    if not positive_candidates:
+        return False
+    if _candidate_requires_resolved_location(positive_candidates[0]):
+        return True
+    top_tool_id = getattr(positive_candidates[0], "tool_id", None) or getattr(
+        positive_candidates[0],
+        "id",
+        None,
+    )
+    if top_tool_id == "resolve_location":
+        top_score = getattr(positive_candidates[0], "score", 0.0)
+        return any(
+            _candidate_requires_resolved_location(candidate)
+            and getattr(candidate, "score", 0.0) >= top_score * 0.75
+            for candidate in positive_candidates[1:]
+            if getattr(candidate, "primitive", None) == "lookup"
+        )
+    if getattr(positive_candidates[0], "primitive", None) == "subscribe":
+        return any(
+            _candidate_requires_resolved_location(candidate)
+            for candidate in positive_candidates[1:]
+            if getattr(candidate, "primitive", None) == "lookup"
+        )
+    return False
+
+
+def _conversation_has_verify(llm_messages: list[Any]) -> bool:
+    for m in llm_messages:
+        role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+        if role == "tool":
+            name = getattr(m, "name", None) or (m.get("name") if isinstance(m, dict) else None)
+            if name == "verify":
+                return True
+            continue
+        if role != "assistant":
+            continue
+        tool_calls = getattr(m, "tool_calls", None) or (
+            m.get("tool_calls") if isinstance(m, dict) else None
+        )
+        if not tool_calls:
+            continue
+        for tc in tool_calls:
+            call_fn = getattr(getattr(tc, "function", None), "name", None) or (
+                tc.get("function", {}).get("name") if isinstance(tc, dict) else None
+            )
+            if call_fn == "verify":
+                return True
+    return False
+
+
+def _conversation_has_primitive(llm_messages: list[Any], primitive_name: str) -> bool:
+    for m in llm_messages:
+        role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+        if role == "tool":
+            name = getattr(m, "name", None) or (m.get("name") if isinstance(m, dict) else None)
+            if name == primitive_name:
+                return True
+            continue
+        if role != "assistant":
+            continue
+        tool_calls = getattr(m, "tool_calls", None) or (
+            m.get("tool_calls") if isinstance(m, dict) else None
+        )
+        if not tool_calls:
+            continue
+        for tc in tool_calls:
+            call_fn = getattr(getattr(tc, "function", None), "name", None) or (
+                tc.get("function", {}).get("name") if isinstance(tc, dict) else None
+            )
+            if call_fn == primitive_name:
+                return True
+    return False
+
+
+def _tool_message_payload(message: Any, primitive_name: str) -> dict[str, object] | None:
+    role = getattr(message, "role", None) or (
+        message.get("role") if isinstance(message, dict) else None
+    )
+    name = getattr(message, "name", None) or (
+        message.get("name") if isinstance(message, dict) else None
+    )
+    if role != "tool" or name != primitive_name:
+        return None
+    content = getattr(message, "content", None) or (
+        message.get("content") if isinstance(message, dict) else None
+    )
+    if not isinstance(content, str) or not content:
+        return None
+    try:
+        payload = _stdlib_json.loads(content)
+    except (_stdlib_json.JSONDecodeError, TypeError):
+        return None
+    if isinstance(payload, dict):
+        return cast("dict[str, object]", payload)
+    return None
+
+
+def _tool_payload_result(payload: dict[str, object]) -> dict[str, object] | None:
+    result = payload.get("result")
+    if isinstance(result, dict):
+        nested_result = result.get("result")
+        if isinstance(nested_result, dict):
+            return cast("dict[str, object]", nested_result)
+        return cast("dict[str, object]", result)
+    return None
+
+
+def _status_is_rejected_or_failed(status: object) -> bool:
+    if not isinstance(status, str):
+        return False
+    return status.strip().lower() in {
+        "rejected",
+        "failed",
+        "반려",
+        "반려됨",
+        "실패",
+    }
+
+
+def _tool_payload_succeeded(payload: dict[str, object], primitive_name: str) -> bool:
+    if payload.get("kind") == "error":
+        return False
+    result = _tool_payload_result(payload)
+    if result is None:
+        if primitive_name == "subscribe" and payload.get("kind") == "subscribe":
+            return (
+                payload.get("status") == "opened"
+                and (
+                    isinstance(payload.get("subscription_id"), str)
+                    or isinstance(payload.get("handle_id"), str)
+                )
+            )
+        return False
+    if result.get("kind") == "error":
+        return False
+    if _status_is_rejected_or_failed(result.get("status")):
+        return False
+    adapter_receipt = result.get("adapter_receipt")
+    if isinstance(adapter_receipt, dict):
+        if _status_is_rejected_or_failed(adapter_receipt.get("status")):
+            return False
+        if adapter_receipt.get("error") or adapter_receipt.get("reason"):
+            return False
+    if primitive_name == "submit":
+        return result.get("status") in {"succeeded", "accepted"}
+    return True
+
+
+def _conversation_has_successful_primitive(
+    llm_messages: list[Any],
+    primitive_name: str,
+) -> bool:
+    for message in llm_messages:
+        payload = _tool_message_payload(message, primitive_name)
+        if payload is None:
+            continue
+        if _tool_payload_succeeded(payload, primitive_name):
             return True
-    return any(kw in q for kw in _FOLLOWUP_REQUIRED_KEYWORDS_EN)
+    return False
+
+
+def _latest_verify_result(llm_messages: list[Any]) -> dict[str, object] | None:
+    """Return the latest verified AuthContext payload emitted by verify."""
+    for m in reversed(llm_messages):
+        role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+        if role != "tool":
+            continue
+        name = getattr(m, "name", None) or (m.get("name") if isinstance(m, dict) else None)
+        if name != "verify":
+            continue
+        content = getattr(m, "content", None) or (m.get("content") if isinstance(m, dict) else None)
+        if not isinstance(content, str) or not content:
+            continue
+        try:
+            payload = _stdlib_json.loads(content)
+        except (_stdlib_json.JSONDecodeError, TypeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        result = payload.get("result")
+        if isinstance(result, dict):
+            nested_result = result.get("result")
+            if isinstance(nested_result, dict):
+                return cast("dict[str, object]", nested_result)
+            return cast("dict[str, object]", result)
+    return None
+
+
+def _latest_delegation_context(llm_messages: list[Any]) -> dict[str, object] | None:
+    """Return the latest DelegationContext emitted by a verify tool result."""
+    result = _latest_verify_result(llm_messages)
+    if result is not None:
+        delegation_context = result.get("delegation_context")
+        if isinstance(delegation_context, dict):
+            return cast("dict[str, object]", delegation_context)
+    return None
+
+
+def _delegation_context_from_auth_context(auth_context: object | None) -> dict[str, object] | None:
+    delegation_context = getattr(auth_context, "delegation_context", None)
+    if delegation_context is None:
+        return None
+    dump = getattr(delegation_context, "model_dump", None)
+    if callable(dump):
+        dumped = dump(mode="json")
+        if isinstance(dumped, dict):
+            return cast("dict[str, object]", dumped)
+    if isinstance(delegation_context, dict):
+        return cast("dict[str, object]", delegation_context)
+    return None
+
+
+def _mock_delegation_context_for_tool(
+    tool_id: str,
+    *,
+    session_id: str,
+    user_query: str,
+    registry: Any,
+) -> dict[str, object] | None:
+    """Build a scope-bound mock DelegationContext for mock-only MyData actions."""
+    scope = _required_scope_for_registry_tool(registry, tool_id)
+    if not _is_valid_delegation_scope(scope):
+        return None
+    issued_at = datetime.now(UTC)
+    delegation_token = f"del_{uuid.uuid4().hex}"
+    issuer_did = "did:web:kosmos.local:mock-mydata"
+    expires_at = issued_at + timedelta(hours=1)
+    try:
+        from kosmos.memdir.consent_ledger import (  # noqa: PLC0415
+            DelegationIssuedEvent,
+            append_delegation_issued,
+        )
+
+        append_delegation_issued(
+            DelegationIssuedEvent(
+                ts=issued_at,
+                session_id=session_id,
+                delegation_token=delegation_token,
+                scope=scope,
+                expires_at=expires_at,
+                issuer_did=issuer_did,
+                verify_tool_id="mock_verify_mydata",
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.debug(
+            "mock delegation issuance ledger append failed for tool_id=%s session=%s: %s",
+            tool_id,
+            session_id,
+            exc,
+        )
+    return {
+        "token": {
+            "vp_jwt": "mock-header.mock-payload.mock-signature-not-cryptographic",
+            "delegation_token": delegation_token,
+            "scope": scope,
+            "issuer_did": issuer_did,
+            "issued_at": issued_at.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "_mode": "mock",
+        },
+        "citizen_did": "did:web:kosmos.local:citizen:mock",
+        "purpose_ko": (user_query or "정부 서비스 위임 처리")[:200],
+        "purpose_en": "Citizen-requested delegated government service workflow.",
+    }
+
+
+def _permission_visible_arguments(args_obj: dict[str, object]) -> dict[str, object]:
+    """Return permission-prompt args with backend-only identity fields removed."""
+    visible = dict(args_obj)
+    visible.pop("delegation_context", None)
+    params_obj = visible.get("params")
+    if isinstance(params_obj, dict):
+        params = dict(cast("dict[str, object]", params_obj))
+        for key in (
+            "delegation_context",
+            "identity_assertion",
+            "session_context",
+            "session_id",
+        ):
+            params.pop(key, None)
+        visible["params"] = params
+    return visible
+
+
+def _copy_coord_fields(source: dict[str, object], target: dict[str, object]) -> None:
+    lat = source.get("lat")
+    lon = source.get("lon")
+    if isinstance(lat, int | float):
+        target["lat"] = float(lat)
+    if isinstance(lon, int | float):
+        target["lon"] = float(lon)
+
+
+def _copy_admcd_fields(source: dict[str, object], target: dict[str, object]) -> None:
+    code = source.get("code")
+    name = source.get("name")
+    if isinstance(code, str) and code:
+        target["adm_cd"] = code
+    if isinstance(name, str) and name:
+        target["address"] = name
+
+
+def _copy_address_fields(source: dict[str, object], target: dict[str, object]) -> None:
+    road = source.get("road_address")
+    jibun = source.get("jibun_address")
+    if isinstance(road, str) and road:
+        target["address"] = road
+    elif isinstance(jibun, str) and jibun:
+        target["address"] = jibun
+
+
+def _copy_flat_resolve_fields(source: dict[str, object], target: dict[str, object]) -> None:
+    """Copy the v4 flat resolve_location payload into reusable adapter fields."""
+    _copy_coord_fields(source, target)
+    b_code = source.get("b_code") or source.get("adm_cd")
+    if isinstance(b_code, str) and b_code:
+        target["adm_cd"] = b_code
+    address_name = source.get("address_name") or source.get("address")
+    if isinstance(address_name, str) and address_name:
+        target["address"] = address_name
+
+
+def _resolve_location_fields_from_result(result: dict[str, object]) -> dict[str, object]:
+    fields: dict[str, object] = {}
+    kind = result.get("kind")
+    if kind == "bundle":
+        coords = result.get("coords")
+        adm = result.get("adm_cd")
+        address = result.get("address")
+        if isinstance(coords, dict):
+            _copy_coord_fields(cast("dict[str, object]", coords), fields)
+        if isinstance(adm, dict):
+            _copy_admcd_fields(cast("dict[str, object]", adm), fields)
+        if isinstance(address, dict):
+            _copy_address_fields(cast("dict[str, object]", address), fields)
+    elif kind == "adm_cd":
+        _copy_admcd_fields(result, fields)
+    elif kind == "coords":
+        _copy_coord_fields(result, fields)
+    else:
+        # Spec 2522 v4 resolve_location returns a flat payload:
+        # {lat, lon, b_code, address_name, confidence, source}.  The previous
+        # enrichment parser only understood the older discriminated-union
+        # shape and therefore failed to pass adm_cd/address into Gov24 lookup
+        # after a successful resolve_location turn.
+        _copy_flat_resolve_fields(result, fields)
+    return fields
+
+
+def _latest_resolve_location_fields(llm_messages: list[Any]) -> dict[str, object]:
+    """Extract reusable location fields from the latest resolve_location result."""
+    for message in reversed(llm_messages):
+        payload = _tool_message_payload(message, "resolve_location")
+        if payload is None:
+            continue
+        result = _tool_payload_result(payload)
+        if result is None:
+            continue
+        fields = _resolve_location_fields_from_result(result)
+        if fields:
+            return fields
+    return {}
+
+
+def _enrich_lookup_args_from_resolve_result(  # noqa: C901
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    registry: Any,
+) -> dict[str, object]:
+    """Fill missing lookup location params from prior resolve_location output.
+
+    The signal is adapter schema metadata: only fields declared by the selected
+    GovAPITool are injected. This preserves registry-driven routing and avoids
+    query-keyword special cases.
+    """
+    tool_id = args_obj.get("tool_id")
+    if not isinstance(tool_id, str) or not tool_id:
+        return args_obj
+    try:
+        tool = registry.lookup(tool_id)
+        schema = tool.input_schema.model_json_schema()
+    except Exception:  # noqa: BLE001
+        return args_obj
+    props = schema.get("properties")
+    if not isinstance(props, dict):
+        return args_obj
+    wanted = set(props) & {
+        "adm_cd",
+        "b_code",
+        "h_code",
+        "siGunGuCd",
+        "siGunGu_cd",
+        "si_do",
+        "gu_gun",
+        "sgg_cd",
+        "address",
+        "address_name",
+        "lat",
+        "lon",
+        "latitude",
+        "longitude",
+        "xPos",
+        "yPos",
+        "x",
+        "y",
+    }
+    if not wanted:
+        return args_obj
+    resolved = _latest_resolve_location_fields(llm_messages)
+    if not resolved:
+        return args_obj
+    params_obj = args_obj.get("params")
+    params: dict[str, object] = dict(params_obj) if isinstance(params_obj, dict) else {}
+    changed = False
+    for key in wanted:
+        if key not in params and key in resolved:
+            params[key] = resolved[key]
+            changed = True
+    lat = resolved.get("lat")
+    lon = resolved.get("lon")
+    if isinstance(lat, int | float) and isinstance(lon, int | float):
+        coord_aliases: dict[str, float] = {
+            "lat": float(lat),
+            "latitude": float(lat),
+            "y": float(lat),
+            "yPos": float(lat),
+            "lon": float(lon),
+            "longitude": float(lon),
+            "x": float(lon),
+            "xPos": float(lon),
+        }
+        for key, value in coord_aliases.items():
+            if key in wanted and key not in params:
+                params[key] = value
+                changed = True
+    adm_cd = resolved.get("adm_cd") or resolved.get("b_code")
+    if isinstance(adm_cd, str) and adm_cd:
+        for key in ("adm_cd", "b_code", "h_code", "siGunGuCd", "siGunGu_cd", "sgg_cd"):
+            if key in wanted and key not in params:
+                params[key] = adm_cd
+                changed = True
+    address = resolved.get("address") or resolved.get("address_name")
+    if isinstance(address, str) and address:
+        for key in ("address", "address_name"):
+            if key in wanted and key not in params:
+                params[key] = address
+                changed = True
+    if not changed:
+        return args_obj
+    enriched = dict(args_obj)
+    enriched["params"] = params
+    return enriched
+
+
+def _extract_explicit_location_text(user_query: str) -> str:
+    match = re.search(r"현재 위치는\s*(.+?)\s*입니다[.。]?", user_query)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
+def _query_explicitly_requests_verify_primitive(user_query: str) -> bool:
+    return bool(re.search(r"\bverify\b", user_query or "", flags=re.IGNORECASE))
+
+
+def _schema_for_adapter_args(
+    args_obj: dict[str, object],
+    registry: Any,
+) -> dict[str, object] | None:
+    tool_id = args_obj.get("tool_id")
+    if not isinstance(tool_id, str) or not tool_id or tool_id in _CORE_PRIMITIVE_TOOL_IDS:
+        return None
+    try:
+        tool = registry.lookup(tool_id)
+        schema = tool.input_schema.model_json_schema()
+    except Exception:  # noqa: BLE001
+        return None
+    return cast("dict[str, object]", schema) if isinstance(schema, dict) else None
+
+
+def _schema_properties(schema: dict[str, object] | None) -> dict[str, object]:
+    props = schema.get("properties") if isinstance(schema, dict) else None
+    return cast("dict[str, object]", props) if isinstance(props, dict) else {}
+
+
+def _schema_required(schema: dict[str, object] | None) -> set[str]:
+    raw = schema.get("required") if isinstance(schema, dict) else None
+    if not isinstance(raw, list):
+        return set()
+    return {str(item) for item in raw if isinstance(item, str)}
+
+
+def _schema_enum_values(meta: object, schema: dict[str, object] | None) -> list[object]:
+    if not isinstance(meta, dict):
+        return []
+    direct = meta.get("enum")
+    if isinstance(direct, list):
+        return list(direct)
+    for item in (
+        meta.get("anyOf", []) if isinstance(meta.get("anyOf"), list) else []
+    ):
+        if isinstance(item, dict):
+            values = _schema_enum_values(item, schema)
+            if values:
+                return values
+    ref = meta.get("$ref")
+    defs = schema.get("$defs") if isinstance(schema, dict) else None
+    if isinstance(ref, str) and ref.startswith("#/$defs/") and isinstance(defs, dict):
+        target = defs.get(ref.removeprefix("#/$defs/"))
+        if isinstance(target, dict):
+            values = target.get("enum")
+            if isinstance(values, list):
+                return list(values)
+    return []
+
+
+def _text_match_key(value: str) -> str:
+    return re.sub(r"\s+", "", value).lower()
+
+
+def _default_for_adapter_field(  # noqa: C901
+    field_name: str,
+    meta: object,
+    *,
+    schema: dict[str, object] | None,
+    user_query: str,
+) -> object:
+    if isinstance(meta, dict) and "default" in meta:
+        return meta["default"]
+    enum_values = _schema_enum_values(meta, schema)
+    user_key = _text_match_key(user_query)
+    for value in enum_values:
+        if not isinstance(value, str) or not value:
+            continue
+        value_key = _text_match_key(value)
+        if value in user_query or (value_key and value_key in user_key):
+            return value
+    if enum_values:
+        return enum_values[0]
+    if field_name in {"applicant_name"}:
+        return "verified_citizen_mock"
+    if field_name in {"purpose"}:
+        return (user_query or "정부 서비스 처리")[:200]
+    if field_name in {"query"}:
+        return (user_query or "정부 서비스 조회")[:300]
+    if field_name in {"address"}:
+        return _extract_explicit_location_text(user_query) or "주소 미확인"
+    if field_name in {"target_institution_code"}:
+        return "KOSMOS_MOCK"
+    if field_name in {"applicant_di"}:
+        return "mock-applicant-di"
+    if field_name in {"applicant_id"}:
+        return "mock-applicant"
+    if field_name in {"benefit_code"}:
+        return "mock-benefit"
+    if field_name in {"household_size"}:
+        return 1
+    if field_name in {"limit"}:
+        return 5
+    if field_name in {"stn_id"}:
+        code = _schema_code_for_query_label(meta, user_query)
+        if code is not None:
+            return code
+    if field_name == "year":
+        if isinstance(meta, dict):
+            minimum = meta.get("minimum")
+            maximum = meta.get("maximum")
+            year = datetime.now(UTC).year
+            if isinstance(minimum, int | float):
+                year = max(year, int(minimum))
+            if isinstance(maximum, int | float):
+                year = min(year, int(maximum))
+            return year
+        return datetime.now(UTC).year
+    if field_name in {"fine_reference"}:
+        return "mock-fine-reference"
+    if field_name in {"payment_method"}:
+        return "virtual_account"
+    return ""
+
+
+_PREGNANCY_BIRTH_INTENT_RE = re.compile(
+    r"(임신|출산|산모|산전|산후|분만|진료비\s*바우처|국민행복카드|출산\s*휴가|첫만남)"
+)
+
+
+def _schema_code_for_label(
+    meta: object,
+    schema: dict[str, object] | None,
+    label: str,
+) -> str | None:
+    """Extract an official enum code from the field description."""
+    if not isinstance(meta, dict):
+        return None
+    description = meta.get("description")
+    if not isinstance(description, str):
+        return None
+    patterns = (
+        rf"(?P<code>\d{{3}})\s*=\s*{re.escape(label)}",
+        rf"{re.escape(label)}\s*code\s*:\s*['\"]?(?P<code>\d{{3}})['\"]?",
+        rf"{re.escape(label)}\s*코드\s*:\s*['\"]?(?P<code>\d{{3}})['\"]?",
+    )
+    enum_values = {str(value) for value in _schema_enum_values(meta, schema)}
+    for pattern in patterns:
+        match = re.search(pattern, description, flags=re.IGNORECASE)
+        if match is None:
+            continue
+        code = match.group("code")
+        if not enum_values or code in enum_values:
+            return code
+    return None
+
+
+def _schema_code_for_query_label(meta: object, user_query: str) -> str | None:
+    if not isinstance(meta, dict):
+        return None
+    description = meta.get("description")
+    if not isinstance(description, str):
+        return None
+    query_key = _text_match_key(user_query)
+    for match in re.finditer(r"(?P<label>[가-힣A-Za-z·]+)\s*=\s*(?P<code>\d{2,5})", description):
+        label = match.group("label")
+        if _text_match_key(label) in query_key:
+            return match.group("code")
+    return None
+
+
+def _fill_optional_schema_filters(
+    params: dict[str, object],
+    props: dict[str, object],
+    schema: dict[str, object] | None,
+    *,
+    user_query: str,
+) -> None:
+    """Fill optional adapter filters when schema text publishes exact codes."""
+    if "stn_id" in props and "stn_id" not in params:
+        code = _schema_code_for_query_label(props["stn_id"], user_query)
+        if code is not None:
+            params["stn_id"] = code
+    if not _PREGNANCY_BIRTH_INTENT_RE.search(user_query):
+        return
+    if "life_array" in props and "life_array" not in params:
+        code = _schema_code_for_label(props["life_array"], schema, "임신·출산")
+        if code is not None:
+            params["life_array"] = code
+    if "intrs_thema_array" in props and "intrs_thema_array" not in params:
+        code = _schema_code_for_label(props["intrs_thema_array"], schema, "임신·출산")
+        if code is not None:
+            params["intrs_thema_array"] = code
+    if "search_wrd" in props and "search_wrd" not in params:
+        params["search_wrd"] = "출산" if "출산" in user_query else "임신"
+
+
+_LOCATION_ANCHOR_FIELD_NAMES: Final = {
+    "adm_cd",
+    "b_code",
+    "h_code",
+    "siGunGuCd",
+    "siGunGu_cd",
+    "si_do",
+    "gu_gun",
+    "sgg_cd",
+    "address",
+    "address_name",
+    "lat",
+    "lon",
+    "latitude",
+    "longitude",
+    "nx",
+    "ny",
+    "x",
+    "y",
+    "xPos",
+    "yPos",
+}
+
+
+def _has_location_anchor(params: dict[str, object]) -> bool:
+    for field_name in _LOCATION_ANCHOR_FIELD_NAMES:
+        value = params.get(field_name)
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        return True
+    return False
+
+
+def _fill_optional_location_anchor(
+    params: dict[str, object],
+    props: dict[str, object],
+    *,
+    user_query: str,
+) -> bool:
+    """Fill schema-declared optional address anchors from explicit user context.
+
+    Some Pydantic adapters enforce an either/or location anchor in a
+    model_validator, so JSON Schema cannot mark either field as individually
+    required.  The Gov24 move-in lookup is one example: ``adm_cd`` and
+    ``address`` are both optional in schema, but at least one is required at
+    runtime.  Use only schema-declared fields and explicit prompt location text
+    so this stays metadata-driven rather than adapter-id routed.
+    """
+    if _has_location_anchor(params):
+        return False
+    if "address" not in props:
+        return False
+    location_text = _extract_explicit_location_text(user_query)
+    if not location_text:
+        return False
+    params["address"] = location_text
+    return True
+
+
+def _latest_kma_forecast_base(now: datetime | None = None) -> tuple[str, str]:
+    kst_now = (now or datetime.now(tz=ZoneInfo("Asia/Seoul"))).astimezone(
+        ZoneInfo("Asia/Seoul")
+    )
+    publication_anchor = kst_now - timedelta(minutes=10)
+    anchor_hhmm = publication_anchor.strftime("%H%M")
+    for base_time in reversed(_KMA_FORECAST_BASE_TIMES):
+        if base_time <= anchor_hhmm:
+            return publication_anchor.strftime("%Y%m%d"), base_time
+    previous_day = publication_anchor - timedelta(days=1)
+    return previous_day.strftime("%Y%m%d"), _KMA_FORECAST_BASE_TIMES[-1]
+
+
+def _schema_declares_kma_forecast_base(props: dict[str, object]) -> bool:
+    base_time_meta = props.get("base_time")
+    if not isinstance(base_time_meta, dict):
+        return False
+    description = base_time_meta.get("description")
+    return (
+        isinstance(description, str)
+        and "Data is published approximately 10 minutes after each base time" in description
+        and all(base_time in description for base_time in _KMA_FORECAST_BASE_TIMES)
+    )
+
+
+def _coerce_kma_forecast_base_params(
+    params: dict[str, object],
+    props: dict[str, object],
+) -> None:
+    """Use KMA publication base time, not the citizen's travel target date."""
+    if "base_date" not in props or "base_time" not in props:
+        return
+    if not _schema_declares_kma_forecast_base(props):
+        return
+    base_date, base_time = _latest_kma_forecast_base()
+    params["base_date"] = base_date
+    params["base_time"] = base_time
+
+
+def _coerce_adapter_params_from_schema(
+    args_obj: dict[str, object],
+    *,
+    user_query: str,
+    registry: Any,
+    keep_backend_fields: bool = True,
+) -> dict[str, object]:
+    """Prune invented params and fill Mock-safe required fields from schema."""
+    schema = _schema_for_adapter_args(args_obj, registry)
+    props = _schema_properties(schema)
+    if not props:
+        return args_obj
+    params_obj = args_obj.get("params")
+    params: dict[str, object] = dict(params_obj) if isinstance(params_obj, dict) else {}
+    allowed = set(props)
+    if keep_backend_fields:
+        # Backend-owned auth/session fields are still subject to the target
+        # adapter's Pydantic schema. Keeping them for read-only adapters whose
+        # schema uses extra="forbid" turns a harmless verified context into an
+        # invalid extra field and causes lookup retry loops.
+        allowed |= {"delegation_context", "session_id", "identity_assertion"} & set(props)
+    pruned = {key: value for key, value in params.items() if key in allowed}
+    pruned = {
+        key: value
+        for key, value in pruned.items()
+        if not (isinstance(value, str) and not value.strip())
+    }
+    required = _schema_required(schema)
+    for field_name in sorted(required):
+        if field_name in pruned:
+            continue
+        if field_name in {"delegation_context", "session_id", "identity_assertion"}:
+            continue
+        pruned[field_name] = _default_for_adapter_field(
+            field_name,
+            props.get(field_name),
+            schema=schema,
+            user_query=user_query,
+        )
+    _fill_optional_schema_filters(pruned, props, schema, user_query=user_query)
+    _fill_optional_location_anchor(pruned, props, user_query=user_query)
+    _coerce_kma_forecast_base_params(pruned, props)
+    enriched = dict(args_obj)
+    enriched["params"] = pruned
+    return enriched
+
+
+def _search_relevant_candidates(user_query: str, registry: Any, top_k: int = 12) -> list[Any]:
+    q = (user_query or "").strip()
+    if not q:
+        return []
+    try:
+        from kosmos.tools.search import search  # noqa: PLC0415
+
+        candidates = search(
+            query=q,
+            bm25_index=registry.bm25_index,  # type: ignore[attr-defined]
+            registry=registry,
+            top_k=top_k,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("forced follow-up retrieval failed for '%s'", q[:80])
+        return []
+    return _relevant_positive_candidates(candidates)
+
+
+def _first_candidate_for_primitive(
+    candidates: list[Any],
+    primitive: str,
+) -> Any | None:
+    for candidate in candidates:
+        if getattr(candidate, "primitive", None) != primitive:
+            continue
+        tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+        if not isinstance(tool_id, str) or not tool_id or tool_id in _CORE_PRIMITIVE_TOOL_IDS:
+            continue
+        return candidate
+    return None
+
+
+def _candidate_by_tool_id(candidates: list[Any], tool_id: str, primitive: str) -> Any | None:
+    for candidate in candidates:
+        if getattr(candidate, "primitive", None) != primitive:
+            continue
+        candidate_tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+        if candidate_tool_id == tool_id:
+            return candidate
+    return None
+
+
+def _build_forced_resolve_location_args(user_query: str) -> dict[str, object]:
+    return {
+        "query": _extract_explicit_location_text(user_query) or user_query,
+        "want": "coords_and_admcd",
+    }
+
+
+def _normalise_resolve_location_args(args_obj: dict[str, object]) -> dict[str, object]:
+    """Use the bundle request when the model asks for adm_cd alone.
+
+    ``want='adm_cd'`` is brittle in mock/live mixed environments because
+    address-code backends may be unavailable while the coordinate resolver is
+    still able to return a usable bundle.  The LLM-visible schema already
+    describes ``coords_and_admcd`` as the safest default for chained tools, so
+    normalize the narrower request at the harness boundary before dispatch and
+    before the TUI paints the tool-call arguments.
+    """
+    if args_obj.get("want") != "adm_cd":
+        return args_obj
+    normalised = dict(args_obj)
+    normalised["want"] = "coords_and_admcd"
+    return normalised
+
+
+def _gov24_minwon_types_from_query(user_query: str, registry: Any) -> list[str]:
+    schema = _schema_for_adapter_args(
+        {"tool_id": "mock_submit_module_gov24_minwon", "params": {}},
+        registry,
+    )
+    props = _schema_properties(schema)
+    values = _schema_enum_values(props.get("minwon_type"), schema)
+    user_key = _text_match_key(user_query)
+    matched: list[str] = []
+    for value in values:
+        if not isinstance(value, str):
+            continue
+        value_key = _text_match_key(value)
+        if value in user_query or (value_key and value_key in user_key):
+            matched.append(value)
+            continue
+        for suffix in ("신고", "신청", "감면", "연결", "등록", "예약", "증명"):
+            if not value_key.endswith(suffix):
+                continue
+            stem = value_key[: -len(suffix)]
+            if len(stem) >= 2 and stem in user_key:
+                matched.append(value)
+                break
+        else:
+            if value_key.endswith("등기") and "등기" in user_key:
+                matched.append(value)
+    if (
+        "방문예약" in values
+        and "방문예약" not in matched
+        and "예약" in user_key
+        and any(token in user_key for token in ("외국인등록", "체류기간", "출입국", "전자민원"))
+    ):
+        matched.append("방문예약")
+    return matched
+
+
+def _query_has_gov24_followup_minwon_intent(
+    user_query: str,
+    *,
+    completed: set[str],
+    registry: Any,
+) -> bool:
+    return (
+        _gov24_followup_minwon_type_from_query(
+            user_query,
+            completed=completed,
+            registry=registry,
+        )
+        is not None
+    )
+
+
+def _gov24_direct_followup_flow_completed(
+    user_query: str,
+    llm_messages: list[Any],
+    registry: Any,
+) -> bool:
+    if not _conversation_has_successful_tool_id(
+        llm_messages,
+        "lookup",
+        "mock_lookup_module_national_ax_bundle",
+    ):
+        return False
+    completed = _successful_gov24_minwon_types(llm_messages)
+    if "전입신고" not in completed:
+        return False
+    requested_followups = set(_gov24_minwon_types_from_query(user_query, registry)) - {
+        "전입신고",
+    }
+    return bool(requested_followups) and requested_followups.issubset(completed)
+
+
+def _gov24_direct_submit_candidate_before_lookup(
+    user_query: str,
+    submit_args: dict[str, object] | None,
+    llm_messages: list[Any],
+    registry: Any,
+) -> bool:
+    """Return True for target-state flows that start with a self-contained Gov24 submit.
+
+    EDU-001's canonical chain files the move-in report before looking up
+    school-transfer / care options.  Keep the rule schema-derived: the initial
+    action must be the Gov24 minwon adapter with a declared ``전입신고`` enum
+    value, and the same query must also contain another Gov24 minwon enum that
+    remains unsubmitted.  CIV-001 still goes through the move-in dependency
+    lookup first because it has no explicit second minwon enum in the request.
+    """
+    if _conversation_has_successful_primitive(llm_messages, "submit"):
+        return False
+    if _conversation_has_successful_primitive(llm_messages, "lookup"):
+        return False
+    if submit_args is None or submit_args.get("tool_id") != "mock_submit_module_gov24_minwon":
+        return False
+    params = submit_args.get("params")
+    if not isinstance(params, dict) or params.get("minwon_type") != "전입신고":
+        return False
+    if not _extract_explicit_location_text(user_query):
+        return False
+    return _query_has_gov24_followup_minwon_intent(
+        user_query,
+        completed={"전입신고"},
+        registry=registry,
+    )
+
+
+def _gov24_direct_submit_should_precede_lookup(
+    user_query: str,
+    submit_args: dict[str, object] | None,
+    llm_messages: list[Any],
+    registry: Any,
+) -> bool:
+    return _conversation_has_successful_primitive(
+        llm_messages,
+        "resolve_location",
+    ) and _gov24_direct_submit_candidate_before_lookup(
+        user_query,
+        submit_args,
+        llm_messages,
+        registry,
+    )
+
+
+def _gov24_location_first_submit_should_precede_lookup(
+    user_query: str,
+    submit_args: dict[str, object] | None,
+    llm_messages: list[Any],
+    registry: Any,
+) -> bool:
+    if not _conversation_has_successful_primitive(llm_messages, "resolve_location"):
+        return False
+    if _conversation_has_successful_primitive(llm_messages, "lookup"):
+        return False
+    if submit_args is None or submit_args.get("tool_id") != "mock_submit_module_gov24_minwon":
+        return False
+    if not _gov24_query_followup_submit_allowed(
+        "mock_submit_module_gov24_minwon",
+        submit_args,
+        user_query,
+        registry,
+    ):
+        return False
+    if _submit_args_already_succeeded(submit_args, llm_messages):
+        return False
+    return _query_prefers_resolve_location_before_verify(
+        user_query,
+        _search_relevant_candidates(user_query, registry),
+    )
+
+
+def _gov24_bundle_lookup_should_follow_direct_submit(
+    user_query: str,
+    llm_messages: list[Any],
+    registry: Any,
+) -> bool:
+    """Prefer the bundled service lookup after an initial Gov24 move-in submit."""
+    if not _conversation_has_successful_tool_id(
+        llm_messages,
+        "submit",
+        "mock_submit_module_gov24_minwon",
+    ):
+        return False
+    if _conversation_has_successful_tool_id(
+        llm_messages,
+        "lookup",
+        "mock_lookup_module_national_ax_bundle",
+    ):
+        return False
+    completed = _successful_gov24_minwon_types(llm_messages)
+    return "전입신고" in completed and _query_has_gov24_followup_minwon_intent(
+        user_query,
+        completed=completed,
+        registry=registry,
+    )
+
+
+def _build_forced_lookup_args(
+    user_query: str,
+    llm_messages: list[Any],
+    registry: Any,
+) -> dict[str, object] | None:
+    candidates = _search_relevant_candidates(user_query, registry)
+    candidate = None
+    if (
+        _gov24_movein_sequence_completed(llm_messages)
+        and not _conversation_has_successful_tool_id(
+            llm_messages,
+            "lookup",
+            "mock_lookup_module_national_ax_bundle",
+        )
+    ):
+        candidate = _candidate_by_tool_id(
+            candidates,
+            "mock_lookup_module_national_ax_bundle",
+            "lookup",
+        )
+    if (
+        candidate is None
+        and _gov24_bundle_lookup_should_follow_direct_submit(
+            user_query,
+            llm_messages,
+            registry,
+        )
+    ):
+        candidate = _candidate_by_tool_id(
+            candidates,
+            "mock_lookup_module_national_ax_bundle",
+            "lookup",
+        )
+    if candidate is None:
+        candidate = _first_candidate_for_primitive(
+            candidates,
+            "lookup",
+        )
+    if candidate is None:
+        return None
+    tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+    args: dict[str, object] = {
+        "tool_id": str(tool_id),
+        "params": {},
+    }
+    args = _enrich_lookup_args_from_resolve_result(args, llm_messages, registry)
+    return _coerce_adapter_params_from_schema(
+        args,
+        user_query=user_query,
+        registry=registry,
+    )
+
+
+def _gov24_followup_minwon_type_from_query(
+    user_query: str,
+    *,
+    completed: set[str],
+    registry: Any,
+) -> str | None:
+    for value in _gov24_minwon_types_from_query(user_query, registry):
+        if value not in completed:
+            return value
+    return None
+
+
+def _successful_submit_action_types_for_tool(
+    llm_messages: list[Any],
+    tool_id: str,
+) -> set[str]:
+    args_by_id = _tool_call_args_by_id(llm_messages)
+    completed: set[str] = set()
+    for message in llm_messages:
+        payload = _tool_message_payload(message, "submit")
+        if payload is None or not _tool_payload_succeeded(payload, "submit"):
+            continue
+        call_id = getattr(message, "tool_call_id", None) or (
+            message.get("tool_call_id") if isinstance(message, dict) else None
+        )
+        args = args_by_id.get(call_id, {}) if isinstance(call_id, str) else {}
+        if args.get("tool_id") != tool_id:
+            continue
+        params = args.get("params")
+        action_type = params.get("action_type") if isinstance(params, dict) else None
+        if not isinstance(action_type, str) or not action_type:
+            result = _tool_payload_result(payload)
+            receipt = result.get("adapter_receipt") if result is not None else None
+            action_type = (
+                receipt.get("action_type")
+                if isinstance(receipt, dict)
+                else None
+            )
+        if isinstance(action_type, str) and action_type:
+            completed.add(action_type)
+    return completed
+
+
+def _submit_args_already_succeeded(
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+) -> bool:
+    tool_id = args_obj.get("tool_id")
+    if not isinstance(tool_id, str) or not tool_id:
+        return False
+    if tool_id == "mock_submit_module_gov24_minwon":
+        params = args_obj.get("params")
+        minwon_type = params.get("minwon_type") if isinstance(params, dict) else None
+        return isinstance(minwon_type, str) and minwon_type in _successful_gov24_minwon_types(
+            llm_messages
+        )
+    if tool_id == "mock_submit_module_hometax_taxreturn":
+        params = args_obj.get("params")
+        action_type = params.get("action_type") if isinstance(params, dict) else None
+        if not isinstance(action_type, str) or not action_type:
+            action_type = "file_return"
+        return action_type in _successful_submit_action_types_for_tool(
+            llm_messages,
+            tool_id,
+        )
+    return _conversation_has_successful_tool_id(llm_messages, "submit", tool_id)
+
+
+def _gov24_query_followup_submit_allowed(
+    tool_id: str,
+    coerced: dict[str, object],
+    user_query: str,
+    registry: Any,
+) -> bool:
+    if tool_id != "mock_submit_module_gov24_minwon":
+        return False
+    params = coerced.get("params")
+    minwon_type = params.get("minwon_type") if isinstance(params, dict) else None
+    return isinstance(minwon_type, str) and minwon_type in _gov24_minwon_types_from_query(
+        user_query,
+        registry,
+    )
+
+
+def _submit_candidate_allowed_after_completed_gov24(
+    candidate: Any,
+    *,
+    tool_id: str,
+    requested_gov24: set[str],
+    completed_gov24: set[str],
+    top_score: float,
+) -> bool:
+    if not requested_gov24 or not requested_gov24.issubset(completed_gov24):
+        return True
+    if tool_id == "mock_submit_module_gov24_minwon":
+        return True
+    return float(getattr(candidate, "score", 0) or 0) >= max(1.0, top_score * 0.65)
+
+
+def _with_next_gov24_followup_minwon_type(
+    coerced: dict[str, object],
+    *,
+    tool_id: str,
+    user_query: str,
+    completed_gov24: set[str],
+    registry: Any,
+) -> dict[str, object]:
+    if tool_id != "mock_submit_module_gov24_minwon":
+        return coerced
+    params = coerced.get("params")
+    if not isinstance(params, dict):
+        return coerced
+    followup_minwon_type = _gov24_followup_minwon_type_from_query(
+        user_query,
+        completed=completed_gov24,
+        registry=registry,
+    )
+    if followup_minwon_type is None:
+        return coerced
+    updated = dict(coerced)
+    updated_params = dict(params)
+    updated_params["minwon_type"] = followup_minwon_type
+    updated["params"] = updated_params
+    return updated
+
+
+def _hometax_followup_action_type_from_query(user_query: str) -> str:
+    if re.search(r"(환급|환급\s*계좌|계좌\s*(등록|변경|신고))", user_query):
+        return "register_refund_account"
+    return "create_payment_deadline_reminder"
+
+
+def _build_hometax_followup_submit_args(
+    user_query: str,
+    llm_messages: list[Any],
+    registry: Any,
+) -> dict[str, object] | None:
+    if not _submit_payment_followup_needed(llm_messages):
+        return None
+    args: dict[str, object] = {
+        "tool_id": "mock_submit_module_hometax_taxreturn",
+        "params": {
+            "action_type": _hometax_followup_action_type_from_query(user_query),
+        },
+    }
+    coerced = _coerce_adapter_params_from_schema(
+        args,
+        user_query=user_query,
+        registry=registry,
+    )
+    if not _submit_args_compatible_with_latest_auth(coerced, llm_messages, registry):
+        return None
+    if _submit_args_already_succeeded(coerced, llm_messages):
+        return None
+    return coerced
+
+
+def _build_forced_submit_args(
+    user_query: str,
+    llm_messages: list[Any],
+    registry: Any,
+) -> dict[str, object] | None:
+    gov24_args = _next_gov24_movein_submit_args(llm_messages)
+    if gov24_args is not None:
+        return _coerce_adapter_params_from_schema(
+            gov24_args,
+            user_query=user_query,
+            registry=registry,
+        )
+    hometax_followup_args = _build_hometax_followup_submit_args(
+        user_query,
+        llm_messages,
+        registry,
+    )
+    if hometax_followup_args is not None:
+        return hometax_followup_args
+    candidates = _search_relevant_candidates(user_query, registry)
+    completed_gov24 = _successful_gov24_minwon_types(llm_messages)
+    requested_gov24 = set(_gov24_minwon_types_from_query(user_query, registry))
+    top_score = float(getattr(candidates[0], "score", 0) or 0) if candidates else 0.0
+    for candidate in candidates:
+        if getattr(candidate, "primitive", None) != "submit":
+            continue
+        tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+        if not isinstance(tool_id, str) or not tool_id or tool_id in _CORE_PRIMITIVE_TOOL_IDS:
+            continue
+        if not _submit_candidate_allowed_after_completed_gov24(
+            candidate,
+            tool_id=tool_id,
+            requested_gov24=requested_gov24,
+            completed_gov24=completed_gov24,
+            top_score=top_score,
+        ):
+            continue
+        args: dict[str, object] = {
+            "tool_id": tool_id,
+            "params": {},
+        }
+        coerced = _coerce_adapter_params_from_schema(
+            args,
+            user_query=user_query,
+            registry=registry,
+        )
+        coerced = _with_next_gov24_followup_minwon_type(
+            coerced,
+            tool_id=tool_id,
+            user_query=user_query,
+            completed_gov24=completed_gov24,
+            registry=registry,
+        )
+        if not _candidate_submit_compatible_with_latest_auth(
+            candidate,
+            llm_messages,
+            registry,
+        ):
+            continue
+        if _submit_args_already_succeeded(coerced, llm_messages):
+            continue
+        return coerced
+    return None
+
+
+def _build_forced_subscribe_args(user_query: str, registry: Any) -> dict[str, object] | None:
+    candidate = _first_candidate_for_primitive(
+        _search_relevant_candidates(user_query, registry),
+        "subscribe",
+    )
+    if candidate is None:
+        try:
+            tools = list(registry._tools.values())  # noqa: SLF001
+        except Exception:  # noqa: BLE001
+            tools = []
+        candidate = _first_candidate_for_primitive(tools, "subscribe")
+    if candidate is None:
+        return None
+    tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+    return {
+        "tool_id": str(tool_id),
+        "params": {},
+        "lifetime_seconds": 300,
+    }
+
+
+def _latest_auth_context(llm_messages: list[Any]) -> object | None:
+    """Return the latest verify AuthContext as a typed model or tier stand-in."""
+    result = _latest_verify_result(llm_messages)
+    if result is None:
+        return None
+    try:
+        from kosmos.primitives.verify import AuthContext  # noqa: PLC0415
+
+        return TypeAdapter(AuthContext).validate_python(result)
+    except Exception:  # noqa: BLE001
+        delegation_context = result.get("delegation_context")
+        if isinstance(delegation_context, dict):
+            return SimpleNamespace(
+                delegation_context=delegation_context,
+                published_tier=result.get("published_tier"),
+                nist_aal_hint=result.get("nist_aal_hint"),
+                family=result.get("family"),
+            )
+        published_tier = result.get("published_tier")
+        if isinstance(published_tier, str) and published_tier:
+            return SimpleNamespace(
+                published_tier=published_tier,
+                nist_aal_hint=result.get("nist_aal_hint"),
+                family=result.get("family"),
+            )
+    return None
+
+
+def _aal_rank_for_tier(tier: object) -> int | None:
+    if not isinstance(tier, str):
+        return None
+    match = re.search(r"_aal([123])$", tier)
+    if match is None:
+        return None
+    return int(match.group(1))
+
+
+def _published_tier_satisfies(caller_tier: object, required_tier: object) -> bool:
+    """Mirror submit.check_tier_gate's tier relation for planning only."""
+    if not isinstance(required_tier, str) or not required_tier:
+        return True
+    if not isinstance(caller_tier, str) or not caller_tier:
+        return False
+    caller_rank = _aal_rank_for_tier(caller_tier)
+    required_rank = _aal_rank_for_tier(required_tier)
+    if caller_rank is None or required_rank is None:
+        return caller_tier == required_tier
+    if caller_rank > required_rank:
+        return True
+    if caller_rank < required_rank:
+        return False
+    return caller_tier == required_tier
+
+
+def _candidate_submit_compatible_with_latest_auth(
+    candidate: Any,
+    llm_messages: list[Any],
+    registry: Any,
+) -> bool:
+    tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+    if not isinstance(tool_id, str) or not tool_id:
+        return False
+    granted_scopes = _latest_delegation_scope_values(llm_messages)
+    if granted_scopes and not _delegation_scope_grants(
+        _required_scope_for_registry_tool(registry, tool_id),
+        granted_scopes,
+    ):
+        return False
+    auth_context = _latest_auth_context(llm_messages)
+    if auth_context is None:
+        return True
+    caller_tier = getattr(auth_context, "published_tier", None)
+    if caller_tier is None:
+        return True
+    try:
+        tool = registry.lookup(tool_id)
+    except Exception:  # noqa: BLE001
+        return True
+    required_tier = getattr(tool, "published_tier_minimum", None)
+    return _published_tier_satisfies(caller_tier, required_tier)
+
+
+def _submit_args_compatible_with_latest_auth(
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    registry: Any,
+) -> bool:
+    tool_id = args_obj.get("tool_id")
+    if not isinstance(tool_id, str) or not tool_id or tool_id in _CORE_PRIMITIVE_TOOL_IDS:
+        return True
+    granted_scopes = _latest_delegation_scope_values(llm_messages)
+    if granted_scopes and not _delegation_scope_grants(
+        _required_scope_for_registry_tool(registry, tool_id),
+        granted_scopes,
+    ):
+        return False
+    auth_context = _latest_auth_context(llm_messages)
+    if auth_context is None:
+        return True
+    caller_tier = getattr(auth_context, "published_tier", None)
+    if caller_tier is None:
+        return True
+    try:
+        tool = registry.lookup(tool_id)
+    except Exception:  # noqa: BLE001
+        return True
+    return _published_tier_satisfies(
+        caller_tier,
+        getattr(tool, "published_tier_minimum", None),
+    )
+
+
+def _required_scope_for_registry_tool(registry: Any, tool_id: str) -> str | None:
+    """Read a tool module's declared _REQUIRED_SCOPE through registry metadata."""
+    try:
+        tool = registry.lookup(tool_id)
+    except Exception:  # noqa: BLE001
+        return None
+    input_schema = getattr(tool, "input_schema", None)
+    module_path = getattr(input_schema, "__module__", None)
+    if not isinstance(module_path, str) or not module_path:
+        return None
+    try:
+        import importlib  # noqa: PLC0415
+
+        module = importlib.import_module(module_path)
+    except Exception:  # noqa: BLE001
+        return None
+    scope = getattr(module, "_REQUIRED_SCOPE", None)
+    return scope if isinstance(scope, str) and scope else None
+
+
+def _delegation_scope_bundle_for_registry_tool(registry: Any, tool_id: str) -> list[str]:
+    """Read a tool module's declared same-consent scope bundle, if present."""
+    try:
+        tool = registry.lookup(tool_id)
+    except Exception:  # noqa: BLE001
+        return []
+    input_schema = getattr(tool, "input_schema", None)
+    module_path = getattr(input_schema, "__module__", None)
+    if not isinstance(module_path, str) or not module_path:
+        return []
+    try:
+        import importlib  # noqa: PLC0415
+
+        module = importlib.import_module(module_path)
+    except Exception:  # noqa: BLE001
+        return []
+    raw_bundle = getattr(module, "_DELEGATION_SCOPE_BUNDLE", None)
+    if not isinstance(raw_bundle, list | tuple | set):
+        return []
+    return [scope for scope in raw_bundle if _is_valid_delegation_scope(scope)]
+
+
+def _is_valid_delegation_scope(scope: object) -> bool:
+    return isinstance(scope, str) and bool(_DELEGATION_SCOPE_RE.match(scope.strip()))
+
+
+def _delegation_scope_namespace(scope: str) -> str | None:
+    if not _is_valid_delegation_scope(scope):
+        return None
+    _, resource = scope.split(":", 1)
+    namespace = resource.split(".", 1)[0]
+    return namespace or None
+
+
+def _delegation_scope_values_from_context(
+    delegation_context: dict[str, object] | None,
+) -> set[str]:
+    if not isinstance(delegation_context, dict):
+        return set()
+    token = delegation_context.get("token")
+    if not isinstance(token, dict):
+        return set()
+    values: set[str] = set()
+    raw_scope = token.get("scope")
+    if isinstance(raw_scope, str):
+        values.update(scope.strip() for scope in raw_scope.split(",") if scope.strip())
+    raw_scope_list = token.get("scope_list")
+    if isinstance(raw_scope_list, list):
+        values.update(scope for scope in raw_scope_list if isinstance(scope, str) and scope)
+    return {scope for scope in values if _is_valid_delegation_scope(scope)}
+
+
+def _latest_delegation_scope_values(llm_messages: list[Any]) -> set[str]:
+    return _delegation_scope_values_from_context(_latest_delegation_context(llm_messages))
+
+
+def _delegation_scope_grants(required_scope: str | None, granted_scopes: set[str]) -> bool:
+    if not _is_valid_delegation_scope(required_scope):
+        return True
+    return required_scope in granted_scopes
+
+
+def _identity_scope_for_verify_tool_id(tool_id: object) -> str:
+    if isinstance(tool_id, str) and tool_id:
+        try:
+            from kosmos.tools.verify_canonical_map import resolve_family  # noqa: PLC0415
+
+            family = resolve_family(tool_id)
+        except Exception:  # noqa: BLE001
+            family = None
+        if isinstance(family, str) and family:
+            return f"verify:{family}.identity"
+    return "verify:ganpyeon.identity"
+
+
+def _relevant_positive_candidates(candidates: list[Any]) -> list[Any]:
+    """Return a score-bounded shortlist instead of every weak BM25 hit.
+
+    The delegation planner previously granted scopes from all positive
+    candidates. On broad citizen requests this pulled in unrelated low-score
+    submit adapters, over-broadening the consent grant and causing the LLM to
+    chase irrelevant tools. Keep only the score band that is plausibly tied to
+    the top retrieval result, while still allowing multi-adapter bundles.
+    """
+    positive = [candidate for candidate in candidates if getattr(candidate, "score", 0) > 0]
+    if not positive:
+        return []
+    top_score = float(getattr(positive[0], "score", 0) or 0)
+    if top_score <= 0:
+        return []
+    # Target-state citizen requests often contain several legitimate agency
+    # actions in one utterance (e.g. move-in + school/care + reminders).  A
+    # 0.35 band kept only the dominant first agency and hid the second action
+    # candidate from the recovery gates.  Keep a narrower absolute floor while
+    # still dropping weak near-zero BM25 noise.
+    floor = max(1.0, top_score * 0.15)
+    score_band = {
+        id(candidate)
+        for candidate in positive
+        if float(getattr(candidate, "score", 0) or 0) >= floor
+    }
+    best_by_primitive: dict[str, int] = {}
+    for candidate in positive:
+        primitive = getattr(candidate, "primitive", None)
+        if not isinstance(primitive, str) or primitive in best_by_primitive:
+            continue
+        score = float(getattr(candidate, "score", 0) or 0)
+        if score >= 1.0:
+            best_by_primitive[primitive] = id(candidate)
+    retained = score_band | set(best_by_primitive.values())
+    return [candidate for candidate in positive if id(candidate) in retained]
+
+
+def _candidate_is_policy_gated(candidate: Any) -> bool:
+    tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+    if not isinstance(tool_id, str) or not tool_id or tool_id in _CORE_PRIMITIVE_TOOL_IDS:
+        return False
+    gate = getattr(candidate, "citizen_facing_gate", None)
+    return isinstance(gate, str) and gate != "read-only"
+
+
+def _candidate_is_location_readonly_lookup(candidate: Any) -> bool:
+    gate = getattr(candidate, "citizen_facing_gate", None)
+    return (
+        getattr(candidate, "primitive", None) == "lookup"
+        and gate == "read-only"
+        and _candidate_requires_resolved_location(candidate)
+    )
+
+
+def _retrieval_policy_requires_initial_verify(candidates: list[Any]) -> bool:
+    """Return True when a registry shortlist contains a real gated step.
+
+    The earlier gate inspected only the top candidate. Target-state bundle
+    lookups intentionally rank high because they explain the workflow, but many
+    citizen requests also retrieve submit/login adapters that must not be
+    called without a DelegationContext. Conversely, emergency/location lookups
+    often retrieve weak, unrelated submit hits; when a coordinate-input
+    read-only lookup dominates the ranking, keep the first turn location-first.
+    """
+    positive_candidates = _relevant_positive_candidates(candidates)
+    if not positive_candidates:
+        return False
+    strong_gate_floor = max(1.0, float(getattr(positive_candidates[0], "score", 0) or 0) * 0.25)
+    gated_candidates = [
+        candidate for candidate in positive_candidates if _candidate_is_policy_gated(candidate)
+        and float(getattr(candidate, "score", 0) or 0) >= strong_gate_floor
+    ]
+    if not gated_candidates:
+        return False
+    top_candidate = positive_candidates[0]
+    top_score = float(getattr(top_candidate, "score", 0) or 0)
+    best_gated_score = max(
+        float(getattr(candidate, "score", 0) or 0) for candidate in gated_candidates
+    )
+    top_tool_id = getattr(top_candidate, "tool_id", None) or getattr(top_candidate, "id", None)
+    if (
+        top_tool_id == "resolve_location"
+        and top_score > 0
+        and top_score >= best_gated_score
+    ):
+        return False
+    return not (
+        top_score > 0
+        and _candidate_is_location_readonly_lookup(top_candidate)
+        and best_gated_score < top_score * 0.50
+    )
+
+
+def _retrieval_has_strong_policy_gated_candidate(candidates: list[Any]) -> bool:
+    positive_candidates = _relevant_positive_candidates(candidates)
+    if not positive_candidates:
+        return False
+    floor = max(1.0, float(getattr(positive_candidates[0], "score", 0) or 0) * 0.25)
+    return any(
+        _candidate_is_policy_gated(candidate)
+        and float(getattr(candidate, "score", 0) or 0) >= floor
+        for candidate in positive_candidates
+    )
+
+
+def _query_prefers_resolve_location_before_verify(
+    user_query: str,
+    candidates: list[Any],
+) -> bool:
+    """Return True when registry evidence says location must anchor the flow first.
+
+    This keeps the decision metadata-derived instead of scenario-keyword based.
+    A privileged Gov24 submit can outrank the location primitive after schema
+    hints are improved; for emergency/location flows we still need to resolve
+    the citizen's explicit current location before issuing a delegation token.
+    Login-gated lookup workflows such as move-in keep verify first.
+    """
+    if not _extract_explicit_location_text(user_query):
+        return False
+    positive_candidates = _relevant_positive_candidates(candidates)
+    if not positive_candidates or not _retrieval_has_strong_policy_gated_candidate(candidates):
+        return False
+    top_score = float(getattr(positive_candidates[0], "score", 0) or 0)
+    if top_score <= 0:
+        return False
+    if getattr(positive_candidates[0], "primitive", None) == "subscribe":
+        strong_verify_floor = max(1.0, top_score * 0.25)
+        if any(
+            getattr(candidate, "primitive", None) == "verify"
+            and float(getattr(candidate, "score", 0) or 0) >= strong_verify_floor
+            for candidate in positive_candidates
+        ):
+            return False
+
+    resolve_score = max(
+        (
+            float(getattr(candidate, "score", 0) or 0)
+            for candidate in positive_candidates
+            if (getattr(candidate, "tool_id", None) or getattr(candidate, "id", None))
+            == "resolve_location"
+        ),
+        default=0.0,
+    )
+    location_lookup_score = max(
+        (
+            float(getattr(candidate, "score", 0) or 0)
+            for candidate in positive_candidates
+            if _candidate_is_location_readonly_lookup(candidate)
+        ),
+        default=0.0,
+    )
+    if resolve_score <= 0 or location_lookup_score <= 0:
+        return False
+
+    gated_lookup_score = max(
+        (
+            float(getattr(candidate, "score", 0) or 0)
+            for candidate in positive_candidates
+            if _candidate_is_policy_gated(candidate)
+            and getattr(candidate, "primitive", None) == "lookup"
+        ),
+        default=0.0,
+    )
+    if gated_lookup_score >= location_lookup_score:
+        return False
+    return location_lookup_score >= max(1.0, top_score * 0.25)
+
+
+def _delegation_plan_from_candidates(  # noqa: C901
+    candidates: list[Any],
+    registry: Any,
+) -> tuple[str | None, list[str]]:
+    """Derive compatible verify adapter + scope_list from retrieved adapters."""
+    verify_tool_id: str | None = None
+    scopes_by_source: dict[str, list[str]] = {}
+    scope_scores: dict[str, float] = {}
+    source_scores: dict[str, float] = {}
+    source_has_scope: dict[str, bool] = {}
+    source_counts: dict[str, int] = {}
+    source_order: dict[str, int] = {}
+    verify_candidates: list[str] = []
+    retained_candidates = _relevant_positive_candidates(candidates)
+    for index, candidate in enumerate(retained_candidates):
+        primitive = getattr(candidate, "primitive", None)
+        tool_id = getattr(candidate, "tool_id", None) or getattr(candidate, "id", None)
+        if (
+            primitive == "verify"
+            and isinstance(tool_id, str)
+            and tool_id
+            and tool_id not in _CORE_PRIMITIVE_TOOL_IDS
+        ):
+            verify_candidates.append(tool_id)
+        source = getattr(candidate, "delegation_source_tool_id", None)
+        if isinstance(source, str) and source:
+            if primitive == "submit":
+                source_scores[source] = source_scores.get(source, 0.0) + float(
+                    getattr(candidate, "score", 0) or 0
+                )
+                source_counts[source] = source_counts.get(source, 0) + 1
+                source_order.setdefault(source, index)
+            if verify_tool_id is None:
+                verify_tool_id = source
+        if primitive not in {"lookup", "submit", "subscribe"}:
+            continue
+        if not isinstance(source, str) or not source:
+            continue
+        scope = _required_scope_for_registry_tool(
+            registry,
+            str(getattr(candidate, "tool_id", "")),
+        )
+        if _is_valid_delegation_scope(scope):
+            source_has_scope[source] = True
+            scope_scores[scope] = max(
+                scope_scores.get(scope, 0.0),
+                float(getattr(candidate, "score", 0) or 0),
+            )
+            source_scopes = scopes_by_source.setdefault(source, [])
+            if scope not in source_scopes:
+                source_scopes.append(scope)
+            if primitive == "submit" and isinstance(tool_id, str):
+                for bundled_scope in _delegation_scope_bundle_for_registry_tool(
+                    registry,
+                    tool_id,
+                ):
+                    scope_scores[bundled_scope] = max(
+                        scope_scores.get(bundled_scope, 0.0),
+                        float(getattr(candidate, "score", 0) or 0),
+                    )
+                    if bundled_scope not in source_scopes:
+                        source_scopes.append(bundled_scope)
+    if source_scores:
+        top_source_score = max(source_scores.values())
+        close_scoped_sources = [
+            source
+            for source, score in source_scores.items()
+            if source_has_scope.get(source) and score >= max(1.0, top_source_score * 0.80)
+        ]
+        eligible_sources = close_scoped_sources or list(source_scores)
+        verify_tool_id = max(
+            eligible_sources,
+            key=lambda source: (
+                source_scores[source],
+                source_counts.get(source, 0),
+                -source_order.get(source, 0),
+            ),
+        )
+    elif verify_candidates:
+        verify_tool_id = verify_candidates[0]
+    namespace_score_floor = max(
+        1.0,
+        source_scores.get(verify_tool_id or "", 0.0) * 0.50,
+    )
+    scopes = [
+        scope
+        for scope in scopes_by_source.get(verify_tool_id or "", [])
+        if scope_scores.get(scope, 0.0) >= namespace_score_floor
+    ]
+    selected_namespaces = {
+        namespace
+        for scope in scopes
+        if (namespace := _delegation_scope_namespace(scope)) is not None
+    }
+    if selected_namespaces:
+        scopes = list(scopes)
+        for source_scopes in scopes_by_source.values():
+            for scope in source_scopes:
+                namespace = _delegation_scope_namespace(scope)
+                if (
+                    namespace in selected_namespaces
+                    and scope not in scopes
+                    and scope_scores.get(scope, 0.0) >= namespace_score_floor
+                ):
+                    scopes.append(scope)
+    return verify_tool_id, scopes
+
+
+def _derive_delegation_plan_for_query(
+    user_query: str,
+    registry: Any,
+    *,
+    top_k: int = 12,
+) -> tuple[str | None, list[str]]:
+    q = (user_query or "").strip()
+    if not q:
+        return None, []
+    try:
+        from kosmos.tools.search import search  # noqa: PLC0415
+
+        candidates = search(
+            query=q,
+            bm25_index=registry.bm25_index,
+            registry=registry,
+            top_k=top_k,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("delegation plan retrieval failed for '%s'", q[:80])
+        return None, []
+    return _delegation_plan_from_candidates(candidates, registry)
+
+
+def _forced_tool_choice_name(tool_choice: object) -> str | None:
+    """Return the primitive name from an OpenAI explicit tool_choice object."""
+    if not isinstance(tool_choice, dict):
+        return None
+    function = tool_choice.get("function")
+    if not isinstance(function, dict):
+        return None
+    name = function.get("name")
+    return name if isinstance(name, str) and name else None
+
+
+def _build_policy_forced_verify_args(
+    user_query: str,
+    registry: Any,
+) -> dict[str, object] | None:
+    """Build a registry-derived verify call for empty forced-tool turns.
+
+    FriendliAI/K-EXAONE occasionally ends a turn with no tool_call even when
+    the backend sent explicit ``tool_choice=verify``.  The permission boundary
+    cannot be left to a silent empty answer: derive the verify adapter and
+    scope list from the same registry shortlist that produced the policy gate,
+    then dispatch the real verify primitive through the normal tool pipeline.
+    """
+    verify_tool_id, required_scopes = _derive_delegation_plan_for_query(
+        user_query,
+        registry,
+    )
+    if not verify_tool_id or not required_scopes:
+        if not verify_tool_id:
+            return None
+        required_scopes = [_identity_scope_for_verify_tool_id(verify_tool_id)]
+    return {
+        "tool_id": verify_tool_id,
+        "params": {
+            "scope_list": required_scopes,
+            "purpose_ko": (user_query or "정부 서비스 위임 처리").strip(),
+            "purpose_en": "Citizen-requested delegated government service workflow.",
+        },
+    }
+
+
+def _enrich_verify_args_from_policy(
+    args_obj: dict[str, object],
+    user_query: str,
+    registry: Any,
+) -> dict[str, object]:
+    """Fill missing verify scope/purpose fields from adapter policy metadata."""
+    params_obj = args_obj.get("params")
+    params: dict[str, object] = dict(params_obj) if isinstance(params_obj, dict) else {}
+    scope_list = params.get("scope_list")
+    existing_scopes = [
+        scope.strip()
+        for scope in scope_list
+        if _is_valid_delegation_scope(scope)
+    ] if isinstance(scope_list, list) else []
+    discarded_scopes = (
+        [
+            scope
+            for scope in scope_list
+            if isinstance(scope, str)
+            and scope.strip()
+            and not _is_valid_delegation_scope(scope)
+        ]
+        if isinstance(scope_list, list)
+        else []
+    )
+    if discarded_scopes:
+        logger.warning(
+            "verify policy enrichment discarded invalid delegation scopes: %s",
+            discarded_scopes,
+        )
+    purpose_ko = params.get("purpose_ko")
+    purpose_en = params.get("purpose_en")
+    needs_enrichment = (
+        not existing_scopes
+        or bool(discarded_scopes)
+        or not isinstance(purpose_ko, str)
+        or not purpose_ko.strip()
+        or not isinstance(purpose_en, str)
+        or not purpose_en.strip()
+    )
+    if not needs_enrichment:
+        return args_obj
+    verify_tool_id, required_scopes = _derive_delegation_plan_for_query(user_query, registry)
+    current_tool_id = args_obj.get("tool_id")
+    legacy_family = args_obj.get("family_hint") or args_obj.get("family")
+    if (
+        verify_tool_id
+        and not (isinstance(current_tool_id, str) and current_tool_id.strip())
+        and not (isinstance(legacy_family, str) and legacy_family.strip())
+        and not _query_explicitly_requests_verify_primitive(user_query)
+    ):
+        args_obj = dict(args_obj)
+        args_obj["tool_id"] = verify_tool_id
+    merged_scopes = list(existing_scopes)
+    for scope in required_scopes:
+        if scope not in merged_scopes:
+            merged_scopes.append(scope)
+    if not merged_scopes:
+        merged_scopes.append(_identity_scope_for_verify_tool_id(args_obj.get("tool_id")))
+    if merged_scopes:
+        params["scope_list"] = merged_scopes
+    if not isinstance(purpose_ko, str) or not purpose_ko.strip():
+        params["purpose_ko"] = (user_query or "정부 서비스 위임 처리").strip()
+    if not isinstance(purpose_en, str) or not purpose_en.strip():
+        params["purpose_en"] = "Citizen-requested delegated government service workflow."
+    args_obj = dict(args_obj)
+    args_obj["params"] = params
+    return args_obj
+
+
+def _submit_result_from_tool_message(message: Any) -> dict[str, object] | None:
+    payload = _tool_message_payload(message, "submit")
+    if payload is None or not _tool_payload_succeeded(payload, "submit"):
+        return None
+    result = _tool_payload_result(payload)
+    if isinstance(result, dict) and result.get("status") == "succeeded":
+        return cast("dict[str, object]", result)
+    return None
+
+
+def _submit_receipt_payment_state(result: dict[str, object]) -> object:
+    receipt = result.get("adapter_receipt")
+    if not isinstance(receipt, dict):
+        return None
+    action_type = receipt.get("action_type")
+    if action_type in {
+        "create_payment_deadline_reminder",
+        "mock_payment_after_confirmation",
+        "register_refund_account",
+    }:
+        return action_type
+    preflight = receipt.get("preflight_validation")
+    if isinstance(preflight, dict):
+        return preflight.get("payment")
+    return None
+
+
+def _submit_payment_followup_needed(llm_messages: list[Any]) -> bool:
+    """Return True when a submit receipt explicitly requires a payment follow-up."""
+    needed = False
+    for message in llm_messages:
+        result = _submit_result_from_tool_message(message)
+        if result is None:
+            continue
+        payment_state = _submit_receipt_payment_state(result)
+        if payment_state in {
+            "create_payment_deadline_reminder",
+            "mock_payment_after_confirmation",
+        }:
+            needed = False
+        elif payment_state == "separate_submit_required_before_payment":
+            needed = True
+    return needed
+
+
+def _submit_payment_followup_completed(llm_messages: list[Any]) -> bool:
+    """Return True once a successful payment reminder/payment submit exists."""
+    for message in llm_messages:
+        result = _submit_result_from_tool_message(message)
+        if result is None:
+            continue
+        if _submit_receipt_payment_state(result) in {
+            "create_payment_deadline_reminder",
+            "mock_payment_after_confirmation",
+            "register_refund_account",
+        }:
+            return True
+    return False
+
+
+def _latest_gov24_movein_sequence_item(llm_messages: list[Any]) -> dict[str, object] | None:
+    """Return the latest Gov24 move-in sequence lookup item, if present."""
+    for message in reversed(llm_messages):
+        payload = _tool_message_payload(message, "lookup")
+        if payload is None or not _tool_payload_succeeded(payload, "lookup"):
+            continue
+        result = _tool_payload_result(payload)
+        if result is None:
+            continue
+        item = result.get("item")
+        if not isinstance(item, dict):
+            continue
+        if item.get("workflow_kind") == "gov24_movein_dependent_sequence":
+            return cast("dict[str, object]", item)
+    return None
+
+
+def _gov24_movein_required_minwon_types(item: dict[str, object]) -> list[str]:
+    sequence = item.get("required_sequence")
+    if not isinstance(sequence, list):
+        return []
+    minwon_types: list[str] = []
+    for step in sequence:
+        if not isinstance(step, dict):
+            continue
+        if step.get("primitive") != "submit":
+            continue
+        if step.get("tool_id") != "mock_submit_module_gov24_minwon":
+            continue
+        minwon_type = step.get("minwon_type")
+        if isinstance(minwon_type, str) and minwon_type and minwon_type not in minwon_types:
+            minwon_types.append(minwon_type)
+    return minwon_types
+
+
+def _gov24_movein_suggested_submit_params(
+    item: dict[str, object],
+    minwon_type: str,
+) -> dict[str, object]:
+    suggested = item.get("suggested_submit_params")
+    if isinstance(suggested, dict):
+        for value in suggested.values():
+            if not isinstance(value, dict):
+                continue
+            params = value.get("params")
+            if not isinstance(params, dict):
+                continue
+            if params.get("minwon_type") == minwon_type:
+                return dict(cast("dict[str, object]", params))
+    return {"minwon_type": minwon_type}
+
+
+def _successful_gov24_minwon_types(llm_messages: list[Any]) -> set[str]:
+    args_by_id = _tool_call_args_by_id(llm_messages)
+    completed: set[str] = set()
+    for message in llm_messages:
+        payload = _tool_message_payload(message, "submit")
+        if payload is None or not _tool_payload_succeeded(payload, "submit"):
+            continue
+        call_id = getattr(message, "tool_call_id", None) or (
+            message.get("tool_call_id") if isinstance(message, dict) else None
+        )
+        args = args_by_id.get(call_id, {}) if isinstance(call_id, str) else {}
+        if args.get("tool_id") != "mock_submit_module_gov24_minwon":
+            continue
+        params = args.get("params")
+        minwon_type = params.get("minwon_type") if isinstance(params, dict) else None
+        if not isinstance(minwon_type, str) or not minwon_type:
+            result = _tool_payload_result(payload)
+            receipt = result.get("adapter_receipt") if result is not None else None
+            minwon_type = (
+                receipt.get("minwon_type")
+                if isinstance(receipt, dict)
+                else None
+            )
+        if isinstance(minwon_type, str) and minwon_type:
+            completed.add(minwon_type)
+    return completed
+
+
+def _conversation_has_successful_tool_id(
+    llm_messages: list[Any],
+    primitive_name: str,
+    tool_id: str,
+) -> bool:
+    args_by_id = _tool_call_args_by_id(llm_messages)
+    for message in llm_messages:
+        payload = _tool_message_payload(message, primitive_name)
+        if payload is None or not _tool_payload_succeeded(payload, primitive_name):
+            continue
+        call_id = getattr(message, "tool_call_id", None) or (
+            message.get("tool_call_id") if isinstance(message, dict) else None
+        )
+        args = args_by_id.get(call_id, {}) if isinstance(call_id, str) else {}
+        if args.get("tool_id") == tool_id:
+            return True
+    return False
+
+
+def _next_gov24_movein_submit_args(
+    llm_messages: list[Any],
+) -> dict[str, object] | None:
+    """Build the next Gov24 submit envelope required by a move-in lookup."""
+    item = _latest_gov24_movein_sequence_item(llm_messages)
+    if item is None:
+        return None
+    completed = _successful_gov24_minwon_types(llm_messages)
+    for minwon_type in _gov24_movein_required_minwon_types(item):
+        if minwon_type in completed:
+            continue
+        params = _gov24_movein_suggested_submit_params(item, minwon_type)
+        params.setdefault("minwon_type", minwon_type)
+        params.setdefault("delivery_method", "online")
+        # Mock-mode identity comes from the prior verify DelegationContext.
+        # Do not ask for resident ID/name in chat; live mode will hydrate this
+        # from the official identity assertion.
+        params.setdefault("applicant_name", "verified_citizen_mock")
+        return {
+            "tool_id": "mock_submit_module_gov24_minwon",
+            "params": params,
+        }
+    return None
+
+
+def _gov24_movein_followup_needed(llm_messages: list[Any]) -> bool:
+    return _next_gov24_movein_submit_args(llm_messages) is not None
+
+
+def _gov24_movein_sequence_completed(llm_messages: list[Any]) -> bool:
+    """Return True after all lookup-declared Gov24 move-in submits succeeded."""
+    return (
+        _latest_gov24_movein_sequence_item(llm_messages) is not None
+        and _next_gov24_movein_submit_args(llm_messages) is None
+    )
+
+
+def _verify_pre_permission_arg_error(args_obj: dict[str, object]) -> str | None:
+    tool_id = args_obj.get("tool_id")
+    if not isinstance(tool_id, str) or not tool_id:
+        return None
+    legacy_family = args_obj.get("family_hint") or args_obj.get("family")
+    if not legacy_family:
+        from kosmos.tools.verify_canonical_map import resolve_family  # noqa: PLC0415
+
+        if resolve_family(tool_id) is None:
+            return (
+                f"unknown verify tool_id: {tool_id!r}. Select one of the "
+                "tool_ids listed in <verify_families> or the adapter "
+                "delegation_source_tool_id metadata."
+            )
+    params = args_obj.get("params")
+    if not isinstance(params, dict):
+        return (
+            "invalid verify params: citizen-shape verify(tool_id=...) requires "
+            "params.scope_list (non-empty list[str]), params.purpose_ko, "
+            "and params.purpose_en."
+        )
+    scope_list = params.get("scope_list")
+    if (
+        not isinstance(scope_list, list)
+        or not scope_list
+        or not all(_is_valid_delegation_scope(scope) for scope in scope_list)
+        or not isinstance(params.get("purpose_ko"), str)
+        or not str(params.get("purpose_ko")).strip()
+        or not isinstance(params.get("purpose_en"), str)
+        or not str(params.get("purpose_en")).strip()
+    ):
+        return (
+            "invalid verify params: citizen-shape verify(tool_id=...) requires "
+            "params.scope_list (non-empty list[str]), params.purpose_ko, "
+            "and params.purpose_en. Use the adapter's delegation_source_tool_id "
+            "and required scope metadata from <available_adapters>."
+        )
+    return None
+
+
+def _check_privileged_chain_terminated_early(  # noqa: C901
+    llm_messages: list[Any],
+    user_query: str,
+    registry: Any = None,
+) -> tuple[str, str] | None:
+    """Detect verify→final early exits for registry-selected privileged chains."""
+    if not _conversation_has_verify(llm_messages):
+        return None
+    if _latest_auth_context(llm_messages) is None:
+        return None
+    q = (user_query or "").strip()
+    if not q:
+        return None
+    if registry is None:
+        return None
+    try:
+        from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
+        from kosmos.tools.search import search  # noqa: PLC0415
+
+        reg = cast("ToolRegistry", registry)
+        candidates = search(query=q, bm25_index=reg.bm25_index, registry=reg, top_k=12)
+    except Exception:  # noqa: BLE001
+        logger.exception("privileged chain policy retrieval failed for '%s'", q[:80])
+        return None
+
+    positive_candidates = _relevant_positive_candidates(candidates)
+    lookup_ids = [
+        candidate.tool_id
+        for candidate in positive_candidates
+        if candidate.primitive == "lookup" and candidate.tool_id != "resolve_location"
+    ]
+    submit_ids = []
+    for candidate in positive_candidates:
+        if candidate.primitive != "submit" or candidate.tool_id in _CORE_PRIMITIVE_TOOL_IDS:
+            continue
+        if not _candidate_submit_compatible_with_latest_auth(
+            candidate,
+            llm_messages,
+            registry,
+        ):
+            continue
+        submit_ids.append(candidate.tool_id)
+    subscribe_ids = [
+        candidate.tool_id
+        for candidate in positive_candidates
+        if candidate.primitive == "subscribe" and candidate.tool_id not in _CORE_PRIMITIVE_TOOL_IDS
+    ]
+    pending_submit_args = _build_forced_submit_args(q, llm_messages, registry)
+
+    if (
+        subscribe_ids
+        and positive_candidates
+        and getattr(positive_candidates[0], "primitive", None) == "subscribe"
+        and _conversation_has_successful_primitive(llm_messages, "resolve_location")
+        and not _conversation_has_successful_primitive(llm_messages, "subscribe")
+    ):
+        return (
+            "subscribe",
+            (
+                "The registry-selected top candidate is a subscribe adapter, "
+                "and the location context has already been resolved. Continue "
+                "with subscribe before any follow-up lookup so the citizen gets "
+                f"the requested alert handle: {subscribe_ids[:3]}."
+            ),
+        )
+
+    if (
+        lookup_ids
+        and submit_ids
+        and _gov24_direct_submit_candidate_before_lookup(
+            q,
+            pending_submit_args,
+            llm_messages,
+            registry,
+        )
+    ):
+        if not _conversation_has_successful_primitive(
+            llm_messages,
+            "resolve_location",
+        ):
+            return (
+                "resolve_location",
+                (
+                    "A self-contained Gov24 move-in submit is pending, but "
+                    "the citizen supplied a new-address workflow and no "
+                    "successful resolve_location result exists yet. Resolve "
+                    "the address first, then submit the move-in report before "
+                    "bundled school/care service discovery."
+                ),
+            )
+        return (
+            "submit",
+            (
+                "A self-contained Gov24 move-in submit is the next canonical "
+                "step for this registry-selected workflow before bundled "
+                "school/care service discovery. Continue with submit using "
+                "the backend-selected adapter and schema-derived params."
+            ),
+        )
+    if (
+        lookup_ids
+        and submit_ids
+        and _gov24_location_first_submit_should_precede_lookup(
+            q,
+            pending_submit_args,
+            llm_messages,
+            registry,
+        )
+    ):
+        return (
+            "submit",
+            (
+                "The citizen's explicit current-location workflow has a "
+                "location-resolved Gov24 minwon submit pending before any "
+                "registry-selected lookup. Continue with submit using the "
+                "backend-selected adapter and schema-derived params, then "
+                "advance to the next requested Gov24 minwon or subscribe step."
+            ),
+        )
+    if lookup_ids and not _conversation_has_successful_primitive(llm_messages, "lookup"):
+        return (
+            "lookup",
+            (
+                "A DelegationContext is already available from verify, but the "
+                "privileged lookup step was skipped. Continue the tool chain now: "
+                f"call lookup with one of these registry-selected candidates: {lookup_ids[:3]}. "
+                "Pass the verify result's delegation_context in params. Do not ask "
+                "the citizen for resident ID digits, raw session_id, certificate "
+                "PINs, or other PII in chat; omit optional Mock fixture fields."
+            ),
+        )
+    if submit_ids and not _conversation_has_successful_primitive(llm_messages, "submit"):
+        return (
+            "submit",
+            (
+                "A DelegationContext is already available from verify, but the "
+                "privileged submit step was skipped. Continue the tool chain now: "
+                f"call submit with one of these registry-selected candidates: {submit_ids[:3]}. "
+                "Pass the verify result's delegation_context in params; omit "
+                "backend-injected session_id and optional Mock fixture fields. "
+                "If payment was requested but explicit payment confirmation is "
+                "absent, create a payment deadline reminder rather than executing payment."
+            ),
+        )
+    if submit_ids and _submit_payment_followup_needed(llm_messages):
+        return (
+            "submit",
+            (
+                "The previous submit receipt explicitly says payment still requires "
+                "a separate submit step before any payment can be executed. Continue "
+                "with the same registry-selected submit adapter now, but set "
+                "params.action_type='create_payment_deadline_reminder'. Do not "
+                "execute payment unless the citizen gives an explicit post-filing "
+                "confirmation."
+            ),
+        )
+    if (
+        subscribe_ids
+        and _conversation_has_successful_primitive(llm_messages, "submit")
+        and not _conversation_has_successful_primitive(llm_messages, "subscribe")
+        and pending_submit_args is None
+    ):
+        return (
+            "subscribe",
+            (
+                "A registry-selected submit receipt already exists, and this "
+                "workflow also selected a subscribe adapter for future due dates, "
+                "status changes, or alerts. No schema-compatible submit action "
+                "remains for the current verified identity, so continue the tool "
+                "chain now: call subscribe with one of these registry-selected "
+                f"candidates: {subscribe_ids[:3]}."
+            ),
+        )
+    if submit_ids and _gov24_movein_followup_needed(llm_messages):
+        return (
+            "submit",
+            (
+                "The Gov24 move-in lookup returned a required submit sequence, "
+                "and at least one required minwon_type remains unsubmitted. "
+                "Continue with submit(tool_id='mock_submit_module_gov24_minwon') "
+                "now. Use the next required params from the lookup result's "
+                "suggested_submit_params; do not ask the citizen for resident "
+                "ID digits or raw identity data in chat."
+            ),
+        )
+    requested_gov24_minwon = set(_gov24_minwon_types_from_query(q, registry))
+    completed_gov24_minwon = _successful_gov24_minwon_types(llm_messages)
+    if (
+        pending_submit_args is not None
+        and pending_submit_args.get("tool_id") == "mock_submit_module_gov24_minwon"
+        and requested_gov24_minwon - completed_gov24_minwon
+        and not _submit_args_already_succeeded(pending_submit_args, llm_messages)
+    ):
+        return (
+            "submit",
+            (
+                "The citizen requested multiple Gov24 certificate/minwon types, "
+                "and at least one requested minwon_type remains unsubmitted. "
+                "Continue with submit(tool_id='mock_submit_module_gov24_minwon') "
+                "using the next unsubmitted enum value derived from the adapter "
+                "schema. Do not final-answer before the receipt is emitted."
+            ),
+        )
+    if (
+        "mock_lookup_module_national_ax_bundle" in lookup_ids
+        and _gov24_movein_sequence_completed(llm_messages)
+        and not _conversation_has_successful_tool_id(
+            llm_messages,
+            "lookup",
+            "mock_lookup_module_national_ax_bundle",
+        )
+    ):
+        return (
+            "lookup",
+            (
+                "The Gov24 move-in sequence is complete, but the bundled "
+                "target-state service discovery step has not run yet. Continue "
+                "with lookup(tool_id='mock_lookup_module_national_ax_bundle') "
+                "before any final answer so school/care or other follow-up "
+                "service boundaries are grounded."
+            ),
+        )
+    if (
+        submit_ids
+        and (
+            _gov24_movein_sequence_completed(llm_messages)
+            or _conversation_has_successful_tool_id(
+                llm_messages,
+                "lookup",
+                "mock_lookup_module_national_ax_bundle",
+            )
+        )
+        and pending_submit_args is not None
+        and not _submit_args_already_succeeded(pending_submit_args, llm_messages)
+    ):
+        return (
+            "submit",
+            (
+                "A registry-selected submit action remains after the previous "
+                "tool results. Continue the tool chain now with submit using "
+                "the backend-selected adapter and schema-derived params; do not "
+                "final-answer before the receipt is emitted."
+            ),
+        )
+    if subscribe_ids and not _conversation_has_successful_primitive(llm_messages, "subscribe"):
+        return (
+            "subscribe",
+            (
+                "A DelegationContext is already available from verify, but the "
+                "privileged subscribe step was skipped. Continue the tool chain now: "
+                "call subscribe with one of these registry-selected candidates: "
+                f"{subscribe_ids[:3]}."
+            ),
+        )
+    return None
+
+
+def _check_public_subscribe_terminated_early(
+    llm_messages: list[Any],
+    user_query: str,
+    registry: Any = None,
+) -> tuple[str, str] | None:
+    """Detect read-only lookup chains that stop before a registry-selected subscribe.
+
+    Some target-state public-safety and mobility flows are intentionally
+    location/read-only first, so they never create a DelegationContext and the
+    privileged-chain gate does not run. If retrieval still surfaces a concrete
+    subscribe adapter, keep the loop going until the citizen gets a durable
+    alert/status handle instead of a one-shot lookup answer.
+    """
+    if registry is None:
+        return None
+    if _conversation_has_verify(llm_messages):
+        return None
+    if _conversation_has_successful_primitive(llm_messages, "subscribe"):
+        return None
+    if not (
+        _conversation_has_successful_primitive(llm_messages, "lookup")
+        or _conversation_has_successful_primitive(llm_messages, "resolve_location")
+    ):
+        return None
+    candidates = _search_relevant_candidates(user_query, registry)
+    top_score = float(getattr(candidates[0], "score", 0) or 0) if candidates else 0.0
+    subscribe_floor = max(1.0, top_score * 0.75)
+    subscribe_ids = [
+        getattr(candidate, "tool_id", "")
+        for candidate in candidates
+        if getattr(candidate, "primitive", None) == "subscribe"
+        and getattr(candidate, "tool_id", "") not in _CORE_PRIMITIVE_TOOL_IDS
+        and float(getattr(candidate, "score", 0) or 0) >= subscribe_floor
+    ]
+    if not subscribe_ids:
+        return None
+    return (
+        "subscribe",
+        (
+            "A public read-only lookup chain is about to terminate, but "
+            "registry retrieval selected a subscribe adapter for this citizen "
+            "request. Continue the tool chain now: call subscribe with one of "
+            f"these registry-selected candidates: {subscribe_ids[:3]}."
+        ),
+    )
+
+
+def _check_submit_prerequisite(
+    fname: str,
+    llm_messages: list[Any],
+    user_query: str,
+    registry: Any = None,
+) -> tuple[str, str] | None:
+    """Reject submit attempts that skip registry-selected prerequisite tools."""
+    if fname != "submit":
+        return None
+    q = (user_query or "").strip()
+    if not q or registry is None:
+        return None
+    try:
+        from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
+        from kosmos.tools.search import search  # noqa: PLC0415
+
+        reg = cast("ToolRegistry", registry)
+        candidates = search(query=q, bm25_index=reg.bm25_index, registry=reg, top_k=8)
+    except Exception:  # noqa: BLE001
+        logger.exception("submit prerequisite retrieval failed for '%s'", q[:80])
+        return None
+
+    positive_candidates = _relevant_positive_candidates(candidates)
+    needs_location = any(
+        candidate.tool_id == "resolve_location"
+        for candidate in positive_candidates
+    )
+    lookup_ids = [
+        candidate.tool_id
+        for candidate in positive_candidates
+        if candidate.primitive == "lookup"
+        and candidate.tool_id != "resolve_location"
+    ]
+
+    if needs_location and not _conversation_has_successful_primitive(
+        llm_messages,
+        "resolve_location",
+    ):
+        return (
+            "resolve_location",
+            (
+                "Submit prerequisite missing: registry retrieval selected "
+                "resolve_location for this citizen request, but no successful "
+                "resolve_location result exists yet. Call resolve_location first "
+                "with the citizen's location/address, then continue the lookup "
+                "and submit chain. Do not submit from unresolved address text."
+            ),
+        )
+    pending_submit_args = _build_forced_submit_args(q, llm_messages, registry)
+    if _gov24_direct_submit_should_precede_lookup(
+        q,
+        pending_submit_args,
+        llm_messages,
+        registry,
+    ):
+        return None
+    if _gov24_location_first_submit_should_precede_lookup(
+        q,
+        pending_submit_args,
+        llm_messages,
+        registry,
+    ):
+        return None
+    if lookup_ids and not _conversation_has_successful_primitive(llm_messages, "lookup"):
+        return (
+            "lookup",
+            (
+                "Submit prerequisite missing: registry retrieval selected a "
+                "privileged lookup step before submit. Call lookup with one of "
+                f"these registry-selected candidates first: {lookup_ids[:3]}. "
+                "Pass the verify result's delegation_context in params, then "
+                "continue submit using the returned record/collection."
+            ),
+        )
+    return None
+
+
+def _check_pending_submit_before_non_submit(
+    fname: str,
+    llm_messages: list[Any],
+    user_query: str,
+    registry: Any = None,
+) -> tuple[str, str] | None:
+    """Reject lookup/subscribe drift when a schema-safe submit remains.
+
+    This is the tool-call side of the final-answer privileged-chain gate. It
+    stops the model from opening a subscription or retrying another lookup
+    while the registry-selected write sequence still has an unsubmitted,
+    auth-compatible adapter call.
+    """
+    if fname not in {"lookup", "subscribe"}:
+        return None
+    if registry is None or not _conversation_has_verify(llm_messages):
+        return None
+    if _latest_auth_context(llm_messages) is None:
+        return None
+    pending_submit_args = _build_forced_submit_args(
+        user_query,
+        llm_messages,
+        registry,
+    )
+    if (
+        pending_submit_args is not None
+        and pending_submit_args.get("tool_id") == "mock_submit_module_gov24_minwon"
+        and _conversation_has_successful_primitive(llm_messages, "resolve_location")
+        and _gov24_location_first_submit_should_precede_lookup(
+            user_query,
+            pending_submit_args,
+            llm_messages,
+            registry,
+        )
+        and not _submit_args_already_succeeded(pending_submit_args, llm_messages)
+    ):
+        tool_id = pending_submit_args.get("tool_id")
+        return (
+            "submit",
+            (
+                "A location-resolved Gov24 submit action remains before this "
+                f"{fname} step. Continue with submit(tool_id={tool_id!r}) using "
+                "the backend-selected, schema-derived params; do not run another "
+                "lookup before the receipt is emitted."
+            ),
+        )
+    if fname == "lookup" and _gov24_bundle_lookup_should_follow_direct_submit(
+        user_query,
+        llm_messages,
+        registry,
+    ):
+        return None
+    if not (
+        _conversation_has_successful_primitive(llm_messages, "lookup")
+        or _conversation_has_successful_primitive(llm_messages, "submit")
+    ):
+        return None
+    if pending_submit_args is None:
+        return None
+    if _submit_args_already_succeeded(pending_submit_args, llm_messages):
+        return None
+    tool_id = pending_submit_args.get("tool_id")
+    return (
+        "submit",
+        (
+            "A registry-selected submit action remains before this "
+            f"{fname} step. Continue with submit(tool_id={tool_id!r}) using "
+            "the backend-selected, schema-derived params; do not subscribe, "
+            "retry lookup, or final-answer before the receipt is emitted."
+        ),
+    )
+
+
+def _check_tool_call_after_completed_submit_subscribe(
+    fname: str,
+    llm_messages: list[Any],
+    user_query: str,
+    registry: Any = None,
+) -> tuple[str, str] | None:
+    """Reject post-completion tool drift after durable submit+subscribe receipts."""
+    if fname not in {"lookup", "submit", "subscribe"}:
+        return None
+    if not (
+        _conversation_has_successful_primitive(llm_messages, "submit")
+        and _conversation_has_successful_primitive(llm_messages, "subscribe")
+    ):
+        return None
+    if registry is not None:
+        pending_submit_args = _build_forced_submit_args(
+            user_query,
+            llm_messages,
+            registry,
+        )
+        if (
+            pending_submit_args is not None
+            and not _submit_args_already_succeeded(pending_submit_args, llm_messages)
+        ):
+            return None
+    return (
+        "final",
+        (
+            "A successful submit receipt and a successful subscribe handle already "
+            "exist for this citizen request, and no registry-selected pending "
+            "submit remains. Do not call lookup, submit, or subscribe again in "
+            "this turn; produce a final answer grounded only in the existing "
+            "tool payloads and receipts."
+        ),
+    )
+
+
+def _check_tool_call_after_completed_submit(
+    fname: str,
+    llm_messages: list[Any],
+    user_query: str,
+    registry: Any = None,
+) -> tuple[str, str] | None:
+    """Reject lookup drift after submit when no pending write remains."""
+    if fname not in {"lookup", "submit", "verify"}:
+        return None
+    if registry is None:
+        return None
+    if not _conversation_has_successful_primitive(llm_messages, "submit"):
+        return None
+    pending_submit_args = _build_forced_submit_args(
+        user_query,
+        llm_messages,
+        registry,
+    )
+    if (
+        pending_submit_args is not None
+        and not _submit_args_already_succeeded(pending_submit_args, llm_messages)
+    ):
+        return None
+    candidates = _search_relevant_candidates(user_query, registry)
+    top_score = float(getattr(candidates[0], "score", 0) or 0) if candidates else 0.0
+    subscribe_floor = max(1.0, top_score * 0.20)
+    strong_subscribe_ids = [
+        getattr(candidate, "tool_id", "")
+        for candidate in candidates
+        if getattr(candidate, "primitive", None) == "subscribe"
+        and getattr(candidate, "tool_id", "") not in _CORE_PRIMITIVE_TOOL_IDS
+        and float(getattr(candidate, "score", 0) or 0) >= subscribe_floor
+    ]
+    if strong_subscribe_ids and not _conversation_has_successful_primitive(
+        llm_messages,
+        "subscribe",
+    ):
+        return (
+            "subscribe",
+            (
+                "A registry-selected submit receipt already exists and the "
+                "remaining high-confidence follow-up is subscribe, not another "
+                "lookup. Continue with subscribe using one of these candidates: "
+                f"{strong_subscribe_ids[:3]}."
+            ),
+        )
+    return (
+        "final",
+        (
+            "A successful submit receipt already exists for this citizen request, "
+            "no schema-compatible pending submit remains, and registry retrieval "
+            "does not select a high-confidence subscribe follow-up. Do not run "
+            "another lookup, submit, or verify in this turn; produce a final "
+            "answer grounded only in the existing lookup and submit payloads."
+        ),
+    )
+
+
+def _check_resolve_location_without_location_context(
+    args_obj: dict[str, object],
+    user_query: str,
+    registry: Any = None,
+) -> tuple[str, str] | None:
+    if registry is None:
+        return None
+    query = args_obj.get("query")
+    query_text = query if isinstance(query, str) else user_query
+    if _extract_explicit_location_text(query_text) or _extract_explicit_location_text(user_query):
+        return None
+    candidates = _search_relevant_candidates(user_query, registry)
+    if candidates and getattr(candidates[0], "tool_id", None) == "resolve_location":
+        return None
+    return (
+        "lookup",
+        (
+            "resolve_location was requested with a service workflow sentence but "
+            "no explicit address/location text. Do not retry location resolution "
+            "on the same sentence; continue with registry-selected lookup or "
+            "submit workflow discovery instead."
+        ),
+    )
+
+
+_FINAL_SPECULATIVE_AVAILABILITY_RE = re.compile(
+    r"(운영\s*가능성|야간\s*진료\s*가능|진료\s*가능|현재\s*진료\s*중|"
+    r"가능성.{0,20}(병원|응급실|진료)|"
+    r"(병원|응급실|진료|운영).{0,20}가능성|24\s*시간\s*운영)"
+)
+_FINAL_UNSUPPORTED_INSURANCE_RE = re.compile(
+    r"건강보험\s*적용|"
+    r"(본인\s*부담|실비|진료비).{0,40}"
+    r"(약\s*)?\d+(?:\.\d+)?\s*(?:[-~]\s*\d+(?:\.\d+)?)?\s*(?:%|퍼센트)"
+)
+_FINAL_MEDICAL_ADVICE_RE = re.compile(
+    r"((?<![A-Za-z0-9])39\s*(?:°\s*)?C(?![A-Za-z0-9])|"
+    r"39\s*도|해열제|수분\s*공급|의식이\s*흐려)"
+)
+_FINAL_ALREADY_RESOLVED_ADDRESS_RE = re.compile(
+    r"(?:새\s*)?주소.{0,24}(?:알려|말씀|제공|입력|기재)"
+)
+_FINAL_DENIES_REGISTERED_TOOL_RE = re.compile(
+    r"((도구|어댑터).{0,30}(등록되어\s*있지\s*않|없(?:습니다|다))|"
+    r"등록된\s*(도구|어댑터).{0,24}없)"
+)
+_FINAL_EXTERNAL_HANDOFF_AFTER_TOOL_RE = re.compile(
+    r"((공식\s*)?(사이트|채널|포털|서비스).{0,36}(직접|확인|진행|처리|납부|예약|신청)|"
+    r"(직접|별도).{0,36}(진행|처리|납부|예약|신청|확인).{0,12}"
+    r"(하세요|하셔야|하시는|하십시오|해\s*주세요|해야|필요)|"
+    r"(safedriving|efine|wetax|위택스|이파인|안전운전).{0,36}"
+    r"(직접|확인|진행|처리|납부|예약))",
+    re.IGNORECASE,
+)
+_FINAL_DISMISSES_SUBSCRIBE_RE = re.compile(
+    r"(구독|알림).{0,40}(무관|불필요|종료해야|취소해야)"
+)
+_FINAL_UNSUPPORTED_PROCEDURAL_AFTER_SUBMIT_RE = re.compile(
+    r"("
+    r"필요\s*서류|담당\s*기관|지원\s*금액|처리\s*기간|"
+    r"비과세|상속세|취득세|검인|콜센터|"
+    r"사망일로부터|온라인\s*신청|방문\s*신청|지역번호\s*\+\s*120|"
+    r"지원금\s*유형|자격요건|신청방법|회사\s*규모|업종|근로자\s*수|"
+    r"고용유지지원금|고용촉진지원금|청년고용|사회보험료|세제혜택|"
+    r"표준\s*근로계약서|원천징수|"
+    r"\b110\b|\b1355\b"
+    r")"
+)
+_FINAL_UNSUPPORTED_ALERT_ALL_CLEAR_RE = re.compile(
+    r"(미세먼지|정전|단수).{0,40}(경보|알림|위험|발령).{0,40}"
+    r"(없|없습니다|아니|않|미발령|발령되지)"
+)
+_FINAL_UNSUPPORTED_TRANSIT_RE = re.compile(
+    r"(KTX|코레일|고속버스|시외버스|대중교통|열차|버스).{0,60}"
+    r"(추천|안전|정시|지연|운행|소요|비용|저렴|도착)"
+)
+
+
+def _conversation_has_domain_source(llm_messages: list[Any], *needles: str) -> bool:
+    haystack_parts: list[str] = []
+    for m in llm_messages:
+        content = getattr(m, "content", None) or (m.get("content") if isinstance(m, dict) else None)
+        if isinstance(content, str):
+            haystack_parts.append(content.lower())
+        tool_calls = getattr(m, "tool_calls", None) or (
+            m.get("tool_calls") if isinstance(m, dict) else None
+        )
+        if tool_calls:
+            haystack_parts.append(str(tool_calls).lower())
+    haystack = "\n".join(haystack_parts)
+    return any(needle.lower() in haystack for needle in needles)
+
+
+def _tool_payload_has_domain_source(llm_messages: list[Any], *needles: str) -> bool:
+    haystack_parts: list[str] = []
+    for m in llm_messages:
+        role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+        if role != "tool":
+            continue
+        content = getattr(m, "content", None) or (
+            m.get("content") if isinstance(m, dict) else None
+        )
+        if isinstance(content, str):
+            haystack_parts.append(content.lower())
+    haystack = "\n".join(haystack_parts)
+    return any(needle.lower() in haystack for needle in needles)
+
+
+def _tool_payload_has_structured_key(llm_messages: list[Any], *keys: str) -> bool:
+    key_set = {key for key in keys if key}
+    if not key_set:
+        return False
+
+    def _contains(value: object) -> bool:
+        if isinstance(value, dict):
+            if any(isinstance(key, str) and key in key_set for key in value):
+                return True
+            return any(_contains(v) for v in value.values())
+        if isinstance(value, list):
+            return any(_contains(item) for item in value)
+        return False
+
+    for m in llm_messages:
+        role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+        if role != "tool":
+            continue
+        content = getattr(m, "content", None) or (
+            m.get("content") if isinstance(m, dict) else None
+        )
+        if not isinstance(content, str):
+            continue
+        payload = _result_payload_from_tool_content(content)
+        if payload is not None and _contains(payload):
+            return True
+    return False
+
+
+def _final_has_unsupported_procedure_after_submit(
+    text: str,
+    llm_messages: list[Any],
+) -> bool:
+    if not _FINAL_UNSUPPORTED_PROCEDURAL_AFTER_SUBMIT_RE.search(text):
+        return False
+    if not _conversation_has_successful_primitive(llm_messages, "submit"):
+        return False
+    return not _tool_payload_has_structured_key(
+        llm_messages,
+        "required_documents",
+        "documents_required",
+        "support_amount",
+        "processing_period",
+        "official_contact",
+        "deadline_days",
+        "statutory_deadline",
+    )
+
+
+def _post_tool_final_answer_violations(text: str, llm_messages: list[Any]) -> list[str]:
+    violations: list[str] = []
+    has_submit_or_subscribe = _conversation_has_successful_primitive(
+        llm_messages,
+        "submit",
+    ) or _conversation_has_successful_primitive(llm_messages, "subscribe")
+    if _FINAL_DENIES_REGISTERED_TOOL_RE.search(text) and has_submit_or_subscribe:
+        violations.append(
+            "claiming no registered tool is available after submit/subscribe tools succeeded"
+        )
+    if _FINAL_EXTERNAL_HANDOFF_AFTER_TOOL_RE.search(text) and has_submit_or_subscribe:
+        violations.append(
+            "redirecting the citizen to direct external-site handling after "
+            "submit/subscribe receipts already succeeded"
+        )
+    if (
+        _FINAL_DISMISSES_SUBSCRIBE_RE.search(text)
+        and _conversation_has_successful_primitive(llm_messages, "subscribe")
+    ):
+        violations.append(
+            "describing a successful registry-selected subscribe handle as "
+            "irrelevant, unnecessary, or something to terminate"
+        )
+    if _final_has_unsupported_procedure_after_submit(text, llm_messages):
+        violations.append(
+            "procedural document, deadline, amount, contact, legal, or tax claims "
+            "not present in the submit/lookup payloads"
+        )
+    if _FINAL_UNSUPPORTED_ALERT_ALL_CLEAR_RE.search(text) and not _tool_payload_has_domain_source(
+        llm_messages,
+        "airkorea",
+        "kepco",
+        "water",
+        "상수도",
+        "수도",
+    ):
+        violations.append(
+            "all-clear claims for fine-dust, outage, or water-shutdown domains "
+            "without a corresponding domain status payload"
+        )
+    if _FINAL_UNSUPPORTED_TRANSIT_RE.search(text) and not _tool_payload_has_domain_source(
+        llm_messages,
+        "korail",
+        "rail",
+        "bus",
+        "transit",
+        "대중교통",
+        "열차",
+        "버스",
+    ):
+        violations.append(
+            "rail, bus, transit delay, travel-time, or route recommendation claims "
+            "without a corresponding transit payload"
+        )
+    return violations
+
+
+def _check_final_answer_grounding(text: str, llm_messages: list[Any]) -> str | None:
+    """Reject unsupported final-answer claims before they reach the citizen.
+
+    This is the terminal-turn analogue of CC's tool validation boundary: if the
+    model drafts a final answer that upgrades a registry result into real-time
+    availability, insurance coverage, or medical triage advice without a tool
+    result for that domain, the loop feeds a corrective tool message back to
+    the model and asks it to rewrite from the observed payload only.
+    """
+    if not text.strip():
+        return None
+    violations: list[str] = []
+    if _FINAL_SPECULATIVE_AVAILABILITY_RE.search(text):
+        violations.append(
+            "availability/status claims such as emergency operation, night treatment, "
+            "24-hour operation, or facility availability"
+        )
+    if _FINAL_UNSUPPORTED_INSURANCE_RE.search(text) and not _conversation_has_domain_source(
+        llm_messages,
+        "nhis",
+        "health_insurance",
+        "국민건강보험공단",
+    ):
+        violations.append("insurance coverage or payment claims")
+    if _FINAL_MEDICAL_ADVICE_RE.search(text) and not _conversation_has_domain_source(
+        llm_messages,
+        "guideline",
+        "질병관리청",
+        "medical_guideline",
+    ):
+        violations.append("medical triage thresholds or treatment advice")
+    if _FINAL_ALREADY_RESOLVED_ADDRESS_RE.search(
+        text
+    ) and _conversation_has_successful_primitive(llm_messages, "resolve_location"):
+        violations.append("asking again for an address that was already resolved by tools")
+    violations.extend(_post_tool_final_answer_violations(text, llm_messages))
+    if not violations:
+        return None
+    return (
+        "Final answer grounding violation: the draft contained unsupported "
+        + "; ".join(violations)
+        + ". Rewrite using only fields explicitly present in the latest tool "
+        "payloads. Do not introduce unrelated service domains, handoff steps, "
+        "external-site instructions, medical guidance, or policy claims that are "
+        "not present in the observed tool results."
+    )
+
+
+def _tool_call_args_by_id(llm_messages: list[Any]) -> dict[str, dict[str, object]]:
+    args_by_id: dict[str, dict[str, object]] = {}
+    for m in llm_messages:
+        role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+        if role != "assistant":
+            continue
+        tool_calls = getattr(m, "tool_calls", None) or (
+            m.get("tool_calls") if isinstance(m, dict) else None
+        )
+        if not tool_calls:
+            continue
+        for tc in tool_calls:
+            call_id = getattr(tc, "id", None) or (tc.get("id") if isinstance(tc, dict) else None)
+            fn = getattr(getattr(tc, "function", None), "arguments", None) or (
+                tc.get("function", {}).get("arguments") if isinstance(tc, dict) else None
+            )
+            if not isinstance(call_id, str) or not isinstance(fn, str):
+                continue
+            try:
+                parsed = _stdlib_json.loads(fn)
+            except ValueError:
+                continue
+            if isinstance(parsed, dict):
+                args_by_id[call_id] = parsed
+    return args_by_id
+
+
+def _result_payload_from_tool_content(content: str) -> dict[str, object] | None:
+    try:
+        decoded = _stdlib_json.loads(content)
+    except ValueError:
+        return None
+    if not isinstance(decoded, dict):
+        return None
+    result = decoded.get("result")
+    if isinstance(result, dict):
+        return result
+    return decoded
+
+
+_INTERNAL_RECOVERY_ERROR_REASONS: Final = {
+    "chain_followup_missing",
+    "privileged_chain_followup_missing",
+    "public_subscribe_followup_missing",
+    "submit_auth_tier_incompatible",
+    "completed_submit_subscribe_chain",
+    "completed_submit_chain",
+    "pending_submit_before_non_submit",
+    "gov24_direct_followup_flow_completed",
+    "gov24_movein_sequence_pending",
+    "bundle_lookup_already_grounded",
+    "submit_chain_already_completed",
+    "gov24_movein_sequence_completed",
+    "submit_prerequisite_missing",
+    "final_answer_grounding_violation",
+    "resolve_location_context_missing",
+    "lookup_delegation_prerequisite_missing",
+    "repeat_call_blocked",
+    "repeat_successful_submit_blocked",
+}
+
+
+def _payload_is_internal_recovery_error(payload: dict[str, object]) -> bool:
+    if payload.get("kind") != "error":
+        return False
+    reason = payload.get("reason")
+    return isinstance(reason, str) and reason in _INTERNAL_RECOVERY_ERROR_REASONS
+
+
+def _item_display_fields(item: object) -> tuple[str, str, str, str]:
+    if not isinstance(item, dict):
+        return (str(item), "", "", "")
+    name = str(
+        item.get("yadmNm")
+        or item.get("dutyName")
+        or item.get("name")
+        or item.get("title")
+        or item.get("facility_name")
+        or "기관명 정보 없음"
+    )
+    addr = str(item.get("addr") or item.get("dutyAddr") or item.get("address") or "")
+    tel = str(item.get("telno") or item.get("dutyTel1") or item.get("phone") or "")
+    distance_raw = item.get("distance")
+    distance = ""
+    if distance_raw not in (None, ""):
+        try:
+            distance = f"{float(distance_raw):.0f}m"
+        except (TypeError, ValueError):
+            distance = str(distance_raw)
+    return (name, addr, tel, distance)
+
+
+def _collect_grounded_result_summaries(
+    llm_messages: list[Any],
+) -> tuple[list[str], list[tuple[str, list[object]]]]:
+    args_by_id = _tool_call_args_by_id(llm_messages)
+    zero_tools: list[str] = []
+    collections: list[tuple[str, list[object]]] = []
+    for m in llm_messages:
+        role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+        if role != "tool":
+            continue
+        content = getattr(m, "content", None) or (m.get("content") if isinstance(m, dict) else None)
+        call_id = getattr(m, "tool_call_id", None) or (
+            m.get("tool_call_id") if isinstance(m, dict) else None
+        )
+        if not isinstance(content, str) or not isinstance(call_id, str):
+            continue
+        payload = _result_payload_from_tool_content(content)
+        if payload is None:
+            continue
+        if _payload_is_internal_recovery_error(payload):
+            continue
+        args = args_by_id.get(call_id, {})
+        tool_id = str(args.get("tool_id") or getattr(m, "name", None) or "tool")
+        kind = payload.get("kind")
+        if kind == "collection":
+            raw_items = payload.get("items")
+            items = raw_items if isinstance(raw_items, list) else []
+            total = payload.get("total_count")
+            if not items or total == 0:
+                zero_tools.append(tool_id)
+            else:
+                collections.append((tool_id, items))
+        elif kind == "error":
+            zero_tools.append(tool_id)
+    return zero_tools, collections
+
+
+def _build_grounded_safety_answer(llm_messages: list[Any]) -> str | None:
+    """Build a deterministic, payload-only answer after grounding rejection."""
+    zero_tools, collections = _collect_grounded_result_summaries(llm_messages)
+    if not zero_tools and not collections:
+        return _build_tool_result_completion_answer(llm_messages)
+    domain_tool_ids = [*zero_tools, *(tool_id for tool_id, _ in collections)]
+    medical_grounding = any(
+        re.search(r"(hira|nmc|hospital|emergency|egen|e-gen|응급|병원)", tool_id, re.I)
+        for tool_id in domain_tool_ids
+    )
+    if not medical_grounding:
+        return _build_tool_result_completion_answer(llm_messages)
+
+    lines: list[str] = [
+        "조회된 도구 결과에 근거해서만 안내드립니다.",
+        "",
+    ]
+    for tool_id in zero_tools:
+        lines.append(f"- `{tool_id}` 조회 결과: 해당 조건의 결과가 없습니다.")
+    for tool_id, items in collections[:2]:
+        lines.append(f"- `{tool_id}` 조회 결과: 일반 기관 정보 {len(items)}건이 반환되었습니다.")
+        for index, item in enumerate(items[:5], start=1):
+            name, addr, tel, distance = _item_display_fields(item)
+            suffix_parts = [part for part in (addr, tel, distance) if part]
+            suffix = " / ".join(suffix_parts)
+            lines.append(f"  {index}. {name}" + (f" — {suffix}" if suffix else ""))
+    lines.extend(
+        [
+            "",
+            "위 일반 기관 목록만으로는 응급실 운영, 야간진료, 병상, 대기시간, "
+            "보험 정보가 확인되지 않습니다.",
+            "아이 상태가 급하거나 판단이 어렵다면 119에 바로 문의하거나 "
+            "E-Gen 응급의료포털 및 각 병원 전화로 현재 접수 여부를 확인하세요.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _tool_message_parts(message: Any) -> tuple[str, str, str | None] | None:
+    role = getattr(message, "role", None) or (
+        message.get("role") if isinstance(message, dict) else None
+    )
+    if role != "tool":
+        return None
+    name = getattr(message, "name", None) or (
+        message.get("name") if isinstance(message, dict) else None
+    )
+    content = getattr(message, "content", None) or (
+        message.get("content") if isinstance(message, dict) else None
+    )
+    call_id = getattr(message, "tool_call_id", None) or (
+        message.get("tool_call_id") if isinstance(message, dict) else None
+    )
+    if not isinstance(name, str) or not isinstance(content, str):
+        return None
+    return (name, content, call_id if isinstance(call_id, str) else None)
+
+
+def _submit_completion_line(payload: dict[str, object]) -> str:
+    receipt = payload.get("adapter_receipt")
+    receipt_obj = receipt if isinstance(receipt, dict) else {}
+    receipt_id = (
+        receipt_obj.get("receipt_id")
+        or receipt_obj.get("receipt_number")
+        or payload.get("receipt_id")
+        or payload.get("transaction_id")
+    )
+    status = receipt_obj.get("status") or payload.get("status")
+    action = receipt_obj.get("action_type")
+    mode = receipt_obj.get("_mode") or payload.get("_mode")
+    prefix = "모의 제출" if mode == "mock" else "제출"
+    if _status_is_rejected_or_failed(status):
+        reason = receipt_obj.get("reason") or receipt_obj.get("error") or "사유 미상"
+        return (
+            f"- {prefix}: 반려/실패"
+            + (f" · 접수번호 {receipt_id}" if receipt_id else "")
+            + f" · 사유 {reason}"
+        )
+    return (
+        f"- {prefix}: 접수"
+        + (f" · 처리 {action}" if action else "")
+        + (f" · 접수번호 {receipt_id}" if receipt_id else "")
+        + (f" · 상태 {status}" if status else "")
+    )
+
+
+def _completion_line_for_tool_payload(
+    name: str,
+    tool_id: str,
+    payload: dict[str, object],
+) -> str | None:
+    if name == "verify":
+        return "- 인증: 완료" if payload.get("kind") != "error" else None
+    if name == "lookup":
+        kind = payload.get("kind")
+        if kind == "collection":
+            total = payload.get("total_count")
+            return f"- 조회 `{tool_id}`: {total if total is not None else '복수'}건"
+        if kind == "record":
+            return f"- 조회 `{tool_id}`: 1건"
+        if kind == "timeseries":
+            points = payload.get("points")
+            count = len(points) if isinstance(points, list) else "복수"
+            return f"- 조회 `{tool_id}`: 시계열 {count}건"
+        if kind == "error":
+            reason = payload.get("reason") or payload.get("message") or "error"
+            return f"- 조회 `{tool_id}`: 오류({reason})"
+    if name == "submit":
+        return _submit_completion_line(payload)
+    if name == "subscribe":
+        status = payload.get("status") or payload.get("kind") or "등록됨"
+        return f"- 알림 `{tool_id}`: {status}"
+    return None
+
+
+def _build_tool_result_completion_answer(llm_messages: list[Any]) -> str | None:
+    """Build a deterministic citizen-facing close when the model returns empty text."""
+    args_by_id = _tool_call_args_by_id(llm_messages)
+    lines: list[str] = []
+    for message in llm_messages:
+        parts = _tool_message_parts(message)
+        if parts is None:
+            continue
+        name, content, call_id = parts
+        payload = _result_payload_from_tool_content(content)
+        if payload is None:
+            continue
+        if _payload_is_internal_recovery_error(payload):
+            continue
+        args = args_by_id.get(call_id, {}) if call_id is not None else {}
+        tool_id = str(args.get("tool_id") or name)
+        line = _completion_line_for_tool_payload(name, tool_id, payload)
+        if line is not None:
+            lines.append(line)
+
+    if not lines:
+        return None
+    return "\n".join(
+        [
+            "도구 결과 기준으로 처리 상태를 정리합니다.",
+            *lines,
+            "표시된 모의 결과는 실제 행정 효력이 없으며, 운영 전환 시 기관 공식 "
+            "엔드포인트와 권한 정책을 따라야 합니다.",
+        ]
+    )
 
 
 def _check_resolve_terminated_without_followup(  # noqa: C901
     llm_messages: list[Any],
     user_query: str,
+    *,
+    registry: object | None = None,
 ) -> str | None:
     """Return chain-recovery error message when the LLM is about to terminate
     a turn without invoking a follow-up ``lookup`` after ``resolve_location``.
@@ -527,7 +3798,7 @@ def _check_resolve_terminated_without_followup(  # noqa: C901
     coord-input tool too early", this is "stopped after resolve and never
     called the coord-input tool at all".
     """
-    if not _query_implies_followup_lookup(user_query):
+    if not _query_implies_followup_lookup(user_query, registry=registry):
         return None
 
     saw_resolve_result = False
@@ -934,6 +4205,9 @@ async def run(  # noqa: C901
     # Per-session auto-approved tool IDs (allow_session grants).
     # Keyed by session_id → set of tool_ids approved for the session lifetime.
     _session_grants: dict[str, set[str]] = {}
+    # Per-session verified AuthContext, populated by verify dispatch and used by
+    # side-effecting primitives for the SC-005 published_tier gate.
+    _session_auth_contexts: dict[str, object] = {}
 
     # Epic #2077 T010 — single ToolRegistry + ToolExecutor instance pair
     # reused across every chat_request. Adapter registration happens lazily
@@ -1239,7 +4513,27 @@ async def run(  # noqa: C901
             if len(hint) > 90:
                 hint = hint[:87] + "..."
             prim_label = f" [primitive={c.primitive}]" if c.primitive else ""
-            lines.append(f"- {c.tool_id} [{c.score:.2f}]{prim_label} — {hint or '(설명 없음)'}")
+            mode_label = f" [mode={c.adapter_mode}]" if c.adapter_mode else ""
+            gate_label = (
+                f" [citizen_facing_gate={c.citizen_facing_gate}]"
+                if c.citizen_facing_gate
+                else ""
+            )
+            policy_label = (
+                f" [policy_url={c.real_classification_url}]"
+                if c.real_classification_url
+                else ""
+            )
+            delegation_label = (
+                f" [delegation_source={c.delegation_source_tool_id}]"
+                if c.delegation_source_tool_id
+                else ""
+            )
+            lines.append(
+                f"- {c.tool_id} [{c.score:.2f}]{prim_label}{mode_label}"
+                f"{gate_label}{policy_label}{delegation_label} — "
+                f"{hint or '(설명 없음)'}"
+            )
             # Render the adapter's llm_description (usage prose, ORDERING RULE,
             # prerequisites, worked examples) so the LLM sees the complete
             # "먼저 resolve_location 호출" ordering rule.
@@ -1377,6 +4671,30 @@ async def run(  # noqa: C901
             " subscribe 호출, verify 도구는 verify 호출, submit 도구는 submit 호출"
             " 만 허용됩니다."
         )
+        # Tool-selection deep-research follow-up (2026-05-05): BM25/dense rank
+        # is a progressive-disclosure shortlist, not a deterministic router.
+        # OpenAI/Anthropic tool-search guidance and the CC ToolSearch reference
+        # both rely on the model choosing from a loaded candidate set after
+        # reading schema and behavior metadata. KOSMOS therefore tells
+        # K-EXAONE to arbitrate by primitive + policy gate + schema fit instead
+        # of blindly calling the top-ranked tool_id.
+        lines.append(
+            "BM25 점수는 후보 shortlist 신호입니다 — top-1 이 시민 의도,"
+            " [primitive=...], [mode=...], [citizen_facing_gate=...],"
+            " [policy_url=...], delegation_source, input schema required fields"
+            " 와 맞지 않으면 다음 후보를 검토하세요."
+            " 맞는 후보가 없으면 tool_id 를 지어내거나 lookup(mode='search') 를"
+            " 재시도하지 말고, 한 가지 좁은 확인 질문 또는 현재 등록 도구로 처리"
+            " 불가 답변을 사용하세요."
+        )
+        lines.append(
+            "각 후보의 [citizen_facing_gate=...] 라벨을 확인하세요. read-only 가 아닌"
+            " 후보는 시민 본인확인/위임이 필요한 개인자료 또는 실행 도구입니다."
+            " DelegationContext 가 아직 없으면 먼저 primitive=verify 후보를 호출하세요."
+            " 후보에 [delegation_source=...] 가 있으면 그 verify tool_id 를 사용하고,"
+            " 그 결과의 delegation_context 를 후속 lookup/submit/subscribe params 에"
+            " 포함하세요."
+        )
         # Audit G4 / F-beta-03 — NO DATA / dedup companion guidance.
         lines.append(
             "동일 tool_id 를 같은 params 로 두 번째 호출하지 마세요. 도구 결과가"
@@ -1386,6 +4704,183 @@ async def run(  # noqa: C901
         )
         lines.append("</available_adapters>")
         return "\n".join(lines)
+
+    def _retrieval_requires_initial_verify(user_query: str) -> bool:
+        """Use the live registry policy graph to decide first-turn verify.
+
+        No domain keywords are encoded here. The decision comes from the same
+        BM25/dense retrieval path that builds ``<available_adapters>``: if the
+        current citizen request retrieves any candidate whose agency-cited
+        ``citizen_facing_gate`` is not ``read-only``, the first primitive must
+        be ``verify`` so the later tool call has a DelegationContext.
+        """
+        q = (user_query or "").strip()
+        if not q:
+            return False
+        if _query_explicitly_requests_verify_primitive(q):
+            return False
+        try:
+            from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
+            from kosmos.tools.search import search  # noqa: PLC0415
+
+            registry = cast("ToolRegistry", _ensure_tool_registry())
+            candidates = search(
+                query=q,
+                bm25_index=registry.bm25_index,
+                registry=registry,
+                top_k=max(_AVAILABLE_ADAPTERS_TOP_K, 12),
+            )
+        except Exception:
+            logger.exception("initial verify policy retrieval failed for '%s'", q[:80])
+            return False
+        positive_candidates = _relevant_positive_candidates(candidates)
+        if _query_prefers_resolve_location_before_verify(q, candidates):
+            return False
+        if _retrieval_policy_requires_initial_verify(candidates):
+            gated = [
+                candidate
+                for candidate in positive_candidates
+                if _candidate_is_policy_gated(candidate)
+            ]
+            top_gated = gated[0] if gated else positive_candidates[0]
+            logger.info(
+                "initial verify policy: candidate %s requires gate=%s",
+                top_gated.tool_id,
+                top_gated.citizen_facing_gate,
+            )
+            return True
+        return False
+
+    def _retrieval_prefers_initial_resolve_location(user_query: str) -> bool:
+        q = (user_query or "").strip()
+        if not q:
+            return False
+        if _query_explicitly_requests_verify_primitive(q):
+            return False
+        try:
+            from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
+            from kosmos.tools.search import search  # noqa: PLC0415
+
+            registry = cast("ToolRegistry", _ensure_tool_registry())
+            candidates = search(
+                query=q,
+                bm25_index=registry.bm25_index,
+                registry=registry,
+                top_k=max(_AVAILABLE_ADAPTERS_TOP_K, 12),
+            )
+        except Exception:
+            logger.exception("initial resolve policy retrieval failed for '%s'", q[:80])
+            return False
+        return _query_prefers_resolve_location_before_verify(q, candidates)
+
+    def _build_policy_plan_suffix(user_query: str) -> str:
+        q = (user_query or "").strip()
+        if not q:
+            return ""
+        if _query_explicitly_requests_verify_primitive(q):
+            return ""
+        try:
+            from kosmos.tools.registry import ToolRegistry  # noqa: PLC0415
+            from kosmos.tools.search import search  # noqa: PLC0415
+
+            registry = cast("ToolRegistry", _ensure_tool_registry())
+            candidates = search(
+                query=q,
+                bm25_index=registry.bm25_index,
+                registry=registry,
+                top_k=max(_AVAILABLE_ADAPTERS_TOP_K, 12),
+            )
+        except Exception:
+            logger.exception("policy plan retrieval failed for '%s'", q[:80])
+            return ""
+        positive_candidates = [candidate for candidate in candidates if candidate.score > 0]
+        if not positive_candidates:
+            return ""
+        if _query_prefers_resolve_location_before_verify(q, candidates):
+            delegation_source, required_scopes = _delegation_plan_from_candidates(
+                _relevant_positive_candidates(candidates),
+                registry,
+            )
+            lines = [
+                "<policy_derived_first_action>",
+                (
+                    "First action: call resolve_location because the citizen "
+                    "provided an explicit current location and registry "
+                    "retrieval selected strong location-dependent read-only "
+                    "adapters before the privileged Gov24 action."
+                ),
+            ]
+            if delegation_source and required_scopes:
+                lines.append(
+                    "After resolve_location, call verify with "
+                    f"tool_id={delegation_source} and scope_list="
+                    f"{required_scopes}; then continue the submit/subscribe chain."
+                )
+            lines.append("</policy_derived_first_action>")
+            return "\n".join(lines)
+        candidate = positive_candidates[0]
+        if not candidate.citizen_facing_gate or candidate.citizen_facing_gate == "read-only":
+            return ""
+        delegation_source, required_scopes = _delegation_plan_from_candidates(
+            positive_candidates,
+            registry,
+        )
+        lines = [
+            "<policy_derived_first_action>",
+            (
+                f"Top policy-gated candidate: {candidate.tool_id} "
+                f"(primitive={candidate.primitive}, "
+                f"citizen_facing_gate={candidate.citizen_facing_gate})."
+            ),
+            "First primitive: verify.",
+        ]
+        if delegation_source:
+            lines.append(f"Use verify tool_id: {delegation_source}.")
+        if required_scopes:
+            lines.append(f"Use verify params.scope_list: {required_scopes}.")
+        lines.append(
+            "After verify returns, pass result.delegation_context to the "
+            "policy-gated adapter params."
+        )
+        lines.append("</policy_derived_first_action>")
+        return "\n".join(lines)
+
+    def _check_lookup_delegation_prerequisite(
+        fname: str,
+        args_obj: dict[str, object],
+    ) -> str | None:
+        """Validate lookup prerequisites from adapter policy metadata.
+
+        This is the CC-style ``Tool.validateInput`` boundary for sensitive
+        lookup adapters. It is intentionally generic: the adapter's cited
+        ``citizen_facing_gate`` is the only policy input.
+        """
+        if fname != "lookup":
+            return None
+        inner_tool_id = args_obj.get("tool_id")
+        if not isinstance(inner_tool_id, str) or not inner_tool_id:
+            return None
+        params = args_obj.get("params")
+        if not isinstance(params, dict):
+            params = {}
+        try:
+            tool = _ensure_tool_registry().lookup(inner_tool_id)  # type: ignore[attr-defined]
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "lookup delegation prerequisite: cannot resolve %s (%s)",
+                inner_tool_id,
+                type(exc).__name__,
+            )
+            return None
+        gate = tool.policy.citizen_facing_gate if tool.policy is not None else "login"
+        if gate == "read-only" or "delegation_context" in params:
+            return None
+        return (
+            f"Adapter {inner_tool_id!r} has citizen_facing_gate={gate!r}, so lookup "
+            "requires a DelegationContext from a prior verify primitive call. "
+            "Do not call this lookup first. Call verify, then retry this adapter "
+            "with params.delegation_context set to the returned DelegationContext."
+        )
 
     # Spec 1978 T053 — eager-import the Mock adapter tree so every adapter
     # self-registers with its primitive dispatcher before the first chat
@@ -1405,9 +4900,10 @@ async def run(  # noqa: C901
     )
 
     # Primitives that require a citizen permission request when called outside
-    # an existing session-grant. Spec 033 Layer 1 (L1) exempts verify/lookup/
-    # resolve_location (read-only, public-tier); submit/subscribe are side-
-    # effecting (Layer 2/3) and always enter the bridge.
+    # an existing session-grant. verify is a light gate (delegation-only
+    # identity binding); submit/subscribe are heavy gates (side effects or
+    # persistent streams). lookup/resolve_location remain auto-allowed unless
+    # lookup's inner adapter policy declares a non-read-only gate below.
     #
     # Epic #2077 T010 (FR-003) — single-source-of-truth migration: read the
     # gated set from ``kosmos.primitives.GATED_PRIMITIVES`` rather than
@@ -1443,6 +4939,13 @@ async def run(  # noqa: C901
             ToolResultFrame,
         )
 
+        if _pre_permission_arg_error(fname, args_obj) is not None:
+            with _tracer.start_as_current_span("kosmos.permission") as span:
+                span.set_attribute("kosmos.permission.mode", "auto_allow")
+                span.set_attribute("kosmos.permission.decision", "skip_invalid_params")
+                span.set_attribute("kosmos.tool.dispatched", fname)
+            return True
+
         # F-beta-04 fix (Wave-2 G1, PIPA §22): when the LLM dispatches via
         # `lookup(mode='fetch', tool_id=<adapter>, params=...)`, the gate must
         # consult the *adapter's* `policy.citizen_facing_gate` because the
@@ -1470,13 +4973,26 @@ async def run(  # noqa: C901
                             else "login"
                         )
                         if _adapter_gate != "read-only":
-                            _lookup_needs_modal = True
-                            logger.info(
-                                "permission: lookup adapter %s requires modal "
-                                "(citizen_facing_gate=%s)",
-                                _inner_tool_id,
-                                _adapter_gate,
-                            )
+                            _lookup_params = args_obj.get("params")
+                            _has_delegation_context = isinstance(
+                                _lookup_params, dict
+                            ) and "delegation_context" in _lookup_params
+                            if _has_delegation_context:
+                                logger.info(
+                                    "permission: lookup adapter %s uses prior "
+                                    "DelegationContext; skipping duplicate modal "
+                                    "(citizen_facing_gate=%s)",
+                                    _inner_tool_id,
+                                    _adapter_gate,
+                                )
+                            else:
+                                _lookup_needs_modal = True
+                                logger.info(
+                                    "permission: lookup adapter %s requires modal "
+                                    "(citizen_facing_gate=%s)",
+                                    _inner_tool_id,
+                                    _adapter_gate,
+                                )
                     except Exception as exc:  # noqa: BLE001
                         # Fail-closed: when the registry cannot resolve the
                         # adapter (boot race / unknown id), require modal
@@ -1571,6 +5087,7 @@ async def run(  # noqa: C901
                         description_en=_PRIM_EN.get(fname, "Invoke tool."),
                         risk_level=_PRIM_RISK.get(fname, "medium"),  # type: ignore[arg-type]
                         tool_id=_resolved_tool_id,
+                        arguments=_permission_visible_arguments(args_obj),
                     )
                 )
             except Exception as exc:  # noqa: BLE001
@@ -1810,6 +5327,31 @@ async def run(  # noqa: C901
 
             return True
 
+    def _pre_permission_arg_error(fname: str, args_obj: dict[str, object]) -> str | None:
+        """Reject malformed primitive calls before opening a permission modal."""
+        if "_raw" in args_obj:
+            return (
+                f"malformed {fname} tool arguments: expected a JSON object matching "
+                "the primitive schema. Re-emit a valid JSON object using tool_id "
+                "from <available_adapters>; do not ask the citizen for backend-"
+                "injected session_id, DelegationContext internals, or identity numbers."
+            )
+        if "_value" in args_obj:
+            return (
+                f"invalid {fname} tool arguments: expected a JSON object, got "
+                "a non-object JSON value. Re-emit a valid object with tool_id and params."
+            )
+        if fname in {"lookup", "submit", "subscribe"}:
+            tool_id = args_obj.get("tool_id")
+            if not isinstance(tool_id, str) or not tool_id:
+                return (
+                    f"invalid {fname} params: tool_id must be a non-empty adapter id "
+                    "selected from <available_adapters>."
+                )
+        if fname == "verify":
+            return _verify_pre_permission_arg_error(args_obj)
+        return None
+
     async def _handle_permission_response(frame: IPCFrame) -> None:
         """Spec 1978 T047 — consume permission_response and resolve pending Future.
 
@@ -1873,6 +5415,35 @@ async def run(  # noqa: C901
             span.set_attribute("kosmos.tool.dispatched", fname)
             span.set_attribute("kosmos.session.id", session_id)
 
+            pre_permission_error = _pre_permission_arg_error(fname, args_obj)
+            if pre_permission_error is not None:
+                result_frame = ToolResultFrame(
+                    session_id=session_id,
+                    correlation_id=correlation_id,
+                    role="backend",
+                    ts=_utcnow(),
+                    kind="tool_result",
+                    call_id=call_id,
+                    envelope=ToolResultEnvelope(
+                        kind=cast("Any", fname),
+                        **{
+                            "error": pre_permission_error,
+                            "tool_id": str(args_obj.get("tool_id", fname)),
+                        },
+                    ),
+                )
+                try:
+                    await write_frame(result_frame)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "_dispatch_primitive: failed to emit pre-permission error: %s",
+                        exc,
+                    )
+                fut = _pending_calls.pop(call_id, None)
+                if fut is not None and not fut.done():
+                    fut.set_result(result_frame)
+                return
+
             # ----- Permission gate (T043-T049) -----
             allowed = await _check_permission_gate(
                 call_id, fname, args_obj, session_id, correlation_id
@@ -1924,15 +5495,62 @@ async def run(  # noqa: C901
                     # ``family_hint`` (primitive's internal arg name) for
                     # legacy / tools-bridge compatibility.
                     tool_id = str(args_obj.get("tool_id") or "")
-                    family_hint = resolve_family(tool_id) or str(
+                    resolved_family = resolve_family(tool_id) if tool_id else None
+                    family_hint = resolved_family or str(
                         args_obj.get("family_hint") or args_obj.get("family") or ""
                     )
-                    session_ctx = cast("dict[str, object]", args_obj.get("session_context") or {})
-                    raw = await verify(family_hint=family_hint, session_context=session_ctx)
-                    result_payload = {
-                        "family": family_hint,
-                        "result": _serialize_primitive_result(raw),
-                    }
+                    if tool_id and resolved_family is None and not family_hint:
+                        dispatch_error = (
+                            f"unknown verify tool_id: {tool_id!r}. Select one of the "
+                            "tool_ids listed in <verify_families> or the adapter "
+                            "delegation_source_tool_id metadata."
+                        )
+                    # Accept the LLM-facing citizen shape
+                    # {tool_id, params={scope_list, purpose_ko, ...}} and the
+                    # legacy primitive shape {family_hint, session_context}.
+                    # mvp_surface._VerifyInputForLLM performs this packing for
+                    # schema-validated callers, but stdio dispatch receives the
+                    # already-decoded tool_call args directly.
+                    raw_session_ctx = args_obj.get("session_context")
+                    session_ctx: dict[str, object] = (
+                        dict(raw_session_ctx) if isinstance(raw_session_ctx, dict) else {}
+                    )
+                    raw_params = args_obj.get("params")
+                    if isinstance(raw_params, dict):
+                        session_ctx.update(cast("dict[str, object]", raw_params))
+                    if "session_id" not in session_ctx:
+                        session_ctx["session_id"] = session_id
+                    if tool_id and dispatch_error is None:
+                        missing_param_keys = [
+                            key
+                            for key in ("scope_list", "purpose_ko", "purpose_en")
+                            if key not in session_ctx
+                        ]
+                        scope_list = session_ctx.get("scope_list")
+                        if (
+                            missing_param_keys
+                            or not isinstance(scope_list, list)
+                            or not scope_list
+                            or not all(
+                                isinstance(scope, str) and scope.strip()
+                                for scope in scope_list
+                            )
+                        ):
+                            dispatch_error = (
+                                "invalid verify params: citizen-shape verify(tool_id=...) "
+                                "requires params.scope_list (non-empty list[str]), "
+                                "params.purpose_ko, and params.purpose_en. "
+                                "Use the adapter's delegation_source_tool_id and "
+                                "required scope metadata from <available_adapters>."
+                            )
+                    if dispatch_error is None:
+                        raw = await verify(family_hint=family_hint, session_context=session_ctx)
+                        if getattr(raw, "published_tier", None) is not None:
+                            _session_auth_contexts[session_id] = raw
+                        result_payload = {
+                            "family": family_hint,
+                            "result": _serialize_primitive_result(raw),
+                        }
 
                 elif fname == "lookup":
                     # Spec 2521 (2026-05-01): the LLM-visible ``lookup``
@@ -2013,9 +5631,18 @@ async def run(  # noqa: C901
                 elif fname == "submit":
                     from kosmos.primitives.submit import submit  # noqa: PLC0415
 
+                    submit_params = cast("dict[str, object]", args_obj.get("params") or {})
+                    _submit_tool_id = str(args_obj.get("tool_id", ""))
+                    _schema_args = {"tool_id": _submit_tool_id, "params": submit_params}
+                    _submit_schema = _schema_for_adapter_args(_schema_args, _ensure_tool_registry())
+                    _submit_props = _schema_properties(_submit_schema)
+                    if "session_id" in _submit_props and "session_id" not in submit_params:
+                        submit_params = dict(submit_params)
+                        submit_params["session_id"] = session_id
                     raw = await submit(
-                        tool_id=str(args_obj.get("tool_id", "")),
-                        params=cast("dict[str, object]", args_obj.get("params") or {}),
+                        tool_id=_submit_tool_id,
+                        params=submit_params,
+                        auth_context=_session_auth_contexts.get(session_id),
                         session_id=session_id,
                     )
                     result_payload = {
@@ -2403,6 +6030,11 @@ async def run(  # noqa: C901
                     suffix_block = _build_available_adapters_suffix(latest_user_utt)
                     if suffix_block:
                         augmented_system = augmented_system + "\n\n" + suffix_block + "\n"
+                    policy_plan_block = _build_policy_plan_suffix(latest_user_utt)
+                    if policy_plan_block:
+                        augmented_system = (
+                            augmented_system + "\n\n" + policy_plan_block + "\n"
+                        )
             except Exception:  # noqa: BLE001 — fail-open per FR-002
                 logger.exception(
                     "available_adapters auto-inject failed — continuing without suffix"
@@ -2477,6 +6109,8 @@ async def run(  # noqa: C901
         # cannot bypass it). Once a turn fires resolve_location the flag
         # clears so the agentic loop returns to free tool_choice.
         force_resolve_location_next_turn = False
+        force_verify_next_turn = False
+        force_followup_primitive_next_turn: str | None = None
 
         # Audit G4 / F-beta-03 dedup guard.
         #
@@ -2510,15 +6144,27 @@ async def run(  # noqa: C901
             _pagination_keys: frozenset[str] = frozenset(
                 {"page_no", "num_of_rows", "order_by", "pageNo", "numOfRows", "pageSize"}
             )
+            _auth_context_keys: frozenset[str] = frozenset(
+                {"delegation_context", "session_id", "identity_assertion"}
+            )
+            _ignored_keys = _pagination_keys | _auth_context_keys
 
             def _norm_val(v: object) -> object:
                 if isinstance(v, str):
                     return " ".join(v.split())  # collapse internal whitespace
                 if isinstance(v, float) and v == int(v):
                     return int(v)  # 1.0 → 1
+                if isinstance(v, dict):
+                    return {
+                        str(k): _norm_val(value)
+                        for k, value in v.items()
+                        if str(k) not in _ignored_keys
+                    }
+                if isinstance(v, list):
+                    return [_norm_val(item) for item in v]
                 return v
 
-            normalized = {k: _norm_val(v) for k, v in params.items() if k not in _pagination_keys}
+            normalized = {k: _norm_val(v) for k, v in params.items() if k not in _ignored_keys}
             try:
                 canonical = _json_dedup.dumps(
                     normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
@@ -2532,6 +6178,39 @@ async def run(  # noqa: C901
                 canonical[:120],
             )
             return _hashlib.sha256(f"{tool_id}|{canonical}".encode()).hexdigest()[:16]
+
+        _issued_submit_signatures: set[str] = set()
+        _issued_singleton_submit_tool_ids: set[str] = set()
+        _SINGLETON_SUBMIT_TOOL_IDS = frozenset({"mock_traffic_fine_pay_v1"})  # noqa: N806
+
+        def _submit_semantic_signature(args_obj: dict[str, object]) -> str | None:
+            """Return a write-side duplicate signature, ignoring backend auth fields."""
+            tool_id = args_obj.get("tool_id")
+            if not isinstance(tool_id, str) or not tool_id:
+                return None
+            params_obj = args_obj.get("params")
+            params = dict(params_obj) if isinstance(params_obj, dict) else {}
+            if tool_id == "mock_traffic_fine_pay_v1":
+                semantic = {
+                    key: params.get(key)
+                    for key in ("fine_reference", "payment_method", "action_type")
+                    if key in params
+                }
+            elif tool_id == "mock_submit_module_gov24_minwon":
+                semantic = {
+                    key: params.get(key)
+                    for key in ("minwon_type", "delivery_method", "target_institution_code")
+                    if key in params
+                }
+            elif tool_id == "mock_submit_module_hometax_taxreturn":
+                semantic = {
+                    key: params.get(key)
+                    for key in ("tax_year", "income_type", "action_type")
+                    if key in params
+                }
+            else:
+                semantic = params
+            return _hash_call(tool_id, {"params": semantic})
 
         def _classify_envelope_outcome(env: dict[str, object]) -> str:  # noqa: C901
             """Classify a tool result envelope outcome for the dedup guard.
@@ -2607,7 +6286,36 @@ async def run(  # noqa: C901
             # K-EXAONE on FriendliAI honours it as a hard constraint at the
             # decoding boundary rather than a system-prompt hint.
             stream_tool_choice: str | dict[str, object] | None = None
-            if force_resolve_location_next_turn:
+            if (
+                _retrieval_prefers_initial_resolve_location(latest_user_utt)
+                and not _conversation_has_successful_primitive(
+                    llm_messages,
+                    "resolve_location",
+                )
+            ):
+                stream_tool_choice = {
+                    "type": "function",
+                    "function": {"name": "resolve_location"},
+                }
+                logger.warning(
+                    "_handle_chat_request: forcing tool_choice=resolve_location "
+                    "for turn %d (registry policy requires location anchor first)",
+                    _turn,
+                )
+            elif force_verify_next_turn or (
+                _retrieval_requires_initial_verify(latest_user_utt)
+                and not _conversation_has_verify(llm_messages)
+            ):
+                stream_tool_choice = {
+                    "type": "function",
+                    "function": {"name": "verify"},
+                }
+                logger.warning(
+                    "_handle_chat_request: forcing tool_choice=verify for "
+                    "turn %d (registry policy requires DelegationContext)",
+                    _turn,
+                )
+            elif force_resolve_location_next_turn:
                 stream_tool_choice = {
                     "type": "function",
                     "function": {"name": "resolve_location"},
@@ -2617,15 +6325,85 @@ async def run(  # noqa: C901
                     "turn %d (chain gate previously rejected a coord-input call)",
                     _turn,
                 )
+            elif force_followup_primitive_next_turn in {"lookup", "submit", "subscribe"}:
+                stream_tool_choice = {
+                    "type": "function",
+                    "function": {"name": force_followup_primitive_next_turn},
+                }
+                logger.warning(
+                    "_handle_chat_request: forcing tool_choice=%s for turn %d "
+                    "(privileged chain gate rejected an early final answer)",
+                    force_followup_primitive_next_turn,
+                    _turn,
+                )
+            pre_synthesised_forced_tool = False
+            forced_tool_name = _forced_tool_choice_name(stream_tool_choice)
+            if forced_tool_name is not None:
+                forced_args: dict[str, object] | None = None
+                if forced_tool_name == "verify":
+                    forced_args = _build_policy_forced_verify_args(
+                        latest_user_utt,
+                        _ensure_tool_registry(),
+                    )
+                elif forced_tool_name == "resolve_location":
+                    forced_args = _build_forced_resolve_location_args(latest_user_utt)
+                elif forced_tool_name == "lookup":
+                    forced_args = _build_forced_lookup_args(
+                        latest_user_utt,
+                        llm_messages,
+                        _ensure_tool_registry(),
+                    )
+                elif forced_tool_name == "submit":
+                    forced_args = _build_forced_submit_args(
+                        latest_user_utt,
+                        llm_messages,
+                        _ensure_tool_registry(),
+                    )
+                elif forced_tool_name == "subscribe":
+                    forced_args = _build_forced_subscribe_args(
+                        latest_user_utt,
+                        _ensure_tool_registry(),
+                    )
+                if forced_args is not None:
+                    tool_call_buf[0] = {
+                        "id": str(uuid.uuid4()),
+                        "name": forced_tool_name,
+                        "args": _json.dumps(forced_args, ensure_ascii=False),
+                    }
+                    buffered_visible.clear()
+                    pre_synthesised_forced_tool = True
+                    logger.warning(
+                        "_handle_chat_request: pre-synthesised %s tool_call "
+                        "from harness-owned forced tool_choice",
+                        forced_tool_name,
+                    )
+                elif forced_tool_name in {"lookup", "submit", "subscribe"}:
+                    logger.warning(
+                        "_handle_chat_request: clearing forced tool_choice=%s "
+                        "because no schema-safe forced args could be derived",
+                        forced_tool_name,
+                    )
+                    stream_tool_choice = None
+                    force_followup_primitive_next_turn = None
+                    forced_tool_name = None
             try:
-                async for event in client.stream(  # type: ignore[attr-defined]
-                    messages=llm_messages,
-                    tools=llm_tools or None,
-                    temperature=frame.temperature,
-                    top_p=frame.top_p,
-                    max_tokens=frame.max_tokens,
-                    tool_choice=stream_tool_choice,
-                ):
+                async def _empty_forced_stream() -> Any:
+                    if False:
+                        yield None
+
+                stream_events = (
+                    _empty_forced_stream()
+                    if pre_synthesised_forced_tool
+                    else client.stream(  # type: ignore[attr-defined]
+                        messages=llm_messages,
+                        tools=llm_tools or None,
+                        temperature=frame.temperature,
+                        top_p=frame.top_p,
+                        max_tokens=frame.max_tokens,
+                        tool_choice=stream_tool_choice,
+                    )
+                )
+                async for event in stream_events:
                     event_type = getattr(event, "type", None)
                     if event_type == "content_delta":
                         delta = getattr(event, "content", "") or ""
@@ -2778,6 +6556,105 @@ async def run(  # noqa: C901
                         len(parsed_calls),
                     )
 
+            # Provider-boundary recovery (2026-05-05): when KOSMOS forces
+            # ``tool_choice=verify`` from registry policy, an empty/no-tool
+            # stream is not a valid terminal turn. Synthesize the same verify
+            # call the model was required to emit, using registry-derived
+            # delegation metadata, then let the normal permission + dispatch
+            # pipeline render the real ToolCallFrame/ToolResultFrame. This
+            # mirrors CC's API-layer constraint boundary: prompt guidance is
+            # advisory, but the harness owns the tool loop invariants.
+            if not tool_call_buf:
+                forced_tool_name = _forced_tool_choice_name(stream_tool_choice)
+                if forced_tool_name == "verify":
+                    forced_verify_args = _build_policy_forced_verify_args(
+                        latest_user_utt,
+                        _ensure_tool_registry(),
+                    )
+                    if forced_verify_args is not None:
+                        tool_call_buf[0] = {
+                            "id": str(uuid.uuid4()),
+                            "name": "verify",
+                            "args": _json.dumps(forced_verify_args, ensure_ascii=False),
+                        }
+                        cleaned_text = ""
+                        buffered_visible.clear()
+                        logger.warning(
+                            "_handle_chat_request: synthesised verify tool_call "
+                            "after provider returned no tool_call under explicit "
+                            "tool_choice=verify"
+                        )
+                elif forced_tool_name == "submit":
+                    forced_submit_args = _build_forced_submit_args(
+                        latest_user_utt,
+                        llm_messages,
+                        _ensure_tool_registry(),
+                    )
+                    if forced_submit_args is not None:
+                        tool_call_buf[0] = {
+                            "id": str(uuid.uuid4()),
+                            "name": "submit",
+                            "args": _json.dumps(forced_submit_args, ensure_ascii=False),
+                        }
+                        cleaned_text = ""
+                        buffered_visible.clear()
+                        logger.warning(
+                            "_handle_chat_request: synthesised submit tool_call "
+                            "after provider returned no tool_call under explicit "
+                            "tool_choice=submit"
+                        )
+                elif forced_tool_name == "resolve_location":
+                    forced_resolve_args = _build_forced_resolve_location_args(latest_user_utt)
+                    tool_call_buf[0] = {
+                        "id": str(uuid.uuid4()),
+                        "name": "resolve_location",
+                        "args": _json.dumps(forced_resolve_args, ensure_ascii=False),
+                    }
+                    cleaned_text = ""
+                    buffered_visible.clear()
+                    logger.warning(
+                        "_handle_chat_request: synthesised resolve_location tool_call "
+                        "after provider returned no tool_call under explicit "
+                        "tool_choice=resolve_location"
+                    )
+                elif forced_tool_name == "lookup":
+                    forced_lookup_args = _build_forced_lookup_args(
+                        latest_user_utt,
+                        llm_messages,
+                        _ensure_tool_registry(),
+                    )
+                    if forced_lookup_args is not None:
+                        tool_call_buf[0] = {
+                            "id": str(uuid.uuid4()),
+                            "name": "lookup",
+                            "args": _json.dumps(forced_lookup_args, ensure_ascii=False),
+                        }
+                        cleaned_text = ""
+                        buffered_visible.clear()
+                        logger.warning(
+                            "_handle_chat_request: synthesised lookup tool_call "
+                            "after provider returned no tool_call under explicit "
+                            "tool_choice=lookup"
+                        )
+                elif forced_tool_name == "subscribe":
+                    forced_subscribe_args = _build_forced_subscribe_args(
+                        latest_user_utt,
+                        _ensure_tool_registry(),
+                    )
+                    if forced_subscribe_args is not None:
+                        tool_call_buf[0] = {
+                            "id": str(uuid.uuid4()),
+                            "name": "subscribe",
+                            "args": _json.dumps(forced_subscribe_args, ensure_ascii=False),
+                        }
+                        cleaned_text = ""
+                        buffered_visible.clear()
+                        logger.warning(
+                            "_handle_chat_request: synthesised subscribe tool_call "
+                            "after provider returned no tool_call under explicit "
+                            "tool_choice=subscribe"
+                        )
+
             # Epic #2766 issue B — render-order fix flush.
             # No tool calls this turn → emit the FULL buffered prose as a
             # single chunk (or empty) before the terminal done=True frame.
@@ -2792,9 +6669,9 @@ async def run(  # noqa: C901
                 # ---- G-class fabrication gate (2026-05-04) ---------------
                 # Before emitting a final-answer turn, check whether the
                 # conversation invoked resolve_location but never followed up
-                # with a coord/admcd-input lookup despite the citizen query
-                # demanding one (weather / hospital / accident / 119 /
-                # welfare). The donga-univ-poi-bug snap-001-01-kma-now
+                # with a coord/admcd-input lookup despite registry retrieval
+                # selecting a location-parameterized data adapter. The
+                # donga-univ-poi-bug snap-001-01-kma-now
                 # capture (2026-05-04) showed K-EXAONE producing 16°C / 84%
                 # humidity by parametric memory — 4.7°C / 61%p drift versus
                 # the raw KMA observation — because the agentic loop allowed
@@ -2802,7 +6679,9 @@ async def run(  # noqa: C901
                 # Inject a synthetic chain-recovery tool_result and continue
                 # the loop so the next turn produces the missing lookup call.
                 chain_followup_msg = _check_resolve_terminated_without_followup(
-                    llm_messages, latest_user_utt
+                    llm_messages,
+                    latest_user_utt,
+                    registry=_ensure_tool_registry(),
                 )
                 if chain_followup_msg is not None:
                     synth_call_id = str(uuid.uuid4())
@@ -2859,8 +6738,198 @@ async def run(  # noqa: C901
                     buffered_visible.clear()
                     continue
 
+                privileged_followup = _check_privileged_chain_terminated_early(
+                    llm_messages,
+                    latest_user_utt,
+                    registry=_ensure_tool_registry(),
+                )
+                if privileged_followup is not None:
+                    next_primitive, followup_msg = privileged_followup
+                    synth_call_id = str(uuid.uuid4())
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="assistant",
+                            content="",
+                            tool_calls=[
+                                LLMToolCall(
+                                    id=synth_call_id,
+                                    type="function",
+                                    function=LLMFunctionCall(
+                                        name=next_primitive,
+                                        arguments=_json.dumps(
+                                            {
+                                                "tool_id": "<privileged-chain-gate>",
+                                                "params": {},
+                                            }
+                                        ),
+                                    ),
+                                )
+                            ],
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="tool",
+                            content=_json.dumps(
+                                {
+                                    "kind": "error",
+                                    "reason": "privileged_chain_followup_missing",
+                                    "message": followup_msg,
+                                },
+                                ensure_ascii=False,
+                            ),
+                            name=next_primitive,
+                            tool_call_id=synth_call_id,
+                        )
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected final-answer turn — "
+                        "privileged chain follow-up %s was missing after verify",
+                        next_primitive,
+                    )
+                    buffered_visible.clear()
+                    force_followup_primitive_next_turn = next_primitive
+                    continue
+
+                public_subscribe_followup = _check_public_subscribe_terminated_early(
+                    llm_messages,
+                    latest_user_utt,
+                    registry=_ensure_tool_registry(),
+                )
+                if public_subscribe_followup is not None:
+                    next_primitive, followup_msg = public_subscribe_followup
+                    synth_call_id = str(uuid.uuid4())
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="assistant",
+                            content="",
+                            tool_calls=[
+                                LLMToolCall(
+                                    id=synth_call_id,
+                                    type="function",
+                                    function=LLMFunctionCall(
+                                        name=next_primitive,
+                                        arguments=_json.dumps(
+                                            {
+                                                "tool_id": "<public-subscribe-chain-gate>",
+                                                "params": {},
+                                            }
+                                        ),
+                                    ),
+                                )
+                            ],
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="tool",
+                            content=_json.dumps(
+                                {
+                                    "kind": "error",
+                                    "reason": "public_subscribe_followup_missing",
+                                    "message": followup_msg,
+                                },
+                                ensure_ascii=False,
+                            ),
+                            name=next_primitive,
+                            tool_call_id=synth_call_id,
+                        )
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected final-answer turn — "
+                        "public subscribe follow-up was missing after lookup"
+                    )
+                    buffered_visible.clear()
+                    force_followup_primitive_next_turn = next_primitive
+                    continue
+
                 merged_prose = "".join(buffered_visible)
+                if not merged_prose.strip():
+                    completion_answer = _build_tool_result_completion_answer(llm_messages)
+                    if completion_answer is not None:
+                        await write_frame(
+                            AssistantChunkFrame(
+                                session_id=frame.session_id,
+                                correlation_id=frame.correlation_id,
+                                role="llm",
+                                ts=_utcnow(),
+                                kind="assistant_chunk",
+                                message_id=message_id,
+                                delta=completion_answer,
+                                done=True,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: replaced empty final answer "
+                            "with deterministic tool-result completion summary"
+                        )
+                        return
                 if merged_prose:
+                    grounding_msg = _check_final_answer_grounding(merged_prose, llm_messages)
+                    if grounding_msg is not None:
+                        grounded_answer = _build_grounded_safety_answer(llm_messages)
+                        if grounded_answer is not None:
+                            await write_frame(
+                                AssistantChunkFrame(
+                                    session_id=frame.session_id,
+                                    correlation_id=frame.correlation_id,
+                                    role="llm",
+                                    ts=_utcnow(),
+                                    kind="assistant_chunk",
+                                    message_id=message_id,
+                                    delta=grounded_answer,
+                                    done=True,
+                                )
+                            )
+                            logger.warning(
+                                "_handle_chat_request: replaced unsupported final answer "
+                                "with deterministic payload-only safety answer"
+                            )
+                            return
+                        synth_call_id = str(uuid.uuid4())
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=synth_call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name="lookup",
+                                            arguments=_json.dumps(
+                                                {
+                                                    "mode": "fetch",
+                                                    "tool_id": "<grounding-gate>",
+                                                    "params": {},
+                                                }
+                                            ),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "final_answer_grounding_violation",
+                                        "message": grounding_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name="lookup",
+                                tool_call_id=synth_call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: rejected final-answer turn — "
+                            "unsupported groundedness claim detected"
+                        )
+                        buffered_visible.clear()
+                        continue
                     await write_frame(
                         AssistantChunkFrame(
                             session_id=frame.session_id,
@@ -2899,6 +6968,7 @@ async def run(  # noqa: C901
             # loop can update _seen_calls with the actual outcome.
             issued_dedup_keys: dict[str, str] = {}
             assistant_tool_calls: list[LLMToolCall] = []
+            internal_recovery_inserted = False
             tool_call_indices = sorted(tool_call_buf.keys())
             if len(tool_call_indices) > 1:
                 selected_idx = tool_call_indices[0]
@@ -2915,9 +6985,11 @@ async def run(  # noqa: C901
             for idx in tool_call_indices:
                 slot = tool_call_buf[idx]
                 call_id = slot["id"] or str(uuid.uuid4())
+                malformed_json_args = False
                 try:
                     args_obj = _json.loads(slot["args"]) if slot["args"] else {}
                 except _json.JSONDecodeError:
+                    malformed_json_args = True
                     args_obj = {"_raw": slot["args"]}
                 if not isinstance(args_obj, dict):
                     args_obj = {"_value": args_obj}
@@ -2942,6 +7014,941 @@ async def run(  # noqa: C901
                             details={"call_id": call_id},
                         )
                     )
+                    continue
+
+                if malformed_json_args:
+                    recovery_args = {
+                        "_malformed_json": True,
+                        "raw_length": len(str(slot["args"] or "")),
+                    }
+                    recovery_msg = (
+                        f"Malformed JSON arguments were emitted for {fname}. "
+                        "Retry the same primitive with a valid JSON object using "
+                        "the registry-selected adapter tool_id. Reuse already "
+                        "verified DelegationContext from the prior verify result; "
+                        "do not ask the citizen for session IDs or identity digits."
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="assistant",
+                            content="",
+                            tool_calls=[
+                                LLMToolCall(
+                                    id=call_id,
+                                    type="function",
+                                    function=LLMFunctionCall(
+                                        name=fname,
+                                        arguments=_json.dumps(recovery_args),
+                                    ),
+                                )
+                            ],
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="tool",
+                            content=_json.dumps(
+                                {
+                                    "kind": "error",
+                                    "reason": "malformed_json_arguments",
+                                    "message": recovery_msg,
+                                },
+                                ensure_ascii=False,
+                            ),
+                            name=fname,
+                            tool_call_id=call_id,
+                        )
+                    )
+                    logger.warning(
+                        "_handle_chat_request: suppressed malformed JSON %s "
+                        "call_id=%s before permission gate (raw_length=%d)",
+                        fname,
+                        call_id[:12],
+                        len(str(slot["args"] or "")),
+                    )
+                    if fname == "verify":
+                        force_verify_next_turn = True
+                    elif fname in {"lookup", "submit", "subscribe"}:
+                        force_followup_primitive_next_turn = fname
+                    continue
+
+                if fname == "resolve_location":
+                    args_obj = _normalise_resolve_location_args(args_obj)
+                    resolve_prerequisite = _check_resolve_location_without_location_context(
+                        args_obj,
+                        latest_user_utt,
+                        registry=_ensure_tool_registry(),
+                    )
+                    if resolve_prerequisite is not None:
+                        next_primitive, prerequisite_msg = resolve_prerequisite
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "resolve_location_context_missing",
+                                        "message": prerequisite_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        force_followup_primitive_next_turn = next_primitive
+                        internal_recovery_inserted = True
+                        logger.warning(
+                            "_handle_chat_request: suppressed resolve_location "
+                            "call_id=%s with no explicit location context",
+                            call_id[:12],
+                        )
+                        continue
+
+                if fname == "verify":
+                    args_obj = _enrich_verify_args_from_policy(
+                        args_obj,
+                        latest_user_utt,
+                        _ensure_tool_registry(),
+                    )
+
+                if fname in {"lookup", "submit", "subscribe"}:
+                    params_obj = args_obj.get("params")
+                    params_dict: dict[str, object] = (
+                        dict(params_obj) if isinstance(params_obj, dict) else {}
+                    )
+                    delegation_context = _latest_delegation_context(
+                        llm_messages
+                    ) or _delegation_context_from_auth_context(
+                        _session_auth_contexts.get(frame.session_id)
+                    )
+                    if delegation_context is None and isinstance(args_obj.get("tool_id"), str):
+                        _adapter_schema = _schema_for_adapter_args(
+                            args_obj,
+                            _ensure_tool_registry(),
+                        )
+                        if "delegation_context" in _schema_required(_adapter_schema):
+                            delegation_context = _mock_delegation_context_for_tool(
+                                str(args_obj["tool_id"]),
+                                session_id=frame.session_id,
+                                user_query=latest_user_utt,
+                                registry=_ensure_tool_registry(),
+                            )
+                    if delegation_context is not None:
+                        # The LLM may summarize or partially reconstruct the
+                        # DelegationContext in later turns. The backend owns the
+                        # original verified object, so prefer it over any
+                        # model-supplied copy before Pydantic validation.
+                        params_dict["delegation_context"] = delegation_context
+                    if fname == "submit" and "session_id" not in params_dict:
+                        _submit_schema = _schema_for_adapter_args(
+                            args_obj,
+                            _ensure_tool_registry(),
+                        )
+                        if "session_id" in _schema_properties(_submit_schema):
+                            params_dict["session_id"] = frame.session_id
+                    if fname == "submit":
+                        latest_auth_context = _latest_auth_context(llm_messages)
+                        if latest_auth_context is not None:
+                            _session_auth_contexts[frame.session_id] = latest_auth_context
+                        gov24_next_submit = _next_gov24_movein_submit_args(llm_messages)
+                        if (
+                            gov24_next_submit is not None
+                            and args_obj.get("tool_id") == gov24_next_submit.get("tool_id")
+                        ):
+                            next_params = gov24_next_submit.get("params")
+                            if isinstance(next_params, dict):
+                                for key, value in next_params.items():
+                                    params_dict.setdefault(key, value)
+                                expected_minwon_type = next_params.get("minwon_type")
+                                if isinstance(expected_minwon_type, str):
+                                    params_dict["minwon_type"] = expected_minwon_type
+                        if _submit_payment_followup_needed(llm_messages):
+                            params_dict["action_type"] = _hometax_followup_action_type_from_query(
+                                latest_user_utt
+                            )
+                    if params_dict is not params_obj:
+                        args_obj = dict(args_obj)
+                        args_obj["params"] = params_dict
+
+                    if fname == "lookup":
+                        args_obj = _enrich_lookup_args_from_resolve_result(
+                            args_obj,
+                            llm_messages,
+                            _ensure_tool_registry(),
+                        )
+                    if fname in {"lookup", "submit"}:
+                        args_obj = _coerce_adapter_params_from_schema(
+                            args_obj,
+                            user_query=latest_user_utt,
+                            registry=_ensure_tool_registry(),
+                        )
+
+                    if (
+                        fname == "submit"
+                        and not _submit_args_compatible_with_latest_auth(
+                            args_obj,
+                            llm_messages,
+                            _ensure_tool_registry(),
+                        )
+                    ):
+                        pending_compatible_submit = _build_forced_submit_args(
+                            latest_user_utt,
+                            llm_messages,
+                            _ensure_tool_registry(),
+                        )
+                        recovery_msg = (
+                            "The requested submit adapter is not compatible with "
+                            "the latest verified identity tier. Do not retry this "
+                            "tool_id in the current turn; continue only with an "
+                            "auth-compatible registry-selected submit, subscribe, "
+                            "or final answer grounded in existing successful receipts."
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "submit_auth_tier_incompatible",
+                                        "message": recovery_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: suppressed submit call_id=%s — "
+                            "adapter %s is incompatible with latest auth tier",
+                            call_id[:12],
+                            args_obj.get("tool_id"),
+                        )
+                        if pending_compatible_submit is not None:
+                            force_followup_primitive_next_turn = "submit"
+                        internal_recovery_inserted = True
+                        continue
+
+                    completed_chain_prerequisite = (
+                        _check_tool_call_after_completed_submit_subscribe(
+                            fname,
+                            llm_messages,
+                            latest_user_utt,
+                            registry=_ensure_tool_registry(),
+                        )
+                    )
+                    if completed_chain_prerequisite is not None:
+                        _, prerequisite_msg = completed_chain_prerequisite
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "completed_submit_subscribe_chain",
+                                        "message": prerequisite_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: suppressed %s call_id=%s — "
+                            "submit+subscribe chain already completed",
+                            fname,
+                            call_id[:12],
+                        )
+                        internal_recovery_inserted = True
+                        continue
+
+                    completed_submit_prerequisite = _check_tool_call_after_completed_submit(
+                        fname,
+                        llm_messages,
+                        latest_user_utt,
+                        registry=_ensure_tool_registry(),
+                    )
+                    if completed_submit_prerequisite is not None:
+                        next_primitive, prerequisite_msg = completed_submit_prerequisite
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "completed_submit_chain",
+                                        "message": prerequisite_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: suppressed %s call_id=%s — "
+                            "submit chain already completed",
+                            fname,
+                            call_id[:12],
+                        )
+                        if next_primitive != "final":
+                            force_followup_primitive_next_turn = next_primitive
+                        internal_recovery_inserted = True
+                        continue
+
+                    pending_submit_prerequisite = None
+                    if not (
+                        fname == "lookup"
+                        and args_obj.get("tool_id") == "mock_lookup_module_national_ax_bundle"
+                        and _gov24_bundle_lookup_should_follow_direct_submit(
+                            latest_user_utt,
+                            llm_messages,
+                            _ensure_tool_registry(),
+                        )
+                    ):
+                        pending_submit_prerequisite = _check_pending_submit_before_non_submit(
+                            fname,
+                            llm_messages,
+                            latest_user_utt,
+                            registry=_ensure_tool_registry(),
+                        )
+                    if pending_submit_prerequisite is not None:
+                        from kosmos.ipc.frame_schema import (  # noqa: PLC0415
+                            ToolResultEnvelope,
+                            ToolResultFrame,
+                        )
+
+                        next_primitive, prerequisite_msg = pending_submit_prerequisite
+                        await write_frame(
+                            ToolCallFrame(
+                                session_id=frame.session_id,
+                                correlation_id=frame.correlation_id,
+                                role="backend",
+                                ts=_utcnow(),
+                                kind="tool_call",
+                                call_id=call_id,
+                                name=fname,  # type: ignore[arg-type]
+                                arguments=args_obj,
+                            )
+                        )
+                        err_envelope = ToolResultEnvelope.model_validate(
+                            {
+                                "kind": cast("Any", fname),
+                                "result": {
+                                    "kind": "error",
+                                    "reason": "pending_submit_before_non_submit",
+                                    "message": prerequisite_msg,
+                                    "retryable": False,
+                                },
+                            }
+                        )
+                        await write_frame(
+                            ToolResultFrame(
+                                session_id=frame.session_id,
+                                correlation_id=frame.correlation_id,
+                                role="backend",
+                                ts=_utcnow(),
+                                kind="tool_result",
+                                call_id=call_id,
+                                envelope=err_envelope,
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "pending_submit_before_non_submit",
+                                        "message": prerequisite_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: rejected %s call_id=%s — "
+                            "pending submit prerequisite remains",
+                            fname,
+                            call_id[:12],
+                        )
+                        force_followup_primitive_next_turn = next_primitive
+                        continue
+
+                    if (
+                        fname == "lookup"
+                        and args_obj.get("tool_id") == "mock_lookup_module_gov24_movein_sequence"
+                        and _gov24_direct_followup_flow_completed(
+                            latest_user_utt,
+                            llm_messages,
+                            _ensure_tool_registry(),
+                        )
+                    ):
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "gov24_direct_followup_flow_completed",
+                                        "message": (
+                                            "The direct Gov24 move-in submit, "
+                                            "bundled school/care lookup, and "
+                                            "all query-matched follow-up Gov24 "
+                                            "minwon submissions are already "
+                                            "complete. Do not run the broader "
+                                            "move-in dependency sequence or "
+                                            "submit unrelated address-change "
+                                            "minwon in this citizen turn; answer "
+                                            "from the existing receipts."
+                                        ),
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        internal_recovery_inserted = True
+                        logger.warning(
+                            "_handle_chat_request: suppressed Gov24 move-in "
+                            "sequence lookup call_id=%s after direct follow-up "
+                            "flow completed",
+                            call_id[:12],
+                        )
+                        continue
+
+                    if (
+                        fname == "lookup"
+                        and args_obj.get("tool_id") == "mock_lookup_module_national_ax_bundle"
+                        and _gov24_movein_followup_needed(llm_messages)
+                    ):
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "gov24_movein_sequence_pending",
+                                        "message": (
+                                            "The Gov24 move-in lookup already "
+                                            "returned required submit steps. "
+                                            "Complete submit(tool_id="
+                                            "'mock_submit_module_gov24_minwon') "
+                                            "for the remaining minwon_type before "
+                                            "running bundled target-state service "
+                                            "discovery."
+                                        ),
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        force_followup_primitive_next_turn = "submit"
+                        internal_recovery_inserted = True
+                        logger.warning(
+                            "_handle_chat_request: deferred national AX bundle "
+                            "lookup call_id=%s until Gov24 move-in sequence completes",
+                            call_id[:12],
+                        )
+                        continue
+
+                    if (
+                        fname == "lookup"
+                        and args_obj.get("tool_id") == "mock_lookup_module_national_ax_bundle"
+                        and _conversation_has_successful_tool_id(
+                            llm_messages,
+                            "lookup",
+                            "mock_lookup_module_national_ax_bundle",
+                        )
+                    ):
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "bundle_lookup_already_grounded",
+                                        "message": (
+                                            "The national AX bundle lookup already "
+                                            "returned a workflow inventory in this "
+                                            "citizen turn. Do not call the same "
+                                            "grounding lookup again; continue to "
+                                            "submit or subscribe using the existing "
+                                            "lookup result."
+                                        ),
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        force_followup_primitive_next_turn = "submit"
+                        internal_recovery_inserted = True
+                        logger.warning(
+                            "_handle_chat_request: suppressed repeated national "
+                            "AX bundle lookup call_id=%s and forced submit follow-up",
+                            call_id[:12],
+                        )
+                        continue
+
+                    if fname == "submit" and _submit_payment_followup_completed(llm_messages):
+                        recovery_args = {
+                            "tool_id": args_obj.get("tool_id", "submit"),
+                            "params": {
+                                "reason": "submit_chain_already_completed",
+                            },
+                        }
+                        recovery_msg = (
+                            "A successful tax filing submit and a successful payment "
+                            "deadline reminder submit are already present in the tool "
+                            "results. Do not call submit again in this citizen turn. "
+                            "Answer from the existing receipts and explain that real "
+                            "payment still requires explicit confirmation."
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(recovery_args),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "submit_chain_already_completed",
+                                        "message": recovery_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: suppressed extra submit "
+                            "call_id=%s after payment follow-up completion",
+                            call_id[:12],
+                        )
+                        internal_recovery_inserted = True
+                        continue
+
+                    if (
+                        fname == "submit"
+                        and args_obj.get("tool_id") == "mock_submit_module_gov24_minwon"
+                        and _gov24_movein_sequence_completed(llm_messages)
+                    ):
+                        recovery_args = {
+                            "tool_id": args_obj.get("tool_id", "submit"),
+                            "params": {
+                                "reason": "gov24_movein_sequence_completed",
+                            },
+                        }
+                        recovery_msg = (
+                            "The Gov24 move-in lookup's required submit sequence "
+                            "has already completed in this citizen turn. Do not "
+                            "call submit again; answer from the existing receipts."
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(recovery_args),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "gov24_movein_sequence_completed",
+                                        "message": recovery_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: suppressed extra Gov24 move-in "
+                            "submit call_id=%s after required sequence completion",
+                            call_id[:12],
+                        )
+                        internal_recovery_inserted = True
+                        continue
+
+                    submit_prerequisite = _check_submit_prerequisite(
+                        fname,
+                        llm_messages,
+                        latest_user_utt,
+                        registry=_ensure_tool_registry(),
+                    )
+                    if submit_prerequisite is not None:
+                        from kosmos.ipc.frame_schema import (  # noqa: PLC0415
+                            ToolResultEnvelope,
+                            ToolResultFrame,
+                        )
+
+                        next_primitive, prerequisite_msg = submit_prerequisite
+                        await write_frame(
+                            ToolCallFrame(
+                                session_id=frame.session_id,
+                                correlation_id=frame.correlation_id,
+                                role="backend",
+                                ts=_utcnow(),
+                                kind="tool_call",
+                                call_id=call_id,
+                                name=fname,  # type: ignore[arg-type]
+                                arguments=args_obj,
+                            )
+                        )
+                        err_envelope = ToolResultEnvelope.model_validate(
+                            {
+                                "kind": cast("Any", fname),
+                                "result": {
+                                    "kind": "error",
+                                    "reason": "submit_prerequisite_missing",
+                                    "message": prerequisite_msg,
+                                    "retryable": False,
+                                },
+                            }
+                        )
+                        await write_frame(
+                            ToolResultFrame(
+                                session_id=frame.session_id,
+                                correlation_id=frame.correlation_id,
+                                role="backend",
+                                ts=_utcnow(),
+                                kind="tool_result",
+                                call_id=call_id,
+                                envelope=err_envelope,
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="assistant",
+                                content="",
+                                tool_calls=[
+                                    LLMToolCall(
+                                        id=call_id,
+                                        type="function",
+                                        function=LLMFunctionCall(
+                                            name=fname,
+                                            arguments=_json.dumps(args_obj),
+                                        ),
+                                    )
+                                ],
+                            )
+                        )
+                        llm_messages.append(
+                            LLMChatMessage(
+                                role="tool",
+                                content=_json.dumps(
+                                    {
+                                        "kind": "error",
+                                        "reason": "submit_prerequisite_missing",
+                                        "message": prerequisite_msg,
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                                name=fname,
+                                tool_call_id=call_id,
+                            )
+                        )
+                        logger.warning(
+                            "_handle_chat_request: rejected submit call_id=%s — "
+                            "prerequisite %s missing",
+                            call_id[:12],
+                            next_primitive,
+                        )
+                        if next_primitive == "resolve_location":
+                            force_resolve_location_next_turn = True
+                        else:
+                            force_followup_primitive_next_turn = next_primitive
+                        continue
+
+                pre_permission_error_msg = _pre_permission_arg_error(fname, args_obj)
+                if pre_permission_error_msg is not None:
+                    from kosmos.ipc.frame_schema import (  # noqa: PLC0415
+                        ToolResultEnvelope,
+                        ToolResultFrame,
+                    )
+
+                    await write_frame(
+                        ToolCallFrame(
+                            session_id=frame.session_id,
+                            correlation_id=frame.correlation_id,
+                            role="backend",
+                            ts=_utcnow(),
+                            kind="tool_call",
+                            call_id=call_id,
+                            name=fname,  # type: ignore[arg-type]
+                            arguments=args_obj,
+                        )
+                    )
+                    err_envelope = ToolResultEnvelope.model_validate(
+                        {
+                            "kind": cast("Any", fname),
+                            "result": {
+                                "kind": "error",
+                                "reason": "invalid_params",
+                                "message": pre_permission_error_msg,
+                                "retryable": False,
+                            },
+                        }
+                    )
+                    await write_frame(
+                        ToolResultFrame(
+                            session_id=frame.session_id,
+                            correlation_id=frame.correlation_id,
+                            role="backend",
+                            ts=_utcnow(),
+                            kind="tool_result",
+                            call_id=call_id,
+                            envelope=err_envelope,
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="assistant",
+                            content="",
+                            tool_calls=[
+                                LLMToolCall(
+                                    id=call_id,
+                                    type="function",
+                                    function=LLMFunctionCall(
+                                        name=fname,
+                                        arguments=_json.dumps(args_obj),
+                                    ),
+                                )
+                            ],
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="tool",
+                            content=_json.dumps(
+                                {
+                                    "kind": "error",
+                                    "reason": "invalid_params",
+                                    "message": pre_permission_error_msg,
+                                },
+                                ensure_ascii=False,
+                            ),
+                            name=fname,
+                            tool_call_id=call_id,
+                        )
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected %s call_id=%s — "
+                        "invalid params before permission",
+                        fname,
+                        call_id[:12],
+                    )
+                    if fname == "verify":
+                        force_verify_next_turn = True
+                    elif fname in {"lookup", "submit", "subscribe"}:
+                        force_followup_primitive_next_turn = fname
+                    continue
+
+                delegation_error_msg = _check_lookup_delegation_prerequisite(fname, args_obj)
+                if delegation_error_msg is not None:
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="assistant",
+                            content="",
+                            tool_calls=[
+                                LLMToolCall(
+                                    id=call_id,
+                                    type="function",
+                                    function=LLMFunctionCall(
+                                        name=fname,
+                                        arguments=_json.dumps(args_obj),
+                                    ),
+                                )
+                            ],
+                        )
+                    )
+                    llm_messages.append(
+                        LLMChatMessage(
+                            role="tool",
+                            content=_json.dumps(
+                                {
+                                    "kind": "error",
+                                    "reason": "lookup_delegation_prerequisite_missing",
+                                    "message": delegation_error_msg,
+                                },
+                                ensure_ascii=False,
+                            ),
+                            name=fname,
+                            tool_call_id=call_id,
+                        )
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected %s call_id=%s — "
+                        "lookup DelegationContext prerequisite missing",
+                        fname,
+                        call_id[:12],
+                    )
+                    force_verify_next_turn = True
                     continue
 
                 # Chain prerequisite gate — donga-univ-poi-bug Epic #2766.
@@ -3067,55 +8074,95 @@ async def run(  # noqa: C901
                 # FriendliAI repeated `mohw_welfare_eligibility_search` 5x
                 # with identical params in β7 (2026-05-05); each produced
                 # NO_DATA but the model did not recognise the redundancy.
-                _dedup_inner_id = args_obj.get("tool_id") if fname == "lookup" else fname
+                _dedup_inner_id = (
+                    args_obj.get("tool_id")
+                    if fname in {"lookup", "submit", "subscribe"}
+                    else fname
+                )
                 _dedup_key = _hash_call(str(_dedup_inner_id), args_obj)
                 _prior_outcome = _seen_calls.get(_dedup_key)
-                if _prior_outcome in ("no_data", "error"):
+                _repeat_successful_submit_scheduled = False
+                if fname == "submit":
+                    _submit_tool_id = args_obj.get("tool_id")
+                    if (
+                        isinstance(_submit_tool_id, str)
+                        and _submit_tool_id in _SINGLETON_SUBMIT_TOOL_IDS
+                        and _submit_tool_id in _issued_singleton_submit_tool_ids
+                    ):
+                        _repeat_successful_submit_scheduled = True
+                    elif (
+                        isinstance(_submit_tool_id, str)
+                        and _submit_tool_id in _SINGLETON_SUBMIT_TOOL_IDS
+                    ):
+                        _issued_singleton_submit_tool_ids.add(_submit_tool_id)
+                    _submit_sig = _submit_semantic_signature(args_obj)
+                    if _submit_sig is not None and _submit_sig in _issued_submit_signatures:
+                        _repeat_successful_submit_scheduled = True
+                    elif _submit_sig is not None:
+                        _issued_submit_signatures.add(_submit_sig)
+                if _prior_outcome in ("no_data", "error") or (
+                    fname == "submit"
+                    and (_prior_outcome == "ok" or _repeat_successful_submit_scheduled)
+                ):
                     from kosmos.ipc.frame_schema import (  # noqa: PLC0415
                         ToolResultEnvelope,
                         ToolResultFrame,
                     )
 
-                    repeat_msg_ko = (
-                        "이 (tool_id, params) 조합은 이번 turn 에서 이미 호출되었고 "
-                        f"결과가 '{_prior_outcome}' 였습니다. 동일 호출은 동일 결과를 "
-                        "반환하므로 재시도하지 마세요. 다른 params 또는 다른 도구로 "
-                        "전환하거나, 시민에게 데이터 없음을 안내하세요."
-                    )
-                    await write_frame(
-                        ToolCallFrame(
-                            session_id=frame.session_id,
-                            correlation_id=frame.correlation_id,
-                            role="backend",
-                            ts=_utcnow(),
-                            kind="tool_call",
-                            call_id=call_id,
-                            name=fname,  # type: ignore[arg-type]
-                            arguments=args_obj,
+                    if fname == "submit" and (
+                        _prior_outcome == "ok" or _repeat_successful_submit_scheduled
+                    ):
+                        repeat_reason = "repeat_successful_submit_blocked"
+                        repeat_msg_ko = (
+                            "이 submit(tool_id, params) 조합은 이번 turn 에서 이미 "
+                            "실행 중이거나 성공했습니다. 동일 제출은 중복 접수 위험이 "
+                            "있으므로 재실행하지 마세요. 기존 접수 결과를 사용하거나, "
+                            "다른 후속 단계가 필요하면 다른 tool_id/params 또는 "
+                            "subscribe로 전환하세요."
                         )
-                    )
-                    dedup_envelope = ToolResultEnvelope.model_validate(
-                        {
-                            "kind": cast("Any", fname),
-                            "result": {
-                                "kind": "error",
-                                "reason": "repeat_call_blocked",
-                                "message": repeat_msg_ko,
-                                "retryable": False,
-                            },
-                        }
-                    )
-                    await write_frame(
-                        ToolResultFrame(
-                            session_id=frame.session_id,
-                            correlation_id=frame.correlation_id,
-                            role="backend",
-                            ts=_utcnow(),
-                            kind="tool_result",
-                            call_id=call_id,
-                            envelope=dedup_envelope,
+                    else:
+                        repeat_reason = "repeat_call_blocked"
+                        repeat_msg_ko = (
+                            "이 (tool_id, params) 조합은 이번 turn 에서 이미 호출되었고 "
+                            f"결과가 '{_prior_outcome}' 였습니다. 동일 호출은 동일 결과를 "
+                            "반환하므로 재시도하지 마세요. 다른 params 또는 다른 도구로 "
+                            "전환하거나, 시민에게 데이터 없음을 안내하세요."
                         )
-                    )
+                    if fname == "submit":
+                        await write_frame(
+                            ToolCallFrame(
+                                session_id=frame.session_id,
+                                correlation_id=frame.correlation_id,
+                                role="backend",
+                                ts=_utcnow(),
+                                kind="tool_call",
+                                call_id=call_id,
+                                name=fname,  # type: ignore[arg-type]
+                                arguments=args_obj,
+                            )
+                        )
+                        dedup_envelope = ToolResultEnvelope.model_validate(
+                            {
+                                "kind": cast("Any", fname),
+                                "result": {
+                                    "kind": "error",
+                                    "reason": repeat_reason,
+                                    "message": repeat_msg_ko,
+                                    "retryable": False,
+                                },
+                            }
+                        )
+                        await write_frame(
+                            ToolResultFrame(
+                                session_id=frame.session_id,
+                                correlation_id=frame.correlation_id,
+                                role="backend",
+                                ts=_utcnow(),
+                                kind="tool_result",
+                                call_id=call_id,
+                                envelope=dedup_envelope,
+                            )
+                        )
                     llm_messages.append(
                         LLMChatMessage(
                             role="assistant",
@@ -3138,7 +8185,7 @@ async def run(  # noqa: C901
                             content=_json.dumps(
                                 {
                                     "kind": "error",
-                                    "reason": "repeat_call_blocked",
+                                    "reason": repeat_reason,
                                     "message": repeat_msg_ko,
                                 },
                                 ensure_ascii=False,
@@ -3155,6 +8202,7 @@ async def run(  # noqa: C901
                         _prior_outcome,
                         _dedup_key,
                     )
+                    internal_recovery_inserted = True
                     continue
                 # Reserve the dedup slot now so other calls in the same turn
                 # can detect duplicates within the SAME tool_call_buf.
@@ -3208,6 +8256,10 @@ async def run(  # noqa: C901
                 # NMC) with the resolved coordinates.
                 if fname == "resolve_location":
                     force_resolve_location_next_turn = False
+                if fname == "verify":
+                    force_verify_next_turn = False
+                if fname == force_followup_primitive_next_turn:
+                    force_followup_primitive_next_turn = None
 
             # If every tool call was rejected (whitelist), terminate.
             # Exception: when the chain gate fired (force flag set) we
@@ -3216,10 +8268,16 @@ async def run(  # noqa: C901
             # Returning here would leave the citizen with the chain-error
             # tool_result frame as the only visible output.
             if not issued_calls:
-                if force_resolve_location_next_turn:
+                if (
+                    force_resolve_location_next_turn
+                    or force_verify_next_turn
+                    or force_followup_primitive_next_turn is not None
+                    or internal_recovery_inserted
+                ):
                     # Synthetic tool_result already injected into
                     # llm_messages; the next loop iteration will fire the
-                    # LLM again with tool_choice forced to resolve_location.
+                    # LLM again with tool_choice forced to the required
+                    # primitive.
                     continue
                 await write_frame(
                     AssistantChunkFrame(
@@ -3330,10 +8388,82 @@ async def run(  # noqa: C901
                     )
                 )
 
+            issued_tool_names = {fname for _, fname in issued_calls}
+            if (
+                issued_tool_names == {"verify"}
+                and not _conversation_has_primitive(llm_messages, "resolve_location")
+                and _query_implies_followup_lookup(
+                    latest_user_utt,
+                    registry=_ensure_tool_registry(),
+                )
+            ):
+                force_resolve_location_next_turn = True
+                logger.warning(
+                    "_handle_chat_request: post-verify chain gate forcing "
+                    "tool_choice=resolve_location for next turn"
+                )
+            if (
+                issued_tool_names == {"resolve_location"}
+                and not _conversation_has_verify(llm_messages)
+                and _retrieval_has_strong_policy_gated_candidate(
+                    _search_relevant_candidates(
+                        latest_user_utt,
+                        _ensure_tool_registry(),
+                    )
+                )
+            ):
+                force_verify_next_turn = True
+                logger.warning(
+                    "_handle_chat_request: post-resolve chain gate forcing "
+                    "tool_choice=verify before policy-gated follow-up"
+                )
+            post_tool_followup = (
+                None
+                if force_resolve_location_next_turn
+                else _check_privileged_chain_terminated_early(
+                    llm_messages,
+                    latest_user_utt,
+                    registry=_ensure_tool_registry(),
+                )
+            )
+            if post_tool_followup is not None:
+                post_primitive, _post_reason = post_tool_followup
+                if post_primitive == "verify":
+                    force_verify_next_turn = True
+                elif post_primitive == "resolve_location":
+                    force_resolve_location_next_turn = True
+                elif post_primitive in {"lookup", "submit", "subscribe"}:
+                    force_followup_primitive_next_turn = post_primitive
+                logger.warning(
+                    "_handle_chat_request: post-tool chain gate forcing "
+                    "tool_choice=%s for next turn",
+                    post_primitive,
+                )
+
             # Loop back: re-invoke client.stream with extended history.
 
         # Loop bound exhausted — emit terminal chunk anyway so the TUI
         # un-spins; the model will not be re-invoked beyond the bound.
+        completion_answer = _build_tool_result_completion_answer(llm_messages)
+        if completion_answer is not None:
+            logger.warning(
+                "agentic loop hit KOSMOS_AGENTIC_LOOP_MAX_TURNS=%d; "
+                "emitting deterministic tool-result completion summary",
+                _AGENTIC_LOOP_MAX_TURNS,
+            )
+            await write_frame(
+                AssistantChunkFrame(
+                    session_id=frame.session_id,
+                    correlation_id=frame.correlation_id,
+                    role="llm",
+                    ts=_utcnow(),
+                    kind="assistant_chunk",
+                    message_id=str(uuid.uuid4()),
+                    delta=completion_answer,
+                    done=True,
+                )
+            )
+            return
         logger.warning(
             "agentic loop hit KOSMOS_AGENTIC_LOOP_MAX_TURNS=%d; terminating",
             _AGENTIC_LOOP_MAX_TURNS,
@@ -3405,6 +8535,31 @@ async def run(  # noqa: C901
         await write_frame(echo_frame)
 
     if on_frame is None:
+        _chat_request_lock = asyncio.Lock()
+        _background_tasks: set[asyncio.Task[None]] = set()
+
+        async def _run_chat_request_background(frame: IPCFrame) -> None:
+            """Run one chat turn without blocking the stdin reader loop."""
+            async with _chat_request_lock:
+                try:
+                    await _handle_chat_request(frame)
+                except Exception as exc:  # noqa: BLE001
+                    logger.exception("chat_request handler failed: %s", exc)
+                    err = ErrorFrame(
+                        session_id=frame.session_id,
+                        correlation_id=frame.correlation_id or str(uuid.uuid4()),
+                        role="llm",
+                        ts=_utcnow(),
+                        kind="error",
+                        code="chat_request_error",
+                        message=f"chat_request handler failed: {exc}",
+                        details={},
+                    )
+                    await write_frame(err)
+
+        def _track_background_task(task: asyncio.Task[None]) -> None:
+            _background_tasks.add(task)
+            task.add_done_callback(_background_tasks.discard)
 
         async def _handle_frame(frame: IPCFrame) -> None:  # noqa: C901
             if frame.kind == "user_input":
@@ -3428,22 +8583,15 @@ async def run(  # noqa: C901
                     await write_frame(err)
 
             elif frame.kind == "chat_request":
-                # Spec 1978 ADR-0001 — tools-aware chat path.
-                try:
-                    await _handle_chat_request(frame)
-                except Exception as exc:  # noqa: BLE001
-                    logger.exception("chat_request handler failed: %s", exc)
-                    err = ErrorFrame(
-                        session_id=frame.session_id,
-                        correlation_id=frame.correlation_id or str(uuid.uuid4()),
-                        role="llm",
-                        ts=_utcnow(),
-                        kind="error",
-                        code="chat_request_error",
-                        message=f"chat_request handler failed: {exc}",
-                        details={},
-                    )
-                    await write_frame(err)
+                # Spec 1978 ADR-0001 — tools-aware chat path. The chat turn
+                # can pause on backend-owned permission futures; keep stdin
+                # draining so permission_response frames can resolve them.
+                task_name_corr = frame.correlation_id or str(uuid.uuid4())
+                task = asyncio.create_task(
+                    _run_chat_request_background(frame),
+                    name=f"chat-request-{task_name_corr[:8]}",
+                )
+                _track_background_task(task)
 
             elif frame.kind == "tool_result":
                 # Spec 1978 T028 — resolve pending tool call Future.
@@ -3832,6 +8980,11 @@ async def run(  # noqa: C901
 
         # Cancel whatever is still running
         for task in pending:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await task
+
+        for task in list(locals().get("_background_tasks", set())):
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError, Exception):
                 await task

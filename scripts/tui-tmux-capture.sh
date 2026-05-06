@@ -25,6 +25,9 @@
 #   send_text_pane <text>
 #   send_enter_pane
 #   send_ctrlc_pane
+# Optional env:
+#   KOSMOS_TMUX_SAMPLE_FRAMES=1  — continuously capture distinct pane frames
+#   KOSMOS_FRAME_SAMPLE_INTERVAL — sampler interval seconds (default: 0.2)
 
 set -euo pipefail
 
@@ -33,6 +36,7 @@ SCENARIO="${2:?usage: $0 <output-dir> <scenario>}"
 COLS="${KOSMOS_DEBUG_COLS:-180}"
 ROWS="${KOSMOS_DEBUG_ROWS:-60}"
 TMUX_SESSION="kosmos-debug-$$"
+FRAME_SAMPLE_PID=""
 
 # Resolve scenario absolute path before any cd
 SCENARIO_ABS="$(cd "$(dirname "$SCENARIO")" && pwd)/$(basename "$SCENARIO")"
@@ -50,6 +54,10 @@ if ! command -v tmux >/dev/null 2>&1; then
 fi
 
 cleanup() {
+  if [[ -n "${FRAME_SAMPLE_PID:-}" ]]; then
+    kill "$FRAME_SAMPLE_PID" 2>/dev/null || true
+    wait "$FRAME_SAMPLE_PID" 2>/dev/null || true
+  fi
   tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
 }
 trap cleanup EXIT
@@ -126,16 +134,67 @@ send_ctrlc_pane() {
   tmux send-keys -t "$TMUX_SESSION" C-c
 }
 
+start_frame_sampler() {
+  local frame_dir="$OUTDIR/frames"
+  local interval="${KOSMOS_FRAME_SAMPLE_INTERVAL:-0.2}"
+  mkdir -p "$frame_dir"
+  printf 'seq\ttimestamp_utc\tsha256\tfile\n' > "$frame_dir/timeline.tsv"
+  (
+    seq=0
+    last_hash=""
+    while true; do
+      tmp="$frame_dir/.sample.$$"
+      if ! tmux capture-pane -t "$TMUX_SESSION" -p > "$tmp" 2>/dev/null; then
+        rm -f "$tmp"
+        exit 0
+      fi
+      hash="$(shasum -a 256 "$tmp" | awk '{print $1}')"
+      if [[ "$hash" != "$last_hash" ]]; then
+        file="frame_$(printf '%04d' "$seq")_${hash:0:12}.txt"
+        mv "$tmp" "$frame_dir/$file"
+        printf '%s\t%s\t%s\t%s\n' \
+          "$seq" \
+          "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+          "$hash" \
+          "$file" >> "$frame_dir/timeline.tsv"
+        last_hash="$hash"
+        seq=$((seq + 1))
+      else
+        rm -f "$tmp"
+      fi
+      sleep "$interval"
+    done
+  ) &
+  FRAME_SAMPLE_PID=$!
+  export FRAME_SAMPLE_PID
+  echo "[frame_sampler START pid=$FRAME_SAMPLE_PID dir=$frame_dir interval=${interval}s]"
+}
+
+stop_frame_sampler() {
+  if [[ -z "${FRAME_SAMPLE_PID:-}" ]]; then
+    return 0
+  fi
+  kill "$FRAME_SAMPLE_PID" 2>/dev/null || true
+  wait "$FRAME_SAMPLE_PID" 2>/dev/null || true
+  echo "[frame_sampler STOP pid=$FRAME_SAMPLE_PID]"
+  FRAME_SAMPLE_PID=""
+  export FRAME_SAMPLE_PID
+}
+
 # Export the helpers + state to the scenario script
 export TMUX_SESSION OUTDIR
 export -f wait_for_pane snapshot_pane send_keys_pane send_text_pane \
-          send_enter_pane send_ctrlc_pane
+          send_enter_pane send_ctrlc_pane start_frame_sampler stop_frame_sampler
 SNAP_SEQ=0
 
 # Source the scenario — it can use the helpers directly
 echo "=== running scenario: $SCENARIO_ABS ==="
+if [[ "${KOSMOS_TMUX_SAMPLE_FRAMES:-0}" == "1" ]]; then
+  start_frame_sampler
+fi
 # shellcheck disable=SC1090
 source "$SCENARIO_ABS"
+stop_frame_sampler
 
 # Final dump
 tmux capture-pane -t "$TMUX_SESSION" -p > "$OUTDIR/final.txt"

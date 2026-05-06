@@ -275,8 +275,9 @@ class TestCall:
         inp = KmaWeatherAlertStatusInput(stn_id="108")
         result = await _call(inp, client=mock_client)
 
+        assert result["kind"] == "collection"
         assert result["total_count"] == 2
-        assert len(result["warnings"]) == 2
+        assert len(result["items"]) == 2
         mock_client.get.assert_called_once()
         call_kwargs = mock_client.get.call_args
         assert (

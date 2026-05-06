@@ -68,7 +68,7 @@ function stripUiOnlyToolResultFields(toolUseResult: Record<string, unknown>): st
   return JSON.stringify(llmFacing)
 }
 
-function isErrorEnvelope(envelope: { kind?: string; [k: string]: unknown }): boolean {
+function isErrorResultEnvelope(envelope: { kind?: string; [k: string]: unknown }): boolean {
   return envelope.kind === 'error' || typeof envelope['error'] === 'string'
 }
 
@@ -534,7 +534,7 @@ async function* queryModelWithStreaming(params: {
 
       const env = fa.envelope ?? {}
       const toolUseResult = buildToolUseResultFromEnvelope(env)
-      const isError = isErrorEnvelope(env)
+      const isError = isErrorResultEnvelope(env)
       yield createUserMessage({
         content: [
           {
@@ -548,11 +548,11 @@ async function* queryModelWithStreaming(params: {
         sourceToolAssistantUUID: messageUuid as UUID,
       })
     } else if (fa.kind === 'permission_request') {
-      // Epic #2077 T020 (Step 7) — CC permission gauntlet wire. Routes the
+      // Epic #2077 T020 (Step 7) — CC permission prompt wire. Routes the
       // backend permission_request frame through sessionStore's pending
       // permission slot (T018 / contracts/pending-permission-slot.md). The
-      // store dispatches the request to the mounted PermissionGauntletModal
-      // (T021), awaits the citizen's Y/N decision (or 5-min timeout), and
+      // store mirrors the request for observers, while ipcPermissionBridge
+      // mounts CC's PermissionRequest prompt and awaits the citizen decision, then
       // resolves the Promise here. We then send the permission_response
       // frame upstream with the resolved decision (granted / denied /
       // timeout). 'timeout' is treated by the backend as 'denied' for
@@ -565,6 +565,8 @@ async function* queryModelWithStreaming(params: {
         risk_level?: 'low' | 'medium' | 'high'
         receipt_id?: string
         worker_id?: string
+        tool_id?: string | null
+        arguments?: Record<string, unknown> | null
         session_id?: string
         correlation_id?: string
       }
@@ -572,13 +574,7 @@ async function* queryModelWithStreaming(params: {
       // need it; deps.ts is the only IPC↔store seam for this surface.
       const { setPendingPermission } = await import('../store/pendingPermissionSlot.js')
       const { dispatchSessionAction } = await import('../store/session-store.js')
-      // Epic FU-4 — bridge the frame into toolUseConfirmQueue so the CC
-      // 4-arm permissionComponentForTool switch auto-mounts the correct
-      // adapter (VerifyPermissionRequestAdapter etc.).
-      // This must run BEFORE setPendingPermission so the modal is visible
-      // when the user arrives at the permission prompt.
-      const { pushIpcPermissionRequest } = await import('../utils/permissions/ipcPermissionBridge.js')
-      pushIpcPermissionRequest({
+      const requestFrame = {
         request_id: fp.request_id ?? '',
         primitive_kind: fp.primitive_kind ?? 'submit',
         description_ko: fp.description_ko ?? '',
@@ -593,7 +589,9 @@ async function* queryModelWithStreaming(params: {
         role: 'backend',
         frame_seq: 0,
         kind: 'permission_request',
-      } as import('../ipc/frames.generated.js').PermissionRequestFrame)
+        tool_id: fp.tool_id ?? fp.worker_id ?? '',
+        arguments: fp.arguments ?? null,
+      } as import('../ipc/frames.generated.js').PermissionRequestFrame
       // Mirror the request into the reducer's pending_permission field so
       // any remaining subscribers of `s.pending_permission` still receive
       // the notification. The pendingPermissionSlot owns the Promise + FIFO
@@ -608,35 +606,47 @@ async function* queryModelWithStreaming(params: {
         risk_level: fp.risk_level ?? ('medium' as const),
       }
       dispatchSessionAction({ type: 'PERMISSION_REQUEST', request: reducerRequest })
+      // Arm the slot Promise before mounting CC's PermissionRequest. This
+      // matches CC's canUseTool ownership order: the pending permission result
+      // exists before the UI can call onAllow/onReject. The previous KOSMOS
+      // order pushed the modal first; a fast Enter could call
+      // resolvePermissionDecision before setPendingPermission had installed
+      // the active slot, leaving deps.ts blocked until permission_timeout.
+      const permissionPromise = setPendingPermission({
+        request_id: fp.request_id ?? '',
+        primitive_kind: fp.primitive_kind ?? 'submit',
+        description_ko: fp.description_ko ?? '',
+        description_en: fp.description_en ?? '',
+        risk_level: fp.risk_level ?? 'medium',
+        receipt_id: fp.receipt_id ?? '',
+        enqueued_at: performance.now(),
+      })
+      // Epic FU-4 — bridge the frame into toolUseConfirmQueue so CC's
+      // canonical PermissionRequest pipeline can render the approval prompt.
+      const { pushIpcPermissionRequest } = await import('../utils/permissions/ipcPermissionBridge.js')
+      pushIpcPermissionRequest(requestFrame)
       try {
-        var decision = await setPendingPermission({
-          request_id: fp.request_id ?? '',
-          primitive_kind: fp.primitive_kind ?? 'submit',
-          description_ko: fp.description_ko ?? '',
-          description_en: fp.description_en ?? '',
-          risk_level: fp.risk_level ?? 'medium',
-          receipt_id: fp.receipt_id ?? '',
-          enqueued_at: performance.now(),
-        })
+        var decision = await permissionPromise
       } finally {
         // Always clear the reducer mirror so a stale `pending_permission`
         // never blocks the next turn even on grant/deny/timeout/throw.
         dispatchSessionAction({ type: 'PERMISSION_RESPONSE' })
       }
-      // Backend's permission_response schema accepts only granted/denied;
-      // collapse 'timeout' into 'denied' at the wire boundary (the timeout
-      // distinction stays in the audit ledger via Spec 035 receipt).
-      const wireDecision = decision === 'timeout' ? 'denied' : decision
-      const respFrame = {
-        session_id: sessionId,
-        correlation_id: correlationId,
-        ts: new Date().toISOString(),
-        role: 'tui' as const,
-        kind: 'permission_response' as const,
-        request_id: fp.request_id ?? '',
-        decision: wireDecision,
+      // The CC permission prompt bridge sends allow/deny decisions at the
+      // moment the citizen acts. deps.ts only owns the no-interaction timeout
+      // path, where no prompt callback fired and the backend must be unblocked.
+      if (decision === 'timeout') {
+        const respFrame = {
+          session_id: sessionId,
+          correlation_id: correlationId,
+          ts: new Date().toISOString(),
+          role: 'tui' as const,
+          kind: 'permission_response' as const,
+          request_id: fp.request_id ?? '',
+          decision: 'denied' as const,
+        }
+        bridge.send(respFrame as unknown as IPCFrame)
       }
-      bridge.send(respFrame as unknown as IPCFrame)
     } else if (fa.kind === 'error') {
       const reason = fa.message ?? 'KOSMOS backend error'
       // CC mirror: yield the (error) AssistantMessage first so

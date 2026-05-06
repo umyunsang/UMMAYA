@@ -92,15 +92,9 @@ export function clearSessionCaches(
   // Clear swarm permission pending callbacks
   if (!hasPreserved) clearAllPendingCallbacks()
 
-  // Clear tungsten session usage tracking
-  if (process.env.USER_TYPE === 'ant') {
-    void import('../../tools/TungstenTool/TungstenTool.js').then(
-      ({ clearSessionsWithTungstenUsage, resetInitializationState }) => {
-        clearSessionsWithTungstenUsage()
-        resetInitializationState()
-      },
-    )
-  }
+  // KOSMOS Spec 1633 / Epic #2293: TungstenTool was removed with the
+  // Claude Code-internal tmux workflow, so there is no tungsten session cache
+  // to clear in this build.
   // Clear attribution caches (file content cache, pending bash states)
   // Dynamic import to preserve dead code elimination for COMMIT_ATTRIBUTION feature flag
   if (feature('COMMIT_ATTRIBUTION')) {

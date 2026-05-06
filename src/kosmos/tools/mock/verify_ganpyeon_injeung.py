@@ -11,9 +11,15 @@ contracts/mock-adapter-response-shape.md § 4 "EXISTING (retrofitted)" rows.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import base64
+import json
+import secrets
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Final
 
+from kosmos.memdir.consent_ledger import DelegationIssuedEvent, append_delegation_issued
+from kosmos.primitives.delegation import DelegationContext, DelegationToken
 from kosmos.primitives.verify import (
     GanpyeonInjeungContext,
     register_verify_adapter,
@@ -36,6 +42,7 @@ _POLICY_AUTHORITY: Final = (
     "?bbsId=BBSMSTR_000000000016&nttId=104636"
 )
 _INTERNATIONAL_REF: Final = "Japan JPKI"
+_ISSUER_DID: Final = "did:web:ganpyeon.go.kr"
 
 ADAPTER_REGISTRATION = AdapterRegistration(
     tool_id="mock_verify_ganpyeon_injeung",
@@ -76,14 +83,82 @@ _FIXTURE = GanpyeonInjeungContext.model_validate(
 )
 
 
+def _mock_vp_jwt(scope: str, issued_at: datetime, expires_at: datetime) -> str:
+    """Construct a Mock VP-JWT for the scope-bound delegation grant."""
+    header = {"alg": "none", "typ": "vp+jwt"}
+    payload = {
+        "iss": _ISSUER_DID,
+        "scope": scope,
+        "iat": int(issued_at.timestamp()),
+        "exp": int(expires_at.timestamp()),
+    }
+    header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).rstrip(b"=").decode()
+    payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
+    return f"{header_b64}.{payload_b64}.mock-signature-not-cryptographic"
+
+
+def _scope_list_from_session(session_context: dict[str, object]) -> list[str]:
+    raw = session_context.get("scope_list")
+    if isinstance(raw, list):
+        scopes = [scope for scope in raw if isinstance(scope, str) and scope.strip()]
+        if scopes:
+            return scopes
+    return ["verify:ganpyeon.identity"]
+
+
+def _build_delegation_context(session_context: dict[str, object]) -> DelegationContext:
+    scope_str = ",".join(_scope_list_from_session(session_context))
+    now = datetime.now(UTC)
+    expires_at = now + timedelta(hours=24)
+    raw_token = f"del_{secrets.token_urlsafe(24)}"
+    token = DelegationToken(
+        vp_jwt=_mock_vp_jwt(scope_str, now, expires_at),
+        delegation_token=raw_token,
+        scope=scope_str,
+        issuer_did=_ISSUER_DID,
+        issued_at=now,
+        expires_at=expires_at,
+    )
+    purpose_ko = session_context.get("purpose_ko")
+    purpose_en = session_context.get("purpose_en")
+    session_id = session_context.get("session_id")
+    issuing_session_id = (
+        session_id if isinstance(session_id, str) and session_id else "mock-session-unknown"
+    )
+    ledger_root = session_context.get("ledger_root")
+    append_delegation_issued(
+        DelegationIssuedEvent(
+            ts=now,
+            session_id=issuing_session_id,
+            delegation_token=raw_token,
+            scope=scope_str,
+            expires_at=expires_at,
+            issuer_did=_ISSUER_DID,
+            verify_tool_id="mock_verify_ganpyeon_injeung",
+        ),
+        ledger_root=ledger_root if isinstance(ledger_root, Path) else None,
+    )
+
+    return DelegationContext(
+        token=token,
+        citizen_did=None,
+        purpose_ko=purpose_ko if isinstance(purpose_ko, str) and purpose_ko else "간편인증 위임",
+        purpose_en=(
+            purpose_en
+            if isinstance(purpose_en, str) and purpose_en
+            else "Simple-auth delegated workflow"
+        ),
+    )
+
+
 def invoke(session_context: dict[str, object]) -> GanpyeonInjeungContext:
-    """Return the recorded fixture; override via session_context for test variants."""
+    """Return the recorded fixture plus a scope-bound DelegationContext."""
+    base = _FIXTURE.model_dump(by_alias=True)
+    base["delegation_context"] = _build_delegation_context(session_context)
     if session_context.get("_fixture_override"):
         overrides: dict[str, object] = dict(session_context["_fixture_override"])  # type: ignore[call-overload]
-        base = _FIXTURE.model_dump(by_alias=True)
         base.update(overrides)
-        return GanpyeonInjeungContext.model_validate(base, by_alias=True)
-    return _FIXTURE
+    return GanpyeonInjeungContext.model_validate(base, by_alias=True)
 
 
 register_verify_adapter("ganpyeon_injeung", invoke)

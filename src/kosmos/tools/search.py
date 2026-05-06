@@ -143,6 +143,11 @@ def search(
             real_classification_url=(
                 tool.policy.real_classification_url if tool.policy is not None else None
             ),
+            adapter_mode=tool.adapter_mode,
+            citizen_facing_gate=(
+                tool.policy.citizen_facing_gate if tool.policy is not None else None
+            ),
+            delegation_source_tool_id=tool.delegation_source_tool_id,
         )
         results.append(candidate)
 

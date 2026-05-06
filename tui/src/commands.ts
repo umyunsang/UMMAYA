@@ -136,14 +136,7 @@ import hooks from './commands/hooks/index.js'
 import files from './commands/files/index.js'
 import branch from './commands/branch/index.js'
 import agents from './commands/agents/index.js'
-// Spec 1979 T021 — KOSMOS citizen plugin command (singular file). The previous
-// import (`./commands/plugin/index.js`) routed `/plugin` to the CC marketplace
-// surface; the singular file emits `plugin_op_request` IPC frames consumed by
-// the backend dispatcher in `src/kosmos/ipc/plugin_op_dispatcher.py`. The CC
-// marketplace residue under `commands/plugin/`, `services/plugins/`, and
-// `utils/plugins/` is now unreachable from citizen surface; cleanup tracked
-// in #2242 (deferred to a Spec 1633-style follow-up Epic).
-import plugin from './commands/plugin.js'
+import plugin from './commands/plugin/index.js'
 import reloadPlugins from './commands/reload-plugins/index.js'
 import rewind from './commands/rewind/index.js'
 import heapDump from './commands/heapdump/index.js'
@@ -721,26 +714,4 @@ export function formatDescriptionWithSource(cmd: Command): string {
   }
 
   return `${cmd.description} (${getSettingSourceName(cmd.source)})`
-}
-
-// KOSMOS migration: re-export the dispatcher API so tests / consumers that
-// `import { buildDefaultRegistry, dispatchCommand } from 'src/commands'`
-// resolve to the new dispatcher (Spec 1637 P6 T032). The legacy `commands.ts`
-// barrel takes precedence over `commands/index.ts` in Bun's module
-// resolution, so the new exports must be hoisted up.
-export {
-  buildDefaultRegistry,
-  dispatchCommand,
-  createRegistry,
-  registerCommand,
-  isSlashCommand,
-  listCommands,
-} from './commands/index.js'
-export type { CommandRegistry, DispatchResult } from './commands/index.js'
-
-export type Command = {
-  name: string
-  description?: string
-  isHidden?: boolean
-  [key: string]: unknown
 }

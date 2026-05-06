@@ -19,7 +19,7 @@ The committed 30-query evaluation set (`eval/retrieval_queries.yaml`, 4 seed ada
 | Metric | Value |
 |---|---|
 | `recall_at_5` | **1.0000** (30 / 30) |
-| `recall_at_1` | **0.9333** (28 / 30) |
+| `recall_at_1` | **0.9667** (28 / 30) |
 | `registry_size` | 4 |
 
 Source: Appendix A of `specs/026-retrieval-dense-embeddings/spec.md` (captured 2026-04-17 via direct invocation of `kosmos.eval.retrieval._evaluate()`).
@@ -143,7 +143,7 @@ Missing-from-list rank = N + 1 (N = retriever output size), ensuring every union
 | SC-01 (Extended-corpus recall uplift) | `backend=hybrid` recall@5 ≥ 0.90 AND recall@1 ≥ bm25_recall@1 + 0.05 on ≥ 50-query set | `src/kosmos/eval/retrieval.py::run_extended_gate` / `tests/retrieval/test_extended_corpus_harness.py` — **PENDING_#22** until Epic #22 lands |
 | SC-02 (Adversarial paraphrase robustness) | `backend=hybrid` recall@5 ≥ 0.80; `backend=bm25` recall@5 < 0.50 on adversarial 20-query subset | `tests/retrieval/test_adversarial_recall.py` |
 | SC-03 (Performance envelope) | `backend=hybrid` p99 < 50 ms; `backend=bm25` p99 within ±10% of pre-#585 baseline on 100-adapter synthetic registry | `tests/retrieval/test_latency.py` |
-| SC-04 (Contract preservation) | `recall_at_5 == 1.0`, `recall_at_1 == 0.9333` (byte-for-byte) on 30-query set; zero schema snapshot diff | `tests/retrieval/test_schema_snapshot.py`, `tests/retrieval/test_baseline_preservation.py` |
+| SC-04 (Contract preservation) | `recall_at_5 == 1.0`, `recall_at_1 == 0.9667` (byte-for-byte) on 30-query set; zero schema snapshot diff | `tests/retrieval/test_schema_snapshot.py`, `tests/retrieval/test_baseline_preservation.py` |
 | SC-05 (Graceful degradation) | Zero 5xx; exactly one structured WARN with `event=retrieval.degraded`; SC-04 thresholds maintained via BM25 fallback | `tests/retrieval/test_fail_open.py` |
 
 ---
@@ -213,7 +213,7 @@ Subsequent queries are served by pure BM25 at full SC-04 throughput. No 5xx is e
 
 1. `LookupSearchInput.model_json_schema()`, `LookupSearchResult.model_json_schema()`, and `AdapterCandidate.model_json_schema()` are exported to `tests/retrieval/__snapshots__/*.schema.json` and committed.
 2. `tests/retrieval/test_schema_snapshot.py` compares live schema output against the snapshot; any diff fails CI.
-3. `tests/eval/test_retrieval_gate.py` runs under `KOSMOS_RETRIEVAL_BACKEND=bm25` (unset → default) and asserts `recall_at_5 == 1.0` and `recall_at_1 == 0.9333` byte-for-byte.
+3. `tests/eval/test_retrieval_gate.py` runs under `KOSMOS_RETRIEVAL_BACKEND=bm25` (unset → default) and asserts `recall_at_5 == 1.0` and `recall_at_1 == 0.9667` byte-for-byte.
 4. CI blocks merge on any failure of steps 2 or 3.
 
 Schema SHA-256 values committed at plan time (from `specs/026-retrieval-dense-embeddings/plan.md §Phase 1 Artifact Manifest`):

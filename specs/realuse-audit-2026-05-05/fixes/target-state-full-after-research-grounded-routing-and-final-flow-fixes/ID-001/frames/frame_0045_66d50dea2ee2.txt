@@ -1,0 +1,44 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 모바일 신분증 발급하고 정부24랑 홈택스에서 쓸 수 있게 인증 수단도 연결해줘.
+
+∴ Thinking — We have completed the user's request step by step: 1. We performed a verifica... (ctrl+o to expand)
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_gov24_certificate)
+  ⎿  record — 1건
+       {"kind":"record","item":{"certificate_type":"resident_registration","certificate_type_ko":"주민등록등본","issue_date":"2026-04-29","issuer":"서울특별시
+     강남구청","holder_name":"홍길동 (MOCK)","household_members":[{"relation":"본인","birth_year":1985},{"relati…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-C2630BFE
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:3e2a066caf54009e36f119ef0de0cddb750d39d82edf91ddf1beeb373d2112b9
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-5972BB41
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:e3204a7aab6182b0eaaefa54b6ec66abf1964b90dd2cf807b32ff8f20d991d23
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ watch(mock_rss_public_notices_v1)
+  ⎿  구독 완료: eb130999-f197-4cca-bb34-d22110ca8496 (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+✢ Doing…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773                                                                                                                                                        ● high · /effort

@@ -32,6 +32,16 @@ function renderSubscribe(output: Output, opts: { verbose?: boolean } = {}): stri
 // ---------------------------------------------------------------------------
 
 describe('SubscribePrimitive renderToolResultMessage — mock disclaimer', () => {
+  test('input schema accepts backend lifetime_seconds contract', () => {
+    const parsed = SubscribePrimitive.inputSchema.safeParse({
+      tool_id: 'mock_rest_pull_tick_v1',
+      params: {},
+      lifetime_seconds: 300,
+    })
+
+    expect(parsed.success).toBe(true)
+  })
+
   test('mock subscribe (ok=true, _mode="mock" in result) shows 🧪 모의 prefix', () => {
     const output: Output = {
       ok: true,

@@ -2,21 +2,21 @@
 tool_id: nmc_emergency_search
 primitive: lookup
 tier: live
-permission_tier: 3
+permission_tier: 1
 spec_version: v4
-last_updated: 2026-05-04
+last_updated: 2026-05-05
 ---
 
 # nmc_emergency_search
 
 ## Overview
 
-Queries the National Medical Center (국립중앙의료원) real-time emergency room bed availability for the nearest ERs around a given WGS-84 coordinate. Returns a freshness-validated ranked list of emergency rooms with available bed counts.
+Queries the National Medical Center (국립중앙의료원) public emergency medical institution location endpoint for the nearest ERs around a given WGS-84 coordinate. Returns a ranked list of emergency medical institutions with safety-enriched field names. This endpoint does not expose real-time bed counts; a future sibling adapter must wrap `getEmrrmRltmUsefulSckbdInfoInqire` if KOSMOS needs bed-count data.
 
 | Field | Value |
 |---|---|
-| Classification | Live · Permission tier 3 |
-| Source | National Medical Center (NMC) / api1.odcloud.kr |
+| Classification | Live · Permission tier 1 (read-only public lookup) |
+| Source | National Medical Center (NMC) / data.go.kr B552657 |
 | Primitive | `lookup` |
 | Module | `src/kosmos/tools/nmc/emergency_search.py` |
 | Spec version | v4 (Spec 2522 — URL encoding safety + 5-section description) |
@@ -39,7 +39,7 @@ Queries the National Medical Center (국립중앙의료원) real-time emergency 
 | `lon` | `float` (-180 to 180) | yes | Longitude of the search origin in decimal degrees (WGS-84). Obtain from `resolve_location(want='coords')`. Example: `126.9780` for central Seoul. |
 | `limit` | `int` (1–100) | yes | Maximum number of nearest emergency rooms to return. All three fields are required with no defaults — the LLM must supply explicit values. |
 
-**Output model (authenticated, fresh data)**: `LookupCollection` dict returned by `handle()`.
+**Output model (public read-only data)**: `LookupCollection` dict returned by `handle()`.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -97,30 +97,22 @@ The upstream `getEgytLcinfoInqire` endpoint returns abbreviated fields whose nam
 | `message` | `str` | yes | Human-readable staleness description including data age and threshold in minutes. |
 | `retryable` | `bool` (False) | yes | Stale data is not retryable — data must be refreshed upstream. |
 
-**Output model (unauthenticated — fail-closed)**:
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `kind` | `str` ("error") | yes | Envelope type discriminator. |
-| `reason` | `str` ("auth_required") | yes | Layer 3 auth-gate short-circuit result. |
-| `message` | `str` | yes | Auth gate rejection message. |
-| `retryable` | `bool` (False) | yes | Not retryable without authentication. |
-
 ## Search hints
 
-- 한국어: `응급실`, `실시간 병상`, `응급의료센터`, `국립중앙의료원`, `가까운 응급실`, `응급실 현황`, `가용 병상`
-- English: `emergency room`, `ER bed availability`, `nearest emergency room`, `NMC`, `real-time Korea emergency`, `응급실 찾기`
+- 한국어: `응급실`, `응급의료센터`, `국립중앙의료원`, `가까운 응급실`, `응급의료기관 위치`, `응급실 찾기`
+- English: `emergency room`, `nearest emergency room`, `NMC`, `emergency medical institution`, `Korea emergency location`
 
 ## Endpoint
 
-- **Source URL**: `https://api1.odcloud.kr/api/nmc/v1/realtime-beds`
-- **Authentication**: API key via `KOSMOS_DATA_GO_KR_API_KEY` (per Constitution IV)
+- **Source URL**: `https://apis.data.go.kr/B552657/ErmctInfoInqireService/getEgytLcinfoInqire`
+- **Authentication**: service API key via `KOSMOS_DATA_GO_KR_API_KEY` (no citizen identity)
 - **Query params** (httpx `params={}` dict — automatic percent-encoding):
   - `serviceKey`: API key string
-  - `page`: pagination page number (default 1)
-  - `perPage`: result limit (from `inp.limit`)
-  - `wgs84Lat`: latitude as float
-  - `wgs84Lon`: longitude as float
+  - `pageNo`: pagination page number (default 1)
+  - `numOfRows`: result limit (from `inp.limit`)
+  - `WGS84_LAT`: latitude as float
+  - `WGS84_LON`: longitude as float
+  - `_type`: `json`
 
 ### URL encoding safety (v4)
 
@@ -142,7 +134,7 @@ The freshness threshold is configurable via `KOSMOS_NMC_FRESHNESS_MINUTES` (defa
 
 ## Permission tier rationale
 
-This adapter is classified as Permission tier 3 because real-time emergency room bed availability, when combined with a citizen's session identity, constitutes location-linked health-context data (`pipa_class="personal"`, `is_personal_data=True`, `auth_level="AAL2"`). Under PIPA §23 and the KOSMOS security spec (Spec 033 §2), personal health-context data requires explicit citizen authentication before retrieval. The Layer 3 auth-gate in `executor.invoke()` short-circuits all unauthenticated calls to `LookupError(reason="auth_required")` before `handle()` is ever reached (FR-025, FR-026, SC-006). A `dpa_reference="dpa-nmc-v1"` is required per Spec 024 for PIPA-personal tools. The adapter also enforces a freshness SLO: stale ER data in an emergency context would be actively harmful, so the response is rejected (not degraded) when data exceeds the freshness threshold.
+This adapter is classified as Permission tier 1 because the current `getEgytLcinfoInqire` call returns public emergency medical institution location metadata. KOSMOS sends the coordinates derived from the citizen's place query plus a service API key; it does not send citizen identity, resident registration data, health records, or a user-specific entitlement token. The tool policy is therefore `citizen_facing_gate="read-only"` and the lookup permission modal must not open for "nearby ER" questions. Future NMC adapters that combine citizen identity, clinical context, submissions, or real-time bed-routing decisions must be implemented as separate tools with their own stricter policy gate and citation.
 
 ## Worked example
 
@@ -196,22 +188,6 @@ This adapter is classified as Permission tier 3 because real-time emergency room
 
 > Note: `startTime` / `endTime` are **never** present in the LLM-visible items — they are stripped by `_enrich_item` and replaced by the explicitly-labelled outpatient fields above. This is the safety-critical behaviour that prevents an "응급실 운영시간 08:30~17:00" mis-rendering during an emergency. See `tests/tools/nmc/test_field_semantics_enrichment.py` for the regression suite.
 
-### Output envelope (unauthenticated — fail-closed)
-
-When the caller has no valid session identity, the Layer 3 auth-gate rejects the call before `handle()` is reached:
-
-```json
-{
-  "tool_id": "nmc_emergency_search",
-  "result": {
-    "kind": "error",
-    "reason": "auth_required",
-    "message": "nmc_emergency_search requires citizen authentication (requires_auth=True). Please log in to continue.",
-    "retryable": false
-  }
-}
-```
-
 ### Output envelope (stale data — fail-closed)
 
 ```json
@@ -245,9 +221,8 @@ KOSMOS: 종로구 인근 응급실 (모두 24시간 운영):
 - **Rate limit**: `rate_limit_per_minute=10`; NMC API quota applies per service key.
 - **Freshness window**: `cache_ttl_seconds=0` — no client-side caching. Freshness threshold is controlled by `KOSMOS_NMC_FRESHNESS_MINUTES` (default 30 minutes). Stale responses are rejected rather than degraded.
 - **URL encoding** (v4): All query parameters are passed via `httpx params={}` dict — never string-interpolated into URLs. This prevents HTTP 400 from non-ASCII characters in query strings (documented in `medical-evidence.md § NMC Test 1`).
-- **Fixture coverage gaps**: Live NMC auth is provisioned at the API level; the handler is implemented. CI tests do not call the live endpoint (AGENTS.md hard rule: never call live `data.go.kr` APIs from CI). Fixture shapes for ER-specific fields (`hvgc`, `hvec`, `hvidate`) are derived from NMC published schema.
+- **Fixture coverage gaps**: CI tests do not call the live endpoint (AGENTS.md hard rule: never call live `data.go.kr` APIs from CI). Fixture shapes cover the coordinate location endpoint and the sibling real-time freshness fields used by regression tests.
 - **Error envelope summary**:
-  - Unauthenticated call (Layer 3 gate): `{"kind": "error", "reason": "auth_required", ..., "retryable": false}`.
   - Stale data (freshness SLO): `{"kind": "error", "reason": "stale_data", "message": "NMC data is stale: N min old (threshold: M min)", "retryable": false}`.
   - Missing API key: `{"kind": "error", "reason": "upstream_unavailable", "message": "KOSMOS_DATA_GO_KR_API_KEY is not configured", "retryable": false}`.
   - Non-JSON upstream response: `{"kind": "error", "reason": "upstream_unavailable", "message": "NMC API returned non-JSON content-type: ...", "retryable": true}`.

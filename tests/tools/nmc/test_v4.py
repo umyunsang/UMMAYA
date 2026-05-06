@@ -113,15 +113,15 @@ class TestNmcLive:
             assert isinstance(result.get("items"), list), "collection must have items list"
             assert isinstance(result.get("total_count"), int), "collection must have total_count"
             meta = result.get("meta", {})
-            assert meta.get("freshness_status") == "fresh", (
-                f"fresh collection must have freshness_status='fresh', got {meta!r}"
+            assert meta.get("freshness_status") in ("fresh", "not_applicable"), (
+                "collection must expose a freshness_status compatible with the endpoint, "
+                f"got {meta!r}"
             )
         elif result["kind"] == "error":
-            # Stale/auth/upstream path — all valid reasons from handle()
+            # Stale/upstream path — all valid reasons from handle()
             reason = result.get("reason")
             assert reason in (
                 "stale_data",
-                "auth_required",
                 "upstream_unavailable",
             ), f"unexpected error reason: {reason!r}"
 
@@ -155,7 +155,7 @@ class TestNmcLive:
                         )
         elif kind == "error":
             reason = result.get("reason")
-            assert reason in ("stale_data", "auth_required", "upstream_unavailable"), (
+            assert reason in ("stale_data", "upstream_unavailable"), (
                 f"Unexpected error reason: {reason!r}"
             )
 

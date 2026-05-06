@@ -1,0 +1,40 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 아버지가 돌아가셨어. 사망신고, 장례 지원, 국민연금 유족급여, 재산 관련 절차를 순서대로 알려줘.
+
+∴ Thinking — <tool_call>{"name": "lookup", "arguments": {"⟨내부⟩": "⟨adapter⟩", "params": {"... (ctrl+o to expand)
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"아버지가 돌아가셨어. 사망신고, 장례
+      지원, 국민연금 유족급여, 재산 관련 절차를 순서대로 알려줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-BD26D379
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:64b7af966b8947b6881947bc199936bd198c9438e8fdd8be1f9aa85a7db9a30f
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-E1BDE6DF
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:6efd131354d6684cc246f928a0f6fbfa86cf9d3b6917c51dffa4a9189b51000c
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+✻ Topsy-turvying…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

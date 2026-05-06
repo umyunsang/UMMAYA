@@ -59,6 +59,30 @@ _ACTUAL_ENDPOINT: Final = "https://api.gateway.kosmos.gov.kr/v1/submit/public-my
 _SECURITY_WRAPPING: Final = "마이데이터 표준동의서 OAuth2 + finAuth + mTLS"
 _POLICY_AUTHORITY: Final = "https://www.fsb.or.kr/kor.do"
 _INTERNATIONAL_REF: Final = "Estonia X-Road"
+_MOCK_FIDELITY_GRADE: Final = "B-official-public-mydata-flow-action-extension-inferred"
+_MOCK_EVIDENCE: Final[dict[str, Any]] = {
+    "credential_status": "student_no_live_authority",
+    "basis_urls": [
+        "https://www.mydata.go.kr/pc/intro/serviceIntro.do?tab=tab_3&type=A",
+        "https://adm.mydata.go.kr/images/guide.pdf",
+        "https://x-road.global/data-exchange",
+    ],
+    "supports": [
+        "official public MyData subject-right request and API service flow",
+        "bundle-information minimization model",
+        "signed, logged service-consumer to service-provider exchange analog",
+    ],
+    "inference_boundary": (
+        "Public MyData write/action APIs are partner-scoped; KOSMOS models consent "
+        "state transition semantics without claiming a live endpoint contract."
+    ),
+    "live_swap_requirements": [
+        "using-institution onboarding",
+        "approved bundle or information-item list",
+        "citizen consent receipt",
+        "mTLS/OAuth credentials for the public MyData distribution system",
+    ],
+}
 
 # Required delegation scope for this adapter
 _REQUIRED_SCOPE: Final = "submit:public_mydata.action"
@@ -185,12 +209,16 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
                 security_wrapping_pattern=_SECURITY_WRAPPING,
                 policy_authority=_POLICY_AUTHORITY,
                 international_reference=_INTERNATIONAL_REF,
+                mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+                mock_evidence=_MOCK_EVIDENCE,
             ),
         )
 
     # Success path — produce synthetic 접수번호
     suffix = secrets.token_hex(4).upper()
-    receipt_id = f"mydata-{datetime.now(_SEOUL_TZ).strftime('%Y-%m-%d')}-ACT-{suffix}"
+    now = datetime.now(_SEOUL_TZ)
+    receipt_id = f"mydata-{now.strftime('%Y-%m-%d')}-ACT-{suffix}"
+    processed_at = now.isoformat()
 
     logger.debug(
         "mock_submit_module_public_mydata_action: success, receipt_id=%s action_type=%s",
@@ -223,6 +251,30 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
                 "action_type": typed.action_type,
                 "target_institution_code": typed.target_institution_code,
                 "status": "처리완료",
+                "consent_action": {
+                    "subject_ref": typed.applicant_di,
+                    "target_institution_code": typed.target_institution_code,
+                    "bundle_policy": "minimum_items_for_declared_purpose",
+                    "data_holder_resolution": "fixture",
+                    "third_party_delivery": typed.action_type == "transfer_consent",
+                },
+                "action_flow": [
+                    "verify_delegation_scope",
+                    "load_current_consent_state",
+                    "validate_requested_bundle_or_scope_delta",
+                    "record_citizen_action",
+                    "route_to_public_mydata_distribution_system",
+                    "emit_receipt",
+                ],
+                "status_history": [
+                    {"status": "received", "at": processed_at},
+                    {"status": "consent_state_validated", "at": processed_at},
+                    {"status": "completed", "at": processed_at},
+                ],
+                "audit_refs": {
+                    "consent_receipt_ref": f"mock-mydata-consent-{suffix.lower()}",
+                    "distribution_trace_ref": f"mock-mydata-trace-{suffix.lower()}",
+                },
                 "mock": True,
             },
             reference_implementation=_REFERENCE_IMPL,
@@ -230,6 +282,8 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
             security_wrapping_pattern=_SECURITY_WRAPPING,
             policy_authority=_POLICY_AUTHORITY,
             international_reference=_INTERNATIONAL_REF,
+            mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+            mock_evidence=_MOCK_EVIDENCE,
         ),
     )
 
@@ -250,7 +304,18 @@ REGISTRATION = AdapterRegistration(
     cache_ttl_seconds=0,
     rate_limit_per_minute=5,
     search_hint={
-        "ko": ["마이데이터", "동의", "데이터이동권", "마이데이터액션", "금융보안원"],
+        "ko": [
+            "마이데이터",
+            "제공승인",
+            "정보전송요구권",
+            "마이데이터액션",
+            "금융보안원",
+            "개인정보이용내역",
+            "내정보조회",
+            "주소정정",
+            "연락처정정",
+            "정보수정",
+        ],
         "en": ["mydata", "data portability", "consent", "mydata action", "financial security"],
     },
     auth_type="oauth",

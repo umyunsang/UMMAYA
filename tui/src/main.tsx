@@ -48,7 +48,7 @@ import { getCommands } from './commands.js';
 import type { StatsStore } from './context/stats.js';
 import { launchInvalidSettingsDialog, launchResumeChooser } from './dialogLaunchers.js';
 import { SHOW_CURSOR } from './ink/termio/dec.js';
-import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens, showDialog, showSetupDialog } from './interactiveHelpers.js';
+import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens } from './interactiveHelpers.js';
 import { initBuiltinPlugins } from './plugins/bundled/index.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { getMcpToolsCommandsAndResources, prefetchAllMcpResources } from './services/mcp/client.js';
@@ -1489,51 +1489,6 @@ async function run(): Promise<CommanderCommand> {
         // — enrollTrustedDevice() via checkGate_CACHED_OR_BLOCKING (awaits
         // the GrowthBook reinit above), clearTrustedDeviceToken() via the
         // sync cached check (acceptable since clear is idempotent).
-      }
-
-      // KOSMOS P4 UI L2 — T049/T052: KOSMOS 5-step onboarding gate
-      // Runs after the CC trust/login setup screen so auth is established first.
-      // If the citizen has never completed the 5-step sequence
-      // (~/.kosmos/memdir/user/onboarding/state.json is absent or incomplete),
-      // render OnboardingFlow and block until all 5 steps are done.
-      {
-        const { loadOnboardingState } = await import('./utils/uiL2Memdir.js');
-        const { isOnboardingComplete } = await import('./schemas/ui-l2/onboarding.js');
-        const { emitSurfaceActivation } = await import('./observability/surface.js');
-        const { getCurrentLocale } = await import('./commands/lang.js');
-        const { getKosmosBridgeSessionId } = await import('./ipc/bridgeSingleton.js');
-        const onboardingState = await loadOnboardingState();
-        if (!isOnboardingComplete(onboardingState)) {
-          // T052: emit surface activation before mounting the flow
-          emitSurfaceActivation('onboarding', { 'onboarding.mode': 'initial' });
-          logForDebugging('[KOSMOS] Onboarding incomplete — launching 5-step flow');
-          // SWAP: KOSMOS-integration-verification — `require()` of OnboardingFlow.tsx
-          // fails on Bun because the module's transitive deps include top-level
-          // await; switch to dynamic `await import()` (already async-safe context).
-          //
-          // realuse-audit-2026-05-05 § G2 (PR #2773) — replaced
-          // `showDialog(root, ...)` with `showSetupDialog(root, ...)` so the
-          // OnboardingFlow mounts inside `<AppStateProvider><KeybindingSetup>`
-          // wrappers (CC restored-src parity, line 120 of interactiveHelpers).
-          // Without these the chord registry is unwired and PreflightStep's
-          // `useInput((_, k) => k.return && onAdvance())` never resolves to
-          // any registered action — Enter goes through the bare hook but the
-          // surrounding effects (useApp().exit, surface emission, locale) all
-          // expect provider context. F-delta-03 PASS evidence: the same
-          // OnboardingFlow component re-mounted from inside REPL.tsx
-          // (kosmosOnboardingMode state, where KeybindingSetup is in scope)
-          // works end-to-end. AGENTS.md infra-insight #3 + #4. Closes
-          // F-alpha-02 / F-delta-01 / F-delta-02.
-          const { OnboardingFlow } = await import('./components/onboarding/OnboardingFlow.js');
-          await showSetupDialog(root, (done) => {
-            return React.createElement(OnboardingFlow, {
-              sessionId: getKosmosBridgeSessionId(),
-              onComplete: () => done(),
-              locale: getCurrentLocale(),
-            });
-          });
-          logForDebugging('[KOSMOS] Onboarding complete — proceeding to REPL');
-        }
       }
 
     }

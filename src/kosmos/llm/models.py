@@ -137,6 +137,7 @@ class FunctionSchema(BaseModel):
     # object whose structure is defined by the OpenAI/FriendliAI spec, not by KOSMOS
     # internal I/O contracts. Using Any is the only correct representation.
     parameters: dict[str, Any]
+    strict: bool | None = None
 
     # Epic #2152 R6 — KOSMOS-internal metadata carrying the per-tool trigger
     # phrase that ``build_system_prompt_with_tools`` emits inside the

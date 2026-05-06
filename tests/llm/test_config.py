@@ -69,10 +69,10 @@ def test_default_session_budget(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_default_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
-    """timeout defaults to 60.0 seconds."""
+    """timeout defaults to 180.0 seconds for K-EXAONE high-effort streams."""
     monkeypatch.setenv("KOSMOS_FRIENDLI_TOKEN", "test-token-123")
     config = LLMClientConfig()
-    assert config.timeout == 60.0
+    assert config.timeout == 180.0
 
 
 def test_default_max_retries(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -109,6 +109,14 @@ def test_override_session_budget_via_env(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setenv("KOSMOS_LLM_SESSION_BUDGET", "50000")
     config = LLMClientConfig()
     assert config.session_budget == 50000
+
+
+def test_override_timeout_via_kosmos_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """KOSMOS_LLM_TIMEOUT_SECONDS overrides the default HTTP timeout."""
+    monkeypatch.setenv("KOSMOS_FRIENDLI_TOKEN", "test-token-123")
+    monkeypatch.setenv("KOSMOS_LLM_TIMEOUT_SECONDS", "240")
+    config = LLMClientConfig()
+    assert config.timeout == 240.0
 
 
 # ---------------------------------------------------------------------------

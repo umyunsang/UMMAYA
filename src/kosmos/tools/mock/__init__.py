@@ -8,10 +8,10 @@ Six mock system sub-packages (byte- or shape-mirror-able public systems):
 - npki_crypto: PyPinkSign crypto layer (PKCS#7/#12 only; portal session is OPAQUE)
 - cbs: 3GPP TS 23.041 broadcast (byte mirror)
 
-OPAQUE systems (Government 24 submission, KEC XML signature, NPKI portal
-session handshake) live in docs/scenarios/ only — no mock adapter
-implementations (FR-026). See docs/scenarios/README.md for the three
-journey narratives.
+OPAQUE internals (KEC XML signature, NPKI portal session handshake, and private
+Government24 live submit schemas) stay scenario-only unless a mock mirrors a
+publicly documented workflow boundary and keeps the private endpoint shape
+declared as inferred.
 
 Spec 031 US1 submit adapters (T027) — registered with kosmos.primitives.submit
 on import:
@@ -44,6 +44,7 @@ kosmos.primitives.subscribe on import:
 # Import triggers self-registration in kosmos.primitives.submit._ADAPTER_REGISTRY.
 # APPEND ONLY — do not remove or reorder existing entries.
 import kosmos.tools.mock.data_go_kr.fines_pay  # noqa: F401, E402
+import kosmos.tools.mock.koroad.driver_fitness_reservation  # noqa: F401, E402
 import kosmos.tools.mock.mydata.welfare_application  # noqa: F401, E402
 
 # Epic ε #2296 T023–T025 — new delegation-aware submit adapters.

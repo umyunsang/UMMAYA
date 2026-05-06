@@ -2,17 +2,14 @@
 // Epic γ #2294 · T020 — ToolRegistry boot guard tests.
 //
 // Covers 3 of the 4 cases from contracts/registry-boot-guard.md § Test plan:
-//   Case 1: Full 4-primitive registry boot — ok === true, primitives = 4, durationMs ≤ 200.
+//   Case 1: Full 5-primitive registry boot — ok === true, primitives = 5, durationMs ≤ 200.
 //   Case 2: Synthetic registry with a primitive missing renderToolResultMessage — ok === false.
 //   Case 3: Synthetic registry where one tool has isMcp: undefined — ok === false.
 //   Case 4: Citation enforcement is inside validateInput (Spec 2294 R-3), NOT in the boot guard.
 //           (Skipped per task spec — boot guard only does structural member presence.)
 //
-// NOTE: SubmitPrimitive / VerifyPrimitive / SubscribePrimitive are authored in
-// `.ts` files with JSX by sonnet-submit/verify/subscribe teammates (T010-T018).
-// Bun 1.3.x cannot parse JSX in `.ts` files without a global loader override.
-// Case 1 therefore uses LookupPrimitive (the only working .ts primitive) +
-// compliant synthetic stubs for the other three, demonstrating the same guard
+// Case 1 uses LookupPrimitive (real) + compliant synthetic stubs for the other
+// four, demonstrating the same guard
 // correctness as calling getAllBaseTools() would.
 
 import { describe, test, expect } from 'bun:test'
@@ -44,16 +41,15 @@ function fakePrimitive(name: string, overrides: Partial<Record<string, unknown>>
 }
 
 // ---------------------------------------------------------------------------
-// Case 1: Full 4-primitive registry boot
-// Uses LookupPrimitive (real) + synthetic stubs for Submit/Verify/Subscribe
-// (those are authored with JSX in .ts files by parallel teammates; Bun 1.3.x
-// cannot load them without a loader override that breaks unrelated .ts files).
+// Case 1: Full 5-primitive registry boot
+// Uses LookupPrimitive (real) + synthetic stubs for ResolveLocation/Submit/Verify/Subscribe.
 // ---------------------------------------------------------------------------
 
-describe('verifyBootRegistry — full 4-primitive registry (Case 1)', () => {
-  test('passes with ok === true, 4 primitives, durationMs ≤ 200', () => {
+describe('verifyBootRegistry — full 5-primitive registry (Case 1)', () => {
+  test('passes with ok === true, 5 primitives, durationMs ≤ 200', () => {
     const registry: readonly Tool[] = [
       LookupPrimitive,
+      fakePrimitive('resolve_location'),
       fakePrimitive('submit'),
       fakePrimitive('verify'),
       fakePrimitive('subscribe'),
@@ -63,8 +59,8 @@ describe('verifyBootRegistry — full 4-primitive registry (Case 1)', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return // narrow type
 
-    expect(result.primitives).toBe(4)
-    expect(result.entries).toBe(4)
+    expect(result.primitives).toBe(5)
+    expect(result.entries).toBe(5)
     // SC-002: wall-clock budget on developer laptop
     expect(result.durationMs).toBeLessThanOrEqual(200)
   })
@@ -76,14 +72,15 @@ describe('verifyBootRegistry — full 4-primitive registry (Case 1)', () => {
 
 describe('verifyBootRegistry — missing renderToolResultMessage (Case 2)', () => {
   test('returns ok === false, offendingTool = lookup, missingMembers contains renderToolResultMessage', () => {
-    // Codex P2 fix moved the "all 4 reserved primitives present" check ahead
-    // of the 9-member walk. The registry must contain all 4 primitive names
+    // Codex P2 fix moved the "all 5 reserved primitives present" check ahead
+    // of the 9-member walk. The registry must contain all 5 primitive names
     // for the per-member walk to be reached.
     const brokenLookup = fakePrimitive('lookup', {
       renderToolResultMessage: undefined,
     })
     const registry: readonly Tool[] = [
       brokenLookup,
+      fakePrimitive('resolve_location'),
       fakePrimitive('submit'),
       fakePrimitive('verify'),
       fakePrimitive('subscribe'),
@@ -115,6 +112,7 @@ describe('verifyBootRegistry — isMcp undefined (Case 3)', () => {
     })
     const registry: readonly Tool[] = [
       fakePrimitive('lookup'),
+      fakePrimitive('resolve_location'),
       brokenSubmit,
       fakePrimitive('verify'),
       fakePrimitive('subscribe'),
@@ -132,13 +130,14 @@ describe('verifyBootRegistry — isMcp undefined (Case 3)', () => {
 // ---------------------------------------------------------------------------
 // Case 4 (Codex P2): Reserved primitive set incomplete — fail closed.
 // Without this guard, accidentally removing one primitive from registration
-// would still produce ok:true with primitives < 4.
+// would still produce ok:true with primitives < 5.
 // ---------------------------------------------------------------------------
 
 describe('verifyBootRegistry — missing reserved primitive (Case 4 / Codex P2)', () => {
   test('returns ok === false when subscribe is missing from registry', () => {
     const registry: readonly Tool[] = [
       fakePrimitive('lookup'),
+      fakePrimitive('resolve_location'),
       fakePrimitive('submit'),
       fakePrimitive('verify'),
       // 'subscribe' deliberately omitted
@@ -152,12 +151,7 @@ describe('verifyBootRegistry — missing reserved primitive (Case 4 / Codex P2)'
     expect(result.offendingTool).toBe('<reserved-primitive-set>')
     expect(result.missingMembers).toEqual(['subscribe'])
     expect(result.diagnostic).toContain('subscribe')
-    // Wave-2 G7 (F-alpha-16): TUI-side primitive count is 4 by Spec 2294
-    // contract. The 5th primitive (`resolve_location`) lives backend-side.
-    // Previous assertion checked for "5-primitive", which contradicted the
-    // success-log line `(4 primitives)` and the next line of the same
-    // diagnostic.
-    expect(result.diagnostic).toContain('4-primitive')
+    expect(result.diagnostic).toContain('5-primitive')
   })
 
   test('returns ok === false when ALL primitives are missing (empty registry)', () => {
@@ -167,9 +161,10 @@ describe('verifyBootRegistry — missing reserved primitive (Case 4 / Codex P2)'
     if (result.ok) return // narrow type
 
     expect(result.offendingTool).toBe('<reserved-primitive-set>')
-    // All four reserved names are missing.
+    // All five reserved names are missing.
     expect(result.missingMembers).toEqual([
       'lookup',
+      'resolve_location',
       'submit',
       'verify',
       'subscribe',

@@ -88,9 +88,10 @@ class TestMCPToolsListShape:
         # Post-Spec-2296 registered count was 16. Epic η #2298 FR-021 added 3
         # primitive surfaces (verify / submit / subscribe) → 19. Epic ζ #2297
         # path B (live smoke 2026-04-30) added 18 non-core mock adapter
-        # wrappers via discovery_bridge → 37, so lookup(mode="search") surfaces
-        # verify/submit/subscribe candidates alongside lookup-class adapters.
-        assert len(tools) == 37, f"Tool list count drift: got {len(tools)}, expected 37"
+        # wrappers via discovery_bridge → 37, then CIV-001 added the Gov24
+        # move-in sequence lookup mock, national AX bundle, and MOB-001 added
+        # the KOROAD fitness reservation submit mock → 40.
+        assert len(tools) == 40, f"Tool list count drift: got {len(tools)}, expected 40"
 
     def test_tools_list_entries_have_required_keys(self, mcp_server: MCPServer) -> None:
         response = asyncio.run(

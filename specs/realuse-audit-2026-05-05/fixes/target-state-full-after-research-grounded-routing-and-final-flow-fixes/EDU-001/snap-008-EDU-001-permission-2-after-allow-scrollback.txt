@@ -1,0 +1,60 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 현재 위치는 부산 사하구 다대1동입니다. 이사 때문에 아이 학교 전학이 필요해. 전입신고랑 전학 절차, 돌봄 신청까지 같이 해줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ locate(부산 사하구 다대1동 → coords_and_admcd)
+  ⎿  위치 해석 결과
+     좌표: 35.059152 / 128.971316 (kakao)
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-64FCC7F1
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:29024a0b81869056af7f7f7dadf8bf6652919af164e05cc505cc7e2063d7a124
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"현재 위치는 부산 사하구
+     다대1동입니다. 이사 때문에 아이 학교 전학이 필요해. 전입신고랑 전학 절차, 돌봄 신청까지 같이 해줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-A8E27FDE
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:e0e11a86d66c04494f902ac87be922c36d4ce75d5a2a106dbcac67ec69b814bd
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   send(
+   {
+     "tool_id": "mock_submit_module_gov24_minwon",
+     "params": {
+       "applicant_name": "verified_citizen_mock",
+       "delivery_method": "online",
+       "minwon_type": "돌봄신청"
+     }
+   }
+   )
+   Submit data to a government API. This action is irreversible.
+   정부 API에 데이터를 제출합니다. 이 작업은 되돌릴 수 없습니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for send commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

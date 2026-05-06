@@ -24,8 +24,9 @@ from kosmos.context.system_prompt import SystemPromptAssembler
 # ---------------------------------------------------------------------------
 
 _GEOCODING_FIRST_RULE = (
-    "When the citizen's message names a district, neighborhood, landmark, or address, "
-    "invoke the geocoding tool before any tool that takes an administrative code."
+    "When the citizen's message names a physical district, neighborhood, landmark, "
+    "address, station, or walk-in office location, invoke the geocoding tool before "
+    "any retrieved adapter whose input schema requires coordinates or an administrative code."
 )
 
 _NO_MEMORY_FILL_RULE = (

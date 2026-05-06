@@ -1,0 +1,36 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로 처리해줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   auth(
+   {
+     "tool_id": "mock_verify_ganpyeon_injeung",
+     "params": {
+       "scope_list": [
+         "submit:gov24.minwon",
+         "lookup:gov24.movein",
+         "lookup:gov24.certificate"
+       ],
+       "purpose_ko": "카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로 처리해줘.",
+       "purpose_en": "Citizen-requested delegated government service workflow."
+     }
+   }
+   )
+   Request identity delegation for verification.
+   신원 확인을 위해 인증 위임을 요청합니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for auth commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

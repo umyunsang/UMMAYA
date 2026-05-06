@@ -29,7 +29,7 @@ This document resolves every `NEEDS CLARIFICATION` marker from `spec.md`, maps e
 **Rationale**:
 - Protects SC-004 (byte-level contract preservation) — the default-path regression gate stays green without requiring an operator to flip a flag.
 - Gives the ops team a proven revert path if dense/hybrid exhibits unforeseen failure modes in real traffic (memory pressure, first-query tail latency spikes under concurrency, weight-cache corruption).
-- Matches Spec 022's committed gate semantics — operators expect `recall_at_5 == 1.0, recall_at_1 == 0.9333` on the 30-query set at merge.
+- Matches Spec 022's committed gate semantics — operators expect `recall_at_5 == 1.0, recall_at_1 == 0.9667` on the 30-query set at merge.
 - A follow-on micro-spec flips the default after one release cycle of telemetry (log-only per FR-007) proves dense/hybrid is stable.
 
 **Alternatives considered**:

@@ -330,6 +330,10 @@ class ToolDefinitionFunction(BaseModel):
             "dict shape; deeper schema validation is delegated to LLMClient."
         ),
     )
+    strict: bool | None = Field(
+        default=None,
+        description="OpenAI-compatible strict function-calling flag.",
+    )
 
 
 class ToolDefinition(BaseModel):
@@ -569,6 +573,14 @@ class PermissionRequestFrame(_BaseFrame):
             "Fully-qualified adapter id (e.g. `mock_verify_mobile_id`). Falls "
             "back to worker_id || primitive_kind in the TUI when None. None for "
             "legacy callers that have not yet been updated."
+        ),
+    )
+    arguments: dict[str, object] | None = Field(
+        default=None,
+        description=(
+            "Display-safe primitive arguments shown in the permission prompt. "
+            "Backend callers must remove DelegationContext tokens, raw session IDs, "
+            "and identity internals before populating this field."
         ),
     )
 

@@ -1,0 +1,42 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 임신했는데 받을 수 있는 지원금, 진료비 바우처, 출산휴가 관련 신청을 한 번에 정리하고 신청해줘.
+
+⏺ auth(mock_verify_mydata)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mohw_welfare_eligibility_search)
+  ⎿  collection — 10건
+       1. {"onapPsbltYn":"Y","servId":"WL<PASSPORT_KR>","servNm":"산모·신생아 건강관리 지원사업","inqNum":"1645241","lifeArray":"영유아,임신 · 출산",…
+       2. {"onapPsbltYn":"Y","servId":"WL<PASSPORT_KR>","servNm":"의료급여임신.출산진료비지원","inqNum":"286232","lifeArray":"영유아,임신 · 출산","ju…
+       3. {"onapPsbltYn":"N","servId":"WL<PASSPORT_KR>","servNm":"고위험 임산부 의료비 지원","inqNum":"119065","lifeArray":"임신 · 출산","jurOrg…
+
+⏺ send(mock_welfare_application_submit_v1)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   send(
+   {
+     "tool_id": "mock_welfare_application_submit_v1",
+     "params": {
+       "applicant_id": "mock-applicant",
+       "application_type": "new",
+       "benefit_code": "mock-benefit",
+       "household_size": 1
+     }
+   }
+   )
+   Submit data to a government API. This action is irreversible.
+   정부 API에 데이터를 제출합니다. 이 작업은 되돌릴 수 없습니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for send commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

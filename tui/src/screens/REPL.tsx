@@ -49,7 +49,7 @@ import { WorkerPendingPermission } from '../components/permissions/WorkerPending
 import { injectUserMessageToTeammate, getAllInProcessTeammateTasks } from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js';
 import { isLocalAgentTask, queuePendingMessage, appendMessageToLocalAgent, type LocalAgentTaskState } from '../tasks/LocalAgentTask/LocalAgentTask.js';
 import { registerLeaderToolUseConfirmQueue, unregisterLeaderToolUseConfirmQueue, registerLeaderSetToolPermissionContext, unregisterLeaderSetToolPermissionContext } from '../utils/swarm/leaderPermissionBridge.js';
-import { registerIpcToolUseConfirmQueue, registerOptimisticAddReceipt } from '../utils/permissions/ipcPermissionBridge.js';
+import { registerIpcToolUseConfirmQueue } from '../utils/permissions/ipcPermissionBridge.js';
 // utils/telemetry/sessionTracing removed — KOSMOS telemetry handled by Spec 021 OTEL pipeline.
 const endInteractionSpan = (): void => { /* no-op */ }
 import { useLogMessages } from '../hooks/useLogMessages.js';
@@ -336,58 +336,7 @@ import { setClipboard } from '../ink/termio/osc.js';
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
 import { createAttachmentMessage, getQueuedCommandAttachments } from '../utils/attachments.js';
 
-// KOSMOS P4 UI L2 — US1/US2/US3/US4/US5 wiring imports (T022/T023/T026/T036/T039/T056/T059/T072)
-import { StreamingChunk } from '../components/messages/StreamingChunk.js';
-import { CtrlOToExpand } from '../components/PromptInput/CtrlOToExpand.js';
-import { MarkdownRenderer } from '../components/messages/MarkdownRenderer.js';
-import { PdfInlineViewer } from '../components/messages/PdfInlineViewer.js';
-import { ErrorEnvelope } from '../components/messages/ErrorEnvelope.js';
-import type { ErrorEnvelopeT } from '../schemas/ui-l2/error.js';
-import { ContextQuoteBlock } from '../components/messages/ContextQuoteBlock.js';
-// SlashCommandSuggestions import removed (P0-2 single-stack): CC useTypeahead
-// now drives the dropdown via UI_L2_SLASH_COMMANDS catalog.
-// KOSMOS Spec 1979 — KOSMOS-original permission UI imports removed.
-// CC's canonical PermissionRequest pipeline carries permission UX.
 import { useSessionStore } from '../store/session-store.js';
-import { PermissionReceiptProvider, usePermissionReceipts } from '../context/PermissionReceiptContext.js';
-import { usePermissionReceiptWatcher } from '../hooks/usePermissionReceiptWatcher.js';
-import type { PermissionReceiptT } from '../schemas/ui-l2/permission.js';
-import { ConsentListView } from '../components/consent/ConsentListView.js';
-import { loadReceiptsFromDisk, mergeReceipts } from '../memdir/loadReceiptsFromDisk.js';
-import { ConsentRevokeConfirmDialog } from '../components/consent/ConsentRevokeConfirmDialog.js';
-import { requestRevoke } from '../ipc/consentBridge.js';
-import { AgentVisibilityPanel } from '../components/agents/AgentVisibilityPanel.js';
-import { shouldActivateSwarm } from '../schemas/ui-l2/agent.js';
-// Audit-5 P0-5 (2026-05-04) — citizen-side swarm-activation analyzer that
-// inspects the latest assistant message text for the migration-tree
-// "A + C union" trigger (3+ ministries OR explicit `복잡` / `complex` tag).
-// Wires the existing `shouldActivateSwarm` predicate (UI-D.2) and surfaces
-// the i18n `swarmActivated` toast via `kosmosSwarmMode`.
-import { analyzeSwarmActivation } from '../state/swarmActivation.js';
-import { useUiL2I18n } from '../i18n/uiL2.js';
-import { HelpV2Grouped } from '../components/help/HelpV2Grouped.js';
-import { ConfigOverlay } from '../components/config/ConfigOverlay.js';
-import { EnvSecretIsolatedEditor } from '../components/config/EnvSecretIsolatedEditor.js';
-import { PluginBrowser } from '../components/plugins/PluginBrowser.js';
-import { ExportPdfDialog } from '../components/export/ExportPdfDialog.js';
-import { HistorySearchDialog } from '../components/history/HistorySearchDialog.js';
-import { MigrateSessionsResult } from '../components/MigrateSessionsResult.js';
-import { migrateSessions } from '../utils/migrateSessions.js';
-import { OnboardingFlow, resetOnboardingState } from '../components/onboarding/OnboardingFlow.js';
-import { emitSurfaceActivation } from '../observability/surface.js';
-import { getOrCreateKosmosBridge, getKosmosBridgeSessionId } from '../ipc/bridgeSingleton.js';
-// KOSMOS Spec 1979 — Spec 033 mode cycle import removed.
-import { executeHelp } from '../commands/help.js';
-import { executeConfig, applyConfigChanges } from '../commands/config.js';
-import { executePlugins } from '../commands/plugins.js';
-import { executeExport } from '../commands/export.js';
-import { executeHistory } from '../commands/history.js';
-import { parseConsentArgs } from '../commands/consent.js';
-import { renderAgentsCommand } from '../commands/agents.js';
-import { parseOnboardingCommand } from '../commands/onboarding.js';
-import { loadOnboardingState } from '../utils/uiL2Memdir.js';
-import { isOnboardingComplete } from '../schemas/ui-l2/onboarding.js';
-import type { ConversationTurn, ToolInvocationRecord } from '../components/export/ExportPdfDialog.js';
 
 // Stable empty array for hooks that accept MCPServerConnection[] — avoids
 // creating a new [] literal on every render in remote mode, which would
@@ -398,36 +347,6 @@ const EMPTY_MCP_CLIENTS: MCPServerConnection[] = [];
 // Declared as a function (hoisted) to avoid TDZ in circular import chains.
 function _getHistoryStub() { return { maybeLoadOlder: (_h: ScrollBoxHandle) => {} } }
 
-// Tiny consumer that mirrors PermissionReceiptContext.receipts + revokeReceipt
-// into parent refs so the REPL onSubmit useCallback (defined ABOVE the provider
-// in the JSX tree) can read the live array and call revokeReceipt synchronously.
-// Renders nothing.
-function PermissionReceiptsRefSync({
-  receiptsRef,
-  revokeReceiptRef,
-}: {
-  receiptsRef: React.MutableRefObject<readonly PermissionReceiptT[]>;
-  revokeReceiptRef: React.MutableRefObject<((id: string) => 'revoked' | 'already_revoked' | 'not_found') | null>;
-}): null {
-  const { receipts, revokeReceipt, addReceipt } = usePermissionReceipts();
-  receiptsRef.current = receipts;
-  revokeReceiptRef.current = revokeReceipt;
-  // Epic 1 finish — wire backend permission_response echo → addReceipt().
-  // Gap A: backend emits PermissionResponseFrame{role:"backend", receipt_id}
-  // after writing the consent ledger. This hook intercepts that echo and
-  // updates PermissionReceiptContext so /consent list reflects the new receipt
-  // without a separate round-trip. FR-018 / Spec 033 / Spec 1635.
-  usePermissionReceiptWatcher(addReceipt);
-  // Wave-4 G11 / F-gamma-04 — optimistic receipt write.
-  // Register addReceipt in the bridge so onAllow() can eagerly write a
-  // placeholder receipt before the backend echo arrives (~1s delay).
-  // This makes `/consent list` show the grant immediately on Y-press.
-  useEffect(() => {
-    registerOptimisticAddReceipt(addReceipt);
-    return () => registerOptimisticAddReceipt(null);
-  }, [addReceipt]);
-  return null;
-}
 // Window after a user-initiated scroll during which type-into-empty does NOT
 // repin to bottom. Josh Rosen's workflow: Claude emits long output → scroll
 // up to read the start → start typing → before this fix, snapped to bottom.
@@ -656,9 +575,7 @@ function _temp2(setFrame_0) {
 function _temp(f) {
   return (f + 1) % _getTitleAnimationFrames().length;
 }
-// KOSMOS Spec 1979 — KosmosActivePermissionGate removed.  Permission UX now
-// flows through CC's canonical PermissionRequest pipeline.  See
-// specs/1979-plugin-dx-tui-integration/migration-scope-analysis.md.
+// Permission UX flows through CC's canonical PermissionRequest pipeline.
 
 export type Props = {
   commands: Command[];
@@ -748,43 +665,6 @@ export function REPL({
     logForDebugging(`[REPL:mount] REPL mounted, disabled=${disabled}`);
     return () => logForDebugging(`[REPL:unmount] REPL unmounting`);
   }, [disabled]);
-
-  // KOSMOS P4 UI L2 — T026: emit kosmos.ui.surface=repl on mount
-  useEffect(() => {
-    emitSurfaceActivation('repl');
-  }, []);
-
-  // KOSMOS P4 UI L2 — T022/T023: streaming state + 5-second no-chunk timeout
-  const [kosmosCurrentError, setKosmosCurrentError] = useState<ErrorEnvelopeT | null>(null);
-  const kosmosLastChunkTimeRef = useRef<number>(Date.now());
-  // KOSMOS_STREAM_TIMEOUT_MS — first-token / inter-chunk silence detector
-  // for the "no response" network-error envelope. K-EXAONE 236B on FriendliAI
-  // Tier 1 with `high effort` reasoning routinely takes 1-3 minutes for the
-  // very first chunk when the system prompt + tool catalog is large (12
-  // tools — 5 primitives + MVP-7); the original 5_000 / 90_000 thresholds
-  // false-flagged every turn before the model finished its reasoning trace.
-  // 300_000 (5 min) is safely above the empirical p99 first-token latency
-  // and still surfaces real network outages without burying the citizen
-  // under a hung spinner. Override via KOSMOS_STREAM_TIMEOUT_MS env var if
-  // a deployment needs further tuning.
-  const KOSMOS_STREAM_TIMEOUT_MS = Number(process.env.KOSMOS_STREAM_TIMEOUT_MS ?? 300000);
-
-  // KOSMOS P4 UI L2 — T056: swarm mode state + primitiveByWorker map
-  const [kosmosSwarmMode, setKosmosSwarmMode] = useState(false);
-  const [kosmosPrimitiveByWorker, setKosmosPrimitiveByWorker] = useState<Record<string, string>>({});
-
-  // KOSMOS P4 UI L2 — T059: emit agents surface on swarm activation
-  useEffect(() => {
-    if (kosmosSwarmMode) {
-      emitSurfaceActivation('agents', { 'kosmos.swarm.auto': true });
-    }
-  }, [kosmosSwarmMode]);
-
-  // KOSMOS P4 UI L2 — T049/T052: onboarding mode state for /onboarding command
-  const [kosmosOnboardingMode, setKosmosOnboardingMode] = useState<{
-    active: boolean;
-    isolatedStep?: import('../schemas/ui-l2/onboarding.js').OnboardingStepNameT;
-  }>({ active: false });
 
   // Agent definition is state so /resume can update it mid-session
   const [mainThreadAgentDefinition, setMainThreadAgentDefinition] = useState(initialMainThreadAgentDefinition);
@@ -1225,17 +1105,6 @@ export function REPL({
     isImmediate?: boolean;
   } | null>(null);
 
-  // KOSMOS — receipts mirror used by /export + /consent list (FR-019/032).
-  // The PermissionReceiptProvider lives BELOW REPL in the JSX tree, so the
-  // onSubmit useCallback (which fires above the provider) cannot consume it
-  // directly. A tiny consumer component (PermissionReceiptsRefSync, mounted
-  // inside the provider subtree below) writes the live receipt array into
-  // this ref on every change, giving onSubmit a synchronous read path.
-  const permissionReceiptsRef = useRef<readonly PermissionReceiptT[]>([]);
-  // Mirror for revokeReceipt — same pattern as permissionReceiptsRef.
-  // Updated by PermissionReceiptsRefSync on every render.
-  const revokeReceiptRef = useRef<((id: string) => 'revoked' | 'already_revoked' | 'not_found') | null>(null);
-
   // Track local JSX commands separately so tools can't overwrite them.
   // This enables "immediate" commands (like /btw) to persist while Claude is processing.
   const localJSXCommandRef = useRef<{
@@ -1380,8 +1249,8 @@ export function REPL({
 
   // Epic FU-4 — register the IPC permission bridge so backend permission_request
   // frames synthesize a ToolUseConfirm and push it into toolUseConfirmQueue.
-  // This replaces the KosmosIpcPermissionGauntletModal deleted in Spec 1979
-  // and restores the CC 4-arm permissionComponentForTool switch path.
+  // This preserves CC's PermissionRequest path while the backend owns the
+  // KOSMOS-specific permission ledger.
   useEffect(() => {
     registerIpcToolUseConfirmQueue(setToolUseConfirmQueue);
     return () => registerIpcToolUseConfirmQueue(null);
@@ -1438,55 +1307,6 @@ export function REPL({
     }
     setUserInputOnProcessingRaw(input);
   }, []);
-
-  // Audit-5 P0-5 (2026-05-04) — citizen-side swarm activation.
-  // Runs `analyzeSwarmActivation` on every new assistant message and
-  // flips `kosmosSwarmMode` true when the migration-tree A+C union
-  // predicate fires (3+ ministries OR explicit `복잡` / `complex` tag).
-  // Surfaces the i18n `swarmActivated` toast as a system message so
-  // the citizen sees `/agents` is now wired to the active swarm.
-  // Idempotent per-turn — a `lastSwarmAnalyzedIndexRef` guard prevents
-  // re-toasting on every render.
-  const uiL2I18nForSwarm = useUiL2I18n();
-  const lastSwarmAnalyzedIndexRef = useRef<number>(-1);
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const lastIdx = messages.length - 1;
-    if (lastSwarmAnalyzedIndexRef.current >= lastIdx) return;
-    const last = messages[lastIdx];
-    if (!last) return;
-    // Only inspect assistant turns — user / tool / system messages don't
-    // tag complexity and don't list ministries from the LLM's POV.
-    if (last.type !== 'assistant') {
-      lastSwarmAnalyzedIndexRef.current = lastIdx;
-      return;
-    }
-    const text = (() => {
-      try {
-        return getContentText(last.message.content);
-      } catch {
-        return null;
-      }
-    })();
-    const result = analyzeSwarmActivation(text);
-    lastSwarmAnalyzedIndexRef.current = lastIdx;
-    if (result.shouldActivate && !kosmosSwarmMode) {
-      setKosmosSwarmMode(true);
-      // Emit a transient system toast so the citizen knows /agents is
-      // now wired and which trigger fired (Korean primary per UI-A.3).
-      const triggerLabel: Record<typeof result.trigger, string> = {
-        none: '',
-        'three-plus-ministries': '(3+ 부처)',
-        'complex-tag': '(복잡 질의)',
-        both: '(3+ 부처 + 복잡 질의)',
-      };
-      const suffix = triggerLabel[result.trigger];
-      const toastText = suffix
-        ? `${uiL2I18nForSwarm.swarmActivated} ${suffix}`
-        : uiL2I18nForSwarm.swarmActivated;
-      setMessages((prev) => [...prev, createSystemMessage(toastText, 'info')]);
-    }
-  }, [messages, kosmosSwarmMode, uiL2I18nForSwarm, setMessages]);
 
   // Fullscreen: track the unseen-divider position. dividerIndex changes
   // only ~twice/scroll-session (first scroll-away + repin). pillVisible
@@ -1720,43 +1540,6 @@ export function REPL({
     if (!showStreamingText) return;
     setStreamingText(f);
   }, [showStreamingText]);
-
-  // KOSMOS Epic #2077 — inter-chunk silence detector. Reschedules the
-  // network-error timer on EVERY chunk arrival so K-EXAONE high-effort
-  // reasoning (which can stream `thinking_delta` tokens for minutes before
-  // emitting the first visible `text_delta`) does not falsely fire the
-  // network-error envelope. Original logic only re-armed on `messages.length`
-  // (turn completion — too late). Dep on streamingText/streamingThinking
-  // length keeps the timer rolling per chunk; the 5-minute hard ceiling
-  // (KOSMOS_STREAM_TIMEOUT_MS) still surfaces real outages.
-  useEffect(() => {
-    if (!isLoading) {
-      kosmosLastChunkTimeRef.current = Date.now();
-      return;
-    }
-    kosmosLastChunkTimeRef.current = Date.now();
-    const timer = setTimeout(() => {
-      if (Date.now() - kosmosLastChunkTimeRef.current >= KOSMOS_STREAM_TIMEOUT_MS) {
-        const networkError: ErrorEnvelopeT = {
-          type: 'network',
-          title_ko: '네트워크 연결이 끊어졌습니다',
-          title_en: 'Network connection lost',
-          detail_ko: '5분간 응답이 없습니다. 다시 시도해주세요.',
-          detail_en: 'No response for 5 minutes. Please retry.',
-          retry_suggested: true,
-          occurred_at: new Date().toISOString(),
-        };
-        setKosmosCurrentError(networkError);
-      }
-    }, KOSMOS_STREAM_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [
-    isLoading,
-    messages.length,
-    streamingText?.length ?? 0,
-    streamingThinking?.thinking?.length ?? 0,
-    KOSMOS_STREAM_TIMEOUT_MS,
-  ]);
 
   // Hide the in-progress source line so text streams line-by-line, not
   // char-by-char. lastIndexOf returns -1 when no newline, giving '' → null.
@@ -3438,606 +3221,6 @@ export function REPL({
       resumeProactive();
     }
 
-    // KOSMOS P4 UI L2 — T072: KOSMOS auxiliary command dispatch
-    // Intercepts /help /config /plugins /export /history /consent /agents /onboarding /lang
-    // BEFORE the existing CC command router so they are always handled locally.
-    if (!speculationAccept && input.trim().startsWith('/')) {
-      const _kosmosRaw = expandPastedTextRefs(input, pastedContents).trim();
-      const _kosmosSpaceIdx = _kosmosRaw.indexOf(' ');
-      const _kosmosCmd = _kosmosSpaceIdx === -1 ? _kosmosRaw.slice(1) : _kosmosRaw.slice(1, _kosmosSpaceIdx);
-      const _kosmosArgs = _kosmosSpaceIdx === -1 ? '' : _kosmosRaw.slice(_kosmosSpaceIdx + 1).trim();
-
-      const _kosmosCloseJSX = (result?: string): void => {
-        setToolJSX({ jsx: null, shouldHidePromptInput: false, clearLocalJSX: true });
-        if (result) {
-          addNotification({ key: `kosmos-cmd-${_kosmosCmd}`, text: result, priority: 'immediate' });
-        }
-      };
-
-      if (_kosmosCmd === 'help') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        // Mount the KOSMOS 4-group help overlay (HelpV2Grouped) but with
-        // `isLocalJSXCommand: false` so PromptInput.tsx:244's
-        // `isLocalJSXCommandActive` flag stays false — that flag, when
-        // true, sets `isModalOverlayActive` to true and deactivates EVERY
-        // useInput hook in the parent prompt subtree. Ink delivers
-        // stdin events to all active hooks via the same EventEmitter; if
-        // none are active in the parent and the overlay's child hook
-        // is the only listener, Esc must reach it. (Frame 28/29 proved
-        // raw \x1b reaches the child stdin via the Bun PTY harness; the
-        // deactivation in 32 was the missing link.)
-        // HelpV2Grouped.tsx now wires both `useKeybinding` and a
-        // `useInput((_,key)=>key.escape && onDismiss())` fallback so the
-        // overlay actually closes on a single Esc.
-        executeHelp((process.env['KOSMOS_TUI_LOCALE'] as 'ko' | 'en' | undefined) ?? 'ko');
-        setToolJSX({
-          jsx: React.createElement(HelpV2Grouped, { onDismiss: () => _kosmosCloseJSX() }),
-          shouldHidePromptInput: false,
-          isLocalJSXCommand: false,
-        });
-        return;
-      }
-
-      if (_kosmosCmd === 'config') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        const configResult = executeConfig(_kosmosArgs || undefined);
-        let _showSecretEditor = configResult.openSecretEditorFor;
-        setToolJSX({
-          jsx: React.createElement(ConfigOverlay, {
-            entries: configResult.entries,
-            onSave: (updated) => { applyConfigChanges(updated); _kosmosCloseJSX(); },
-            onCancel: () => _kosmosCloseJSX(),
-            onOpenSecretEditor: (key) => {
-              _showSecretEditor = key;
-              setToolJSX({
-                jsx: React.createElement(EnvSecretIsolatedEditor, {
-                  secretKey: key,
-                  onConfirm: (_k, _v) => { _kosmosCloseJSX(); },
-                  onCancel: () => _kosmosCloseJSX(),
-                }),
-                shouldHidePromptInput: false,
-                isLocalJSXCommand: true,
-              });
-            },
-          }),
-          shouldHidePromptInput: false,
-          isLocalJSXCommand: true,
-        });
-        return;
-      }
-
-      // Spec 1979 — citizen plugin lifecycle (install/uninstall/list/pipa-text).
-      // Routed via the KOSMOS auxiliary dispatch (NOT processSlashCommand) because
-      // local-jsx commands mounted via processSlashCommand don't receive useInput
-      // events (likely a focus/raw-mode issue with shouldHidePromptInput: true).
-      // Mounted via setToolJSX with shouldHidePromptInput: false so PromptInput
-      // stays mounted (keeps stdin raw mode active) and useInput in the
-      // PluginInstallFlow / Select component receives keystrokes.
-      if (_kosmosCmd === 'plugin') {
-        const _pluginRest = _kosmosArgs;
-        const _pluginSpaceIdx = _pluginRest.indexOf(' ');
-        const _pluginSub =
-          _pluginSpaceIdx === -1 ? _pluginRest : _pluginRest.slice(0, _pluginSpaceIdx);
-        const _pluginRestArgs =
-          _pluginSpaceIdx === -1 ? '' : _pluginRest.slice(_pluginSpaceIdx + 1).trim();
-        if (_pluginSub === 'pipa-text' || _pluginSub === '') {
-          setInputValue('');
-          helpers.setCursorOffset(0);
-          helpers.clearBuffer();
-          if (_pluginSub === '') {
-            addNotification({
-              key: 'kosmos-plugin-usage',
-              text: '사용법: /plugin <install|list|uninstall|pipa-text> [...]',
-              priority: 'immediate',
-            });
-          } else {
-            // pipa-text — surface the canonical SHA-256 directly without a flow component.
-            void import('../ipc/pipa.generated.js').then(({ CANONICAL_PIPA_ACK_SHA256 }) => {
-              addNotification({
-                key: 'kosmos-plugin-pipa',
-                text: [
-                  'PIPA §26 trustee acknowledgment canonical SHA-256:',
-                  `  ${CANONICAL_PIPA_ACK_SHA256}`,
-                  'Source: docs/plugins/security-review.md (마커 사이 텍스트)',
-                ].join('\n'),
-                priority: 'immediate',
-              });
-            });
-          }
-          return;
-        }
-        if (_pluginSub === 'install' || _pluginSub === 'uninstall' || _pluginSub === 'list') {
-          setInputValue('');
-          helpers.setCursorOffset(0);
-          helpers.clearBuffer();
-          // Parse install args (--version, --dry-run) inline.
-          let _pluginName: string | undefined;
-          let _pluginVersion: string | undefined;
-          let _pluginDryRun = false;
-          const _pluginTokens = _pluginRestArgs.split(/\s+/).filter((t) => t.length > 0);
-          for (let i = 0; i < _pluginTokens.length; i += 1) {
-            const tok = _pluginTokens[i];
-            if (!tok) continue;
-            if (tok === '--version') {
-              _pluginVersion = _pluginTokens[i + 1];
-              i += 1;
-            } else if (tok === '--dry-run') {
-              _pluginDryRun = true;
-            } else if (!_pluginName && !tok.startsWith('--')) {
-              _pluginName = tok;
-            }
-          }
-          if ((_pluginSub === 'install' || _pluginSub === 'uninstall') && !_pluginName) {
-            addNotification({
-              key: 'kosmos-plugin-no-name',
-              text: `플러그인 이름이 필요합니다: /plugin ${_pluginSub} <name>`,
-              priority: 'immediate',
-            });
-            return;
-          }
-          // Lazy import to avoid pulling React component into the auxiliary dispatch.
-          void import('../components/plugins/PluginInstallFlow.js').then(
-            ({ PluginInstallFlow }) => {
-              setToolJSX({
-                jsx: React.createElement(PluginInstallFlow, {
-                  sub: _pluginSub as 'install' | 'uninstall' | 'list',
-                  name: _pluginName,
-                  requestedVersion: _pluginVersion,
-                  dryRun: _pluginDryRun,
-                  onComplete: (summary?: string) => {
-                    // Audit-6 P1: persist plugin op result as a permanent system
-                    // message (receipt + PIPA hash + error detail visible in
-                    // /history). addNotification is transient — the receipt ID
-                    // would be lost once the notification expires.
-                    setToolJSX({ jsx: null, shouldHidePromptInput: false, clearLocalJSX: true });
-                    if (summary) {
-                      setMessages((prev) => [
-                        ...prev,
-                        createSystemMessage(summary, 'info'),
-                      ]);
-                    }
-                  },
-                }),
-                shouldHidePromptInput: false,
-                isLocalJSXCommand: true,
-              });
-            },
-          );
-          return;
-        }
-        addNotification({
-          key: 'kosmos-plugin-unknown',
-          text: `알 수 없는 subcommand: ${_pluginSub}\n사용법: /plugin <install|list|uninstall|pipa-text> [...]`,
-          priority: 'immediate',
-        });
-        return;
-      }
-
-      if (_kosmosCmd === 'plugins') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        // Spec 1979 T023 — executePlugins now async (IPC round-trip to
-        // backend plugin_op_dispatcher.handle_list). Render the browser
-        // with an empty list immediately so the citizen sees the surface
-        // open, then refresh once the round-trip resolves.
-        setToolJSX({
-          jsx: React.createElement(PluginBrowser, {
-            plugins: [],
-            onToggle: () => {},
-            onDetail: () => {},
-            onRemove: () => {},
-            onMarketplace: () => {},
-            onDismiss: () => _kosmosCloseJSX(),
-          }),
-          shouldHidePromptInput: false,
-          // Audit-6 P0-1: isLocalJSXCommand:true → false. AGENTS.md
-          // Infrastructure Insight #3 — :true deactivates EVERY useInput
-          // in the parent prompt subtree, including PluginBrowser's own
-          // Esc-dismiss handler. Same fix pattern as /agents (Lead-Fix4).
-          isLocalJSXCommand: false,
-        });
-        // Fire-and-forget: when the IPC round-trip resolves, swap the
-        // toolJSX with the populated browser. Errors are silently swallowed
-        // here — the browser shows the empty-state hint until next /plugins.
-        executePlugins()
-          .then((result) => {
-            setToolJSX({
-              jsx: React.createElement(PluginBrowser, {
-                plugins: result.plugins,
-                onToggle: () => {},
-                onDetail: () => {},
-                onRemove: () => {},
-                onMarketplace: () => {},
-                onDismiss: () => _kosmosCloseJSX(),
-              }),
-              shouldHidePromptInput: false,
-              isLocalJSXCommand: false,
-            });
-          })
-          .catch(() => {
-            // Round-trip failed — keep the empty-state browser; user sees
-            // "플러그인이 없습니다 · No plugins installed".
-          });
-        return;
-      }
-
-      if (_kosmosCmd === 'export') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        // Codex P1 fix on PR #1847: pass active session messages instead of
-        // empty arrays so /export honours its FR-032 contract.
-        const exportTurns = messages.map((m): { role: 'citizen' | 'assistant'; content: string; timestamp: string } => {
-          const human = isHumanTurn(m);
-          const raw = (m as { message?: { content?: unknown } }).message?.content;
-          let content: string;
-          if (typeof raw === 'string') {
-            content = raw;
-          } else if (Array.isArray(raw)) {
-            content = raw
-              .map((b) => (typeof b === 'object' && b !== null && 'text' in b ? String((b as { text?: unknown }).text ?? '') : ''))
-              .join('\n');
-          } else {
-            content = '';
-          }
-          const ts = (m as { timestamp?: string | number | Date }).timestamp;
-          const timestamp = ts != null ? new Date(ts).toISOString() : new Date().toISOString();
-          return { role: human ? 'citizen' : 'assistant', content, timestamp };
-        });
-        // Extract tool_use blocks (assistant) + matching tool_result blocks
-        // (user, with toolUseResult) from the active session's messages so
-        // /export honours its FR-032 contract: "대화 + 도구 + 영수증".
-        const toolUseInputs = new Map<string, { name: string; input: unknown; ts: string }>();
-        const toolResultOutputs = new Map<string, { output: unknown; ts: string }>();
-        for (const m of messages) {
-          const ts = (m as { timestamp?: string | number | Date }).timestamp;
-          const tsIso = ts != null ? new Date(ts).toISOString() : new Date().toISOString();
-          const blocks = (m as { message?: { content?: unknown } }).message?.content;
-          if (!Array.isArray(blocks)) continue;
-          for (const b of blocks) {
-            if (typeof b !== 'object' || b === null) continue;
-            const block = b as { type?: string; name?: string; input?: unknown; tool_use_id?: string; content?: unknown; id?: string };
-            if (block.type === 'tool_use' && typeof block.id === 'string') {
-              toolUseInputs.set(block.id, {
-                name: typeof block.name === 'string' ? block.name : 'unknown',
-                input: block.input,
-                ts: tsIso,
-              });
-            } else if (block.type === 'tool_result' && typeof block.tool_use_id === 'string') {
-              toolResultOutputs.set(block.tool_use_id, { output: block.content, ts: tsIso });
-            }
-          }
-        }
-        const summarize = (v: unknown, max = 200): string => {
-          if (v == null) return '';
-          let s: string;
-          if (typeof v === 'string') s = v;
-          else { try { s = JSON.stringify(v); } catch { s = String(v); } }
-          return s.length > max ? `${s.slice(0, max)}…` : s;
-        };
-        const toolInvocations: ToolInvocationRecord[] = [];
-        for (const [id, use] of toolUseInputs) {
-          const result = toolResultOutputs.get(id);
-          toolInvocations.push({
-            tool_name: use.name,
-            input_summary: summarize(use.input),
-            output_summary: result ? summarize(result.output) : '(pending)',
-            timestamp: use.ts,
-          });
-        }
-        // Receipts come from PermissionReceiptContext via the ref bridge so
-        // /export honours FR-032's third pillar ("권한 영수증").
-        const receipts = [...permissionReceiptsRef.current];
-        const exportResult = executeExport(exportTurns, toolInvocations, receipts);
-        // Mount ExportPdfDialog with `isLocalJSXCommand: false` so the
-        // parent prompt subtree's useInput hooks stay active and the
-        // dialog's own useInput Esc watcher can fire on raw `\x1b`.
-        // ExportPdfDialog now owns Esc → onCancel directly. AGENTS.md
-        // "Infrastructure insights" #3.
-        setToolJSX({
-          jsx: React.createElement(ExportPdfDialog, {
-            turns: exportResult.turns,
-            toolInvocations: exportResult.toolInvocations,
-            receipts: exportResult.receipts,
-            outputPath: exportResult.outputPath,
-            onDone: (result) => _kosmosCloseJSX(result.message),
-            onCancel: () => _kosmosCloseJSX(),
-          }),
-          shouldHidePromptInput: false,
-          isLocalJSXCommand: false,
-        });
-        return;
-      }
-
-      if (_kosmosCmd === 'history') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        const { sessions } = executeHistory(_kosmosArgs);
-        setToolJSX({
-          jsx: React.createElement(HistorySearchDialog, {
-            sessions,
-            onSelect: (sessionId) => { _kosmosCloseJSX(); },
-            onCancel: () => _kosmosCloseJSX(),
-          }),
-          shouldHidePromptInput: false,
-          // Audit-7 P0-2 fix: isLocalJSXCommand:false (AGENTS.md insight #3
-          // — :true 시 HistorySearchDialog:179 자체 useInput 도 비활성).
-          isLocalJSXCommand: false,
-        });
-        return;
-      }
-
-      if (_kosmosCmd === 'consent') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        const subCmd = _kosmosArgs.split(/\s/)[0] ?? '';
-        if (subCmd === 'list' || _kosmosArgs === '') {
-          // FR-019: render the in-session receipt table inside the toolJSX
-          // overlay slot.  Pull receipts from the ref bridge so the data
-          // matches whatever the PermissionReceiptProvider currently holds.
-          // `isLocalJSXCommand: false` keeps the parent prompt subtree's
-          // useInput hooks active so the dialog's own Esc watcher fires
-          // (AGENTS.md "Infrastructure insights" #3).
-          // Wave-5 (F-gamma-04): merge disk-persisted prior-session receipts
-          // with the in-session ref so /consent list shows the full history,
-          // not just receipts granted since this REPL boot.
-          const receipts = mergeReceipts(
-            permissionReceiptsRef.current,
-            loadReceiptsFromDisk(),
-          );
-          setToolJSX({
-            jsx: React.createElement(ConsentListView, {
-              receipts,
-              onExit: () => _kosmosCloseJSX(),
-            }),
-            shouldHidePromptInput: false,
-            isLocalJSXCommand: false,
-          });
-        } else if (subCmd === 'revoke') {
-          // FR-020: parse /consent revoke rcpt-<id> → show ConsentRevokeConfirmDialog.
-          const parsed = parseConsentArgs(_kosmosArgs);
-          if (parsed.sub !== 'revoke') {
-            addNotification({
-              key: 'kosmos-consent-revoke-invalid',
-              text: '사용법: /consent revoke rcpt-<id>',
-              priority: 'immediate',
-            });
-            return;
-          }
-          const { receiptId } = parsed;
-          // Find the receipt in the current session.
-          const receipts = [...permissionReceiptsRef.current];
-          const receipt = receipts.find((r) => r.receipt_id === receiptId);
-          if (!receipt) {
-            addNotification({
-              key: 'kosmos-consent-revoke-not-found',
-              text: `영수증을 찾을 수 없습니다: ${receiptId}`,
-              priority: 'immediate',
-            });
-            return;
-          }
-          // Mount the confirmation dialog.
-          // `isLocalJSXCommand: false` keeps PromptInput's useInput hooks active
-          // so ConsentRevokeConfirmDialog's own useInput Esc handler fires
-          // (AGENTS.md "Infrastructure insights" #3/#4).
-          setToolJSX({
-            jsx: React.createElement(ConsentRevokeConfirmDialog, {
-              receipt,
-              locale: 'ko',
-              onCancel: () => _kosmosCloseJSX(),
-              onConfirm: (scope) => {
-                _kosmosCloseJSX();
-                // Optimistic in-session revoke.
-                const outcome = revokeReceiptRef.current?.(receiptId);
-                if (outcome === 'already_revoked') {
-                  addNotification({
-                    key: 'kosmos-consent-already-revoked',
-                    text: `이미 철회된 영수증입니다: ${receiptId}`,
-                    priority: 'immediate',
-                  });
-                  return;
-                }
-                // Async IPC revoke — fire and handle result.
-                const bridgeSessionId = getKosmosBridgeSessionId?.() ?? '';
-                void requestRevoke(receiptId, {
-                  scope,
-                  sessionId: bridgeSessionId,
-                }).then((result) => {
-                  if (result.ok) {
-                    addNotification({
-                      key: 'kosmos-consent-revoked',
-                      text: `영수증 철회 완료: ${receiptId}`,
-                      priority: 'immediate',
-                    });
-                  } else {
-                    addNotification({
-                      key: 'kosmos-consent-revoke-error',
-                      text: `철회 오류 (${result.error}): ${receiptId}`,
-                      priority: 'immediate',
-                    });
-                  }
-                });
-              },
-            }),
-            shouldHidePromptInput: false,
-            isLocalJSXCommand: false,
-          });
-        }
-        return;
-      }
-
-      if (_kosmosCmd === 'agents') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        // Mount /agents overlay with `isLocalJSXCommand: false` so
-        // PromptInput.tsx:244's `isLocalJSXCommandActive` flag stays false —
-        // that flag, when true, sets `isModalOverlayActive` to true and
-        // deactivates EVERY useInput hook in the parent prompt subtree,
-        // which previously prevented AgentsCommandView's own Esc handler
-        // from firing. AgentsCommandView now owns a `useInput((_,k)=>k.escape
-        // && onExit())` watcher (defense-in-depth, mirrors HelpV2Grouped).
-        // AGENTS.md "Infrastructure insights" #3.
-        const agentsJsx = renderAgentsCommand(_kosmosArgs, () => _kosmosCloseJSX());
-        setToolJSX({
-          jsx: agentsJsx,
-          shouldHidePromptInput: false,
-          isLocalJSXCommand: false,
-        });
-        return;
-      }
-
-      if (_kosmosCmd === 'onboarding') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        const onboardingResult = parseOnboardingCommand(_kosmosArgs);
-        if (onboardingResult.mode === 'error') {
-          addNotification({ key: 'kosmos-onboarding-error', text: onboardingResult.message, priority: 'immediate' });
-        } else if (onboardingResult.mode === 'full') {
-          void loadOnboardingState().then((current) => {
-            void resetOnboardingState(current).then(() => {
-              setKosmosOnboardingMode({ active: true, isolatedStep: undefined });
-            });
-          });
-        } else {
-          setKosmosOnboardingMode({ active: true, isolatedStep: onboardingResult.step });
-        }
-        return;
-      }
-
-      if (_kosmosCmd === 'lang') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        const { parseLangCommand } = await import('../commands/lang.js');
-        const { getUiL2I18n } = await import('../i18n/uiL2.js');
-        const langResult = parseLangCommand(_kosmosArgs);
-        if (langResult.ok) {
-          // Force any currently-mounted i18n consumer (e.g. HelpV2Grouped) to
-          // unmount so the next /help invocation re-evaluates useUiL2I18n() and
-          // renders the new locale. Without this, process.env mutation alone
-          // does not trigger a React re-render and the citizen sees the old
-          // locale's labels until they manually dismiss + re-open the overlay
-          // (integration-verification frame 05-lang-consent-agents § snap-006).
-          setToolJSX({ jsx: null, shouldHidePromptInput: false, clearLocalJSX: true });
-          // Use the new locale's bundle so the toast itself reflects the change.
-          const newI18n = getUiL2I18n(langResult.locale);
-          addNotification({ key: 'kosmos-lang', text: newI18n.langChanged(langResult.locale), priority: 'immediate' });
-        } else {
-          addNotification({ key: 'kosmos-lang-error', text: langResult.message, priority: 'immediate' });
-        }
-        return;
-      }
-
-      // Audit-7 P0-3: /migrate-sessions wiring.
-      // Parses --prune / --filter-cwd / --dry-run / --confirmed flags inline
-      // and dispatches to the migrateSessions utility. Result is rendered
-      // via MigrateSessionsResult overlay so the citizen sees a transient
-      // table; the prompt remains active.
-      if (_kosmosCmd === 'migrate-sessions') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        // Inline flag parser (mirrors tui/src/commands/migrate-sessions.ts
-        // — duplicated here to avoid an extra IO round-trip via CommandHandler).
-        let _migPrune = false;
-        let _migDryRun = false;
-        let _migConfirmed = false;
-        let _migFilterCwd: string | undefined;
-        const _migParseError: string[] = [];
-        const _migTokens = _kosmosArgs.split(/\s+/).filter((t) => t.length > 0);
-        for (let i = 0; i < _migTokens.length; i += 1) {
-          const tok = _migTokens[i];
-          if (tok === '--prune') _migPrune = true;
-          else if (tok === '--dry-run') _migDryRun = true;
-          else if (tok === '--confirmed') _migConfirmed = true;
-          else if (tok === '--filter-cwd') {
-            const next = _migTokens[i + 1];
-            if (!next || next.startsWith('--')) {
-              _migParseError.push('--filter-cwd requires a regex argument');
-            } else {
-              _migFilterCwd = next;
-              i += 1;
-            }
-          } else if (tok && !tok.startsWith('--')) {
-            _migParseError.push(`unexpected positional argument: ${tok}`);
-          } else if (tok) {
-            _migParseError.push(`unknown flag: ${tok}`);
-          }
-        }
-        if (_migFilterCwd !== undefined) {
-          try { new RegExp(_migFilterCwd); }
-          catch (err) { _migParseError.push(`--filter-cwd: invalid regex "${_migFilterCwd}": ${String(err)}`); }
-        }
-        if (_migParseError.length > 0) {
-          addNotification({
-            key: 'kosmos-migrate-parse-error',
-            text: ['/migrate-sessions: flag parse error(s):',
-                   ..._migParseError.map((e) => `  • ${e}`),
-                   'Usage: /migrate-sessions [--dry-run] [--filter-cwd <regex>] [--prune]'].join('\n'),
-            priority: 'immediate',
-          });
-          return;
-        }
-        // Guard: --prune in non-dry-run mode requires --confirmed.
-        if (_migPrune && !_migDryRun && !_migConfirmed) {
-          addNotification({
-            key: 'kosmos-migrate-confirm-needed',
-            text: ['/migrate-sessions --prune: source files will be deleted after copy.',
-                   '먼저 /migrate-sessions --prune --dry-run 으로 미리보기를 권장합니다.',
-                   '확인 후 /migrate-sessions --prune --confirmed 로 실행하세요.'].join('\n'),
-            priority: 'immediate',
-          });
-          return;
-        }
-        // Run migrateSessions and mount the result overlay.
-        void migrateSessions({
-          prune: _migPrune,
-          filterCwd: _migFilterCwd,
-          dryRun: _migDryRun,
-        }).then((summary) => {
-          setToolJSX({
-            jsx: React.createElement(MigrateSessionsResult, {
-              copied: summary.copied,
-              skipped: summary.skipped,
-              pruned: summary.pruned,
-              bytes: summary.bytes,
-              errors: summary.errors,
-              dryRun: _migDryRun,
-            }),
-            shouldHidePromptInput: false,
-            isLocalJSXCommand: false,
-          });
-          // Add a follow-up hint when dry-run yielded copy candidates.
-          if (_migDryRun && summary.copied > 0) {
-            const hint = _migPrune
-              ? '미리보기 완료. 적용하려면 /migrate-sessions --prune --confirmed 입력.'
-              : '미리보기 완료. 적용하려면 /migrate-sessions 입력.';
-            addNotification({
-              key: 'kosmos-migrate-hint',
-              text: hint,
-              priority: 'immediate',
-            });
-          }
-        }).catch((err) => {
-          addNotification({
-            key: 'kosmos-migrate-error',
-            text: `/migrate-sessions failed: ${String(err)}`,
-            priority: 'immediate',
-          });
-        });
-        return;
-      }
-    }
-
     // Handle immediate commands - these bypass the queue and execute right away
     // even while Claude is processing. Commands opt-in via `immediate: true`.
     // Commands triggered via keybindings are always treated as immediate.
@@ -5428,9 +4611,7 @@ export function REPL({
   // flexGrow in FullscreenLayout resolves against this Box. The transcript
   // early return above wraps its virtual-scroll branch the same way; only
   // the 30-cap dump branch stays unwrapped for native terminal scrollback.
-  const mainReturn = <PermissionReceiptProvider>
-    <PermissionReceiptsRefSync receiptsRef={permissionReceiptsRef} revokeReceiptRef={revokeReceiptRef} />
-    <KeybindingSetup>
+  const mainReturn = <KeybindingSetup>
       <AnimatedTerminalTitle isAnimating={titleIsAnimating} title={terminalTitle} disabled={titleDisabled} noPrefix={showStatusInTerminalTab} />
       <GlobalKeybindingHandlers {...globalKeybindingProps} />
       {feature('VOICE_MODE') ? <VoiceKeybindingHandler voiceHandleKeyEvent={voice.handleKeyEvent} stripTrailing={voice.stripTrailing} resetAnchor={voice.resetAnchor} isActive={!toolJSX?.isLocalJSXCommand} /> : null}
@@ -5789,37 +4970,7 @@ export function REPL({
             // Works during isLoading — edit cancels first; uuid selection survives appends.
             feature('MESSAGE_ACTIONS') && isFullscreenEnvEnabled() && !disableMessageActions ? enterMessageActions : undefined} mcpClients={mcpClients} pastedContents={pastedContents} setPastedContents={setPastedContents} vimMode={vimMode} setVimMode={setVimMode} showBashesDialog={showBashesDialog} setShowBashesDialog={setShowBashesDialog} onSubmit={onSubmit} onAgentSubmit={onAgentSubmit} isSearchingHistory={isSearchingHistory} setIsSearchingHistory={setIsSearchingHistory} helpOpen={isHelpOpen} setHelpOpen={setIsHelpOpen} insertTextRef={feature('VOICE_MODE') ? insertTextRef : undefined} voiceInterimRange={voice.interimRange} />
                       <SessionBackgroundHint onBackgroundSession={handleBackgroundSession} isLoading={isLoading} />
-                      {/* KOSMOS P0-2: SlashCommandSuggestions overlay removed — CC useTypeahead
-                          now sources commands from UI_L2_SLASH_COMMANDS catalog (single stack).
-                          See tui/src/utils/suggestions/commandSuggestions.ts:filterToKosmosCommands */}
-                      {/* KOSMOS P4 UI L2 — T022: ErrorEnvelope for network/LLM/tool errors */}
-                      {kosmosCurrentError && (
-                        <ErrorEnvelope
-                          error={kosmosCurrentError}
-                          onRetry={() => setKosmosCurrentError(null)}
-                        />
-                      )}
-                      {/* KOSMOS P4 UI L2 — T022: AgentVisibilityPanel in swarm mode */}
-                      {kosmosSwarmMode && (
-                        <AgentVisibilityPanel
-                          initialEntries={[]}
-                          showDetail={false}
-                          bridge={getOrCreateKosmosBridge()}
-                          primitiveByWorker={kosmosPrimitiveByWorker}
-                        />
-                      )}
-                      {/* KOSMOS Spec 1979 — KOSMOS-original permission UI components
-                          (PermissionGauntletModal × 2, BypassReinforcementModal,
-                          KosmosActivePermissionGate) removed.  Permission UX falls
-                          back to CC's canonical PermissionRequest pipeline mounted
-                          in the message stream by the agentic loop. */}
-                      {/* KOSMOS P4 UI L2 — T049: OnboardingFlow overlay triggered by /onboarding command */}
-                      {kosmosOnboardingMode.active && (
-                        <OnboardingFlow
-                          isolatedStep={kosmosOnboardingMode.isolatedStep}
-                          onComplete={() => setKosmosOnboardingMode({ active: false })}
-                        />
-                      )}
+                      {/* Permission UX uses CC's canonical PermissionRequest pipeline. */}
                     </>}
                 {cursor &&
           // inputValue is REPL state; typed text survives the round-trip.
@@ -5912,8 +5063,7 @@ export function REPL({
               {feature('BUDDY') && !(companionNarrow && isFullscreenEnvEnabled()) && companionVisible ? <CompanionSprite /> : null}
             </Box>} />
       </MCPConnectionManager>
-    </KeybindingSetup>
-  </PermissionReceiptProvider>;
+    </KeybindingSetup>;
   if (isFullscreenEnvEnabled()) {
     return <AlternateScreen mouseTracking={isMouseTrackingEnabled()}>
         {mainReturn}

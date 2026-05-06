@@ -1,0 +1,37 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/TAX-001",
+  "status": "pass",
+  "files_scanned": 610,
+  "frame_count": 586,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "verify",
+      "argument": "mock_verify_module_modid",
+      "path": "final-scrollback.txt",
+      "line": 9,
+      "evidence": "⎿ 검증 결과: 인증 완료"
+    },
+    {
+      "name": "lookup",
+      "argument": "mock_lookup_module_hometax_simplified",
+      "path": "final-scrollback.txt",
+      "line": 12,
+      "evidence": "⎿ record — 1건"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_hometax_taxreturn",
+      "path": "final-scrollback.txt",
+      "line": 17,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 처리: 신고 제출 | 접수 번호: hometax-2026-05-06-RX-6D75E4B9 | 상태: 신고완료"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_hometax_taxreturn",
+      "path": "final-scrollback.txt",
+      "line": 27,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 처리: register_refund_account | 접수 번호: hometax-2026-05-06-RFND-2A2A4A45 | 상태: 환급계좌등록완료"
+    }
+  ]
+}

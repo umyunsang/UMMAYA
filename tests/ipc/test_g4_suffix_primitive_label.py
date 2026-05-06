@@ -47,16 +47,27 @@ async def test_suffix_emits_primitive_label_for_subscribe_tool() -> None:
         f"Discovery bridge should set primitive='subscribe' for the CBS mock; "
         f"got primitive={cbs_match.primitive!r}"
     )
+    assert cbs_match.adapter_mode == "mock"
 
-    # The suffix render must contain the [primitive=...] tag next to the id.
+    # The suffix render must contain selection-card metadata next to the id.
     # We exercise the same code-path as `_build_available_adapters_suffix`
     # by building the prefix string with the same simple template.
+    primitive_label = (
+        f" [primitive={cbs_match.primitive}]" if cbs_match.primitive else ""
+    )
+    mode_label = f" [mode={cbs_match.adapter_mode}]" if cbs_match.adapter_mode else ""
+    policy_label = (
+        f" [policy_url={cbs_match.real_classification_url}]"
+        if cbs_match.real_classification_url
+        else ""
+    )
     rendered_line = (
         f"- {cbs_match.tool_id} [{cbs_match.score:.2f}]"
-        f"{' [primitive=' + cbs_match.primitive + ']' if cbs_match.primitive else ''}"
+        f"{primitive_label}{mode_label}{policy_label}"
         f" — {cbs_match.search_hint or '(설명 없음)'}"
     )
     assert "[primitive=subscribe]" in rendered_line, rendered_line
+    assert "[mode=mock]" in rendered_line, rendered_line
     assert "mock_cbs_disaster_v1" in rendered_line
 
 
@@ -74,7 +85,19 @@ def test_g4_suffix_module_template_string_present() -> None:
         "stdio.py must contain the primitive label template "
         "(Audit G4 / F-beta-02). Did the linter revert the fix?"
     )
+    assert "[mode=" in text, (
+        "stdio.py must expose adapter mode in the candidate card "
+        "(tool-selection guidance implementation)."
+    )
+    assert "[policy_url=" in text, (
+        "stdio.py must expose policy citation URLs in the candidate card "
+        "(KOSMOS cite-only permission invariant)."
+    )
     # Footer should also include the routing rule.
     assert "각 후보의 [primitive=...]" in text or "[primitive=...]" in text, (
         "Suffix footer must include the primitive routing rule."
+    )
+    assert "BM25 점수는 후보 shortlist 신호" in text, (
+        "Suffix footer must tell the model that retrieval rank is a shortlist, "
+        "not a deterministic router."
     )

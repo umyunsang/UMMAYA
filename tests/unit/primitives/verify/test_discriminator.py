@@ -11,6 +11,7 @@ drives the verify() coroutine directly.
 from __future__ import annotations
 
 from datetime import UTC
+from pathlib import Path
 
 import pytest
 import pytest_asyncio  # noqa: F401 — ensures asyncio mode is active
@@ -22,6 +23,7 @@ import kosmos.tools.mock.verify_geumyung_injeungseo  # noqa: F401
 import kosmos.tools.mock.verify_gongdong_injeungseo  # noqa: F401
 import kosmos.tools.mock.verify_mobile_id  # noqa: F401
 import kosmos.tools.mock.verify_mydata  # noqa: F401
+from kosmos.memdir.consent_ledger import DelegationIssuedEvent, read_delegation_events
 from kosmos.primitives.verify import (
     GanpyeonInjeungContext,
     GeumyungInjeungseoContext,
@@ -56,6 +58,55 @@ async def test_dispatch_ganpyeon_injeung() -> None:
     result = await verify("ganpyeon_injeung", {})
     assert isinstance(result, GanpyeonInjeungContext)
     assert result.family == "ganpyeon_injeung"
+
+
+async def test_dispatch_ganpyeon_injeung_issues_delegation_context() -> None:
+    result = await verify(
+        "ganpyeon_injeung",
+        {
+            "scope_list": ["lookup:gov24.movein", "submit:gov24.minwon"],
+            "purpose_ko": "전입신고와 주소변경",
+            "purpose_en": "Move-in report and linked address updates",
+        },
+    )
+
+    assert isinstance(result, GanpyeonInjeungContext)
+    assert result.delegation_context is not None
+    assert result.delegation_context.token.scope == (
+        "lookup:gov24.movein,submit:gov24.minwon"
+    )
+
+
+async def test_dispatch_ganpyeon_injeung_writes_delegation_issued_event(
+    tmp_path: Path,
+) -> None:
+    session_id = "sess-ganpyeon-ledger"
+    result = await verify(
+        "ganpyeon_injeung",
+        {
+            "session_id": session_id,
+            "scope_list": ["lookup:gov24.movein", "submit:gov24.minwon"],
+            "purpose_ko": "전입신고와 주소변경",
+            "purpose_en": "Move-in report and linked address updates",
+            "ledger_root": tmp_path,
+        },
+    )
+
+    assert isinstance(result, GanpyeonInjeungContext)
+    assert result.delegation_context is not None
+    token = result.delegation_context.token
+    events = read_delegation_events(ledger_root=tmp_path)
+
+    issued = [
+        event
+        for event in events
+        if isinstance(event, DelegationIssuedEvent)
+        and event.delegation_token == token.delegation_token
+    ]
+    assert len(issued) == 1
+    assert issued[0].session_id == session_id
+    assert issued[0].scope == "lookup:gov24.movein,submit:gov24.minwon"
+    assert issued[0].verify_tool_id == "mock_verify_ganpyeon_injeung"
 
 
 async def test_dispatch_digital_onepass_deleted() -> None:

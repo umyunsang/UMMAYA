@@ -2,7 +2,7 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the four-surface count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 16 entries (12 Live + 2 MVP-surface + 2 new lookup mocks)
+  - Main ToolRegistry: 40 entries (12 Live + 5 MVP-surface + 4 lookup mocks + 19 bridge wrappers)
   - kosmos.primitives.verify._VERIFY_ADAPTERS: 10 families
   - kosmos.primitives.submit._ADAPTER_REGISTRY: 5 families
   - kosmos.primitives.subscribe._SUBSCRIBE_ADAPTERS: 3 families
@@ -17,7 +17,7 @@ do NOT silently adjust the expected values.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Main ToolRegistry count — 19 total
+# Main ToolRegistry count — 40 total
 # ---------------------------------------------------------------------------
 # Epic η #2298 — extended from 16 to 19 by adding `verify` / `submit` /
 # `subscribe` to mvp_surface as `is_core=True` GovAPITool entries (FR-021).
@@ -30,20 +30,30 @@ from __future__ import annotations
 #   - 10 verify family wrappers (mock_verify_module_{modid,kec,geumyung,
 #     simple_auth,any_id_sso} + mock_verify_{gongdong,geumyung,ganpyeon,
 #     mobile_id,mydata}_*)
-#   - 5 submit wrappers (mock_submit_module_{hometax_taxreturn,gov24_minwon,
-#     public_mydata_action} + mock_traffic_fine_pay_v1 + mock_welfare_application_submit_v1)
+#   - 6 submit wrappers (mock_submit_module_{hometax_taxreturn,gov24_minwon,
+#     public_mydata_action} + mock_traffic_fine_pay_v1 +
+#     mock_koroad_driver_fitness_reservation_v1 + mock_welfare_application_submit_v1)
 #   - 3 subscribe wrappers (mock_cbs_disaster_v1 + mock_rest_pull_tick_v1 +
 #     mock_rss_public_notices_v1)
 # These wrappers are registered with is_core=False so the LLM's primary tool list
 # stays at 5 primitives + lookup-class Live; they participate in lookup(mode="search")
 # BM25 corpus so verify/submit/subscribe candidates surface for citizen queries
 # (the gap that blocked η T011 + ζ T018 live smoke runs).
-_EXPECTED_MAIN_REGISTRY_COUNT = 37
+# CIV-001 real-use audit added one Gov24 lookup mock for the move-in dependent
+# sequence, bringing the main registry to 38 while primitive sub-registries stayed
+# unchanged.
+# The 2026-05-05 full target-state real-use audit added one read-only national
+# AX bundle discovery mock so opaque-but-policy-mandated domains still produce
+# a lookup grounding step before privileged submit/subscribe routing.
+# MOB-001 real-use audit added a KOROAD driver fitness-test reservation submit
+# mock so mobility requests can produce a distinct reservation submit before
+# traffic-fine payment / subscription.
+_EXPECTED_MAIN_REGISTRY_COUNT = 40
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
     "live_adapters": 12,  # 12 Live: koroad ×2, kma ×6, hira ×1, nfa ×1, nmc ×1, mohw ×1
     "mvp_surface": 2,  # lookup + resolve_location (main-verb surface)
-    "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
+    "lookup_mocks": 4,  # Hometax simplified + Gov24 certificate + move-in + AX bundle
 }
 
 _EXPECTED_LIVE_TOOL_IDS = frozenset(
@@ -71,12 +81,14 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
     {
         "mock_lookup_module_hometax_simplified",
         "mock_lookup_module_gov24_certificate",
+        "mock_lookup_module_gov24_movein_sequence",
+        "mock_lookup_module_national_ax_bundle",
     }
 )
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 16 entries after register_all_tools()."""
+    """Main ToolRegistry must have the canonical entry count after register_all_tools()."""
     import kosmos.tools.mock  # noqa: F401 — trigger side-effect registration
     from kosmos.tools.executor import ToolExecutor
     from kosmos.tools.register_all import register_all_tools
@@ -133,7 +145,7 @@ def test_main_registry_mvp_surface_ids_present() -> None:
 
 
 def test_main_registry_lookup_mock_ids_present() -> None:
-    """The 2 new lookup mock IDs must be registered in the main ToolRegistry."""
+    """The lookup mock IDs must be registered in the main ToolRegistry."""
     import kosmos.tools.mock  # noqa: F401 — trigger side-effect registration
     from kosmos.tools.executor import ToolExecutor
     from kosmos.tools.register_all import register_all_tools
@@ -223,15 +235,16 @@ def test_verify_digital_onepass_not_in_registry() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Submit sub-registry count — 5 adapters
+# Submit sub-registry count — 6 adapters
 # ---------------------------------------------------------------------------
 
-_EXPECTED_SUBMIT_COUNT = 5
+_EXPECTED_SUBMIT_COUNT = 6
 
 _EXPECTED_SUBMIT_IDS = frozenset(
     {
-        # 2 existing (retrofitted, pre-delegation)
+        # 3 existing / real-use mock submit adapters (retrofitted, pre-delegation)
         "mock_traffic_fine_pay_v1",
+        "mock_koroad_driver_fitness_reservation_v1",
         "mock_welfare_application_submit_v1",
         # 3 new delegation-aware (Epic ε)
         "mock_submit_module_hometax_taxreturn",
@@ -242,7 +255,7 @@ _EXPECTED_SUBMIT_IDS = frozenset(
 
 
 def test_submit_adapter_registry_count() -> None:
-    """kosmos.primitives.submit._ADAPTER_REGISTRY must have exactly 5 entries."""
+    """kosmos.primitives.submit._ADAPTER_REGISTRY must have exactly 6 entries."""
     import kosmos.tools.mock  # noqa: F401 — trigger side-effect registration
     from kosmos.primitives.submit import _ADAPTER_REGISTRY
 
@@ -255,7 +268,7 @@ def test_submit_adapter_registry_count() -> None:
 
 
 def test_submit_adapter_registry_ids() -> None:
-    """All 5 expected submit adapter IDs must be present in _ADAPTER_REGISTRY."""
+    """All 6 expected submit adapter IDs must be present in _ADAPTER_REGISTRY."""
     import kosmos.tools.mock  # noqa: F401 — trigger side-effect registration
     from kosmos.primitives.submit import _ADAPTER_REGISTRY
 
@@ -354,13 +367,16 @@ def test_all_four_surface_counts_match_canonical() -> None:
         # verify / submit / subscribe primitive surfaces to mvp_surface so the
         # LLM sees them in registry.export_core_tools_openai().
         # Epic ζ #2297 path B (live smoke 2026-04-30) — main_registry extended
-        # from 19 to 37 by discovery_bridge bridging 18 non-core mock adapters
-        # (10 verify + 5 submit + 3 subscribe family wrappers) into the BM25
+        # from 19 to 37 by discovery_bridge bridging 18 non-core mock adapters,
+        # then to 38 by adding the Gov24 move-in dependent-sequence lookup mock,
+        # then to 39 by adding the national AX bundle grounding lookup mock,
+        # then to 40 by adding the KOROAD fitness reservation submit mock
+        # (10 verify + 6 submit + 3 subscribe family wrappers) into the BM25
         # corpus so lookup(mode="search") surfaces them. is_core=False so the
         # primary LLM tool list stays at 5 primitives + lookup-class Live.
-        "main_registry": 37,
+        "main_registry": 40,
         "verify_families": 10,
-        "submit_adapters": 5,
+        "submit_adapters": 6,
         "subscribe_adapters": 3,
     }
 

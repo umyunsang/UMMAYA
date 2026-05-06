@@ -169,6 +169,10 @@ export type Name2 = string;
  */
 export type Description = string | null;
 /**
+ * OpenAI-compatible strict function-calling flag.
+ */
+export type Strict = boolean | null;
+/**
  * Tools available to the model this turn.
  */
 export type Tools = ToolDefinition[];
@@ -460,6 +464,12 @@ export type RiskLevel = 'low' | 'medium' | 'high';
  * Fully-qualified adapter id (e.g. `mock_verify_mobile_id`). Falls back to worker_id || primitive_kind in the TUI when None. None for legacy callers that have not yet been updated.
  */
 export type ToolId = string | null;
+/**
+ * Display-safe primitive arguments shown in the permission prompt. Backend callers must remove DelegationContext tokens, raw session IDs, and identity internals before populating this field.
+ */
+export type Arguments2 = {
+  [k: string]: any;
+} | null;
 /**
  * Opaque session identifier.
  */
@@ -1364,6 +1374,7 @@ export interface ToolDefinitionFunction {
   name: Name2;
   description?: Description;
   parameters?: Parameters;
+  strict?: Strict;
 }
 /**
  * JSON Schema (Draft 2020-12) for the tool input. Pydantic accepts any dict shape; deeper schema validation is delegated to LLMClient.
@@ -1516,6 +1527,7 @@ export interface PermissionRequestFrame {
   description_en: DescriptionEn;
   risk_level: RiskLevel;
   tool_id?: ToolId;
+  arguments?: Arguments2;
 }
 /**
  * TUI -> backend: citizen's decision on a permission_request.

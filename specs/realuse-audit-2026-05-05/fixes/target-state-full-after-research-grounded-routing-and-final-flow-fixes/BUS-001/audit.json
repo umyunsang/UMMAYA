@@ -1,0 +1,44 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/BUS-001",
+  "status": "pass",
+  "files_scanned": 138,
+  "frame_count": 110,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "verify",
+      "argument": "mock_verify_ganpyeon_injeung",
+      "path": "final-scrollback.txt",
+      "line": 7,
+      "evidence": "⎿ 검증 결과: 인증 완료"
+    },
+    {
+      "name": "lookup",
+      "argument": "mock_lookup_module_national_ax_bundle",
+      "path": "final-scrollback.txt",
+      "line": 10,
+      "evidence": "⎿ record — 1건"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_gov24_minwon",
+      "path": "final-scrollback.txt",
+      "line": 15,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 접수 번호: gov24-2026-05-06-MW-91DD0073 | 상태: 접수완료"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_gov24_minwon",
+      "path": "final-scrollback.txt",
+      "line": 23,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 접수 번호: gov24-2026-05-06-MW-73119A87 | 상태: 접수완료"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_rest_pull_tick_v1",
+      "path": "final-scrollback.txt",
+      "line": 31,
+      "evidence": "⎿ 구독 완료: 1bacc76a-bfc7-400d-a4db-985553376a24 (subscribe) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다. | - 상태: 접수완료 (온라인 발급 신청 완료)"
+    }
+  ]
+}

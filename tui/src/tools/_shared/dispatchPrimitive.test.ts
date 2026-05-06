@@ -231,7 +231,7 @@ describe('dispatchPrimitive — [H1] inner-payload error classification', () => 
   // the pending call's promise mid-flight. We bypass the IPC bridge entirely
   // — only the unwrap path under test matters here.
   async function dispatchAndInjectFrame(
-    primitive: 'lookup' | 'verify' | 'submit' | 'subscribe',
+    primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe',
     envelope: Record<string, unknown>,
     toolUseId = `${primitive}-h1-1`,
   ): Promise<{ data: { ok: boolean; result?: unknown; error?: { kind: string; message: string } } }> {

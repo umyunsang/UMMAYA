@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from datetime import datetime
 from typing import Annotated, Final, Literal
 
@@ -169,6 +170,17 @@ class GovAPITool(BaseModel):
     model has already picked this tool, which is too late for ordering rules.
     """
 
+    llm_parameters_schema: dict[str, object] | None = None
+    """Optional JSON schema override for the OpenAI-visible tool parameters.
+
+    Runtime validation can intentionally accept legacy shapes while the LLM
+    should see a narrower citizen-facing contract. When this field is set,
+    ``to_openai_tool()`` exports it instead of ``input_schema.model_json_schema()``.
+    """
+
+    openai_strict: bool = False
+    """Emit ``function.strict=true`` for OpenAI-compatible function calling."""
+
     # Epic #2152 R6 — per-tool trigger phrase examples shown alongside each tool's
     # description in the system prompt's ``## Available tools`` block. Concrete
     # citizen-language utterances the tool covers, used to defeat Opus 4.7-class
@@ -182,6 +194,15 @@ class GovAPITool(BaseModel):
     ``— 예: "..."`` clause of the per-tool ``**Trigger**:`` line. Default ``[]``
     keeps the trigger line description-only when no examples are authored.
     """
+
+    delegation_source_tool_id: str | None = Field(
+        default=None,
+        description=(
+            "When this adapter requires a DelegationContext, this optional "
+            "metadata names the verify tool that issues the compatible context. "
+            "It is adapter-declared policy metadata, not a router hardcode."
+        ),
+    )
 
     # Spec 1634 (P3 Tool System Wiring) FR-009 — runtime live/mock mode.
     # Orthogonal to ``AdapterRegistration.source_mode`` (which classifies
@@ -384,11 +405,18 @@ class GovAPITool(BaseModel):
         ``exclude=True`` annotation.
         """
         description = self.llm_description or self.name_ko
+        parameters = (
+            deepcopy(self.llm_parameters_schema)
+            if self.llm_parameters_schema is not None
+            else self.input_schema.model_json_schema()
+        )
         function: dict[str, object] = {
             "name": self.id,
             "description": description,
-            "parameters": self.input_schema.model_json_schema(),
+            "parameters": parameters,
         }
+        if self.openai_strict:
+            function["strict"] = True
         trigger_phrase = self._build_trigger_phrase()
         if trigger_phrase is not None:
             function["trigger_phrase"] = trigger_phrase
@@ -554,7 +582,9 @@ class ResolveLocationInput(BaseModel):
         description=(
             "자유 텍스트 위치 쿼리 (한국어 또는 영어). 시민 발화에서 그대로 추출. "
             "Examples: '서울 강남구', '동아대 하단캠퍼스', '강남역', '부산 사하구', "
-            "'서울대병원'. POI / 행정동 / 도로명주소 / 지번주소 모두 허용."
+            "'서울대병원'. POI / 행정동 / 도로명주소 / 지번주소 모두 허용. "
+            "온라인 행정 서비스명(홈택스, 정부24, 위택스, 워크넷, 모바일 신분증 등)은 "
+            "물리적 위치가 아니므로 금지; 실제 사무소/지점 위치를 묻는 경우에만 사용."
         ),
     )
     want: Literal[
@@ -862,6 +892,30 @@ class AdapterCandidate(BaseModel):
         description=(
             "Agency-published policy URL the adapter cites "
             "(KOSMOS does not invent permission classifications)."
+        ),
+    )
+    adapter_mode: Literal["live", "mock"] | None = Field(
+        default=None,
+        description=(
+            "Runtime source mode copied from GovAPITool.adapter_mode. "
+            "The LLM uses this as transparency metadata, not as a routing key."
+        ),
+    )
+    citizen_facing_gate: Literal["read-only", "login", "action", "sign", "submit"] | None = (
+        Field(
+            default=None,
+            description=(
+                "AdapterRealDomainPolicy.citizen_facing_gate from the registered tool. "
+                "The LLM uses this to decide whether a prior verify DelegationContext "
+                "is required before invocation."
+            ),
+        )
+    )
+    delegation_source_tool_id: str | None = Field(
+        default=None,
+        description=(
+            "Adapter-declared verify tool that can issue the DelegationContext "
+            "needed by this candidate, when applicable."
         ),
     )
 

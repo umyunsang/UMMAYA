@@ -48,7 +48,7 @@ function _resolveTimeoutMs(override?: number): number {
 // ---------------------------------------------------------------------------
 
 export interface DispatchPrimitiveOpts {
-  primitive: 'lookup' | 'verify' | 'submit' | 'subscribe'
+  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe'
   /** Forwarded verbatim into tool_call frame arguments (FR-009). */
   args: Record<string, unknown>
   /** From CC SDK Tool.call signature. */
@@ -75,7 +75,7 @@ export function _resetCheckpointState(): void {
 }
 
 function _maybeEmitCheckpoint(
-  primitive: 'lookup' | 'verify' | 'submit' | 'subscribe',
+  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe',
   frame: ToolResultFrame,
 ): void {
   if (process.env['KOSMOS_SMOKE_CHECKPOINTS'] !== 'true') return

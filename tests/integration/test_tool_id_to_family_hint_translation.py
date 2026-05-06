@@ -24,7 +24,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from kosmos.tools.mvp_surface import _VerifyInputForLLM
+from kosmos.tools.mvp_surface import VERIFY_TOOL, _VerifyInputForLLM
 
 # ---------------------------------------------------------------------------
 # Parametrised canonical-family cases (I-V1)
@@ -52,6 +52,29 @@ _SAMPLE_PARAMS: dict[str, object] = {
     "purpose_ko": "종합소득세 신고",
     "purpose_en": "Comprehensive income tax filing",
 }
+
+
+def test_verify_openai_schema_requires_citizen_scope_payload() -> None:
+    """The LLM-visible schema must make empty verify params unrepresentable."""
+    tool_definition = VERIFY_TOOL.to_openai_tool()
+    function = tool_definition["function"]
+    assert isinstance(function, dict)
+    assert function.get("strict") is True
+
+    parameters = function["parameters"]
+    assert isinstance(parameters, dict)
+    assert parameters["required"] == ["tool_id", "params"]
+    assert parameters["additionalProperties"] is False
+
+    properties = parameters["properties"]
+    assert isinstance(properties, dict)
+    assert "family_hint" not in properties
+    assert "session_context" not in properties
+
+    params_schema = properties["params"]
+    assert isinstance(params_schema, dict)
+    assert params_schema["required"] == ["scope_list", "purpose_ko", "purpose_en"]
+    assert params_schema["additionalProperties"] is False
 
 
 @pytest.mark.parametrize(

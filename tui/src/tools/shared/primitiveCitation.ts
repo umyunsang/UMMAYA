@@ -15,6 +15,7 @@ export const PrimitiveErrorCode = {
   AdapterNotFound: 1001,
   CitationMissing: 1002,
   RestrictedMode: 1003,
+  InvalidParams: 1004,
 } as const
 
 export type PrimitiveErrorCode =

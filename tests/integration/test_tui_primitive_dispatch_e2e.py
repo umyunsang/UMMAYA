@@ -89,6 +89,13 @@ class _FakeStdout:
     def __init__(self) -> None:
         self.buffer = _CaptureBuf()
 
+    def write(self, data: str) -> int:
+        self.buffer.write(data.encode("utf-8"))
+        return len(data)
+
+    def flush(self) -> None:
+        pass
+
 
 # ---------------------------------------------------------------------------
 # Fake LLM: emits verify → lookup → submit three-step chain
@@ -342,13 +349,8 @@ async def _run_chain(
         event="exit",
         payload={},
     )
-    payload = (frame.model_dump_json() + "\n").encode() + (
-        exit_frame.model_dump_json() + "\n"
-    ).encode()
-
     r_fd, w_fd = os.pipe()
-    os.write(w_fd, payload)
-    os.close(w_fd)
+    os.write(w_fd, (frame.model_dump_json() + "\n").encode())
     r_file = os.fdopen(r_fd, "rb")
 
     class _FakeStdinWrapper:
@@ -360,11 +362,26 @@ async def _run_chain(
 
     from kosmos.ipc.stdio import run as ipc_run
 
+    run_task = asyncio.create_task(ipc_run(session_id=session_id))
     try:
-        await asyncio.wait_for(ipc_run(session_id=session_id), timeout=_RUNNER_TIMEOUT)
+        deadline = asyncio.get_running_loop().time() + _RUNNER_TIMEOUT
+        while asyncio.get_running_loop().time() < deadline:
+            frames = fake_stdout.buffer.as_frames()
+            if any(
+                f.get("kind") == "assistant_chunk" and f.get("done") is True
+                for f in frames
+            ):
+                break
+            await asyncio.sleep(0.01)
+        os.write(w_fd, (exit_frame.model_dump_json() + "\n").encode())
+        os.close(w_fd)
+        await asyncio.wait_for(run_task, timeout=1.0)
     except (TimeoutError, Exception) as exc:  # noqa: BLE001
+        run_task.cancel()
         _logging.getLogger(__name__).debug("_run_chain: IPC loop exited early: %s", exc)
     finally:
+        with contextlib.suppress(OSError):
+            os.close(w_fd)
         if not r_file.closed:
             r_file.close()
 

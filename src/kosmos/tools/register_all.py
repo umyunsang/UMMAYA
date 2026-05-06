@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> RoutingIndex:
     """Register all available government API tool adapters.
 
-    Registers the following 16 tools in order (Epic ε #2296: 2 new lookup mocks added):
+    Registers the following tools in order (lookup mocks include Gov24/Hometax mock records):
       1. resolve_location — MVP LLM core surface: location resolution (is_core=True)
       2. lookup — MVP LLM core surface: adapter discovery + invocation (is_core=True)
       3. koroad_accident_search — KOROAD accident hotspot search (by enum codes)
@@ -65,6 +65,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
      14. mohw_welfare_eligibility_search — SSIS welfare service list (Phase 2, real XML handler — T025)
      15. mock_lookup_module_hometax_simplified — Hometax simplified data (Mock, Epic ε T028)
      16. mock_lookup_module_gov24_certificate — Gov24 certificate lookup (Mock, Epic ε T029)
+     17. mock_lookup_module_gov24_movein_sequence — Gov24 move-in dependent sequence (Mock)
 
     After registration, ``build_routing_index()`` validates every adapter against
     the six invariants in ``contracts/routing-consistency.md § 2``. Violations
@@ -103,8 +104,14 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     from kosmos.tools.mock.lookup_module_gov24_certificate import (
         register as reg_mock_gov24_cert,
     )
+    from kosmos.tools.mock.lookup_module_gov24_movein_sequence import (
+        register as reg_mock_gov24_movein,
+    )
     from kosmos.tools.mock.lookup_module_hometax_simplified import (
         register as reg_mock_hometax_simplified,
+    )
+    from kosmos.tools.mock.lookup_module_national_ax_bundle import (
+        register as reg_mock_national_ax_bundle,
     )
     from kosmos.tools.mohw.welfare_eligibility_search import register as reg_mohw
     from kosmos.tools.mvp_surface import register_mvp_surface
@@ -150,10 +157,12 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     reg_nfa(registry, executor)  # T014 — NFA EMS statistics (interface-only)
     reg_mohw(registry, executor)  # T025 — MOHW welfare eligibility search (real XML handler)
 
-    # Epic ε #2296 T028/T029 — New lookup mock GovAPITools (main ToolRegistry,
-    # not per-primitive sub-registry — lookup adapters use BM25 discovery).
+    # Lookup mock GovAPITools (main ToolRegistry, not per-primitive
+    # sub-registry — lookup adapters use BM25 discovery).
     reg_mock_hometax_simplified(registry, executor)  # T028 — Hometax simplified data
     reg_mock_gov24_cert(registry, executor)  # T029 — Gov24 certificate lookup
+    reg_mock_gov24_movein(registry, executor)  # CIV-001 — Gov24 move-in sequence
+    reg_mock_national_ax_bundle(registry, executor)  # target-state bundle discovery
 
     # Epic ζ #2297 path B (live smoke 2026-04-30 follow-up) — bridge per-primitive
     # registries (verify/submit/subscribe) into the main ToolRegistry's BM25 corpus

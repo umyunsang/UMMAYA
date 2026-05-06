@@ -26,17 +26,18 @@ class TestToolRegistration:
         executor = ToolExecutor(registry)
         register_all_tools(registry, executor)
         # Spec 2296 SC-003: 12 Live + 2 MVP-surface (resolve_location, lookup)
-        # + 2 lookup mocks (mock_lookup_module_hometax_simplified,
-        # mock_lookup_module_gov24_certificate) = 16
+        # + 3 lookup mocks (Hometax simplified, Gov24 certificate,
+        # Gov24 move-in sequence) = 17
         # Epic η #2298 FR-021: + 3 primitive surfaces (verify, submit,
-        # subscribe) = 19. Required so the LLM can emit the
+        # subscribe) = 20. Required so the LLM can emit the
         # citizen-OPAQUE chain via OpenAI tool_calls schema.
-        # Epic ζ #2297 path B (live smoke 2026-04-30): + 18 non-core mock
-        # adapter wrappers (10 verify + 5 submit + 3 subscribe via
-        # discovery_bridge) = 37. is_core=False so the LLM's primary tool
-        # list stays at 5 primitives + lookup-class; these participate in
-        # lookup(mode="search") BM25 corpus only.
-        assert len(registry) == 37
+        # Epic ζ #2297 path B (live smoke 2026-04-30): + 19 non-core mock
+        # adapter wrappers (10 verify + 6 submit + 3 subscribe via
+        # discovery_bridge), plus Gov24 move-in and national AX bundle lookup
+        # mocks = 40. is_core=False so the LLM's primary tool list stays at
+        # 5 primitives + lookup-class; these participate in lookup(mode="search")
+        # BM25 corpus only.
+        assert len(registry) == 40
 
     def test_tool_ids_present(self) -> None:
         """Each expected tool_id is in the registry.

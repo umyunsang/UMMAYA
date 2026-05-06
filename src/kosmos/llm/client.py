@@ -81,6 +81,10 @@ _LLM_STREAM_CHUNK_MAX_CHARS = max(
     1, int(os.environ.get("KOSMOS_LLM_STREAM_CHUNK_MAX_CHARS", "999"))
 )
 _LLM_STREAM_PACE_S = max(0.0, float(os.environ.get("KOSMOS_LLM_STREAM_PACE_MS", "0")) / 1000.0)
+_LLM_STREAM_IDLE_TIMEOUT_S = max(
+    1.0,
+    float(os.environ.get("KOSMOS_LLM_STREAM_IDLE_TIMEOUT_SECONDS", "90")),
+)
 
 
 if TYPE_CHECKING:
@@ -538,9 +542,30 @@ class LLMClient:
 
                         await self._raise_for_status(response)
 
-                        # Yield events; watch for mid-stream 429 envelopes (T016)
+                        # Yield events; watch for mid-stream 429 envelopes (T016).
+                        #
+                        # CC reference parity: claude.ts uses a streaming idle
+                        # watchdog because provider request timeouts often cover
+                        # only headers / initial fetch, not a silently stalled
+                        # SSE body. FriendliAI can keep the stream open after a
+                        # reasoning chunk without sending another line, which
+                        # leaves the TUI spinner alive indefinitely. Bound the
+                        # inter-line wait and surface a typed stream error.
                         rate_limited_mid_stream = False
-                        async for line in response.aiter_lines():
+                        line_iter = response.aiter_lines().__aiter__()
+                        while True:
+                            try:
+                                line = await asyncio.wait_for(
+                                    line_iter.__anext__(),
+                                    timeout=_LLM_STREAM_IDLE_TIMEOUT_S,
+                                )
+                            except StopAsyncIteration:
+                                break
+                            except TimeoutError as exc:
+                                raise StreamInterruptedError(
+                                    "Streaming idle timeout: no SSE line received "
+                                    f"for {_LLM_STREAM_IDLE_TIMEOUT_S:.0f}s"
+                                ) from exc
                             if self._is_rate_limit_envelope(line):
                                 rate_limited_mid_stream = True
                                 delay = self._compute_rate_limit_delay(response, attempt, policy)

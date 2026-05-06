@@ -18,7 +18,14 @@ import { SubscribePrimitive } from '../../../src/tools/SubscribePrimitive/Subscr
 
 // Minimal input stubs that satisfy the z.object({ tool_id, params }) schema.
 const lookupInput = { tool_id: 'kma_forecast_fetch', params: { lat: 37.5, lon: 127.0 } }
-const verifyInput = { tool_id: 'gongdong_injeungseo', params: {} }
+const verifyInput = {
+  tool_id: 'gongdong_injeungseo',
+  params: {
+    scope_list: ['lookup:test.read'],
+    purpose_ko: '테스트',
+    purpose_en: 'test',
+  },
+}
 const submitInput = { tool_id: 'koroad_accident_report', params: {} }
 const subscribeInput = { tool_id: 'nmc_emergency_subscribe', params: {} }
 

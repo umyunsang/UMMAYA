@@ -1,0 +1,36 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 현재 위치는 부산 사하구 다대1동입니다. 아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험 적용되는지도 알려줘.
+
+∴ Thinking — 사용자가 부산 사하구 다대1동에 위치한 아이가 밤에 열이 높아 응급실이나 야간진료 병원을 찾고 있으며, 보험 적용 여부도 알고 싶어 합니다. (ctrl+o to expand)
+
+⏺ locate(부산 사하구 다대1동 → coords_and_admcd)
+  ⎿  위치 해석 결과
+     좌표: 35.059152 / 128.971316 (kakao)
+
+⏺ find(nmc_emergency_search)
+  ⎿  collection — 5건
+       1. {"cnt":29,"distance":4.68,"dutyAddr":"부산광역시 서구 감천로 262 (암남동)","dutyDiv":"A","dutyDivName":"종합병원","dutyFax":"051-990-300…
+       2. {"cnt":29,"distance":6.38,"dutyAddr":"부산광역시 서구 구덕로 179 (아미동1가)","dutyDiv":"A","dutyDivName":"종합병원","dutyFax":"051-254-0…
+       3. {"cnt":29,"distance":6.86,"dutyAddr":"부산광역시 서구 대티로 170 (서대신동2가)","dutyDiv":"A","dutyDivName":"종합병원","dutyFax":"051-242-…
+
+⏺ find(hira_hospital_search)
+  ⎿  collection — 10건
+       1. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkOTkkNTgxMzUxIzExIyQxIyQ3IyQ3MiQzNjEyMjIjNjEjJDEjJDAjJDgz","yadmNm":"라파요양병원","addr":"부…
+       2. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkOTkkMzgxMzUxIzIxIyQxIyQ1IyQ3MiQ0NjEwMDIjODEjJDEjJDIjJDgz","yadmNm":"의료법인성신의료재단 다대수병원"…
+       3. {"ykiho":"JDQ4MTAxMiM1MSMkMSMkMCMkOTkkNTgxMzUxIzIxIyQxIyQ1IyQwMyQzNjE4MzIjNzEjJDEjJDgjJDgz","yadmNm":"의료법인 굿타임의료재단 타임요양…
+
+⏺ watch(mock_rest_pull_tick_v1)
+  ⎿  구독 완료: 4d4119b8-20fd-4000-94f7-ca6f3e6de5c9 (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+✶ Zigzagging… (32s · ↓ 646 tokens)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                                                  ● high · /effort

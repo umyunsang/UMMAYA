@@ -34,10 +34,6 @@ import {
 } from '../_shared/verboseRender.js'
 import { getOrCreateKosmosBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
-import {
-  getOrCreateSubscriptionRegistry,
-  deriveMinistryFromToolId,
-} from '../../state/subscriptionRegistry.js'
 
 // ---------------------------------------------------------------------------
 // KOSMOS citation extension — augments context at runtime for permission UI.
@@ -61,11 +57,14 @@ const inputSchema = lazySchema(() =>
     params: z
       .record(z.string(), z.unknown())
       .describe('Adapter-defined Pydantic-validated subscription parameter body'),
-    lifetime_hint: z
-      .enum(['session', 'short', 'long'])
+    lifetime_seconds: z
+      .number()
+      .int()
+      .min(1)
+      .max(31_536_000)
       .optional()
       .describe(
-        'Requested handle lifetime: "session" (default, entire REPL session), "short" (≤5 min), "long" (≤24 h)',
+        'Bounded subscription lifetime in seconds. Ceiling = 365 days.',
       ),
   }),
 )
@@ -132,6 +131,10 @@ export const SubscribePrimitive = buildTool({
 
   isReadOnly() {
     return false
+  },
+
+  userFacingName() {
+    return 'watch'
   },
 
   async description() {
@@ -336,17 +339,15 @@ export const SubscribePrimitive = buildTool({
   },
 
   /**
-   * subscribe registers a session-lifetime event stream from a government
-   * source (재난 문자, 교통 이벤트, etc.). Always ask for citizen permission
-   * so the stream is explicitly authorized before it opens.
-   * Spec 024 invariant: adapters cite agency policy; the permission gauntlet
-   * surfaces that citation via context.kosmosCitations (set in validateInput).
+   * Backend owns the KOSMOS permission gauntlet for backend-dispatched
+   * primitives. Subscribe opens a persistent channel and remains gated in
+   * Python GATED_PRIMITIVES; the stdio dispatcher emits the canonical
+   * PermissionRequestFrame before adapter invocation. Keeping a separate
+   * client-side prompt here duplicates the gauntlet and can block stream
+   * consumption.
    */
-  async checkPermissions(_input) {
-    return {
-      behavior: 'ask' as const,
-      message: '권한 위임 필요: 실시간 구독 채널을 열어 알림을 수신합니다. 진행하시겠습니까?',
-    }
+  async checkPermissions(input) {
+    return { behavior: 'allow' as const, updatedInput: input }
   },
 
   /**
@@ -364,45 +365,6 @@ export const SubscribePrimitive = buildTool({
       registry: getOrCreatePendingCallRegistry(),
       bridge: getOrCreateKosmosBridge(),
     })
-
-    // Lead-FU-5 (S7 /agents data wire) — on a successful subscription open,
-    // record the handle into the TUI-side registry so /agents can show the
-    // citizen the live channels they have opened. Best-effort: any shape
-    // mismatch is silently ignored (the dispatcher result is the contract;
-    // this is a UI mirror only).
-    try {
-      const data = result.data as Output | undefined
-      if (data && data.ok === true) {
-        const payload = (data.result ?? {}) as Record<string, unknown>
-        // Backend stdio.py:1825 emits { subscription_id, tool_id, status }
-        // Future streaming-wired backend may emit { handle_id, lifetime, kind }
-        const handleId =
-          (typeof payload['handle_id'] === 'string' && (payload['handle_id'] as string)) ||
-          (typeof payload['subscription_id'] === 'string' && (payload['subscription_id'] as string)) ||
-          ''
-        const toolId = (typeof input.tool_id === 'string' && input.tool_id) || ''
-        if (handleId && toolId) {
-          const kind =
-            typeof payload['kind'] === 'string'
-              ? (payload['kind'] as string)
-              : 'subscription'
-          const lifetime =
-            typeof payload['lifetime'] === 'string'
-              ? (payload['lifetime'] as string)
-              : (typeof input.lifetime_hint === 'string' ? input.lifetime_hint : undefined)
-          getOrCreateSubscriptionRegistry().record({
-            handleId,
-            toolId,
-            ministry: deriveMinistryFromToolId(toolId),
-            kind,
-            lifetime,
-            openedAt: new Date().toISOString(),
-          })
-        }
-      }
-    } catch {
-      // Non-fatal — UI mirror is best-effort.
-    }
 
     return result
   },

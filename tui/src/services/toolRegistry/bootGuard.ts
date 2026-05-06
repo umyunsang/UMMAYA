@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Epic γ #2294 · T004 · ToolRegistry boot guard.
 //
-// Walks every registered KOSMOS primitive (the 4 reserved TUI-side verbs:
-// lookup / submit / verify / subscribe — `resolve_location` is the 5th
-// primitive but lives backend-side, exposed via the system prompt + IPC,
-// per Spec 2294 contract / AGENTS.md § L1-C) at process boot and asserts that
+// Walks every registered KOSMOS primitive (the 5 reserved TUI-side verbs:
+// lookup / resolve_location / submit / verify / subscribe) at process boot and asserts that
 // each one exposes the full `Tool<>` 9-member surface from
 // `tui/src/Tool.ts` (byte-identical to CC `Tool.ts`). Fails closed with a
 // Korean diagnostic if any member is missing.
@@ -24,7 +22,7 @@
 
 import type { Tool } from '../../Tool.js'
 
-const PRIMITIVE_NAMES = ['lookup', 'submit', 'verify', 'subscribe'] as const
+const PRIMITIVE_NAMES = ['lookup', 'resolve_location', 'submit', 'verify', 'subscribe'] as const
 export type PrimitiveName = (typeof PRIMITIVE_NAMES)[number]
 
 const REQUIRED_MEMBERS = [
@@ -59,8 +57,8 @@ export type BootResult =
  * structured `BootResult`. Caller decides whether to `process.exit(1)` or
  * throw — the guard itself has no side effects beyond reading the registry.
  *
- * Performance: O(P × M) where P = number of primitives (4) and M = required
- * member count (9) — bounded at 36 property reads. Wall-clock budget on a
+ * Performance: O(P × M) where P = number of primitives (5) and M = required
+ * member count (9) — bounded at 45 property reads. Wall-clock budget on a
  * developer laptop: ≤ 200 ms (Spec SC-002).
  */
 export function verifyBootRegistry(registry: readonly Tool[]): BootResult {
@@ -70,9 +68,9 @@ export function verifyBootRegistry(registry: readonly Tool[]): BootResult {
     (PRIMITIVE_NAMES as readonly string[]).includes(t.name),
   )
 
-  // Codex P2 fix — fail closed when any of the 4 reserved primitives is
+  // Codex P2 fix — fail closed when any of the 5 reserved primitives is
   // accidentally unregistered. Without this check, removing a primitive
-  // would still produce ok:true with primitives < 4.
+  // would still produce ok:true with primitives < 5.
   if (primitives.length !== PRIMITIVE_NAMES.length) {
     const present = new Set(primitives.map(t => t.name))
     const missingNames = PRIMITIVE_NAMES.filter(n => !present.has(n))
@@ -81,15 +79,9 @@ export function verifyBootRegistry(registry: readonly Tool[]): BootResult {
       offendingTool: '<reserved-primitive-set>',
       missingMembers: missingNames as unknown as string[],
       diagnostic:
-        // KOSMOS Wave-2 G7 (F-alpha-16) — TUI-side primitive count is 4 by
-        // Spec 2294 contract (`registry-boot-guard.md`); the 5th primitive
-        // (`resolve_location`) lives backend-side and is exposed via the
-        // system prompt + IPC, not registered as a TUI Tool. The previous
-        // diagnostic ("5-primitive") contradicted both the success-path
-        // log line `(4 primitives)` and the next line of this same string.
-        `[KOSMOS][bootGuard] 예약된 4-primitive 중 일부가 ToolRegistry에 등록되지 않았습니다. ` +
+        `[KOSMOS][bootGuard] 예약된 5-primitive 중 일부가 ToolRegistry에 등록되지 않았습니다. ` +
         `누락: ${missingNames.join(', ')}.\n` +
-        `KOSMOS는 4개 primitive(lookup/submit/verify/subscribe) 모두 등록되어야 부팅을 허용합니다.\n` +
+        `KOSMOS는 5개 primitive(lookup/resolve_location/submit/verify/subscribe) 모두 등록되어야 부팅을 허용합니다.\n` +
         `참조: specs/2294-5-primitive-align/contracts/registry-boot-guard.md`,
     }
   }

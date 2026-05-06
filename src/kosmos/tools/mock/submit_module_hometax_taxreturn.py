@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 import secrets
 from datetime import UTC, datetime
-from typing import Any, Final
+from typing import Any, Final, Literal
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -61,9 +61,35 @@ _POLICY_AUTHORITY: Final = (
     "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=12892&cntntsId=8104"
 )
 _INTERNATIONAL_REF: Final = "UK HMRC Making Tax Digital"
+_MOCK_FIDELITY_GRADE: Final = "C-official-portal-flow-private-submit-api-inferred"
+_MOCK_EVIDENCE: Final[dict[str, Any]] = {
+    "credential_status": "student_no_live_authority",
+    "basis_urls": [
+        "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7713&mi=2304",
+        "https://mob.tbys.hometax.go.kr/jsonAction.do?actionId=UTBYSFAA02F001",
+    ],
+    "supports": [
+        "official Hometax electronic filing path and online attachment submission",
+        "official simplified-data consent and source-data lifecycle",
+    ],
+    "inference_boundary": (
+        "NTS submit payload and validation result codes are not publicly callable by "
+        "student projects; KOSMOS infers only transaction lifecycle and receipt shape."
+    ),
+    "live_swap_requirements": [
+        "NTS partner or taxpayer-authorized filing credential",
+        "official schema for target tax form",
+        "sandbox or recorded development receipt",
+        "separate payment rail when tax payment is requested",
+    ],
+}
 
 # Required delegation scope for this adapter
 _REQUIRED_SCOPE: Final = "submit:hometax.tax-return"
+_DELEGATION_SCOPE_BUNDLE: Final = (
+    "lookup:hometax.simplified",
+    "submit:hometax.tax-return",
+)
 
 # ---------------------------------------------------------------------------
 # Typed input model
@@ -79,29 +105,59 @@ class HometaxTaxreturnParams(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     tax_year: int = Field(
+        default=2025,
         ge=2020,
         le=2030,
-        description="Tax year for the return (e.g. 2025 for 2025 income).",
+        description=(
+            "Tax year for the return (e.g. 2025 for 2025 income). "
+            "If omitted in Mock mode, the fixture default is used."
+        ),
     )
     income_type: str = Field(
+        default="부가가치세",
         min_length=1,
         max_length=32,
         description=(
             "Income category code (e.g. '사업소득', '근로소득', '종합소득'). "
-            "Agency-defined classification."
+            "Agency-defined classification. Defaults to VAT filing in Mock mode."
         ),
     )
     total_income_krw: int = Field(
+        default=38_500_000,
         ge=0,
-        description="Total declared income in KRW.",
+        description=(
+            "Total declared income in KRW. Use the lookup result's "
+            "vat_reconciliation.total_income_krw when available; otherwise omit "
+            "in Mock mode to use the fixture default."
+        ),
     )
     session_id: str = Field(
+        default="backend-injected",
         min_length=1,
         max_length=128,
-        description="Consuming session ID (used for delegation session-binding check).",
+        description=(
+            "Backend-injected consuming session ID. Do not ask the citizen for this "
+            "value and do not expose it in chat."
+        ),
     )
     delegation_context: DelegationContext = Field(
         description="DelegationContext from the prior verify step.",
+    )
+    action_type: Literal[
+        "file_return",
+        "create_payment_deadline_reminder",
+        "mock_payment_after_confirmation",
+        "register_refund_account",
+    ] = Field(
+        default="file_return",
+        description=(
+            "Side-effect variant. Use 'file_return' for the tax filing submit. "
+            "Use 'register_refund_account' when the citizen asks to register or "
+            "update the tax refund deposit account after filing. "
+            "If the citizen requested payment but no explicit payment confirmation "
+            "has occurred, use 'create_payment_deadline_reminder' as the second "
+            "submit step instead of executing payment."
+        ),
     )
 
 
@@ -184,12 +240,25 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
                 security_wrapping_pattern=_SECURITY_WRAPPING,
                 policy_authority=_POLICY_AUTHORITY,
                 international_reference=_INTERNATIONAL_REF,
+                mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+                mock_evidence=_MOCK_EVIDENCE,
             ),
         )
 
     # Success path — produce deterministic synthetic 접수번호
     suffix = secrets.token_hex(4).upper()
-    receipt_id = f"hometax-{datetime.now(_SEOUL_TZ).strftime('%Y-%m-%d')}-RX-{suffix}"
+    now = datetime.now(_SEOUL_TZ)
+    receipt_prefix = (
+        "PAYREM"
+        if typed.action_type == "create_payment_deadline_reminder"
+        else "PAYMOCK"
+        if typed.action_type == "mock_payment_after_confirmation"
+        else "RFND"
+        if typed.action_type == "register_refund_account"
+        else "RX"
+    )
+    receipt_id = f"hometax-{now.strftime('%Y-%m-%d')}-{receipt_prefix}-{suffix}"
+    received_at = now.isoformat()
 
     logger.debug(
         "mock_submit_module_hometax_taxreturn: success, receipt_id=%s tax_year=%d",
@@ -223,7 +292,54 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
                 "tax_year": typed.tax_year,
                 "income_type": typed.income_type,
                 "total_income_krw": typed.total_income_krw,
-                "status": "신고완료",
+                "action_type": typed.action_type,
+                "status": (
+                    "납부기한알림생성"
+                    if typed.action_type == "create_payment_deadline_reminder"
+                    else "모의납부완료"
+                    if typed.action_type == "mock_payment_after_confirmation"
+                    else "환급계좌등록완료"
+                    if typed.action_type == "register_refund_account"
+                    else "신고완료"
+                ),
+                "submission_flow": [
+                    "verify_delegation_scope",
+                    "preflight_tax_form_validation",
+                    "calculate_or_import_tax_base",
+                    "attach_supporting_documents_if_present",
+                    "submit_electronic_return",
+                    "issue_receipt_number",
+                ],
+                "preflight_validation": {
+                    "tax_year": "accepted",
+                    "income_type": "accepted",
+                    "amount_fields": "accepted",
+                    "attachments": "not_required_in_fixture",
+                    "payment": (
+                        "deadline_reminder_created"
+                        if typed.action_type == "create_payment_deadline_reminder"
+                        else "mock_payment_executed_after_confirmation"
+                        if typed.action_type == "mock_payment_after_confirmation"
+                        else "refund_account_registered"
+                        if typed.action_type == "register_refund_account"
+                        else "separate_submit_required_before_payment"
+                    ),
+                },
+                "status_history": [
+                    {"status": "received", "at": received_at},
+                    {"status": "validated", "at": received_at},
+                    {"status": "filed", "at": received_at},
+                ],
+                "idempotency_key": derive_transaction_id(
+                    "mock_submit_module_hometax_taxreturn",
+                    {k: v for k, v in params.items() if k != "delegation_context"},
+                    adapter_nonce=_ADAPTER_NONCE,
+                ),
+                "citizen_next_actions": [
+                    "review receipt",
+                    "review payment deadline reminder before any real payment",
+                    "keep supporting documents for audit period",
+                ],
                 "mock": True,
             },
             reference_implementation=_REFERENCE_IMPL,
@@ -231,6 +347,8 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
             security_wrapping_pattern=_SECURITY_WRAPPING,
             policy_authority=_POLICY_AUTHORITY,
             international_reference=_INTERNATIONAL_REF,
+            mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+            mock_evidence=_MOCK_EVIDENCE,
         ),
     )
 
@@ -251,8 +369,32 @@ REGISTRATION = AdapterRegistration(
     cache_ttl_seconds=0,
     rate_limit_per_minute=5,
     search_hint={
-        "ko": ["홈택스", "종합소득세", "신고", "세금신고", "연말정산"],
-        "en": ["hometax", "tax return", "income tax", "tax filing"],
+        "ko": [
+            "홈택스",
+            "종합소득세",
+            "부가세",
+            "부가가치세",
+            "매출자료",
+            "세금납부",
+            "환급",
+            "환급계좌",
+            "계좌등록",
+            "신고",
+            "세금신고",
+            "연말정산",
+        ],
+        "en": [
+            "hometax",
+            "tax return",
+            "VAT",
+            "value added tax",
+            "sales data",
+            "tax payment",
+            "tax refund",
+            "refund account",
+            "income tax",
+            "tax filing",
+        ],
     },
     auth_type="oauth",
     nonce=_ADAPTER_NONCE,

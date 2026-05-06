@@ -1,0 +1,55 @@
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"아기가 태어났어. 출생신고,
+     아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_servi…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-AC3F6E6A
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:7ab1bfcc8f0b728bd86d28385b57ca765fc2d9823947559a93bc6c9bee12df00
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-F7E1534A
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:811c296612078a84994c9e7b3d70820ad651e001de4ff64671af0fa2fecf6fe0
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-94E023EA
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:827f602e278844f01c928b3ffc4e9c59fbfffee3ce62c43606c546b572e324de
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ watch(mock_rest_pull_tick_v1)
+  ⎿  구독 완료: 323399f2-a645-4e68-84fb-cc7ced8725a7 (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+⏺ 도구 결과 기준으로 처리 상태를 정리합니다.
+  - 인증: 완료
+  - 조회 mock_lookup_module_national_ax_bundle: 1건
+  - 모의 제출: 접수 · 접수번호 gov24-2026-05-06-MW-AC3F6E6A · 상태 접수완료
+  - 모의 제출: 접수 · 접수번호 gov24-2026-05-06-MW-F7E1534A · 상태 접수완료
+  - 모의 제출: 접수 · 접수번호 gov24-2026-05-06-MW-94E023EA · 상태 접수완료
+  - 알림 mock_rest_pull_tick_v1: opened
+  표시된 모의 결과는 실제 행정 효력이 없으며, 운영 전환 시 기관 공식 엔드포인트와 권한 정책을 따라야 합니다.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

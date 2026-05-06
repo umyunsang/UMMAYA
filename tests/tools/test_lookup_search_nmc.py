@@ -67,7 +67,7 @@ class TestNmcDiscoverable:
     @pytest.mark.asyncio
     async def test_nmc_discoverable_english_query(self, nmc_only_registry: ToolRegistry) -> None:
         """English query 'emergency room' must surface nmc_emergency_search."""
-        inp = LookupSearchInput(mode="search", query="emergency room bed availability")
+        inp = LookupSearchInput(mode="search", query="nearest emergency room")
         result = await lookup(inp, registry=nmc_only_registry)
 
         assert isinstance(result, LookupSearchResult)
@@ -77,10 +77,10 @@ class TestNmcDiscoverable:
         )
 
     @pytest.mark.asyncio
-    async def test_nmc_candidate_reflects_auth_required_contract(
+    async def test_nmc_candidate_reflects_read_only_contract(
         self, nmc_only_registry: ToolRegistry
     ) -> None:
-        """AdapterCandidate for NMC must reflect requires_auth=True and is_personal_data=True."""
+        """AdapterCandidate for NMC must reflect the read-only public lookup contract."""
         inp = LookupSearchInput(mode="search", query="응급실")
         result = await lookup(inp, registry=nmc_only_registry)
 
@@ -91,10 +91,9 @@ class TestNmcDiscoverable:
         candidate = nmc_candidates[0]
         assert isinstance(candidate, AdapterCandidate)
 
-        # Note: requires_auth / is_personal_data removed from GovAPITool and
-        # AdapterCandidate in Epic δ #2295 (Constitution § II cleanup).
-        # Auth semantics now expressed via policy.citizen_facing_gate.
         assert candidate.tool_id == "nmc_emergency_search"
+        assert NMC_EMERGENCY_SEARCH_TOOL.policy is not None
+        assert NMC_EMERGENCY_SEARCH_TOOL.policy.citizen_facing_gate == "read-only"
 
     @pytest.mark.asyncio
     async def test_nmc_candidate_required_params(self, nmc_only_registry: ToolRegistry) -> None:
@@ -129,7 +128,6 @@ class TestNmcDiscoverable:
     @pytest.mark.asyncio
     async def test_nmc_tool_metadata_integrity(self) -> None:
         """NMC_EMERGENCY_SEARCH_TOOL constants match the spec contract."""
-        # Note: requires_auth / is_personal_data removed in Epic δ #2295.
         assert NMC_EMERGENCY_SEARCH_TOOL.id == "nmc_emergency_search"
         assert NMC_EMERGENCY_SEARCH_TOOL.is_concurrency_safe is False
         assert NMC_EMERGENCY_SEARCH_TOOL.cache_ttl_seconds == 0

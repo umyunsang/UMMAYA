@@ -7,14 +7,16 @@ export const VERIFY_TOOL_NAME = 'verify'
 
 /** One-line citizen-facing Korean description shown to the LLM (≤ 240 chars). */
 export const DESCRIPTION =
-  '인증 어댑터에 자격증명 검증을 위임합니다. 공인인증서·간편인증·모바일신분증 등 등록된 인증 수단을 tool_id로 지정하세요. 인증 결과(auth_family·auth_level)를 반환하며 자격증명을 직접 발급하거나 저장하지 않습니다.'
+  '인증 어댑터에 scope-bound 위임을 요청합니다. 등록된 verify tool_id와 params.scope_list·purpose_ko·purpose_en을 함께 지정하세요. 결과는 후속 lookup/submit에 전달할 DelegationContext입니다.'
 
 /** Extended prompt included in the system-prompt tool-use section. */
 export const VERIFY_TOOL_PROMPT = `Delegate credential verification to a registered KOSMOS auth adapter.
 
-Input: { tool_id: string, params: object }
-  - tool_id: the auth adapter identifier (e.g. "gongdong_injeungseo", "mobile_id")
-  - params: adapter-defined credential parameter body
+Input: { tool_id: string, params: { scope_list: string[], purpose_ko: string, purpose_en: string } }
+  - tool_id: the verify adapter identifier from <verify_families> or delegation_source_tool_id metadata.
+  - params.scope_list: every downstream primitive scope this ceremony must cover.
+    Example: ["lookup:hometax.simplified", "submit:hometax.tax-return"]
+  - params.purpose_ko / params.purpose_en: bilingual purpose for the consent ledger.
 
 Output (discriminated by auth_family):
   - auth_family: "gongdong_injeungseo" | "geumyung_injeungseo" | "ganpyeon_injeung" | "digital_onepass" | "mobile_id" | "mydata"
@@ -22,7 +24,7 @@ Output (discriminated by auth_family):
     and to decide subsequent calls (e.g., "now I have AAL2, I can call this submit adapter")
 
 Rules:
-- verify NEVER mints credentials — it only delegates verification.
-- Use the auth_family in the output to plan subsequent submit or lookup calls.
-- Do NOT store or log credential values in params.
-- Layer 1 green ⓵ permission applies; no user confirmation modal for read-only verify.`
+- verify NEVER mints credentials — it requests a scope-bound DelegationContext.
+- Always pass non-empty params.scope_list, purpose_ko, and purpose_en. Never call verify with params={}.
+- Pass the returned DelegationContext into every downstream lookup/submit that requires delegation.
+- Do NOT store or log credential values in params.`

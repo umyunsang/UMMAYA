@@ -1786,6 +1786,20 @@
       "additionalProperties": false,
       "description": "backend -> TUI: a worker raises a permission request.",
       "properties": {
+        "arguments": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Display-safe primitive arguments shown in the permission prompt. Backend callers must remove DelegationContext tokens, raw session IDs, and identity internals before populating this field.",
+          "title": "Arguments"
+        },
         "correlation_id": {
           "description": "UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)",
           "minLength": 1,
@@ -2985,6 +2999,19 @@
           "description": "JSON Schema (Draft 2020-12) for the tool input. Pydantic accepts any dict shape; deeper schema validation is delegated to LLMClient.",
           "title": "Parameters",
           "type": "object"
+        },
+        "strict": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "OpenAI-compatible strict function-calling flag.",
+          "title": "Strict"
         }
       },
       "required": [

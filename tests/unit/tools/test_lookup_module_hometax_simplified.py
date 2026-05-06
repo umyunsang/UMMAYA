@@ -4,8 +4,8 @@
 Covers:
 1. Happy path: response carries six transparency fields.
 2. BM25 discovery: BM25 search for bilingual search hint keywords surfaces this tool.
-3. Scope validation (with DelegationContext): matching scope passes, mismatched rejects.
-4. No-delegation path: adapter proceeds without DelegationContext.
+3. Scope validation: matching DelegationContext scope passes, missing/mismatched rejects.
+4. No-delegation path: adapter fails closed before returning citizen tax data.
 5. Registration: adapter registers correctly in ToolRegistry + ToolExecutor.
 
 Contract: specs/2296-ax-mock-adapters/tasks.md T028
@@ -68,12 +68,15 @@ def _make_delegation_context(scope: str) -> object:
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_carries_six_transparency_fields() -> None:
-    """handle() without delegation context returns all six transparency fields.
+    """handle() with delegated scope returns all six transparency fields.
 
     LookupOutput envelope fix — transparency fields live inside ``item`` so
     the outer envelope passes ``LookupRecord`` (``extra='forbid'``) validation.
     """
-    result = await handle(_VALID_INPUT)
+    result = await handle(
+        _VALID_INPUT,
+        delegation_context=_make_delegation_context("lookup:hometax.simplified"),
+    )
     assert result["kind"] == "record", f"expected LookupRecord envelope, got {result!r}"
     item = result["item"]
     assert isinstance(item, dict)
@@ -88,28 +91,40 @@ async def test_handle_happy_path_carries_six_transparency_fields() -> None:
 @pytest.mark.asyncio
 async def test_handle_happy_path_mode_is_mock() -> None:
     """_mode is always 'mock' for Epic ε mock adapters (lives inside item)."""
-    result = await handle(_VALID_INPUT)
+    result = await handle(
+        _VALID_INPUT,
+        delegation_context=_make_delegation_context("lookup:hometax.simplified"),
+    )
     assert result["item"]["_mode"] == "mock"
 
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_reference_impl() -> None:
     """_reference_implementation is 'public-mydata-read-v240930' per spec catalog."""
-    result = await handle(_VALID_INPUT)
+    result = await handle(
+        _VALID_INPUT,
+        delegation_context=_make_delegation_context("lookup:hometax.simplified"),
+    )
     assert result["item"]["_reference_implementation"] == "public-mydata-read-v240930"
 
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_international_ref() -> None:
     """_international_reference is 'UK HMRC Making Tax Digital' per spec catalog."""
-    result = await handle(_VALID_INPUT)
+    result = await handle(
+        _VALID_INPUT,
+        delegation_context=_make_delegation_context("lookup:hometax.simplified"),
+    )
     assert result["item"]["_international_reference"] == "UK HMRC Making Tax Digital"
 
 
 @pytest.mark.asyncio
 async def test_handle_happy_path_domain_payload() -> None:
     """Happy path returns a domain payload with expected keys (inside item)."""
-    result = await handle(_VALID_INPUT)
+    result = await handle(
+        _VALID_INPUT,
+        delegation_context=_make_delegation_context("lookup:hometax.simplified"),
+    )
     item = result["item"]
     assert item.get("year") == 2024
     # The domain fixture's internal `kind` (legacy field name from the
@@ -118,6 +133,23 @@ async def test_handle_happy_path_domain_payload() -> None:
     assert item.get("kind") == "simplified_data_summary"
     assert isinstance(item.get("items"), list)
     assert len(item["items"]) > 0
+    assert item["consent_receipt"]["consent_type"] == "annual_simplified_data_bulk_provision"
+    assert item["bundle"]["data_minimization"] == "category_totals_and_issuer_summaries_only"
+
+
+@pytest.mark.asyncio
+async def test_handle_happy_path_evidence_grade() -> None:
+    """Privileged mock exposes evidence grade and inference boundary."""
+    result = await handle(
+        _VALID_INPUT,
+        delegation_context=_make_delegation_context("lookup:hometax.simplified"),
+    )
+    item = result["item"]
+    assert item["_mock_fidelity_grade"] == "B-official-consent-flow-private-payload-inferred"
+    evidence = item["_mock_evidence"]
+    assert evidence["credential_status"] == "student_no_live_authority"
+    assert "basis_urls" in evidence
+    assert "inference_boundary" in evidence
 
 
 # ---------------------------------------------------------------------------
@@ -232,15 +264,13 @@ async def test_handle_with_multi_scope_containing_required_passes() -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_without_delegation_context_proceeds() -> None:
-    """Adapter proceeds without DelegationContext (lookups are read-only)."""
+async def test_handle_without_delegation_context_fails_closed() -> None:
+    """Adapter never returns citizen tax data without DelegationContext."""
     result = await handle(_VALID_INPUT, delegation_context=None)
-    assert result.get("kind") == "record"
-    item = result["item"]
-    assert item.get("_mode") == "mock"
-    # The fixture's internal kind (마이데이터 read v240930 legacy shape) is
-    # inside `item`; the outer envelope kind is "record".
-    assert item.get("kind") == "simplified_data_summary"
+    assert result.get("kind") == "error"
+    assert result.get("reason") == "auth_required"
+    assert result.get("retryable") is False
+    assert "lookup:hometax.simplified" in str(result.get("message", ""))
 
 
 # ---------------------------------------------------------------------------
@@ -282,10 +312,10 @@ def test_tool_definition_adapter_mode_is_mock() -> None:
     assert MOCK_LOOKUP_MODULE_HOMETAX_SIMPLIFIED_TOOL.adapter_mode == "mock"
 
 
-def test_tool_definition_policy_gate_is_read_only() -> None:
-    """GovAPITool policy.citizen_facing_gate is 'read-only'."""
+def test_tool_definition_policy_gate_is_login() -> None:
+    """GovAPITool policy.citizen_facing_gate is 'login' for personal tax data."""
     assert MOCK_LOOKUP_MODULE_HOMETAX_SIMPLIFIED_TOOL.policy is not None
-    assert MOCK_LOOKUP_MODULE_HOMETAX_SIMPLIFIED_TOOL.policy.citizen_facing_gate == "read-only"
+    assert MOCK_LOOKUP_MODULE_HOMETAX_SIMPLIFIED_TOOL.policy.citizen_facing_gate == "login"
 
 
 def test_registration_duplicate_raises_error() -> None:

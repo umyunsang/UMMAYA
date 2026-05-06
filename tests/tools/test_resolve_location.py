@@ -304,6 +304,10 @@ class TestResolveCoordsAndAdmCd:
                 new=AsyncMock(return_value=None),
             ),
             patch(
+                "kosmos.tools.resolve_location._kakao_adm_cd",
+                new=AsyncMock(return_value=None),
+            ),
+            patch(
                 "kosmos.tools.resolve_location._sgis_adm_cd",
                 new=AsyncMock(return_value=None),
             ),
@@ -333,6 +337,35 @@ class TestResolveCoordsAndAdmCd:
         # strip() makes it empty
         assert isinstance(result, ResolveError)
         assert result.reason == "empty_query"
+
+    @pytest.mark.asyncio
+    async def test_online_service_name_is_not_geocoded(self):
+        inp = ResolveLocationInput(query="홈택스", want="coords_and_admcd")
+        with patch(
+            "kosmos.tools.resolve_location._kakao_coords",
+            new=AsyncMock(return_value=_COORD),
+        ) as kakao_coords:
+            result = await resolve_location(inp)
+        assert isinstance(result, ResolveError)
+        assert result.reason == "invalid_query"
+        kakao_coords.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_service_name_with_physical_location_intent_is_allowed(self):
+        inp = ResolveLocationInput(query="홈택스 세무서 위치", want="coords_and_admcd")
+        with (
+            patch(
+                "kosmos.tools.resolve_location._kakao_coords",
+                new=AsyncMock(return_value=_COORD),
+            ) as kakao_coords,
+            patch(
+                "kosmos.tools.resolve_location._juso_adm_cd",
+                new=AsyncMock(return_value=_ADM),
+            ),
+        ):
+            result = await resolve_location(inp)
+        assert isinstance(result, ResolveBundle)
+        kakao_coords.assert_awaited_once()
 
 
 # ---------------------------------------------------------------------------

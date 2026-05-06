@@ -1,0 +1,35 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 이번 달 재산세랑 자동차세, 과태료 밀린 거 있는지 확인하고 납부 가능한 건 한 번에 처리해줘.
+
+∴ Thinking — 사용자가 "이번 달 재산세랑 자동차세, 과태료 밀린 (ctrl+o to expand)
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"이번 달 재산세랑 자동차세, 과태료
+     밀린 거 있는지 확인하고 납부 가능한 건 한 번에 처리해줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_s…
+
+⏺ send(mock_traffic_fine_pay_v1)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: urn:kosmos:submit:0f4bfd290ffb0ac2cc3d64f82db36927fd9bf428b24ab458cd1eef45a18e6510
+     상태: 성공
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/traffic/fine-pay
+
+⏺ watch(mock_rest_pull_tick_v1)
+  ⎿  구독 완료: 488b4a77-b814-4656-8534-9c053ce81116 (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+· Inferring…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773                                                                                                                                                        ● high · /effort

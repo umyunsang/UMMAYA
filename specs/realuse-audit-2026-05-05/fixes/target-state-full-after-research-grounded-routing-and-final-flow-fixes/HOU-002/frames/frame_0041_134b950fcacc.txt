@@ -1,0 +1,48 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 생애최초 주택구입인데 대출, 취득세 감면, 등기, 전입까지 빠뜨리지 않게 순서대로 진행해줘.
+
+∴ Thinking — 이제 대출에 관한 정보를 제공해야 합니다. 대출 관련 공공 데이터 조회 도구가 ⟨내부⟩에 있는지 확인해야 합니다. (ctrl+o to expand)
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"생애최초 주택구입인데 대출, 취득세
+     감면, 등기, 전입까지 빠뜨리지 않게 순서대로 진행해줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_ser…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-27EFF8D8
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:e12665438dd1ec61135e2a1df3293d045334f70e33a472a7a5833e8ff2ff8330
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-1B28BD70
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:bcd8068675f0fe642fd64a561211ed59f66feefe818e8f46e428166a833187e5
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-B6D37E3D
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:55371e1110583965b5d1f56df3ad3700d7915396b8305676d414d4032afa9526
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+✽ Nebulizing…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773                                                                                                                                                        ● high · /effort

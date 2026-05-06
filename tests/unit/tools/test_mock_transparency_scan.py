@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 """T034 — Registry-wide transparency scan (FR-006 / SC-005).
 
-Parameterised over all 20 Mock adapter IDs across the four surfaces:
+Parameterised over all 21 Mock adapter IDs across the four surfaces:
   - 10 verify families  (kosmos.primitives.verify._VERIFY_ADAPTERS)
   - 5  submit adapters  (kosmos.primitives.submit._ADAPTER_REGISTRY)
   - 3  subscribe adapters via get_transparency_metadata()
-  - 2  lookup tools     (main ToolRegistry, adapter_mode='mock')
+  - 3  lookup tools     (main ToolRegistry, adapter_mode='mock')
 
 Each adapter is invoked with minimal synthetic input and the six transparency
 fields are asserted present and non-empty.
@@ -175,6 +175,16 @@ _NODELEGATION_SUBMIT_CASES: list[tuple[str, dict[str, Any]]] = [
         {"fine_reference": "FINE-SCAN-001", "payment_method": "card"},
     ),
     (
+        "mock_koroad_driver_fitness_reservation_v1",
+        {
+            "reservation_type": "fitness_test",
+            "applicant_id": "di-scan-driver-001",
+            "preferred_center": "부산남부운전면허시험장",
+            "preferred_date": "next_available",
+            "contact_channel": "sms",
+        },
+    ),
+    (
         "mock_welfare_application_submit_v1",
         {
             "applicant_id": "di-scan-001",
@@ -274,7 +284,7 @@ def test_subscribe_adapter_transparency_metadata_carries_six_fields(
 
 
 # ---------------------------------------------------------------------------
-# Lookup surface — 2 adapters in main ToolRegistry
+# Lookup surface — 3 adapters in main ToolRegistry
 # ---------------------------------------------------------------------------
 
 _LOOKUP_ADAPTER_CASES: list[tuple[str, Any, dict[str, Any]]] = []
@@ -293,10 +303,20 @@ _LOOKUP_ADAPTER_CASES: list[tuple[str, Any, dict[str, Any]]] = []
             "mock_lookup_module_gov24_certificate",
             None,  # populated inside test
         ),
+        (
+            "mock_lookup_module_gov24_movein_sequence",
+            None,  # populated inside test
+        ),
+        (
+            "mock_lookup_module_national_ax_bundle",
+            None,  # populated inside test
+        ),
     ],
     ids=[
         "mock_lookup_module_hometax_simplified",
         "mock_lookup_module_gov24_certificate",
+        "mock_lookup_module_gov24_movein_sequence",
+        "mock_lookup_module_national_ax_bundle",
     ],
 )
 @pytest.mark.asyncio
@@ -312,7 +332,10 @@ async def test_lookup_adapter_response_carries_six_transparency_fields(
         )
 
         inp = HometaxSimplifiedInput(year=2024, resident_id_prefix="851201")
-        result = await handle(inp)
+        result = await handle(
+            inp,
+            delegation_context=_make_delegation_context("lookup:hometax.simplified"),
+        )
 
     elif adapter_id == "mock_lookup_module_gov24_certificate":
         from kosmos.tools.mock.lookup_module_gov24_certificate import (
@@ -322,6 +345,36 @@ async def test_lookup_adapter_response_carries_six_transparency_fields(
 
         inp = Gov24CertificateInput(
             certificate_type="resident_registration",
+            purpose="transparency-scan-test-purpose",
+        )
+        result = await handle(
+            inp,
+            delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+        )
+
+    elif adapter_id == "mock_lookup_module_gov24_movein_sequence":
+        from kosmos.tools.mock.lookup_module_gov24_movein_sequence import (
+            Gov24MoveInSequenceInput,
+            handle,
+        )
+
+        inp = Gov24MoveInSequenceInput(
+            adm_cd="2638000000",
+            address="부산광역시 사하구 다대1동",
+        )
+        result = await handle(
+            inp,
+            delegation_context=_make_delegation_context("lookup:gov24.movein"),
+        )
+
+    elif adapter_id == "mock_lookup_module_national_ax_bundle":
+        from kosmos.tools.mock.lookup_module_national_ax_bundle import (
+            NationalAXBundleLookupInput,
+            handle,
+        )
+
+        inp = NationalAXBundleLookupInput(
+            query="운전면허 갱신 적성검사 예약 과태료 자동차세",
             purpose="transparency-scan-test-purpose",
         )
         result = await handle(inp)
@@ -355,12 +408,12 @@ async def test_lookup_adapter_response_carries_six_transparency_fields(
 
 
 # ---------------------------------------------------------------------------
-# Coverage guard — enumerates all 20 IDs explicitly
+# Coverage guard — enumerates all canonical Mock IDs explicitly
 # ---------------------------------------------------------------------------
 
 
 def _all_mock_adapter_ids() -> list[str]:
-    """Return the canonical list of all 20 Mock adapter IDs across the 4 surfaces."""
+    """Return the canonical list of all 23 Mock adapter IDs across the 4 surfaces."""
     return (
         _ALL_VERIFY_FAMILIES
         + _ALL_SUBMIT_IDS
@@ -368,14 +421,16 @@ def _all_mock_adapter_ids() -> list[str]:
         + [
             "mock_lookup_module_hometax_simplified",
             "mock_lookup_module_gov24_certificate",
+            "mock_lookup_module_gov24_movein_sequence",
+            "mock_lookup_module_national_ax_bundle",
         ]
     )
 
 
-def test_canonical_mock_adapter_count_is_20() -> None:
-    """Guard: canonical mock adapter list must total exactly 20 entries."""
+def test_canonical_mock_adapter_count_is_23() -> None:
+    """Guard: canonical mock adapter list must total exactly 23 entries."""
     ids = _all_mock_adapter_ids()
-    assert len(ids) == 20, f"Expected 20 canonical Mock adapter IDs, got {len(ids)}. IDs: {ids}"
+    assert len(ids) == 23, f"Expected 23 canonical Mock adapter IDs, got {len(ids)}. IDs: {ids}"
     assert len(set(ids)) == len(ids), (
         "Duplicate adapter IDs detected in canonical list — each adapter must "
         f"appear exactly once. Duplicates: "

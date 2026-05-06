@@ -12,10 +12,10 @@ export const DESCRIPTION =
 /** Extended prompt included in the system-prompt tool-use section. */
 export const SUBSCRIBE_TOOL_PROMPT = `Subscribe to a streaming KOSMOS adapter and receive a session-lifetime handle.
 
-Input: { tool_id: string, params: object, lifetime_hint?: "session"|"short"|"long" }
+Input: { tool_id: string, params: object, lifetime_seconds?: number }
   - tool_id: the streaming adapter identifier (obtain via lookup mode=search first)
   - params: adapter-defined Pydantic-validated subscription parameter body
-  - lifetime_hint: requested handle lifetime — "session" (default), "short" (≤5 min), "long" (≤24 h)
+  - lifetime_seconds: bounded handle lifetime in seconds — default 300 if omitted; maximum 31,536,000 (365 days)
 
 Output: { handle_id: string, lifetime: string, kind: string }
   - handle_id: opaque subscription handle recorded in the audit ledger (Spec 024)
@@ -28,4 +28,4 @@ Rules:
 - subscribe is session-scoped and side-effecting — not concurrency safe.
 - Use handle_id to reference the subscription in follow-up lookup or subscribe calls.
 - Layer 2 orange ⓶ permission gauntlet executes before adapter dispatch.
-- prefer "session" lifetime_hint unless the user explicitly requests longer.`
+- prefer 300 seconds unless the user explicitly requests a longer bounded lifetime.`

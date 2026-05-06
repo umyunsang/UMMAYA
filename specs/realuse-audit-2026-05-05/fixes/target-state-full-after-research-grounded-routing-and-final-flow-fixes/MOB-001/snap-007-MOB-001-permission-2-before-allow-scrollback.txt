@@ -1,0 +1,47 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 운전면허 갱신해야 하는지 확인하고 적성검사 예약, 과태료, 자동차세까지 같이 봐줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"운전면허 갱신해야 하는지 확인하고
+     적성검사 예약, 과태료, 자동차세까지 같이 봐줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_service_…
+
+⏺ send(mock_koroad_driver_fitness_reservation_v1)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: koroad-resv-fb674b334338
+     상태: 성공
+     트랜잭션: urn:kosmos:submit:0bbda69c45ff0a54dafae735cfa9bb0ab4b7667d85e15005d6853485950c54d2
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/koroad/driver-fitness-reservation
+
+⏺ send(mock_traffic_fine_pay_v1)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   send(
+   {
+     "tool_id": "mock_traffic_fine_pay_v1",
+     "params": {
+       "fine_reference": "mock-fine-reference",
+       "payment_method": "virtual_account"
+     }
+   }
+   )
+   Submit data to a government API. This action is irreversible.
+   정부 API에 데이터를 제출합니다. 이 작업은 되돌릴 수 없습니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for send commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

@@ -1,0 +1,22 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 등록금이 부담돼. 국가장학금, 학자금대출, 근로장학 중 내가 신청할 수 있는 걸 찾아서 진행해줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"등록금이 부담돼. 국가장학금,
+     학자금대출, 근로장학 중 내가 신청할 수 있는 걸 찾아서 진행해줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_…
+
+✻ Grooving…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773                                                                                                                                                        ● high · /effort

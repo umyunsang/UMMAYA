@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """B1 — LookupOutput envelope contract regression for lookup mock adapters.
 
-Reproduces the snap-S8-002 regression where the two ``primitive='lookup'``
-mock adapters (``mock_lookup_module_gov24_certificate`` /
-``mock_lookup_module_hometax_simplified``) returned a flat stamped dict
+Reproduces the snap-S8-002 regression where ``primitive='lookup'`` mock
+adapters returned a flat stamped dict
 without the ``kind`` discriminator, causing
 ``EnvelopeNormalizationError: tagged-union[…] Unable to extract tag``
 inside ``kosmos.tools.envelope.normalize`` and triggering 2× LLM retry.
@@ -26,6 +25,7 @@ Linked surfaces:
   - ``src/kosmos/tools/envelope.py`` — normalize() / TypeAdapter.
   - ``src/kosmos/tools/mock/lookup_module_gov24_certificate.py`` (fix B1).
   - ``src/kosmos/tools/mock/lookup_module_hometax_simplified.py`` (fix B1).
+  - ``src/kosmos/tools/mock/lookup_module_gov24_movein_sequence.py``.
 """
 
 from __future__ import annotations
@@ -40,6 +40,13 @@ from kosmos.tools.mock.lookup_module_gov24_certificate import (
 )
 from kosmos.tools.mock.lookup_module_gov24_certificate import (
     handle as gov24_handle,
+)
+from kosmos.tools.mock.lookup_module_gov24_movein_sequence import (
+    MOCK_LOOKUP_MODULE_GOV24_MOVEIN_SEQUENCE_TOOL,
+    Gov24MoveInSequenceInput,
+)
+from kosmos.tools.mock.lookup_module_gov24_movein_sequence import (
+    handle as movein_handle,
 )
 from kosmos.tools.mock.lookup_module_hometax_simplified import (
     MOCK_LOOKUP_MODULE_HOMETAX_SIMPLIFIED_TOOL,
@@ -65,6 +72,11 @@ _HOMETAX_INPUT = HometaxSimplifiedInput(
     resident_id_prefix="851201",
 )
 
+_MOVEIN_INPUT = Gov24MoveInSequenceInput(
+    adm_cd="2638000000",
+    address="부산 사하구 다대1동",
+)
+
 
 # ---------------------------------------------------------------------------
 # 1. Happy-path envelope shape — kind discriminator + item wrap.
@@ -74,7 +86,10 @@ _HOMETAX_INPUT = HometaxSimplifiedInput(
 @pytest.mark.asyncio
 async def test_gov24_handle_returns_record_envelope() -> None:
     """gov24 happy path returns ``{"kind": "record", "item": {...}}``."""
-    out = await gov24_handle(_GOV24_INPUT)
+    out = await gov24_handle(
+        _GOV24_INPUT,
+        delegation_context=_delegation("lookup:gov24.certificate"),
+    )
 
     assert isinstance(out, dict), f"handle() must return dict, got {type(out).__name__}"
     assert out.get("kind") == "record", (
@@ -91,7 +106,10 @@ async def test_gov24_handle_returns_record_envelope() -> None:
 @pytest.mark.asyncio
 async def test_hometax_handle_returns_record_envelope() -> None:
     """hometax happy path returns ``{"kind": "record", "item": {...}}``."""
-    out = await hometax_handle(_HOMETAX_INPUT)
+    out = await hometax_handle(
+        _HOMETAX_INPUT,
+        delegation_context=_delegation("lookup:hometax.simplified"),
+    )
 
     assert isinstance(out, dict), f"handle() must return dict, got {type(out).__name__}"
     assert out.get("kind") == "record", (
@@ -105,7 +123,24 @@ async def test_hometax_handle_returns_record_envelope() -> None:
     assert item["year"] == 2024
     assert item["kind"] == "simplified_data_summary"
     assert isinstance(item["items"], list)
-    assert len(item["items"]) == 3
+    assert len(item["items"]) >= 3
+
+
+@pytest.mark.asyncio
+async def test_gov24_movein_handle_returns_record_envelope() -> None:
+    """move-in sequence happy path returns ``{"kind": "record", "item": {...}}``."""
+    out = await movein_handle(
+        _MOVEIN_INPUT,
+        delegation_context=_delegation("lookup:gov24.movein"),
+    )
+
+    assert isinstance(out, dict), f"handle() must return dict, got {type(out).__name__}"
+    assert out.get("kind") == "record"
+    assert isinstance(out.get("item"), dict), "item must be a dict[str, object]"
+    item = out["item"]
+    assert item["workflow_kind"] == "gov24_movein_dependent_sequence"
+    assert item["required_sequence"][0]["minwon_type"] == "전입신고"
+    assert item["required_sequence"][1]["minwon_type"] == "주소변경"
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +151,10 @@ async def test_hometax_handle_returns_record_envelope() -> None:
 @pytest.mark.asyncio
 async def test_gov24_envelope_normalize_passes() -> None:
     """gov24 handle() output passes ``envelope.normalize()`` cleanly."""
-    raw = await gov24_handle(_GOV24_INPUT)
+    raw = await gov24_handle(
+        _GOV24_INPUT,
+        delegation_context=_delegation("lookup:gov24.certificate"),
+    )
     validated = normalize(
         output=raw,
         tool=MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL,
@@ -143,7 +181,10 @@ async def test_gov24_envelope_normalize_passes() -> None:
 @pytest.mark.asyncio
 async def test_hometax_envelope_normalize_passes() -> None:
     """hometax handle() output passes ``envelope.normalize()`` cleanly."""
-    raw = await hometax_handle(_HOMETAX_INPUT)
+    raw = await hometax_handle(
+        _HOMETAX_INPUT,
+        delegation_context=_delegation("lookup:hometax.simplified"),
+    )
     validated = normalize(
         output=raw,
         tool=MOCK_LOOKUP_MODULE_HOMETAX_SIMPLIFIED_TOOL,
@@ -166,6 +207,27 @@ async def test_hometax_envelope_normalize_passes() -> None:
     assert validated.item["_mode"] == "mock"
     assert validated.item["_reference_implementation"] == "public-mydata-read-v240930"
     assert validated.item["_international_reference"] == "UK HMRC Making Tax Digital"
+
+
+@pytest.mark.asyncio
+async def test_gov24_movein_envelope_normalize_passes() -> None:
+    """move-in sequence handle() output passes ``envelope.normalize()`` cleanly."""
+    raw = await movein_handle(
+        _MOVEIN_INPUT,
+        delegation_context=_delegation("lookup:gov24.movein"),
+    )
+    validated = normalize(
+        output=raw,
+        tool=MOCK_LOOKUP_MODULE_GOV24_MOVEIN_SEQUENCE_TOOL,
+        request_id="test-request-gov24-movein-0001",
+        elapsed_ms=11,
+    )
+
+    assert isinstance(validated, LookupRecord)
+    assert validated.kind == "record"
+    assert validated.meta.source == "mock_lookup_module_gov24_movein_sequence"
+    assert validated.item["workflow_kind"] == "gov24_movein_dependent_sequence"
+    assert validated.item["_mode"] == "mock"
 
 
 # ---------------------------------------------------------------------------
@@ -246,6 +308,31 @@ async def test_hometax_scope_violation_returns_error_envelope() -> None:
     assert validated.meta.source == "mock_lookup_module_hometax_simplified"
 
 
+@pytest.mark.asyncio
+async def test_gov24_movein_scope_violation_returns_error_envelope() -> None:
+    """Wrong-scope delegation on move-in lookup produces a clean LookupError."""
+    raw = await movein_handle(
+        _MOVEIN_INPUT,
+        delegation_context=_delegation("submit:gov24.minwon"),
+    )
+
+    assert raw["kind"] == "error"
+    assert raw["reason"] == LookupErrorReason.auth_required.value
+
+    validated = normalize(
+        output=raw,
+        tool=MOCK_LOOKUP_MODULE_GOV24_MOVEIN_SEQUENCE_TOOL,
+        request_id="test-scope-violation-movein-0001",
+        elapsed_ms=5,
+    )
+    assert isinstance(validated, KosmosLookupError)
+    assert validated.kind == "error"
+    assert validated.reason == LookupErrorReason.auth_required
+    assert validated.retryable is False
+    assert validated.meta is not None
+    assert validated.meta.source == "mock_lookup_module_gov24_movein_sequence"
+
+
 # ---------------------------------------------------------------------------
 # 4. End-to-end integration through the lookup primitive
 #    LookupFetchInput → lookup() → executor.invoke() → mock handle()
@@ -260,6 +347,9 @@ def registry_with_mocks():
     from kosmos.tools.mock.lookup_module_gov24_certificate import (
         register as register_gov24,
     )
+    from kosmos.tools.mock.lookup_module_gov24_movein_sequence import (
+        register as register_movein,
+    )
     from kosmos.tools.mock.lookup_module_hometax_simplified import (
         register as register_hometax,
     )
@@ -269,6 +359,7 @@ def registry_with_mocks():
     executor = ToolExecutor(registry)
     register_gov24(registry, executor)
     register_hometax(registry, executor)
+    register_movein(registry, executor)
     return registry, executor
 
 
@@ -287,6 +378,7 @@ async def test_primitive_lookup_fetch_gov24_returns_typed_record(
         params={
             "certificate_type": "resident_registration",
             "purpose": "금융기관 제출용",
+            "delegation_context": _delegation("lookup:gov24.certificate"),
         },
     )
     result = await lookup(inp, executor=executor, session_identity="test-session")
@@ -318,7 +410,11 @@ async def test_primitive_lookup_fetch_hometax_returns_typed_record(
     inp = LookupFetchInput(
         mode="fetch",
         tool_id="mock_lookup_module_hometax_simplified",
-        params={"year": 2024, "resident_id_prefix": "851201"},
+        params={
+            "year": 2024,
+            "resident_id_prefix": "851201",
+            "delegation_context": _delegation("lookup:hometax.simplified"),
+        },
     )
     result = await lookup(inp, executor=executor, session_identity="test-session")
 
@@ -330,4 +426,32 @@ async def test_primitive_lookup_fetch_hometax_returns_typed_record(
     assert result.item["year"] == 2024
     assert result.item["kind"] == "simplified_data_summary"
     assert isinstance(result.item["items"], list)
+    assert result.item["_mode"] == "mock"
+
+
+@pytest.mark.asyncio
+async def test_primitive_lookup_fetch_gov24_movein_returns_typed_record(
+    registry_with_mocks: tuple[object, object],
+) -> None:
+    """End-to-end: move-in sequence mock surfaces a typed LookupRecord."""
+    from kosmos.tools.lookup import lookup
+    from kosmos.tools.models import LookupFetchInput
+
+    _registry, executor = registry_with_mocks
+    inp = LookupFetchInput(
+        mode="fetch",
+        tool_id="mock_lookup_module_gov24_movein_sequence",
+        params={
+            "adm_cd": "2638000000",
+            "address": "부산 사하구 다대1동",
+            "delegation_context": _delegation("lookup:gov24.movein"),
+        },
+    )
+    result = await lookup(inp, executor=executor, session_identity="test-session")
+
+    assert isinstance(result, LookupRecord)
+    assert result.kind == "record"
+    assert result.meta.source == "mock_lookup_module_gov24_movein_sequence"
+    assert result.item["workflow_kind"] == "gov24_movein_dependent_sequence"
+    assert result.item["required_sequence"][0]["minwon_type"] == "전입신고"
     assert result.item["_mode"] == "mock"

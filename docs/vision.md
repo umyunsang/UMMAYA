@@ -89,6 +89,9 @@ KOSMOS adapts architectural patterns from the conversational AI agent ecosystem 
 | AutoGen (`microsoft/autogen`) | MIT | AgentRuntime mailbox IPC, InterventionHandler for permission interception, cooperative cancellation |
 | Anthropic Cookbook (`anthropic-cookbook`) | MIT | Orchestrator-workers pattern, multi-agent coordination examples |
 | Anthropic, OpenAI official documentation | Public | Tool use protocols, prompt caching, context window management |
+| OpenAI Tool Search (`tools-tool-search`) | Public | Deferred tool-definition loading, client-executed tool discovery, cache-preserving late context injection for large catalogs |
+| Anthropic Tool Search | Public | Deferred client tools with BM25 / regex search over names, descriptions, argument names, and argument descriptions |
+| Model Context Protocol spec + Registry | Public / Apache-2.0 | Tool definition schema, behavior annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`), registry validation and namespace ownership patterns |
 | Ink (`vadimdemedes/ink`) | MIT | React-based terminal UI framework — Claude Code's TUI framework |
 | Gemini CLI (`google-gemini/gemini-cli`) | Apache-2.0 | Full Ink + React + Yoga TUI implementation, component hierarchy, hooks, themes |
 | Claude Code sourcemap (`ChinaSiro/claude-code-sourcemap`) | Reconstructed | Tool loop internals, permission model, context assembly, TUI component structure |
@@ -99,7 +102,9 @@ KOSMOS adapts architectural patterns from the conversational AI agent ecosystem 
 | NeMo Guardrails (`NVIDIA/NeMo-Guardrails`) | Apache-2.0 | Colang 2.0 declarative tool-call validation rails — whitelist-of-approved-actions model, auditable policy language for PIPA compliance |
 | Google ADK (`google/adk-python`) | Apache-2.0 | Runner-level plugin pattern for centralized permission enforcement, reflect-and-retry tool failure handling |
 | LangGraph (`langchain-ai/langgraph`) | MIT | `RetryPolicy` per-node exponential backoff, `ToolNode(handle_tool_errors=True)` — Pydantic `ValidationError` fail-closed lesson at tool boundary |
+| LangChain Tools / ToolNode | MIT | Tool descriptions and type hints as model-visible schemas; graph execution node as controlled boundary for tool errors, state injection, and parallel dispatch |
 | Mastra (`mastra-ai/mastra`) | Apache-2.0 | TypeScript agent framework — typed tool workflow graphs with loops, branching, human-in-the-loop (reference only; not used for Phase 2 TUI after ADR-003/004) |
+| AnyTool / ToolLLM / API-Bank / ToolSandbox | Open access | Large-tool-catalog evaluation lessons: retrieval-first selection, argument validity, state dependency, canonicalization, insufficient-information, and trajectory-level scoring |
 | Korean Public APIs index (`yybmion/public-apis-4Kr`) | MIT | Curated `data.go.kr` API discovery index with auth type annotations — tool registry `search_hint` population |
 | stamina (`hynek/stamina`) | MIT | Production-grade async retry with enforced jitter and capped backoff — Layer 6 retry policy foundation |
 | aiobreaker (`arlyon/aiobreaker`) | MIT | Asyncio-native circuit breaker for per-API failure isolation — Layer 6 circuit breaker pattern |

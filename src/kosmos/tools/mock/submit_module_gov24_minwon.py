@@ -59,6 +59,30 @@ _ACTUAL_ENDPOINT: Final = "https://api.gateway.kosmos.gov.kr/v1/submit/gov24/min
 _SECURITY_WRAPPING: Final = "OAuth2.1 + mTLS + scope-bound bearer + 행정안전부 OAuth gateway"
 _POLICY_AUTHORITY: Final = "https://www.gov.kr/portal/service/serviceList"
 _INTERNATIONAL_REF: Final = "Singapore APEX"
+_MOCK_FIDELITY_GRADE: Final = "B-official-api-onboarding-private-submit-spec-inferred"
+_MOCK_EVIDENCE: Final[dict[str, Any]] = {
+    "credential_status": "student_no_live_authority",
+    "basis_urls": [
+        "https://www.dpaper.kr/ewp/smm/intrcn.do",
+        "https://www.dpaper.kr/ewp/busiAccountUrl.do",
+        "https://www.apex.gov.sg/",
+    ],
+    "supports": [
+        "official electronic certificate API application and approval path",
+        "official electronic document wallet service terms and wallet address concept",
+        "central government API hub pattern for secure API onboarding and monitoring",
+    ],
+    "inference_boundary": (
+        "The 민원 submit operation schema is gated behind approved institution access; "
+        "KOSMOS mirrors the official onboarding and document lifecycle, not live forms."
+    ),
+    "live_swap_requirements": [
+        "MOIS or Government24 API approval",
+        "server certificate and portal account",
+        "development API key and successful test-result review",
+        "operation API key and service-specific 민원 schema",
+    ],
+}
 
 # Required delegation scope for this adapter
 _REQUIRED_SCOPE: Final = "submit:gov24.minwon"
@@ -83,6 +107,31 @@ class Gov24MinwonParams(BaseModel):
         "건강보험료납부확인서",
         "인감증명서",
         "사업자등록증명",
+        "전입신고",
+        "주소변경",
+        "임대차신고",
+        "확정일자",
+        "취득세감면",
+        "소유권이전등기",
+        "전학신청",
+        "돌봄신청",
+        "출생신고",
+        "아동수당",
+        "첫만남이용권",
+        "영업신고",
+        "모바일신분증발급",
+        "인증수단연결",
+        "워크넷등록",
+        "고용센터예약",
+        "체류기간연장",
+        "방문예약",
+        "사망신고",
+        "국민연금유족급여",
+        "4대보험신고",
+        "근로계약",
+        "피해신고",
+        "재난피해신고",
+        "재난지원금",
     ] = Field(
         description="Type of civil petition document being requested.",
     )
@@ -181,12 +230,16 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
                 security_wrapping_pattern=_SECURITY_WRAPPING,
                 policy_authority=_POLICY_AUTHORITY,
                 international_reference=_INTERNATIONAL_REF,
+                mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+                mock_evidence=_MOCK_EVIDENCE,
             ),
         )
 
     # Success path — produce synthetic 접수번호
     suffix = secrets.token_hex(4).upper()
-    receipt_id = f"gov24-{datetime.now(_SEOUL_TZ).strftime('%Y-%m-%d')}-MW-{suffix}"
+    now = datetime.now(_SEOUL_TZ)
+    receipt_id = f"gov24-{now.strftime('%Y-%m-%d')}-MW-{suffix}"
+    received_at = now.isoformat()
 
     logger.debug(
         "mock_submit_module_gov24_minwon: success, receipt_id=%s minwon_type=%s",
@@ -219,6 +272,30 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
                 "minwon_type": typed.minwon_type,
                 "delivery_method": typed.delivery_method,
                 "status": "접수완료",
+                "application_flow": [
+                    "verify_delegation_scope",
+                    "validate_citizen_identity_and_request_payload",
+                    "route_to_issuing_authority",
+                    "issue_or_stage_electronic_document",
+                    "deliver_to_requested_channel",
+                    "record_receipt",
+                ],
+                "api_onboarding_assumptions": {
+                    "server_certificate_required": True,
+                    "portal_account_required": True,
+                    "development_api_key_required": True,
+                    "operation_api_key_required": True,
+                },
+                "wallet_delivery": {
+                    "wallet_address": "mock-wallet-address-not-routable",
+                    "document_ref": f"mock-gov24-document-{suffix.lower()}",
+                    "integrity": "fixture_only_not_cryptographic",
+                },
+                "status_history": [
+                    {"status": "received", "at": received_at},
+                    {"status": "routed_to_issuer", "at": received_at},
+                    {"status": "accepted", "at": received_at},
+                ],
                 "mock": True,
             },
             reference_implementation=_REFERENCE_IMPL,
@@ -226,6 +303,8 @@ async def invoke(params: dict[str, Any]) -> SubmitOutput:
             security_wrapping_pattern=_SECURITY_WRAPPING,
             policy_authority=_POLICY_AUTHORITY,
             international_reference=_INTERNATIONAL_REF,
+            mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+            mock_evidence=_MOCK_EVIDENCE,
         ),
     )
 
@@ -246,8 +325,78 @@ REGISTRATION = AdapterRegistration(
     cache_ttl_seconds=0,
     rate_limit_per_minute=10,
     search_hint={
-        "ko": ["정부24", "민원", "주민등록등본", "가족관계증명서", "민원신청"],
-        "en": ["government24", "civil petition", "resident certificate", "document request"],
+        "ko": [
+            "정부24",
+            "민원",
+            "민원신청",
+            "주민등록등본",
+            "가족관계증명서",
+            "전입신고",
+            "이사민원",
+            "주소변경",
+            "자동차주소",
+            "건강보험주소",
+            "학교배정",
+            "전학신청",
+            "학교전학",
+            "돌봄신청",
+            "초등돌봄",
+            "방과후돌봄",
+            "아이돌봄",
+            "출생신고",
+            "아동수당",
+            "첫만남이용권",
+            "영업신고",
+            "모바일신분증발급",
+            "인증수단연결",
+            "워크넷등록",
+            "고용센터예약",
+            "체류기간연장",
+            "사망신고",
+            "장례지원",
+            "국민연금유족급여",
+            "4대보험신고",
+            "근로계약",
+            "직원채용",
+            "재난피해신고",
+            "피해신고",
+            "침수피해",
+            "재난지원금",
+            "임시주거",
+            "전기가스안전점검",
+            "외국인등록",
+            "전자민원",
+            "방문예약",
+            "출입국예약",
+            "외국인등록예약",
+            "전자민원예약",
+            "임대차신고",
+            "확정일자",
+            "전세보증",
+            "생애최초",
+            "주택구입",
+            "취득세감면",
+            "소유권이전등기",
+        ],
+        "en": [
+            "government24",
+            "civil petition",
+            "resident certificate",
+            "document request",
+            "move-in report",
+            "address change",
+            "lease report",
+            "fixed date confirmation",
+            "jeonse guarantee",
+            "first home purchase",
+            "acquisition tax reduction",
+            "property registration",
+            "school transfer",
+            "after-school care",
+            "child care application",
+            "immigration reservation",
+            "alien registration reservation",
+        ],
     },
     auth_type="oauth",
     nonce=_ADAPTER_NONCE,

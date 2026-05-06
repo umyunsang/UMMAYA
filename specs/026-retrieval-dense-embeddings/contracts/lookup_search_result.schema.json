@@ -2,12 +2,108 @@
   "$defs": {
     "AdapterCandidate": {
       "additionalProperties": false,
-      "description": "A single search-result entry from lookup(mode='search').",
+      "description": "A single search-result entry from lookup(mode='search').\n\nEpic ζ #2297 path B (live smoke 2026-04-30 follow-up) — extended with\nfull per-domain REST schema metadata so the LLM can read each adapter's\nparameter descriptions, types, patterns, and constraints WITHOUT a\nsecond round-trip. Each domain API has different parameter names and\nstructures (KOROAD adm_cd+year vs KMA base_date+base_time vs hometax\ndelegation_context+payload); the LLM uses ``input_schema_json`` to\njudge what to fill per domain.",
       "properties": {
-        "is_personal_data": {
-          "default": false,
-          "title": "Is Personal Data",
-          "type": "boolean"
+        "adapter_mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "live",
+                "mock"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Runtime source mode copied from GovAPITool.adapter_mode. The LLM uses this as transparency metadata, not as a routing key.",
+          "title": "Adapter Mode"
+        },
+        "citizen_facing_gate": {
+          "anyOf": [
+            {
+              "enum": [
+                "read-only",
+                "login",
+                "action",
+                "sign",
+                "submit"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "AdapterRealDomainPolicy.citizen_facing_gate from the registered tool. The LLM uses this to decide whether a prior verify DelegationContext is required before invocation.",
+          "title": "Citizen Facing Gate"
+        },
+        "delegation_source_tool_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Adapter-declared verify tool that can issue the DelegationContext needed by this candidate, when applicable.",
+          "title": "Delegation Source Tool Id"
+        },
+        "input_schema_json": {
+          "additionalProperties": true,
+          "description": "Full Pydantic JSON Schema (Draft 2020-12) of the adapter's input_schema, including per-field description / type / pattern / examples / ge-le constraints. The LLM reads this to fill params according to the domain API's REST shape.",
+          "title": "Input Schema Json",
+          "type": "object"
+        },
+        "llm_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Adapter usage prose (rich than search_hint). Includes ordering rules, prerequisites, scope_list semantics, and worked examples when applicable.",
+          "title": "Llm Description"
+        },
+        "output_schema_json": {
+          "additionalProperties": true,
+          "description": "Full Pydantic JSON Schema of the adapter's output_schema. Helpful for the LLM to anticipate the shape of the result.",
+          "title": "Output Schema Json",
+          "type": "object"
+        },
+        "primitive": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primitive root this adapter binds to (lookup / verify / submit / subscribe / resolve_location).",
+          "title": "Primitive"
+        },
+        "real_classification_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Agency-published policy URL the adapter cites (KOSMOS does not invent permission classifications).",
+          "title": "Real Classification Url"
         },
         "required_params": {
           "items": {
@@ -15,11 +111,6 @@
           },
           "title": "Required Params",
           "type": "array"
-        },
-        "requires_auth": {
-          "default": false,
-          "title": "Requires Auth",
-          "type": "boolean"
         },
         "score": {
           "minimum": 0,

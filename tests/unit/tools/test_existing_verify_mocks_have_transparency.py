@@ -86,3 +86,16 @@ def test_digital_onepass_is_not_in_existing_mocks() -> None:
             f"verify_digital_onepass should have been deleted (FR-004) but found in mock list: "
             f"{module_path}"
         )
+
+
+def test_verify_mydata_has_evidence_grade() -> None:
+    """MyData verify mock exposes evidence metadata for private credential requirements."""
+    from kosmos.tools.mock.verify_mydata import invoke
+
+    result = invoke({})
+    dumped = result.model_dump(by_alias=True)
+    assert dumped["_mock_fidelity_grade"] == (
+        "B-public-mydata-standard-private-credential-required"
+    )
+    assert dumped["_mock_evidence"]["credential_status"] == "student_no_live_authority"
+    assert "live_swap_requirements" in dumped["_mock_evidence"]

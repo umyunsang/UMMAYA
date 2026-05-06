@@ -23,8 +23,7 @@ import type { Command } from '../../commands.js'
 const fork = {
   type: 'local-jsx',
   name: 'fork',
-  // Citizen-facing description in English; the localized short-text comes
-  // from the UI L2 catalog entry (tui/src/commands/catalog.ts).
+  // Citizen-facing description in English.
   description: 'Fork the current conversation into a new session',
   argumentHint: '[name]',
   // Re-use the branch handler. branch.ts:createFork() generates a new UUID,

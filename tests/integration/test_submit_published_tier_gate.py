@@ -157,6 +157,21 @@ async def test_submit_with_matching_tier_passes_gate(
     assert result is None, "Matching tier must return None (gate passes — no rejection)"
 
 
+@pytest.mark.asyncio
+async def test_submit_with_ax_module_aal3_tier_satisfies_aal2_gate(
+    tier_gated_registration: AdapterRegistration,
+) -> None:
+    """AX-channel AAL3 verify tiers are recognised and satisfy lower AAL2 gates."""
+    from kosmos.primitives.submit import check_tier_gate
+
+    auth_ctx = _MinimalAuthContext(published_tier="modid_aal3")
+    result = check_tier_gate(
+        registration=tier_gated_registration,
+        auth_context=auth_ctx,
+    )
+    assert result is None, "A recognised AAL3 module tier must satisfy an AAL2 gate"
+
+
 # ---------------------------------------------------------------------------
 # T020-D: Adapter with no tier minimum → always passes gate
 # ---------------------------------------------------------------------------

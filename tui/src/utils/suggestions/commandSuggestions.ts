@@ -7,31 +7,6 @@ import {
 } from '../../commands.js'
 import type { SuggestionItem } from '../../components/PromptInput/PromptInputFooterSuggestions.js'
 import { getSkillUsageScore } from './skillUsageTracking.js'
-// KOSMOS P0-2: single-stack slash suggestions — only catalog commands are shown.
-// The CC Fuse infrastructure is preserved for directory / @ / resume completions.
-import { UI_L2_SLASH_COMMANDS } from '../../commands/catalog.js'
-
-/** Set of command names that citizens are allowed to discover via the dropdown. */
-const KOSMOS_CITIZEN_COMMAND_NAMES: ReadonlySet<string> = new Set(
-  UI_L2_SLASH_COMMANDS.filter(e => !e.hidden).map(e =>
-    // catalog entries are prefixed with '/' but Command.name is not.
-    e.name.startsWith('/') ? e.name.slice(1) : e.name,
-  ),
-)
-
-/**
- * Filter a commands array to only those in the KOSMOS citizen catalog.
- * Used by generateCommandSuggestions so that the CC Fuse dropdown never
- * surfaces dev-only commands like /speckit-*, /add-dir, /doctor, /review.
- */
-function filterToKosmosCommands(commands: Command[]): Command[] {
-  return commands.filter(cmd => {
-    const name = getCommandName(cmd)
-    // Catalog contains multi-word entries like "consent list" (normalized below)
-    const base = name.split(' ')[0]!
-    return KOSMOS_CITIZEN_COMMAND_NAMES.has(name) || KOSMOS_CITIZEN_COMMAND_NAMES.has(base)
-  })
-}
 
 // Treat these characters as word separators for command search
 const SEPARATORS = /[:_-]/g
@@ -328,43 +303,11 @@ export function generateCommandSuggestions(
     return []
   }
 
-  // KOSMOS P0-2: restrict dropdown to citizen-facing catalog entries only.
-  // This prevents CC dev commands (/speckit-*, /add-dir, /doctor, /review …)
-  // from appearing in the autocomplete dropdown.
-  const citizenCommands = filterToKosmosCommands(commands)
-
   const query = input.slice(1).toLowerCase().trim()
-
-  // KOSMOS Wave-2 G7 (audit specs/realuse-audit-2026-05-05;
-  // F-alpha-03 / F-alpha-14 / F-delta-08): once the citizen has typed at
-  // least one character after `/`, surface ONLY entries whose canonical
-  // name starts with that prefix. The CC Fuse path (still reached for the
-  // bare-`/` branch below) admits fuzzy matches against descriptions and
-  // aliases — that pulled in unrelated commands (`/he` → /branch /fork
-  // /export), and let `/branch`'s `aliases: ['fork']` collide with a typed
-  // `/fork`. matchPrefix() in commands/catalog.ts is the strict SSOT
-  // (UI-B.6 + audit P-B pattern); we replicate it here against the live
-  // citizenCommands array so plugin-installed catalog entries are still
-  // surfaced. Audit ref: specs/realuse-audit-2026-05-05/research/g7-autocomplete.md.
-  if (query !== '') {
-    const prefixCommands = citizenCommands.filter(cmd => {
-      if (cmd.isHidden) return false
-      const name = getCommandName(cmd).toLowerCase()
-      return name.startsWith(query)
-    })
-    // Stable alphabetical ordering so selectedSuggestion=0 is deterministic
-    // for both human and PTY-smoke verification (closes F-alpha-14 selectedIndex
-    // drift — `/fork` Enter dispatched `/branch` because the Fuse sort placed
-    // an alias-matched candidate adjacent to the exact-name match).
-    prefixCommands.sort((a, b) =>
-      getCommandName(a).localeCompare(getCommandName(b)),
-    )
-    return prefixCommands.map(cmd => createCommandSuggestionItem(cmd))
-  }
 
   // When just typing '/' without additional text
   if (query === '') {
-    const visibleCommands = citizenCommands.filter(cmd => !cmd.isHidden)
+    const visibleCommands = commands.filter(cmd => !cmd.isHidden)
 
     // Find recently used skills (only prompt commands have usage tracking)
     const recentlyUsed: Command[] = []
@@ -437,24 +380,27 @@ export function generateCommandSuggestions(
   }
 
   // The Fuse index filters isHidden at build time and is keyed on the
-  // (memoized) citizenCommands array identity, so a command that is hidden
-  // when Fuse first builds stays invisible to Fuse for the whole session.
-  // If the user types the exact name of a currently-hidden command, prepend
-  // it to the Fuse results so exact-name always wins over weak description
-  // fuzzy matches — but only when no visible command shares the name.
-  let hiddenExact = citizenCommands.find(
+  // (memoized) commands array identity, so a command that is hidden when Fuse
+  // first builds stays invisible to Fuse for the whole session. If the user
+  // types the exact name of a currently-hidden command, prepend it to the
+  // Fuse results so exact-name always wins over weak description fuzzy
+  // matches — but only when no visible command shares the name (that would
+  // be the user's explicit override and should win). Prepend rather than
+  // early-return so visible prefix siblings (e.g. /voice-memo) still appear
+  // below, and getBestCommandMatch can still find a non-empty suffix.
+  let hiddenExact = commands.find(
     cmd => cmd.isHidden && getCommandName(cmd).toLowerCase() === query,
   )
   if (
     hiddenExact &&
-    citizenCommands.some(
+    commands.some(
       cmd => !cmd.isHidden && getCommandName(cmd).toLowerCase() === query,
     )
   ) {
     hiddenExact = undefined
   }
 
-  const fuse = getCommandFuse(citizenCommands)
+  const fuse = getCommandFuse(commands)
   const searchResults = fuse.search(query)
 
   // Sort results prioritizing exact/prefix command name matches over fuzzy description matches

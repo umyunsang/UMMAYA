@@ -1,0 +1,42 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 현재 위치는 부산 사하구 다대1동입니다. 내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동 방법 추천해줘.
+
+∴ Thinking — The user wants to go from Busan Sa-ha-gu Da-dae 1-dong to Seoul tomorrow. (ctrl+o to expand)
+
+⏺ locate(부산 사하구 다대1동 → coords_and_admcd)
+  ⎿  위치 해석 결과
+     좌표: 35.059152 / 128.971316 (kakao)
+
+⏺ find(kma_forecast_fetch)
+  ⎿  timeseries — 24건
+       1. {"timestamp_iso":"2026-05-06T12:00:00","temperature_c":20,"pop_pct":0,"precipitation_mm":"강수없음","sky_code":"1","interva…
+       2. {"timestamp_iso":"2026-05-06T13:00:00","temperature_c":21,"pop_pct":0,"precipitation_mm":"강수없음","sky_code":"1","interva…
+       3. {"timestamp_iso":"2026-05-06T14:00:00","temperature_c":21,"pop_pct":0,"precipitation_mm":"강수없음","sky_code":"1","interva…
+
+⏺ locate(부산 사하구 → coords_and_admcd)
+  ⎿  위치 해석 결과
+     좌표: 35.104448 / 128.974933 (kakao)
+     행정코드: 2638000000 — 부산 사하구
+
+⏺ find(koroad_accident_hazard_search)
+  ⎿  collection — 3건
+       1. {"spot_nm":"부산 사하구 당리동(하단교차로 부근)","tot_dth_cnt":0,"spot_cd":"26380001","sido_sgg_nm":"부산 사하구1","occrrnc_cnt":39,"caslt_…
+       2. {"spot_nm":"부산 사하구 괴정동(괴정사거리 부근)","tot_dth_cnt":0,"spot_cd":"26380002","sido_sgg_nm":"부산 사하구2","occrrnc_cnt":32,"caslt_…
+       3. {"spot_nm":"부산 사하구 당리동(동매교사거리 부근)","tot_dth_cnt":0,"spot_cd":"26380003","sido_sgg_nm":"부산 사하구3","occrrnc_cnt":27,"caslt…
+
+⏺ locate(서울 강남구 → coords_and_admcd)
+  ⎿  위치 해석 결과
+     좌표: 37.517332 / 127.047377 (kakao)
+     행정코드: 1168000000 — 서울 강남구
+
+✽ Bunning…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

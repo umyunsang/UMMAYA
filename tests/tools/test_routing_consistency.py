@@ -202,6 +202,8 @@ class TestCheck7ToolListClosure:
             # with the six transparency fields stamped.
             "mock_lookup_module_hometax_simplified",
             "mock_lookup_module_gov24_certificate",
+            "mock_lookup_module_gov24_movein_sequence",
+            "mock_lookup_module_national_ax_bundle",
             # Epic η #2298 FR-021 — primitive surfaces registered via
             # mvp_surface.py so the LLM sees them in
             # registry.export_core_tools_openai(). Required for the
@@ -209,7 +211,7 @@ class TestCheck7ToolListClosure:
             "verify",
             "submit",
             "subscribe",
-            # Epic ζ #2297 path B (live smoke 2026-04-30) — 18 non-core mock
+            # Epic ζ #2297 path B (live smoke 2026-04-30) — non-core mock
             # adapter wrappers bridged into the BM25 corpus by discovery_bridge
             # so lookup(mode="search") surfaces verify/submit/subscribe
             # candidates alongside lookup-class adapters. is_core=False; not
@@ -225,10 +227,11 @@ class TestCheck7ToolListClosure:
             "mock_verify_ganpyeon_injeung",
             "mock_verify_mobile_id",
             "mock_verify_mydata",
-            # 5 submit wrappers
+            # 6 submit wrappers
             "mock_submit_module_hometax_taxreturn",
             "mock_submit_module_gov24_minwon",
             "mock_submit_module_public_mydata_action",
+            "mock_koroad_driver_fitness_reservation_v1",
             "mock_traffic_fine_pay_v1",
             "mock_welfare_application_submit_v1",
             # 3 subscribe wrappers

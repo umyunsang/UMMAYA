@@ -135,6 +135,10 @@ export const LookupPrimitive = buildTool({
     return true
   },
 
+  userFacingName() {
+    return 'find'
+  },
+
   async description() {
     return DESCRIPTION
   },

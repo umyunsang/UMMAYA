@@ -33,6 +33,30 @@ _ACTUAL_ENDPOINT: Final = "https://api.gateway.kosmos.gov.kr/v1/verify/mydata"
 _SECURITY_WRAPPING: Final = "마이데이터 표준동의서 OAuth2 + mTLS + finAuth"
 _POLICY_AUTHORITY: Final = "https://www.kftc.or.kr/kftc/main/EgovMenuContent.do?menuId=CNT020400"
 _INTERNATIONAL_REF: Final = "Singapore Myinfo"
+_MOCK_FIDELITY_GRADE: Final = "B-public-mydata-standard-private-credential-required"
+_MOCK_EVIDENCE: Final[dict[str, object]] = {
+    "credential_status": "student_no_live_authority",
+    "basis_urls": [
+        "https://www.mydata.go.kr/pc/intro/serviceIntro.do?tab=tab_3&type=A",
+        "https://adm.mydata.go.kr/images/guide.pdf",
+        "https://docs.developer.singpass.gov.sg/docs/legacy-myinfo-v3-v4/technical-specifications/myinfo-v4",
+    ],
+    "supports": [
+        "official public MyData API service and subject-right consent model",
+        "minimum bundle-information delivery model",
+        "OAuth consent and personal-data retrieval analog",
+    ],
+    "inference_boundary": (
+        "The fixture confirms identity/consent envelope only; no live MyData "
+        "provider token, mTLS certificate, or personal data is used."
+    ),
+    "live_swap_requirements": [
+        "MyData using-institution approval",
+        "provider code and API credential",
+        "mTLS/OAuth client material",
+        "citizen consent artifact",
+    ],
+}
 
 ADAPTER_REGISTRATION = AdapterRegistration(
     tool_id="mock_verify_mydata",
@@ -68,6 +92,8 @@ _FIXTURE = MyDataContext.model_validate(
         "_security_wrapping_pattern": _SECURITY_WRAPPING,
         "_policy_authority": _POLICY_AUTHORITY,
         "_international_reference": _INTERNATIONAL_REF,
+        "_mock_fidelity_grade": _MOCK_FIDELITY_GRADE,
+        "_mock_evidence": _MOCK_EVIDENCE,
     },
     by_alias=True,
 )

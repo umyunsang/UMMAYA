@@ -162,8 +162,12 @@ Every Mock adapter response payload (returned from `invoke()` or `call()`) MUST 
 | `_security_wrapping_pattern` | `str` | the security stack the channel is expected to use, e.g., `"OAuth2.1 + mTLS + scope-bound bearer"` or `"OID4VP + DID-resolved RP"` or `"마이데이터 표준동의서 OAuth2 + finAuth"` |
 | `_policy_authority` | `str` | URL form; the agency-published policy URL. Examples: `"https://www.mois.go.kr/frt/bbs/.../public-mydata.do"`, `"https://www.kdca.go.kr/.../digital-id.html"` |
 | `_international_reference` | `str` | non-empty; the closest international-analog system, e.g., `"Singapore APEX"`, `"Estonia X-Road"`, `"EU EUDI Wallet"`, `"Japan マイナポータル API"`, `"UK HMRC Making Tax Digital"` |
+| `_mock_fidelity_grade` | `str \| None` | optional evidence-grade extension for institution-gated channels |
+| `_mock_evidence` | `dict[str, object] \| None` | optional evidence object with source URLs, inference boundary, and live-swap requirements |
 
 **Stamping point**: the Mock adapter's response builder calls `stamp_mock_response(domain_payload, reference_implementation=..., actual_endpoint_when_live=..., security_wrapping_pattern=..., policy_authority=..., international_reference=...)` to produce the final dict. The five non-mode values are typically per-adapter constants declared at module top-level (e.g., `_REFERENCE_IMPL = "ax-infrastructure-callable-channel"`).
+
+**Evidence-grade rule**: For privileged domains where the channel exists but KOSMOS has no official credential, the adapter should pass `mock_fidelity_grade` and `mock_evidence` to the shared stamper. The evidence object MUST distinguish official facts from inferred private payload details and list the approvals or credentials needed for Live promotion.
 
 **Retrofit applies to all 20 Mock adapters**: 5 existing verify (after `digital_onepass` deletion) + 5 new verify + 2 existing submit + 3 new submit + 3 existing subscribe + 2 new lookup.
 

@@ -83,13 +83,13 @@ Single Python project. Retrieval subpackage lives at `src/kosmos/tools/retrieval
 
 ## Phase 4: User Story 2 — Zero-change default path (Priority: P1)
 
-**Goal**: With `KOSMOS_RETRIEVAL_BACKEND` unset or `=bm25`, behaviour is byte-identical to `main`: same rankings, same `why_matched`, same `recall_at_5 == 1.0` / `recall_at_1 == 0.9333` on the committed 30-query set, and the frozen schema snapshots unchanged. Plus: `backend=dense` with a forced model-load failure degrades gracefully to BM25 (FR-002 / SC-005).
+**Goal**: With `KOSMOS_RETRIEVAL_BACKEND` unset or `=bm25`, behaviour is byte-identical to `main`: same rankings, same `why_matched`, same `recall_at_5 == 1.0` / `recall_at_1 == 0.9667` on the committed 30-query set, and the frozen schema snapshots unchanged. Plus: `backend=dense` with a forced model-load failure degrades gracefully to BM25 (FR-002 / SC-005).
 
 **Independent Test**: Run `tests/eval/test_retrieval_gate.py` with `KOSMOS_RETRIEVAL_BACKEND` unset; assert exact baseline. Run the fail-open test with a monkey-patched `sentence_transformers` that raises on import; assert registry serves on BM25 and emits exactly one WARN line.
 
 ### Tests for User Story 2 (write first; fail before implementation)
 
-- [X] T025 [P] [US2] Baseline preservation test at `/Users/um-yunsang/KOSMOS-585/tests/retrieval/test_baseline_preservation.py`: programmatic invocation of `kosmos.eval.retrieval._build_registry()` + `_evaluate()` on `eval/retrieval_queries.yaml` with `KOSMOS_RETRIEVAL_BACKEND` unset; assert `recall_at_5 == 1.0` and `recall_at_1 == 0.9333333333333333` exactly (Appendix A of spec). SC-004 evidence.
+- [X] T025 [P] [US2] Baseline preservation test at `/Users/um-yunsang/KOSMOS-585/tests/retrieval/test_baseline_preservation.py`: programmatic invocation of `kosmos.eval.retrieval._build_registry()` + `_evaluate()` on `eval/retrieval_queries.yaml` with `KOSMOS_RETRIEVAL_BACKEND` unset; assert `recall_at_5 == 1.0` and `recall_at_1 == 0.9666666666666667` exactly (Appendix A of spec). SC-004 evidence.
 - [X] T026 [P] [US2] Fail-open degradation test at `/Users/um-yunsang/KOSMOS-585/tests/retrieval/test_fail_open.py`: `monkeypatch.setenv("KOSMOS_RETRIEVAL_BACKEND", "dense")`; patch `sentence_transformers.SentenceTransformer` to raise `RuntimeError("simulated")` on construction; build a `ToolRegistry` with 4 seed adapters; assert effective retriever is `BM25Backend`, `caplog.records` contains exactly one WARN with `event=retrieval.degraded`, `requested_backend="dense"`, `effective_backend="bm25"`; second `search()` call MUST NOT emit another WARN. SC-005 evidence.
 
 ### Implementation for User Story 2

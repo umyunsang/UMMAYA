@@ -16,7 +16,7 @@
 
 ## Baseline Saturation & Re-anchoring
 
-- [ ] CHK008 Measured baseline (`recall_at_5 = 1.0`, `recall_at_1 = 0.9333`) is captured with method + timestamp.
+- [ ] CHK008 Measured baseline (`recall_at_5 = 1.0`, `recall_at_1 = 0.9667`) is captured with method + timestamp.
 - [ ] CHK009 Spec explicitly states why Epic's "+10%p" is unmeasurable on the 30-query set.
 - [ ] CHK010 SC-001 is re-anchored to the extended corpus (#22) with `PENDING_#22` semantics via FR-013.
 - [ ] CHK011 SC-002 adversarial-subset target and BM25 ceiling (< 0.50) are both specified.

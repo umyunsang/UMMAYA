@@ -54,15 +54,28 @@ export function extractMockMeta(payload: unknown): MockMeta {
   }
 
   const p = payload as Record<string, unknown>
+  const result =
+    typeof p['result'] === 'object' && p['result'] !== null
+      ? (p['result'] as Record<string, unknown>)
+      : undefined
+  const adapterReceipt =
+    typeof result?.['adapter_receipt'] === 'object' &&
+    result['adapter_receipt'] !== null
+      ? (result['adapter_receipt'] as Record<string, unknown>)
+      : undefined
 
   // Check the outer envelope first (``{ok, result, _mode}``),
-  // then fall through to the inner ``result`` field.
+  // then fall through to the inner ``result`` field and submit's opaque
+  // ``adapter_receipt``. SubmitOutput intentionally keeps domain data under
+  // adapter_receipt, including the Spec 024 transparency stamp.
   const mode =
     typeof p['_mode'] === 'string'
       ? p['_mode']
-      : typeof (p['result'] as Record<string, unknown> | null | undefined)?.['_mode'] === 'string'
-        ? ((p['result'] as Record<string, unknown>)['_mode'] as string)
-        : undefined
+      : typeof result?.['_mode'] === 'string'
+        ? (result['_mode'] as string)
+        : typeof adapterReceipt?.['_mode'] === 'string'
+          ? (adapterReceipt['_mode'] as string)
+          : undefined
 
   if (mode !== 'mock') {
     return { isMock: false }
@@ -70,9 +83,11 @@ export function extractMockMeta(payload: unknown): MockMeta {
 
   // Pick fields from whichever level has them — prefer inner result.
   const inner =
-    typeof p['result'] === 'object' && p['result'] !== null
-      ? (p['result'] as Record<string, unknown>)
-      : p
+    typeof adapterReceipt?.['_mode'] === 'string'
+      ? adapterReceipt
+      : typeof result?.['_mode'] === 'string'
+        ? result
+        : p
 
   return {
     isMock: true,

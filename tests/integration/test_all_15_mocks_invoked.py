@@ -1,23 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
-"""T034 — US2: all 15 mock adapters invoked at least once (FR-020 / SC-004).
+"""T034 — US2: all mock adapters invoked at least once (FR-020 / SC-004).
 
 Drives each of the 10 verify families directly through the backend dispatcher
-(no subprocess), then exercises the 2 lookup, 2 submit, and 1 subscribe
+(no subprocess), then exercises the 3 lookup, 2 submit, and 1 subscribe
 adapters via their respective primitive invocation paths.
 
-Mock surface (15 adapters):
+Mock surface:
   Verify (10):
     modid, kec, geumyung_module, simple_auth_module, any_id_sso,
     gongdong_injeungseo, geumyung_injeungseo, ganpyeon_injeung,
     mobile_id, mydata
-  Lookup (2):
-    mock_lookup_module_hometax_simplified, mock_lookup_module_gov24_certificate
+  Lookup (3):
+    mock_lookup_module_hometax_simplified, mock_lookup_module_gov24_certificate,
+    mock_lookup_module_gov24_movein_sequence
   Submit (2):
     mock_submit_module_hometax_taxreturn, mock_submit_module_gov24_minwon
   Subscribe (1):
     mock_cbs_disaster_v1
 
-SC-004 acceptance criterion: each of the 15 adapters logs ≥1 invocation in
+SC-004 acceptance criterion: each adapter logs ≥1 invocation in
 the aggregate across this test module.
 
 Strategy: backend-direct (in-process) for speed; no TUI subprocess required.
@@ -129,7 +130,7 @@ async def test_verify_family_invoked(fixture_name: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# T034b — 2 lookup mocks invoked
+# T034b — 3 lookup mocks invoked
 # ---------------------------------------------------------------------------
 
 
@@ -165,6 +166,37 @@ async def test_lookup_gov24_certificate_invoked() -> None:
     result = await handle(inp, delegation_context=None)
     assert result is not None, "gov24_certificate lookup returned None"
     _LOOKUP_INVOKED.add("mock_lookup_module_gov24_certificate")
+
+
+@pytest.mark.asyncio
+async def test_lookup_gov24_movein_sequence_invoked() -> None:
+    """mock_lookup_module_gov24_movein_sequence invoked ≥1 time."""
+    from datetime import UTC, datetime, timedelta
+
+    from kosmos.primitives.delegation import DelegationContext, DelegationToken
+    from kosmos.tools.mock.lookup_module_gov24_movein_sequence import (
+        Gov24MoveInSequenceInput,
+        handle,
+    )
+
+    token = DelegationToken(
+        vp_jwt="eyJhbGciOiJub25lIiwidHlwIjoidnArand0In0.eyJzdWIiOiJtb2NrIn0.mock-signature-not-cryptographic",
+        delegation_token="del_" + "m" * 24,
+        scope="lookup:gov24.movein",
+        issuer_did="did:web:mobileid.go.kr",
+        issued_at=datetime.now(UTC),
+        expires_at=datetime.now(UTC) + timedelta(hours=1),
+        **{"_mode": "mock"},
+    )
+    delegation = DelegationContext(
+        token=token,
+        purpose_ko="전입신고 연계절차 조회",
+        purpose_en="Gov24 move-in sequence lookup",
+    )
+    inp = Gov24MoveInSequenceInput(adm_cd="2638000000", address="부산 사하구 다대1동")
+    result = await handle(inp, delegation_context=delegation)
+    assert result is not None, "gov24_movein_sequence lookup returned None"
+    _LOOKUP_INVOKED.add("mock_lookup_module_gov24_movein_sequence")
 
 
 # ---------------------------------------------------------------------------
@@ -323,12 +355,12 @@ async def test_subscribe_cbs_disaster_invoked() -> None:
 
 
 # ---------------------------------------------------------------------------
-# T034e — Aggregate SC-004 assertion (all 15 mocks present)
+# T034e — Aggregate SC-004 assertion (all mocks present)
 # ---------------------------------------------------------------------------
 
 
-def test_sc004_all_15_mocks_invoked() -> None:
-    """SC-004: assert all 15 mock adapters appear in the invoked sets.
+def test_sc004_all_mocks_invoked() -> None:
+    """SC-004: assert all mock adapters appear in the invoked sets.
 
     This test MUST run last (alphabetically after test_verify_* / test_lookup_*
     / test_submit_* / test_subscribe_* — pytest default ordering by declaration
@@ -349,6 +381,7 @@ def test_sc004_all_15_mocks_invoked() -> None:
     expected_lookup = {
         "mock_lookup_module_hometax_simplified",
         "mock_lookup_module_gov24_certificate",
+        "mock_lookup_module_gov24_movein_sequence",
     }
     expected_submit = {
         "mock_submit_module_hometax_taxreturn",

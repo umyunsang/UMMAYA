@@ -1,0 +1,44 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘.
+
+∴ Thinking — 사용자가 "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘."라고 요청했습니다. 이에 대한 응답을 작성해야 합니다. (ctrl+o to expand)
+
+⏺ auth(mock_verify_module_modid)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_hometax_simplified)
+  ⎿  record — 1건
+       {"kind":"record","item":{"year":2025,"kind":"simplified_data_summary","citizen_scope_ref":"hometax-simplified-2025-mock-subject","consent_receipt":{"consent_type":"annu
+     al_simplified_data_bulk_provision","subject":"taxpayer_and_consented_de…
+
+⏺ send(mock_submit_module_hometax_taxreturn)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     처리: 신고 제출
+     접수 번호: hometax-2026-05-06-RX-6D75E4B9
+     상태: 신고완료
+     납부 단계: 별도 납부 확인 필요
+     트랜잭션: urn:kosmos:submit:a68bc2dc577a3a1798e2259071ecafdc2b8c5d3763f4f3914ebe2fed644f2599
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/hometax/tax-return
+
+⏺ send(mock_submit_module_hometax_taxreturn)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     처리: register_refund_account
+     접수 번호: hometax-2026-05-06-RFND-2A2A4A45
+     상태: 환급계좌등록완료
+     납부 단계: refund_account_registered
+     트랜잭션: urn:kosmos:submit:e647a204423058a0def5ecf34a84f248299035ca1aaae15cfa5f693e81e6ddaa
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/hometax/tax-return
+
+✢ Ebbing… (1m 36s · ↓ 7.5k tokens)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

@@ -1,0 +1,1 @@
+"""Mock KOROAD submit adapters."""

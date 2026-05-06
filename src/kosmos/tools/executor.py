@@ -210,7 +210,21 @@ class ToolExecutor:
         try:
             validated_input = tool.input_schema.model_validate(params)
         except ValidationError as exc:
-            field_paths = [".".join(str(p) for p in e["loc"]) for e in exc.errors()]
+            field_paths: list[str] = []
+            field_summaries: list[str] = []
+            for err in exc.errors():
+                loc = err.get("loc")
+                path = (
+                    ".".join(str(p) for p in loc)
+                    if isinstance(loc, (tuple, list)) and loc
+                    else "__root__"
+                )
+                field_paths.append(path)
+                msg = err.get("msg")
+                if isinstance(msg, str) and msg:
+                    field_summaries.append(f"{path} ({msg})")
+                else:
+                    field_summaries.append(path)
             logger.warning(
                 "invoke: input validation failed for %s (%d errors, fields: %s)",
                 tool_id,
@@ -250,7 +264,7 @@ class ToolExecutor:
                     " then re-invoke this tool with the returned values."
                     " Do NOT guess coordinates from prior knowledge."
                 )
-            field_summary = ", ".join(field_paths) if field_paths else "(no field info)"
+            field_summary = ", ".join(field_summaries) if field_summaries else "(no field info)"
             return make_error_envelope(
                 tool_id=tool_id,
                 reason=LookupErrorReason.invalid_params,

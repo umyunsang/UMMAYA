@@ -117,6 +117,8 @@ async def test_happy_path_returns_succeeded() -> None:
     assert "receipt_id" in receipt
     assert str(receipt["receipt_id"]).startswith("hometax-")
     assert receipt.get("mock") is True
+    assert "submission_flow" in receipt
+    assert receipt["preflight_validation"]["payment"] == "separate_submit_required_before_payment"
 
     # Ledger event appended
     mock_append.assert_called_once()
@@ -152,6 +154,10 @@ async def test_transparency_fields_present_on_success() -> None:
     assert receipt["_mode"] == "mock"
     assert receipt["_international_reference"] == "UK HMRC Making Tax Digital"
     assert receipt["_reference_implementation"] == "ax-infrastructure-callable-channel"
+    assert receipt["_mock_fidelity_grade"] == (
+        "C-official-portal-flow-private-submit-api-inferred"
+    )
+    assert receipt["_mock_evidence"]["credential_status"] == "student_no_live_authority"
 
 
 @pytest.mark.asyncio

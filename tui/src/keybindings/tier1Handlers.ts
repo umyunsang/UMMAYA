@@ -117,7 +117,7 @@ export type Tier1HandlerDeps = Readonly<{
   getCurrentDraft: () => string
 
   /**
-   * App-level setter that mounts / unmounts `<HistorySearchOverlay>`.  The
+   * App-level setter that mounts / unmounts a history search overlay.  The
    * handler hands it the open-request envelope returned by
    * `openHistorySearchOverlay(...)`; passing `null` closes the overlay.  The
    * return value of the pure action is purely declarative — without this
@@ -359,7 +359,7 @@ export function buildTier1Handlers(
         consent: { memdir_user_granted: deps.memdirUserGranted },
         announcer: deps.announcer,
       })
-      // Hand the envelope to the app-level state so <HistorySearchOverlay>
+      // Hand the envelope to the app-level state so a history search overlay
       // actually mounts.  Previously we dropped the return value — the
       // action announced itself (FR-030) but the citizen saw nothing
       // (Codex P1 at line 295 of the pre-fix file).

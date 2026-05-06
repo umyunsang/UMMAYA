@@ -154,8 +154,8 @@ pyproject.toml                          # Dependency addition: sentence-transfor
 - `data-model.md` — 7 entities (Retriever Protocol, BM25Backend, DenseBackend, HybridBackend, RetrievalManifest, AdversarialQuerySet, DegradationRecord). Frozen entities referenced, not redefined.
 - `contracts/retriever_protocol.md` — internal Protocol contract + 6 invariants + registry integration note.
 - `contracts/lookup_search_input.schema.json` — SHA-256 `422ed50f3a26c6627d8177222600e0a42afeb8348a6c3f228009bc58d4fa788b`.
-- `contracts/lookup_search_result.schema.json` — SHA-256 `c2a50c0d9a2b088e391c2f21557a0613871ff40a6e8157262a0cf56569745ed1`.
-- `contracts/adapter_candidate.schema.json` — SHA-256 `ea5187bdfa981288b83b337f6ae4ee9de7ff14d07c630b1bab2a22c47b3ca12b`.
+- `contracts/lookup_search_result.schema.json` — SHA-256 `191c4f81ba071629b83ca99507d0c83c813c29d1a0e77723242604fd4a3d2bcb`.
+- `contracts/adapter_candidate.schema.json` — SHA-256 `cf122f6949b69b2bdedb06044bc5e489b4b3dfd5b35e4e5ab0ee6c42de4bb0e7`.
 - `quickstart.md` — operator walkthrough for all three backends, A/B harness, env-var reference, and frozen-surface reminder.
 - `CLAUDE.md` (agent context) — `update-agent-context.sh claude` appended 026 Active Technologies entry.
 

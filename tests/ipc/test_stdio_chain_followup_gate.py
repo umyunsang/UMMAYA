@@ -23,11 +23,13 @@ fabricated values; verifying ``lastFrame()`` never caught it).
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from typing import Any
 
 from kosmos.ipc.stdio import (
     _check_chain_prerequisite,
     _check_resolve_terminated_without_followup,
+    _coerce_adapter_params_from_schema,
     _query_implies_followup_lookup,
 )
 from kosmos.llm.models import (
@@ -39,6 +41,17 @@ from kosmos.llm.models import (
 from kosmos.llm.models import (
     ToolCall as LLMToolCall,
 )
+from kosmos.tools.executor import ToolExecutor
+from kosmos.tools.register_all import register_all_tools
+from kosmos.tools.registry import ToolRegistry
+
+
+@lru_cache(maxsize=1)
+def _registry() -> ToolRegistry:
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry=registry)
+    register_all_tools(registry, executor)
+    return registry
 
 # ---------------------------------------------------------------------------
 # _query_implies_followup_lookup
@@ -46,38 +59,42 @@ from kosmos.llm.models import (
 
 
 def test_weather_query_implies_followup() -> None:
-    """Korean weather keywords trigger the follow-up requirement."""
-    assert _query_implies_followup_lookup("지금 부산 사하구 다대1동 날씨 어때")
-    assert _query_implies_followup_lookup("내일 서울 기온 알려줘")
-    assert _query_implies_followup_lookup("오늘 강수량 예보")
+    """Weather adapters declare location-derived inputs, so follow-up is required."""
+    registry = _registry()
+    assert _query_implies_followup_lookup("지금 부산 사하구 다대1동 날씨 어때", registry=registry)
+    assert _query_implies_followup_lookup("내일 서울 기온 알려줘", registry=registry)
+    assert _query_implies_followup_lookup("오늘 강수량 예보", registry=registry)
 
 
 def test_hospital_query_implies_followup() -> None:
-    """Hospital / ER / pharmacy keywords trigger the follow-up requirement."""
-    assert _query_implies_followup_lookup("강남역 근처 응급실")
-    assert _query_implies_followup_lookup("부산 내과 병원 찾아줘")
-    assert _query_implies_followup_lookup("서울역 약국 위치")
+    """Medical adapters declare coordinates, so follow-up is required."""
+    registry = _registry()
+    assert _query_implies_followup_lookup("강남역 근처 응급실", registry=registry)
+    assert _query_implies_followup_lookup("부산 내과 병원 찾아줘", registry=registry)
+    assert _query_implies_followup_lookup("서울역 약국 위치", registry=registry)
 
 
 def test_accident_query_implies_followup() -> None:
-    """Traffic accident / hazard keywords trigger the follow-up requirement."""
-    assert _query_implies_followup_lookup("강남역 사고다발지")
-    assert _query_implies_followup_lookup("서울시 어린이보호구역 위험")
+    """Road-safety adapters declare administrative-code inputs."""
+    registry = _registry()
+    assert _query_implies_followup_lookup("강남구 사고 위험 행정동", registry=registry)
 
 
 def test_english_query_keywords() -> None:
-    """English fallback keywords also trigger the follow-up requirement."""
-    assert _query_implies_followup_lookup("weather in Seoul today")
-    assert _query_implies_followup_lookup("emergency hospital nearby")
+    """English queries use the same registry metadata path."""
+    registry = _registry()
+    assert _query_implies_followup_lookup("weather in Seoul today", registry=registry)
+    assert _query_implies_followup_lookup("emergency hospital nearby", registry=registry)
 
 
 def test_non_followup_query_does_not_trigger() -> None:
     """Pure address resolution / verify-class queries do NOT trigger."""
-    assert not _query_implies_followup_lookup("부산 사하구 다대1동 주소가 어디?")
-    assert not _query_implies_followup_lookup("종합소득세 신고해줘")
-    assert not _query_implies_followup_lookup("정부24 등본 발급")
-    assert not _query_implies_followup_lookup("")
-    assert not _query_implies_followup_lookup("안녕하세요")
+    registry = _registry()
+    assert not _query_implies_followup_lookup("부산 사하구 다대1동 주소가 어디?", registry=registry)
+    assert not _query_implies_followup_lookup("종합소득세 신고해줘", registry=registry)
+    assert not _query_implies_followup_lookup("정부24 등본 발급", registry=registry)
+    assert not _query_implies_followup_lookup("", registry=registry)
+    assert not _query_implies_followup_lookup("안녕하세요", registry=registry)
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +141,45 @@ def test_chain_complete_passes_through() -> None:
         ),
         _msg_tool_result("lookup", {"t1h": 20.7, "reh": 23}),
     ]
-    assert _check_resolve_terminated_without_followup(msgs, "부산 날씨") is None
+    assert (
+        _check_resolve_terminated_without_followup(msgs, "부산 날씨", registry=_registry())
+        is None
+    )
+
+
+def test_optional_location_anchor_filled_for_model_validator_lookup() -> None:
+    """Adapters may require one of two optional schema fields via model_validator."""
+    coerced = _coerce_adapter_params_from_schema(
+        {
+            "tool_id": "mock_lookup_module_gov24_movein_sequence",
+            "params": {"adm_cd": ""},
+        },
+        user_query=(
+            "현재 위치는 부산 사하구 다대1동입니다. 이사 때문에 아이 학교 전학이 "
+            "필요해. 전입신고랑 돌봄 신청까지 같이 해줘."
+        ),
+        registry=_registry(),
+    )
+
+    params = coerced["params"]
+    assert isinstance(params, dict)
+    assert "adm_cd" not in params
+    assert params["address"] == "부산 사하구 다대1동"
+
+
+def test_required_query_field_filled_for_bundle_lookup() -> None:
+    coerced = _coerce_adapter_params_from_schema(
+        {
+            "tool_id": "mock_lookup_module_national_ax_bundle",
+            "params": {},
+        },
+        user_query="전학 절차와 돌봄 신청 옵션을 조회해줘.",
+        registry=_registry(),
+    )
+
+    params = coerced["params"]
+    assert isinstance(params, dict)
+    assert params["query"] == "전학 절차와 돌봄 신청 옵션을 조회해줘."
 
 
 def test_resolve_only_then_terminate_is_rejected() -> None:
@@ -142,7 +197,11 @@ def test_resolve_only_then_terminate_is_rejected() -> None:
         ),
         _msg_tool_result("resolve_location", {"lat": 35.05915, "lon": 128.97132}),
     ]
-    msg = _check_resolve_terminated_without_followup(msgs, "지금 부산 사하구 다대1동 날씨 어때")
+    msg = _check_resolve_terminated_without_followup(
+        msgs,
+        "지금 부산 사하구 다대1동 날씨 어때",
+        registry=_registry(),
+    )
     assert msg is not None
     assert "Chain incomplete" in msg
     assert "lookup" in msg.lower()
@@ -156,7 +215,14 @@ def test_resolve_only_with_non_observable_query_passes() -> None:
         _msg_assistant_tool_call("resolve_location", {"query": "부산 사하구 다대1동"}),
         _msg_tool_result("resolve_location", {"lat": 35.05915, "lon": 128.97132}),
     ]
-    assert _check_resolve_terminated_without_followup(msgs, "부산 사하구 다대1동 주소") is None
+    assert (
+        _check_resolve_terminated_without_followup(
+            msgs,
+            "부산 사하구 다대1동 주소",
+            registry=_registry(),
+        )
+        is None
+    )
 
 
 def test_no_resolve_call_no_gate() -> None:
@@ -164,7 +230,10 @@ def test_no_resolve_call_no_gate() -> None:
     msgs: list[Any] = [
         LLMChatMessage(role="user", content="강남역 응급실"),
     ]
-    assert _check_resolve_terminated_without_followup(msgs, "강남역 응급실") is None
+    assert (
+        _check_resolve_terminated_without_followup(msgs, "강남역 응급실", registry=_registry())
+        is None
+    )
 
 
 def test_lookup_without_fetch_mode_still_counts() -> None:
@@ -183,7 +252,10 @@ def test_lookup_without_fetch_mode_still_counts() -> None:
             },
         ),
     ]
-    assert _check_resolve_terminated_without_followup(msgs, "부산 날씨") is None
+    assert (
+        _check_resolve_terminated_without_followup(msgs, "부산 날씨", registry=_registry())
+        is None
+    )
 
 
 # ---------------------------------------------------------------------------

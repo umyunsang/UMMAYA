@@ -31,7 +31,7 @@ Concrete schemas, transparency fields, citation requirements, mock fidelity grad
 
 - **L1-A LLM Harness** — Single-fixed provider `FriendliAI Serverless + K-EXAONE` (`LGAI-EXAONE/K-EXAONE-236B-A23B` — 236B MoE / 23B active, `enable_thinking=True` is the model-card default; KOSMOS toggles via `KOSMOS_K_EXAONE_THINKING` env, default `true` — reasoning active by default, set to `false` to disable). CC agentic loop preserved 1:1 (byte-identical with CC restored-src). Native K-EXAONE function calling (Hermes-parser compatible). `prompts/system_v1.md` + compaction + prompt cache. Sessions in `~/.kosmos/memdir/user/sessions/` JSONL. 4-tier OTEL, zero external egress.
 - **L1-B Tool System** — Each Korean national-infrastructure channel is wrapped as one `GovAPITool` adapter, registered into `ToolRegistry` at boot. **Live** when an official callable channel plus credential exists; **Mock** when the channel exists or is policy-mandated but we lack credential/access (fixture replay, byte/shape-mirror per public spec); **Handoff/scenario** when the domain is opaque today. Hometax, Government24 submit, mobile ID, certificates, utility bills, and payments are target-state channels, not out of scope; they remain mock/handoff until an official callable surface exists. Discovery via BM25 + dense `lookup`. Permission UX uses CC `<PermissionRequest>` with adapter's `real_classification_url` citation; **no KOSMOS-invented permission classification**.
-- **L1-C Main-Verb Abstraction** — Five reserved primitives (`lookup · resolve_location · submit · verify · subscribe`) with shared `PrimitiveInput/Output` envelope. System prompt exposes primitive signatures only; BM25 surfaces adapters dynamically. Each adapter declares its real-domain policy by citation, not invention.
+- **L1-C Main-Verb Abstraction** — Five reserved primitives (`lookup · resolve_location · submit · verify · subscribe`) with shared `PrimitiveInput/Output` envelope. These are the citizen-facing national AX equivalents of CC's always-loaded developer harness tools: the stable main tool surface for using Korean administrative systems, agencies, departments, ministries, and infrastructure. System prompt exposes primitive signatures only; BM25 surfaces adapters dynamically. Each adapter declares its real-domain policy by citation, not invention.
 
 ## Execution phases
 
@@ -49,6 +49,9 @@ Stack changes require an ADR under `docs/adr/`.
 - Env vars prefixed `KOSMOS_`. Never commit `.env` or `secrets/`.
 - Stdlib `logging` only; no `print()` outside CLI output layer.
 - Pydantic v2 for all tool I/O. Never `Any`.
+- Minimize fallbacks. Hardcoded routing, keyword gates, static service matrices, and static policy design are forbidden; derive decisions from CC reference behavior, adapter metadata, registry search, official schemas, recorded fixtures, or cited agency policy.
+- Never remove or downgrade the five primitives while pruning UI. Surface cleanup may remove bespoke renderers, but primitive contracts, registry exposure, permission gating, adapter dispatch, and mock/live swap boundaries are core harness behavior.
+- Privileged primitives (`verify`, `submit`, privileged `subscribe`, and personal-data `lookup`) stay evidence-graded Mock unless KOSMOS has official credentials and legal authority. Mock shape MUST cite official/policy sources, declare its inference boundary, and keep live-swap requirements visible in the adapter response; do not hardcode private APIs as if they were known facts.
 - Never call live `data.go.kr`, government, identity, payment, certificate, utility, or other external citizen-infrastructure channels from CI tests.
 - Never add a dependency outside a spec-driven PR.
 - Never `--force` push `main`, `--no-verify`, or bypass signing.
@@ -95,6 +98,10 @@ A fallback is acceptable ONLY when ALL three hold:
 Canonical example of a fallback that violated this rule and was retired:
 
 - The Ctrl+O `useInput` fallback in `tui/src/hooks/useGlobalKeybindings.tsx` (introduced PR #2754 / strengthened PR #2767) was kept alive while the actual root cause — `app:toggleTranscript` missing from `TIER_ONE_ACTIONS` + `DEFAULT_BINDINGS` — was deferred. The Epic #2766 follow-up promoted the action (`tui/src/keybindings/types.ts:84` + `tui/src/keybindings/defaultBindings.ts:81`) AND removed the fallback in the same PR. Same pattern applies to every other CC-namespaced action whose callsite is alive but whose chord is dead.
+
+### 5. Metadata over hardcoding
+
+Runtime behavior must be derived from live contracts, not static guesses. Tool routing, permission ordering, citizen-facing policy gates, scenario selection, and UI state transitions must come from the tool registry, adapter-declared metadata, CC-original reference flows, official API schemas, recorded fixtures, or explicit spec artifacts. Keyword lists, one-off service-name routers, hardcoded scenario tables, and static policy maps are regressions unless a primary reference explicitly requires that exact shape.
 
 ## Issue hierarchy
 

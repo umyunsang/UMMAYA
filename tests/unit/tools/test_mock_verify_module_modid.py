@@ -72,6 +72,23 @@ def test_modid_security_wrapping(tmp_path: Path) -> None:
     assert "OID4VP" in result.transparency_security_wrapping_pattern
 
 
+def test_modid_evidence_grade(tmp_path: Path) -> None:
+    """Mobile ID module mock exposes official API evidence metadata."""
+    from kosmos.tools.mock.verify_module_modid import invoke
+
+    result = invoke(
+        {
+            "scope_list": ["verify:modid.identity"],
+            "session_id": "s1",
+            "ledger_root": tmp_path / "ledger",
+        }
+    )
+    dumped = result.model_dump(by_alias=True)
+    assert dumped["_mock_fidelity_grade"] == "A-official-mobile-id-verifier-api-published"
+    assert dumped["_mock_evidence"]["credential_status"] == "student_no_live_authority"
+    assert "basis_urls" in dumped["_mock_evidence"]
+
+
 def test_modid_citizen_did_is_set(tmp_path: Path) -> None:
     """citizen_did is populated (DID issued during Mobile-ID ceremony)."""
     from kosmos.tools.mock.verify_module_modid import invoke

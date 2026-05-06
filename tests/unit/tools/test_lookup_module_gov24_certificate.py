@@ -4,8 +4,8 @@
 Covers:
 1. Happy path: response carries six transparency fields for all three cert types.
 2. BM25 discovery: bilingual search hint keywords surface this tool.
-3. Scope validation (with DelegationContext): matching scope passes, mismatched rejects.
-4. No-delegation path: adapter proceeds without DelegationContext.
+3. Scope validation: matching DelegationContext scope passes, missing/mismatched rejects.
+4. No-delegation path: adapter fails closed before returning certificate data.
 5. Registration: adapter registers correctly in ToolRegistry + ToolExecutor.
 
 Contract: specs/2296-ax-mock-adapters/tasks.md T029
@@ -89,12 +89,15 @@ def _make_delegation_context(scope: str) -> object:
 async def test_handle_happy_path_carries_six_transparency_fields(
     inp: Gov24CertificateInput,
 ) -> None:
-    """handle() without delegation context returns all six transparency fields.
+    """handle() with delegated scope returns all six transparency fields.
 
     LookupOutput envelope fix — transparency fields live inside ``item`` so
     the outer envelope passes ``LookupRecord`` (``extra='forbid'``) validation.
     """
-    result = await handle(inp)
+    result = await handle(
+        inp,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
     assert result["kind"] == "record", f"expected LookupRecord envelope, got {result!r}"
     item = result["item"]
     assert isinstance(item, dict)
@@ -111,38 +114,71 @@ async def test_handle_happy_path_carries_six_transparency_fields(
 @pytest.mark.asyncio
 async def test_handle_mode_is_mock() -> None:
     """_mode is always 'mock' for Epic ε mock adapters (lives inside item)."""
-    result = await handle(_VALID_INPUT_RESIDENT)
+    result = await handle(
+        _VALID_INPUT_RESIDENT,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
     assert result["item"]["_mode"] == "mock"
 
 
 @pytest.mark.asyncio
 async def test_handle_reference_impl() -> None:
     """_reference_implementation is 'public-mydata-read-v240930' per spec catalog."""
-    result = await handle(_VALID_INPUT_FAMILY)
+    result = await handle(
+        _VALID_INPUT_FAMILY,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
     assert result["item"]["_reference_implementation"] == "public-mydata-read-v240930"
 
 
 @pytest.mark.asyncio
 async def test_handle_international_ref() -> None:
     """_international_reference is 'Estonia X-Road' per spec catalog."""
-    result = await handle(_VALID_INPUT_BUSINESS)
+    result = await handle(
+        _VALID_INPUT_BUSINESS,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
     assert result["item"]["_international_reference"] == "Estonia X-Road"
 
 
 @pytest.mark.asyncio
 async def test_handle_resident_registration_domain_payload() -> None:
     """Resident registration returns the correct certificate_type_ko."""
-    result = await handle(_VALID_INPUT_RESIDENT)
+    result = await handle(
+        _VALID_INPUT_RESIDENT,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
     item = result["item"]
     assert item.get("certificate_type") == "resident_registration"
     assert item.get("certificate_type_ko") == "주민등록등본"
     assert isinstance(item.get("household_members"), list)
+    assert item["electronic_document_wallet"]["wallet_address"] == (
+        "mock-wallet-address-not-routable"
+    )
+    assert "api_onboarding_flow" in item
+
+
+@pytest.mark.asyncio
+async def test_handle_happy_path_evidence_grade() -> None:
+    """Privileged mock exposes evidence grade and live-swap requirements."""
+    result = await handle(
+        _VALID_INPUT_RESIDENT,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
+    item = result["item"]
+    assert item["_mock_fidelity_grade"] == "B-official-api-onboarding-private-spec-inferred"
+    evidence = item["_mock_evidence"]
+    assert evidence["credential_status"] == "student_no_live_authority"
+    assert "live_swap_requirements" in evidence
 
 
 @pytest.mark.asyncio
 async def test_handle_family_relations_domain_payload() -> None:
     """Family relations returns the correct certificate_type_ko."""
-    result = await handle(_VALID_INPUT_FAMILY)
+    result = await handle(
+        _VALID_INPUT_FAMILY,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
     item = result["item"]
     assert item.get("certificate_type") == "family_relations"
     assert item.get("certificate_type_ko") == "가족관계증명서"
@@ -152,7 +188,10 @@ async def test_handle_family_relations_domain_payload() -> None:
 @pytest.mark.asyncio
 async def test_handle_business_registration_domain_payload() -> None:
     """Business registration returns the correct certificate_type_ko."""
-    result = await handle(_VALID_INPUT_BUSINESS)
+    result = await handle(
+        _VALID_INPUT_BUSINESS,
+        delegation_context=_make_delegation_context("lookup:gov24.certificate"),
+    )
     item = result["item"]
     assert item.get("certificate_type") == "business_registration"
     assert item.get("certificate_type_ko") == "사업자등록증"
@@ -270,13 +309,13 @@ async def test_handle_with_multi_scope_containing_required_passes() -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_without_delegation_context_proceeds() -> None:
-    """Adapter proceeds without DelegationContext (lookups are read-only)."""
+async def test_handle_without_delegation_context_fails_closed() -> None:
+    """Adapter never returns citizen certificate data without DelegationContext."""
     result = await handle(_VALID_INPUT_RESIDENT, delegation_context=None)
-    assert result.get("kind") == "record"
-    item = result["item"]
-    assert item.get("_mode") == "mock"
-    assert item.get("certificate_type") == "resident_registration"
+    assert result.get("kind") == "error"
+    assert result.get("reason") == "auth_required"
+    assert result.get("retryable") is False
+    assert "lookup:gov24.certificate" in str(result.get("message", ""))
 
 
 # ---------------------------------------------------------------------------
@@ -318,10 +357,10 @@ def test_tool_definition_adapter_mode_is_mock() -> None:
     assert MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL.adapter_mode == "mock"
 
 
-def test_tool_definition_policy_gate_is_read_only() -> None:
-    """GovAPITool policy.citizen_facing_gate is 'read-only'."""
+def test_tool_definition_policy_gate_is_login() -> None:
+    """GovAPITool policy.citizen_facing_gate is 'login' for personal certificate data."""
     assert MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL.policy is not None
-    assert MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL.policy.citizen_facing_gate == "read-only"
+    assert MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL.policy.citizen_facing_gate == "login"
 
 
 def test_registration_duplicate_raises_error() -> None:

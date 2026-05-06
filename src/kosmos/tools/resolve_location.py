@@ -33,6 +33,52 @@ from kosmos.tools.models import (
 
 logger = logging.getLogger(__name__)
 
+_NON_LOCATION_SERVICE_TERMS: tuple[str, ...] = (
+    "홈택스",
+    "hometax",
+    "정부24",
+    "government24",
+    "gov24",
+    "위택스",
+    "wetax",
+    "워크넷",
+    "worknet",
+    "모바일신분증",
+    "mobileid",
+    "인증서",
+    "간편인증",
+    "개인정보",
+    "내정보",
+    "정보이용",
+    "정보제공",
+    "연락처",
+    "주소정정",
+    "주소변경",
+)
+
+_PHYSICAL_LOCATION_TERMS: tuple[str, ...] = (
+    "세무서",
+    "주민센터",
+    "행정복지센터",
+    "고용센터",
+    "센터 위치",
+    "청사",
+    "사무소",
+    "지점",
+    "위치",
+    "가는 길",
+    "주소",
+)
+
+
+def _is_non_location_service_query(query: str) -> bool:
+    normalized = "".join(query.lower().split())
+    if not normalized:
+        return False
+    if not any(term in normalized for term in _NON_LOCATION_SERVICE_TERMS):
+        return False
+    return not any(term in query for term in _PHYSICAL_LOCATION_TERMS)
+
 
 async def _kakao_geocode(
     query: str,
@@ -416,6 +462,16 @@ async def resolve_location(  # noqa: C901
             reason="empty_query",
             message="Query must not be empty.",
         )
+    if _is_non_location_service_query(query):
+        return ResolveError(
+            kind="error",
+            reason="invalid_query",
+            message=(
+                f"{query!r} is an online public-service channel, not a physical "
+                "location query. Use the matching verify/lookup/submit chain "
+                "unless the citizen explicitly asks for a physical office or branch."
+            ),
+        )
 
     logger.debug("resolve_location: query=%r want=%s", query, want)
 
@@ -623,6 +679,8 @@ async def resolve_location(  # noqa: C901
         # Resolve adm_cd via juso (preferred) or sgis (fallback)
         adm_bundle = await _juso_adm_cd(query, client=client)
         if adm_bundle is None:
+            adm_bundle = await _kakao_adm_cd(query, client=client)
+        if adm_bundle is None:
             adm_bundle = await _sgis_adm_cd(query, coords=coords_bundle, client=client)
 
         if coords_bundle is None and adm_bundle is None:
@@ -675,6 +733,16 @@ async def resolve_location_v4(
             kind="error",
             reason="empty_query",
             message="Query must not be empty.",
+        )
+    if _is_non_location_service_query(query):
+        return ResolveError(
+            kind="error",
+            reason="invalid_query",
+            message=(
+                f"{query!r} is an online public-service channel, not a physical "
+                "location query. Use the matching verify/lookup/submit chain "
+                "unless the citizen explicitly asks for a physical office or branch."
+            ),
         )
 
     logger.debug("resolve_location_v4: query=%r", query)

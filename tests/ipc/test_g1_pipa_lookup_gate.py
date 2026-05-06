@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 """Wave-2 G1 fix — F-beta-04 lookup-adapter-policy-aware permission gate.
 
-The audit finding: NMC ``nmc_emergency_search`` (Layer 3 / login-gated /
-``is_irreversible``) was dispatched WITHOUT a Spec 035 PermissionGauntlet
-modal, because ``_check_permission_gate`` only consulted the *primitive*
-name (``lookup`` is not in ``GATED_PRIMITIVES``) — never the inner
-adapter's ``policy.citizen_facing_gate``.
+The audit finding: non-read-only lookup adapters were dispatched WITHOUT a
+Spec 035 PermissionGauntlet modal, because ``_check_permission_gate`` only
+consulted the *primitive* name (``lookup`` is not in ``GATED_PRIMITIVES``) —
+never the inner adapter's ``policy.citizen_facing_gate``.
 
 This test reproduces the gate-decision branch directly (the full IPC loop
 integration is covered by ``test_stdio_lookup_registry`` /
@@ -13,10 +12,9 @@ integration is covered by ``test_stdio_lookup_registry`` /
 
 1. ``lookup`` with a ``read-only`` adapter (e.g. KMA forecast) auto-allows
    (no modal traffic, return True).
-2. ``lookup`` with a non-``read-only`` adapter (NMC emergency, login gate)
-   triggers the modal flow — the gate must NOT short-circuit-return on
-   the GATED_PRIMITIVES check; it must walk the full
-   PermissionRequestFrame emission path.
+2. ``lookup`` with a non-``read-only`` adapter triggers the modal flow — the
+   gate must NOT short-circuit-return on the GATED_PRIMITIVES check; it must
+   walk the full PermissionRequestFrame emission path.
 3. ``lookup`` with an unknown ``tool_id`` fails closed (modal flow) so
    that an unregistered/typo'd ``tool_id`` cannot bypass consent.
 """
@@ -87,13 +85,12 @@ def test_lookup_readonly_adapter_auto_allows() -> None:
     ["login", "action", "sign", "submit"],
 )
 def test_lookup_non_readonly_adapter_requires_modal(gate_label: str) -> None:
-    """NMC (login), KEC submit (sign/submit), action-class adapters all
-    enter the modal flow when reached via the lookup primitive."""
-    registry = _make_registry_mock(tool_id="nmc_emergency_search", citizen_facing_gate=gate_label)
+    """Sensitive lookup adapters enter the modal flow through lookup."""
+    registry = _make_registry_mock(tool_id="mock_sensitive_lookup", citizen_facing_gate=gate_label)
     decision = _classify(
         fname="lookup",
         args_obj={
-            "tool_id": "nmc_emergency_search",
+            "tool_id": "mock_sensitive_lookup",
             "params": {"lat": 37.5665, "lon": 126.978},
         },
         registry=registry,
@@ -119,7 +116,7 @@ def test_lookup_with_no_registry_fails_closed() -> None:
     """Boot race: registry not yet ensured. Gate must fail-closed."""
     decision = _classify(
         fname="lookup",
-        args_obj={"tool_id": "nmc_emergency_search", "params": {}},
+        args_obj={"tool_id": "mock_sensitive_lookup", "params": {}},
         registry=None,
     )
     assert decision == "needs_modal"

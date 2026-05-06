@@ -154,6 +154,8 @@ class _AuthContextBase(BaseModel):
     transparency_international_reference: str | None = Field(
         default=None, alias="_international_reference"
     )
+    mock_fidelity_grade: str | None = Field(default=None, alias="_mock_fidelity_grade")
+    mock_evidence: dict[str, object] | None = Field(default=None, alias="_mock_evidence")
 
 
 # ---------------------------------------------------------------------------
@@ -202,6 +204,13 @@ class GanpyeonInjeungContext(_AuthContextBase):
 
     family: Literal["ganpyeon_injeung"] = "ganpyeon_injeung"
     provider: Literal["pass", "kakao", "naver", "toss", "bank", "samsung", "payco"]
+    delegation_context: DelegationContext | None = Field(
+        default=None,
+        description=(
+            "Optional scope-bound delegation grant emitted when the verify request "
+            "included downstream lookup/submit scopes."
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_published_tier(self) -> GanpyeonInjeungContext:

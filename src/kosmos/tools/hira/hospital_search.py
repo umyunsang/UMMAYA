@@ -544,7 +544,7 @@ HIRA_HOSPITAL_SEARCH_TOOL = GovAPITool(
     output_schema=_HiraHospitalSearchOutput,
     llm_description=_HIRA_DESCRIPTION,
     search_hint=(
-        "병원 검색 진료과목 의료기관 정보 근처 병원 내과 외과 소아과 "
+        "병원 검색 진료과목 근처 병원 내과 외과 소아과 "
         "hospital search medical specialty clinic nearby HIRA healthcare Korea"
     ),
     policy=AdapterRealDomainPolicy(

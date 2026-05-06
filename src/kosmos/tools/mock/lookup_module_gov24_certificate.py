@@ -7,10 +7,10 @@ Registers as a ``GovAPITool`` in the main ``ToolRegistry`` (not a per-primitive
 sub-registry) because the ``lookup`` primitive resolves adapter IDs against the
 BM25-indexed main registry.
 
-When called with a ``DelegationContext``, validates the scope matches
-``"lookup:gov24.certificate"`` (fail-closed per Constitution § II). When no
-delegation context is supplied, the adapter proceeds without scope enforcement
-(lookups are read-only and may not require delegation in all flows).
+Requires a ``DelegationContext`` and validates the scope matches
+``"lookup:gov24.certificate"`` (fail-closed per Constitution § II). Without
+delegation the adapter returns a typed auth_required envelope instead of
+returning synthetic citizen certificate data.
 
 Transparency constants (contracts/mock-adapter-response-shape.md § 4):
   _REFERENCE_IMPL    = "public-mydata-read-v240930"
@@ -35,6 +35,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
+from kosmos.primitives.delegation import DelegationContext
 from kosmos.tools.models import AdapterRealDomainPolicy, GovAPITool
 from kosmos.tools.transparency import stamp_mock_response
 
@@ -53,6 +54,30 @@ _ACTUAL_ENDPOINT: Final = "https://api.gateway.kosmos.gov.kr/v1/lookup/gov24_cer
 _SECURITY_WRAPPING: Final = "OAuth2.1 + mTLS + scope-bound bearer"
 _POLICY_AUTHORITY: Final = "https://www.gov.kr/portal/main/nlogin"
 _INTERNATIONAL_REF: Final = "Estonia X-Road"
+_MOCK_FIDELITY_GRADE: Final = "B-official-api-onboarding-private-spec-inferred"
+_MOCK_EVIDENCE: Final[dict[str, Any]] = {
+    "credential_status": "student_no_live_authority",
+    "basis_urls": [
+        "https://www.dpaper.kr/ewp/smm/intrcn.do",
+        "https://www.dpaper.kr/ewp/busiAccountUrl.do",
+        "https://x-road.global/data-exchange",
+    ],
+    "supports": [
+        "official electronic certificate issuance and distribution API onboarding",
+        "server-certificate, portal ID, API key, development API, and operation API gates",
+        "direct service-consumer to service-provider exchange with signed and logged traffic",
+    ],
+    "inference_boundary": (
+        "Detailed Government24 certificate payloads are partner-gated; KOSMOS models "
+        "wallet/document lifecycle fields and integrity placeholders only."
+    ),
+    "live_swap_requirements": [
+        "MOIS approval for electronic document wallet API use",
+        "server certificate and portal account",
+        "development API key plus test result approval",
+        "operation API key and wallet address",
+    ],
+}
 
 # Required delegation scope when a DelegationContext is present.
 _REQUIRED_SCOPE: Final = "lookup:gov24.certificate"
@@ -94,6 +119,13 @@ class Gov24CertificateInput(BaseModel):
         description=(
             "Purpose for which the certificate is requested (제출 목적). "
             "Example: '금융기관 제출용', '취업 지원 제출용'."
+        ),
+    )
+    delegation_context: DelegationContext | None = Field(
+        default=None,
+        description=(
+            "DelegationContext returned by mock_verify_module_simple_auth. Required; "
+            "must include scope 'lookup:gov24.certificate'."
         ),
     )
 
@@ -160,12 +192,39 @@ _CERT_FIXTURES: dict[CertificateType, dict[str, Any]] = {
 def _build_fixture(inp: Gov24CertificateInput) -> dict[str, Any]:
     """Build a synthetic certificate fixture for the given certificate type."""
     base = dict(_CERT_FIXTURES[inp.certificate_type])
+    fetched_at = datetime.now(_SEOUL_TZ).isoformat()
+    certificate_ref = f"mock-gov24-cert-{inp.certificate_type}-20260429-001"
     return {
         **base,
+        "certificate_ref": certificate_ref,
         "purpose": inp.purpose,
-        "fetched_at": datetime.now(_SEOUL_TZ).isoformat(),
+        "electronic_document_wallet": {
+            "wallet_address": "mock-wallet-address-not-routable",
+            "document_id": certificate_ref,
+            "lifecycle": [
+                "application",
+                "issuer_verification",
+                "issuance",
+                "wallet_storage",
+                "citizen_view",
+                "third_party_transfer",
+            ],
+            "integrity": {
+                "document_hash": "sha256:mock-not-a-real-certificate",
+                "signature_status": "fixture_only_not_cryptographic",
+            },
+        },
+        "api_onboarding_flow": [
+            "submit_official_application",
+            "portal_review",
+            "development_api_key_issued",
+            "institution_builds_and_tests",
+            "operation_api_key_issued_after_test_review",
+        ],
+        "fetched_at": fetched_at,
         "disclaimer": (
-            "Mock fixture — data is synthetic. Real endpoint requires authenticated Gov24 session."
+            "Mock fixture — data is synthetic. Real endpoint requires Government24 "
+            "or electronic document wallet API approval and citizen authorization."
         ),
     }
 
@@ -182,10 +241,9 @@ async def handle(
 ) -> dict[str, Any]:
     """Handle a Gov24 certificate lookup.
 
-    When ``delegation_context`` is supplied, validates that the token scope
-    matches ``"lookup:gov24.certificate"``; rejects with a scope-violation
-    error if not. When absent, proceeds without delegation enforcement (the
-    lookup is read-only).
+    Requires a ``delegation_context`` and validates that the token scope
+    matches ``"lookup:gov24.certificate"``; rejects with a typed auth_required
+    envelope when missing or mismatched.
 
     Returns a ``LookupOutput``-shaped envelope (``{"kind": "record", "item": …}``
     or ``{"kind": "error", …}``) so the response passes the executor's
@@ -196,37 +254,46 @@ async def handle(
     The outer ``meta`` block is injected by ``normalize()`` — adapters MUST NOT
     pre-populate ``meta`` themselves (system-reserved keys are dropped).
     """
-    # Optional delegation scope check (fail-closed when context is present).
-    if delegation_context is not None:
-        from kosmos.primitives.delegation import DelegationContext
+    delegation_context = delegation_context or inp.delegation_context
+    if not isinstance(delegation_context, DelegationContext):
+        logger.warning("mock_lookup_module_gov24_certificate: missing delegation context")
+        return {
+            "kind": "error",
+            "reason": "auth_required",
+            "message": (
+                "DelegationContext with scope 'lookup:gov24.certificate' is required "
+                "before Gov24 certificate lookup. Call verify first and pass the "
+                "returned delegation_context in lookup params."
+            ),
+            "retryable": False,
+        }
 
-        if isinstance(delegation_context, DelegationContext):
-            token_scope = delegation_context.token.scope
-            # Scope may be comma-joined multi-scope; match exact entry.
-            if _REQUIRED_SCOPE not in token_scope.split(","):
-                logger.warning(
-                    "mock_lookup_module_gov24_certificate: scope violation "
-                    "(token_scope=%r required=%r)",
-                    token_scope,
-                    _REQUIRED_SCOPE,
-                )
-                # LookupError envelope variant — `kind="error"` is the
-                # discriminator. ``reason`` MUST be a member of
-                # ``LookupErrorReason`` (envelope ``extra='forbid'``); a
-                # missing-scope delegation maps to ``auth_required`` (the
-                # closest semantic match in the closed enum). Transparency
-                # fields are NOT stamped here — the LookupError schema
-                # forbids extra keys; ``meta.source`` (injected by
-                # ``envelope.normalize()``) carries the tool_id instead.
-                return {
-                    "kind": "error",
-                    "reason": "auth_required",
-                    "message": (
-                        f"Delegation token scope {token_scope!r} does not "
-                        f"grant {_REQUIRED_SCOPE!r}."
-                    ),
-                    "retryable": False,
-                }
+    token_scope = delegation_context.token.scope
+    # Scope may be comma-joined multi-scope; match exact entry.
+    if _REQUIRED_SCOPE not in token_scope.split(","):
+        logger.warning(
+            "mock_lookup_module_gov24_certificate: scope violation "
+            "(token_scope=%r required=%r)",
+            token_scope,
+            _REQUIRED_SCOPE,
+        )
+        # LookupError envelope variant — `kind="error"` is the
+        # discriminator. ``reason`` MUST be a member of
+        # ``LookupErrorReason`` (envelope ``extra='forbid'``); a
+        # missing-scope delegation maps to ``auth_required`` (the
+        # closest semantic match in the closed enum). Transparency
+        # fields are NOT stamped here — the LookupError schema
+        # forbids extra keys; ``meta.source`` (injected by
+        # ``envelope.normalize()``) carries the tool_id instead.
+        return {
+            "kind": "error",
+            "reason": "auth_required",
+            "message": (
+                f"Delegation token scope {token_scope!r} does not "
+                f"grant {_REQUIRED_SCOPE!r}."
+            ),
+            "retryable": False,
+        }
 
     # LookupRecord envelope variant — domain payload + transparency stamp
     # live inside `item`; `meta` is filled by `envelope.normalize()`.
@@ -237,6 +304,8 @@ async def handle(
         security_wrapping_pattern=_SECURITY_WRAPPING,
         policy_authority=_POLICY_AUTHORITY,
         international_reference=_INTERNATIONAL_REF,
+        mock_fidelity_grade=_MOCK_FIDELITY_GRADE,
+        mock_evidence=_MOCK_EVIDENCE,
     )
     return {
         "kind": "record",
@@ -263,7 +332,8 @@ MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL = GovAPITool(
         "가족관계증명서 (family relations certificate), or "
         "사업자등록증 (business registration certificate). "
         "Returns a synthetic fixture stamped with six AX-channel transparency fields. "
-        "When a DelegationContext is provided, requires scope 'lookup:gov24.certificate'. "
+        "Requires a DelegationContext from mock_verify_module_simple_auth with scope "
+        "'lookup:gov24.certificate'; never call before verify. "
         "This is a Mock adapter — no real Gov24 API is called. "
         "Use when a citizen asks to retrieve their registration documents or "
         "business registration details through the government portal."
@@ -276,9 +346,9 @@ MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL = GovAPITool(
         real_classification_url=_POLICY_AUTHORITY,
         real_classification_text=(
             "정부24 공공데이터 포털 — 증명서 조회 서비스 공공데이터 이용약관 "
-            "(OAuth2.1 인증 기반 읽기 전용 공공이용 허가)"
+            "(OAuth2.1 인증 기반 개인 증명서 조회)"
         ),
-        citizen_facing_gate="read-only",
+        citizen_facing_gate="login",
         last_verified=datetime(2026, 4, 29, tzinfo=UTC),
     ),
     adapter_mode="mock",
@@ -296,6 +366,7 @@ MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL = GovAPITool(
         "정부24 증명서",
         "등본 발급",
     ],
+    delegation_source_tool_id="mock_verify_module_simple_auth",
 )
 
 
@@ -318,12 +389,12 @@ def register(registry: object, executor: object) -> None:
 
     async def _adapter(inp: BaseModel) -> dict[str, Any]:
         assert isinstance(inp, Gov24CertificateInput)
-        return await handle(inp)
+        return await handle(inp, delegation_context=inp.delegation_context)
 
     registry.register(MOCK_LOOKUP_MODULE_GOV24_CERTIFICATE_TOOL)
     executor.register_adapter("mock_lookup_module_gov24_certificate", _adapter)
     logger.info(
         "Registered mock tool: mock_lookup_module_gov24_certificate "
-        "(read-only, mock mode, AX-channel reference: %s)",
+        "(login-gated, mock mode, AX-channel reference: %s)",
         _REFERENCE_IMPL,
     )

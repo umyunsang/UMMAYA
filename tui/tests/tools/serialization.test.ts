@@ -7,6 +7,7 @@
 import { describe, test, expect } from 'bun:test'
 import { LookupPrimitive } from '../../src/tools/LookupPrimitive/LookupPrimitive.js'
 import { SubmitPrimitive } from '../../src/tools/SubmitPrimitive/SubmitPrimitive.js'
+import { VerifyPrimitive } from '../../src/tools/VerifyPrimitive/VerifyPrimitive.js'
 import {
   toolToFunctionSchema,
   getToolDefinitionsForFrame,
@@ -73,6 +74,28 @@ describe('toolToFunctionSchema - LookupPrimitive required fields', () => {
     expect(required).toEqual(expect.arrayContaining(['tool_id', 'params']))
     expect(required).not.toContain('mode')
     expect(required).not.toContain('query')
+  })
+})
+
+describe('toolToFunctionSchema - VerifyPrimitive strict schema', () => {
+  test('verify requires scope-bound params and emits strict=true', async () => {
+    const def = await toolToFunctionSchema(VerifyPrimitive)
+
+    expect(def.function.name).toBe('verify')
+    expect(def.function.strict).toBe(true)
+
+    const params = def.function.parameters as Record<string, unknown>
+    expect(params['additionalProperties']).toBe(false)
+    expect(params['required']).toEqual(['tool_id', 'params'])
+
+    const properties = params['properties'] as Record<string, unknown>
+    const verifyParams = properties['params'] as Record<string, unknown>
+    expect(verifyParams['additionalProperties']).toBe(false)
+    expect(verifyParams['required']).toEqual([
+      'scope_list',
+      'purpose_ko',
+      'purpose_en',
+    ])
   })
 })
 

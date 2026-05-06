@@ -77,6 +77,23 @@ def test_simple_auth_reference_impl(tmp_path: Path) -> None:
     assert result.transparency_reference_implementation == "ax-infrastructure-callable-channel"
 
 
+def test_simple_auth_evidence_grade(tmp_path: Path) -> None:
+    """Simple-auth module mock exposes evidence and inference boundary."""
+    from kosmos.tools.mock.verify_module_simple_auth import invoke
+
+    result = invoke(
+        {
+            "scope_list": ["verify:simple_auth.identity"],
+            "session_id": "s1",
+            "ledger_root": tmp_path / "ledger",
+        }
+    )
+    dumped = result.model_dump(by_alias=True)
+    assert dumped["_mock_fidelity_grade"] == "B-official-policy-private-hub-api-inferred"
+    assert dumped["_mock_evidence"]["credential_status"] == "student_no_live_authority"
+    assert "inference_boundary" in dumped["_mock_evidence"]
+
+
 def test_simple_auth_delegation_context_shape(tmp_path: Path) -> None:
     """invoke() result carries 'token' dict (DelegationContext payload)."""
     from kosmos.tools.mock.verify_module_simple_auth import invoke

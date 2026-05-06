@@ -48,6 +48,12 @@ const syntheticAdapter = {
   },
 }
 
+const VERIFY_PARAMS = {
+  scope_list: ['lookup:koroad.accident-hazard'],
+  purpose_ko: '교통 안전 조회',
+  purpose_en: 'Road safety lookup',
+}
+
 // ---------------------------------------------------------------------------
 // Minimal ToolUseContext builder — only options.tools is required by validateInput.
 // ---------------------------------------------------------------------------
@@ -161,7 +167,7 @@ describe('validateInput — happy path (citation populates context)', () => {
   test('VerifyPrimitive: result true + kosmosCitations populated', async () => {
     const context = buildContext([syntheticAdapter])
     const result = await VerifyPrimitive.validateInput(
-      { tool_id: 'koroad_accident_hazard_search', params: {} },
+      { tool_id: 'koroad_accident_hazard_search', params: VERIFY_PARAMS },
       context,
     )
 
@@ -321,7 +327,7 @@ describe('validateInput — citation-missing path (errorCode 1002)', () => {
   test('VerifyPrimitive returns CitationMissing + Korean message', async () => {
     const context = buildContext([emptyPolicyAdapter])
     const result = await VerifyPrimitive.validateInput(
-      { tool_id: 'koroad_accident_hazard_search', params: {} },
+      { tool_id: 'koroad_accident_hazard_search', params: VERIFY_PARAMS },
       context,
     )
 
@@ -377,7 +383,7 @@ describe('validateInput — adapter-not-found path (errorCode 1001)', () => {
   test('VerifyPrimitive returns AdapterNotFound for unknown tool_id', async () => {
     const context = buildContext([syntheticAdapter])
     const result = await VerifyPrimitive.validateInput(
-      { tool_id: 'nonexistent', params: {} },
+      { tool_id: 'nonexistent', params: VERIFY_PARAMS },
       context,
     )
 
@@ -396,5 +402,20 @@ describe('validateInput — adapter-not-found path (errorCode 1001)', () => {
     expect(result.result).toBe(false)
     if (result.result) return
     expect(result.errorCode).toBe(PrimitiveErrorCode.AdapterNotFound)
+  })
+})
+
+describe('VerifyPrimitive scope-bound params guard', () => {
+  test('rejects params={} before adapter resolution', async () => {
+    const context = buildContext([syntheticAdapter])
+    const result = await VerifyPrimitive.validateInput(
+      { tool_id: 'koroad_accident_hazard_search', params: {} },
+      context,
+    )
+
+    expect(result.result).toBe(false)
+    if (result.result) return
+    expect(result.errorCode).toBe(PrimitiveErrorCode.InvalidParams)
+    expect(result.message).toContain('params.scope_list')
   })
 })

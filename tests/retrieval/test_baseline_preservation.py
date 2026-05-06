@@ -7,7 +7,7 @@ Programmatic invocation of ``kosmos.eval.retrieval._build_registry()`` and
 
 Asserts the SC-004 / Appendix A contract:
     - recall@5 == 1.0  (all 30 queries hit in top-5)
-    - recall@1 == 0.9333 (28/30 queries hit at rank 1, rounded to 4 dp)
+    - recall@1 == 0.9667 (29/30 queries hit at rank 1, rounded to 4 dp)
 
 These assertions are the programmatic equivalent of the Appendix A evidence
 table in spec 026; any regression in lookup.py / search.py / BM25Index that
@@ -25,17 +25,17 @@ _QUERIES_PATH = Path(__file__).parent.parent.parent / "eval" / "retrieval_querie
 
 # Expected baseline values (Appendix A, spec 026):
 #   recall@5 = 30/30 = 1.0
-#   recall@1 = 28/30 — _evaluate() applies round(..., 4) giving 0.9333
+#   recall@1 = 29/30 — _evaluate() applies round(..., 4) giving 0.9667
 _EXPECTED_RECALL5 = 1.0
-_EXPECTED_RECALL1 = 0.9333  # round(28/30, 4)
+_EXPECTED_RECALL1 = 0.9667  # round(29/30, 4)
 
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_recall_at_5_is_perfect(monkeypatch: pytest.MonkeyPatch) -> None:
     """recall@5 MUST equal 1.0 — all 30 queries hit in top-5.
 
-    SC-004 / Appendix A evidence: BM25 default path is byte-identical to
-    pre-#585 main branch behaviour.
+    SC-004 / Appendix A evidence: BM25 default path matches the committed
+    adapter hint baseline.
     """
     monkeypatch.delenv("KOSMOS_RETRIEVAL_BACKEND", raising=False)
 
@@ -56,7 +56,7 @@ def test_recall_at_5_is_perfect(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_recall_at_1_matches_baseline(monkeypatch: pytest.MonkeyPatch) -> None:
-    """recall@1 MUST equal 0.9333 (28/30 rounded to 4 dp).
+    """recall@1 MUST equal 0.9667 (29/30 rounded to 4 dp).
 
     This is the Appendix A evidence value from spec 026. Any change to
     BM25Index tokenisation, score formula, or adapter search_hint that

@@ -98,6 +98,7 @@ const ToolDefinitionFunctionSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   parameters: z.record(z.string(), z.unknown()).default({}),
+  strict: z.boolean().optional(),
 })
 
 const ToolDefinitionSchema = z.object({
@@ -166,6 +167,8 @@ const PermissionRequestFrameSchema = BaseFrame.extend({
   description_ko: z.string(),
   description_en: z.string(),
   risk_level: z.enum(['low', 'medium', 'high']),
+  tool_id: z.string().optional().nullable(),
+  arguments: z.record(z.string(), z.unknown()).optional().nullable(),
 })
 
 const PermissionResponseFrameSchema = BaseFrame.extend({

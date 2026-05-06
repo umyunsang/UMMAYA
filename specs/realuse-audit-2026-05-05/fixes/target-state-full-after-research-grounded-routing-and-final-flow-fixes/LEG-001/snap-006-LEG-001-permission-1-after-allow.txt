@@ -1,0 +1,48 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 가족관계증명서랑 주민등록등본이 필요한데 법원 제출용으로 발급하고 제출 가능한지 확인해줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_gov24_certificate)
+  ⎿  record — 1건
+       {"kind":"record","item":{"certificate_type":"resident_registration","certificate_type_ko":"주민등록등본","issue_date":"2026-04-29","issuer":"서울특별시
+     강남구청","holder_name":"홍길동 (MOCK)","household_members":[{"relation":"본인","birth_year":1985},{"relati…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-AF730A89
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:3a205c25943021e6ee4d515819f5c0a1d387f8391e0237dec7baf640dd4517ca
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   send(
+   {
+     "tool_id": "mock_submit_module_gov24_minwon",
+     "params": {
+       "applicant_name": "verified_citizen_mock",
+       "delivery_method": "online",
+       "minwon_type": "가족관계증명서"
+     }
+   }
+   )
+   Submit data to a government API. This action is irreversible.
+   정부 API에 데이터를 제출합니다. 이 작업은 되돌릴 수 없습니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for send commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

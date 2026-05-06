@@ -1,0 +1,44 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/TAX-002",
+  "status": "pass",
+  "files_scanned": 57,
+  "frame_count": 33,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "verify",
+      "argument": "mock_verify_module_modid",
+      "path": "final-scrollback.txt",
+      "line": 9,
+      "evidence": "⎿ 검증 결과: 인증 완료"
+    },
+    {
+      "name": "lookup",
+      "argument": "mock_lookup_module_hometax_simplified",
+      "path": "final-scrollback.txt",
+      "line": 12,
+      "evidence": "⎿ record — 1건"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_hometax_taxreturn",
+      "path": "final-scrollback.txt",
+      "line": 17,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 처리: 신고 제출 | 접수 번호: hometax-2026-05-06-RX-BC4ECB51 | 상태: 신고완료"
+    },
+    {
+      "name": "submit",
+      "argument": "mock_submit_module_hometax_taxreturn",
+      "path": "final-scrollback.txt",
+      "line": 27,
+      "evidence": "⎿ 🧪 모의 제출 접수 | 처리: 납부기한 알림 생성 | 접수 번호: hometax-2026-05-06-PAYREM-204B2C4E | 상태: 납부기한알림생성"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_rest_pull_tick_v1",
+      "path": "final-scrollback.txt",
+      "line": 37,
+      "evidence": "⎿ 구독 완료: 핸들 ID 없음 (error) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다."
+    }
+  ]
+}

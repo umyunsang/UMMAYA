@@ -63,6 +63,25 @@ def test_stamp_mock_response_empty_payload_works() -> None:
     assert len(result) == 6  # exactly 6 transparency fields
 
 
+def test_stamp_mock_response_optional_evidence_fields() -> None:
+    """Adapters may attach evidence-grade metadata for privileged mocks."""
+    evidence = {
+        "credential_status": "student_no_live_authority",
+        "basis_urls": ["https://example.gov.test/spec"],
+        "inference_boundary": "Private payload is inferred.",
+        "live_swap_requirements": ["official approval"],
+    }
+    result = stamp_mock_response(
+        {"receipt_id": "mock-001"},
+        **_VALID_KWARGS,
+        mock_fidelity_grade="B-official-flow-private-spec-inferred",
+        mock_evidence=evidence,
+    )
+
+    assert result["_mock_fidelity_grade"] == "B-official-flow-private-spec-inferred"
+    assert result["_mock_evidence"] == evidence
+
+
 # ---------------------------------------------------------------------------
 # Empty-string / whitespace rejection paths
 # ---------------------------------------------------------------------------
@@ -85,3 +104,23 @@ def test_stamp_mock_response_rejects_empty(field_name: str, bad_value: str) -> N
     kwargs = {**_VALID_KWARGS, field_name: bad_value}
     with pytest.raises(ValueError, match="non-empty"):
         stamp_mock_response({"key": "value"}, **kwargs)
+
+
+def test_stamp_mock_response_rejects_empty_evidence_grade() -> None:
+    """Evidence grade is optional, but if provided it must be non-empty."""
+    with pytest.raises(ValueError, match="mock_fidelity_grade"):
+        stamp_mock_response(
+            {"key": "value"},
+            **_VALID_KWARGS,
+            mock_fidelity_grade=" ",
+        )
+
+
+def test_stamp_mock_response_rejects_empty_evidence_object() -> None:
+    """Evidence object is optional, but if provided it must not be empty."""
+    with pytest.raises(ValueError, match="mock_evidence"):
+        stamp_mock_response(
+            {"key": "value"},
+            **_VALID_KWARGS,
+            mock_evidence={},
+        )

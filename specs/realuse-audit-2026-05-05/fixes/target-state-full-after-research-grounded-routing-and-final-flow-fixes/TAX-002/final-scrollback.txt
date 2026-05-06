@@ -1,0 +1,51 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 개인사업자 부가세 신고해야 하는데 매출 자료 모아서 납부까지 진행해줘.
+
+⏺ auth(mock_verify_module_modid)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_hometax_simplified)
+  ⎿  record — 1건
+       {"kind":"record","item":{"year":2025,"kind":"simplified_data_summary","citizen_scope_ref":"hometax-simplified-2025-mock-subject","consent_receipt":{"consent_type":"annu
+     al_simplified_data_bulk_provision","subject":"taxpayer_and_consented_de…
+
+⏺ send(mock_submit_module_hometax_taxreturn)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     처리: 신고 제출
+     접수 번호: hometax-2026-05-06-RX-BC4ECB51
+     상태: 신고완료
+     납부 단계: 별도 납부 확인 필요
+     트랜잭션: urn:kosmos:submit:51af30e3da15bb80779a431e58035b7b8697cca03b6aab30216cbfc6eff3b085
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/hometax/tax-return
+
+⏺ send(mock_submit_module_hometax_taxreturn)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     처리: 납부기한 알림 생성
+     접수 번호: hometax-2026-05-06-PAYREM-204B2C4E
+     상태: 납부기한알림생성
+     납부 단계: 납부기한 알림 생성됨
+     트랜잭션: urn:kosmos:submit:e6546ee4ab812cfd8cffdae12f913e3479bc54dc8a7bdfd0d15af35f1956e7ad
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/hometax/tax-return
+
+⏺ watch(mock_rest_pull_tick_v1)
+  ⎿  구독 완료: 핸들 ID 없음 (error)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+⏺ 도구 결과 기준으로 처리 상태를 정리합니다.
+  - 인증: 완료
+  - 조회 mock_lookup_module_hometax_simplified: 1건
+  - 모의 제출: 접수 · 처리 file_return · 접수번호 hometax-2026-05-06-RX-BC4ECB51 · 상태 신고완료
+  - 모의 제출: 접수 · 처리 create_payment_deadline_reminder · 접수번호 hometax-2026-05-06-PAYREM-204B2C4E · 상태 납부기한알림생성
+  표시된 모의 결과는 실제 행정 효력이 없으며, 운영 전환 시 기관 공식 엔드포인트와 권한 정책을 따라야 합니다.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  PR #2773

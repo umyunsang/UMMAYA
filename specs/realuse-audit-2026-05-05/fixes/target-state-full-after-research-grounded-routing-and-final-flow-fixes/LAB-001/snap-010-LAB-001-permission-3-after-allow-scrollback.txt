@@ -1,0 +1,42 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 퇴사했는데 실업급여 받을 수 있는지 확인하고 워크넷 등록이랑 고용센터 예약까지 해줘.
+
+⏺ auth(mock_verify_ganpyeon_injeung)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_national_ax_bundle)
+  ⎿  record — 1건
+       {"kind":"record","item":{"workflow_kind":"national_ax_bundle_discovery","lookup_ref":"mock-national-ax-bundle-20260505-001","query":"퇴사했는데 실업급여 받을 수 있는지
+     확인하고 워크넷 등록이랑 고용센터 예약까지 해줘.","purpose":"국가 AX 묶음 민원/서비스 선행 조회","matched_public_service…
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-332F2A55
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:0ac515ccee9799570eaf8ff5df5a2a6e29453dbbbcaec8569198862c7276483d
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ send(mock_submit_module_gov24_minwon)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     접수 번호: gov24-2026-05-06-MW-165B5AF4
+     상태: 접수완료
+     트랜잭션: urn:kosmos:submit:b4f846c0230e8d9a2c585652cfc323e842a7f919c6fb4570413267287676beee
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/gov24/minwon
+
+⏺ watch(mock_rest_pull_tick_v1)
+  ⎿  구독 완료: 72788283-9455-4347-9184-9d41da777f99 (subscribe)
+     실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다.
+
+· Pontificating…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                                                                                  ● high · /effort

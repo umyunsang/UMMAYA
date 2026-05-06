@@ -41,6 +41,7 @@ from kosmos.tools.models import (  # noqa: A004
     AdapterRealDomainPolicy,
     GovAPITool,
     LookupError,  # noqa: A004 — domain-specific Pydantic model, intentional shadow
+    LookupMeta,
     LookupTimeseries,
 )
 
@@ -175,6 +176,41 @@ def _normalize_items(raw: object) -> list[dict[str, object]]:
     return []
 
 
+def _empty_timeseries(request_id: str, started_at: datetime) -> LookupTimeseries:
+    elapsed_ms = int((datetime.now(tz=UTC) - started_at).total_seconds() * 1000)
+    return LookupTimeseries(
+        kind="timeseries",
+        points=[],
+        interval="hour",
+        meta=LookupMeta(
+            source="kma_forecast_fetch",
+            fetched_at=started_at.astimezone(_SEOUL_TZ),
+            request_id=request_id,
+            elapsed_ms=elapsed_ms,
+        ),
+    )
+
+
+def _non_normal_result(
+    result_code: str,
+    result_msg: str,
+    *,
+    request_id: str,
+    started_at: datetime,
+) -> LookupTimeseries | LookupError | None:
+    if result_code == "00":
+        return None
+    if result_code == "03":
+        return _empty_timeseries(request_id, started_at)
+    return LookupError(
+        kind="error",
+        reason=LookupErrorReason.upstream_unavailable,
+        message=f"KMA API error: resultCode={result_code!r} resultMsg={result_msg!r}",
+        upstream_code=result_code,
+        upstream_message=result_msg,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Core async handler
 # ---------------------------------------------------------------------------
@@ -302,14 +338,14 @@ async def _fetch(
             message=f"Unexpected KMA response structure: {exc}",
         )
 
-    if result_code != "00":
-        return LookupError(
-            kind="error",
-            reason=LookupErrorReason.upstream_unavailable,
-            message=f"KMA API error: resultCode={result_code!r} resultMsg={result_msg!r}",
-            upstream_code=result_code,
-            upstream_message=result_msg,
-        )
+    non_normal_result = _non_normal_result(
+        result_code,
+        result_msg,
+        request_id=request_id,
+        started_at=t_start,
+    )
+    if non_normal_result is not None:
+        return non_normal_result
 
     body = resp_body.get("body", {})
     raw_items_container = body.get("items", {})
@@ -322,8 +358,6 @@ async def _fetch(
     points = _parse_forecast_items(item_list)
 
     elapsed_ms = int((datetime.now(tz=UTC) - t_start).total_seconds() * 1000)
-
-    from kosmos.tools.models import LookupMeta
 
     meta = LookupMeta(
         source="kma_forecast_fetch",

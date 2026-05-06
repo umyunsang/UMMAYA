@@ -1,0 +1,48 @@
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 15 entries verified (5 primitives) in 0ms
+    ▛███▜      KOSMOS v0.1.0-alpha+1978
+▗▟█████████▙▖  K-EXAONE with high effort · API Usage Billing
+   ▘ ▘ ▘ ▘     ~/KOSMOS/tui
+
+❯ 개인사업자 부가세 신고해야 하는데 매출 자료 모아서 납부까지 진행해줘.
+
+⏺ auth(mock_verify_module_modid)
+  ⎿  검증 결과: 인증 완료
+
+⏺ find(mock_lookup_module_hometax_simplified)
+  ⎿  record — 1건
+       {"kind":"record","item":{"year":2025,"kind":"simplified_data_summary","citizen_scope_ref":"hometax-simplified-2025-mock-subject","consent_receipt":{"consent_type":"annu
+     al_simplified_data_bulk_provision","subject":"taxpayer_and_consented_de…
+
+⏺ send(mock_submit_module_hometax_taxreturn)
+  ⎿  🧪 모의 제출 접수
+     실제 행정 영향 없는 시연 결과입니다.
+     처리: 신고 제출
+     접수 번호: hometax-2026-05-06-RX-BC4ECB51
+     상태: 신고완료
+     납부 단계: 별도 납부 확인 필요
+     트랜잭션: urn:kosmos:submit:51af30e3da15bb80779a431e58035b7b8697cca03b6aab30216cbfc6eff3b085
+     실제 엔드포인트 (운영 시): https://api.gateway.kosmos.gov.kr/v1/submit/hometax/tax-return
+
+⏺ send(mock_submit_module_hometax_taxreturn)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Tool use
+
+   send(
+   {
+     "tool_id": "mock_submit_module_hometax_taxreturn",
+     "params": {
+       "action_type": "create_payment_deadline_reminder"
+     }
+   }
+   )
+   Submit data to a government API. This action is irreversible.
+   정부 API에 데이터를 제출합니다. 이 작업은 되돌릴 수 없습니다.
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for send commands in /Users/um-yunsang/KOSMOS/tui
+   3. No
+
+ Esc to cancel · Tab to amend

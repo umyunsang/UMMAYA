@@ -72,7 +72,7 @@ class Retriever(Protocol):
 ### `BM25Backend` (default — `KOSMOS_RETRIEVAL_BACKEND=bm25`)
 
 - Wraps the existing `BM25Index` (no internal change).
-- Preserves baseline recall@5 = 1.0, recall@1 = 0.9333 on the 30-query set.
+- Preserves baseline recall@5 = 1.0, recall@1 = 0.9667 on the 30-query set.
 - Boot latency unchanged (Principle II — default path cannot regress).
 
 ### `DenseBackend` (opt-in — `KOSMOS_RETRIEVAL_BACKEND=dense`)

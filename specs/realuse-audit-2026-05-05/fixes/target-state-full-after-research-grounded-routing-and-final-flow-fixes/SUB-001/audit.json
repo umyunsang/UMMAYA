@@ -1,0 +1,44 @@
+{
+  "root": "/Users/um-yunsang/KOSMOS/specs/realuse-audit-2026-05-05/fixes/target-state-full-after-research-grounded-routing-and-final-flow-fixes/SUB-001",
+  "status": "pass",
+  "files_scanned": 181,
+  "frame_count": 161,
+  "findings": [],
+  "tool_calls": [
+    {
+      "name": "verify",
+      "argument": "mock_verify_ganpyeon_injeung",
+      "path": "final-scrollback.txt",
+      "line": 9,
+      "evidence": "⎿ 검증 결과: 인증 완료"
+    },
+    {
+      "name": "resolve_location",
+      "argument": "부산 사하구 다대1동 → coords_and_admcd",
+      "path": "final-scrollback.txt",
+      "line": 12,
+      "evidence": "⎿ 위치 해석 결과"
+    },
+    {
+      "name": "subscribe",
+      "argument": "mock_cbs_disaster_v1",
+      "path": "final-scrollback.txt",
+      "line": 16,
+      "evidence": "⎿ 구독 완료: 99384693-5ecd-4a7c-830d-c910d0e8e4f7 (subscribe) | 실시간 스트림은 대화창에서 별도 ⎿ 인용으로 전달됩니다."
+    },
+    {
+      "name": "lookup",
+      "argument": "kma_weather_alert_status",
+      "path": "final-scrollback.txt",
+      "line": 20,
+      "evidence": "⎿ collection — 0건"
+    },
+    {
+      "name": "lookup",
+      "argument": "kma_pre_warning",
+      "path": "final-scrollback.txt",
+      "line": 23,
+      "evidence": "⎿ collection — 0건"
+    }
+  ]
+}

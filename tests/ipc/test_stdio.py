@@ -189,6 +189,13 @@ class _FakeStdout:
     def __init__(self) -> None:
         self.buffer = _CaptureBuf()
 
+    def write(self, data: str) -> int:
+        self.buffer.write(data.encode("utf-8"))
+        return len(data)
+
+    def flush(self) -> None:
+        pass
+
 
 # ---------------------------------------------------------------------------
 # Fake LLMClient base
@@ -712,7 +719,7 @@ class _SingleLookupLLMClient(_BaseFakeLLMClient):
                 tool_call_index=0,
                 tool_call_id=f"call-{uuid.uuid4().hex[:8]}",
                 function_name="lookup",
-                function_args_delta='{"mode":"search","query":"응급실"}',
+                function_args_delta='{"mode":"fetch","tool_id":"kma_pre_warning","params":{}}',
             )
             yield StreamEvent(type="done")
         else:

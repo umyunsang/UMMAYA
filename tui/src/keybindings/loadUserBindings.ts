@@ -400,13 +400,11 @@ export function loadKeybindingsSyncWithWarnings(): KeybindingsLoadResult {
   }
 
   // Audit-4 P0-1 fix — extend the runtime resolver with non-Tier-1 context
-  // bindings (Select navigation, Confirmation Y/N, etc.) drawn from the
+  // bindings (Select navigation, confirmation prompts, etc.) drawn from the
   // legacy DEFAULT_BINDING_BLOCKS catalogue. Without these chords the
   // CC-canonical Select component (used by PermissionPrompt) calls
   // useKeybindings({ 'select:next': ..., 'select:accept': ... }) but no
-  // chord ever resolves to those actions — the Y/A/N selector freezes
-  // because Enter/Down are unbound. This is the smoking-gun failure for
-  // every gated permission modal in KOSMOS (Audit-4 2026-05-04).
+  // chord ever resolves to those actions, so Enter/Down are unbound.
   //
   // Tier-1 user remappings still take precedence: chord-clash collisions
   // are resolved in resolveKeyWithChordState by context priority. We only
