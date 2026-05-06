@@ -41,6 +41,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # Push builds need merge-parent history so the PR commit carrying
+          # [tui-bun-linux-known-issue] remains visible after GitHub creates
+          # the main merge commit. The test step below still restricts the
+          # scanned messages to the PR head range or the pushed range.
+          fetch-depth: 50
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -137,13 +143,25 @@ jobs:
           # PR builds checkout a synthetic merge commit ("Merge X into Y")
           # whose message never carries our sentinel — even with fetch-depth>=1.
           # Read the sentinel directly from the PR's title/body context AND
-          # any reachable commit messages so manual reruns / push events both
-          # work.
+          # only the commit messages in the PR head range. Push builds scan
+          # only the pushed range, so old main-branch sentinel commits cannot
+          # make unrelated future TUI failures warn-only.
+          EVENT_NAME: ${{ github.event_name }}
           PR_TITLE: ${{ github.event.pull_request.title || '' }}
           PR_BODY: ${{ github.event.pull_request.body || '' }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+          PUSH_BEFORE_SHA: ${{ github.event.before || '' }}
+          PUSH_AFTER_SHA: ${{ github.sha || '' }}
           HEAD_COMMIT_MSG: ${{ github.event.head_commit.message || '' }}
         run: |
-          GIT_LOG_MSGS=$(git -C "$GITHUB_WORKSPACE" log -50 HEAD --format=%B 2>/dev/null || true)
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$PR_BASE_SHA" ] && [ -n "$PR_HEAD_SHA" ]; then
+            GIT_LOG_MSGS=$(git -C "$GITHUB_WORKSPACE" log -50 "$PR_BASE_SHA..$PR_HEAD_SHA" --format=%B 2>/dev/null || true)
+          elif [ "$EVENT_NAME" = "push" ] && [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            GIT_LOG_MSGS=$(git -C "$GITHUB_WORKSPACE" log -50 "$PUSH_BEFORE_SHA..$PUSH_AFTER_SHA" --format=%B 2>/dev/null || true)
+          else
+            GIT_LOG_MSGS=$(git -C "$GITHUB_WORKSPACE" log -50 HEAD --format=%B 2>/dev/null || true)
+          fi
           if printf '%s\n%s\n%s\n%s\n' "$PR_TITLE" "$PR_BODY" "$HEAD_COMMIT_MSG" "$GIT_LOG_MSGS" | grep -qF "[tui-bun-linux-known-issue]"; then
             BYPASS=1
           else

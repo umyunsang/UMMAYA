@@ -15,7 +15,8 @@ on:
       - "specs/**"
       - "docs/**"
       - "*.md"
-      - ".github/workflows/ci.yml"
+      # Required CI contexts must materialize for workflow-only PRs too.
+      - ".github/workflows/**"
   push:
     branches: [main]
   merge_group:
