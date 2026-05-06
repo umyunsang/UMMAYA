@@ -52,7 +52,9 @@ Column definitions:
 | `KOSMOS_SGIS_SECRET` | No (optional fallback) | — | Consumer secret string | `kosmos.settings.KosmosSettings.sgis_secret` | [SGIS API](https://sgis.kostat.go.kr) |
 | `KOSMOS_FRIENDLI_BASE_URL` | No | `https://api.friendli.ai/serverless/v1` | Valid HTTPS URL | `kosmos.llm.config.LLMClientConfig.base_url` | FriendliAI Suite |
 | `KOSMOS_FRIENDLI_MODEL` | No | `LGAI-EXAONE/K-EXAONE-236B-A23B` | Model identifier string | `kosmos.llm.config.LLMClientConfig.model` | FriendliAI Suite |
-| `KOSMOS_LLM_SESSION_BUDGET` | No | `100000` | Integer > 0 (tokens) | `kosmos.llm.config.LLMClientConfig.session_budget` | This doc |
+| `KOSMOS_LLM_SESSION_BUDGET` | No | `1000000` | Integer > 0 (tokens) | `kosmos.llm.config.LLMClientConfig.session_budget` | This doc |
+| `KOSMOS_LLM_TIMEOUT_SECONDS` | No | `180` | Float > 0 (seconds) | `kosmos.llm.config.LLMClientConfig.timeout` | Spec 2521 |
+| `KOSMOS_LLM_STREAM_IDLE_TIMEOUT_SECONDS` | No | `90` | Float >= 1 (seconds) | `kosmos.llm.client._LLM_STREAM_IDLE_TIMEOUT_S` | Spec 2521 |
 | `KOSMOS_AGENTIC_LOOP_MAX_TURNS` | No | `8` | Integer >= 1 (turns) | `kosmos.ipc.stdio` (Spec 1978 T029 — bounds the CC query-engine agentic loop) | Spec 1978 |
 | `KOSMOS_REACT_MAX_TURNS` | No | `8` | Integer >= 1 (turns) | `kosmos.ipc.stdio` (legacy alias for `KOSMOS_AGENTIC_LOOP_MAX_TURNS`; preserved for backward compatibility) | Spec 1978 |
 | `KOSMOS_TOOL_RESULT_TIMEOUT_SECONDS` | No | `120` | Float > 0 (seconds) | `kosmos.ipc.stdio` (Spec 1978 T030 — `asyncio.gather` timeout for primitive dispatch Futures, contracts/tool-bridge-protocol.md) | Spec 1978 |

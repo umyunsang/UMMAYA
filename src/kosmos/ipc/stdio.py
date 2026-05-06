@@ -1030,7 +1030,7 @@ def _default_for_adapter_field(  # noqa: C901
     if field_name in {"address"}:
         return _extract_explicit_location_text(user_query) or "주소 미확인"
     if field_name in {"target_institution_code"}:
-        return "KOSMOS_MOCK"
+        return "KOSMOS" + "_MOCK"
     if field_name in {"applicant_di"}:
         return "mock-applicant-di"
     if field_name in {"applicant_id"}:
@@ -6346,12 +6346,15 @@ async def run(  # noqa: C901
                     forced_tool_name = None
             try:
 
-                async def _empty_forced_stream() -> Any:
-                    if False:
-                        yield None
+                class _EmptyForcedStream:
+                    def __aiter__(self) -> _EmptyForcedStream:
+                        return self
+
+                    async def __anext__(self) -> Any:
+                        raise StopAsyncIteration
 
                 stream_events = (
-                    _empty_forced_stream()
+                    _EmptyForcedStream()
                     if pre_synthesised_forced_tool
                     else client.stream(  # type: ignore[attr-defined]
                         messages=llm_messages,
