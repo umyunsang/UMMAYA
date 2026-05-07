@@ -66,6 +66,7 @@ htmlcov/
 .references/
 
 # Claude Code local state
+.agents/skills/kosmos-reference-first/
 .agents/
 .claude/
 .claude/scheduled_tasks.lock
