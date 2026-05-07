@@ -9,7 +9,7 @@
 
 | | |
 |---|---|
-| Hash | `321d518f4bda3bf748352603131b6ca23eb3b37e4dc432ff25ac6e938378c0aa` |
+| Hash | `1f37e43eda5dd3291ca18a5ff68e7acbc42d6d08dc31dd2c6b3705311c1079ef` |
 | Source-of-truth | 본 문서의 `<!-- CANONICAL-PIPA-ACK-START -->` ↔ `<!-- CANONICAL-PIPA-ACK-END -->` 사이 텍스트 |
 | 산출 모듈 | [`src/ummaya/plugins/canonical_acknowledgment.py`](../../src/ummaya/plugins/canonical_acknowledgment.py) (`CANONICAL_ACKNOWLEDGMENT_SHA256`) |
 | 정규화 | UTF-8 + CRLF→LF + 양끝 whitespace strip 후 SHA-256 |
@@ -22,6 +22,7 @@
 | Version | Date | Hash | 변경 사유 |
 |---|---|---|---|
 | v1 | 2026-04-25 | `321d518f4bda3bf748352603131b6ca23eb3b37e4dc432ff25ac6e938378c0aa` | Spec 1636 P5 초안. 「개인정보 보호법」 제26조 + 시행령 제28조 의 수탁자 7대 의무 정문화. |
+| v2 | 2026-05-08 | `1f37e43eda5dd3291ca18a5ff68e7acbc42d6d08dc31dd2c6b3705311c1079ef` | Project rename: KOSAX → UMMAYA in canonical acknowledgment text. |
 
 > **변경 정책**: canonical 텍스트가 변경되면 hash 가 바뀌고 모든 기존 플러그인이 hash mismatch 로 거부됩니다. 변경은 다음 절차로만 허용:
 > 1. 법무 검토 + UMMAYA 운영자 합의로 새 텍스트 확정.
@@ -78,7 +79,7 @@ uv run python -c "
 from ummaya.plugins import CANONICAL_ACKNOWLEDGMENT_SHA256
 print(CANONICAL_ACKNOWLEDGMENT_SHA256)
 "
-# → 321d518f4bda3bf748352603131b6ca23eb3b37e4dc432ff25ac6e938378c0aa
+# → 1f37e43eda5dd3291ca18a5ff68e7acbc42d6d08dc31dd2c6b3705311c1079ef
 ```
 
 또는 TUI 에서 `/plugin pipa-text` 슬래시 커맨드 (canonical 본문 + hash 를 그대로 출력).
@@ -96,7 +97,7 @@ pipa_trustee_acknowledgment:
     - resident_registration_number   # 주민등록번호 — pipa_class=personal_unique_id
     - phone_number                   # 휴대전화번호 — pipa_class=personal_standard
   legal_basis: "「개인정보 보호법」 제15조 제1항 제2호"
-  acknowledgment_sha256: "321d518f4bda3bf748352603131b6ca23eb3b37e4dc432ff25ac6e938378c0aa"
+  acknowledgment_sha256: "1f37e43eda5dd3291ca18a5ff68e7acbc42d6d08dc31dd2c6b3705311c1079ef"
 ```
 
 규칙 (50-item 검증의 Q6 4 항목 + Spec 024 V2 가 enforce):
