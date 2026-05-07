@@ -374,7 +374,9 @@ import { MigrateSessionsResult } from '../components/MigrateSessionsResult.js';
 import { migrateSessions } from '../utils/migrateSessions.js';
 import { OnboardingFlow, resetOnboardingState } from '../components/onboarding/OnboardingFlow.js';
 import { emitSurfaceActivation } from '../observability/surface.js';
-import { getOrCreateKosmosBridge, getKosmosBridgeSessionId } from '../ipc/bridgeSingleton.js';
+import { FriendliLoginDialog } from '../components/FriendliLoginDialog.js';
+import { closeKosmosBridge, getOrCreateKosmosBridge, getKosmosBridgeSessionId } from '../ipc/bridgeSingleton.js';
+import { clearFriendliCredential, getFriendliCredentialSource, installFriendliCredential } from '../utils/friendliAuth.js';
 // KOSMOS Spec 1979 — Spec 033 mode cycle import removed.
 import { executeHelp } from '../commands/help.js';
 import { executeConfig, applyConfigChanges } from '../commands/config.js';
@@ -3430,7 +3432,7 @@ export function REPL({
     }
 
     // KOSMOS P4 UI L2 — T072: KOSMOS auxiliary command dispatch
-    // Intercepts /help /config /plugins /export /history /consent /agents /onboarding /lang
+    // Intercepts /login /logout /help /config /plugins /export /history /consent /agents /onboarding /lang
     // BEFORE the existing CC command router so they are always handled locally.
     if (!speculationAccept && input.trim().startsWith('/')) {
       const _kosmosRaw = expandPastedTextRefs(input, pastedContents).trim();
@@ -3444,6 +3446,68 @@ export function REPL({
           addNotification({ key: `kosmos-cmd-${_kosmosCmd}`, text: result, priority: 'immediate' });
         }
       };
+
+      if (_kosmosCmd === 'login') {
+        setInputValue('');
+        helpers.setCursorOffset(0);
+        helpers.clearBuffer();
+        if (queryGuard.isActive || isExternalLoading) {
+          addNotification({
+            key: 'kosmos-login-busy',
+            text: 'Wait for the current request to finish, then run /login.',
+            priority: 'immediate',
+          });
+          return;
+        }
+        const existingSource = getFriendliCredentialSource();
+        setToolJSX({
+          jsx: React.createElement(FriendliLoginDialog, {
+            existingSource,
+            onConfirm: (apiKey: string) => {
+              void (async () => {
+                try {
+                  installFriendliCredential(apiKey);
+                  await closeKosmosBridge();
+                  await reverify();
+                  setAppState(prev => ({ ...prev, authVersion: prev.authVersion + 1 }));
+                  _kosmosCloseJSX('FriendliAI login successful. API key is active for this session only.');
+                } catch (error) {
+                  _kosmosCloseJSX(error instanceof Error ? error.message : String(error));
+                }
+              })();
+            },
+            onCancel: () => _kosmosCloseJSX('Login cancelled.'),
+          }),
+          // Keep PromptInput mounted so Ink keeps stdin raw mode active, but
+          // mark the local command active so PromptInput's own useInput hooks
+          // stay inactive while the masked FriendliAI dialog owns keystrokes.
+          shouldHidePromptInput: false,
+          isLocalJSXCommand: true,
+        });
+        return;
+      }
+
+      if (_kosmosCmd === 'logout') {
+        setInputValue('');
+        helpers.setCursorOffset(0);
+        helpers.clearBuffer();
+        if (queryGuard.isActive || isExternalLoading) {
+          addNotification({
+            key: 'kosmos-logout-busy',
+            text: 'Wait for the current request to finish, then run /logout.',
+            priority: 'immediate',
+          });
+          return;
+        }
+        void (async () => {
+          clearFriendliCredential();
+          await closeKosmosBridge();
+          await reverify();
+          setAppState(prev => ({ ...prev, authVersion: prev.authVersion + 1 }));
+          _kosmosCloseJSX('Logged out from FriendliAI. Run /login before the next request.');
+        })();
+        return;
+      }
 
       if (_kosmosCmd === 'help') {
         setInputValue('');

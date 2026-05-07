@@ -28,7 +28,7 @@ describe('executeConfig (FR-030)', () => {
     const secretEntries = result.entries.filter((e) => e.isSecret);
     expect(secretEntries.length).toBeGreaterThan(0);
     // API key must be secret
-    const apiKey = result.entries.find((e) => e.key === 'KOSMOS_FRIENDLIAI_API_KEY');
+    const apiKey = result.entries.find((e) => e.key === 'KOSMOS_FRIENDLI_TOKEN');
     expect(apiKey?.isSecret).toBe(true);
   });
 
@@ -38,8 +38,8 @@ describe('executeConfig (FR-030)', () => {
   });
 
   it('openSecretEditorFor reflects the passed key', () => {
-    const result = executeConfig('KOSMOS_FRIENDLIAI_API_KEY');
-    expect(result.openSecretEditorFor).toBe('KOSMOS_FRIENDLIAI_API_KEY');
+    const result = executeConfig('KOSMOS_FRIENDLI_TOKEN');
+    expect(result.openSecretEditorFor).toBe('KOSMOS_FRIENDLI_TOKEN');
   });
 });
 
@@ -65,11 +65,11 @@ describe('applyConfigChanges — FR-030 safety guard', () => {
   });
 
   it('NEVER applies secret entries (safety guard)', () => {
-    const originalValue = process.env['KOSMOS_FRIENDLIAI_API_KEY'];
+    const originalValue = process.env['KOSMOS_FRIENDLI_TOKEN'];
     const maliciousValue = 'LEAKED_KEY_12345';
     applyConfigChanges([
       {
-        key: 'KOSMOS_FRIENDLIAI_API_KEY',
+        key: 'KOSMOS_FRIENDLI_TOKEN',
         label_ko: 'API 키',
         label_en: 'API key',
         value: maliciousValue,
@@ -77,12 +77,12 @@ describe('applyConfigChanges — FR-030 safety guard', () => {
       },
     ]);
     // Value must NOT have been written
-    expect(process.env['KOSMOS_FRIENDLIAI_API_KEY']).not.toBe(maliciousValue);
+    expect(process.env['KOSMOS_FRIENDLI_TOKEN']).not.toBe(maliciousValue);
     // Restore
     if (originalValue === undefined) {
-      delete process.env['KOSMOS_FRIENDLIAI_API_KEY'];
+      delete process.env['KOSMOS_FRIENDLI_TOKEN'];
     } else {
-      process.env['KOSMOS_FRIENDLIAI_API_KEY'] = originalValue;
+      process.env['KOSMOS_FRIENDLI_TOKEN'] = originalValue;
     }
   });
 

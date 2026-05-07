@@ -34,9 +34,9 @@ describe('ConfigOverlay — KOSMOS_CONFIG_CATALOG (FR-030)', () => {
     }
   });
 
-  it('KOSMOS_FRIENDLIAI_API_KEY is marked as secret', () => {
+  it('KOSMOS_FRIENDLI_TOKEN is marked as secret', () => {
     const entry = KOSMOS_CONFIG_CATALOG.find(
-      (e) => e.key === 'KOSMOS_FRIENDLIAI_API_KEY',
+      (e) => e.key === 'KOSMOS_FRIENDLI_TOKEN',
     );
     expect(entry).toBeDefined();
     expect(entry?.isSecret).toBe(true);
@@ -62,7 +62,7 @@ describe('executeConfig — command result (FR-030)', () => {
   });
 
   it('openSecretEditorFor is set when key is passed', () => {
-    const result = executeConfig('KOSMOS_FRIENDLIAI_API_KEY');
-    expect(result.openSecretEditorFor).toBe('KOSMOS_FRIENDLIAI_API_KEY');
+    const result = executeConfig('KOSMOS_FRIENDLI_TOKEN');
+    expect(result.openSecretEditorFor).toBe('KOSMOS_FRIENDLI_TOKEN');
   });
 });

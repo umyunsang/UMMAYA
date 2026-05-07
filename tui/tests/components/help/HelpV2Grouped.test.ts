@@ -38,12 +38,14 @@ describe('HelpV2Grouped — groupCatalog correctness (FR-029)', () => {
     }
   });
 
-  it('session group contains /help and /onboarding and /lang', () => {
+  it('session group contains core session commands', () => {
     const grouped = groupCatalog(UI_L2_SLASH_COMMANDS);
     const names = grouped.session.map((e) => e.name);
     expect(names).toContain('/help');
     expect(names).toContain('/onboarding');
     expect(names).toContain('/lang');
+    expect(names).toContain('/login');
+    expect(names).toContain('/logout');
   });
 
   it('permission group contains /consent list and /consent revoke', () => {

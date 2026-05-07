@@ -1,46 +1,56 @@
 // SPDX-License-Identifier: Apache-2.0
-// KOSMOS-original — Epic #1633 T011 fail-closed env guard.
+// KOSMOS-original — Epic #1633 T011 env credential helper.
 //
-// Enforces FR-004 edge case: TUI MUST refuse to start without a FriendliAI
-// credential environment variable, emitting a bilingual error envelope and
-// exiting with status 1 before any IPC bridge or Python backend handshake
-// is attempted. Under no circumstance does the TUI look up Anthropic
-// credentials (Keychain, OAuth, apiKeyHelper) — those code paths are
-// deleted in Wave B / Wave C.
+// KOSMOS now boots without a FriendliAI credential so /login can collect a
+// process-scoped API key. The model/tool loop still fails closed before first
+// backend use when no key is present.
 //
 // Intentionally Node/Bun-stdlib only: no imports from ipc/, bridge/, or
 // LLM layers — this runs *before* anything else in main().
 
+import { hasFriendliCredential as hasFriendliCredentialInEnv } from '../utils/friendliAuth.js'
+
 export const ENV_GUARD_MESSAGE =
-  'FRIENDLI_API_KEY 환경변수가 필요합니다 / FRIENDLI_API_KEY environment variable required'
+  'FriendliAI API key not configured yet. Start KOSMOS and run /login before sending a request.'
 
 /**
  * Check whether a valid FriendliAI credential is present in the process
  * environment. Both names are accepted for backwards compatibility with
  * different bootstrap scripts:
- *   - FRIENDLI_API_KEY (canonical, documented in quickstart.md)
- *   - KOSMOS_FRIENDLI_TOKEN (equivalent; populated by the Python backend
- *     config layer at src/kosmos/llm/config.py:LLMClientConfig.token)
+ *   - KOSMOS_FRIENDLI_TOKEN (KOSMOS-canonical)
+ *   - FRIENDLI_API_KEY (SDK-compatible alias)
  */
 export function hasFriendliCredential(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
-  const friendli = env.FRIENDLI_API_KEY
-  const kosmos = env.KOSMOS_FRIENDLI_TOKEN
-  return Boolean(
-    (friendli && friendli.trim().length > 0) ||
-      (kosmos && kosmos.trim().length > 0),
-  )
+  return hasFriendliCredentialInEnv(env)
 }
 
 /**
- * Enforces the fail-closed credential gate at boot. If no credential is
- * present, writes the bilingual error message to stderr and exits the
- * process with status 1. Otherwise, returns void and boot continues.
+ * Warns when no FriendliAI credential is present. Boot continues so the
+ * citizen can run /login; query/deps.ts enforces the actual fail-closed gate.
  *
  * The second argument is injection seams for tests — production callers
- * should invoke with no arguments so the real `process.env`, `console.error`,
- * and `process.exit` are used.
+ * should invoke with no arguments so the real `process.env` and `console.error`
+ * are used.
+ */
+export function warnIfMissingFriendliCredential(
+  env: Record<string, string | undefined> = process.env,
+  hooks: {
+    writeError?: (msg: string) => void
+  } = {},
+): void {
+  if (hasFriendliCredential(env)) {
+    return
+  }
+
+  const writeError = hooks.writeError ?? ((msg: string) => console.error(msg))
+  writeError(ENV_GUARD_MESSAGE)
+}
+
+/**
+ * Backward-compatible wrapper for older imports. It no longer exits at boot;
+ * the hard auth gate lives at first model/backend use.
  */
 export function enforceFriendliCredential(
   env: Record<string, string | undefined> = process.env,
@@ -49,17 +59,6 @@ export function enforceFriendliCredential(
     exit?: (code: number) => never
   } = {},
 ): void {
-  if (hasFriendliCredential(env)) {
-    return
-  }
-
-  const writeError = hooks.writeError ?? ((msg: string) => console.error(msg))
-  const exit =
-    hooks.exit ??
-    ((code: number) => {
-      process.exit(code)
-    })
-
-  writeError(ENV_GUARD_MESSAGE)
-  exit(1) as never
+  void hooks.exit
+  warnIfMissingFriendliCredential(env, hooks)
 }

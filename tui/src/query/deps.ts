@@ -7,6 +7,7 @@ import type { ChatRequestFrame, IPCFrame } from '../ipc/frames.generated.js'
 import { getToolDefinitionsForFrame } from './toolSerialization.js'
 import { createAssistantMessage, createSystemMessage, createUserMessage, SYNTHETIC_MODEL } from '../utils/messages.js'
 import { buildChatMessagesFromTranscript } from './chatMessagesBuilder.js'
+import { assertFriendliCredentialForUse } from '../utils/friendliAuth.js'
 
 // SWAP/llm-provider(2521) — frontend deps.ts typewriter REVERTED.
 //
@@ -153,6 +154,7 @@ async function* queryModelWithStreaming(params: {
   options?: { model?: string; querySource?: string; [k: string]: unknown }
 }): AsyncGenerator<unknown> {
   const { messages, systemPrompt, signal } = params
+  assertFriendliCredentialForUse()
   const correlationId = randomUUID()
   // Outer transcript uuid + inner BetaMessage.id are fixed at turn start so
   // the final AssistantMessage carries stable React keys; rebuilding either

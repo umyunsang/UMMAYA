@@ -69,6 +69,8 @@ describe('SlashCommandSuggestions (FR-014)', () => {
     expect(names).toContain('/consent revoke');
     expect(names).toContain('/agents');
     expect(names).toContain('/help');
+    expect(names).toContain('/login');
+    expect(names).toContain('/logout');
     expect(names).toContain('/config');
     expect(names).toContain('/plugins');
     expect(names).toContain('/export');

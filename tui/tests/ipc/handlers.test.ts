@@ -226,16 +226,32 @@ function makeFrame(
 }
 
 async function run(buildFrames: (corrId: string) => StagedFrame[]): Promise<unknown[]> {
+  const previousPrimary = process.env.KOSMOS_FRIENDLI_TOKEN
+  const previousAlias = process.env.FRIENDLI_API_KEY
+  process.env.KOSMOS_FRIENDLI_TOKEN = 'test-token-handlers'
   installBridge(buildFrames)
-  const callModel = productionDeps().callModel
-  const results: unknown[] = []
-  for await (const ev of callModel({
-    messages: [{ type: 'user', message: { role: 'user', content: 'hi' } }],
-    systemPrompt: 'test system prompt',
-  })) {
-    results.push(ev)
+  try {
+    const callModel = productionDeps().callModel
+    const results: unknown[] = []
+    for await (const ev of callModel({
+      messages: [{ type: 'user', message: { role: 'user', content: 'hi' } }],
+      systemPrompt: 'test system prompt',
+    })) {
+      results.push(ev)
+    }
+    return results
+  } finally {
+    if (previousPrimary === undefined) {
+      delete process.env.KOSMOS_FRIENDLI_TOKEN
+    } else {
+      process.env.KOSMOS_FRIENDLI_TOKEN = previousPrimary
+    }
+    if (previousAlias === undefined) {
+      delete process.env.FRIENDLI_API_KEY
+    } else {
+      process.env.FRIENDLI_API_KEY = previousAlias
+    }
   }
-  return results
 }
 
 // ---------------------------------------------------------------------------

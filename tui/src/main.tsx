@@ -1,5 +1,5 @@
 import { Command as CommanderCommand, InvalidArgumentError, Option } from '@commander-js/extra-typings';
-import { enforceFriendliCredential } from './entrypoints/envGuard.js';
+import { warnIfMissingFriendliCredential } from './entrypoints/envGuard.js';
 import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import mapValues from 'lodash-es/mapValues.js';
@@ -362,8 +362,9 @@ export async function main() {
   // See: https://docs.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-searchpathw
   process.env.NoDefaultCurrentDirectoryInExePath = '1';
 
-  // Fail-closed: require FRIENDLI_API_KEY for KOSMOS (Epic #1633 T011)
-  enforceFriendliCredential();
+  // KOSMOS boots without a key so /login can collect one. The first
+  // model/backend use still fails closed if the user has not logged in.
+  warnIfMissingFriendliCredential();
 
   // Initialize warning handler early to catch warnings
   initializeWarningHandler();
@@ -2502,8 +2503,8 @@ async function run(): Promise<CommanderCommand> {
   });
 
 
-  const auth = program.command('auth').description('Manage authentication').configureHelp(createSortedHelpConfig());
-  auth.command('login').description('Sign in to your Anthropic account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use Anthropic Console (API usage billing) instead of Claude subscription').option('--claudeai', 'Use Claude subscription (default)').action(async ({
+  const auth = program.command('auth').description('Show KOSMOS FriendliAI session-auth status').configureHelp(createSortedHelpConfig());
+  auth.command('login').description('Show how to log in with /login inside the TUI').option('--email <email>', 'Ignored in KOSMOS').option('--sso', 'Ignored in KOSMOS').option('--console', 'Ignored in KOSMOS').option('--claudeai', 'Ignored in KOSMOS').action(async ({
     email,
     sso,
     console: useConsole,
@@ -2533,7 +2534,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/auth.js');
     await authStatus(opts);
   });
-  auth.command('logout').description('Log out from your Anthropic account').action(async () => {
+  auth.command('logout').description('Clear FriendliAI credentials from this CLI process').action(async () => {
     const {
       authLogout
     } = await import('./cli/handlers/auth.js');

@@ -17,6 +17,7 @@
 // presence — no network round-trip, no Anthropic API call.
 
 import { useCallback, useState } from 'react'
+import { hasFriendliCredential } from '../utils/friendliAuth.js'
 
 export type VerificationStatus =
   | 'loading'
@@ -29,20 +30,6 @@ export type ApiKeyVerificationResult = {
   status: VerificationStatus
   reverify: () => Promise<void>
   error: Error | null
-}
-
-/**
- * KOSMOS-1978 T005: env-var presence check, not Anthropic API verification.
- * Mirrors the canonical Python guard at `src/kosmos/llm/envGuard.ts:hasFriendliCredential`
- * (Spec 1633 T011) — both names accepted for backwards compatibility.
- */
-function hasFriendliCredential(): boolean {
-  const friendli = process.env.FRIENDLI_API_KEY
-  const kosmos = process.env.KOSMOS_FRIENDLI_TOKEN
-  return Boolean(
-    (friendli && friendli.trim().length > 0) ||
-      (kosmos && kosmos.trim().length > 0),
-  )
 }
 
 export function useApiKeyVerification(): ApiKeyVerificationResult {

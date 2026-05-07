@@ -1,0 +1,2 @@
+$ bun run src/entrypoints/cli.tsx
+FriendliAI API key not configured yet. Start KOSMOS and run /login before sending a request.

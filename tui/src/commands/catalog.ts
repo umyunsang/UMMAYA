@@ -30,6 +30,22 @@ export const UI_L2_SLASH_COMMANDS: readonly SlashCommandCatalogEntryT[] = [
     hidden: false,
   },
   {
+    name: '/login',
+    group: 'session',
+    description_ko: 'FriendliAI API 키로 현재 세션에 로그인합니다',
+    description_en: 'Log in for this session with a FriendliAI API key',
+    arg_signature: null,
+    hidden: false,
+  },
+  {
+    name: '/logout',
+    group: 'session',
+    description_ko: 'FriendliAI API 키를 현재 세션에서 제거합니다',
+    description_en: 'Log out and clear the session FriendliAI API key',
+    arg_signature: null,
+    hidden: false,
+  },
+  {
     name: '/consent list',
     group: 'permission',
     description_ko: '본 세션의 권한 영수증 목록을 표시합니다',

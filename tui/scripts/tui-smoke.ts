@@ -52,6 +52,13 @@ const BOOT_MS = Number(process.env['KOSMOS_TUI_SMOKE_BOOT_MS'] ?? 3_000)
 const SHUTDOWN_GRACE_MS = 5_000
 const ACCEPTABLE_EXIT_CODES = new Set([0, 143])
 
+function withoutFriendliCredential(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const next = { ...env }
+  delete next.KOSMOS_FRIENDLI_TOKEN
+  delete next.FRIENDLI_API_KEY
+  return next
+}
+
 interface SmokeResult {
   exitCode: number | null
   signal: NodeJS.Signals | null
@@ -91,7 +98,7 @@ async function runSmoke(): Promise<SmokeResult> {
   const child = spawn(bin, argv, {
     cwd: tuiDir,
     env: {
-      ...process.env,
+      ...withoutFriendliCredential(process.env),
       // Fake backend that stays alive until SIGTERMed — tests the bridge
       // spawn path without requiring the Python harness on the runner.
       KOSMOS_BACKEND_CMD: 'sleep 60',
@@ -102,10 +109,9 @@ async function runSmoke(): Promise<SmokeResult> {
       // substrings anyway.
       NO_COLOR: '1',
       FORCE_COLOR: '0',
-      // envGuard (Spec 1633 T011) requires a FriendliAI credential at boot.
-      // Use a placeholder so the smoke boot path does not exit before Ink renders.
-      // Real API calls never happen — KOSMOS_BACKEND_CMD is a no-op sleep.
-      FRIENDLI_API_KEY: process.env.FRIENDLI_API_KEY ?? 'smoke-test-placeholder',
+      // Enables macro-preload's bun:bundle runtime mock for local source runs.
+      // Packaged builds inline this module; source smoke runs do not.
+      NODE_ENV: 'test',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })

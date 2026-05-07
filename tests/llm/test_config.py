@@ -13,10 +13,11 @@ from kosmos.llm.config import LLMClientConfig
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Remove all KOSMOS_* env vars to ensure a clean state for every test."""
+    """Remove KOSMOS/Friendli credential env vars for a clean test state."""
     for key in list(os.environ):
         if key.startswith("KOSMOS_"):
             monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("FRIENDLI_API_KEY", raising=False)
 
 
 # ---------------------------------------------------------------------------
@@ -40,6 +41,13 @@ def test_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("KOSMOS_FRIENDLI_TOKEN", "test-token-123")
     config = LLMClientConfig()
     assert config.token.get_secret_value() == "test-token-123"
+
+
+def test_token_from_friendli_alias(monkeypatch: pytest.MonkeyPatch) -> None:
+    """FRIENDLI_API_KEY remains accepted as the SDK-compatible alias."""
+    monkeypatch.setenv("FRIENDLI_API_KEY", "alias-token-123")
+    config = LLMClientConfig()
+    assert config.token.get_secret_value() == "alias-token-123"
 
 
 # ---------------------------------------------------------------------------

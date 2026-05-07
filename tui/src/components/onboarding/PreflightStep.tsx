@@ -15,6 +15,7 @@ import { useTheme } from '../../theme/provider.js'
 import { useKoreanIME } from '../../hooks/useKoreanIME.js'
 import { getUiL2I18n } from '../../i18n/uiL2.js'
 import { emitSurfaceActivation } from '../../observability/surface.js'
+import { hasFriendliCredential } from '../../utils/friendliAuth.js'
 
 // ---------------------------------------------------------------------------
 // Preflight check items
@@ -75,15 +76,8 @@ function checkGraphicsProtocol(): PreflightCheckResult {
 }
 
 function checkRequiredEnvVars(): PreflightCheckResult[] {
-  // Canonical name + accepted aliases (mirrors envGuard.ts + useApiKeyVerification.ts).
-  // AGENTS.md hard rule: KOSMOS_ prefix is canonical; FRIENDLI_API_KEY kept as
-  // SDK-compat alias (Friendli SDK reads its own env name).
-  const required: { keys: string[]; label: string }[] = [
-    {
-      keys: ['KOSMOS_FRIENDLI_TOKEN', 'FRIENDLI_API_KEY'],
-      label: 'KOSMOS_FRIENDLI_TOKEN',
-    },
-  ]
+  // FriendliAI auth is session-scoped after /login. Missing env no longer
+  // blocks onboarding; the first model/backend use remains fail-closed.
   const optional: { keys: string[]; label: string; mockNote: string }[] = [
     {
       keys: ['KOSMOS_DATA_GO_KR_API_KEY', 'KOSMOS_DATA_GO_KR_KEY'],
@@ -92,14 +86,14 @@ function checkRequiredEnvVars(): PreflightCheckResult[] {
     },
   ]
 
-  const results: PreflightCheckResult[] = required.map(({ keys, label }) => {
-    const present = keys.some((k) => Boolean(process.env[k]))
-    return {
-      label,
-      passed: present,
-      note: present ? undefined : `${label} is not set`,
-    }
-  })
+  const friendliPresent = hasFriendliCredential()
+  const results: PreflightCheckResult[] = [
+    {
+      label: 'KOSMOS_FRIENDLI_TOKEN',
+      passed: true,
+      note: friendliPresent ? undefined : 'not logged in — run /login before first request',
+    },
+  ]
 
   for (const { keys, label, mockNote } of optional) {
     const present = keys.some((k) => Boolean(process.env[k]))

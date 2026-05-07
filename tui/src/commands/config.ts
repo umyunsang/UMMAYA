@@ -35,9 +35,9 @@ export const KOSMOS_CONFIG_CATALOG: Omit<ConfigEntry, 'value'>[] = [
     isSecret: false,
   },
   {
-    key: 'KOSMOS_FRIENDLIAI_API_KEY',
-    label_ko: 'FriendliAI API 키 (.env)',
-    label_en: 'FriendliAI API key (.env)',
+    key: 'KOSMOS_FRIENDLI_TOKEN',
+    label_ko: 'FriendliAI API 키 (세션)',
+    label_en: 'FriendliAI API key (session)',
     isSecret: true,
   },
   {
