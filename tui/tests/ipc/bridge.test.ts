@@ -40,7 +40,7 @@ function makeUserInputFrame(sid: string, text: string): IPCFrame {
 
 // KOSMOS_IPC_HANDLER=echo selects the test-friendly echo handler in
 // src/kosmos/ipc/stdio.py — matches these tests' FIFO / lifecycle assertions
-// without requiring FRIENDLI_API_KEY on the CI runner.
+// without requiring a FriendliAI session on the CI runner.
 const ECHO_ENV = { KOSMOS_IPC_HANDLER: 'echo' }
 
 describe('bridge: process lifecycle', () => {

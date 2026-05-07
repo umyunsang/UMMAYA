@@ -227,8 +227,9 @@ function makeFrame(
 
 async function run(buildFrames: (corrId: string) => StagedFrame[]): Promise<unknown[]> {
   const previousPrimary = process.env.KOSMOS_FRIENDLI_TOKEN
-  const previousAlias = process.env.FRIENDLI_API_KEY
+  const previousSession = process.env.KOSMOS_FRIENDLI_SESSION_ACTIVE
   process.env.KOSMOS_FRIENDLI_TOKEN = 'test-token-handlers'
+  process.env.KOSMOS_FRIENDLI_SESSION_ACTIVE = '1'
   installBridge(buildFrames)
   try {
     const callModel = productionDeps().callModel
@@ -246,10 +247,10 @@ async function run(buildFrames: (corrId: string) => StagedFrame[]): Promise<unkn
     } else {
       process.env.KOSMOS_FRIENDLI_TOKEN = previousPrimary
     }
-    if (previousAlias === undefined) {
-      delete process.env.FRIENDLI_API_KEY
+    if (previousSession === undefined) {
+      delete process.env.KOSMOS_FRIENDLI_SESSION_ACTIVE
     } else {
-      process.env.FRIENDLI_API_KEY = previousAlias
+      process.env.KOSMOS_FRIENDLI_SESSION_ACTIVE = previousSession
     }
   }
 }

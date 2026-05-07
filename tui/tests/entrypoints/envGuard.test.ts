@@ -10,10 +10,15 @@ import {
 } from '../../src/entrypoints/envGuard.js'
 
 describe('envGuard', () => {
-  it('accepts either Friendli credential env name', () => {
+  it('requires the TUI login session marker', () => {
     expect(hasFriendliCredential({})).toBe(false)
-    expect(hasFriendliCredential({ KOSMOS_FRIENDLI_TOKEN: 'primary' })).toBe(true)
-    expect(hasFriendliCredential({ FRIENDLI_API_KEY: 'alias' })).toBe(true)
+    expect(hasFriendliCredential({ KOSMOS_FRIENDLI_TOKEN: 'primary' })).toBe(false)
+    expect(
+      hasFriendliCredential({
+        KOSMOS_FRIENDLI_TOKEN: 'primary',
+        KOSMOS_FRIENDLI_SESSION_ACTIVE: '1',
+      }),
+    ).toBe(true)
   })
 
   it('warns without exiting when credential is missing', () => {

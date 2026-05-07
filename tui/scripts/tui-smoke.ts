@@ -55,7 +55,7 @@ const ACCEPTABLE_EXIT_CODES = new Set([0, 143])
 function withoutFriendliCredential(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const next = { ...env }
   delete next.KOSMOS_FRIENDLI_TOKEN
-  delete next.FRIENDLI_API_KEY
+  delete next.KOSMOS_FRIENDLI_SESSION_ACTIVE
   return next
 }
 

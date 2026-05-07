@@ -12,7 +12,7 @@ Set Height 900
 Set Theme "TokyoNightStorm"
 
 Hide
-Type "cd /Users/um-yunsang/KOSMOS/tui && env KOSMOS_FRIENDLI_TOKEN= FRIENDLI_API_KEY= KOSMOS_ONBOARDING_AUTO_COMPLETE=1 KOSMOS_BACKEND_CMD='sleep 60' NODE_ENV=test IS_DEMO=1 bun run tui"
+Type "cd /Users/um-yunsang/KOSMOS/tui && env KOSMOS_FRIENDLI_TOKEN= KOSMOS_FRIENDLI_SESSION_ACTIVE= KOSMOS_ONBOARDING_AUTO_COMPLETE=1 KOSMOS_BACKEND_CMD='sleep 60' NODE_ENV=test IS_DEMO=1 bun run tui"
 Enter
 Sleep 5s
 Show

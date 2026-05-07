@@ -7,11 +7,10 @@
 // backend. /logout clears the process env and closes that backend.
 
 export const FRIENDLI_PRIMARY_ENV = 'KOSMOS_FRIENDLI_TOKEN'
-export const FRIENDLI_ALIAS_ENV = 'FRIENDLI_API_KEY'
+export const FRIENDLI_SESSION_ENV = 'KOSMOS_FRIENDLI_SESSION_ACTIVE'
 
 export type FriendliCredentialSource =
   | typeof FRIENDLI_PRIMARY_ENV
-  | typeof FRIENDLI_ALIAS_ENV
   | 'none'
 
 export const FRIENDLI_LOGIN_REQUIRED_MESSAGE =
@@ -28,14 +27,13 @@ export function normalizeFriendliApiKey(value: string): string {
 export function getFriendliCredentialSource(
   env: Record<string, string | undefined> = process.env,
 ): FriendliCredentialSource {
+  if (env[FRIENDLI_SESSION_ENV] !== '1') {
+    return 'none'
+  }
+
   const primary = env[FRIENDLI_PRIMARY_ENV]
   if (primary && primary.trim().length > 0) {
     return FRIENDLI_PRIMARY_ENV
-  }
-
-  const alias = env[FRIENDLI_ALIAS_ENV]
-  if (alias && alias.trim().length > 0) {
-    return FRIENDLI_ALIAS_ENV
   }
 
   return 'none'
@@ -53,14 +51,14 @@ export function installFriendliCredential(
 ): void {
   const normalized = normalizeFriendliApiKey(apiKey)
   env[FRIENDLI_PRIMARY_ENV] = normalized
-  env[FRIENDLI_ALIAS_ENV] = normalized
+  env[FRIENDLI_SESSION_ENV] = '1'
 }
 
 export function clearFriendliCredential(
   env: Record<string, string | undefined> = process.env,
 ): void {
   delete env[FRIENDLI_PRIMARY_ENV]
-  delete env[FRIENDLI_ALIAS_ENV]
+  delete env[FRIENDLI_SESSION_ENV]
 }
 
 export function assertFriendliCredentialForUse(

@@ -14,11 +14,9 @@ export const ENV_GUARD_MESSAGE =
   'FriendliAI API key not configured yet. Start KOSMOS and run /login before sending a request.'
 
 /**
- * Check whether a valid FriendliAI credential is present in the process
- * environment. Both names are accepted for backwards compatibility with
- * different bootstrap scripts:
- *   - KOSMOS_FRIENDLI_TOKEN (KOSMOS-canonical)
- *   - FRIENDLI_API_KEY (SDK-compatible alias)
+ * Check whether the current process has an active FriendliAI login session.
+ * A shell-level KOSMOS_FRIENDLI_TOKEN alone is not treated as logged in; /login
+ * must activate the session so packaged builds cannot bypass the login step.
  */
 export function hasFriendliCredential(
   env: Record<string, string | undefined> = process.env,

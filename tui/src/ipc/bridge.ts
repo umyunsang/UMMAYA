@@ -116,7 +116,7 @@ export interface BridgeOptions {
    * Additional env vars to merge onto the backend subprocess environment
    * (on top of the inherited process env). Used primarily by tests to select
    * the `echo` handler via `{ KOSMOS_IPC_HANDLER: 'echo' }` without needing
-   * FRIENDLI_API_KEY on the CI runner.
+   * a FriendliAI session on the CI runner.
    */
   env?: Record<string, string>
 }

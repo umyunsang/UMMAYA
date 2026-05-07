@@ -12,7 +12,6 @@ class LLMClientConfig(BaseSettings):
 
     Environment variables (no global prefix — each field declares its own alias):
         KOSMOS_FRIENDLI_TOKEN       — required API token
-        FRIENDLI_API_KEY            — SDK-compatible token alias
         KOSMOS_FRIENDLI_BASE_URL    — API base URL
         KOSMOS_FRIENDLI_MODEL       — model identifier
         KOSMOS_LLM_SESSION_BUDGET   — per-session token budget
@@ -25,9 +24,9 @@ class LLMClientConfig(BaseSettings):
         extra="ignore",
     )
 
-    token: SecretStr = Field(  # type: ignore[pydantic-alias]
+    token: SecretStr = Field(
         ...,
-        validation_alias=AliasChoices("KOSMOS_FRIENDLI_TOKEN", "FRIENDLI_API_KEY"),
+        validation_alias="KOSMOS_FRIENDLI_TOKEN",
         description="FriendliAI API token.",
     )
     base_url: AnyHttpUrl = Field(  # type: ignore[assignment]

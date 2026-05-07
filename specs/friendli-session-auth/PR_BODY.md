@@ -12,7 +12,7 @@
 - `cd tui && bun run typecheck`
 - `cd tui && bun run test`
 - `cd tui && bun run tui:smoke`
-- `cd tui && NODE_ENV=test KOSMOS_FRIENDLI_TOKEN=test-token bun run src/entrypoints/cli.tsx auth status --json`
+- `cd tui && NODE_ENV=test KOSMOS_FRIENDLI_TOKEN=test-token KOSMOS_FRIENDLI_SESSION_ACTIVE=1 bun run src/entrypoints/cli.tsx auth status --json`
 - `cd tui && NODE_ENV=test bun run src/entrypoints/cli.tsx auth login`
 - `git diff --check`
 
