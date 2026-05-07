@@ -44,12 +44,13 @@ def test_main_exits_78_when_required_var_missing(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """End-to-end: empty env → guard trips → process exits 78 before tracing."""
+    """End-to-end: prod missing vars → guard trips → exits 78 before tracing."""
     tracing_called = {"hit": False}
 
     def _mark_tracing(*_a, **_kw) -> None:
         tracing_called["hit"] = True
 
+    monkeypatch.setenv("KOSAX_ENV", "prod")
     monkeypatch.setattr(cli_app, "load_repo_dotenv", lambda: None)
     monkeypatch.setattr(cli_app, "setup_tracing", _mark_tracing)
     monkeypatch.setattr(cli_app, "_app", lambda: None)
