@@ -24,6 +24,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "22.14.0"
+          package-manager-cache: false
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -115,6 +116,7 @@ jobs:
         with:
           node-version: "22.14.0"
           registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
 
       - name: Install npm CLI
         run: npm install --global npm@11.5.1

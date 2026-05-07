@@ -34,6 +34,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "22.14.0"
+          package-manager-cache: false
 
       - uses: oven-sh/setup-bun@v2
         with:
