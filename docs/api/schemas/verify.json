@@ -27,12 +27,12 @@
         }
       ],
       "default": null,
-      "description": "Adapter-specific input. Must include scope_list (list[str] of '<verb>:<adapter_family>.<action>' scopes), purpose_ko, purpose_en. Pre-validator packs this into session_context.",
+      "description": "Adapter-specific input. Must include scope_list (list[str] of '<verb>:<adapter_family>.<action>' scopes), purpose_ko, purpose_en. Optional session_id belongs directly in params (params['session_id']), not nested under params['session_context']. Pre-validator packs this into session_context.",
       "title": "Params"
     },
     "session_context": {
       "additionalProperties": true,
-      "description": "(legacy) Adapter-specific session evidence. For Mock-mode chains the LLM passes scope_list (list[str] of '<verb>:<adapter_family>.<action>' scopes), purpose_ko, purpose_en. Set automatically from params by the pre-validator when citizen-shape input is supplied.",
+      "description": "(legacy) Adapter-specific session evidence. For Mock-mode chains the LLM passes scope_list (list[str] of '<verb>:<adapter_family>.<action>' scopes), purpose_ko, purpose_en. Set automatically from params by the pre-validator when citizen-shape input is supplied. This is a top-level legacy field; citizen-shape callers must not nest it under params.",
       "title": "Session Context",
       "type": "object"
     },

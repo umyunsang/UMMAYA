@@ -16,7 +16,7 @@ zod-v3 schema graph that eagerly creates ~300 `.bind(this)` schema
 instances at import time, costing roughly **700 KB of resident heap**.
 Most KOSMOS sessions never process a `.dxt` (MCP-bundle) file — citizen
 sessions invoke Korean public-API adapters via `lookup` / `submit` /
-`verify` / `subscribe` primitives, not MCP bundles. Paying the import-
+`verify` primitives, not MCP bundles. Paying the import-
 time heap cost up-front for a feature touched by < 5 % of sessions is
 wasteful.
 

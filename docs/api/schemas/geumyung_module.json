@@ -1,5 +1,108 @@
 {
   "$defs": {
+    "DelegationContext": {
+      "additionalProperties": false,
+      "description": "Carries a ``DelegationToken`` plus bilingual purpose strings for the permission UI.\n\nReturned by verify adapters (except ``mock_verify_module_any_id_sso``).\nPassed forward through the LLM's tool-call context to the next adapter.",
+      "properties": {
+        "citizen_did": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Citizen DID if the verify ceremony surfaced one (e.g. 'did:web:mobileid.go.kr' issuance). Optional.",
+          "title": "Citizen Did"
+        },
+        "purpose_en": {
+          "description": "English purpose statement shown in the permission UI.",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Purpose En",
+          "type": "string"
+        },
+        "purpose_ko": {
+          "description": "Korean purpose statement shown in the permission UI.",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Purpose Ko",
+          "type": "string"
+        },
+        "token": {
+          "$ref": "#/$defs/DelegationToken",
+          "description": "The opaque delegation credential."
+        }
+      },
+      "required": [
+        "token",
+        "purpose_ko",
+        "purpose_en"
+      ],
+      "title": "DelegationContext",
+      "type": "object"
+    },
+    "DelegationToken": {
+      "additionalProperties": false,
+      "description": "Opaque, scope-bound, time-bound credential issued by a verify adapter.\n\nIn Mock mode the ``vp_jwt`` header is ``{\"alg\":\"none\",\"typ\":\"vp+jwt\"}``;\nthe signature segment is the literal string ``\"mock-signature-not-cryptographic\"``.\n\nValidators:\n- ``expires_at > issued_at``\n- ``scope`` matches the multi-scope grammar\n- ``delegation_token`` starts with ``del_`` and has >= 24 chars after the prefix",
+      "properties": {
+        "_mode": {
+          "const": "mock",
+          "default": "mock",
+          "description": "Always 'mock' for Epic ε. Reserved for future 'live' value.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "delegation_token": {
+          "description": "Opaque bearer token consumed by submit/lookup adapters. Must start with 'del_' and have >= 24 chars after the prefix.",
+          "minLength": 1,
+          "title": "Delegation Token",
+          "type": "string"
+        },
+        "expires_at": {
+          "description": "UTC tz-aware expiry. Must be > issued_at. 24h max in Mock mode.",
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "issued_at": {
+          "description": "UTC tz-aware token mint time.",
+          "format": "date-time",
+          "title": "Issued At",
+          "type": "string"
+        },
+        "issuer_did": {
+          "description": "DID of the issuing verify adapter, e.g. 'did:web:mobileid.go.kr'.",
+          "minLength": 1,
+          "title": "Issuer Did",
+          "type": "string"
+        },
+        "scope": {
+          "description": "Comma-joined list of scope entries, each matching '<verb>:<adapter_family>.<action>'. Single-scope is also valid.",
+          "minLength": 1,
+          "title": "Scope",
+          "type": "string"
+        },
+        "vp_jwt": {
+          "description": "Verifiable Presentation as JWS (header.payload.signature dot-separated). In Mock mode: header=base64({alg:none,typ:vp+jwt}), signature='mock-signature-not-cryptographic'.",
+          "minLength": 1,
+          "title": "Vp Jwt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "vp_jwt",
+        "delegation_token",
+        "scope",
+        "issuer_did",
+        "issued_at",
+        "expires_at"
+      ],
+      "title": "DelegationToken",
+      "type": "object"
+    },
     "DigitalOnepassContext": {
       "additionalProperties": false,
       "description": "Digital Onepass Level 1–3 authentication context.",
@@ -883,6 +986,18 @@
           ],
           "default": null,
           "title": "Security Wrapping Pattern"
+        },
+        "delegation_context": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DelegationContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Scope-bound delegation credential issued when the caller requests downstream MyData lookup/submit authority."
         },
         "external_session_ref": {
           "anyOf": [

@@ -249,7 +249,7 @@ async def _run_chain(
                 "parameters": {"type": "object", "properties": {}},
             },
         }
-        for n in ("lookup", "resolve_location", "submit", "subscribe", "verify")
+        for n in ("lookup", "resolve_location", "submit", "verify")
     ]
 
     monkeypatch.setattr(
@@ -288,7 +288,7 @@ async def _run_chain(
 
     monkeypatch.setattr(lookup_mod, "lookup", _fake_lookup)
 
-    # Bypass the permission gate for submit/subscribe so the test does not
+    # Bypass the permission gate for submit so the test does not
     # wait 60 s for a TUI response that never comes in the headless harness.
     import kosmos.primitives as primitives_mod
 

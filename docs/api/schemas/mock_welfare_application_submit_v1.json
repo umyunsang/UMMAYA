@@ -36,6 +36,17 @@
       "title": "Benefit Code",
       "type": "string"
     },
+    "delegation_context": {
+      "anyOf": [
+        {},
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional auth artifact from the prior verify step. This older shape-mirror mock does not validate delegation scope; the submit primitive enforces the published tier gate before invocation.",
+      "title": "Delegation Context"
+    },
     "household_size": {
       "description": "Number of household members (1–50 inclusive).",
       "maximum": 50,

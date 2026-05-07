@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 """Build JSON Schema files for all registered KOSMOS tool adapters.
 
-Covers all four registries:
+Covers the active registries:
   1. kosmos.tools.registry.ToolRegistry  — lookup-side tools (14 adapters)
   2. kosmos.primitives.submit._ADAPTER_REGISTRY  — submit adapters (2 mocks)
   3. kosmos.primitives.verify._VERIFY_ADAPTERS   — verify adapters (6 mocks)
-  4. kosmos.primitives.subscribe._SUBSCRIBE_ADAPTERS — subscribe adapters (3 mocks)
+
+Subscribe schemas are intentionally not generated. National notification
+delivery is deferred until KOSMOS has an app/push runtime that can own delivery.
 
 Usage:
     python scripts/build_schemas.py [--check] [--output-dir DIR] [--quiet]
@@ -131,8 +133,8 @@ def _resolve_model_ref(ref: str) -> type | None:
 
 
 def _collect_primitive_adapters() -> list[tuple[str, type, type]]:
-    """Collect (tool_id, input_model_class, output_model_class) from the three
-    primitive registries: submit, verify, and subscribe.
+    """Collect (tool_id, input_model_class, output_model_class) from active
+    primitive registries: submit and verify.
 
     The caller must have already imported ``kosmos.tools.mock`` (which triggers
     all adapter self-registration side-effects) before calling this function.
@@ -209,17 +211,6 @@ def _collect_primitive_adapters() -> list[tuple[str, type, type]]:
         results[tool_id] = (verify_input_cls, verify_output_cls)
 
     # ------------------------------------------------------------------
-    # 3. Subscribe adapters — _SUBSCRIBE_ADAPTERS: dict[tool_id, (modality, fn)]
-    #    All three share SubscribeInput / SubscriptionHandle.
-    # ------------------------------------------------------------------
-    subscribe_mod = importlib.import_module("kosmos.primitives.subscribe")
-    subscribe_input_cls = subscribe_mod.SubscribeInput
-    subscribe_output_cls = subscribe_mod.SubscriptionHandle
-    subscribe_registry: dict[str, tuple] = getattr(subscribe_mod, "_SUBSCRIBE_ADAPTERS", {})
-
-    for tool_id in subscribe_registry:
-        results[tool_id] = (subscribe_input_cls, subscribe_output_cls)
-
     # Return sorted by tool_id for deterministic output
     return [(tid, inp, out) for tid, (inp, out) in sorted(results.items())]
 
@@ -312,10 +303,10 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
             return 3
 
     # ------------------------------------------------------------------
-    # 4. Collect all adapters: ToolRegistry + 3 primitive registries.
+    # 4. Collect all adapters: ToolRegistry + active primitive registries.
     # ------------------------------------------------------------------
 
-    # Trigger mock adapter self-registration side effects (submit/verify/subscribe).
+    # Trigger mock adapter self-registration side effects (submit/verify).
     try:
         import kosmos.tools.mock  # noqa: F401, PLC0415
     except Exception:  # pragma: no cover

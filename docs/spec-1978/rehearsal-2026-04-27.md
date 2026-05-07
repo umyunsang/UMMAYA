@@ -44,7 +44,7 @@ $ python scripts/probe-bridge.py --message "강남구 응급실 알려줘" --tim
 | `tool_call` frames | **0 (expected)** — `probe-bridge.py` sends empty tools array, so the LLM produces plain text without invoking the `lookup` primitive. |
 | Korean rendering | ✅ — emergency-room guidance + 119 phone CTA + 🩺 emoji |
 
-⚠️ **PARTIAL** — Backend stream + frame schema OK; tool-dispatch path is NOT exercised by `probe-bridge.py` (out of scope: probe-bridge sends `tools=[]`). Tool dispatch is exercised by the TUI integration path which registers the 5-primitive surface in `ChatRequestFrame.tools`. To explicitly test tool calls, extend `probe-bridge.py` with a `--tools <json>` option in a follow-up commit, OR exercise via the TUI (currently blocked by PTY harness TTY issue — see S3 below).
+⚠️ **PARTIAL** — Backend stream + frame schema OK; tool-dispatch path is NOT exercised by `probe-bridge.py` (out of scope: probe-bridge sends `tools=[]`). Tool dispatch is exercised by the TUI integration path which registers the active primitive surface in `ChatRequestFrame.tools`. To explicitly test tool calls, extend `probe-bridge.py` with a `--tools <json>` option in a follow-up commit, OR exercise via the TUI (currently blocked by PTY harness TTY issue — see S3 below).
 
 ### S3 — `pty-scenario greeting` (FR-039 / SC-007)
 

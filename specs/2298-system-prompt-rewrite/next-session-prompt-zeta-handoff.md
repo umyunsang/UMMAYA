@@ -10,7 +10,7 @@
 
 ✅ **Layer 1** — `prompts/system_v1.md` 4-paragraph + 4 nested XML tag (`<primitives>` / `<verify_families>` / `<verify_chain_pattern>` / `<scope_grammar>`), 10 mock_verify_* tool_id 매핑, TRIGGER + canonical 매핑. Manifest SHA `bda67fb…`.
 
-✅ **Layer 2** — `src/kosmos/tools/mvp_surface.py` 5 GovAPITool (resolve_location + lookup + verify + submit + subscribe) `is_core=True`. `_VerifyInputForLLM` / `_SubmitInputForLLM` / `_SubscribeInputForLLM` envelope. Registry 16 → 19.
+✅ **Layer 2** — `src/kosmos/tools/mvp_surface.py` active GovAPITool surface (resolve_location + lookup + verify + submit) `is_core=True`. `_VerifyInputForLLM` / `_SubmitInputForLLM` envelope.
 
 ❌ **Layer 5** — Epic ζ 의 책임. TUI 4 primitive `call()` 가 stub.
 

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 """Discovery bridge — Epic ζ #2297 path B fix (live smoke 2026-04-30 follow-up).
 
-The KOSMOS 5-primitive design isolates verify / submit / subscribe mock adapters
+The KOSMOS primitive design isolates verify / submit mock adapters
 in per-primitive ``_ADAPTER_REGISTRY`` dicts (``kosmos.primitives.{verify,
-submit,subscribe}``). The main :class:`kosmos.tools.registry.ToolRegistry` and
+submit}``). The main :class:`kosmos.tools.registry.ToolRegistry` and
 its BM25 corpus only see lookup-class adapters, so when the LLM emits
 ``lookup(mode="search", query="종합소득세 신고")`` the search returns no
 verify/submit candidates — the citizen-facing chain never starts.
@@ -12,7 +12,7 @@ This module bridges the per-primitive registries into the main ToolRegistry by
 synthesising lightweight :class:`kosmos.tools.models.GovAPITool` wrappers for
 each registered mock and registering them with ``is_core=False`` (so they
 participate in BM25 search but do NOT appear in the LLM-visible primary tool
-list — that surface stays as the 5 primitives + lookup-class Live adapters).
+list — that surface stays as the active primitives + lookup-class Live adapters).
 
 The wrapped tools surface (per :class:`AdapterCandidate`):
 - input_schema (Pydantic) — the citizen-shape params model the LLM should fill
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Lightweight params shells for verify/subscribe (LLM-facing input schemas)
+# Lightweight params shell for verify (LLM-facing input schema)
 # ---------------------------------------------------------------------------
 
 
@@ -71,12 +71,6 @@ class _VerifyParamsShell(BaseModel):
         default="",
         description=("English-language one-line purpose statement (for audit logs)."),
     )
-
-
-class _SubscribeParamsShell(BaseModel):
-    """LLM-facing subscribe params — opaque per-adapter dict."""
-
-    model_config = ConfigDict(extra="allow")
 
 
 class _OpaqueOutput(RootModel[dict[str, Any]]):
@@ -341,7 +335,7 @@ def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
 
 
 # ---------------------------------------------------------------------------
-# Submit / subscribe — read AdapterRegistration from per-primitive registries
+# Submit — read AdapterRegistration from the per-primitive registry
 # ---------------------------------------------------------------------------
 
 
@@ -379,63 +373,13 @@ def _submit_to_govapitool(
     )
 
 
-def _subscribe_to_govapitool(tool_id: str, search_hint_str: str) -> GovAPITool:
-    """Build a GovAPITool wrapper for a subscribe mock (registry has tool_id only)."""
-    return GovAPITool(
-        id=tool_id,
-        name_ko=tool_id.replace("mock_", "").replace("_", " "),
-        ministry="KOSMOS",
-        category=["subscribe", "mock", "stream"],
-        endpoint=f"internal://mock-subscribe/{tool_id}",
-        auth_type="public",
-        input_schema=_SubscribeParamsShell,
-        output_schema=_OpaqueOutput,
-        llm_description=(
-            f"Subscribe primitive — {tool_id}. Opens a session-lifetime stream "
-            "of events from the registered data source (CBS broadcast / REST-pull / RSS). "
-            "Returns a SubscriptionHandle; subsequent events arrive as backend tool_result "
-            "frames during the session."
-        ),
-        search_hint=search_hint_str,
-        policy=AdapterRealDomainPolicy(
-            real_classification_url="https://www.data.go.kr/policy/privacyPolicy.do",
-            real_classification_text=(
-                "공공데이터포털 개인정보처리방침 (KOSMOS subscribe mock — "
-                "session-lifetime event stream; no persistent state)."
-            ),
-            citizen_facing_gate="read-only",
-            last_verified=datetime(2026, 4, 30, tzinfo=UTC),
-        ),
-        is_concurrency_safe=True,
-        cache_ttl_seconds=0,
-        rate_limit_per_minute=30,
-        is_core=False,
-        primitive="subscribe",
-    )
-
-
-# Subscribe search hints — hardcoded since the per-tool registry doesn't carry them.
-_SUBSCRIBE_HINTS: dict[str, str] = {
-    "mock_cbs_disaster_v1": (
-        "재난방송 CBS 긴급재난문자 cell broadcast disaster alert "
-        "emergency 3GPP TS 23.041 subscribe 구독"
-    ),
-    "mock_rest_pull_tick_v1": (
-        "REST-pull 폴링 polling 데이터고닷케이알 data.go.kr periodic subscribe 구독"
-    ),
-    "mock_rss_public_notices_v1": (
-        "RSS 공공 공지 정부 announcement notice government subscribe 구독"
-    ),
-}
-
-
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
 
 
 def bridge_per_primitive_registries(registry: ToolRegistry) -> int:
-    """Bridge verify/submit/subscribe mock adapters into the main ToolRegistry.
+    """Bridge verify/submit mock adapters into the main ToolRegistry.
 
     Idempotent — already-registered tool_ids are skipped (logged at DEBUG).
     Must be called AFTER ``import kosmos.tools.mock`` so all per-primitive
@@ -443,7 +387,7 @@ def bridge_per_primitive_registries(registry: ToolRegistry) -> int:
 
     Returns the number of newly-registered tools.
     """
-    return _bridge_verify(registry) + _bridge_submit(registry) + _bridge_subscribe(registry)
+    return _bridge_verify(registry) + _bridge_submit(registry)
 
 
 def _bridge_verify(registry: ToolRegistry) -> int:
@@ -489,35 +433,9 @@ def _bridge_submit(registry: ToolRegistry) -> int:
     return count
 
 
-def _bridge_subscribe(registry: ToolRegistry) -> int:
-    try:
-        from kosmos.primitives.subscribe import (
-            _SUBSCRIBE_ADAPTERS as _SUBSCRIBE_REG_LOCAL,
-        )
-    except ImportError:
-        return 0
-
-    count = 0
-    for tool_id in _SUBSCRIBE_REG_LOCAL:
-        if tool_id in registry._tools:  # noqa: SLF001
-            continue
-        search_hint = _SUBSCRIBE_HINTS.get(tool_id, f"{tool_id} subscribe stream")
-        try:
-            registry.register(_subscribe_to_govapitool(tool_id, search_hint))
-            count += 1
-        except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "discovery_bridge: failed to register subscribe %s: %s",
-                tool_id,
-                exc,
-            )
-    return count
-
-
 __all__ = [
     "_VERIFY_FAMILIES",
     "_VerifyParamsShell",
-    "_SubscribeParamsShell",
     "_OpaqueOutput",
     "bridge_per_primitive_registries",
 ]

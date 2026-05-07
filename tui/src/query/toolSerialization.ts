@@ -13,7 +13,8 @@ import { getAllBaseTools } from '../tools.js'
 // ---------------------------------------------------------------------------
 // Published-to-LLM name set — FR-003 single-source rule (TUI side).
 //
-// Includes ONLY the five reserved primitives (Migration Tree § L1-C.C1).
+// Includes ONLY the active reserved primitives (Migration Tree § L1-C.C1).
+// subscribe is deferred until KOSMOS has a real app/push-notification runtime.
 // MVP-7 auxiliary tools (Migration Tree § L1-C.C6) are tracked client-side
 // for permissions / sandbox infrastructure but NOT yet exposed to the LLM:
 // their TUI-side execution path (``runTools`` → ``tool_result`` frame back
@@ -26,11 +27,10 @@ import { getAllBaseTools } from '../tools.js'
 //   Read, Write, Edit, Bash, Glob, Grep, NotebookEdit  (Migration Tree § L1-C.C6)
 // ---------------------------------------------------------------------------
 const PUBLISHED_NAMES: ReadonlySet<string> = new Set([
-  // Five root primitives — Epic #2077 FR-003 single-source-of-truth.
+  // Active root primitives — Epic #2077 FR-003 single-source-of-truth.
   'lookup',
   'resolve_location',
   'submit',
-  'subscribe',
   'verify',
 ])
 
@@ -99,7 +99,7 @@ export async function toolToFunctionSchema(tool: Tool): Promise<ToolDefinition> 
  * sorted alphabetically by `function.name`.
  *
  * Called once per `chat_request` turn in `tui/src/query/deps.ts`.
- * Budget: ≤ 50 ms (5 published primitive schemas; Zod conversion is fast and tool descriptions
+ * Budget: ≤ 50 ms (4 published primitive schemas; Zod conversion is fast and tool descriptions
  * are constant-string returns — no I/O).
  */
 export async function getToolDefinitionsForFrame(): Promise<ToolDefinition[]> {

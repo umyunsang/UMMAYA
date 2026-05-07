@@ -101,7 +101,7 @@ def test_no_legacy_verb_registration(rel_path: str, lineno: int, verb: str) -> N
     pytest.fail(
         f"Legacy verb registration detected: {rel_path!r} line {lineno} — "
         f"tool_id={verb!r} is a banned top-level verb (Spec 031 T080 pruning).\n"
-        f"Replace with a primitive envelope call (lookup/submit/subscribe/verify) "
+        f"Replace with a primitive envelope call (lookup/submit/verify) "
         f"or remove the registration."
     )
 

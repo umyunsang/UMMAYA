@@ -8,9 +8,9 @@ import {
 } from '../../../src/commands/config.js';
 
 describe('ConfigOverlay — KOSMOS_CONFIG_CATALOG (FR-030)', () => {
-  it('catalog contains at least one secret entry', () => {
+  it('catalog contains no secret entries', () => {
     const secrets = KOSMOS_CONFIG_CATALOG.filter((e) => e.isSecret);
-    expect(secrets.length).toBeGreaterThan(0);
+    expect(secrets).toHaveLength(0);
   });
 
   it('catalog contains at least one non-secret entry', () => {
@@ -34,12 +34,9 @@ describe('ConfigOverlay — KOSMOS_CONFIG_CATALOG (FR-030)', () => {
     }
   });
 
-  it('KOSMOS_FRIENDLI_TOKEN is marked as secret', () => {
-    const entry = KOSMOS_CONFIG_CATALOG.find(
-      (e) => e.key === 'KOSMOS_FRIENDLI_TOKEN',
-    );
-    expect(entry).toBeDefined();
-    expect(entry?.isSecret).toBe(true);
+  it('does not expose FriendliAI API keys through /config', () => {
+    const entry = KOSMOS_CONFIG_CATALOG.find((e) => e.key.includes('FRIENDLI'));
+    expect(entry).toBeUndefined();
   });
 });
 
@@ -62,7 +59,7 @@ describe('executeConfig — command result (FR-030)', () => {
   });
 
   it('openSecretEditorFor is set when key is passed', () => {
-    const result = executeConfig('KOSMOS_FRIENDLI_TOKEN');
-    expect(result.openSecretEditorFor).toBe('KOSMOS_FRIENDLI_TOKEN');
+    const result = executeConfig('KOSMOS_DATA_GO_KR_API_KEY');
+    expect(result.openSecretEditorFor).toBe('KOSMOS_DATA_GO_KR_API_KEY');
   });
 });

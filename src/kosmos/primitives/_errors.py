@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Structured error envelopes for the Spec 031 five-primitive harness (T011).
+"""Structured error envelopes for the active primitive harness (T011).
 
 All primitives return structured errors (never raw exceptions) per FR-005 and
 the general harness principle. Shapes mirror Spec 022's ``LookupError`` idiom
@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class AdapterNotFoundError(BaseModel):
     """Registry lookup miss — requested ``tool_id`` has no registered adapter.
 
-    Surfaced by :mod:`kosmos.primitives.submit`, ``verify``, and ``subscribe``
+    Surfaced by :mod:`kosmos.primitives.submit` and ``verify``
     when their dispatch path cannot resolve ``tool_id`` against the registry.
     """
 
@@ -45,25 +45,7 @@ class AdapterInvocationError(BaseModel):
     message: str = Field(min_length=1)
 
 
-class SubscriptionBackpressureDrop(BaseModel):
-    """``subscribe`` queue overflowed — events were dropped rather than blocking.
-
-    Back-pressure policy is documented in Spec 031 FR-012: the subscribe
-    iterator uses ``asyncio.Queue(maxsize=64)``; when a producer would block
-    for longer than the queue drain budget, events are dropped and this error
-    is yielded so consumers can detect the gap.
-    """
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    kind: Literal["subscription_backpressure_drop"] = "subscription_backpressure_drop"
-    subscription_id: str = Field(min_length=1)
-    events_dropped: int = Field(ge=1)
-    message: str = Field(min_length=1)
-
-
 __all__ = [
     "AdapterInvocationError",
     "AdapterNotFoundError",
-    "SubscriptionBackpressureDrop",
 ]

@@ -36,8 +36,6 @@ Starting with v1.2, KOSMOS replaces the single-axis `TOOL_MIN_AAL` table (8 lega
 
 Footnote (†): Spec 022 adapters (`lookup`, `resolve_location`, `nfa_emergency_info_service`, `mohw_welfare_eligibility_search`) are registered as `GovAPITool` objects via the legacy path; they do not construct `AdapterRegistration` directly and therefore carry `null` for `published_tier_minimum` during the pre-v1.2 GA migration window. Their `auth_level` values (referenced by V3) are authoritative until T080 completes the dual-axis migration.
 
-Footnote (‡): Subscribe adapters (`mock_cbs_disaster_v1`, `mock_rest_pull_tick_v1`, `mock_rss_public_notices_v1`) are registered via `register_subscribe_adapter()` in `kosmos.primitives.subscribe`, which does not construct `AdapterRegistration`. They do not participate in the V3/V6 invariant chain and are not enumerated in `TOOL_MIN_AAL`. The `—` marker in the dual-axis columns reflects the absence of `AdapterRegistration`; security posture for subscribe streams is governed by the `SubscriptionHandle` lifetime and CBS/RSS modality contracts in `src/kosmos/primitives/subscribe.py`.
-
 | Tool ID | Primitive | `published_tier_minimum` | `nist_aal_hint` | Korean Description | English Description |
 |---|---|---|---|---|---|
 | `lookup` | `lookup` | `null` †  | `AAL1` | 공공정보 검색 — 개인정보 없음 | Public catalog search; no PII in inputs or outputs |
@@ -52,9 +50,6 @@ Footnote (‡): Subscribe adapters (`mock_cbs_disaster_v1`, `mock_rest_pull_tick
 | `mock_verify_digital_onepass` | `verify` | `digital_onepass_level2_aal2` | `AAL2` | 디지털원패스 Level 2 — 행정안전부 AAL2 | Digital Onepass Level 2; MOIS public auth |
 | `mock_verify_mobile_id` | `verify` | `mobile_id_mdl_aal2` | `AAL2` | 모바일 운전면허 신분확인 — AAL2 | Mobile driver license identity verify; MOIS |
 | `mock_verify_mydata` | `verify` | `mydata_individual_aal2` | `AAL2` | 마이데이터 OAuth 인증 — 금결원 개인 AAL2 | MyData OAuth identity verify; KFTC |
-| `mock_cbs_disaster_v1` | `subscribe` | — ‡ | — ‡ | CBS 재난문자 구독 — 3GPP TS 23.041 | CBS disaster broadcast subscription |
-| `mock_rest_pull_tick_v1` | `subscribe` | — ‡ | — ‡ | REST 폴링 구독 — data.go.kr | REST-pull polling subscription; data.go.kr |
-| `mock_rss_public_notices_v1` | `subscribe` | — ‡ | — ‡ | RSS 2.0 공고 구독 — data.go.kr | RSS 2.0 public notices subscription; data.go.kr |
 
 **Authoritative sources**: `published_tier_minimum` values are enforced by `src/kosmos/tools/registry.py::AdapterRegistration.published_tier_minimum` (the `PublishedTier` closed enum, 18 labels across 6 families). The registration-time backstop is `src/kosmos/security/v12_dual_axis.py::enforce` (a `@model_validator(mode="after")` on `AdapterRegistration`).
 
@@ -715,7 +710,7 @@ Adapters registered before T079 (Spec 022 / Phase-2 adapters using the legacy `G
 The following items are explicitly not addressed in this version:
 
 - **OPAQUE systems** — Government 24 민원 제출 (form submission), KEC XML 서명 (digital signature), and NPKI 포털 세션 핸드셰이크 (portal session handshake) cannot be byte/shape mirrored per the mock-evidence matrix (docs/mock/ criteria, FR-026). These systems are documented in `docs/scenarios/` only and do not appear in the dual-axis adapter table.
-- **Subscribe security invariants on `AdapterRegistration`** — subscribe adapters are registered via `register_subscribe_adapter()` in `kosmos.primitives.subscribe`, which does not construct `AdapterRegistration`. FR-030 does not apply to them. Their security posture is governed by `SubscriptionHandle` lifetime and CBS/RSS modality contracts in `src/kosmos/primitives/subscribe.py`.
+- **Subscribe security invariants on `AdapterRegistration`** — deferred. Subscribe is not an active CLI primitive; national alert/RSS delivery belongs to a future app/push runtime with its own registration and security contract.
 
 > **Citation**: Spec 031 FR-028 (V1–V6 preservation); FR-030 (dual-axis completeness); SC-007 (no new runtime deps in security layer); SC-010 (legacy 8-verb surface retired).
 

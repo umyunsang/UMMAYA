@@ -210,10 +210,11 @@ async def main() -> None:
     Boot sequence:
     1. Configure stderr-only logging (stdout reserved for JSONL).
     2. Build ToolRegistry + ToolExecutor.
-    3. Call ``register_all_tools()`` — registers the 14 live tools + 2 MVP-surface tools.
+    3. Call ``register_all_tools()`` — registers the active LLM/core and adapter tools.
     4. Import ``kosmos.tools.mock`` — triggers __init__.py side-effects that register all
-       20 mock surfaces (5+5=10 verify families, 2+3=5 submit adapters, 3 subscribe adapters)
-       into their per-primitive sub-registries. The 2 new lookup mocks (T028/T029) are
+       verify and submit mock surfaces into their per-primitive sub-registries.
+       Subscribe adapters are intentionally not imported until KOSMOS has an
+       app/push delivery runtime. The 2 new lookup mocks (T028/T029) are
        already registered by register_all_tools(); their re-import is idempotent.
     5. Call ``emit_manifest()`` — emits AdapterManifestSyncFrame to stdout. TUI ingests
        this before any LLM turn (FR-015 gate).

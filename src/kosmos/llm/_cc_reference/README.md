@@ -84,7 +84,7 @@ Output:
 
 This means `tui/src/query/toolSerialization.ts:toolToFunctionSchema()` can call `z.toJSONSchema(tool.inputSchema)` directly and get a spec-compliant JSON Schema parameters block without bringing in `zod-to-json-schema` (which would violate AGENTS.md "no new runtime dep").
 
-Discriminated unions, `.describe()` strings, `.min()` / `.max()` / `.int()` modifiers, and optional fields all survive the conversion intact (verified against `LookupPrimitive` and `SubscribePrimitive` Zod schemas).
+Discriminated unions, `.describe()` strings, `.min()` / `.max()` / `.int()` modifiers, and optional fields all survive the conversion intact (verified against the active primitive Zod schemas).
 
 ## Index of KOSMOS modules that cite this directory
 

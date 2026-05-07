@@ -143,7 +143,7 @@ def check_input_model(ctx: CheckContext) -> CheckOutcome:
             en="schema.py AST parse failed (Q1-INPUT-MODEL)",
         )
     classes = {c.name for c in _iter_classes(tree)}
-    candidates = {"LookupInput", "SubmitInput", "VerifyInput", "SubscribeInput"}
+    candidates = {"LookupInput", "SubmitInput", "VerifyInput"}
     if not (classes & candidates):
         return failed(
             ko=f"input model class 가 필요 (Q1-INPUT-MODEL); 후보: {sorted(candidates)}",
@@ -161,7 +161,7 @@ def check_output_model(ctx: CheckContext) -> CheckOutcome:
             en="schema.py AST parse failed (Q1-OUTPUT-MODEL)",
         )
     classes = {c.name for c in _iter_classes(tree)}
-    candidates = {"LookupOutput", "SubmitOutput", "VerifyOutput", "SubscribeOutput"}
+    candidates = {"LookupOutput", "SubmitOutput", "VerifyOutput"}
     if not (classes & candidates):
         return failed(
             ko=f"output model class 가 필요 (Q1-OUTPUT-MODEL); 후보: {sorted(candidates)}",

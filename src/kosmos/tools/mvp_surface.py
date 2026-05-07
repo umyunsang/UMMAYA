@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
-"""LLM-visible core tool definitions for the MVP five-tool surface.
+"""LLM-visible core tool definitions for the MVP primitive surface.
 
-Defines ``GovAPITool`` registrations for the 5 callable primitives:
-``resolve_location`` + ``lookup`` + ``verify`` + ``submit`` + ``subscribe``.
+Defines ``GovAPITool`` registrations for the 4 callable primitives:
+``resolve_location`` + ``lookup`` + ``verify`` + ``submit``.
 All carry ``is_core=True`` so they appear in the core prompt partition and are
 exported via ``registry.export_core_tools_openai()``.
 
 Original Spec 022 / Spec 1634 (T028) shipped 2 tools (resolve_location + lookup).
-Epic η #2298 (Initiative #2290) extended the LLM-visible surface with the 3
-remaining primitives (verify / submit / subscribe) so the citizen-OPAQUE chain
+Epic η #2298 (Initiative #2290) extended the LLM-visible surface with
+verify / submit so the citizen-OPAQUE chain
 (verify → lookup → submit) the system prompt teaches is actually callable.
 
 For ``verify``, the input_schema declares ``family_hint: str`` permissively —
@@ -19,8 +19,9 @@ values (10 active families per Epic ε #2296). The dispatcher's
 of Spec 031). This is the same pattern lookup uses — permissive ``tool_id: str``
 where the prompt + BM25 search hint tells the LLM what's valid.
 
-FR-001 (Epic η updated): The LLM sees exactly five tools: resolve_location,
-lookup, verify, submit, subscribe.
+FR-001 (Epic η updated): The LLM sees exactly four tools: resolve_location,
+lookup, verify, submit. Subscribe is deferred until KOSMOS has a real
+app/push-notification runtime rather than a CLI-only subscription surface.
 """
 
 from __future__ import annotations
@@ -78,7 +79,7 @@ class _LookupInputForLLM(BaseModel):
 
     tool_id: str = Field(
         # Mirrors LookupFetchInput.tool_id pattern (Spec 1636 ADR-007).
-        pattern=r"^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe|resolve_location))$",
+        pattern=r"^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|resolve_location))$",
         description=(
             "Adapter identifier picked from the dynamically-injected "
             "<available_adapters> block. Must come from the candidate "
@@ -216,9 +217,9 @@ LOOKUP_SEARCH_TOOL = GovAPITool(
 
 
 # ---------------------------------------------------------------------------
-# Epic η #2298 — verify / submit / subscribe primitive surfaces
+# Epic η #2298 — verify / submit primitive surfaces
 # ---------------------------------------------------------------------------
-# These three primitives were previously registered into per-primitive sub-
+# These two primitives were previously registered into per-primitive sub-
 # registries only (Spec 031 + Spec 2296) and were NOT visible to the LLM via
 # the OpenAI tool_calls schema. The system prompt teaches the citizen-OPAQUE
 # verify→lookup→submit chain pattern, but the LLM cannot follow it without
@@ -256,35 +257,6 @@ class _SubmitInputForLLM(BaseModel):
             "specific filing fields. Adapter validates against its own "
             "Pydantic model at invocation time."
         ),
-    )
-
-
-class _SubscribeInputForLLM(BaseModel):
-    """LLM-visible subscribe input schema — `{tool_id, params, lifetime_seconds}`.
-
-    Mirrors :class:`kosmos.primitives.subscribe.SubscribeInput`. lifetime_seconds
-    enforces the FR-011 365-day ceiling.
-    """
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    tool_id: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[a-z][a-z0-9_]*$",
-        description="Registered subscribe adapter tool_id (CBS / REST-pull / RSS).",
-    )
-    params: dict[str, object] = Field(
-        default_factory=dict,
-        description=(
-            "Modality-specific subscription parameters (region filter for CBS, "
-            "polling_interval for REST-pull, rss_feed_url for RSS)."
-        ),
-    )
-    lifetime_seconds: int = Field(
-        ge=1,
-        le=31_536_000,
-        description="Bounded lifetime; ceiling 365 days (FR-011 of Spec 031).",
     )
 
 
@@ -564,59 +536,12 @@ SUBMIT_TOOL = GovAPITool(
 )
 
 
-SUBSCRIBE_TOOL = GovAPITool(
-    id="subscribe",
-    name_ko="실시간 구독",
-    ministry="KOSMOS",
-    category=["구독", "스트리밍", "primitive"],
-    endpoint="internal://subscribe",
-    auth_type="public",
-    input_schema=_SubscribeInputForLLM,
-    output_schema=_LookupOutput,
-    llm_description=(
-        "Subscribe primitive — bounded-lifetime streaming subscription to a "
-        "data source. tool_id is the registered subscribe adapter (CBS broadcast "
-        "/ REST-pull / RSS 2.0 feeds). params include the modality-specific "
-        "configuration (region filter for CBS, polling_interval for REST-pull, "
-        "rss_feed_url for RSS). lifetime_seconds MUST be ≤ 31_536_000 (365 day "
-        "ceiling, FR-011).\n\n"
-        "Returns an event stream until the lifetime expires. Each event carries "
-        "a kind discriminator (cbs_broadcast / rest_pull / rss). Use this for "
-        "citizen-facing alerts (e.g. disaster broadcasts, government RSS notices) "
-        "where the citizen wants ongoing updates rather than a one-shot lookup."
-    ),
-    search_hint=(
-        "구독 실시간 알림 재해 방송 RSS 정부 공지 subscribe stream notification "
-        "CBS broadcast disaster alert feed"
-    ),
-    policy=AdapterRealDomainPolicy(
-        real_classification_url="https://www.data.go.kr/policy/privacyPolicy.do",
-        real_classification_text=(
-            "공공데이터포털 개인정보처리방침 (KOSMOS 내부 subscribe primitive — "
-            "각 source adapter 가 기관 자체 정책 citation)"
-        ),
-        citizen_facing_gate="read-only",
-        last_verified=datetime(2026, 4, 30, tzinfo=UTC),
-    ),
-    is_concurrency_safe=True,
-    cache_ttl_seconds=0,
-    rate_limit_per_minute=10,
-    is_core=True,
-    primitive="subscribe",
-    trigger_examples=[
-        "재해 방송 구독",
-        "정부 공지 알림",
-    ],
-)
-
-
 def register_mvp_surface(registry: object) -> None:
-    """Register the MVP LLM-visible core tools — 5-primitive surface.
+    """Register the MVP LLM-visible core tools — 4-primitive surface.
 
     Spec 022 / Spec 1634 shipped resolve_location + lookup. Epic η #2298 added
-    verify, submit, subscribe so the citizen-OPAQUE chain the system prompt
-    teaches is actually callable from the OpenAI tool_calls schema sent to the
-    LLM.
+    verify and submit so the citizen-OPAQUE chain the system prompt teaches is
+    actually callable from the OpenAI tool_calls schema sent to the LLM.
 
     These tools are NOT bound to executor adapters — their invocation is
     handled directly by the KOSMOS orchestrator loop (or its primitive sub-
@@ -635,4 +560,3 @@ def register_mvp_surface(registry: object) -> None:
     registry.register(LOOKUP_SEARCH_TOOL)
     registry.register(VERIFY_TOOL)
     registry.register(SUBMIT_TOOL)
-    registry.register(SUBSCRIBE_TOOL)

@@ -275,7 +275,7 @@ export type CallId = string;
 /**
  * Primitive name per Spec 031.
  */
-export type Name3 = 'lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify';
+export type Name3 = 'lookup' | 'resolve_location' | 'submit' | 'verify';
 /**
  * Opaque session identifier.
  */
@@ -315,7 +315,7 @@ export type CallId1 = string;
 /**
  * Primitive kind discriminator per Spec 031.
  */
-export type Kind5 = 'lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify';
+export type Kind5 = 'lookup' | 'resolve_location' | 'submit' | 'verify';
 /**
  * Opaque session identifier.
  */
@@ -395,7 +395,7 @@ export type RoleId = string;
 /**
  * Primitive currently being invoked by this worker.
  */
-export type CurrentPrimitive = 'lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify';
+export type CurrentPrimitive = 'lookup' | 'resolve_location' | 'submit' | 'verify';
 /**
  * Worker execution status.
  */
@@ -443,7 +443,7 @@ export type WorkerId1 = string;
 /**
  * The primitive the worker wants to invoke.
  */
-export type PrimitiveKind = 'lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify';
+export type PrimitiveKind = 'lookup' | 'resolve_location' | 'submit' | 'verify';
 /**
  * Korean-language description shown to the citizen.
  */
@@ -507,9 +507,7 @@ export type ReceiptId = string | null;
 /**
  * The primitive that was authorised. The TUI feeds this into `aalToLayer(primitive, isIrreversible)` to recompute the gauntlet layer (1=green / 2=orange / 3=red) for the receipt row. None on deny / timeout / legacy backends.
  */
-export type PrimitiveKind1 =
-  | ('lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify')
-  | null;
+export type PrimitiveKind1 = ('lookup' | 'resolve_location' | 'submit' | 'verify') | null;
 /**
  * The fully-qualified adapter id (e.g. `mock_verify_mobile_id`, `mock_submit_welfare_grant`) the citizen authorised. The TUI uses this to render the human-readable Korean adapter name in /consent list and the modal title. None for non-adapter primitives (rare) or legacy backends.
  */
@@ -980,11 +978,11 @@ export type TransactionId20 = string | null;
  */
 export type Kind20 = 'notification_push';
 /**
- * Handle from Spec 031 subscribe registration.
+ * Notification channel handle.
  */
 export type SubscriptionId = string;
 /**
- * e.g., disaster_alert_cbs_push, rss_newsroom_subscribe.
+ * e.g., disaster_alert_cbs_push, gov_newsroom_push.
  */
 export type AdapterId = string;
 /**
@@ -1136,7 +1134,7 @@ export type Name5 = string;
 /**
  * Primitive verb the adapter is registered under (I6).
  */
-export type Primitive = 'lookup' | 'submit' | 'subscribe' | 'verify' | 'resolve_location';
+export type Primitive = 'lookup' | 'submit' | 'verify' | 'resolve_location';
 /**
  * Agency-published policy URL (HTTPS). None only when source_mode == 'internal' (I4/I5).
  */
@@ -1448,7 +1446,7 @@ export interface ToolResultFrame {
   envelope: ToolResultEnvelope;
 }
 /**
- * 5-primitive discriminated union. Unknown kind falls to UnrecognizedPayload.
+ * Active primitive discriminated union. Unknown kind falls to UnrecognizedPayload.
  */
 export interface ToolResultEnvelope {
   kind: Kind5;
@@ -1775,7 +1773,7 @@ export interface HeartbeatFrame {
   peer_frame_seq: PeerFrameSeq;
 }
 /**
- * Push from subscription surfaces (Spec 031 SubscriptionHandle).
+ * Push from app/phone notification surfaces.
  *
  * Carried over the same stdio channel to keep a single correlation plane.
  * role allow-list: notification.
@@ -1785,7 +1783,7 @@ export interface HeartbeatFrame {
  * in-process from ``ink/useTerminalNotification.ts``. There is no
  * push-based IPC notification arm in CC. KOSMOS adds this arm as a
  * swap-2 addition for Korean civic push channels (KMA disaster CBS,
- * RSS newsroom subscribe, hospital-alert subscribe) carried over the
+ * government newsroom alerts, hospital alerts) carried over the
  * same stdio plane to keep a single correlation plane. Spec 2642
  * Epic F · S7 audit recorded this finding (specs/cc-migration-audit/
  * scope-S7-ipc-bridge.md § 5 Finding 3 — resolved as orthogonal

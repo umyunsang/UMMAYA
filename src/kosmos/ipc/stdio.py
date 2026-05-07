@@ -62,9 +62,9 @@ _tracer = trace.get_tracer(__name__)
 # stdin stream. Running them inline deadlocks the reader: chat_request waits for
 # permission_response while the reader is still awaiting chat_request.
 _BACKGROUND_FRAME_KINDS: frozenset[str] = frozenset({"chat_request", "user_input", "plugin_op"})
-_SCOPE_ENTRY_RE = re.compile(r"^(lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+$")
+_SCOPE_ENTRY_RE = re.compile(r"^(lookup|submit|verify):[a-z0-9_]+\.[a-z0-9_-]+$")
 _TOOL_ID_SCOPE_RE = re.compile(
-    r"^(?P<verb>lookup|submit|verify|subscribe):(?P<tool_id>[a-z][a-z0-9_]*[a-z0-9])$"
+    r"^(?P<verb>lookup|submit|verify):(?P<tool_id>[a-z][a-z0-9_]*[a-z0-9])$"
 )
 _CANONICAL_SCOPE_ALIASES: Final[dict[str, str]] = {
     "lookup:mock_lookup_module_hometax_simplified": "lookup:hometax.simplified",
@@ -233,13 +233,6 @@ _VERIFY_QUERY_REQUIREMENTS: Final[tuple[tuple[tuple[str, ...], dict[str, str]], 
             "purpose_en": "Traffic fine payment",
         },
     ),
-)
-_SUBSCRIBE_TOOL_IDS: Final[frozenset[str]] = frozenset(
-    {
-        "mock_cbs_disaster_v1",
-        "mock_rest_pull_tick_v1",
-        "mock_rss_public_notices_v1",
-    }
 )
 _LOCATION_RESOLUTION_HINTS_KO: Final[frozenset[str]] = frozenset(
     {
@@ -1154,12 +1147,6 @@ def _primitive_payload_is_success(payload: object, *, primitive: str) -> bool:
         if isinstance(result, dict) and result.get("status") == "succeeded":
             return True
         return payload.get("status") == "succeeded"
-    if primitive == "subscribe":
-        if isinstance(result, dict):
-            return result.get("status") == "opened" or isinstance(
-                result.get("subscription_id"), str
-            )
-        return payload.get("status") == "opened" or isinstance(payload.get("subscription_id"), str)
     return True
 
 
@@ -1706,74 +1693,6 @@ def _normalize_lookup_args_for_query(
     return normalized
 
 
-def _subscribe_requirement_for_query(user_query: str) -> dict[str, str] | None:
-    """Map citizen subscription wording to the subscribe adapter that must run."""
-    if not user_query:
-        return None
-    compact = _compact_query(user_query)
-    if "구독" not in compact and "알림" not in compact:
-        return None
-    if not _query_contains_any(user_query, ("재난문자", "재난 알림", "긴급재난문자", "cbs")):
-        return None
-    params = {
-        "region": "부산 사하구" if "부산" in user_query and "사하" in user_query else "전국",
-        "burst_count": 3,
-    }
-    return {
-        "tool_id": "mock_cbs_disaster_v1",
-        "params_json": _stdlib_json.dumps(params, ensure_ascii=False),
-        "lifetime_seconds": "300",
-        "message": (
-            "Subscribe follow-up missing: the citizen asked for an ongoing "
-            "disaster-alert subscription. RECOVERY: in the next turn call "
-            "subscribe(tool_id='mock_cbs_disaster_v1', "
-            f"params={_stdlib_json.dumps(params, ensure_ascii=False)}, "
-            "lifetime_seconds=300). Do NOT call lookup for a subscribe adapter."
-        ),
-    }
-
-
-def _check_subscribe_terminated_without_subscribe(
-    llm_messages: list[Any],
-    user_query: str,
-) -> dict[str, str] | None:
-    """Return recovery metadata when a subscription request ends without subscribe."""
-    requirement = _subscribe_requirement_for_query(user_query)
-    if requirement is None:
-        return None
-    if _conversation_has_successful_primitive(
-        llm_messages,
-        primitive="subscribe",
-        tool_id=requirement["tool_id"],
-    ):
-        return None
-    return requirement
-
-
-def _check_lookup_wrong_primitive_prerequisite(
-    fname: str,
-    args_obj: dict[str, object],
-) -> dict[str, str] | None:
-    """Reject lookup calls that target adapters registered for another primitive."""
-    if fname != "lookup":
-        return None
-    tool_id = args_obj.get("tool_id")
-    if not isinstance(tool_id, str) or tool_id not in _SUBSCRIBE_TOOL_IDS:
-        return None
-    params = args_obj.get("params") if isinstance(args_obj.get("params"), dict) else {}
-    return {
-        "tool_id": tool_id,
-        "params_json": _stdlib_json.dumps(params, ensure_ascii=False),
-        "message": (
-            f"Wrong primitive for adapter {tool_id!r}: this adapter is registered "
-            "under subscribe, not lookup. RECOVERY: call "
-            f"subscribe(tool_id={tool_id!r}, params="
-            f"{_stdlib_json.dumps(params, ensure_ascii=False)}, lifetime_seconds=300). "
-            "Do NOT tell the citizen the adapter is unavailable."
-        ),
-    }
-
-
 def _check_verify_terminated_without_verify(
     llm_messages: list[Any],
     user_query: str,
@@ -2309,7 +2228,7 @@ def _check_chain_prerequisite(  # noqa: C901
     # Only the `lookup` primitive carries adapter calls (mode='fetch'
     # routes to a registered GovAPITool). All other primitives are
     # either coord-free (verify) or carry their own param schema
-    # (submit, subscribe, resolve_location).
+    # (submit, resolve_location).
     if fname != "lookup":
         return None
     if not isinstance(args_obj, dict):
@@ -3450,9 +3369,9 @@ async def run(  # noqa: C901
     )
 
     # Primitives that require a citizen permission request when called outside
-    # an existing session-grant. Spec 033 Layer 1 (L1) exempts verify/lookup/
-    # resolve_location (read-only, public-tier); submit/subscribe are side-
-    # effecting (Layer 2/3) and always enter the bridge.
+    # an existing session-grant. Spec 033 Layer 1 (L1) exempts lookup/
+    # resolve_location (read-only, public-tier); verify and submit enter the
+    # bridge.
     #
     # Epic #2077 T010 (FR-003) — single-source-of-truth migration: read the
     # gated set from ``kosmos.primitives.GATED_PRIMITIVES`` rather than
@@ -3472,7 +3391,7 @@ async def run(  # noqa: C901
     ) -> bool:
         """Return True if the tool call is permitted to proceed.
 
-        For gated primitives (submit/subscribe):
+        For gated primitives (verify/submit):
         1. Check session_grants cache — auto-allow if already approved.
         2. Emit PermissionRequestFrame and await citizen decision (60 s).
         3. On allow_session: cache grant; write consent receipt.
@@ -3508,21 +3427,18 @@ async def run(  # noqa: C901
 
         # Determine risk level and description from primitive type.
         # verify is LIGHT_GATE (low risk, identity delegation read-only).
-        # submit/subscribe are HEAVY_GATE (medium/high risk, side-effecting).
+        # submit is HEAVY_GATE (high risk, side-effecting).
         _PRIM_RISK: dict[str, str] = {  # noqa: N806
             "verify": "low",
             "submit": "high",
-            "subscribe": "medium",
         }
         _PRIM_KO: dict[str, str] = {  # noqa: N806
             "verify": "신원 확인을 위해 인증 위임을 요청합니다.",
             "submit": "정부 API에 데이터를 제출합니다. 이 작업은 되돌릴 수 없습니다.",
-            "subscribe": "공공 데이터 스트림을 구독합니다.",
         }
         _PRIM_EN: dict[str, str] = {  # noqa: N806
             "verify": "Request identity delegation for verification.",
             "submit": "Submit data to a government API. This action is irreversible.",
-            "subscribe": "Subscribe to a public data stream.",
         }
 
         request_id = str(uuid.uuid4())
@@ -3855,7 +3771,7 @@ async def run(  # noqa: C901
         resolves _pending_calls[call_id] so the agentic-loop continuation can
         inject the result as a role="tool" message.
 
-        Permission gate: submit/subscribe go through _check_permission_gate
+        Permission gate: verify/submit go through _check_permission_gate
         first. On denial/timeout, the gate itself resolves the Future with an
         error envelope, so this function exits early without double-resolution.
 
@@ -4080,77 +3996,6 @@ async def run(  # noqa: C901
                         "result": _serialize_primitive_result(raw),
                     }
 
-                elif fname == "subscribe":
-                    # T069 streaming events are deferred. Return the SubscriptionHandle.
-                    from kosmos.ipc.frame_schema import (  # noqa: PLC0415
-                        WorkerStatusFrame,
-                    )
-                    from kosmos.primitives.subscribe import (  # noqa: PLC0415
-                        SubscribeInput,
-                        _SubscribeIterator,
-                        subscribe,
-                    )
-
-                    inp_sub = SubscribeInput(
-                        tool_id=str(args_obj.get("tool_id", "")),
-                        params=cast("dict[str, object]", args_obj.get("params") or {}),
-                        lifetime_seconds=int(cast("Any", args_obj.get("lifetime_seconds", 300))),
-                    )
-                    iterator_or_error = subscribe(inp_sub)
-                    if isinstance(iterator_or_error, _SubscribeIterator):
-                        # Audit-5 P0-2 fix (2026-05-04): use the canonical
-                        # subscription_id from the real ``SubscriptionHandle``
-                        # so the TUI ``subscriptionRegistry`` key matches every
-                        # subsequent OTEL span / drop event / consent ledger
-                        # entry. Synthetic ``uuid.uuid4()`` removed.
-                        handle = iterator_or_error.peek_handle()
-                        result_payload = {
-                            "kind": "subscribe",
-                            "subscription_id": handle.subscription_id,
-                            "handle_id": handle.subscription_id,  # alias for TS-side
-                            "tool_id": inp_sub.tool_id,
-                            "opened_at": handle.opened_at.isoformat(),
-                            "closes_at": handle.closes_at.isoformat(),
-                            "lifetime_seconds": int(inp_sub.lifetime_seconds),
-                            "status": "opened",
-                            "note": "Streaming events deferred (T069).",
-                        }
-
-                        # Audit-5 P0-4 fix (2026-05-04): emit a WorkerStatusFrame
-                        # so the TUI ``AgentVisibilityPanel`` (subscribed via
-                        # ``bridge.frames()``) records the active subscription
-                        # channel as a "running" ministry agent. The panel maps
-                        # ``role_id`` → display label; we pass the adapter
-                        # ``tool_id`` so the citizen sees the real source name.
-                        # The frontend ``subscriptionRegistry`` (TS-side) and
-                        # this ``worker_status`` IPC stream now agree on the
-                        # same ``worker_id`` (``subscribe:<subscription_id>``).
-                        try:
-                            ws_frame = WorkerStatusFrame(
-                                session_id=session_id,
-                                correlation_id=correlation_id,
-                                ts=_utcnow(),
-                                role="backend",
-                                kind="worker_status",
-                                worker_id=f"subscribe:{handle.subscription_id}",
-                                role_id=inp_sub.tool_id,
-                                current_primitive="subscribe",
-                                status="running",
-                            )
-                            await write_frame(ws_frame)
-                        except Exception as _ws_exc:  # noqa: BLE001
-                            logger.warning(
-                                "subscribe: failed to emit worker_status frame: %s",
-                                _ws_exc,
-                            )
-                    else:
-                        # AdapterNotFoundError or similar
-                        result_payload = {
-                            "kind": "subscribe",
-                            "error": str(iterator_or_error),
-                            "tool_id": str(args_obj.get("tool_id", "")),
-                        }
-
                 else:
                     dispatch_error = f"unknown primitive {fname!r}"
 
@@ -4294,7 +4139,7 @@ async def run(  # noqa: C901
                 logger.exception("[CHAT_REQUEST_DUMP] failed to serialise")
 
         # Tool inventory — backend ToolRegistry is the single source of
-        # truth, BUT only the five LLM-callable primitives go into the
+        # truth, BUT only the active LLM-callable primitives go into the
         # ``tools`` parameter the model sees. KOSMOS architecture
         # (docs/vision.md L1-C): `system prompt exposes primitive
         # signatures only; BM25 surfaces adapters dynamically`. Adapter
@@ -4307,12 +4152,12 @@ async def run(  # noqa: C901
         # of `lookup(tool_id="kma_current_observation", params=...)`).
         # The dispatcher then rejected the call with "Model requested
         # unknown tool 'kma_current_observation'" because PRIMITIVE_REGISTRY
-        # only contains the five primitives. Captured live in
+        # only contains the active primitives. Captured live in
         # specs/integration-verification/donga-univ-poi-bug/
         # snap-001-01-kma-now (2026-05-04).
         #
         # Filtering by `ministry == "KOSMOS"` AND id in the primitive
-        # whitelist matches the intent of mvp_surface.py — the five
+        # whitelist matches the intent of mvp_surface.py — the KOSMOS
         # GovAPITool entries with `primitive=` field set are exactly
         # the LLM-callable surface. Adapters (every other ministry) flow
         # through the `<available_adapters>` system-prompt suffix that
@@ -4540,7 +4385,6 @@ async def run(  # noqa: C901
         )
         force_lookup_next_turn: str | None = None
         force_submit_next_turn: str | None = None
-        force_subscribe_next_turn: str | None = None
         continue_free_next_turn = False
         mock_disclosure_required = False
 
@@ -4810,17 +4654,6 @@ async def run(  # noqa: C901
                     "(submit gate requires %s)",
                     _turn,
                     force_submit_next_turn,
-                )
-            elif force_subscribe_next_turn is not None:
-                stream_tool_choice = {
-                    "type": "function",
-                    "function": {"name": "subscribe"},
-                }
-                logger.warning(
-                    "_handle_chat_request: forcing tool_choice=subscribe for turn %d "
-                    "(subscribe gate requires %s)",
-                    _turn,
-                    force_subscribe_next_turn,
                 )
             try:
                 async for event in client.stream(  # type: ignore[attr-defined]
@@ -5272,61 +5105,6 @@ async def run(  # noqa: C901
                     force_lookup_next_turn = sensitive_lookup_followup_gate["tool_id"]
                     continue
 
-                subscribe_followup_gate = _check_subscribe_terminated_without_subscribe(
-                    llm_messages,
-                    latest_user_utt,
-                )
-                if subscribe_followup_gate is not None:
-                    synth_call_id = str(uuid.uuid4())
-                    subscribe_args = {
-                        "tool_id": subscribe_followup_gate["tool_id"],
-                        "params": _stdlib_json.loads(subscribe_followup_gate["params_json"]),
-                        "lifetime_seconds": int(subscribe_followup_gate["lifetime_seconds"]),
-                    }
-                    llm_messages.append(
-                        LLMChatMessage(
-                            role="assistant",
-                            content="",
-                            tool_calls=[
-                                LLMToolCall(
-                                    id=synth_call_id,
-                                    type="function",
-                                    function=LLMFunctionCall(
-                                        name="subscribe",
-                                        arguments=_json.dumps(
-                                            subscribe_args,
-                                            ensure_ascii=False,
-                                        ),
-                                    ),
-                                )
-                            ],
-                        )
-                    )
-                    llm_messages.append(
-                        LLMChatMessage(
-                            role="tool",
-                            content=_json.dumps(
-                                {
-                                    "kind": "error",
-                                    "reason": "subscribe_followup_missing",
-                                    "message": subscribe_followup_gate["message"],
-                                },
-                                ensure_ascii=False,
-                            ),
-                            name="subscribe",
-                            tool_call_id=synth_call_id,
-                        )
-                    )
-                    logger.warning(
-                        "_handle_chat_request: rejected final-answer turn — "
-                        "subscription request ended without subscribe. "
-                        "Re-entering loop with subscribe forced (%s).",
-                        subscribe_followup_gate["tool_id"],
-                    )
-                    buffered_visible.clear()
-                    force_subscribe_next_turn = subscribe_followup_gate["tool_id"]
-                    continue
-
                 # ---- G-class fabrication gate (2026-05-04) ---------------
                 # Before emitting a final-answer turn, check whether the
                 # conversation invoked resolve_location but never followed up
@@ -5521,90 +5299,6 @@ async def run(  # noqa: C901
                         call_id[:12],
                         primitive,
                         resolve_redirect["tool_id"],
-                    )
-                    continue
-
-                wrong_primitive_gate = _check_lookup_wrong_primitive_prerequisite(
-                    fname,
-                    args_obj,
-                )
-                if wrong_primitive_gate is not None:
-                    from kosmos.ipc.frame_schema import (  # noqa: PLC0415
-                        ToolResultEnvelope,
-                        ToolResultFrame,
-                    )
-
-                    await write_frame(
-                        ToolCallFrame(
-                            session_id=frame.session_id,
-                            correlation_id=frame.correlation_id,
-                            role="backend",
-                            ts=_utcnow(),
-                            kind="tool_call",
-                            call_id=call_id,
-                            name=fname,  # type: ignore[arg-type]
-                            arguments=args_obj,
-                        )
-                    )
-                    err_envelope = ToolResultEnvelope.model_validate(
-                        {
-                            "kind": cast("Any", fname),
-                            "result": {
-                                "kind": "error",
-                                "reason": "wrong_primitive",
-                                "message": wrong_primitive_gate["message"],
-                                "retryable": False,
-                            },
-                        }
-                    )
-                    await write_frame(
-                        ToolResultFrame(
-                            session_id=frame.session_id,
-                            correlation_id=frame.correlation_id,
-                            role="backend",
-                            ts=_utcnow(),
-                            kind="tool_result",
-                            call_id=call_id,
-                            envelope=err_envelope,
-                        )
-                    )
-                    llm_messages.append(
-                        LLMChatMessage(
-                            role="assistant",
-                            content="",
-                            tool_calls=[
-                                LLMToolCall(
-                                    id=call_id,
-                                    type="function",
-                                    function=LLMFunctionCall(
-                                        name=fname,
-                                        arguments=_json.dumps(args_obj),
-                                    ),
-                                )
-                            ],
-                        )
-                    )
-                    llm_messages.append(
-                        LLMChatMessage(
-                            role="tool",
-                            content=_json.dumps(
-                                {
-                                    "kind": "error",
-                                    "reason": "wrong_primitive",
-                                    "message": wrong_primitive_gate["message"],
-                                },
-                                ensure_ascii=False,
-                            ),
-                            name=fname,
-                            tool_call_id=call_id,
-                        )
-                    )
-                    force_subscribe_next_turn = wrong_primitive_gate["tool_id"]
-                    logger.warning(
-                        "_handle_chat_request: rejected %s call_id=%s — "
-                        "adapter belongs to subscribe primitive",
-                        fname,
-                        call_id[:12],
                     )
                     continue
 
@@ -6050,8 +5744,6 @@ async def run(  # noqa: C901
                     force_lookup_next_turn = None
                 if fname == "submit":
                     force_submit_next_turn = None
-                if fname == "subscribe":
-                    force_subscribe_next_turn = None
 
             # If every tool call was rejected (whitelist), terminate.
             # Exception: when the chain gate fired (force flag set) we
@@ -6065,7 +5757,6 @@ async def run(  # noqa: C901
                     or force_verify_next_turn is not None
                     or force_lookup_next_turn is not None
                     or force_submit_next_turn is not None
-                    or force_subscribe_next_turn is not None
                     or continue_free_next_turn
                 ):
                     if continue_free_next_turn:

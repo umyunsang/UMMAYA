@@ -7,7 +7,7 @@
 
 ## Context
 
-Migration tree § L1-C C7 mandates that plugin-contributed tools live under the namespace `plugin.<plugin_id>.<verb>` where `<verb>` is one of the 4 root primitives (`lookup` / `submit` / `verify` / `subscribe`). This prevents adapter-id collisions across third-party plugins and makes the plugin origin visible in the LLM's `lookup` discovery surface.
+Migration tree § L1-C C7 mandates that plugin-contributed tools live under the namespace `plugin.<plugin_id>.<verb>` where `<verb>` is one of the active plugin primitives (`lookup` / `submit` / `verify`). This prevents adapter-id collisions across third-party plugins and makes the plugin origin visible in the LLM's `lookup` discovery surface. `subscribe` is intentionally excluded until KOSMOS has an app/push-notification runtime.
 
 The existing `AdapterRegistration.tool_id` and `LookupFetchInput.tool_id` fields enforce a snake-case pattern `^[a-z][a-z0-9_]*$` (Spec 022/031). Dots are rejected, so the canonical plugin-namespaced form would fail validation at registration and at `lookup(mode="fetch")` time.
 
@@ -18,12 +18,12 @@ Spec #1636 (Plugin DX 5-tier) requires `PluginManifest` to compose `AdapterRegis
 Extend the `tool_id` regex on both `AdapterRegistration` (Spec 031 registry metadata) and `LookupFetchInput` (Spec 022 fetch surface) to accept either:
 
 1. **Built-in form** — `^[a-z][a-z0-9_]*$` (existing Spec 022/031 adapters such as `koroad_accident_hazard_search`, `kma_short_term_forecast`).
-2. **Plugin-namespaced form** — `^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe|resolve_location)$` (new for Spec 1636).
+2. **Plugin-namespaced form** — `^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|resolve_location)$` (new for Spec 1636).
 
 The combined pattern is a backward-compatible alternation:
 
 ```regex
-^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe|resolve_location))$
+^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|resolve_location))$
 ```
 
 ## Rationale
@@ -42,7 +42,7 @@ The combined pattern is a backward-compatible alternation:
 ## Consequences
 
 - `AdapterRegistration` and `LookupFetchInput` accept the new dotted form starting on `feat/1636-plugin-dx-5tier`.
-- `PluginManifest._v_namespace` validator (Spec 1636 T006) refines the constraint further: when `tool_id` matches the dotted form, it must additionally satisfy `tool_id == f"plugin.{plugin_id}.<verb>"` and `<verb> ∈ {lookup, submit, verify, subscribe}` (note: `resolve_location` is allowed by the registry regex for parity with the 5-primitive set, but plugin manifests today restrict to the 4 LLM-visible verbs).
+- `PluginManifest._v_namespace` validator (Spec 1636 T006) refines the constraint further: when `tool_id` matches the dotted form, it must additionally satisfy `tool_id == f"plugin.{plugin_id}.<verb>"` and `<verb> ∈ {lookup, submit, verify}` (note: `resolve_location` is allowed by the registry regex for built-in parity, but plugin manifests restrict it because plugins cannot override `resolve_location`).
 - Spec 022/024/025/031 invariant chain is preserved — the regex is the only field that changed.
 - No ToolRegistry test needs editing; new tests in `kosmos.plugins.tests` cover the plugin form.
 

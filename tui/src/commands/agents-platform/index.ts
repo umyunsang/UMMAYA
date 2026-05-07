@@ -4,9 +4,8 @@
 // Original CC module: `tui/src/commands/agents-platform/index.js`
 // CC version: 2.1.88
 // KOSMOS deviation: agents-platform is Anthropic's `claude agents` CLI surface
-// (Anthropic Console agent CRUD + collaboration). KOSMOS uses Spec 027 swarm
-// mailbox + Spec 287 Ink agent UI (`tui/src/components/agents/`) instead — the
-// `claude agents` Anthropic CLI is non-functional in KOSMOS by design.
+// (Anthropic Console agent CRUD + collaboration). The Anthropic Console-backed
+// CLI is non-functional in KOSMOS by design.
 //
 // Function shape preserved so dynamic imports in main.tsx link successfully.
 // Returning the absent-handler shape (`{ register: noop }`) is the canonical

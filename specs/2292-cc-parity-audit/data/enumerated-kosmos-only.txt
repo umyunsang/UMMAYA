@@ -244,8 +244,6 @@ tui/src/tools/REPLTool/REPLTool.ts
 tui/src/tools/ReviewArtifactTool/ReviewArtifactTool.ts
 tui/src/tools/SubmitPrimitive/SubmitPrimitive.ts
 tui/src/tools/SubmitPrimitive/prompt.ts
-tui/src/tools/SubscribePrimitive/SubscribePrimitive.ts
-tui/src/tools/SubscribePrimitive/prompt.ts
 tui/src/tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.ts
 tui/src/tools/TranslateTool/TranslateTool.ts
 tui/src/tools/TranslateTool/UI.tsx

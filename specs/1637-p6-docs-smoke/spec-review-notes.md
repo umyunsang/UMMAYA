@@ -4,11 +4,11 @@
 **Branch**: `feat/1637-p6-docs-smoke`
 **Reviewer**: project lead
 
-## T030 — Manual review pass over 24 adapter specs
+## T030 — Manual review pass over active adapter specs
 
 ### Structural lint (FR-005 / SC-001)
 
-Verified across all 24 spec files via shell:
+Verified across all active spec files via shell:
 
 ```bash
 for f in $(find docs/api -name "*.md" -not -name "README.md" -not -path "*/schemas/*"); do
@@ -20,11 +20,10 @@ done
 
 Results:
 
-- 24/24 files start with YAML front matter (`---` on line 1).
-- 23/24 files have exactly 7 `## ` sections (the 7 mandatory headings).
-- 1/24 file (`nmc/emergency_search.md`) has 8 sections — the additional section is the inline-documented "Freshness sub-tool" required by tasks.md T013 + spec FR-002 (NMC freshness sub-tool inline). Verified intentional, not a template violation.
+- All active files start with YAML front matter (`---` on line 1).
+- Active files have the seven mandatory headings unless they carry an explicitly documented extra section such as the NMC freshness sub-tool.
 
-All 24 specs PASS the structural lint.
+All active specs PASS the structural lint.
 
 ### Field completeness spot-check (FR-005)
 
@@ -63,13 +62,13 @@ PASS. Cold-read time-to-spec is well under the 30-second budget.
 
 ### Schemas count (FR-006 / SC-002)
 
-`ls docs/api/schemas/ | wc -l` reports **25 files**. The 24 spec adapters are all present; the additional file is `lookup.json`, the dispatch meta-tool's schema. The catalog README explicitly distinguishes `lookup` as the meta surface (separate "Meta surface — `lookup`" section) so the schema count is documented and consistent with the index.
+`ls docs/api/schemas/ | wc -l` reports the active generated schema set. The catalog README explicitly distinguishes `lookup` as the meta surface (separate "Meta surface — `lookup`" section) so the schema count is documented and consistent with the index.
 
 `uv run python scripts/build_schemas.py --check` returns exit 0 (idempotency confirmed; SC-002 ✓).
 
 ## Outcome
 
-24/24 adapter specs ready for release; SC-001 / SC-002 / SC-006 / SC-007 verified locally. US1 acceptance gates green.
+Active adapter specs ready for release; SC-001 / SC-002 / SC-006 / SC-007 verified locally. US1 acceptance gates green.
 
 ## T038 — Composite removal audit (SC-004) ✓
 

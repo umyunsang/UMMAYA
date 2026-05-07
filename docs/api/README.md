@@ -1,6 +1,6 @@
 # KOSMOS API Catalog
 
-This directory documents every adapter registered with KOSMOS at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637). Twenty-four adapters span seven Korean ministries and agencies, twelve of which call live `data.go.kr` endpoints and twelve of which replay public-spec-mirrored fixtures (six identity-verification, two submission, three subscription, plus one location-resolution meta-tool).
+This directory documents every active adapter registered with KOSMOS at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637). Twenty-one adapters span seven Korean ministries and agencies: twelve call live `data.go.kr` or public-infrastructure endpoints, eight replay public-spec-mirrored fixtures (six identity-verification and two submission), and one is the `resolve_location` meta-tool. Subscription adapters are intentionally deferred until KOSMOS has an app/push-notification runtime.
 
 The catalog is intended for three audiences:
 
@@ -12,7 +12,7 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 
 ## How to use this catalog
 
-1. **Find an adapter** — scan Matrix A (by source) when the ministry is known, Matrix B (by primitive) when the verb (`lookup` / `submit` / `verify` / `subscribe`) is known. Both matrices are sorted alphabetically by `tool_id`.
+1. **Find an adapter** — scan Matrix A (by source) when the ministry is known, Matrix B (by primitive) when the verb (`lookup` / `submit` / `verify`) is known. Both matrices are sorted alphabetically by `tool_id`.
 2. **Read the spec** — open the linked Markdown file. The seven mandatory sections give classification, envelope reference, bilingual search hints, endpoint, permission rationale, worked example, and constraints.
 3. **Consume the schema** — the JSON Schema file linked from each row is Draft 2020-12 and validates against any generic schema validator. Re-run `python scripts/build_schemas.py --check` to verify the on-disk schemas still match the source Pydantic models.
 
@@ -40,9 +40,6 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | Mock — Verify | `mock_verify_mydata` | `verify` | mock | 2 | [verify/mydata.md](./verify/mydata.md) | [mock_verify_mydata.json](./schemas/mock_verify_mydata.json) |
 | Mock — Submit | `mock_traffic_fine_pay_v1` | `submit` | mock | 2 | [submit/traffic_fine_pay.md](./submit/traffic_fine_pay.md) | [mock_traffic_fine_pay_v1.json](./schemas/mock_traffic_fine_pay_v1.json) |
 | Mock — Submit | `mock_welfare_application_submit_v1` | `submit` | mock | 2 | [submit/welfare_application.md](./submit/welfare_application.md) | [mock_welfare_application_submit_v1.json](./schemas/mock_welfare_application_submit_v1.json) |
-| Mock — Subscribe | `mock_cbs_disaster_v1` | `subscribe` | mock | 1 | [subscribe/cbs_disaster.md](./subscribe/cbs_disaster.md) | [mock_cbs_disaster_v1.json](./schemas/mock_cbs_disaster_v1.json) |
-| Mock — Subscribe | `mock_rss_public_notices_v1` | `subscribe` | mock | 1 | [subscribe/rss_public_notices.md](./subscribe/rss_public_notices.md) | [mock_rss_public_notices_v1.json](./schemas/mock_rss_public_notices_v1.json) |
-| Mock — Subscribe | `mock_rest_pull_tick_v1` | `subscribe` | mock | 1 | [subscribe/rest_pull_tick.md](./subscribe/rest_pull_tick.md) | [mock_rest_pull_tick_v1.json](./schemas/mock_rest_pull_tick_v1.json) |
 | Geocoding | `resolve_location` | `lookup` (meta) | live | 1 | [resolve_location/index.md](./resolve_location/index.md) | [resolve_location.json](./schemas/resolve_location.json) |
 
 ## Matrix B — adapters by primitive
@@ -82,14 +79,6 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | `mock_verify_gongdong_injeungseo` | 공동인증서 | mock | 3 | [verify/gongdong_injeungseo.md](./verify/gongdong_injeungseo.md) |
 | `mock_verify_mobile_id` | 모바일 신분증 | mock | 2 | [verify/mobile_id.md](./verify/mobile_id.md) |
 | `mock_verify_mydata` | 마이데이터 | mock | 2 | [verify/mydata.md](./verify/mydata.md) |
-
-### `subscribe` (3 entries)
-
-| tool_id | Source | Tier | Permission | Spec |
-|---|---|---|---|---|
-| `mock_cbs_disaster_v1` | CBS / 3GPP TS 23.041 | mock | 1 | [subscribe/cbs_disaster.md](./subscribe/cbs_disaster.md) |
-| `mock_rest_pull_tick_v1` | data.go.kr REST polling | mock | 1 | [subscribe/rest_pull_tick.md](./subscribe/rest_pull_tick.md) |
-| `mock_rss_public_notices_v1` | korea.kr RSS | mock | 1 | [subscribe/rss_public_notices.md](./subscribe/rss_public_notices.md) |
 
 ## Meta surface — `lookup`
 

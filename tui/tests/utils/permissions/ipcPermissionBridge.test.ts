@@ -10,8 +10,7 @@
 //   6. null registration clears the setter (unregister path)
 //   7. primitive_kind='verify' → VerifyPrimitive
 //   8. primitive_kind='submit' → SubmitPrimitive
-//   9. primitive_kind='subscribe' → SubscribePrimitive
-//  10. primitive_kind='lookup' → LookupPrimitive
+//   9. primitive_kind='lookup' → LookupPrimitive
 
 import { describe, it, expect, mock, beforeEach } from 'bun:test'
 
@@ -37,7 +36,6 @@ import {
 import { LookupPrimitive } from '../../../src/tools/LookupPrimitive/LookupPrimitive'
 import { VerifyPrimitive } from '../../../src/tools/VerifyPrimitive/VerifyPrimitive'
 import { SubmitPrimitive } from '../../../src/tools/SubmitPrimitive/SubmitPrimitive'
-import { SubscribePrimitive } from '../../../src/tools/SubscribePrimitive/SubscribePrimitive'
 import type { PermissionRequestFrame } from '../../../src/ipc/frames.generated'
 import type { ToolUseConfirm } from '../../../src/components/permissions/PermissionRequest'
 
@@ -158,15 +156,6 @@ describe('ipcPermissionBridge — primitive_kind → Tool mapping', () => {
     pushIpcPermissionRequest(makeFrame({ primitive_kind: 'submit' }))
 
     expect(calls[0]![0]!.tool).toBe(SubmitPrimitive)
-  })
-
-  it('primitive_kind=subscribe → SubscribePrimitive', () => {
-    const { setter, calls } = captureQueue()
-    registerIpcToolUseConfirmQueue(setter)
-
-    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'subscribe' }))
-
-    expect(calls[0]![0]!.tool).toBe(SubscribePrimitive)
   })
 
   it('primitive_kind=lookup → LookupPrimitive', () => {

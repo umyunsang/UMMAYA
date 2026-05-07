@@ -22,10 +22,11 @@ Sleep 500ms
 
 Type "/login"
 Enter
-Sleep 1s
+Sleep 2s
 Screenshot specs/friendli-session-auth/vhs/keyframe-2-login-dialog.png
 
-Type "friendli-vhs-placeholder"
+Sleep 500ms
+Type@200ms "1234567890"
 Sleep 1s
 Screenshot specs/friendli-session-auth/vhs/keyframe-3-login-masked.png
 

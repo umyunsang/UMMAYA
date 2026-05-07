@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Spec 2294 — KosmosPrimitivePermissionRequest tests.
 //
-// Tests the 4 primitive arms (verify / submit-reversible / submit-irreversible
-// / subscribe) × the 3 decision paths (allow_once / allow_session / deny).
+// Tests the active primitive arms (verify / submit-reversible / submit-irreversible)
+// × the 3 decision paths (allow_once / allow_session / deny).
 // Render is done via ink-testing-library; we assert on lastFrame() text.
 
 import { describe, test, expect, mock } from 'bun:test'
@@ -83,7 +83,7 @@ function Wrap({ children }: { children: React.ReactNode }): React.ReactElement {
 // ---------------------------------------------------------------------------
 
 function makeProps(
-  primitive: 'verify' | 'submit' | 'subscribe',
+  primitive: 'verify' | 'submit',
   isIrreversible = false,
   overrides: Partial<{
     toolName: string
@@ -228,32 +228,6 @@ describe('KosmosPrimitivePermissionRequest — submit irreversible (Layer 3)', (
 })
 
 // ---------------------------------------------------------------------------
-// subscribe arm (Layer 2)
-// ---------------------------------------------------------------------------
-
-describe('KosmosPrimitivePermissionRequest — subscribe (Layer 2)', () => {
-  test('renders layer 2 glyph ⓶', () => {
-    const props = makeProps('subscribe')
-    const { lastFrame } = render(
-      <Wrap>
-        <KosmosPrimitivePermissionRequest {...props} />
-      </Wrap>,
-    )
-    expect(lastFrame()).toContain('⓶')
-  })
-
-  test('renders subscribe modal title (contains 구독)', () => {
-    const props = makeProps('subscribe')
-    const { lastFrame } = render(
-      <Wrap>
-        <KosmosPrimitivePermissionRequest {...props} />
-      </Wrap>,
-    )
-    expect(lastFrame() ?? '').toContain('구독')
-  })
-})
-
-// ---------------------------------------------------------------------------
 // lookup arm — null layer → component returns null (bypass)
 // ---------------------------------------------------------------------------
 
@@ -284,7 +258,7 @@ describe('KosmosPrimitivePermissionRequest — lookup (bypass)', () => {
 // ---------------------------------------------------------------------------
 
 describe('KosmosPrimitivePermissionRequest — selector labels', () => {
-  for (const primitive of ['verify', 'submit', 'subscribe'] as const) {
+  for (const primitive of ['verify', 'submit'] as const) {
     test(`${primitive}: shows selector labels without KOSMOS-only hotkey prefixes`, () => {
       const props = makeProps(primitive)
       const { lastFrame } = render(

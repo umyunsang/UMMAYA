@@ -48,14 +48,6 @@ export type UiL2Bundle = {
   consentAlreadyRevoked: string;
   bypassReinforcement: string;
 
-  // UI-D agents
-  agentsTitle: string;
-  agentStateLabel: (
-    s: 'idle' | 'dispatched' | 'running' | 'waiting-permission' | 'done',
-  ) => string;
-  agentDetailHeader: string;
-  swarmActivated: string;
-
   // UI-E auxiliary
   helpGroupSession: string;
   helpGroupPermission: string;
@@ -123,19 +115,6 @@ const KO: UiL2Bundle = {
   consentAlreadyRevoked: '이미 철회됨',
   bypassReinforcement:
     '이 모드는 모든 권한 모달을 우회합니다. 정말로 진행하시겠습니까?',
-
-  agentsTitle: '활성 부처 에이전트',
-  agentStateLabel: (s) => {
-    switch (s) {
-      case 'idle': return '대기';
-      case 'dispatched': return '파견됨';
-      case 'running': return '실행 중';
-      case 'waiting-permission': return '권한 대기';
-      case 'done': return '완료';
-    }
-  },
-  agentDetailHeader: 'SLA 잔여 · 건강 · 평균 응답',
-  swarmActivated: 'Swarm 모드 활성화 (3+ 부처 또는 복잡 질의)',
 
   helpGroupSession: '세션',
   helpGroupPermission: '권한',
@@ -210,19 +189,6 @@ const EN: UiL2Bundle = {
   consentAlreadyRevoked: 'Already revoked',
   bypassReinforcement:
     'This mode bypasses ALL permission modals. Are you sure you want to continue?',
-
-  agentsTitle: 'Active ministry agents',
-  agentStateLabel: (s) => {
-    switch (s) {
-      case 'idle': return 'idle';
-      case 'dispatched': return 'dispatched';
-      case 'running': return 'running';
-      case 'waiting-permission': return 'waiting-permission';
-      case 'done': return 'done';
-    }
-  },
-  agentDetailHeader: 'SLA · Health · Avg response',
-  swarmActivated: 'Swarm mode activated (3+ ministries or complex query)',
 
   helpGroupSession: 'Session',
   helpGroupPermission: 'Permission',

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Spec 2294 — KosmosPrimitivePermissionRequest component.
 //
-// Renders the KOSMOS permission gauntlet for the four reserved primitives:
+// Renders the KOSMOS permission gauntlet for the active reserved primitives:
 //   lookup  → bypassed (null layer — this component is never rendered)
 //   verify  → Layer 1 (green ⓵)
 //   submit  → Layer 2 (orange ⓶) or Layer 3 (red ⓷) based on isIrreversible
-//   subscribe → Layer 2 (orange ⓶)
 //
 // CC reference: .references/claude-code-sourcemap/restored-src/src/components/
 //   permissions/PermissionRequest.tsx:47-80 (permissionComponentForTool switch).
@@ -93,10 +92,6 @@ export function KosmosPrimitivePermissionRequest({
     case 'submit':
       title = strings.submitModalTitle(isIrreversible)
       body = strings.submitModalBody(toolName, isIrreversible)
-      break
-    case 'subscribe':
-      title = strings.subscribeModalTitle
-      body = strings.subscribeModalBody(toolName)
       break
     default:
       // lookup — should not reach here

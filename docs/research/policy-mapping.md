@@ -29,7 +29,7 @@ KOSMOS positions itself as the **client-side reference implementation for Korea'
 | `mock_verify_mydata` (KFTC MyData v240930) | MyInfo Open Banking | X-Road Banking Service Provider | EUDI Wallet Open Finance | 全銀協 Open API + 個人金融情報移転 |
 | `lookup` primitive (read-only data pull) | APEX MyInfo / Whole-of-Gov data API | X-Road Pull-style data exchange | EUDI Wallet Verifiable Credential Presentation | マイナポータル ぴったりサービス API |
 | `submit` primitive (write-transaction) | APEX File Submission API | X-Road Push-style transaction (signed) | EUDI Wallet Verifiable Presentation + Signing | e-Gov 電子申請 / マイナポータル ぴったり申請 |
-| `subscribe` primitive (event stream / RSS / CBS) | APEX Event Subscription | X-Road MSG queue (asynchronous) | EUDI Wallet Notification Service | 防災行政無線 / Lアラート CBS |
+| Deferred notification/app-push runtime (not an active primitive) | APEX Event Subscription | X-Road MSG queue (asynchronous) | EUDI Wallet Notification Service | 防災行政無線 / Lアラート CBS |
 | OPAQUE-forever — hometax-tax-filing | n/a (Singapore IRAS uses APEX) | n/a (EMTA on X-Road) | n/a (national tax authority on EUDI) | e-Tax 国税電子申告 (separate ceremony) |
 | OPAQUE-forever — gov24 minwon-submit | n/a (Singapore Whole-of-Gov on APEX) | n/a (riik.ee on X-Road) | n/a (national portal on EUDI) | e-Gov 電子申請 (separate ceremony) |
 

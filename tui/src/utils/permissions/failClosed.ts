@@ -2,13 +2,14 @@
 // Epic 1 finish — FR-012: KOSMOS bypass detection backstop.
 //
 // The CC `bypassPermissions` flag gates the dangerous-mode UX.  In KOSMOS
-// the gauntlet must NEVER be silently skipped for IRREVERSIBLE primitives
-// (submit / subscribe) regardless of bypassPermissions or auto-mode state.
+// the gauntlet must NEVER be silently skipped for credentialed or side-
+// effecting primitives (verify / submit) regardless of bypassPermissions or
+// auto-mode state.
 //
 // This module exposes two guards:
 //   - isKosmosBypassAllowed(primitive, toolPermissionContext)
-//     Returns true only when bypass is safe (lookup / verify).
-//     Returns false + emits a warning for submit (irreversible) / subscribe.
+//     Returns true only when bypass is safe (lookup).
+//     Returns false for verify / submit.
 //
 //   - assertKosmosGauntletRequired(primitive, toolPermissionContext)
 //     Throws if a blocked primitive is called in bypass mode (test helper).
@@ -29,15 +30,13 @@ import type { KosmosPrimitive } from './aalToLayer.js'
  * even when `bypassPermissions` is true or the session is in auto-mode.
  *
  * Rationale (FR-012):
- *   - submit:    side-effecting, potentially irreversible (Layer 2/3).
- *   - subscribe: session-lifetime subscription with potential data egress (Layer 2).
- *   - verify:    delegates real credentials to external auth vendor (Layer 1).
- *   - lookup:    read-only; intentionally excluded — bypass is safe here.
+ *   - verify: delegates real credentials to external auth vendor (Layer 1).
+ *   - submit: side-effecting, potentially irreversible (Layer 2/3).
+ *   - lookup: read-only; intentionally excluded — bypass is safe here.
  */
 export const BYPASS_BLOCKED_PRIMITIVES: ReadonlySet<KosmosPrimitive> = new Set<KosmosPrimitive>([
   'verify',
   'submit',
-  'subscribe',
 ])
 
 // ---------------------------------------------------------------------------

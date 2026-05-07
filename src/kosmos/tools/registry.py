@@ -34,12 +34,12 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Spec 031 Phase 2 — Five-primitive registry metadata (T007–T009).
+# Spec 031 Phase 2 — active primitive registry metadata (T007–T009).
 # ---------------------------------------------------------------------------
 
 
 class AdapterPrimitive(StrEnum):
-    """T007 — the five primitive surfaces every registered adapter binds to.
+    """T007 — active primitive surfaces every registered adapter binds to.
 
     Matches data-model.md § 4 verbatim.
     """
@@ -47,7 +47,6 @@ class AdapterPrimitive(StrEnum):
     lookup = "lookup"
     resolve_location = "resolve_location"
     submit = "submit"
-    subscribe = "subscribe"
     verify = "verify"
 
 
@@ -106,7 +105,7 @@ NistAalHint = Literal["AAL1", "AAL2", "AAL3"]
 
 
 class AdapterRegistration(BaseModel):
-    """T009 — registry metadata for Spec 031 five-primitive adapters.
+    """T009 — registry metadata for active primitive adapters.
 
     Mirrors data-model.md § 4 verbatim. Spec 024 V1–V4 (applied via pydantic
     ``@model_validator`` on :class:`GovAPITool`) and Spec 025 V6 + the Spec 031
@@ -127,12 +126,12 @@ class AdapterRegistration(BaseModel):
         # Spec 1636 P5 ADR-007 (revised by review eval C3): tool_id may be
         # either snake_case (built-in adapters from Spec 022/031) OR
         # plugin-namespaced ``plugin.<plugin_id>.<verb>`` (Migration tree
-        # § L1-C C7) where <verb> is one of the FOUR root primitives.
+        # § L1-C C7) where <verb> is one of the active plugin primitives.
         # resolve_location is host-reserved (Q8-NO-ROOT-OVERRIDE) and
         # cannot be overridden by plugins; the regex enforces that on
         # both AdapterRegistration and GovAPITool to keep the layers
         # drift-free.
-        pattern=r"^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe))$",
+        pattern=r"^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify))$",
     )
     primitive: AdapterPrimitive
     module_path: str

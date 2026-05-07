@@ -5,8 +5,7 @@ Verifies that:
 1. ``GATED_PRIMITIVES`` includes ``verify``.
 2. ``LIGHT_GATE_PRIMITIVES`` is a subset of ``GATED_PRIMITIVES`` containing
    only ``verify``.
-3. ``HEAVY_GATE_PRIMITIVES`` contains ``submit`` and ``subscribe`` but NOT
-   ``verify``.
+3. ``HEAVY_GATE_PRIMITIVES`` contains ``submit`` but NOT ``verify``.
 4. The gate partition is exhaustive: every primitive is either gated or
    fully auto-allowed (lookup / resolve_location).
 5. The IPC stdio ``_check_permission_gate`` emits a ``PermissionRequestFrame``
@@ -73,10 +72,10 @@ def test_heavy_gate_does_not_contain_verify() -> None:
     )
 
 
-def test_heavy_gate_contains_submit_and_subscribe() -> None:
-    """submit and subscribe are side-effecting — must be in HEAVY_GATE_PRIMITIVES."""
+def test_heavy_gate_contains_submit() -> None:
+    """submit is side-effecting — must be in HEAVY_GATE_PRIMITIVES."""
     assert "submit" in HEAVY_GATE_PRIMITIVES
-    assert "subscribe" in HEAVY_GATE_PRIMITIVES
+    assert "subscribe" not in HEAVY_GATE_PRIMITIVES
 
 
 def test_light_heavy_partition_is_disjoint() -> None:

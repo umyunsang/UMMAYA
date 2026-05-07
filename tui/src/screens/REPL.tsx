@@ -355,15 +355,6 @@ import type { PermissionReceiptT } from '../schemas/ui-l2/permission.js';
 import { ConsentListView } from '../components/consent/ConsentListView.js';
 import { ConsentRevokeConfirmDialog } from '../components/consent/ConsentRevokeConfirmDialog.js';
 import { requestRevoke } from '../ipc/consentBridge.js';
-import { AgentVisibilityPanel } from '../components/agents/AgentVisibilityPanel.js';
-import { shouldActivateSwarm } from '../schemas/ui-l2/agent.js';
-// Audit-5 P0-5 (2026-05-04) — citizen-side swarm-activation analyzer that
-// inspects the latest assistant message text for the migration-tree
-// "A + C union" trigger (3+ ministries OR explicit `복잡` / `complex` tag).
-// Wires the existing `shouldActivateSwarm` predicate (UI-D.2) and surfaces
-// the i18n `swarmActivated` toast via `kosmosSwarmMode`.
-import { analyzeSwarmActivation } from '../state/swarmActivation.js';
-import { useUiL2I18n } from '../i18n/uiL2.js';
 import { HelpV2Grouped } from '../components/help/HelpV2Grouped.js';
 import { ConfigOverlay } from '../components/config/ConfigOverlay.js';
 import { EnvSecretIsolatedEditor } from '../components/config/EnvSecretIsolatedEditor.js';
@@ -374,9 +365,7 @@ import { MigrateSessionsResult } from '../components/MigrateSessionsResult.js';
 import { migrateSessions } from '../utils/migrateSessions.js';
 import { OnboardingFlow, resetOnboardingState } from '../components/onboarding/OnboardingFlow.js';
 import { emitSurfaceActivation } from '../observability/surface.js';
-import { FriendliLoginDialog } from '../components/FriendliLoginDialog.js';
-import { closeKosmosBridge, getOrCreateKosmosBridge, getKosmosBridgeSessionId } from '../ipc/bridgeSingleton.js';
-import { clearFriendliCredential, getFriendliCredentialSource, installFriendliCredential } from '../utils/friendliAuth.js';
+import { getKosmosBridgeSessionId } from '../ipc/bridgeSingleton.js';
 // KOSMOS Spec 1979 — Spec 033 mode cycle import removed.
 import { executeHelp } from '../commands/help.js';
 import { executeConfig, applyConfigChanges } from '../commands/config.js';
@@ -384,7 +373,6 @@ import { executePlugins } from '../commands/plugins.js';
 import { executeExport } from '../commands/export.js';
 import { executeHistory } from '../commands/history.js';
 import { parseConsentArgs } from '../commands/consent.js';
-import { renderAgentsCommand } from '../commands/agents.js';
 import { parseOnboardingCommand } from '../commands/onboarding.js';
 import { loadOnboardingState } from '../utils/uiL2Memdir.js';
 import { isOnboardingComplete } from '../schemas/ui-l2/onboarding.js';
@@ -754,24 +742,13 @@ export function REPL({
   // for the "no response" network-error envelope. K-EXAONE 236B on FriendliAI
   // Tier 1 with `high effort` reasoning routinely takes 1-3 minutes for the
   // very first chunk when the system prompt + tool catalog is large (12
-  // tools — 5 primitives + MVP-7); the original 5_000 / 90_000 thresholds
+  // tools — active primitives + MVP-7); the original 5_000 / 90_000 thresholds
   // false-flagged every turn before the model finished its reasoning trace.
   // 300_000 (5 min) is safely above the empirical p99 first-token latency
   // and still surfaces real network outages without burying the citizen
   // under a hung spinner. Override via KOSMOS_STREAM_TIMEOUT_MS env var if
   // a deployment needs further tuning.
   const KOSMOS_STREAM_TIMEOUT_MS = Number(process.env.KOSMOS_STREAM_TIMEOUT_MS ?? 300000);
-
-  // KOSMOS P4 UI L2 — T056: swarm mode state + primitiveByWorker map
-  const [kosmosSwarmMode, setKosmosSwarmMode] = useState(false);
-  const [kosmosPrimitiveByWorker, setKosmosPrimitiveByWorker] = useState<Record<string, string>>({});
-
-  // KOSMOS P4 UI L2 — T059: emit agents surface on swarm activation
-  useEffect(() => {
-    if (kosmosSwarmMode) {
-      emitSurfaceActivation('agents', { 'kosmos.swarm.auto': true });
-    }
-  }, [kosmosSwarmMode]);
 
   // KOSMOS P4 UI L2 — T049/T052: onboarding mode state for /onboarding command
   const [kosmosOnboardingMode, setKosmosOnboardingMode] = useState<{
@@ -1431,55 +1408,6 @@ export function REPL({
     }
     setUserInputOnProcessingRaw(input);
   }, []);
-
-  // Audit-5 P0-5 (2026-05-04) — citizen-side swarm activation.
-  // Runs `analyzeSwarmActivation` on every new assistant message and
-  // flips `kosmosSwarmMode` true when the migration-tree A+C union
-  // predicate fires (3+ ministries OR explicit `복잡` / `complex` tag).
-  // Surfaces the i18n `swarmActivated` toast as a system message so
-  // the citizen sees `/agents` is now wired to the active swarm.
-  // Idempotent per-turn — a `lastSwarmAnalyzedIndexRef` guard prevents
-  // re-toasting on every render.
-  const uiL2I18nForSwarm = useUiL2I18n();
-  const lastSwarmAnalyzedIndexRef = useRef<number>(-1);
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const lastIdx = messages.length - 1;
-    if (lastSwarmAnalyzedIndexRef.current >= lastIdx) return;
-    const last = messages[lastIdx];
-    if (!last) return;
-    // Only inspect assistant turns — user / tool / system messages don't
-    // tag complexity and don't list ministries from the LLM's POV.
-    if (last.type !== 'assistant') {
-      lastSwarmAnalyzedIndexRef.current = lastIdx;
-      return;
-    }
-    const text = (() => {
-      try {
-        return getContentText(last.message.content);
-      } catch {
-        return null;
-      }
-    })();
-    const result = analyzeSwarmActivation(text);
-    lastSwarmAnalyzedIndexRef.current = lastIdx;
-    if (result.shouldActivate && !kosmosSwarmMode) {
-      setKosmosSwarmMode(true);
-      // Emit a transient system toast so the citizen knows /agents is
-      // now wired and which trigger fired (Korean primary per UI-A.3).
-      const triggerLabel: Record<typeof result.trigger, string> = {
-        none: '',
-        'three-plus-ministries': '(3+ 부처)',
-        'complex-tag': '(복잡 질의)',
-        both: '(3+ 부처 + 복잡 질의)',
-      };
-      const suffix = triggerLabel[result.trigger];
-      const toastText = suffix
-        ? `${uiL2I18nForSwarm.swarmActivated} ${suffix}`
-        : uiL2I18nForSwarm.swarmActivated;
-      setMessages((prev) => [...prev, createSystemMessage(toastText, 'info')]);
-    }
-  }, [messages, kosmosSwarmMode, uiL2I18nForSwarm, setMessages]);
 
   // Fullscreen: track the unseen-divider position. dividerIndex changes
   // only ~twice/scroll-session (first scroll-away + repin). pillVisible
@@ -3431,9 +3359,9 @@ export function REPL({
       resumeProactive();
     }
 
-    // KOSMOS P4 UI L2 — T072: KOSMOS auxiliary command dispatch
-    // Intercepts /login /logout /help /config /plugins /export /history /consent /agents /onboarding /lang
-    // BEFORE the existing CC command router so they are always handled locally.
+    // Auxiliary KOSMOS-only command dispatch. CC-owned local-jsx commands
+    // such as /login, /logout, and /agents fall through to the normal command
+    // router.
     if (!speculationAccept && input.trim().startsWith('/')) {
       const _kosmosRaw = expandPastedTextRefs(input, pastedContents).trim();
       const _kosmosSpaceIdx = _kosmosRaw.indexOf(' ');
@@ -3446,68 +3374,6 @@ export function REPL({
           addNotification({ key: `kosmos-cmd-${_kosmosCmd}`, text: result, priority: 'immediate' });
         }
       };
-
-      if (_kosmosCmd === 'login') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        if (queryGuard.isActive || isExternalLoading) {
-          addNotification({
-            key: 'kosmos-login-busy',
-            text: 'Wait for the current request to finish, then run /login.',
-            priority: 'immediate',
-          });
-          return;
-        }
-        const existingSource = getFriendliCredentialSource();
-        setToolJSX({
-          jsx: React.createElement(FriendliLoginDialog, {
-            existingSource,
-            onConfirm: (apiKey: string) => {
-              void (async () => {
-                try {
-                  installFriendliCredential(apiKey);
-                  await closeKosmosBridge();
-                  await reverify();
-                  setAppState(prev => ({ ...prev, authVersion: prev.authVersion + 1 }));
-                  _kosmosCloseJSX('FriendliAI login successful. API key is active for this session only.');
-                } catch (error) {
-                  _kosmosCloseJSX(error instanceof Error ? error.message : String(error));
-                }
-              })();
-            },
-            onCancel: () => _kosmosCloseJSX('Login cancelled.'),
-          }),
-          // Keep PromptInput mounted so Ink keeps stdin raw mode active, but
-          // mark the local command active so PromptInput's own useInput hooks
-          // stay inactive while the masked FriendliAI dialog owns keystrokes.
-          shouldHidePromptInput: false,
-          isLocalJSXCommand: true,
-        });
-        return;
-      }
-
-      if (_kosmosCmd === 'logout') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        if (queryGuard.isActive || isExternalLoading) {
-          addNotification({
-            key: 'kosmos-logout-busy',
-            text: 'Wait for the current request to finish, then run /logout.',
-            priority: 'immediate',
-          });
-          return;
-        }
-        void (async () => {
-          clearFriendliCredential();
-          await closeKosmosBridge();
-          await reverify();
-          setAppState(prev => ({ ...prev, authVersion: prev.authVersion + 1 }));
-          _kosmosCloseJSX('Logged out from FriendliAI. Run /login before the next request.');
-        })();
-        return;
-      }
 
       if (_kosmosCmd === 'help') {
         setInputValue('');
@@ -3693,7 +3559,7 @@ export function REPL({
           // Audit-6 P0-1: isLocalJSXCommand:true → false. AGENTS.md
           // Infrastructure Insight #3 — :true deactivates EVERY useInput
           // in the parent prompt subtree, including PluginBrowser's own
-          // Esc-dismiss handler. Same fix pattern as /agents (Lead-Fix4).
+          // Esc-dismiss handler.
           isLocalJSXCommand: false,
         });
         // Fire-and-forget: when the IPC round-trip resolves, swap the
@@ -3919,27 +3785,6 @@ export function REPL({
             isLocalJSXCommand: false,
           });
         }
-        return;
-      }
-
-      if (_kosmosCmd === 'agents') {
-        setInputValue('');
-        helpers.setCursorOffset(0);
-        helpers.clearBuffer();
-        // Mount /agents overlay with `isLocalJSXCommand: false` so
-        // PromptInput.tsx:244's `isLocalJSXCommandActive` flag stays false —
-        // that flag, when true, sets `isModalOverlayActive` to true and
-        // deactivates EVERY useInput hook in the parent prompt subtree,
-        // which previously prevented AgentsCommandView's own Esc handler
-        // from firing. AgentsCommandView now owns a `useInput((_,k)=>k.escape
-        // && onExit())` watcher (defense-in-depth, mirrors HelpV2Grouped).
-        // AGENTS.md "Infrastructure insights" #3.
-        const agentsJsx = renderAgentsCommand(_kosmosArgs, () => _kosmosCloseJSX());
-        setToolJSX({
-          jsx: agentsJsx,
-          shouldHidePromptInput: false,
-          isLocalJSXCommand: false,
-        });
         return;
       }
 
@@ -5846,15 +5691,6 @@ export function REPL({
                         <ErrorEnvelope
                           error={kosmosCurrentError}
                           onRetry={() => setKosmosCurrentError(null)}
-                        />
-                      )}
-                      {/* KOSMOS P4 UI L2 — T022: AgentVisibilityPanel in swarm mode */}
-                      {kosmosSwarmMode && (
-                        <AgentVisibilityPanel
-                          initialEntries={[]}
-                          showDetail={false}
-                          bridge={getOrCreateKosmosBridge()}
-                          primitiveByWorker={kosmosPrimitiveByWorker}
                         />
                       )}
                       {/* KOSMOS Spec 1979 — KOSMOS-original permission UI components

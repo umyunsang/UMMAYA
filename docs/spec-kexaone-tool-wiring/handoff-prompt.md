@@ -8,7 +8,7 @@
 
 ## 1. 작업 목적 (한 문단)
 
-K-EXAONE이 `<tool_call>{"name":"Read",...}</tool_call>` 같은 **CC 학습 데이터 도구를 hallucinate하는 문제**를 해결한다. 진짜 원인은 **TUI가 `ChatRequestFrame.tools`를 비워 보내고 backend도 fallback inject가 없어서** K-EXAONE이 `tools=None`으로 호출되는 것. 그 결과 모델은 KOSMOS의 5개 primitive(`lookup`, `resolve_location`, `submit`, `subscribe`, `verify`)를 모르고 자기 학습 데이터에 있는 CC tool들(Read, Glob, Bash 등)을 응답에 박는다. 본 epic은 CC 소스맵의 tool wiring + agentic loop 패턴을 KOSMOS로 마이그레이션해서 K-EXAONE이 KOSMOS-등록 도구만 호출하고, 호출 결과가 `tool_use` content block으로 transcript에 paint되고, follow-up turn까지 진행되도록 만든다.
+K-EXAONE이 `<tool_call>{"name":"Read",...}</tool_call>` 같은 **CC 학습 데이터 도구를 hallucinate하는 문제**를 해결한다. 진짜 원인은 **TUI가 `ChatRequestFrame.tools`를 비워 보내고 backend도 fallback inject가 없어서** K-EXAONE이 `tools=None`으로 호출되는 것. 그 결과 모델은 KOSMOS의 active primitives(`lookup`, `resolve_location`, `submit`, `verify`)를 모르고 자기 학습 데이터에 있는 CC tool들(Read, Glob, Bash 등)을 응답에 박는다. 본 epic은 CC 소스맵의 tool wiring + agentic loop 패턴을 KOSMOS로 마이그레이션해서 K-EXAONE이 KOSMOS-등록 도구만 호출하고, 호출 결과가 `tool_use` content block으로 transcript에 paint되고, follow-up turn까지 진행되도록 만든다.
 
 ## 2. 시작 전에 반드시 읽을 문서
 
@@ -49,18 +49,18 @@ cd .. && uv run pytest tests/llm tests/ipc
 | 영역 | 현재 상태 | 필요 변경 |
 |---|---|---|
 | `frame.tools` unpack (line 1099-1101) | `LLMToolDefinition.model_validate(t.model_dump())` 정상 | OK — 그대로 유지 |
-| **frame.tools 빈 경우 fallback** | **없음** — `llm_tools=[]`로 LLM 호출 | `ToolRegistry().export_core_tools_openai()` 또는 primitive 5종 자동 inject |
-| **system prompt 도구 list 주입** | **없음** — `prompts/system_v1.md` 8 lines 순수 산문 | system prompt 끝에 `## Available tools` 섹션을 primitive 5종 signature로 자동 append |
+| **frame.tools 빈 경우 fallback** | **없음** — `llm_tools=[]`로 LLM 호출 | `ToolRegistry().export_core_tools_openai()` 또는 active primitive 자동 inject |
+| **system prompt 도구 list 주입** | **없음** — `prompts/system_v1.md` 8 lines 순수 산문 | system prompt 끝에 `## Available tools` 섹션을 active primitive signature로 자동 append |
 | Registry 인스턴스화 (line 916) | `_dispatch_primitive()` 안에서만 매번 new — wasteful | session 시작 시 1회 instantiate, `_handle_chat_request` 진입 전 ready |
-| Whitelist (line 1278-1284) | 하드코딩된 `{lookup, resolve_location, submit, subscribe, verify}` | primitives 카탈로그(`src/kosmos/primitives/__init__.py` 또는 `manifest.yaml`)에서 single source of truth로 끌어오기 |
+| Whitelist (line 1278-1284) | 하드코딩된 primitive list | primitives 카탈로그(`src/kosmos/primitives/__init__.py` 또는 `manifest.yaml`)에서 single source of truth로 끌어오기 |
 | Tool result follow-up (line 1412-1419) | `LLMChatMessage(role="tool", content=payload, name=fname, tool_call_id=cid)` | OK — 그대로 유지 |
 
 ### 4.2 TUI 누락 (`tui/src/query/deps.ts`)
 
 | 영역 | 현재 상태 | 필요 변경 |
 |---|---|---|
-| ChatRequestFrame 빌드 (deps.ts:73-81) | `tools` 필드 omit | `getAllBaseTools()` → primitive 5종 + MVP-7 보조 → `ToolDefinition[]`로 직렬화해 spread |
-| Tool object pool (`tui/src/tools.ts:228-257`) | `LookupPrimitive`, `SubmitPrimitive`, `VerifyPrimitive`, `SubscribePrimitive` 정의 존재 | Zod inputSchema → JSON Schema 2020-12 변환 + `name`/`description` 추출하는 `toToolDefinition()` 헬퍼 추가 |
+| ChatRequestFrame 빌드 (deps.ts:73-81) | `tools` 필드 omit | `getAllBaseTools()` → active primitives + MVP 보조 → `ToolDefinition[]`로 직렬화해 spread |
+| Tool object pool (`tui/src/tools.ts:228-257`) | active primitive tools 정의 존재 | Zod inputSchema → JSON Schema 2020-12 변환 + `name`/`description` 추출하는 `toToolDefinition()` 헬퍼 추가 |
 | tool_call frame 처리 (deps.ts:237-242) | `createSystemMessage("🔧 …")` — display-only progress line | CC 패턴으로 `stream_event{content_block_start, content_block:{type:'tool_use', id, name, input}}` + `content_block_stop` yield → `AssistantToolUseMessage` 가 native 렌더 |
 | tool_result frame 처리 (deps.ts:245-249) | `createSystemMessage("✓ ok …")` | `tool_use_id` 매칭으로 user-message에 `tool_result` content block append (`createUserMessage` with tool_result content) |
 | permission_request frame 처리 (deps.ts:250-266) | **자동 거부** + warning SystemMessage | `useSessionStore().setPendingPermission(...)` 로 dispatch → `PermissionGauntletModal`이 modal 표시 → 사용자 Y/N 후 PermissionResponseFrame send |
@@ -127,12 +127,12 @@ CC reference: `_cc_reference/api.ts:toolToAPISchema()` (line 119-266).
 
 `tui/src/query/toolSerialization.ts` (신규):
 - `toolToFunctionSchema(tool: Tool): FunctionSchema` — Zod inputSchema → JSON Schema Draft 2020-12 변환 (zod-to-json-schema 또는 수동 walker), `name` (Tool.name), `description` (Tool.userFacingName + Tool.prompt 첫 200자) 추출
-- `getToolDefinitionsForFrame(): ToolDefinition[]` — `getAllBaseTools()` 호출, primitive 5종 + MVP-7만 필터, `toolToFunctionSchema` 적용
+- `getToolDefinitionsForFrame(): ToolDefinition[]` — `getAllBaseTools()` 호출, active primitives + MVP 보조만 필터, `toolToFunctionSchema` 적용
 
 `tui/src/query/deps.ts:73-81` 의 ChatRequestFrame 빌드에 `tools: getToolDefinitionsForFrame()` 추가.
 
 검증:
-- bun test (toolSerialization spec) — 5 primitives 각각 JSON Schema valid
+- bun test (toolSerialization spec) — active primitives 각각 JSON Schema valid
 - PTY trace로 backend 도착한 frame.tools 길이 ≥ 5 확인
 
 ### Step 3 — Backend system prompt 도구 list 자동 inject (작업량 1-2h)
@@ -147,7 +147,7 @@ CC reference: `_cc_reference/api.ts:appendSystemContext()` + `_cc_reference/prom
 - `if llm_tools: system_text = build_system_prompt_with_tools(system_text, llm_tools)`
 - `frame.system or system_text` 로 LLM 첫 메시지 설정
 
-검증: backend log에서 system prompt에 primitive 5종 description 포함 확인. K-EXAONE 응답에서 `<tool_call>{"name":"Read"}` 가 사라지고 `<tool_call>{"name":"lookup"}` 또는 KOSMOS primitive 이름만 등장.
+검증: backend log에서 system prompt에 active primitive description 포함 확인. K-EXAONE 응답에서 `<tool_call>{"name":"Read"}` 가 사라지고 `<tool_call>{"name":"lookup"}` 또는 KOSMOS primitive 이름만 등장.
 
 ### Step 4 — Backend registry fallback (작업량 1-2h)
 
@@ -156,7 +156,7 @@ CC reference: `_cc_reference/tools.ts:assembleToolPool()` (line 345-367).
 `src/kosmos/ipc/stdio.py`:
 - session 시작(또는 첫 chat_request) 시 `ToolRegistry()` 1회 instantiate, module-level cache
 - `_handle_chat_request`에서 `if not frame.tools: llm_tools = registry.export_core_tools_openai()` fallback
-- `registry.export_core_tools_openai()` 가 primitive 5종 + MVP 보조를 OpenAI function shape로 반환 (현재 정의는 `src/kosmos/tools/registry.py:373-378`, KOSMOS-1978 T053b의 `_dispatch_primitive` 가 사용 가능한지 확인)
+- `registry.export_core_tools_openai()` 가 active primitives + MVP 보조를 OpenAI function shape로 반환 (현재 정의는 `src/kosmos/tools/registry.py:373-378`, KOSMOS-1978 T053b의 `_dispatch_primitive` 가 사용 가능한지 확인)
 
 검증: TUI `frame.tools=[]` 로 보내도 backend가 fallback inject해서 K-EXAONE이 도구 사용. 이중 안전망.
 
@@ -254,8 +254,8 @@ GIF frame 추출 (10fps): `ffmpeg -i /tmp/probe-tool-loop.gif -vf "fps=10" /tmp/
 
 - `lookup` mode 분리 (search vs fetch BM25 라우팅) — Spec 022 영역
 - Adapter-level permission gate (Spec 033) — 이번 epic은 PermissionGauntletModal **modal 자체** 만 wire
-- Plugin-tier tools (Spec 1636) — primitive 5종 + MVP-7 only
-- `subscribe` primitive long-lived stream — PoC 정도
+- Plugin-tier tools (Spec 1636) — active primitives + MVP only
+- App/push notification runtime — required before any future `subscribe` primitive returns
 - Spec 1635 P4 UI L2의 onboarding/help/etc — paint chain만 사용
 
 후속 epic 제안:
@@ -320,7 +320,7 @@ f459bfb feat(tui): KOSMOS-1633 P3 — stream-event projection for incremental pa
 
 | Risk | 가능성 | Mitigation |
 |---|---|---|
-| Zod → JSON Schema 변환이 nested discriminated union에서 깨짐 | 중 | primitive 5종은 단순 schema라 zod 자체 `.toJSONSchema()` 또는 `zod-to-json-schema` lib 검토 |
+| Zod → JSON Schema 변환이 nested discriminated union에서 깨짐 | 중 | active primitive schemas are simple enough for zod 자체 `.toJSONSchema()` 또는 `zod-to-json-schema` lib 검토 |
 | K-EXAONE이 system prompt에 도구 list 있어도 여전히 `Read` hallucinate | 저-중 | system prompt에 `Only the following tools are available` 강한 명령 + `<tool_call>` 응답 후 unknown_tool error frame을 LLM에게 turn으로 feedback해 학습 | 
 | FriendliAI Tier 1 RPM 한계 (60 RPM) — multi-turn loop가 한 prompt당 2-5 회 호출 | 중 | 직전 epic의 `RetryPolicy` 그대로 동작, 단 burst시 sleep |
 | AssistantToolUseMessage가 Tool registry lookup 실패하면 빈 paint | 저 | TUI의 `getAllBaseTools()` 와 paint 시 `findToolByName()` 동일 source 보장 |

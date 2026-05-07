@@ -21,8 +21,8 @@ Assertions
 - Final response is non-empty Korean text mentioning both KOROAD (강남구/사고) and
   HIRA (병원/강남).
 - All IPC frames survive model_dump_json + TypeAdapter.validate_json round-trip.
-- ToolCallFrame.name values are exclusively the 5-primitive names accepted by
-  ToolCallFrame (lookup, resolve_location, submit, subscribe, verify).
+- ToolCallFrame.name values are exclusively the active primitive names accepted by
+  ToolCallFrame (lookup, resolve_location, submit, verify).
 - stop_reason == "end_turn".
 - message_order ends with AssistantChunkFrame(done=True) — i.e., the TUI-side
   consumer would receive a properly closed stream.
@@ -354,7 +354,7 @@ async def test_sc8_phase2_multi_ministry_ipc_frame_sequence() -> None:  # noqa: 
 
     session_id = str(uuid.uuid4())
     ipc_frames: list[IPCFrame] = []  # type: ignore[type-arg]
-    primitive_names = {"lookup", "resolve_location", "submit", "subscribe", "verify"}
+    primitive_names = {"lookup", "resolve_location", "submit", "verify"}
 
     for event in collected_events:
         if event.type == "tool_use" and event.tool_name in primitive_names:
@@ -431,11 +431,11 @@ async def test_sc8_phase2_multi_ministry_ipc_frame_sequence() -> None:  # noqa: 
     )
     assert last_frame.done, "Last AssistantChunkFrame must have done=True"
 
-    # All ToolCallFrame names must be 5-primitive names
+    # All ToolCallFrame names must be active primitive names
     for f in ipc_frames:
         if isinstance(f, ToolCallFrame):
             assert f.name in primitive_names, (
-                f"ToolCallFrame.name={f.name!r} is not a valid 5-primitive name"
+                f"ToolCallFrame.name={f.name!r} is not a valid active primitive name"
             )
 
     # JSON round-trip for all frames

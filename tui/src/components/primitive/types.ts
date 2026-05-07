@@ -171,43 +171,6 @@ export interface SubmitErrorPayload {
 
 export type SubmitPayload = SubmitSuccessPayload | SubmitErrorPayload
 
-// ---------------------------------------------------------------------------
-// Subscribe mode
-// ---------------------------------------------------------------------------
-
-export type SubscribeModality = 'cbs' | 'rest_pull' | 'rss'
-
-export type CloseReason = 'exhausted' | 'revoked' | 'timeout'
-
-export interface StreamEvent {
-  id: string
-  ts: string
-  body: string
-}
-
-export interface EventStreamPayload {
-  kind: 'subscribe'
-  tool_id: string
-  modality: SubscribeModality
-  /** Currently accumulated events. */
-  events: StreamEvent[]
-  /** True once the stream has been closed. */
-  closed: false
-}
-
-export interface StreamClosedPayload {
-  kind: 'subscribe'
-  tool_id: string
-  modality: SubscribeModality
-  events: StreamEvent[]
-  closed: true
-  close_reason: CloseReason
-  final_cursor?: string
-}
-
-export type SubscribePayload = EventStreamPayload | StreamClosedPayload
-
-// ---------------------------------------------------------------------------
 // Verify mode
 // ---------------------------------------------------------------------------
 
@@ -253,12 +216,11 @@ export interface UnrecognizedPayloadData {
 }
 
 // ---------------------------------------------------------------------------
-// Dispatcher union — exhaustive across all 5 primitive modes
+// Dispatcher union — exhaustive across active primitive modes
 // ---------------------------------------------------------------------------
 
 export type PrimitivePayload =
   | LookupPayload
   | ResolveLocationPayload
   | SubmitPayload
-  | SubscribePayload
   | VerifyPayload

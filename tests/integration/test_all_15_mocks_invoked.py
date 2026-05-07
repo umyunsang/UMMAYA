@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
-"""T034 — US2: all 15 mock adapters invoked at least once (FR-020 / SC-004).
+"""T034 — US2: active mock adapters invoked at least once (FR-020 / SC-004).
 
 Drives each of the 10 verify families directly through the backend dispatcher
-(no subprocess), then exercises the 2 lookup, 2 submit, and 1 subscribe
-adapters via their respective primitive invocation paths.
+(no subprocess), then exercises the 2 lookup and 2 submit adapters via their
+respective primitive invocation paths.
 
-Mock surface (15 adapters):
+Mock surface (14 active adapters):
   Verify (10):
     modid, kec, geumyung_module, simple_auth_module, any_id_sso,
     gongdong_injeungseo, geumyung_injeungseo, ganpyeon_injeung,
@@ -14,10 +14,8 @@ Mock surface (15 adapters):
     mock_lookup_module_hometax_simplified, mock_lookup_module_gov24_certificate
   Submit (2):
     mock_submit_module_hometax_taxreturn, mock_submit_module_gov24_minwon
-  Subscribe (1):
-    mock_cbs_disaster_v1
 
-SC-004 acceptance criterion: each of the 15 adapters logs ≥1 invocation in
+SC-004 acceptance criterion: each active adapter logs ≥1 invocation in
 the aggregate across this test module.
 
 Strategy: backend-direct (in-process) for speed; no TUI subprocess required.
@@ -82,9 +80,6 @@ _EXPECTED_SUBMIT = {
     "mock_submit_module_hometax_taxreturn",
     "mock_submit_module_gov24_minwon",
 }
-
-_EXPECTED_SUBSCRIBE = {"mock_cbs_disaster_v1"}
-
 
 # ---------------------------------------------------------------------------
 # T034a — all 10 verify families invoked
@@ -334,48 +329,13 @@ async def test_submit_gov24_minwon_invoked(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# T034d — 1 subscribe mock invoked (CBS disaster)
-# ---------------------------------------------------------------------------
-
-
-async def _invoke_subscribe_cbs_disaster() -> str:
-    """mock_cbs_disaster_v1 invoked ≥1 time via subscribe() primitive."""
-    from kosmos.primitives.subscribe import AdapterNotFoundError, SubscribeInput, subscribe
-
-    inp = SubscribeInput(
-        tool_id="mock_cbs_disaster_v1",
-        params={"area_code": "11"},
-        lifetime_seconds=10,
-    )
-    result = subscribe(inp)
-
-    assert not isinstance(result, AdapterNotFoundError), (
-        f"subscribe(mock_cbs_disaster_v1) returned AdapterNotFoundError: {result!r}"
-    )
-    # Consume one event to confirm the iterator is live.
-    event_received = False
-    async for _ in result:
-        event_received = True
-        break
-
-    assert event_received, "CBS disaster subscribe iterator produced no events"
-    return "mock_cbs_disaster_v1"
-
-
-@pytest.mark.asyncio
-async def test_subscribe_cbs_disaster_invoked() -> None:
-    invoked_adapter = await _invoke_subscribe_cbs_disaster()
-    assert invoked_adapter in _EXPECTED_SUBSCRIBE
-
-
-# ---------------------------------------------------------------------------
-# T034e — Aggregate SC-004 assertion (all 15 mocks present)
+# T034d — Aggregate SC-004 assertion (active mocks present)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_sc004_all_15_mocks_invoked(tmp_path: Path) -> None:
-    """SC-004: assert all 15 mock adapters can be invoked in one battery.
+async def test_sc004_active_mocks_invoked(tmp_path: Path) -> None:
+    """SC-004: assert all active mock adapters can be invoked in one battery.
 
     The aggregate check cannot depend on module globals populated by sibling
     tests because CI runs this file under pytest-xdist (`pytest -n auto`), where
@@ -393,14 +353,11 @@ async def test_sc004_all_15_mocks_invoked(tmp_path: Path) -> None:
         await _invoke_submit_hometax_taxreturn(tmp_path / "hometax"),
         await _invoke_submit_gov24_minwon(tmp_path / "gov24"),
     }
-    invoked_subscribe = {await _invoke_subscribe_cbs_disaster()}
 
     missing_verify = _EXPECTED_VERIFY - invoked_verify
     missing_lookup = _EXPECTED_LOOKUP - invoked_lookup
     missing_submit = _EXPECTED_SUBMIT - invoked_submit
-    missing_subscribe = _EXPECTED_SUBSCRIBE - invoked_subscribe
 
     assert not missing_verify, f"SC-004: verify families not invoked: {missing_verify}"
     assert not missing_lookup, f"SC-004: lookup adapters not invoked: {missing_lookup}"
     assert not missing_submit, f"SC-004: submit adapters not invoked: {missing_submit}"
-    assert not missing_subscribe, f"SC-004: subscribe adapters not invoked: {missing_subscribe}"

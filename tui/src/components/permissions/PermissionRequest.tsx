@@ -36,12 +36,10 @@ import {
   LookupPermissionRequestAdapter,
   VerifyPermissionRequestAdapter,
   SubmitPermissionRequestAdapter,
-  SubscribePermissionRequestAdapter,
 } from './KosmosPrimitivePermissionRequest/KosmosPermissionRequestAdapter.js';
 import { LookupPrimitive } from '../../tools/LookupPrimitive/LookupPrimitive.js';
 import { VerifyPrimitive } from '../../tools/VerifyPrimitive/VerifyPrimitive.js';
 import { SubmitPrimitive } from '../../tools/SubmitPrimitive/SubmitPrimitive.js';
-import { SubscribePrimitive } from '../../tools/SubscribePrimitive/SubscribePrimitive.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const ReviewArtifactTool = feature('REVIEW_ARTIFACT') ? (require('../../tools/ReviewArtifactTool/ReviewArtifactTool.js') as typeof import('../../tools/ReviewArtifactTool/ReviewArtifactTool.js')).ReviewArtifactTool : null;
@@ -97,9 +95,6 @@ function permissionComponentForTool(tool: Tool): React.ComponentType<PermissionR
     // submit: Layer 2 (reversible) / Layer 3 (irreversible) — side-effecting citizen action.
     case SubmitPrimitive:
       return SubmitPermissionRequestAdapter;
-    // subscribe: Layer 2 (orange ⓶) — session-lifetime subscription.
-    case SubscribePrimitive:
-      return SubscribePermissionRequestAdapter;
     default:
       return FallbackPermissionRequest;
   }

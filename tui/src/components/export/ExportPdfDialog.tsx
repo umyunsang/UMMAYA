@@ -294,7 +294,7 @@ export function ExportPdfDialog({
   const [state, setState] = useState<ExportState>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  // Defense-in-depth Esc dismiss — mirrors HelpV2Grouped + AgentsCommandView.
+  // Defense-in-depth Esc dismiss — mirrors HelpV2Grouped.
   // The dialog assembles + writes immediately on mount, so Esc only fires
   // onCancel during the brief idle/writing window or on the terminal error
   // frame. Once `done` fires, onDone has already been invoked and the parent

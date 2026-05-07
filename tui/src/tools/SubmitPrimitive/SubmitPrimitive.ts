@@ -179,7 +179,7 @@ export const SubmitPrimitive = buildTool({
     if (isManifestSynced()) {
       const backendEntry = resolveAdapter(input.tool_id)
       if (backendEntry) {
-        // Internal-mode adapters (lookup/submit/verify/subscribe primitives
+        // Internal-mode adapters (lookup/submit/verify primitives
         // themselves, resolve_location, etc.) are not citizen-facing
         // agency calls and are exempt from the citation invariant.
         if (backendEntry.source_mode === 'internal') {

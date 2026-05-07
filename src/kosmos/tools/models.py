@@ -198,8 +198,8 @@ class GovAPITool(BaseModel):
     Distinct from ``AdapterRegistration.source_mode`` (mirror fidelity axis)."""
 
     # Spec 031 T032 dual-axis fields — None during pre-v1.2 compatibility window FR-028
-    primitive: Literal["lookup", "resolve_location", "submit", "subscribe", "verify"] | None = None
-    """Five-primitive surface this adapter binds to (Spec 031 AdapterPrimitive).
+    primitive: Literal["lookup", "resolve_location", "submit", "verify"] | None = None
+    """Active primitive surface this adapter binds to (Spec 031 AdapterPrimitive).
 
     Set to the appropriate value during Spec 031 Phase 4 (T033).
     ``None`` is legal during the pre-v1.2 compatibility window (FR-028).
@@ -253,8 +253,8 @@ class GovAPITool(BaseModel):
     @classmethod
     def _validate_id(cls, v: str) -> str:
         # Spec 1636 P5 ADR-007 (revised by review eval C3):
-        # plugin-namespaced ids may use ONLY the four root primitives
-        # (lookup / submit / verify / subscribe). resolve_location is a
+        # plugin-namespaced ids may use ONLY the active plugin primitives
+        # (lookup / submit / verify). resolve_location is a
         # host-reserved built-in primitive (Migration tree § L1-C C6) —
         # plugins cannot override it. The earlier regex permitted
         # resolve_location at the GovAPITool layer for symmetry with
@@ -265,13 +265,13 @@ class GovAPITool(BaseModel):
         # layers agree.
         if not re.fullmatch(
             r"^([a-z][a-z0-9_]*"
-            r"|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe))$",
+            r"|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify))$",
             v,
         ):
             raise ValueError(
                 f"Tool id {v!r} must match ^[a-z][a-z0-9_]*$ "
                 "(lowercase, start with a letter, underscores only) "
-                "OR ^plugin\\.<plugin_id>\\.(lookup|submit|verify|subscribe)$ "
+                "OR ^plugin\\.<plugin_id>\\.(lookup|submit|verify)$ "
                 "for plugin-namespaced tools (ADR-007 + Q8-NO-ROOT-OVERRIDE). "
                 "resolve_location is a host-reserved primitive — plugins "
                 "cannot override it."
@@ -801,7 +801,7 @@ class LookupFetchInput(BaseModel):
     mode: Literal["fetch"]
     tool_id: str = Field(
         # Spec 1636 P5 ADR-007: snake_case OR plugin-namespaced.
-        pattern=r"^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe|resolve_location))$",
+        pattern=r"^([a-z][a-z0-9_]*|plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|resolve_location))$",
     )
     """Must come from a previous `search` result. Never guess."""
 
@@ -900,7 +900,7 @@ class AdapterCandidate(BaseModel):
         default=None,
         description=(
             "The primitive root this adapter binds to "
-            "(lookup / verify / submit / subscribe / resolve_location)."
+            "(lookup / verify / submit / resolve_location)."
         ),
     )
     real_classification_url: str | None = Field(

@@ -35,7 +35,7 @@ At this point:
 - Detects an expired or absent NPKI certificate during the `npki_crypto` load step (this detection is fully mockable).
 - Obtains explicit citizen consent before initiating a portal session.
 - Emits a `ToolCallAuditRecord` at handoff time.
-- Polls the `poll_url` at 10-second intervals with a 5-minute total timeout, using the `subscribe` primitive.
+- Polls the `poll_url` at 10-second intervals with a 5-minute total timeout through the portal-session handoff flow. This is not exposed as an active `subscribe` primitive.
 - Records only the outcome (`complete` / `timeout` / `error`) and session token in the audit record — not any intermediate CA portal state.
 - After a successful portal session, re-attempts the original operation from step 2.
 

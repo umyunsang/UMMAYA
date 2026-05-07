@@ -37,7 +37,7 @@ sed 's/\x1b\[[0-9;]*m//g' \
 | `onboarding-4-ministry` | Ministry scope selection | Selected scope persisted to `~/.kosmos/memdir/user/onboarding/state.json` | `onboarding-4-ministry.ansi.txt` + `.txt` | ☐ |
 | `onboarding-5-terminal` | Terminal setup; transition to REPL | Main REPL prompt visible | `onboarding-5-terminal.ansi.txt` + `.txt` | ☐ |
 
-## Primitive flows (5 flows)
+## Primitive flows (active flows)
 
 | Step ID | Description | Pass criterion | Evidence | Result |
 |---|---|---|---|---|
@@ -45,7 +45,6 @@ sed 's/\x1b\[[0-9;]*m//g' \
 | `primitive-lookup-fetch` | `lookup` adapter fetch | Adapter response rendered with envelope | `primitive-lookup-fetch.ansi.txt` + `.txt` | ☐ |
 | `primitive-submit` | `submit` mock adapter | Mock submission receipt | `primitive-submit.ansi.txt` + `.txt` | ☐ |
 | `primitive-verify` | `verify` mock adapter | Verification mock result | `primitive-verify.ansi.txt` + `.txt` | ☐ |
-| `primitive-subscribe` | `subscribe` mock adapter | Subscription handle returned | `primitive-subscribe.ansi.txt` + `.txt` | ☐ |
 
 ## Slash commands (4 commands)
 
@@ -72,7 +71,7 @@ sed 's/\x1b\[[0-9;]*m//g' \
 
 ## Summary
 
-- Total steps: 18 (5 onboarding + 5 primitive + 4 slash + 3 error + 1 PDF; FR-013 minimum was 17, this checklist exceeds by 1).
+- Total steps cover onboarding, active primitive flows, slash commands, error envelopes, and PDF fallback.
 - Pass count: <fill at end>
 - Fail count: <fill at end>
 - Blocked count: <fill at end>
@@ -88,4 +87,4 @@ If any row fails, the PR is blocked until the failing step is either fixed or ex
 - `script(1)` is part of the macOS base system; no new dependencies required (research.md § R6).
 - The visual-evidence convention exactly mirrors `specs/1636-plugin-dx-5tier/visual-evidence/` (Spec 1636 precedent).
 - The PDF step accepts the `open` fallback for non-Kitty/iTerm2 terminals — visual-fidelity inline is asserted only on the supported set.
-- The 18-row total exceeds FR-013's 17-minimum by adding `primitive-lookup` as a two-row split (search + fetch); the spec's "4 primitive flows" counts these as one combined surface.
+- `primitive-lookup` stays split into search + fetch rows; `subscribe` is deferred until an app/push-notification runtime exists.

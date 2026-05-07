@@ -1,15 +1,15 @@
-# Epic P3 · Tool system wiring · Python stdio MCP + 4 primitives
+# Epic P3 · Tool system wiring · Python stdio MCP + active primitives
 
 ## Objective
 
-Wire Python adapters (`src/kosmos/tools/`) as the LLM tool surface via stdio MCP. Expose 4 primitives (`lookup`/`submit`/`verify`/`subscribe`) + auxiliary tools. Remove all CC dev tools from the runtime path.
+Wire Python adapters (`src/kosmos/tools/`) as the LLM tool surface via stdio MCP. Expose active primitives (`lookup`/`resolve_location`/`submit`/`verify`) + auxiliary tools. Remove all CC dev tools from the runtime path.
 
 ## Context from codebase audit
 
 **Python side — already built:**
 - 14 registered tool_ids: `resolve_location`, `lookup`, `koroad_accident_search`, `koroad_accident_hazard_search`, `kma_weather_alert_status`, `kma_current_observation`, `kma_short_term_forecast`, `kma_ultra_short_term_forecast`, `kma_pre_warning`, `nmc_emergency_search`, `kma_forecast_fetch`, `hira_hospital_search`, `nfa_emergency_info_service`, `mohw_welfare_eligibility_search` (an earlier composite adapter was removed in Epic #1634 per migration tree § L1-B B6)
 - `GovAPITool` model already has `primitive` field — but only 4 adapters set it (`accident_hazard_search`, `kma_forecast_fetch`, `hira_hospital_search`, `nmc_emergency_search` → `"lookup"`). 11 adapters have `primitive=None`
-- Mock adapters cover `verify` (6), `submit` (2), subscribe (3 — wired to `kosmos.primitives.subscribe`, not `GovAPITool.primitive`)
+- Mock adapters cover active `verify` and `submit` surfaces. Subscribe is deferred until KOSMOS has an app/push-notification runtime.
 - `GovAPITool` does NOT have `permission_tier`, `ministry`, `mode` (live/mock) fields — see clarification below
 
 **TUI side:**
@@ -39,8 +39,9 @@ Wire Python adapters (`src/kosmos/tools/`) as the LLM tool surface via stdio MCP
 ### Evaluate per P4/P5
 - `tui/src/tools/{TodoWriteTool,ToolSearchTool,AskUserQuestionTool,SleepTool,MonitorTool,WorkflowTool,ScheduleCronTool,Task{Create,Get,List,Stop,Update}Tool,Team{Create,Delete}Tool}/`
 
-### New — 4 primitive wrappers
-- `tui/src/tools/primitive/{lookup,submit,verify,subscribe}.ts`
+### New — active primitive wrappers
+- `tui/src/tools/primitive/{lookup,submit,verify}.ts`
+- `resolve_location` is a built-in meta-tool. `subscribe` is deferred until KOSMOS has an app/push-notification runtime.
 
 ### New — auxiliary tools
 - `tui/src/tools/{Translate,Calculator,DateParser,ExportPDF}/`

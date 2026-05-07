@@ -10,7 +10,7 @@
 //   Frame → synthesized ToolUseConfirm → setToolUseConfirmQueue push.
 //   REPL registers its setter via registerIpcToolUseConfirmQueue; deps.ts calls
 //   pushIpcPermissionRequest whenever a permission_request frame arrives.
-//   The 4-arm switch then auto-mounts the correct adapter.
+//   The active primitive switch then auto-mounts the correct adapter.
 //
 // CC reference:
 //   tui/src/utils/swarm/leaderPermissionBridge.ts — same register/push pattern
@@ -28,7 +28,6 @@ import type { ToolUseConfirm } from '../../components/permissions/PermissionRequ
 import { LookupPrimitive } from '../../tools/LookupPrimitive/LookupPrimitive.js'
 import { VerifyPrimitive } from '../../tools/VerifyPrimitive/VerifyPrimitive.js'
 import { SubmitPrimitive } from '../../tools/SubmitPrimitive/SubmitPrimitive.js'
-import { SubscribePrimitive } from '../../tools/SubscribePrimitive/SubscribePrimitive.js'
 import type { IPCFrame } from '../../ipc/frames.generated.js'
 import type { Tool } from '../../Tool.js'
 import { createAssistantMessage } from '../../utils/messages.js'
@@ -100,8 +99,6 @@ function primitiveKindToTool(kind: PrimitiveKind): Tool {
       return VerifyPrimitive
     case 'submit':
       return SubmitPrimitive
-    case 'subscribe':
-      return SubscribePrimitive
     default: {
       // Exhaustive fallback — future primitive kinds fall through to verify
       // (Layer 1, safest default per Constitution §II fail-closed).

@@ -171,14 +171,6 @@ _MINIMAL_TEST_TOOLS: list[dict[str, object]] = [
     {
         "type": "function",
         "function": {
-            "name": "subscribe",
-            "description": "Subscribe to government service events",
-            "parameters": {"type": "object", "properties": {}},
-        },
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "verify",
             "description": "Verify identity or delegate",
             "parameters": {"type": "object", "properties": {}},

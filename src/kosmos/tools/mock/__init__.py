@@ -1,12 +1,11 @@
-"""Mock adapter tree for Spec 031 Five-Primitive Harness.
+"""Mock adapter tree for the active KOSMOS primitive harness.
 
-Six mock system sub-packages (byte- or shape-mirror-able public systems):
+Five mock system sub-packages (byte- or shape-mirror-able public systems):
 - data_go_kr: openapi.data.go.kr REST surface (byte mirror)
 - omnione: OpenDID reference stack (byte mirror, Apache-2.0)
 - barocert: developers.barocert.com SDK docs (shape mirror)
 - mydata: KFTC MyData v240930 (shape mirror, mTLS/OAuth profile)
 - npki_crypto: PyPinkSign crypto layer (PKCS#7/#12 only; portal session is OPAQUE)
-- cbs: 3GPP TS 23.041 broadcast (byte mirror)
 
 OPAQUE systems (Government 24 submission, KEC XML signature, NPKI portal
 session handshake) live in docs/scenarios/ only — no mock adapter
@@ -33,11 +32,9 @@ Epic ε #2296 US1 new verify adapters — registered on import:
 - verify_module_geumyung: 금융인증서 AX-channel (Singapore Myinfo analog)
 - verify_module_any_id_sso: Any-ID SSO — returns IdentityAssertion only (UK GOV.UK One Login analog)
 
-Spec 031 US3 subscribe adapters (T058–T060) — registered with
-kosmos.primitives.subscribe on import:
-- cbs.disaster_feed.MOCK_CBS_DISASTER_TOOL (tool_id="mock_cbs_disaster_v1")
-- data_go_kr.rest_pull_tick.MOCK_REST_PULL_TICK_TOOL (tool_id="mock_rest_pull_tick_v1")
-- data_go_kr.rss_notices.MOCK_RSS_PUBLIC_NOTICES_TOOL (tool_id="mock_rss_public_notices_v1")
+Subscribe adapters were removed from the active mock tree. National alert/RSS
+subscriptions belong to a future app/push-notification runtime, not the CLI
+tool-call loop.
 """
 
 # T027 (Spec 031) + Epic ε #2296 T026 — existing submit adapters (transparency-retrofitted).
@@ -68,12 +65,4 @@ from kosmos.tools.mock import (  # noqa: F401, E402  # noqa: F401, E402
     verify_module_modid,
     verify_module_simple_auth,
     verify_mydata,
-)
-
-# T058–T060 — US3 subscribe adapters. Import side-effect registers each
-# tool via register_subscribe_adapter().
-from kosmos.tools.mock.cbs.disaster_feed import MOCK_CBS_DISASTER_TOOL  # noqa: F401, E402
-from kosmos.tools.mock.data_go_kr.rest_pull_tick import MOCK_REST_PULL_TICK_TOOL  # noqa: F401, E402
-from kosmos.tools.mock.data_go_kr.rss_notices import (
-    MOCK_RSS_PUBLIC_NOTICES_TOOL,  # noqa: F401, E402
 )

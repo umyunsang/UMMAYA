@@ -64,8 +64,8 @@ If green: the scaffold works. Move on. If red: something is misconfigured locall
 
 Open `docs/plugins/architecture.md` (in this repo, vendored as a stub during scaffold; canonical version at https://github.com/umyunsang/KOSMOS/blob/main/docs/plugins/architecture.md). Skim:
 
-- The 4 root primitives: `lookup`, `submit`, `verify`, `subscribe`.
-- Your plugin's `tool_id` MUST be `plugin.<plugin_id>.<verb>` where `<verb>` is one of those 4.
+- The active plugin primitives: `lookup`, `submit`, `verify`.
+- Your plugin's `tool_id` MUST be `plugin.<plugin_id>.<verb>` where `<verb>` is one of those active plugin verbs.
 - Your `adapter.py` registers a `GovAPITool` instance into the registry.
 - Live tier vs Mock tier — pick before you write code.
 

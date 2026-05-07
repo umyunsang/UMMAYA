@@ -87,7 +87,7 @@ Total: **50** items.
 |---|---|---|---|---|---|
 | `Q8-NAMESPACE` | tool_id 가 plugin.<id>.<verb> 형식 | tool_id matches plugin.<id>.<verb> | FR-022 + migration tree § L1-C C7 | unit | `kosmos.plugins.checks.q8_namespace:check_namespace` |
 | `Q8-NO-ROOT-OVERRIDE` | tool_id verb 가 host 예약 (resolve_location) 과 충돌 안 함 | tool_id verb is not a host-reserved primitive | FR-022 | unit | `kosmos.plugins.checks.q8_namespace:check_no_root_override` |
-| `Q8-VERB-IN-PRIMITIVES` | verb ∈ 4 root primitive (lookup/submit/verify/subscribe) | verb is one of 4 root primitives | FR-004 + migration tree § L1-C C1 | unit | `kosmos.plugins.checks.q8_namespace:check_verb_in_primitives` |
+| `Q8-VERB-IN-PRIMITIVES` | verb ∈ active plugin primitive (lookup/submit/verify) | verb is one of the active plugin primitives | FR-004 + migration tree § L1-C C1 | unit | `kosmos.plugins.checks.q8_namespace:check_verb_in_primitives` |
 
 ## Q9 — OTEL emission (2)
 
@@ -110,4 +110,3 @@ Total: **50** items.
 When a check fails the workflow surfaces both Korean and English failure
 messages on the PR comment + step summary. The bilingual messages live in
 the YAML rows below — see `failure_message_ko` / `failure_message_en`.
-

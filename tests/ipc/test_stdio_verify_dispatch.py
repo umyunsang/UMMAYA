@@ -233,14 +233,14 @@ async def _run_verify_dispatch(
     # Gap B fix: verify is now gated (GATED_PRIMITIVES includes "verify").
     # These tests only exercise the tool_id → family_hint translation path,
     # NOT the permission gating logic. Bypass the gate by patching
-    # GATED_PRIMITIVES to the pre-Gap-B set (submit/subscribe only) so
+    # GATED_PRIMITIVES to submit only so
     # verify auto-allows and the IPC loop doesn't wait 60 s for citizen input.
     import kosmos.primitives as _prims_mod
 
     monkeypatch.setattr(
         _prims_mod,
         "GATED_PRIMITIVES",
-        frozenset({"submit", "subscribe"}),
+        frozenset({"submit"}),
     )
 
     fake_stdout = _FakeStdout()

@@ -106,7 +106,7 @@
         }
       ],
       "default": null,
-      "description": "Life-stage filter. 001=영유아 / 002=아동 / 003=청소년 / 004=청년 / 005=중장년 / 006=노년 / 007=임신·출산"
+      "description": "Life-stage filter. 001=영유아 / 002=아동 / 003=청소년 / 004=청년 / 005=중장년 / 006=노년 / 007=임신·출산. For 한부모/조손 child-support searches, omit this field and use trgter_indvdl_array='060'."
     },
     "num_of_rows": {
       "default": 10,

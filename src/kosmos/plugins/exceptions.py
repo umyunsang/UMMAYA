@@ -16,7 +16,7 @@ class PluginRegistrationError(PluginError):
     """Raised when a plugin cannot be registered into the running tool registry.
 
     Examples include duplicate ``plugin_id``, namespace conflicts with
-    reserved root primitives, or invariant violations propagated from
+    reserved active plugin primitives, or invariant violations propagated from
     Spec 022/024/025/031 validators on the embedded ``AdapterRegistration``.
     """
 

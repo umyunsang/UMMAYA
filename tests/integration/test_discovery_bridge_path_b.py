@@ -2,7 +2,7 @@
 """Integration tests — Epic ζ #2297 path B (live smoke 2026-04-30 follow-up).
 
 Verifies:
-  B-1: verify/submit/subscribe mock adapters appear in the main ToolRegistry's
+  B-1: verify/submit mock adapters appear in the main ToolRegistry's
        BM25 corpus (so lookup(mode="search") surfaces them alongside
        lookup-class adapters).
   B-2: AdapterCandidate exposes full per-domain REST schema metadata
@@ -32,22 +32,22 @@ def loaded_registry() -> tuple[ToolRegistry, ToolExecutor]:
 
 
 # ---------------------------------------------------------------------------
-# B-1: BM25 corpus expansion — verify/submit/subscribe mocks discoverable
+# B-1: BM25 corpus expansion — verify/submit mocks discoverable
 # ---------------------------------------------------------------------------
 
 
 def test_b1_total_tool_count_includes_mocks(
     loaded_registry: tuple[ToolRegistry, ToolExecutor],
 ) -> None:
-    """Path B-1: bridge registers 18 non-core mock adapters into main registry.
+    """Path B-1: bridge registers active non-core mock adapters into main registry.
 
-    Expected total: 19 (lookup-class + 5 primitives) + 10 verify + 5 submit + 3 subscribe = 37.
+    Expected total: 33 after subscribe is deferred out of the active surface.
     """
     r, _ = loaded_registry
     total = len(r.all_tools())
-    assert total == 37, (
-        f"Expected 37 total tools after discovery_bridge runs; got {total}. "
-        f"Verify the bridge registered all 18 mock adapters."
+    assert total == 33, (
+        f"Expected 33 total tools after discovery_bridge runs; got {total}. "
+        f"Verify the bridge registered the active mock adapters."
     )
 
 
@@ -88,21 +88,6 @@ def test_b1_submit_mocks_in_registry(
     }
     missing = expected - ids
     assert not missing, f"Missing submit adapters in main registry: {missing}"
-
-
-def test_b1_subscribe_mocks_in_registry(
-    loaded_registry: tuple[ToolRegistry, ToolExecutor],
-) -> None:
-    """All 3 subscribe mock tool_ids are registered (CBS + REST-pull + RSS)."""
-    r, _ = loaded_registry
-    ids = {t.id for t in r.all_tools()}
-    expected = {
-        "mock_cbs_disaster_v1",
-        "mock_rest_pull_tick_v1",
-        "mock_rss_public_notices_v1",
-    }
-    missing = expected - ids
-    assert not missing, f"Missing subscribe adapters in main registry: {missing}"
 
 
 # ---------------------------------------------------------------------------
@@ -293,9 +278,9 @@ def test_b1_cross_domain_search_returns_correct_candidates(
     kec_results = asyncio.run(_search("사업자 등록증 발급"))
     assert "mock_verify_module_kec" in kec_results
 
-    # CBS disaster broadcast path
-    cbs_results = asyncio.run(_search("재난방송 긴급재난문자"))
-    assert "mock_cbs_disaster_v1" in cbs_results
+    # GOV24 submit path
+    gov24_results = asyncio.run(_search("정부24 민원 신청"))
+    assert "mock_submit_module_gov24_minwon" in gov24_results
 
 
 # ---------------------------------------------------------------------------

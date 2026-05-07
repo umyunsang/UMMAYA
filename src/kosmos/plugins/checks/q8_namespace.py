@@ -14,8 +14,8 @@ import re
 
 from kosmos.plugins.checks.framework import CheckContext, CheckOutcome, failed, passed
 
-_NAMESPACE_RE = re.compile(r"^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe)$")
-_ROOT_PRIMITIVES: frozenset[str] = frozenset({"lookup", "submit", "verify", "subscribe"})
+_NAMESPACE_RE = re.compile(r"^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify)$")
+_ROOT_PRIMITIVES: frozenset[str] = frozenset({"lookup", "submit", "verify"})
 _HOST_RESERVED: frozenset[str] = frozenset({"resolve_location"})
 
 
@@ -39,11 +39,11 @@ def check_namespace(ctx: CheckContext) -> CheckOutcome:
         return failed(
             ko=(
                 f"tool_id {tool_id!r} 가 plugin.<id>.<verb> 형식이 아님 "
-                "(verb ∈ lookup/submit/verify/subscribe)"
+                "(verb ∈ lookup/submit/verify)"
             ),
             en=(
                 f"tool_id {tool_id!r} does not match plugin.<id>.<verb> "
-                "(verb ∈ lookup/submit/verify/subscribe)"
+                "(verb ∈ lookup/submit/verify)"
             ),
         )
     return passed()
@@ -77,7 +77,7 @@ def check_no_root_override(ctx: CheckContext) -> CheckOutcome:
 
 
 def check_verb_in_primitives(ctx: CheckContext) -> CheckOutcome:
-    """Q8-VERB-IN-PRIMITIVES — tool_id verb ∈ 4 root primitives."""
+    """Q8-VERB-IN-PRIMITIVES — tool_id verb ∈ active plugin primitive verbs."""
     blocked = _ensure_manifest(ctx, "Q8-VERB-IN-PRIMITIVES")
     if blocked:
         return blocked
@@ -91,9 +91,10 @@ def check_verb_in_primitives(ctx: CheckContext) -> CheckOutcome:
         )
     verb = parts[2]
     if verb not in _ROOT_PRIMITIVES:
+        sorted_primitives = sorted(_ROOT_PRIMITIVES)
         return failed(
-            ko=(f"verb {verb!r} 는 4 root primitive 중 하나가 아님 ({sorted(_ROOT_PRIMITIVES)})"),
-            en=(f"verb {verb!r} is not one of the 4 root primitives ({sorted(_ROOT_PRIMITIVES)})"),
+            ko=(f"verb {verb!r} 는 active plugin primitive 중 하나가 아님 ({sorted_primitives})"),
+            en=(f"verb {verb!r} is not one of the active plugin primitives ({sorted_primitives})"),
         )
     return passed()
 

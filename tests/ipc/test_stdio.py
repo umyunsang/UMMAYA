@@ -327,14 +327,6 @@ async def _run_with_frame(  # noqa: C901 — test harness deliberately covers ma
         {
             "type": "function",
             "function": {
-                "name": "subscribe",
-                "description": "Subscribe to government service events",
-                "parameters": {"type": "object", "properties": {}},
-            },
-        },
-        {
-            "type": "function",
-            "function": {
                 "name": "resolve_location",
                 "description": "Resolve a Korean address or location",
                 "parameters": {"type": "object", "properties": {}},

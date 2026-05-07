@@ -106,7 +106,6 @@ Column definitions:
 | `KOSMOS_AGENT_MAILBOX_RECIPIENT` | OTel span attr | n/a | String span attribute key | `kosmos.observability.semconv.KOSMOS_AGENT_MAILBOX_RECIPIENT` | [Agent Swarm (Epic #13)](#agent-swarm-epic-13) |
 | `KOSMOS_TUI_THEME` | No | `default` | `default` \| `dark` \| `light` | `kosmos.config.env_registry.TUISettings.theme` | [Spec 287 TUI (Epic #287)](#tui-ink-react-bun-epic-287) |
 | `KOSMOS_TUI_LOG_LEVEL` | No | `WARN` | `DEBUG` \| `INFO` \| `WARN` \| `ERROR` | `kosmos.config.env_registry.TUISettings.log_level` | [Spec 287 TUI (Epic #287)](#tui-ink-react-bun-epic-287) |
-| `KOSMOS_TUI_SUBSCRIBE_TIMEOUT_S` | No | `300` | Integer >= 1 (seconds) | `kosmos.config.env_registry.TUISettings.subscribe_timeout_s` | [Spec 287 TUI (Epic #287)](#tui-ink-react-bun-epic-287) |
 | `KOSMOS_TUI_IME_STRATEGY` | No | `fork` | `fork` \| `readline` | `kosmos.config.env_registry.TUISettings.ime_strategy` | [Spec 287 TUI (Epic #287)](#tui-ink-react-bun-epic-287) |
 | `KOSMOS_TUI_SOAK_EVENTS_PER_SEC` | No | `100` | Integer >= 1 | `kosmos.config.env_registry.TUISettings.soak_events_per_sec` | [Spec 287 TUI (Epic #287)](#tui-ink-react-bun-epic-287) |
 | `KOSMOS_IPC_RING_SIZE` | No | `256` | Integer >= 1 | `kosmos.ipc.ring_buffer._DEFAULT_RING_SIZE` | [Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298) |
@@ -138,15 +137,15 @@ Column definitions:
 | `KOSMOS_PLUGIN_CATALOG_URL` | No | `https://raw.githubusercontent.com/kosmos-plugin-store/index/main/index.json` | https:// URL or `file://` path (tests only) | `kosmos.settings.KosmosSettings.plugin_catalog_url` | [Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier) |
 | `KOSMOS_PLUGIN_SLSA_SKIP` | No | `false` | `true` \| `false` | `kosmos.settings.KosmosSettings.plugin_slsa_skip` | [Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier) |
 
-> **Row count**: 53 rows (48 `KOSMOS_*` active + 2 `LANGFUSE_*` + 1 `KOSMOS_OTEL_ENDPOINT` +
+> **Row count**: 52 rows (47 `KOSMOS_*` active + 2 `LANGFUSE_*` + 1 `KOSMOS_OTEL_ENDPOINT` +
 > 1 override-family pattern + 1 deprecated). `KOSMOS_KOROAD_API_KEY` and
 > `KOSMOS_KOROAD_ACCIDENT_SEARCH_API_KEY` are concrete expansions of the
 > `KOSMOS_{TOOL_ID}_API_KEY` override-family pattern and are covered by that row.
 > Spec 028 added `KOSMOS_OTEL_COLLECTOR_PORT`, `KOSMOS_LANGFUSE_OTLP_ENDPOINT`, and
 > `KOSMOS_LANGFUSE_OTLP_AUTH_HEADER` (rows 29–31 of KOSMOS_* active set).
 > Spec 287 (T010) added `KOSMOS_TUI_THEME`, `KOSMOS_TUI_LOG_LEVEL`,
-> `KOSMOS_TUI_SUBSCRIBE_TIMEOUT_S`, `KOSMOS_TUI_IME_STRATEGY`, and
-> `KOSMOS_TUI_SOAK_EVENTS_PER_SEC` (rows 36–40 of KOSMOS_* active set).
+> `KOSMOS_TUI_IME_STRATEGY`, and `KOSMOS_TUI_SOAK_EVENTS_PER_SEC`
+> (rows 36–39 of KOSMOS_* active set).
 > Spec 032 (T053–T061) added 3 env-var rows (`KOSMOS_IPC_RING_SIZE`,
 > `KOSMOS_IPC_HWM`, `KOSMOS_IPC_TX_CACHE_CAPACITY`) and 9 OTel-span-attribute
 > key constants (`KOSMOS_IPC_CORRELATION_ID`, `KOSMOS_IPC_TRANSACTION_ID`,

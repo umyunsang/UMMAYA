@@ -191,7 +191,7 @@ def main() -> int:  # noqa: C901
         cc_sha = baseline.get(rel_to_slice)
         if cc_sha is None:
             # KOSMOS-only file — no CC baseline. PASS (these are KOSMOS-original
-            # additions per audit § 6, e.g. 5-primitive renderers, onboarding,
+            # additions per audit § 6, e.g. active primitive renderers, onboarding,
             # citizen UI extensions).
             stats["kosmos_only"] += 1
             continue

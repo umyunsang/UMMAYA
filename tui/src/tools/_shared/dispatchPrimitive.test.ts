@@ -125,19 +125,6 @@ describe.skip('dispatchPrimitive (server-side-ack) — superseded by register-an
     expect(result.data.result?.['primitive']).toBe('submit')
   })
 
-  test('subscribe returns ack with subscribe primitive name', async () => {
-    const result = (await dispatchPrimitive({
-      primitive: 'subscribe',
-      args: { tool_id: 'mock_subscribe_module_test' },
-      context: fakeContext('subscribe-use-1'),
-      registry,
-      bridge: fakeBridge(),
-    })) as unknown as { data: { ok: boolean; result?: Record<string, unknown> } }
-
-    expect(result.data.ok).toBe(true)
-    expect(result.data.result?.['primitive']).toBe('subscribe')
-  })
-
   test('missing toolUseId surfaces null in ack envelope', async () => {
     const ctx = {
       options: {
@@ -231,7 +218,7 @@ describe('dispatchPrimitive — [H1] inner-payload error classification', () => 
   // the pending call's promise mid-flight. We bypass the IPC bridge entirely
   // — only the unwrap path under test matters here.
   async function dispatchAndInjectFrame(
-    primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe',
+    primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit',
     envelope: Record<string, unknown>,
     toolUseId = `${primitive}-h1-1`,
   ): Promise<{ data: { ok: boolean; result?: unknown; error?: { kind: string; message: string } } }> {
@@ -315,21 +302,6 @@ describe('dispatchPrimitive — [H1] inner-payload error classification', () => 
     expect(result.data.ok).toBe(false)
     expect(result.data.error?.kind).toBe('tool_error')
     expect(result.data.error?.message).toContain('OPAQUE')
-  })
-
-  test('subscribe: inner reason=coercion_violation alone → ok=false', async () => {
-    // Defense-in-depth: even if family/kind are missing, a known-fatal
-    // ``reason`` must trigger the failure classification.
-    const envelope = {
-      kind: 'subscribe',
-      result: {
-        reason: 'coercion_violation',
-        message: 'Adapter return type disagrees with declared family.',
-      },
-    }
-    const result = await dispatchAndInjectFrame('subscribe', envelope)
-    expect(result.data.ok).toBe(false)
-    expect(result.data.error?.kind).toBe('coercion_violation')
   })
 
   test('lookup: success envelope with normal result still flips ok=true (regression guard)', async () => {

@@ -59,8 +59,6 @@ describe('Epic #1633 T041 — US3 invariant: CC dead-code directories removed', 
     'components/grove',
     'components/TeleportResumeWrapper.tsx',
     'hooks/useTeleportResume.tsx',
-    'commands/login',
-    'commands/logout',
   ])('%s MUST NOT exist', (path) => {
     expect(exists(path), `${path} still present`).toBe(false)
   })

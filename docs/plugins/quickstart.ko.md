@@ -67,8 +67,8 @@ uv run pytest     # ~5초 (synthetic fixture 기반 happy-path 테스트 1건)
 
 [`docs/plugins/architecture.md`](architecture.md) 의 핵심:
 
-- **4 root primitive**: `lookup`, `submit`, `verify`, `subscribe` (Migration tree § L1-C C1).
-- 플러그인의 `tool_id` 는 반드시 `plugin.<plugin_id>.<verb>` 형식이며 `<verb>` 는 위 4개 중 하나여야 함 (ADR-007).
+- **Active plugin primitive**: `lookup`, `submit`, `verify`. `subscribe` 는 앱/푸시 런타임이 생길 때까지 비활성.
+- 플러그인의 `tool_id` 는 반드시 `plugin.<plugin_id>.<verb>` 형식이며 `<verb>` 는 active plugin primitive 중 하나여야 함 (ADR-007).
 - `adapter.py` 는 `GovAPITool` 인스턴스를 모듈-레벨 `TOOL` 심볼로 export.
 - **Live tier vs Mock tier** — 코드를 작성하기 전에 결정 (`docs/plugins/live-vs-mock.md`).
 
@@ -302,7 +302,7 @@ PR 작성 후 `plugin-validation.yml` workflow 가 PR 에 자동 실행. 기대 
 | 카탈로그 | catalog | `kosmos-plugin-store/index/index.json` — 설치 가능한 플러그인 메타 인덱스. |
 | 수탁자 | trustee | PIPA §26 기반 위탁자/수탁자 체인의 수탁 측. Live tier + PII 처리 시 필수. |
 | 동의 영수증 | consent receipt | 플러그인 install/uninstall 시 `~/.kosmos/memdir/user/consent/<id>.json` 에 append. Spec 035 ledger 확장. |
-| 프리미티브 | primitive | 4 root 동사 (`lookup`, `submit`, `verify`, `subscribe`). 플러그인은 이 중 하나에 binding (Migration tree § L1-C). |
+| 프리미티브 | primitive | active plugin 동사 (`lookup`, `submit`, `verify`). 플러그인은 이 중 하나에 binding. |
 | 1차 매핑 | byte mirror | OpenAPI 사양과 byte-equivalent 한 어댑터 (Spec 031 `source_mode=OPENAPI`). |
 | 2차 매핑 | shape mirror | OSS SDK 와 shape-compatible 한 어댑터 (`source_mode=OOS`). |
 

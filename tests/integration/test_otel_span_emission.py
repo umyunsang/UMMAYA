@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
-"""T085 — OTEL span parity across submit / subscribe / verify primitives.
+"""T085 — OTEL span parity across submit / verify primitives.
 
-Asserts that all three v1.2 primitives emit a ``gen_ai.tool_loop.iteration``
+Asserts that active gated primitives emit a ``gen_ai.tool_loop.iteration``
 span carrying ``gen_ai.tool.name`` (the shared Spec 022 attribute shape)
 whenever they are invoked on the main surface.
 
@@ -16,7 +16,6 @@ Reference: specs/031-five-primitive-harness/tasks.md T085.
 
 from __future__ import annotations
 
-import asyncio
 import importlib
 from datetime import UTC, datetime
 
@@ -31,7 +30,6 @@ from kosmos.tools.models import AdapterRealDomainPolicy
 # same names as the submodules, which shadows them in the package namespace.
 # Resolve the modules via importlib to get the real module objects.
 submit_mod = importlib.import_module("kosmos.primitives.submit")
-subscribe_mod = importlib.import_module("kosmos.primitives.subscribe")
 verify_mod = importlib.import_module("kosmos.primitives.verify")
 
 from kosmos.primitives.submit import (  # noqa: E402
@@ -39,13 +37,6 @@ from kosmos.primitives.submit import (  # noqa: E402
     SubmitStatus,
     register_submit_adapter,
     submit,
-)
-from kosmos.primitives.subscribe import (  # noqa: E402
-    MODALITY_REST_PULL,
-    RestPullTickEvent,
-    SubscribeInput,
-    register_subscribe_adapter,
-    subscribe,
 )
 from kosmos.primitives.verify import (  # noqa: E402
     GanpyeonInjeungContext,
@@ -217,63 +208,3 @@ async def test_verify_emits_gen_ai_tool_loop_iteration_span(
             register_verify_adapter(family, _previous_adapter)
         else:
             _VERIFY_ADAPTERS.pop(family, None)
-
-
-# ---------------------------------------------------------------------------
-# subscribe primitive parity
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_subscribe_emits_gen_ai_tool_loop_iteration_span(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    exporter, provider = _fresh_exporter()
-    monkeypatch.setattr(
-        subscribe_mod,
-        "_tracer",
-        provider.get_tracer("kosmos.primitives.subscribe"),
-    )
-
-    tool_id = "mock_otel_parity_subscribe_v1"
-
-    async def _adapter(inp: SubscribeInput, _handle):
-        yield RestPullTickEvent(
-            tool_id=inp.tool_id,
-            tick_at=datetime.now(UTC),
-            response_hash="0" * 64,
-            payload={"ok": True},
-        )
-
-    # Snapshot previous _SUBSCRIBE_ADAPTERS entry so we can restore on teardown
-    # — leaving the fixture adapter in the global registry pollutes later
-    # tests' counts (Spec 2296 T035 surfaces this when running the full suite).
-    from kosmos.primitives.subscribe import _SUBSCRIBE_ADAPTERS as _subscribe_registry  # noqa: N811
-
-    _previous_subscribe = _subscribe_registry.get(tool_id)
-    register_subscribe_adapter(tool_id, MODALITY_REST_PULL, _adapter)
-
-    inp = SubscribeInput(tool_id=tool_id, params={}, lifetime_seconds=2)
-    iterator = subscribe(inp).__aiter__()
-
-    try:
-        first = await asyncio.wait_for(iterator.__anext__(), timeout=3.0)
-        assert isinstance(first, RestPullTickEvent)
-    finally:
-        # Ensure the iterator finalizes and the driver task is cancelled.
-        with pytest.raises(StopAsyncIteration):
-            while True:
-                await asyncio.wait_for(iterator.__anext__(), timeout=3.0)
-        # Restore the global registry to its pre-test state.
-        if _previous_subscribe is None:
-            _subscribe_registry.pop(tool_id, None)
-        else:
-            _subscribe_registry[tool_id] = _previous_subscribe
-
-    spans = exporter.get_finished_spans()
-    names = [s.name for s in spans]
-    assert _SPAN_NAME in names, f"subscribe did not emit {_SPAN_NAME}; got {names}"
-
-    parity_span = next(s for s in spans if s.name == _SPAN_NAME)
-    attrs = dict(parity_span.attributes or {})
-    assert attrs.get("gen_ai.tool.name") == tool_id

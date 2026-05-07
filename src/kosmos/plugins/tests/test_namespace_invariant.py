@@ -5,8 +5,8 @@ The three checks in this file mirror the validation-workflow IDs:
 
 * **Q8-NAMESPACE** — every plugin adapter's ``tool_id`` MUST match
   ``plugin.<plugin_id>.<verb>``.
-* **Q8-NO-ROOT-OVERRIDE** — ``<verb>`` MUST be one of the four reserved
-  root primitives (``lookup`` / ``submit`` / ``verify`` / ``subscribe``).
+* **Q8-NO-ROOT-OVERRIDE** — ``<verb>`` MUST be one of the active plugin
+  primitive verbs (``lookup`` / ``submit`` / ``verify``).
   ``resolve_location`` is explicitly excluded — it is a built-in
   primitive whose surface a plugin cannot override.
 * **Q8-VERB-IN-PRIMITIVES** — the verb suffix collisions with ADR-007's
@@ -225,10 +225,13 @@ class TestQ8VerbInPrimitives:
             ("lookup", AdapterPrimitive.lookup),
             ("submit", AdapterPrimitive.submit),
             ("verify", AdapterPrimitive.verify),
-            ("subscribe", AdapterPrimitive.subscribe),
         ],
     )
-    def test_each_root_verb_accepted(self, verb: str, primitive: AdapterPrimitive) -> None:
+    def test_each_active_plugin_verb_accepted(
+        self,
+        verb: str,
+        primitive: AdapterPrimitive,
+    ) -> None:
         m = PluginManifest(
             **_manifest_kwargs(
                 adapter=_adapter(
@@ -239,6 +242,13 @@ class TestQ8VerbInPrimitives:
         )
         assert m.adapter.tool_id.endswith(f".{verb}")
         assert m.adapter.primitive == primitive
+
+    def test_subscribe_verb_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            _adapter(
+                tool_id="plugin.demo_plugin.subscribe",
+                primitive="subscribe",  # type: ignore[arg-type]
+            )
 
 
 class TestRegisterPluginAdapterShim:

@@ -28,7 +28,8 @@ asks the schema to enforce:
 * ``_v_otel_attribute`` — ``otel_attributes["kosmos.plugin.id"]``
   equals ``plugin_id`` (FR-021, Spec 021 attribute).
 * ``_v_namespace`` — ``adapter.tool_id`` follows
-  ``plugin.<plugin_id>.<verb>`` with ``<verb>`` in the 4 root primitives
+  ``plugin.<plugin_id>.<verb>`` with ``<verb>`` in the active plugin
+  primitive verbs
   (R-1 Q8-NAMESPACE / Q8-NO-ROOT-OVERRIDE / Q8-VERB-IN-PRIMITIVES,
   ADR-007).
 
@@ -53,19 +54,18 @@ from kosmos.tools.registry import AdapterRegistration
 # H5 (review eval): tool_id MUST be ASCII to prevent Unicode confusable
 # attacks (e.g. Cyrillic 'о' replacing Latin 'o' in plugin_id).
 _TOOL_ID_ASCII_RE: Final = re.compile(
-    r"^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe)$",
+    r"^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify)$",
     flags=re.ASCII,
 )
 
-_ROOT_PRIMITIVE_VERBS: Final[frozenset[str]] = frozenset(
-    {"lookup", "submit", "verify", "subscribe"}
-)
-"""The four reserved root primitive verbs (Migration tree § L1-C C1).
+_ROOT_PRIMITIVE_VERBS: Final[frozenset[str]] = frozenset({"lookup", "submit", "verify"})
+"""The active reserved plugin primitive verbs.
 
 Plugin namespaces extend the registry via ``plugin.<id>.<verb>``; ADR-007
-permits exactly these four suffixes. ``resolve_location`` is intentionally
+permits exactly these suffixes. ``resolve_location`` is intentionally
 NOT in this set — it is a built-in primitive a plugin cannot override
-(Q8-NO-ROOT-OVERRIDE).
+(Q8-NO-ROOT-OVERRIDE). ``subscribe`` is deferred until KOSMOS has a real
+app/push-notification runtime to own delivery.
 """
 
 

@@ -32,7 +32,7 @@
     },
     "tool_id": {
       "description": "Adapter identifier picked from the dynamically-injected <available_adapters> block. Must come from the candidate list — never guess.",
-      "pattern": "^([a-z][a-z0-9_]*|plugin\\.[a-z][a-z0-9_]*\\.(lookup|submit|verify|subscribe|resolve_location))$",
+      "pattern": "^([a-z][a-z0-9_]*|plugin\\.[a-z][a-z0-9_]*\\.(lookup|submit|verify|resolve_location))$",
       "title": "Tool Id",
       "type": "string"
     }

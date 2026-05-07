@@ -336,39 +336,6 @@
       "require_regex": ["Permission|권한|허용|거부|동의"]
     },
     {
-      "id": "SUBSCRIBE-CBS-DISASTER-001",
-      "priority": "P0",
-      "domain": "safety",
-      "focus": ["subscribe-primitive", "event-stream-rendering"],
-      "prompt_ko": "부산 사하구 재난문자 알림을 구독해줘",
-      "expected_chain": ["resolve_location", "subscribe", "mock_cbs_disaster_v1"],
-      "observe_regex": "구독 권한 요청|허용하시겠습니까|한 번만 허용|Permission",
-      "require_expanded_trace": true,
-      "decision_path": "Enter",
-      "decision_ready_regex": "구독 권한 요청|허용하시겠습니까|한 번만 허용|Permission",
-      "after_decision_regex": "mock_cbs_disaster_v1|구독|stream|event|subscription|완료|receipt|영수증"
-    },
-    {
-      "id": "SUBSCRIBE-PUBLIC-NOTICES-001",
-      "priority": "P1",
-      "domain": "civil_affairs",
-      "focus": ["rss-subscribe", "public-notice-flow"],
-      "prompt_ko": "부산 사하구청 공지사항 새 글 알림을 구독해줘",
-      "expected_chain": ["subscribe", "mock_rss_public_notices_v1"],
-      "observe_regex": "mock_rss_public_notices_v1",
-      "require_expanded_trace": true
-    },
-    {
-      "id": "SUBSCRIBE-REST-PULL-001",
-      "priority": "P2",
-      "domain": "utilities",
-      "focus": ["rest-pull-subscribe", "stream-close-rendering"],
-      "prompt_ko": "공공데이터 갱신 상태를 주기적으로 확인하는 알림을 만들어줘",
-      "expected_chain": ["subscribe", "mock_rest_pull_tick_v1"],
-      "observe_regex": "mock_rest_pull_tick_v1",
-      "require_expanded_trace": true
-    },
-    {
       "id": "NEG-UNKNOWN-LOCATION-001",
       "priority": "P0",
       "domain": "error_recovery",

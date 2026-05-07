@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Spec 1635 P4 UI L2 — T064 /config command (FR-030, US5).
 //
-// Opens the ConfigOverlay for non-secret settings.  Secret items that the
-// citizen selects are routed to EnvSecretIsolatedEditor.
+// Opens the ConfigOverlay for non-secret settings.
 // Emits kosmos.ui.surface=config at command start (FR-037).
 
 import { emitSurfaceActivation } from '../observability/surface.js';
@@ -13,7 +12,6 @@ import type { ConfigEntry } from '../components/config/ConfigOverlay.js';
 // ---------------------------------------------------------------------------
 
 // KOSMOS non-secret settings exposed in the overlay.
-// Secret keys have isSecret=true and route to EnvSecretIsolatedEditor.
 // Values are read from env at command time (never hardcoded).
 export const KOSMOS_CONFIG_CATALOG: Omit<ConfigEntry, 'value'>[] = [
   {
@@ -33,12 +31,6 @@ export const KOSMOS_CONFIG_CATALOG: Omit<ConfigEntry, 'value'>[] = [
     label_ko: '스트리밍 chunk 토큰 수',
     label_en: 'Streaming chunk token count',
     isSecret: false,
-  },
-  {
-    key: 'KOSMOS_FRIENDLI_TOKEN',
-    label_ko: 'FriendliAI API 키 (세션)',
-    label_en: 'FriendliAI API key (session)',
-    isSecret: true,
   },
   {
     key: 'KOSMOS_AGENT_MAILBOX_ROOT',

@@ -92,26 +92,6 @@ exports[`PrimitiveDispatcher — submit dispatches ok=false to SubmitErrorBanner
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯"
 `;
 
-exports[`PrimitiveDispatcher — subscribe dispatches closed=false to EventStream 1`] = `
-"┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ● Live [cbs] cbs_disaster_subscribe                                                              │
-│ 2026-04-19T00:00:01.00[KR:강풍경보] 서울특별시 전역에 강풍경보가 발령되었습니다. 순간최대풍속    │
-│ 0Z                    25m/s 예상.                                                                │
-│ 2026-04-19T00:01:00.00[KR:호우주의보] 경기도 남부 지역에 호우주의보가 발령되었습니다. 예상강수량 │
-│ 0Z                    80mm/6h.                                                                   │
-│ 2026-04-19T00:02:30.0[EN:WIND WARNING] Strong wind warning issued for Seoul. Peak gusts up to 25 │
-│ 00Z                  m/s expected.                                                               │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘"
-`;
-
-exports[`PrimitiveDispatcher — subscribe dispatches closed=true to StreamClosed 1`] = `
-"┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ■ Stream closed [exhausted] [cbs]                                                                │
-│ 3 events received                                                                                │
-│ Cursor: cbs-003                                                                                  │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘"
-`;
-
 exports[`PrimitiveDispatcher — verify dispatches ok=true to AuthContextCard 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ ✔ Verified                                                                                       │

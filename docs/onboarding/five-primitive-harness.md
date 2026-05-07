@@ -1,6 +1,6 @@
-# Onboarding: Five-Primitive Harness
+# Onboarding: Active Primitive Harness
 
-KOSMOS replaced an earlier eight-verb surface (`pay`, `issue_certificate`, `submit_application`, `reserve_slot`, `subscribe_alert`, `check_eligibility`, and two others) with five canonical primitives: `lookup`, `resolve_location`, `submit`, `subscribe`, and `verify`. The change mirrors how Claude Code distilled developer work to roughly five always-loaded verbs — not by copying Claude Code's exact verb names, but by applying the same empirical discovery method to citizen-government interaction. Domain specialisation now lives entirely in adapter modules (`src/kosmos/tools/<ministry>/<adapter>.py`), keeping the main LLM-visible surface ministry-agnostic. The rationale and six-layer architecture that motivates this design are in [`docs/vision.md`](../vision.md).
+KOSMOS replaced an earlier eight-verb surface (`pay`, `issue_certificate`, `submit_application`, `reserve_slot`, `subscribe_alert`, `check_eligibility`, and two others) with the active canonical primitives: `lookup`, `resolve_location`, `submit`, and `verify`. `subscribe` was removed from the active surface on 2026-05-07 after official 국민비서 references confirmed notification delivery belongs to authenticated mobile/app channels and push settings, not a CLI-only stream. Domain specialisation now lives entirely in adapter modules (`src/kosmos/tools/<ministry>/<adapter>.py`), keeping the main LLM-visible surface ministry-agnostic. The rationale and six-layer architecture that motivates this design are in [`docs/vision.md`](../vision.md).
 
 ---
 
@@ -10,7 +10,7 @@ The single source for step-by-step commands, environment setup, and smoke tests 
 
 **[`specs/031-five-primitive-harness/quickstart.md`](../../specs/031-five-primitive-harness/quickstart.md)**
 
-Do not replicate those steps here. If the quickstart is broken, fix it there.
+Do not replicate those steps here. Treat its `subscribe` material as historical until a future app/push runtime spec replaces it.
 
 ---
 
@@ -24,10 +24,9 @@ The table below is transcribed from [`specs/031-five-primitive-harness/research.
 | `lookup` (mode=`fetch`) | `src/tools/FileReadTool/` + `src/tools/WebFetchTool/` | Deterministic output, cache-friendly, idempotent | Structural port |
 | `resolve_location` | `src/tools/GlobTool/` | Deterministic resolver, one-shot, no side effects | Structural port |
 | `submit` | `src/tools/BashTool/` + `bashPermissions.ts` + `bashSecurity.ts` | Envelope `{tool_id, params}` → `{transaction_id, status, adapter_receipt}`; permission-gated side effects | Structural port (escalates to Pydantic AI + OpenAI Agents SDK guardrail for per-adapter schema) |
-| `subscribe` | `src/services/SessionMemory/` + `src/tools/shared/` async generator | `AsyncIterator[Event]` with `lifetime`; back-pressure native | Architecture port, Korean-domain data shape (escalates to AutoGen mailbox; 3GPP TS 23.041; RSS 2.0) |
 | `verify` | `src/services/oauth/` + `src/tools/McpAuthTool/` | Discriminated union over external credential families, delegation-only | Architecture port, Korean-domain tiers (escalates to OpenAI Agents SDK guardrail; Pydantic v2 discriminated union) |
 
-**Verdict from research.md**: `lookup`, `resolve_location`, `submit` are structural ports of CC tools. `subscribe` and `verify` are KOSMOS-net-new: they use CC's async-generator and delegation architecture but carry Korean-domain data shapes that CC has no concept of.
+**Verdict from research.md, revised 2026-05-07**: `lookup`, `resolve_location`, and `submit` are structural ports of CC tools. `verify` is KOSMOS-net-new and uses CC's delegation architecture for Korean identity tiers. `subscribe` is deferred until KOSMOS owns an app/push delivery runtime.
 
 ---
 
@@ -47,7 +46,7 @@ Spec 031 introduced a dual-axis security model documented in [`docs/security/too
 
 - [ ] Run `uv sync` and confirm `uv run pytest` exits 0.
 - [ ] Read the full quickstart: [`specs/031-five-primitive-harness/quickstart.md`](../../specs/031-five-primitive-harness/quickstart.md).
-- [ ] Understand the five-primitive surface from the spec: [`specs/031-five-primitive-harness/spec.md`](../../specs/031-five-primitive-harness/spec.md).
+- [ ] Understand the active primitive surface in code: `src/kosmos/primitives/__init__.py`.
 - [ ] When adding an adapter, follow the fail-closed defaults checklist in [`AGENTS.md § New tool adapter`](../../AGENTS.md).
 - [ ] PRs close the Epic issue (`Closes #EPIC`), not individual task sub-issues. See [`docs/conventions.md`](../conventions.md).
 

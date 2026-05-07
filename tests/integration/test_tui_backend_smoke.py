@@ -179,7 +179,7 @@ async def test_sc8_scenario1_ipc_frame_sequence() -> None:  # noqa: C901
     for event in collected_events:
         if event.type == "tool_use":
             # Only emit ToolCallFrame for primitive names that frame_schema accepts
-            primitive_names = {"lookup", "resolve_location", "submit", "subscribe", "verify"}
+            primitive_names = {"lookup", "resolve_location", "submit", "verify"}
             if event.tool_name in primitive_names:
                 frame = ToolCallFrame(
                     session_id=session_id,
@@ -203,7 +203,6 @@ async def test_sc8_scenario1_ipc_frame_sequence() -> None:  # noqa: C901
                     "lookup",
                     "resolve_location",
                     "submit",
-                    "subscribe",
                     "verify",
                 }:
                     result_tool_name = prev.tool_name

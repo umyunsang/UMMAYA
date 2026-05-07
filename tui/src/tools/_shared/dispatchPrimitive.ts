@@ -48,7 +48,7 @@ function _resolveTimeoutMs(override?: number): number {
 // ---------------------------------------------------------------------------
 
 export interface DispatchPrimitiveOpts {
-  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe'
+  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit'
   /** Forwarded verbatim into tool_call frame arguments (FR-009). */
   args: Record<string, unknown>
   /** From CC SDK Tool.call signature. */
@@ -75,7 +75,7 @@ export function _resetCheckpointState(): void {
 }
 
 function _maybeEmitCheckpoint(
-  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe',
+  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit',
   frame: ToolResultFrame,
 ): void {
   if (process.env['KOSMOS_SMOKE_CHECKPOINTS'] !== 'true') return
@@ -280,7 +280,7 @@ export async function dispatchPrimitive<O = unknown>(
   //
   // Classification rules (all OR'd, evaluated against ``inner`` only):
   //   - ``inner.family === "mismatch_error"`` — VerifyMismatchError dump.
-  //   - ``inner.kind === "error"`` — lookup / submit / subscribe error sentinel.
+  //   - ``inner.kind === "error"`` — lookup / submit error sentinel.
   //   - ``inner.reason ∈ {family_mismatch, scope_violation, coercion_violation}``
   //     — defense-in-depth: any adapter that emits a known-fatal reason code
   //     is classified as failure even if it forgot to set ``kind``/``family``.

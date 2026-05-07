@@ -19,7 +19,7 @@ import { useUiL2I18n } from '../../i18n/uiL2.js';
 // ---------------------------------------------------------------------------
 
 export type EnvSecretIsolatedEditorProps = {
-  /** The env-var key being edited, e.g. "KOSMOS_FRIENDLI_TOKEN" */
+  /** The env-var key being edited. */
   secretKey: string;
   /** Called with the new secret value after the citizen confirms */
   onConfirm: (key: string, newValue: string) => void;

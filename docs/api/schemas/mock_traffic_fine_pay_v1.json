@@ -13,13 +13,15 @@
   "description": "Typed params for the traffic fine payment adapter.\n\nMinistry-specific vocabulary lives HERE, not on the main SubmitInput envelope.\nAdapters validate params against this model at invocation time.\n\nSC-002: ``payment_method``, ``fine_reference`` are domain fields and MUST\nNOT appear on ``SubmitInput`` / ``SubmitOutput``.",
   "properties": {
     "fine_reference": {
-      "description": "Unique identifier for the traffic fine (e.g. 이의신청번호 or 고지서번호).",
+      "default": "MOCK-FINE-2026-001",
+      "description": "Unique identifier for the traffic fine (e.g. 이의신청번호 or 고지서번호). Mock default is used only when the citizen asks for the fixture flow without providing a real notice number.",
       "maxLength": 32,
       "minLength": 1,
       "title": "Fine Reference",
       "type": "string"
     },
     "payment_method": {
+      "default": "virtual_account",
       "description": "Payment channel for the fine settlement.",
       "enum": [
         "virtual_account",
@@ -30,10 +32,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "fine_reference",
-    "payment_method"
-  ],
   "title": "mock_traffic_fine_pay_v1",
   "type": "object"
 }

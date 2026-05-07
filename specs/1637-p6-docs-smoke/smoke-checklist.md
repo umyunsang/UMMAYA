@@ -15,7 +15,7 @@ bun run scripts/dump-tui-frames.tsx
 
 The script prints `[dump-tui-frames] N ok, M fail (out: ...)` and exits 0 if every surface rendered. Frames are deterministic — re-running the script must produce identical bytes per file (the only non-deterministic field is the `# Captured <timestamp>` comment header, which the validator ignores during diff review).
 
-## Surfaces dumped automatically (19 — target was 18)
+## Surfaces dumped automatically (18 active surfaces)
 
 | Step ID | Description | Pass criterion | Evidence | Result |
 |---|---|---|---|---|
@@ -31,7 +31,6 @@ The script prints `[dump-tui-frames] N ok, M fail (out: ...)` and exits 0 if eve
 | `primitive-lookup-fetch-timeseries` | `lookup` fetch-mode timeseries (KMA forecast) | Timestamp / Value (°C) header + 5 forecast rows | `visual-evidence/primitive-lookup-fetch-timeseries.txt` | ✓ |
 | `primitive-submit-receipt` | `submit` mock receipt (SubmitReceipt) | ✔ Submitted [MOCK: real_api_unreachable] + confirmation_id + Korean summary | `visual-evidence/primitive-submit-receipt.txt` | ✓ |
 | `primitive-verify-auth-context` | `verify` identity card (AuthContextCard) | ✔ Verified + identity + 금융인증서 + NIST AAL2 | `visual-evidence/primitive-verify-auth-context.txt` | ✓ |
-| `primitive-subscribe-stream` | `subscribe` CBS event stream (EventStream) | ● Live [cbs] header + 3 disaster events with timestamps | `visual-evidence/primitive-subscribe-stream.txt` | ✓ |
 | `onboarding-2-theme` | Onboarding step 2 — theme selector (UFO mascot + 3 options) | UFO ASCII mascot + 보라 팔레트 + dark/light/system options + step 2/5 dots | `visual-evidence/onboarding-2-theme.txt` | ✓ |
 | `onboarding-5-terminal` | Onboarding step 5 — terminal setup (4 a11y toggles) | 4 accessibility toggles + key hints + step 5/5 dots | `visual-evidence/onboarding-5-terminal.txt` | ✓ |
 | `slash-consent-issued` | `/consent` receipt-issued toast | ✻ 발급됨 + receipt ID | `visual-evidence/slash-consent-issued.txt` | ✓ |

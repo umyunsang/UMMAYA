@@ -4,7 +4,7 @@
 >
 > Any spec, ADR, or implementation decision must align with this vision. If a later insight contradicts it, update this file in the same pull request.
 >
-> **Migration status (2026-04-26)** — KOSMOS v0.1-alpha shipped. The six-Phase migration (P0 #1632 → P1+P2 #1633 → P3 #1634 → P4 #1847 → P5 #1927 → P6 #1637) completed under Initiative #1631. The harness migration described below is no longer aspirational: the LLM Harness pillar runs through FriendliAI Serverless + K-EXAONE with Claude Code's agent loop preserved; the Tool System pillar exposes 24 registry-bundled adapters across seven Korean ministries through `lookup` / `submit` / `verify` / `subscribe` primitives, all documented in [`docs/api/`](./api/) with Pydantic v2 envelopes and Draft 2020-12 JSON Schemas; the 5-tier plugin DX (Spec 1636) is open for external citizen and ministry contributors. Live API regression and the in-TUI marketplace browser are tracked as deferred follow-ups.
+> **Migration status (2026-04-26; primitive correction 2026-05-07)** — KOSMOS v0.1-alpha shipped. The six-Phase migration (P0 #1632 → P1+P2 #1633 → P3 #1634 → P4 #1847 → P5 #1927 → P6 #1637) completed under Initiative #1631. The harness migration described below is no longer aspirational: the LLM Harness pillar runs through FriendliAI Serverless + K-EXAONE with Claude Code's agent loop preserved; the Tool System pillar exposes active adapters across seven Korean ministries through `lookup` / `resolve_location` / `submit` / `verify` primitives, all documented in [`docs/api/`](./api/) with Pydantic v2 envelopes and Draft 2020-12 JSON Schemas; the 5-tier plugin DX (Spec 1636) is open for external citizen and ministry contributors. Live API regression, an app/push-notification runtime, and the in-TUI marketplace browser are tracked as deferred follow-ups.
 >
 > **Vision scope correction (2026-05-04)** — `data.go.kr` public APIs are one useful adapter family, not the product boundary. The target is national administrative and public-infrastructure AX: Hometax tax handling, Government24 civil-affairs submission, Wetax/local payments, certificates, mobile ID, simple authentication, public utility bills, welfare, healthcare, housing, education, labor, immigration, safety, and other citizen-facing state infrastructure exposed through one LLM-mediated execution surface.
 
@@ -12,7 +12,7 @@
 
 Turn fragmented national administrative and public-infrastructure channels into a single
 conversational execution surface where a citizen can ask for an outcome, not a portal. KOSMOS
-should route, verify, submit, pay, subscribe, or hand off across agencies and infrastructure
+should route, verify, submit, pay, or hand off across agencies and infrastructure
 operators without requiring the citizen to know which institution owns each step.
 
 `data.go.kr` is an important source of open and semi-open public data. It is not enough. The
@@ -35,7 +35,7 @@ KOSMOS:   discovers each bill source + itemizes amounts and deadlines
           + requests payment confirmation + executes only selected payments
 
 Citizen:  "부모님 지역에 폭염, 미세먼지, 정전, 단수 알림을 묶어서 받아보고 싶어."
-KOSMOS:   subscribes to public safety, environment, utility, and local notices
+KOSMOS:   identifies the official notification channels and handoff/app path
           while separating public area alerts from delegated personal records
 ```
 
@@ -50,7 +50,7 @@ KOSMOS's deeper claim is not "connect many public APIs." It is: **the Claude Cod
 |---|---|---|
 | Who is it for? | Software developers | Citizens using national infrastructure |
 | Tool surface | File system, shell, git, editors | National infrastructure channels: APIs, portals, identity rails, certificates, payments, utility operators, and official handoff paths |
-| Primitive verbs | Read, Edit, Bash, Grep, WebFetch | lookup, resolve_location, submit, subscribe, verify |
+| Primitive verbs | Read, Edit, Bash, Grep, WebFetch | lookup, resolve_location, submit, verify |
 | Permission concerns | Dangerous shell commands, file overwrites | PIPA (PII protection), identity verification, legal ordering |
 | Deployment | Developer laptop + IDE | Citizen laptop (TUI) → eventually mobile/web |
 
@@ -71,7 +71,7 @@ KOSMOS must apply the identical method to citizen-government interaction — not
 3. **Weight by empirical frequency and consequence.** Use annual transaction volume where available, but also weight rare high-consequence workflows such as disaster relief, immigration deadlines, tax submission, and identity issuance. `data.go.kr` usage metrics are only one input.
 4. **Distill to 6–8 always-loaded verbs.** Everything else is lazily discovered via `search_tools`. The upper bound matches Claude Code's cognitive budget for tool schemas in the system prompt.
 
-**Spec 031** executed this method and ratified a small set of domain-agnostic harness primitives — five (`lookup`, `resolve_location`, `submit`, `subscribe`, `verify`), mirroring Claude Code's ~5 always-loaded verbs. An earlier 8-verb proposal (with domain-tinted names such as `pay`, `issue_certificate`, `submit_application`, `reserve_slot`, `subscribe_alert`, `check_eligibility`) has been **retired** for leaking ministry knowledge into the main surface; domain specialization belongs in adapters (`src/kosmos/tools/<ministry>/<adapter>.py`), not in LLM-visible verb names. The method that produced the verb list is what is canonical — if a later survey contradicts a candidate, we re-run the method and update, rather than patching conclusions while keeping stale premises.
+**Spec 031** executed this method and originally ratified five domain-agnostic harness primitives. The active surface is now four (`lookup`, `resolve_location`, `submit`, `verify`). `subscribe` is deferred because official Korean notification delivery is anchored in authenticated app/mobile push channels, and KOSMOS does not yet own an app runtime that can receive or schedule push notifications. An earlier 8-verb proposal (with domain-tinted names such as `pay`, `issue_certificate`, `submit_application`, `reserve_slot`, `subscribe_alert`, `check_eligibility`) has been **retired** for leaking ministry knowledge into the main surface; domain specialization belongs in adapters (`src/kosmos/tools/<ministry>/<adapter>.py`), not in LLM-visible verb names. The method that produced the verb list is what is canonical — if a later survey contradicts a candidate, we re-run the method and update, rather than patching conclusions while keeping stale premises.
 
 The ambition above describes **what** this migration enables. The methodology here fixes **how we decide which tools serve it**. The six layers below describe **how the migration is structured**. All three serve the same thesis.
 
@@ -109,7 +109,7 @@ KOSMOS adapts architectural patterns from the conversational AI agent ecosystem 
 | `kosmos-plugin-store` GitHub org | Apache-2.0 | KOSMOS plugin catalog — Tier 1 template + 4 example repos + index. SLSA v1.0 provenance source URI prefix (Spec 1636 R-3 + ADR-008). |
 | slsa-framework/slsa-verifier | Apache-2.0 | Vendored Go binary (~10 MB) for SLSA v1.0 provenance verification at install time (Spec 1636 R-3 + ADR-008). |
 
-Spec 031 ratifies the 5-primitive surface; see `specs/031-five-primitive-harness/research.md § 1` for the CC primitive-mapping table.
+Spec 031 records the original primitive survey; the active primitive list lives in `src/kosmos/primitives/__init__.py`.
 
 ### What is original to KOSMOS
 
@@ -427,7 +427,7 @@ Representative conversations:
 4. **Birth and welfare bundle** — "아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘." → family registry, welfare, voucher, and insurance coordination
 5. **Housing transaction** — "전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 처리해줘." → document checks, risk flags, filing, guarantee handoff
 6. **Business start** — "카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로 처리해줘." → business, licensing, training, merchant, and tax sequence
-7. **Emergency and safety** — "집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 도와줘." → crisis-aware reporting, relief, inspection, and alert subscription
+7. **Emergency and safety** — "집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 도와줘." → crisis-aware reporting, relief, inspection, and official notification-channel handoff
 8. **Personal-data rights** — "정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘." → cross-agency data inventory, correction request, consent tracking
 
 These are acceptance tests for the end-state direction. Current-code scenarios may be smaller,

@@ -22,8 +22,8 @@
 |---|---|---|---|---|
 | `user_input` | `frame_schema.py:194-199` | TUI→backend | — | LIVE |
 | `assistant_chunk` | `frame_schema.py:206-215` | LLM 스트리밍 | `tui/src/ipc/codec.ts` | LIVE |
-| `tool_call` | `frame_schema.py:222-233` | 5-primitive (lookup·resolve_location·submit·subscribe·verify) | LIVE | demo at `ipc/demo/full_turn_probe.py:65-75` |
-| `tool_result` | `frame_schema.py:250-258` | LIVE | LIVE | `ToolResultEnvelope` 5-primitive union |
+| `tool_call` | `frame_schema.py:222-233` | active primitives (lookup·resolve_location·submit·verify) | LIVE | demo at `ipc/demo/full_turn_probe.py:65-75` |
+| `tool_result` | `frame_schema.py:250-258` | LIVE | LIVE | active primitive union |
 | `coordinator_phase` | `frame_schema.py:265-274` | **0 emit** | `tui/src/ipc/codec.ts:265-268` | dead arm |
 | `worker_status` | `frame_schema.py:281-297` | **0 emit** | `AgentVisibilityPanel` ready | dead arm |
 | `permission_request` | `frame_schema.py:304-324` | partial (`agents/consent.py`) | TUI 모달 | 1978 deferred |
@@ -34,7 +34,7 @@
 | `backpressure` | `ipc/backpressure.py:298-403` | LIVE | LIVE | tui_reader_saturated / writer_congested / upstream_429 |
 | `resume_*` (3) | `frame_schema.py:520-580` | LIVE | LIVE | request/response/rejected |
 | `heartbeat` | `frame_schema.py:585-600` | LIVE | LIVE | Spec 032 |
-| `notification_push` | `frame_schema.py:605-622` | LIVE | LIVE | subscribe primitive |
+| `notification_push` | `frame_schema.py:605-622` | DEFERRED | DEFERRED | Requires a future app/push-notification runtime |
 | **`plugin_op`** | `frame_schema.py:629-786` | request arm only TUI→backend | partial | progress/complete dead |
 
 > Epic #1978 deferred (`#2068`/`#2069`/`#2070`/`#2071`)는 모두 OPEN로 남아있으며 본 결정에는 영향 없음.
@@ -85,7 +85,7 @@
 | `lookup` | `src/kosmos/tools/lookup.py` | ACTIVE · BM25 search + typed fetch |
 | `resolve_location` | `src/kosmos/tools/resolve_location.py` | ACTIVE · geocoding |
 | `submit` | `src/kosmos/primitives/submit.py` | ACTIVE · Spec 031 US1 |
-| `subscribe` | `src/kosmos/primitives/subscribe.py` | ACTIVE · Spec 031 US3 |
+| `subscribe` | — | DEFERRED · app/push runtime required |
 | `verify` | `src/kosmos/primitives/verify.py` | ACTIVE · Spec 031 US2 |
 
 활성 어댑터 14종 (`src/kosmos/tools/register_all.py:51-65`):
@@ -186,7 +186,7 @@ Initiative #1631
 2. **VC 2.0 envelope on verify primitive** — 어느 plugin DX도 verify를 W3C 표준 envelope으로 wrap하지 않았다. 한국 공공 + EUDI Wallet 호환성은 학술 contribution.
 3. **RFC 9396 RAR로 Layer 3 권한 인코딩** — receipt JCS canonical JSON에 `authorization_details` 추가, MCP RAR 미채택 영역 선도.
 4. **`engines.kosmos` 호환성 필드** — 현 manifest는 plugin semver만, host 호환성 미선언 (VSCode 패턴 차용).
-5. **proposed-API 게이트** — 신규 primitive verb (subscribe 확장 등) marketplace 게시 차단 + opt-in 발행.
+5. **proposed-API 게이트** — 신규 primitive verb marketplace 게시 차단 + opt-in 발행. `subscribe` is deferred until app/push delivery exists.
 6. **OS-level sandbox** (Copilot agent 2026 패턴) — PII 처리 plugin은 process-level isolation 권고.
 
 ### 3.2 Agent Swarm (#1980 적용)
@@ -276,7 +276,7 @@ Initiative #1631
 
 1. **US1**: `/plugin install seoul-subway` 시 backend dispatcher가 `plugin_op` request 수신 → installer 8-phase 진행 → progress emit 매 phase → complete emit (≤30s SC-005 보장)
 2. **US2**: 설치 직후 다음 chat turn에서 LLM tool inventory에 `plugin.seoul-subway.*` 노출 — 1978 ChatRequestFrame에 합류 검증
-3. **US3**: 시민 자연어 → BM25 lookup이 plugin tool 매칭 → 5-primitive로 invoke → permission gauntlet 정상 작동 (PIPA §26 ack flow)
+3. **US3**: 시민 자연어 → BM25 lookup이 plugin tool 매칭 → active primitive로 invoke → permission gauntlet 정상 작동 (PIPA §26 ack flow)
 4. **US4**: TUI plugin browser ⏺/○ Space i r a 키바인딩 활성화 (UI-E.3)
 5. **US5**: 실패 path — SLSA verification 실패 / PIPA ack 미동의 / install timeout > 30s 각 시나리오
 6. **US6**: PTY-driven E2E rehearsal (install → next turn invoke) without manual intervention

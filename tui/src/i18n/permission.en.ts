@@ -20,7 +20,6 @@ const permissionEn: PermissionI18nEn = {
   verifyModalTitle: 'Identity Verification — Permission Required',
   submitModalTitle: (isIrreversible) =>
     isIrreversible ? 'Irreversible Submission — Permission Required' : 'Submit — Permission Required',
-  subscribeModalTitle: 'Subscription — Permission Required',
 
   // Modal bodies
   verifyModalBody: (toolName) =>
@@ -37,11 +36,6 @@ const permissionEn: PermissionI18nEn = {
       : `"${toolName}" wants to submit a government-service request. ` +
         'Your request data will be forwarded to the relevant agency. ' +
         '(PIPA §22-2 — Disclosure obligation)',
-
-  subscribeModalBody: (toolName) =>
-    `"${toolName}" wants to start a real-time notification subscription. ` +
-    'Data will be continuously received while the subscription is active. ' +
-    '(PIPA §22-2 — Disclosure obligation)',
 
   // Layer labels
   layer1Label: 'Low risk (Layer 1)',

@@ -16,7 +16,7 @@ import type { ToolResultFrame } from '../../ipc/frames.generated.js'
 
 export interface PendingCall {
   callId: string
-  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe'
+  primitive: 'lookup' | 'resolve_location' | 'verify' | 'submit'
   resolve: (frame: ToolResultFrame) => void
   reject: (err: Error) => void
   timeoutHandle: ReturnType<typeof setTimeout>

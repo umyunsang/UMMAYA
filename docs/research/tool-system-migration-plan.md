@@ -1,6 +1,6 @@
 # KOSMOS Tool System Migration Plan
 
-> Scope: Close the structural gap between Claude Code 2.1.88 (CC) Tool system and KOSMOS public-API harness. Preserve harness invariants (5-primitive envelope, Pydantic v2 schemas, Layer-3 auth gate) while porting CC file layout, deferred-loading mechanism, and per-tool Result components.
+> Scope: Close the structural gap between Claude Code 2.1.88 (CC) Tool system and KOSMOS public-API harness. Preserve harness invariants (active primitive envelope, Pydantic v2 schemas, Layer-3 auth gate) while porting CC file layout, deferred-loading mechanism, and per-tool Result components.
 >
 > Authored by: Software Architect (Opus) · 2026-04-23 · Read-only investigation
 
@@ -10,8 +10,8 @@
 
 **Core findings**
 1. KOSMOS already has a **more rigorous security model than CC** (V1–V6 validators on `GovAPITool`, dual auth dispatch with Layer-3 gate in `executor.invoke`), but its tool surface layout diverges from CC sharply: CC groups *all* assets for a tool under `src/tools/<ToolName>/{Tool.ts, UI.tsx, prompt.ts, …}`, whereas KOSMOS groups by **ministry** (`src/kosmos/tools/{koroad,kma,hira,…}`) with **no per-tool UI** in the TUI layer. The TUI renders everything through one generic `PrimitiveDispatcher` (`tui/src/components/primitive/index.tsx:139`).
-2. The **main-tool router is already primitive-first**: the LLM sees only `resolve_location` + `lookup` (mvp_surface); submit/subscribe/verify are standalone primitives under `src/kosmos/primitives/`. This matches the *main_verb = primitive* rule and is ahead of CC conceptually — CC's Tool interface is still per-verb (Read, Bash, Edit, …).
-3. **Live-capable adapters today**: 10 real HTTP-calling adapters (KOROAD×2, KMA×6, HIRA×1) + 1 composite, plus 2 **Layer-3-gated stubs** (NMC, NFA 119, MOHW/SSIS) that are wired into the registry but intentionally return `LookupError(auth_required)` until personal-data auth is provisioned. Mock adapters (`src/kosmos/tools/mock/`) cover the *submit/subscribe/verify* primitives — all evidence-backed under `docs/mock/` per the Mock-vs-Scenario rule.
+2. The **main-tool router is already primitive-first**: the LLM sees `resolve_location`, `lookup`, `submit`, and `verify`. This matches the *main_verb = primitive* rule and is ahead of CC conceptually — CC's Tool interface is still per-verb (Read, Bash, Edit, …).
+3. **Live-capable adapters today**: 10 real HTTP-calling adapters (KOROAD×2, KMA×6, HIRA×1) + 1 composite, plus 2 **Layer-3-gated stubs** (NMC, NFA 119, MOHW/SSIS) that are wired into the registry but intentionally return `LookupError(auth_required)` until personal-data auth is provisioned. Mock adapters (`src/kosmos/tools/mock/`) cover the active *submit/verify* primitives — all evidence-backed under `docs/mock/` per the Mock-vs-Scenario rule. `subscribe` is deferred until KOSMOS owns an app/push delivery runtime.
 4. CC's **per-tool file bundle** (`UI.tsx`, `prompt.ts`, `permissions logic`, `ToolSearch searchHint`, preapproved hostnames) has **no KOSMOS analogue** today — the closest we have is `llm_description` on `GovAPITool` and a 16-file shared `primitive/` directory. This is the biggest structural gap for Epic #287 "90% file-layout match".
 5. **Deferred tool loading** (ToolSearch) is idiomatic in CC — `shouldDefer=true` tools ship with stub schemas and require an explicit `ToolSearchTool` call to load. KOSMOS's `lookup(mode="search")` is *equivalent in behaviour* but *inequivalent in shape* — it produces `LookupSearchResult.candidates` rather than a schema-hydration side effect.
 
@@ -39,8 +39,8 @@ src/kosmos/tools/                  (70 .py files)
 ├── retrieval/            backend.py · bm25_backend.py · dense_backend.py · hybrid.py · degrade.py · manifest.py
 └── ssis/                 1 adapter + codes.py
 
-src/kosmos/primitives/             5 files
-├── submit.py · subscribe.py · verify.py · _errors.py · __init__.py
+src/kosmos/primitives/
+├── submit.py · verify.py · _errors.py · __init__.py
 
 src/kosmos/permissions/            ~25 files incl. pipeline_v2.py, modes.py, ledger.py, steps/
 
@@ -50,17 +50,16 @@ tui/src/components/primitive/     18 .tsx files (850 LOC total)
 
 **Total python tool-surface LOC** (excluding tests): 70 files, roughly 10–12k LOC.
 
-### 2.2 Main-tool envelope (primitive-first, 5-verb)
+### 2.2 Main-tool envelope (primitive-first, active surface)
 
 | Primitive | Entry point | Shape | Code |
 |-----------|-------------|-------|------|
 | `lookup` | `kosmos.tools.lookup.lookup(inp)` | `LookupInput` discriminated on `mode` → `LookupOutput` (5 variants) | `src/kosmos/tools/lookup.py:33` |
 | `resolve_location` | `mvp_surface.RESOLVE_LOCATION_TOOL` | `ResolveLocationInput` → `ResolveLocationOutput` (6 variants) | `src/kosmos/tools/mvp_surface.py:47` / `src/kosmos/tools/resolve_location.py` |
 | `submit` | `kosmos.primitives.submit.submit(tool_id, params)` | `SubmitInput` → `SubmitOutput` (deterministic `transaction_id`) | `src/kosmos/primitives/submit.py:410` |
-| `subscribe` | `kosmos.primitives.subscribe.subscribe(tool_id, params)` | `SubscribeInput` → `SubscriptionHandle` + event stream | `src/kosmos/primitives/subscribe.py` |
 | `verify` | `kosmos.primitives.verify.verify(family, session_context)` | `VerifyInput` → discriminated `DigitalOnepassContext | … | VerifyError` | `src/kosmos/primitives/verify.py` |
 
-Every dispatcher owns its own in-process registry (`_ADAPTER_REGISTRY`) parallel to the main `ToolRegistry`, so adapter registration is **primitive-scoped** (`register_submit_adapter`, `register_subscribe_adapter`, `register_verify_adapter`) at import time — `src/kosmos/primitives/submit.py:149`. The legacy `GovAPITool` + `ToolExecutor` path handles `lookup(mode="fetch")` via BM25 retrieval then typed Pydantic invocation.
+Every dispatcher owns its own in-process registry (`_ADAPTER_REGISTRY`) parallel to the main `ToolRegistry`, so adapter registration is **primitive-scoped** (`register_submit_adapter`, `register_verify_adapter`) at import time — `src/kosmos/primitives/submit.py:149`. The legacy `GovAPITool` + `ToolExecutor` path handles `lookup(mode="fetch")` via BM25 retrieval then typed Pydantic invocation.
 
 **Key invariant**: `LookupInput.tool_id` is the single routing key; `params: dict[str, object]` is opaque at the envelope layer and validated against `adapter.input_schema` only at invocation time (`src/kosmos/tools/executor.py:206`). This is the *shape-only harness* contract from Spec 031 — the main tool never names a ministry.
 
@@ -69,7 +68,7 @@ Every dispatcher owns its own in-process registry (`_ADAPTER_REGISTRY`) parallel
 Two registries coexist:
 
 1. **`ToolRegistry`** (`src/kosmos/tools/registry.py:164`) — holds every `GovAPITool` instance used by `lookup(mode="fetch")`. Builds a `Retriever` (BM25 by default, dense-embeddings via `KOSMOS_RETRIEVAL_BACKEND`) so `lookup(mode="search")` can rank adapters by Korean+English `search_hint`. Includes a `register()` backstop for V3/V6 security invariants that defends against `model_construct` bypasses (`registry.py:220-…`).
-2. **Primitive registries** — one dict per primitive (`_ADAPTER_REGISTRY` in `submit.py`, `subscribe.py`, `verify.py`), populated at adapter-module import. First-wins on `tool_id` collision (`AdapterIdCollisionError`, Spec 031 FR-020, `submit.py:169`).
+2. **Primitive registries** — one dict per active primitive (`_ADAPTER_REGISTRY` in `submit.py`, `_VERIFY_ADAPTERS` in `verify.py`), populated at adapter-module import. First-wins on `tool_id` collision (`AdapterIdCollisionError`, Spec 031 FR-020, `submit.py:169`).
 
 Both paths share `AdapterRegistration` (Spec 031, `registry.py:93`) as the metadata schema — `(primitive, published_tier_minimum, nist_aal_hint, auth_type, auth_level, pipa_class, is_irreversible, dpa_reference, nonce)`.
 
@@ -99,16 +98,15 @@ Composite tools have been removed (Epic #1634); the LLM now chains primitive ada
 Mock-only (under `mock/`, evidence in `docs/mock/<system>/`):
 - **verify primitive**: `mock_verify_digital_onepass`, `mock_verify_ganpyeon_injeung`, `mock_verify_geumyung_injeungseo`, `mock_verify_gongdong_injeungseo`, `mock_verify_mobile_id`, `mock_verify_mydata` — shape-mirror of OpenDID / PASS / 공동인증서 / 모바일신분증 / MyData APIs. (`src/kosmos/tools/mock/verify_*.py`).
 - **submit primitive**: `mock_traffic_fine_pay_v1` (data_go_kr), `mock_welfare_application_submit_v1` (mydata). (`mock/data_go_kr/fines_pay.py:1`, `mock/mydata/welfare_application.py:1`).
-- **subscribe primitive**: `mock_cbs_disaster_v1` (3GPP CBS byte mirror, `mock/cbs/disaster_feed.py:1`), `mock_rest_pull_tick_v1`, `mock_rss_public_notices_v1` (`mock/data_go_kr/rss_notices.py`).
+- **subscribe primitive**: removed from active code. National alert/RSS delivery requires a future app/push runtime.
 
-### 2.5 5-primitive TUI renderer layout
+### 2.5 Active primitive TUI renderer layout
 
 `tui/src/components/primitive/` (18 files, 850 LOC). Single entry `PrimitiveDispatcher` (`index.tsx:139`) switches on `payload.kind` (5 arms + Unknown) and sub-dispatches:
 
 - `lookup` → subtype discriminator → {PointCard, TimeseriesTable, CollectionList, DetailView, ErrorBanner}.
 - `resolve_location` → renders subset of {CoordPill, AdmCodeBadge, AddressBlock, POIMarker}.
 - `submit` → ok? SubmitReceipt : SubmitErrorBanner.
-- `subscribe` → closed? StreamClosed : EventStream.
 - `verify` → ok? AuthContextCard : AuthWarningBanner.
 - Unknown `kind` → `UnrecognizedPayload` (FR-033 harness discipline: never guess).
 
@@ -207,7 +205,7 @@ Legend — **Impact**: L = low (cosmetic, optional), M = medium (requires refact
 | # | Concern | CC approach | KOSMOS today | Gap | Impact |
 |---|---------|-------------|--------------|-----|--------|
 | G1 | Tool layout | 1 dir per tool, 6–18 files, colocated | 1 dir per ministry, 1 py per adapter, no per-tool dir | KOSMOS has **no per-tool dir** | **H** |
-| G2 | Tool interface | Single `Tool<Input,Output,P>` with 40+ optional methods | `GovAPITool` pydantic record + external `ToolExecutor` callable | No unified TS-facing interface; KOSMOS has 5 primitive dispatchers instead | **M** (by design, aligns with main-verb-primitive) |
+| G2 | Tool interface | Single `Tool<Input,Output,P>` with 40+ optional methods | `GovAPITool` pydantic record + external `ToolExecutor` callable | No unified TS-facing interface; KOSMOS has active primitive dispatchers instead | **M** (by design, aligns with main-verb-primitive) |
 | G3 | Input schema | Zod `lazySchema()` (TS, single language) | Pydantic v2 (Python only) | Backend/TUI schema sharing relies on `inputSchema.model_json_schema()` → `to_openai_tool()` | M |
 | G4 | Output schema | Optional Zod | Pydantic v2 discriminated union (5 variants for lookup, 6 for resolve_location, 4 for verify) | KOSMOS stricter; migration should keep KOSMOS discriminators | L |
 | G5 | Permission gate | `tool.checkPermissions(input, ctx)` + `useCanUseTool` | Layer-3 gate in `ToolExecutor.invoke` + Spec 033 pipeline_v2 external to adapter | KOSMOS centralises; CC is per-tool. Port CC's `checkPermissions()` **optional** hook per adapter so tools can declare preapproved values (e.g. domain whitelist for WebFetch-style citizen services) | M |
@@ -216,7 +214,7 @@ Legend — **Impact**: L = low (cosmetic, optional), M = medium (requires refact
 | G8 | Error rendering | `renderToolUseErrorMessage(result, opts)` per tool | Single `ErrorBanner` / `SubmitErrorBanner` / `AuthWarningBanner` | Per-adapter hints (e.g. "KOROAD year < 2019 → use …") | L |
 | G9 | Deferred loading | `shouldDefer=true` + `ToolSearchTool({query:"select:X"})` schema hydration | `lookup(mode="search")` returns ranked candidates, `lookup(mode="fetch")` runs adapter | Semantically equivalent; syntactically not. Keep KOSMOS envelope; **do not** port CC's `shouldDefer` flag — the main-verb primitive supersedes it | L |
 | G10 | Audit | Not enforced at the interface (CC is developer-domain, low-stakes) | `ToolCallAuditRecord` schema I1-I4; `GovAPITool` V1-V6 validators; Layer-3 gate | KOSMOS stricter — no port needed. Keep | L |
-| G11 | Streaming | `onProgress?: ToolCallProgress<P>` callback + `renderToolUseProgressMessage` | No adapter-level streaming; `subscribe` primitive handles event feeds separately | Different model (subscribe-as-primitive vs inline progress). Keep KOSMOS split | L |
+| G11 | Streaming | `onProgress?: ToolCallProgress<P>` callback + `renderToolUseProgressMessage` | No active adapter-level streaming | Future app/push runtime required before notification streams return | L |
 | G12 | `userFacingName` | Per-tool function | `name_ko` field on `GovAPITool` | Port — add `userFacingNameForAdapter(tool_id, partialInput)` to the KOSMOS bridge layer for consistency | L |
 | G13 | Search hint | `searchHint?: string` (free-text) | `search_hint: str` (bilingual Korean+English required) | KOSMOS stricter — keep; extend schema to `{ko: list[str], en: list[str]}` already used by `AdapterRegistration.search_hint` | L |
 | G14 | Tool result size | `maxResultSizeChars` with auto-persist to disk | Safety detector+redactor runs, but no spill-to-disk policy | Port CC's spill policy if we add tools with large payloads (e.g. SSIS welfare PDFs) | L |
@@ -246,7 +244,6 @@ Evidence: `.env.example:1-30` (keys KOSMOS currently holds), `register_all.py:33
 | NFA 119 (소방청) | `nfa_emergency_info_service` | EmergencyInformationService public endpoints | **live-gated stub** | 4 — 4 sub-operations documented on data.go.kr |
 | MOHW / SSIS (복지로) | `mohw_welfare_eligibility_search` | NationalWelfarelistV001 XML spec (v2.2 §1.1) | **live-gated stub** | 4 — XML shape stable, fixtures recordable |
 | KFTC MyData | (mock only) `mock_welfare_application_submit_v1` | MyData v2.0 2024-09-30 spec | Mock (shape-mirror) | 5 — public KFTC spec; `docs/mock/mydata/README.md` |
-| CBS disaster feed (NDMI/KPAS) | (mock only) `mock_cbs_disaster_v1` | 3GPP TS 23.041 | Mock (byte-mirror) | 5 — 3GPP TS 23.041 fully public |
 | data_go_kr traffic fine pay | (mock only) `mock_traffic_fine_pay_v1` | data_go_kr REST gateway | Mock (shape-mirror) | 4 — sandbox access requires agency approval |
 | Digital Onepass + PASS/Kakao/Naver/Toss 간편인증 + 공동/금융인증서 + 모바일신분증 + MyData verify | `mock_verify_*` (6 adapters) | OmniOne OpenDID Apache-2.0 + published-tier docs | Mock (shape-mirror) | 4 — OpenDID OSS available, non-credentialed delegation |
 | 정부24 제출 | **scenario only** | Not publicly disclosed | `docs/scenarios/gov24_submission.md` | 1 — OPAQUE, never mock |
@@ -261,7 +258,7 @@ Evidence: `.env.example:1-30` (keys KOSMOS currently holds), `register_all.py:33
 |-------|----------|-------|
 | **Live (CI-skipped, live on user machine)** | KOROAD×2, KMA×6, HIRA×1, composite×1 | 10 |
 | **Live-gated stub** (Layer-3 refuses until auth issued) | nmc_emergency_search, nfa_emergency_info_service, mohw_welfare_eligibility_search | 3 |
-| **Mock (byte/shape-mirror, evidence-backed)** | mock_verify×6, mock_traffic_fine_pay_v1, mock_welfare_application_submit_v1, mock_cbs_disaster_v1, mock_rss_public_notices_v1, mock_rest_pull_tick_v1 | 11 |
+| **Mock (byte/shape-mirror, evidence-backed)** | mock_verify×6, mock_traffic_fine_pay_v1, mock_welfare_application_submit_v1 | 8 |
 | **Scenario (OPAQUE, no adapter)** | gov24_submission, kec_xml_signature, npki_portal_session | 3 |
 
 ---
@@ -298,7 +295,7 @@ Introduce a TypeScript protocol in `tui/src/tools/KosmosTool.ts` (new file, **no
 export interface KosmosTool<Payload extends PrimitivePayload = PrimitivePayload> {
   readonly tool_id: string                    // e.g. 'koroad_accident_hazard_search'
   readonly name_ko: string                    // GovAPITool.name_ko
-  readonly primitive: 'lookup' | 'resolve_location' | 'submit' | 'subscribe' | 'verify'
+  readonly primitive: 'lookup' | 'resolve_location' | 'submit' | 'verify'
   readonly searchHint?: string                // derived from GovAPITool.search_hint
   userFacingName(input: Partial<Record<string,unknown>> | undefined): string
   getToolUseSummary?(input: Partial<Record<string,unknown>> | undefined): string | null
@@ -370,7 +367,6 @@ Dependencies: T1–T7 are independent. (An early Wave C-2.1 included a port of a
 |------|-------|-------|
 | T12: Add per-mock `UI.tsx` renderers for `mock_verify_*` (6 adapters) | Sonnet-A | 6 tsx + 1 registry |
 | T13: Add per-mock `UI.tsx` for `mock_traffic_fine_pay_v1` / `mock_welfare_application_submit_v1` | Sonnet-B | 2 tsx + 1 registry |
-| T14: Add per-mock `UI.tsx` for `mock_cbs_disaster_v1` / `mock_rss_public_notices_v1` / `mock_rest_pull_tick_v1` | Sonnet-C | 3 tsx + 1 registry |
 
 Mock python modules remain in `src/kosmos/tools/mock/<ministry>/` — evidence docs at `docs/mock/<system>/README.md` are ministry-scoped and rebundling would break the mock-drift fixture recording process.
 
@@ -445,7 +441,7 @@ Revised Wave C-2.0 (prerequisite, 2 Teammates):
 | Rule | Compliance |
 |------|------------|
 | **Harness not reimpl** | Plan preserves `GovAPITool` + primitive dispatchers; new layout is file-relocation + TS bridge, not a reimplementation. NMC/NFA/MOHW stay Layer-3 gated — no live-auth backfill attempted here. |
-| **Main verb = primitive** | Main surface stays `resolve_location` + `lookup` + `submit` + `subscribe` + `verify`. Ministry-specific vocabulary lives in adapters only. New per-adapter UI.tsx is rendering-only; it does not leak ministry shape into the envelope. |
+| **Main verb = primitive** | Main surface stays `resolve_location` + `lookup` + `submit` + `verify`; `subscribe` is deferred until app/push delivery exists. Ministry-specific vocabulary lives in adapters only. New per-adapter UI.tsx is rendering-only; it does not leak ministry shape into the envelope. |
 | **Mock evidence-based** | Live/Mock/Scenario matrix in §5 cites public specs per row. No adapter proposed without verified public shape. Scores ≥ 4 all carry a link in `.env.example` / `docs/mock/<system>/README.md`. |
 | **Mock vs Scenario** | Six `docs/mock/` systems retained (data_go_kr, cbs, mydata, barocert, omnione, npki_crypto). Three OPAQUE items (gov24 / kec xml signature / npki portal session) remain in `docs/scenarios/` only, with no adapter proposed. |
 | **No hardcoding** | The LLM continues to drive tool choice via `lookup(mode="search")`. Per-tool `searchHint` stays a bilingual metadata field (`GovAPITool.search_hint`), not a static keyword router. No new static tokenisers / salvage code proposed. |

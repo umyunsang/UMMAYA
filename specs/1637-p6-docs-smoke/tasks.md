@@ -36,7 +36,7 @@ KOSMOS monorepo:
 
 **Purpose**: directory tree for the new `docs/api/` catalog.
 
-- [ ] T001 Create `docs/api/` directory tree per plan.md "Source Code (repository root)" section: `docs/api/{koroad,kma,hira,nmc,nfa119,mohw,verify,submit,subscribe,resolve_location,schemas}/` (use `mkdir -p`); leave directories empty pending US1 spec authoring.
+- [ ] T001 Create `docs/api/` directory tree per plan.md "Source Code (repository root)" section: `docs/api/{koroad,kma,hira,nmc,nfa119,mohw,verify,submit,resolve_location,schemas}/` (use `mkdir -p`); leave directories empty pending US1 spec authoring.
 
 ---
 
@@ -52,16 +52,16 @@ KOSMOS monorepo:
 
 ## Phase 3: User Story 1 — Citizen developer discovers and understands every registered KOSMOS adapter from a single index (Priority: P1) 🎯 MVP
 
-**Goal**: produce the canonical `docs/api/` catalog: 24 adapter specs (12 Live + 11 Mock + 1 resolve_location), 24 JSON Schema exports, 1 root index, 1 deterministic build script, and absorb the legacy `docs/tools/` directory.
+**Goal**: produce the canonical `docs/api/` catalog for active adapters, JSON Schema exports, 1 root index, 1 deterministic build script, and absorb the legacy `docs/tools/` directory. Subscribe specs are deferred until an app/push-notification runtime exists.
 
-**Independent Test**: a contributor opens `docs/api/README.md` cold and locates any of the 24 adapter specs in under 30 seconds with all seven mandatory fields populated and a Draft 2020-12 JSON Schema present (per `specs/1637-p6-docs-smoke/quickstart.md`).
+**Independent Test**: a contributor opens `docs/api/README.md` cold and locates any active adapter spec in under 30 seconds with all seven mandatory fields populated and a Draft 2020-12 JSON Schema present (per `specs/1637-p6-docs-smoke/quickstart.md`).
 
 ### Implementation for User Story 1
 
 #### Build script (acceptance gate for SC-002)
 
 - [ ] T002 [US1] Implement `scripts/build_schemas.py` per `specs/1637-p6-docs-smoke/contracts/build-schemas-cli.md`: walks `kosmos.tools.register_all`, calls `Model.model_json_schema(mode='validation', ref_template='#/$defs/{model}')` per envelope, wraps with Draft 2020-12 `$schema` + `$id` + `title` + `$defs`, writes deterministically with `json.dumps(..., sort_keys=True, indent=2, ensure_ascii=False)`, supports `--check` / `--output-dir` / `--quiet` flags. Stdlib + Pydantic v2 only.
-- [ ] T003 [US1] Run `python scripts/build_schemas.py --output-dir docs/api/schemas` to generate 24 JSON files; verify `python scripts/build_schemas.py --check` returns exit 0 (idempotency gate per FR-007 / SC-002). Depends on T002.
+- [ ] T003 [US1] Run `python scripts/build_schemas.py --output-dir docs/api/schemas` to generate active JSON files; verify `python scripts/build_schemas.py --check` returns exit 0 (idempotency gate per FR-007 / SC-002). Depends on T002.
 
 #### Live tier adapter specs (12 — parallel by file)
 
@@ -92,12 +92,6 @@ KOSMOS monorepo:
 - [ ] T022 [P] [US1] Author `docs/api/submit/traffic_fine_pay.md` for `mock_traffic_fine_pay_v1`; cite envelope at `src/kosmos/tools/mock/data_go_kr/fines_pay.py`; cite public-spec source.
 - [ ] T023 [P] [US1] Author `docs/api/submit/welfare_application.md` for `mock_welfare_application_submit_v1`; cite envelope at `src/kosmos/tools/mock/mydata/welfare_application.py`; cite public-spec source.
 
-#### Mock subscribe adapter specs (3 — parallel by file)
-
-- [ ] T024 [P] [US1] Author `docs/api/subscribe/cbs_disaster.md` for `mock_cbs_disaster_v1`; cite envelope at `src/kosmos/tools/mock/cbs/disaster_feed.py`; cite public-spec source.
-- [ ] T025 [P] [US1] Author `docs/api/subscribe/rss_public_notices.md` for `mock_rss_public_notices_v1`; cite envelope at `src/kosmos/tools/mock/data_go_kr/rss_notices.py`; cite public-spec source.
-- [ ] T026 [P] [US1] Author `docs/api/subscribe/rest_pull_tick.md` for `mock_rest_pull_tick_v1`; cite envelope at `src/kosmos/tools/mock/data_go_kr/rest_pull_tick.py`; cite public-spec source.
-
 #### Meta-tool spec
 
 - [ ] T027 [P] [US1] Author `docs/api/resolve_location/index.md` describing the `resolve_location` meta-tool with juso / sgis / kakao backends as variants; cite `src/kosmos/tools/resolve_location.py` plus the three backend modules under `src/kosmos/tools/geocoding/`.
@@ -106,9 +100,9 @@ KOSMOS monorepo:
 
 - [ ] T028 [US1] Author `docs/api/README.md` AdapterIndex per data-model.md § 2: introduction paragraph + Matrix A (by source) + Matrix B (by primitive) + "How to use this catalog" 3-step recipe; every row links to the AdapterSpec and the JSON Schema. Depends on T003 (schemas exist) and T004–T027 (specs exist).
 - [ ] T029 [US1] Migrate legacy `docs/tools/` content into `docs/api/` per research.md § R5 mapping; delete `docs/tools/road-risk-score.md`; merge `docs/tools/kma.md` into `docs/api/kma/README.md`; merge `docs/tools/koroad.md` into `docs/api/koroad/README.md`; merge `docs/tools/README.md` into `docs/api/README.md` (as "How to use this catalog" reference). After migration, remove `docs/tools/` so SC-006 verification (`test ! -d docs/tools`) passes. Depends on T028.
-- [ ] T030 [US1] Manual review pass over all 24 specs verifying the seven-section template (per contracts/adapter-spec-template.md lint rules) and run the SC-007 30-second cold-read self-test (per quickstart.md). Record findings in `specs/1637-p6-docs-smoke/spec-review-notes.md`. Depends on T029.
+- [ ] T030 [US1] Manual review pass over all active specs verifying the seven-section template (per contracts/adapter-spec-template.md lint rules) and run the SC-007 30-second cold-read self-test (per quickstart.md). Record findings in `specs/1637-p6-docs-smoke/spec-review-notes.md`. Depends on T029.
 
-**Checkpoint**: at this point US1 is fully functional and testable independently — the 24-adapter catalog is browsable, the JSON Schemas validate, and `docs/tools/` is gone.
+**Checkpoint**: at this point US1 is fully functional and testable independently — the active adapter catalog is browsable, the JSON Schemas validate, and `docs/tools/` is gone.
 
 ---
 
@@ -122,7 +116,7 @@ KOSMOS monorepo:
 
 - [ ] T031 [US2] Fix `tui/src/hooks/useVirtualScroll.ts:273` `new Set(itemKeys)` Set-constructor type error per research.md § R7: apply minimal nullish-coalescing fix `new Set(itemKeys ?? [])` (or hoist signature to widen `itemKeys` to `ReadonlyArray<K>`); do NOT modify the `tui/tests/components/conversation/overflowToBackbuffer.test.tsx` test contract per FR-011.
 - [ ] T032 [US2] Triage and fix the remaining `bun test` failures: parse `bun test` output, classify each failure as (a) regression to fix, (b) CC-port no longer applicable to delete with rationale, or (c) deliberate behavior change requiring expectation update. Record the classification log in `specs/1637-p6-docs-smoke/test-triage.md` (per FR-012). Apply fixes file-by-file; verification: final `bun test` reports 0 fail / 0 errors / ≥ 830 total (FR-010 / SC-003). Depends on T031.
-- [ ] T033 [US2] Drive the 18-row smoke checklist per `specs/1637-p6-docs-smoke/contracts/smoke-checklist-template.md` against `bun run tui`: capture `<step-id>.ansi.txt` via `script(1)` and produce paired `<step-id>.txt` via `sed` for each row (5 onboarding + 5 primitive + 4 slash + 3 error + 1 PDF). Save to `specs/1637-p6-docs-smoke/visual-evidence/`. Author the populated `specs/1637-p6-docs-smoke/smoke-checklist.md` recording pass/fail per row plus the bun-test summary line. Depends on T032 (need green tests for stable TUI).
+- [ ] T033 [US2] Drive the active smoke checklist per `specs/1637-p6-docs-smoke/contracts/smoke-checklist-template.md` against `bun run tui`: capture `<step-id>.ansi.txt` via `script(1)` and produce paired `<step-id>.txt` via `sed` for each row (onboarding + active primitive + slash + error + PDF). Save to `specs/1637-p6-docs-smoke/visual-evidence/`. Author the populated `specs/1637-p6-docs-smoke/smoke-checklist.md` recording pass/fail per row plus the bun-test summary line. Depends on T032 (need green tests for stable TUI).
 
 **Checkpoint**: at this point US2 is fully verified and the release gate is open.
 
@@ -151,8 +145,8 @@ KOSMOS monorepo:
 **Purpose**: closing migration deliverables — vision rewrite, project-memory updates, CHANGELOG, and PR submission.
 
 - [ ] T039 [P] Update `docs/vision.md § L1-A`, `§ L1-B`, and `§ L1-C` from "planned migration" to "shipped migration" prose; add date 2026-04-26 and Epic #1637 reference.
-- [ ] T040 [P] Update `CLAUDE.md § Recent Changes`: prepend a P6 entry mirroring the P0–P5 prose convention (one paragraph summarizing 24 specs + JSON Schema + bun test recovery + smoke evidence + composite cleanup).
-- [ ] T041 [P] Update `CLAUDE.md § Active Technologies`: append "1637-p6-docs-smoke: docs/api/ catalog (24 adapter specs + Draft 2020-12 schemas) + scripts/build_schemas.py (stdlib + Pydantic v2) + smoke-checklist visual evidence; zero new runtime dependencies."
+- [ ] T040 [P] Update `CLAUDE.md § Recent Changes`: prepend a P6 entry mirroring the P0–P5 prose convention (one paragraph summarizing active specs + JSON Schema + bun test recovery + smoke evidence + composite cleanup).
+- [ ] T041 [P] Update `CLAUDE.md § Active Technologies`: append "1637-p6-docs-smoke: docs/api/ catalog (active adapter specs + Draft 2020-12 schemas) + scripts/build_schemas.py (stdlib + Pydantic v2) + smoke-checklist visual evidence; zero new runtime dependencies."
 - [ ] T042 [P] Author `CHANGELOG.md` v0.1-alpha entry per data-model.md § 8 ChangeLogEntry template; release date filled at PR-merge time.
 - [ ] T043 Submit integrated PR `feat(1637): p6 docs/api specs + integration smoke` body containing `Closes #1637`, the 18-row smoke-checklist results, and the `bun test` summary line. Push to origin, request Copilot review (per AGENTS.md Copilot Review Gate procedure), watch CI to completion. Depends on T030, T033, T038, T039, T040, T041, T042.
 - [ ] T044 After PR merge, verify Initiative #1631 closure prerequisites: confirm all six Phase Epics (#1632, #1633, #1634, #1847, #1927, #1637) report MERGED / CLOSED via `gh api graphql` (Sub-Issues API per AGENTS.md GraphQL rule); record verification output in PR comment. Depends on T043.
@@ -173,7 +167,7 @@ KOSMOS monorepo:
 T001 (setup)
   └─ T002 build_schemas.py
        └─ T003 generate schemas
-            └─ T004…T027 [P] 24 adapter specs (writable in any order; envelope citations are line-stable)
+            └─ T004…T027 [P] active adapter specs (writable in any order; envelope citations are line-stable)
                  └─ T028 AdapterIndex (depends on all spec files existing)
                       └─ T029 migrate docs/tools (depends on AdapterIndex)
                            └─ T030 spec review pass
@@ -192,17 +186,17 @@ T039…T042 [P] cross-cutting docs (depend on T030 + T033 + T038)
 
 ### Parallel execution opportunities
 
-- **US1 spec authoring**: T004–T027 (24 tasks) all parallel-safe. Suggested teammate sharding: 6 teammates of 4 specs each, or 3 teammates of 8 specs each.
+- **US1 spec authoring**: T004–T027 all parallel-safe. Suggested teammate sharding: by ministry group.
 - **US3 cleanups**: T034–T037 (4 tasks) all parallel-safe.
 - **Polish docs**: T039–T042 (4 tasks) parallel-safe.
 
-Total maximum parallel-safe Tasks at any instant: 24 (US1 specs) + 4 (US3) + 4 (Polish) = 32. In practice, schedule by phase.
+Total maximum parallel-safe Tasks at any instant depends on active spec count plus US3 and Polish tasks. In practice, schedule by phase.
 
 ---
 
 ## Implementation Strategy
 
-**MVP**: complete Phase 3 (User Story 1). The 24-adapter catalog with JSON Schema and AdapterIndex satisfies the migration tree § L1-B B7 mandate by itself; release readiness (US2) and consistency cleanup (US3) ride on top.
+**MVP**: complete Phase 3 (User Story 1). The active-adapter catalog with JSON Schema and AdapterIndex satisfies the migration tree § L1-B B7 mandate by itself; release readiness (US2) and consistency cleanup (US3) ride on top.
 
 **Incremental delivery sequence**:
 
@@ -214,7 +208,7 @@ Total maximum parallel-safe Tasks at any instant: 24 (US1 specs) + 4 (US3) + 4 (
 
 **Agent team assignment** (per AGENTS.md § Agent Teams):
 
-- 24 spec writes (T004–T027): parallel teammates (Sonnet — Backend Architect or Technical Writer agent), one teammate per ministry group.
+- Active spec writes (T004–T027): parallel teammates (Sonnet — Backend Architect or Technical Writer agent), one teammate per ministry group.
 - Test triage (T031–T032): single teammate (Sonnet — API Tester) plus Lead synthesis review.
 - Smoke checklist (T033): solo Lead (project lead is the validator; cannot be delegated).
 - Composite cleanups (T034–T037): single teammate (Sonnet — Technical Writer) sequentially in one session is faster than 4 parallel due to context-switching overhead.

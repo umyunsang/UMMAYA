@@ -20,7 +20,6 @@ import {
 import { LookupPrimitive } from '../LookupPrimitive/LookupPrimitive.js'
 import { SubmitPrimitive } from '../SubmitPrimitive/SubmitPrimitive.js'
 import { VerifyPrimitive } from '../VerifyPrimitive/VerifyPrimitive.js'
-import { SubscribePrimitive } from '../SubscribePrimitive/SubscribePrimitive.js'
 
 // ---------------------------------------------------------------------------
 // SC-003 blocklist — phrases KOSMOS must never invent.
@@ -125,7 +124,7 @@ describe('extractCitation — unit sanity check', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Happy-path: all 3 non-search primitives populate kosmosCitations on context.
+// Happy-path: active primitives populate kosmosCitations on context.
 // (LookupPrimitive mode='search' is excluded — it intentionally skips citation.)
 // ---------------------------------------------------------------------------
 
@@ -161,20 +160,6 @@ describe('validateInput — happy path (citation populates context)', () => {
   test('VerifyPrimitive: result true + kosmosCitations populated', async () => {
     const context = buildContext([syntheticAdapter])
     const result = await VerifyPrimitive.validateInput(
-      { tool_id: 'koroad_accident_hazard_search', params: {} },
-      context,
-    )
-
-    expect(result.result).toBe(true)
-    const citations = (context as unknown as Record<string, unknown>).kosmosCitations as { real_classification_url: string; policy_authority: string }[]
-    expect(citations).toBeDefined()
-    expect(citations[0].real_classification_url).toBe(KOROAD_CITATION_URL)
-    expect(citations[0].policy_authority).toBe(KOROAD_POLICY_AUTHORITY)
-  })
-
-  test('SubscribePrimitive: result true + kosmosCitations populated', async () => {
-    const context = buildContext([syntheticAdapter])
-    const result = await SubscribePrimitive.validateInput(
       { tool_id: 'koroad_accident_hazard_search', params: {} },
       context,
     )
@@ -261,22 +246,6 @@ describe('renderToolResultMessage — blocklist assertion (SC-003 0% rule)', () 
     assertNoForbiddenPhrases(rendered, 'VerifyPrimitive ok=true')
   })
 
-  test('SubscribePrimitive ok=true: no forbidden phrases', () => {
-    const output = {
-      ok: true as const,
-      result: {
-        handle_id: 'HANDLE-001',
-        lifetime: 'session',
-        kind: 'realtime',
-      },
-    }
-    const rendered = SubscribePrimitive.renderToolResultMessage(output, [], {
-      theme: 'dark',
-      tools: [],
-      verbose: false,
-    })
-    assertNoForbiddenPhrases(rendered, 'SubscribePrimitive ok=true')
-  })
 })
 
 // ---------------------------------------------------------------------------
@@ -331,18 +300,6 @@ describe('validateInput — citation-missing path (errorCode 1002)', () => {
     expect(result.message).toContain('정책 인용')
   })
 
-  test('SubscribePrimitive returns CitationMissing + Korean message', async () => {
-    const context = buildContext([emptyPolicyAdapter])
-    const result = await SubscribePrimitive.validateInput(
-      { tool_id: 'koroad_accident_hazard_search', params: {} },
-      context,
-    )
-
-    expect(result.result).toBe(false)
-    if (result.result) return
-    expect(result.errorCode).toBe(PrimitiveErrorCode.CitationMissing)
-    expect(result.message).toContain('정책 인용')
-  })
 })
 
 // ---------------------------------------------------------------------------
@@ -386,15 +343,4 @@ describe('validateInput — adapter-not-found path (errorCode 1001)', () => {
     expect(result.errorCode).toBe(PrimitiveErrorCode.AdapterNotFound)
   })
 
-  test('SubscribePrimitive returns AdapterNotFound for unknown tool_id', async () => {
-    const context = buildContext([syntheticAdapter])
-    const result = await SubscribePrimitive.validateInput(
-      { tool_id: 'nonexistent', params: {} },
-      context,
-    )
-
-    expect(result.result).toBe(false)
-    if (result.result) return
-    expect(result.errorCode).toBe(PrimitiveErrorCode.AdapterNotFound)
-  })
 })

@@ -37,7 +37,7 @@
         }
       ],
       "default": null,
-      "description": "The primitive root this adapter binds to (lookup / verify / submit / subscribe / resolve_location).",
+      "description": "The primitive root this adapter binds to (lookup / verify / submit / resolve_location).",
       "title": "Primitive"
     },
     "real_classification_url": {

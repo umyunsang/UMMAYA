@@ -13,7 +13,7 @@ Every row below MUST stay linked to a GitHub tracking issue. If an issue is reti
 | 1 | 원격 TUI 전송 계층 (WebSocket / HTTP) | AGENTS.md stack pins TUI↔backend to same-host stdio. 원격 운영은 공무원 상담 수요가 생기면 재평가 (Phase 3). | Phase 3 remote ops | #1373 | 공무원 원격 상담 요건 확정 시, 또는 MCP Streamable HTTP transport 안정화 시 |
 | 2 | Frame-level 서명 / 암호화 (e2e) | Local stdio 전제이므로 외부 위협 모델 없음. 필요 시 Spec 024 Merkle chain 확장으로 흡수. | Phase 3 sovereignty | #1374 | Spec 024 audit Merkle chain GA 또는 외부 네트워크 전송 도입 시 |
 | 3 | 백엔드 다중 인스턴스 세션 shard | 현 단계는 단일 백엔드 모델. Swarm 수평 확장 시 `SessionRingBuffer` + `TransactionLRU` shard 키 재설계 필요. | Phase 2.5 swarm shard | #1375 | Spec 027 swarm GA 이후 동시 세션 > 100 측정 시 |
-| 4 | WebMCP-style declarative capability advertisement | MCP transports 표준이 정립 중. KOSMOS는 우선 5-primitive 고정 세트로 진행. | Phase 2.5 MCP host | #1376 | MCP host 포트 시점 또는 MCP transport spec이 GA reach 시 |
+| 4 | WebMCP-style declarative capability advertisement | MCP transports 표준이 정립 중. KOSMOS는 우선 active primitive 고정 세트로 진행. | Phase 2.5 MCP host | #1376 | MCP host 포트 시점 또는 MCP transport spec이 GA reach 시 |
 | 5 | OS-native stdio alternative (Windows named pipes) | KOSMOS 타겟 OS는 macOS + Linux. Windows portability 우선순위 낮음. | Phase 3 portability | #1377 | Windows citizen TUI 배포 요건 확정 시 |
 
 ## Rules for this document

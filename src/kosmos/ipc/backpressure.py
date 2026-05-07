@@ -94,8 +94,8 @@ class CriticalLaneBypassError(RuntimeError):
 
 # NotificationPushFrame adapters whose payloads are legally mandated to reach
 # the citizen without throttling (재난 및 안전관리 기본법 §38).  Extended as
-# additional subscription surfaces (e.g., National Emergency broadcasts) are
-# added via Spec 031 subscribe primitives.
+# additional app/push notification surfaces (e.g., National Emergency broadcasts)
+# are added.
 _CRITICAL_NOTIFICATION_ADAPTERS: frozenset[str] = frozenset(
     {
         "disaster_alert_cbs_push",

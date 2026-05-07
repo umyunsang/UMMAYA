@@ -114,8 +114,8 @@ Each item has: `id`, Korean description, English description, Source rule, Mecha
 | ID | Korean | English | Source | Mechanical check |
 |---|---|---|---|---|
 | Q8-NAMESPACE | tool_id 가 plugin.<plugin_id>.<verb> 형식 | tool_id matches plugin.<id>.<verb> regex | FR-022 + migration tree § L1-C C7 | Regex |
-| Q8-NO-ROOT-OVERRIDE | tool_id 가 root primitive (lookup/submit/verify/subscribe) 와 충돌 안 함 | tool_id is not a bare root-primitive name | FR-022 | String set check |
-| Q8-VERB-IN-PRIMITIVES | verb 부분이 4 root primitive 중 하나 | verb subpart is one of 4 root primitives | FR-004 + migration tree § L1-C C1 | Regex group + set check |
+| Q8-NO-ROOT-OVERRIDE | tool_id 가 active plugin primitive (lookup/submit/verify) 와 충돌 안 함 | tool_id is not a bare active plugin primitive name | FR-022 | String set check |
+| Q8-VERB-IN-PRIMITIVES | verb 부분이 active plugin primitive 중 하나 | verb subpart is one of the active plugin primitives | FR-004 + migration tree § L1-C C1 | Regex group + set check |
 
 ### Q9 — OTEL emission (2 items)
 

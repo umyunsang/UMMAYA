@@ -5,7 +5,7 @@ Verifies the full citizen flow:
 1. plugin_op_request:install → register_plugin_adapter populates ToolRegistry
 2. Next ChatRequestFrame.tools[] auto-includes the new plugin via
    ToolRegistry.export_core_tools_openai() fallback path (R-6 verdict)
-3. Plugin tool surfaces via the standard 5-primitive surface
+3. Plugin tool surfaces via the active primitive surface
 
 Because a true E2E install requires fixture catalog + bundle + SLSA setup,
 these tests exercise the post-install registry surface via direct

@@ -33,7 +33,7 @@ uvx kosmos-plugin-init my_plugin --tier live --layer 1 --no-pii
 모든 플러그인은:
 
 1. **`Tool.ts` 호환 GovAPITool 등록** — TS + Python 양쪽 자동 (`adapter.py` 의 `TOOL` 심볼 + `register_plugin_adapter` 호출). 필드: `id`, `name_ko`, `primitive`, `permission_layer`, `ministry`, `tier`, `input_schema`, `output_schema`, `search_hint`, `pipa_class`, `auth_level` 등 ([architecture.md](architecture.md)).
-2. **Reserved-name discipline** — 4 root primitive (`lookup` / `submit` / `verify` / `subscribe`) 만 허용. tool_id 형식: `plugin.<plugin_id>.<verb>` ([ADR-007](../adr/ADR-007-plugin-tool-id-namespace.md)).
+2. **Reserved-name discipline** — active plugin primitive (`lookup` / `submit` / `verify`) 만 허용. tool_id 형식: `plugin.<plugin_id>.<verb>` ([ADR-007](../adr/ADR-007-plugin-tool-id-namespace.md)). `subscribe` 는 앱/푸시 런타임이 생길 때까지 신규 플러그인 verb 로 받지 않습니다.
 3. **권한 Layer 어댑터-레벨 선언** — 1 (green) / 2 (orange) / 3 (red). primitive default 없음 ([permission-tier.md](permission-tier.md)).
 4. **`manifest.yaml` 게시** — `PluginManifest` Pydantic 스키마 통과 필수. tier, PII 처리, PIPA §26 trustee acknowledgment, OTEL attributes, search hints, SLSA provenance URL 모두 포함.
 5. **PIPA §26 trustee acknowledgment** — `processes_pii: true` 일 때 필수. canonical SHA-256 일치 ([security-review.md](security-review.md)).

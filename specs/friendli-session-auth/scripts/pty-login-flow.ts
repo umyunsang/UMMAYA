@@ -26,7 +26,7 @@ export default async function run(h: {
   await h.waitForPaneSince(loginMark, /\/login/, 5)
   await sleep(500)
   h.sendEnter()
-  await h.waitForPane(/FriendliAI Login/, 10)
+  await h.waitForPane(/Login/, 10)
   h.snapshot('login-dialog')
 
   await sleep(500)
@@ -35,7 +35,7 @@ export default async function run(h: {
   h.snapshot('login-input-masked')
 
   h.sendEnter()
-  await h.waitForPane(/FriendliAI login successful/, 10)
+  await h.waitForPane(/Login successful/, 10)
   h.snapshot('login-success')
 
   const logoutMark = h.mark()
@@ -43,9 +43,6 @@ export default async function run(h: {
   await h.waitForPaneSince(logoutMark, /\/logout/, 5)
   await sleep(500)
   h.sendEnter()
-  await h.waitForPane(/Logged out/, 10)
+  await h.waitForPane(/Successfully logged out/, 10)
   h.snapshot('logout-success')
-
-  h.sendCtrlC()
-  h.sendCtrlC()
 }

@@ -2,14 +2,14 @@
 
 **Purpose**: defines the verbatim Markdown structure every adapter spec under `docs/api/` MUST follow. Authors of new adapter specs (during implement phase) copy this template, fill placeholders, and the result MUST satisfy spec FR-005.
 
-**Validates**: SC-001 (24 specs all complete), structural lint script.
+**Validates**: SC-001 (active specs all complete), structural lint script.
 
 ---
 
 ```markdown
 ---
 tool_id: <tool_id>
-primitive: <lookup | submit | verify | subscribe>
+primitive: <lookup | submit | verify | resolve_location>
 tier: <live | mock>
 permission_tier: <1 | 2 | 3>
 ---
@@ -24,7 +24,7 @@ permission_tier: <1 | 2 | 3>
 |---|---|
 | Classification | <Live | Mock> · Permission tier <N> |
 | Source | <ministry / agency / fixture origin> |
-| Primitive | `<lookup | submit | verify | subscribe>` |
+| Primitive | `<lookup | submit | verify | resolve_location>` |
 | Module | `src/kosmos/tools/<path>.py` |
 
 ## Envelope

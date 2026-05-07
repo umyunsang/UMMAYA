@@ -159,7 +159,8 @@ export function Spinner({ verb }) {
 //
 // Dot color → primitive:
 //     blue   (lookup)  ·  orange (submit)  ·  red (verify)
-//     green  (subscribe)  ·  purple (plugin-namespaced verb)
+//     purple (plugin-namespaced verb). Subscribe was deferred until KOSMOS has
+//     an app/push-notification runtime.
 export function ToolUseBlock({ primitive = 'lookup', ministry, result, detail }) {
   const dot = PRIMITIVE_DOT[primitive] ?? C.ring
   return h(Box, { flexDirection: 'column', marginLeft: 2 },

@@ -2,12 +2,11 @@
 import { toolMatchesName, type Tool, type Tools } from './Tool.js'
 import { AgentTool } from './tools/AgentTool/AgentTool.js'
 import { SkillTool } from './tools/SkillTool/SkillTool.js'
-// Epic #1634 P3 FR-001 / Spec 031: five reserved primitives exposed as top-level tools.
+// Epic #1634 P3 FR-001 / Spec 031: active reserved primitives exposed as top-level tools.
 import { LookupPrimitive } from './tools/LookupPrimitive/LookupPrimitive.js'
 import { ResolveLocationPrimitive } from './tools/ResolveLocationPrimitive/ResolveLocationPrimitive.js'
 import { SubmitPrimitive } from './tools/SubmitPrimitive/SubmitPrimitive.js'
 import { VerifyPrimitive } from './tools/VerifyPrimitive/VerifyPrimitive.js'
-import { SubscribePrimitive } from './tools/SubscribePrimitive/SubscribePrimitive.js'
 // Epic #1634 P3 FR-018: four new auxiliary tools completing the MVP-7 set.
 import { TranslateTool } from './tools/TranslateTool/TranslateTool.js'
 import { CalculatorTool } from './tools/CalculatorTool/CalculatorTool.js'
@@ -223,7 +222,7 @@ export function getToolsForDefaultPreset(): string[] {
  *
  * **Epic #1634 P3 — closed 13-tool citizen-facing surface** (contracts/primitive-envelope.md § 1):
  *
- *   Primitives (5):            lookup, resolve_location, submit, verify, subscribe
+ *   Active primitives (4):     lookup, resolve_location, submit, verify
  *   Retained CC auxiliary (2): WebFetch, WebSearch
  *   New auxiliary (4):         Translate, Calculator, DateParser, ExportPDF
  *   Task primitive backing:    AgentTool (rewired per T027)
@@ -248,12 +247,13 @@ export function getToolsForDefaultPreset(): string[] {
  */
 export function getAllBaseTools(): Tools {
   return [
-    // Five reserved primitives — FR-001 / Spec 031
+    // Active reserved primitives — FR-001 / Spec 031.
+    // subscribe is intentionally not LLM-visible until KOSMOS has an app/push
+    // notification surface that matches the real national-service model.
     LookupPrimitive,
     ResolveLocationPrimitive,
     SubmitPrimitive,
     VerifyPrimitive,
-    SubscribePrimitive,
 
     // Retained CC auxiliary — FR-015 + FR-016
     WebFetchTool,

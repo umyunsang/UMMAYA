@@ -8,7 +8,7 @@ P6's "data model" is the schema of every artifact this Epic produces. Because th
 
 ### 1. AdapterSpec
 
-A Markdown document describing a single registered adapter. One per registered tool_id (24 instances at this Epic).
+A Markdown document describing a single active registered adapter.
 
 **Location**: `docs/api/<source>/<tool>.md`. The `<source>` segment matches `kosmos.tools.<source>` directory naming with normalization noted in research.md § R5 (e.g., `ssis` → `mohw`).
 
@@ -16,13 +16,13 @@ A Markdown document describing a single registered adapter. One per registered t
 
 | Section | Heading | Content |
 |---|---|---|
-| Front matter | (YAML block) | `tool_id`, `primitive` (one of `lookup` / `submit` / `verify` / `subscribe`), `tier` (one of `live` / `mock`), `permission_tier` (1 / 2 / 3) |
+| Front matter | (YAML block) | `tool_id`, `primitive` (one of `lookup` / `submit` / `verify` / `resolve_location`), `tier` (one of `live` / `mock`), `permission_tier` (1 / 2 / 3) |
 | 1. Overview | `## Overview` | One sentence purpose; classification key-value table |
 | 2. Envelope | `## Envelope` | Pydantic v2 input/output model citation: file path + line range; field table per envelope |
 | 3. Search hints | `## Search hints` | Bilingual list; Korean primary, English secondary |
 | 4. Endpoint | `## Endpoint` | `data.go.kr` endpoint ID + ministry source URL (Live) OR "Fixture-replay only" + public-spec citation (Mock) |
 | 5. Permission tier rationale | `## Permission tier rationale` | Per-adapter justification; cites Spec 033 |
-| 6. Worked example | `## Worked example` | At least one `lookup(mode="fetch")` (or `submit` / `verify` / `subscribe`) invocation: input JSON, output JSON, KOSMOS conversation snippet |
+| 6. Worked example | `## Worked example` | At least one `lookup(mode="fetch")` (or `submit` / `verify`) invocation: input JSON, output JSON, KOSMOS conversation snippet |
 | 7. Constraints | `## Constraints` | Rate limits, freshness windows, fixture coverage gaps, error-envelope examples |
 
 **Validation rules**:
@@ -44,15 +44,15 @@ The single root index document mapping every AdapterSpec into two cross-cutting 
 **Required structure**:
 
 1. One-paragraph introduction: what this catalog is and how to read it.
-2. Matrix A — by source: rows are sources (KOROAD, KMA, HIRA, NMC, NFA119, MOHW, mock-verify, mock-submit, mock-subscribe, resolve_location). Columns: tool_id, primitive, tier, permission_tier, schema link.
-3. Matrix B — by primitive: rows are primitives (`lookup` × N, `submit` × N, `verify` × N, `subscribe` × N). Columns: tool_id, source, tier, permission_tier.
+2. Matrix A — by source: rows are sources (KOROAD, KMA, HIRA, NMC, NFA119, MOHW, mock-verify, mock-submit, resolve_location). Columns: tool_id, primitive, tier, permission_tier, schema link.
+3. Matrix B — by primitive: rows are primitives (`lookup` × N, `submit` × N, `verify` × N, `resolve_location` × 1). Columns: tool_id, source, tier, permission_tier.
 4. "How to use this catalog" section: 3-step recipe (find adapter → read spec → consume schema).
 
 **Validation rules**:
 
 - Every row in either matrix MUST link to an AdapterSpec that exists.
 - Every link to `docs/api/schemas/<tool_id>.json` MUST resolve to an existing file.
-- Both matrices MUST sum to ≥ 24 distinct tool_ids (some adapters may appear in both matrices, but the union is 24).
+- Both matrices MUST sum to the active registered adapter set. Deferred subscription adapters are excluded.
 
 ### 3. JSONSchema
 
@@ -104,7 +104,7 @@ The hand-driven validation document recording each TUI smoke step.
 
 **Location**: `specs/1637-p6-docs-smoke/contracts/smoke-checklist-template.md` is the template; the populated artifact lives at `specs/1637-p6-docs-smoke/smoke-checklist.md` after implement.
 
-**Required rows** (minimum 17 per FR-013):
+**Required rows** (minimum active smoke set per FR-013):
 
 | Step ID | Description | Input | Expected | Evidence file |
 |---|---|---|---|---|
@@ -117,7 +117,6 @@ The hand-driven validation document recording each TUI smoke step.
 | `primitive-lookup-fetch` | `lookup` primitive fetch mode | Selected adapter | Adapter response in conversation | (same naming) |
 | `primitive-submit` | `submit` primitive (mock) | Mock adapter selection | Submission receipt | (same naming) |
 | `primitive-verify` | `verify` primitive (mock) | Mock adapter | Verification result | (same naming) |
-| `primitive-subscribe` | `subscribe` primitive | Mock adapter | Subscription handle | (same naming) |
 | `slash-agents` | `/agents` command | Type slash command | Agent panel renders | (same naming) |
 | `slash-plugins` | `/plugins` command | Type slash command | Plugin browser renders | (same naming) |
 | `slash-consent-list` | `/consent list` command | Type slash command | Consent receipts list | (same naming) |
@@ -180,9 +179,9 @@ The KOSMOS v0.1-alpha entry in `CHANGELOG.md`.
 ### Highlights
 
 - KOSMOS now routes a Korean citizen's request through the migrated Claude Code harness:
-  EXAONE function call → 4 primitives (`lookup` · `submit` · `verify` · `subscribe`) →
+  EXAONE function call → active primitives (`lookup` · `resolve_location` · `submit` · `verify`) →
   registered adapter → permission gauntlet → response rendered in the migrated TUI.
-- 24 registry-bundled adapters documented with bilingual search hints under `docs/api/`.
+- Active registry-bundled adapters documented with bilingual search hints under `docs/api/`.
 - 5-tier plugin DX (P5) onboards external contributors via `kosmos plugin init`.
 
 ### Aligned with
@@ -209,11 +208,11 @@ The KOSMOS v0.1-alpha entry in `CHANGELOG.md`.
 ```text
 AdapterIndex (docs/api/README.md)
   │
-  ├─ links 24× ─→  AdapterSpec (docs/api/<source>/<tool>.md)
+  ├─ links active adapters ─→  AdapterSpec (docs/api/<source>/<tool>.md)
   │                   │
   │                   └─ cites Pydantic models in src/kosmos/tools/<source>/...
   │
-  └─ links 24× ─→  JSONSchema (docs/api/schemas/<tool_id>.json)
+  └─ links active adapters ─→  JSONSchema (docs/api/schemas/<tool_id>.json)
                        │
                        └─ generated by  SchemaBuildScript (scripts/build_schemas.py)
                                             │

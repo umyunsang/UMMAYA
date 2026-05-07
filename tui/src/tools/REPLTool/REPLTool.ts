@@ -3,7 +3,7 @@
 //
 // Original CC: `tui/src/tools/REPLTool/REPLTool.ts` — Anthropic's Python REPL
 // tool for the Code Interpreter feature. KOSMOS does not ship a Python REPL
-// inside the TUI (citizens use Korean public-API queries via the 5-primitive
+// inside the TUI (citizens use Korean public-API queries via the primitive
 // surface; `Bash` tool covers shell execution). Stub returns an empty Tool
 // object so dynamic import in main.tsx links cleanly.
 

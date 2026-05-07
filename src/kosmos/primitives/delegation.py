@@ -37,12 +37,12 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _SINGLE_SCOPE_PATTERN: re.Pattern[str] = re.compile(
-    r"^(lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+$"
+    r"^(lookup|submit|verify):[a-z0-9_]+\.[a-z0-9_-]+$"
 )
 
 _MULTI_SCOPE_PATTERN: re.Pattern[str] = re.compile(
-    r"^((lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+)"
-    r"(,(lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+)*$"
+    r"^((lookup|submit|verify):[a-z0-9_]+\.[a-z0-9_-]+)"
+    r"(,(lookup|submit|verify):[a-z0-9_]+\.[a-z0-9_-]+)*$"
 )
 
 

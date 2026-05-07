@@ -1,6 +1,6 @@
 # Infrastructure Survey: `submit` primitive
 
-> **범위**: KOSMOS 5-primitive 중 `submit` (쓰기 트랜잭션 — 민원 신청, 납부, 증명서 발급, 등록, 신고, 접수)의 실제 카운터파트인 한국 국가 인프라 시스템의 **외부 계약(external contract) 표면 캡처**.
+> **범위**: KOSMOS active primitive 중 `submit` (쓰기 트랜잭션 — 민원 신청, 납부, 증명서 발급, 등록, 신고, 접수)의 실제 카운터파트인 한국 국가 인프라 시스템의 **외부 계약(external contract) 표면 캡처**.
 > **원칙**: drop-in replaceability — 라이브 자격증명 확보 시 `client` 레이어만 교체(`MockClient(fixtures) → LiveClient(base_url, auth)`)하고 harness는 불변. 따라서 본 조사는 request schema · response schema · error code · auth · rate limit · pagination · idempotency 의 **공개 문서 기반 역공학**에 집중한다.
 > **작성일**: 2026-04-19. **전 소스 공개 문서만** (공공데이터포털, 기관 공식 페이지, 법령, 공개 GitHub). 추측 구간은 모두 "⚠️ OPAQUE" 로 명시.
 > **대상 구현물 금지**: 본 문서는 계약 캡처이지 구현 설계가 아니다. 코드는 싣지 않는다 (OASIS WS-Security namespace 등 이미 공개된 식별자만 인용).

@@ -1,12 +1,11 @@
 {
   "$defs": {
     "AdapterPrimitive": {
-      "description": "T007 — the five primitive surfaces every registered adapter binds to.\n\nMatches data-model.md § 4 verbatim.",
+      "description": "T007 — active primitive surfaces every registered adapter binds to.\n\nMatches data-model.md § 4 verbatim.",
       "enum": [
         "lookup",
         "resolve_location",
         "submit",
-        "subscribe",
         "verify"
       ],
       "title": "AdapterPrimitive",
@@ -16,6 +15,18 @@
       "additionalProperties": false,
       "description": "KOSMOS adapter single permission representation — cite of agency published policy.\n\nKOSMOS does NOT invent permission policy (.specify/memory/constitution.md § II).\nThis model is the single source of truth where an adapter (a) cites the\nagency's published policy URL, (b) declares the citizen-facing gate category,\nand (c) records the last verification timestamp of the policy citation.\n\nReferences:\n- AGENTS.md § CORE THESIS — KOSMOS = AX-infrastructure callable-channel client\n- .specify/memory/constitution.md § II Fail-Closed Security (NON-NEGOTIABLE)\n- .specify/memory/constitution.md § III Pydantic v2 Strict Typing\n- specs/1979-plugin-dx-tui-integration/domain-harness-design.md § 3.2",
       "properties": {
+        "real_classification_url": {
+          "description": "Agency published policy URL (https:// prefix recommended)",
+          "minLength": 1,
+          "title": "Real Classification Url",
+          "type": "string"
+        },
+        "real_classification_text": {
+          "description": "Korean citation from agency policy (text shown to citizen)",
+          "minLength": 1,
+          "title": "Real Classification Text",
+          "type": "string"
+        },
         "citizen_facing_gate": {
           "description": "Citizen-facing gate category — UI uses this value for PermissionRequest UX",
           "enum": [
@@ -33,18 +44,6 @@
           "format": "date-time",
           "title": "Last Verified",
           "type": "string"
-        },
-        "real_classification_text": {
-          "description": "Korean citation from agency policy (text shown to citizen)",
-          "minLength": 1,
-          "title": "Real Classification Text",
-          "type": "string"
-        },
-        "real_classification_url": {
-          "description": "Agency published policy URL (https:// prefix recommended)",
-          "minLength": 1,
-          "title": "Real Classification Url",
-          "type": "string"
         }
       },
       "required": [
@@ -58,78 +57,28 @@
     },
     "AdapterRegistration": {
       "additionalProperties": false,
-      "description": "T009 — registry metadata for Spec 031 five-primitive adapters.\n\nMirrors data-model.md § 4 verbatim. Spec 024 V1–V4 (applied via pydantic\n``@model_validator`` on :class:`GovAPITool`) and Spec 025 V6 + the Spec 031\nv1.2 dual-axis invariant (applied via ``@model_validator`` on this class at\nconstruction time; see :mod:`kosmos.security.v12_dual_axis`) remain the\nauthoritative enforcement points; :meth:`ToolRegistry.register` only\nadditionally validates :class:`GovAPITool` instances passed to it.\n``published_tier_minimum`` / ``nist_aal_hint`` are optional during the\npre-v1.2 compatibility window (FR-028) and become mandatory when the\n:mod:`kosmos.security.v12_dual_axis` backstop flips ``V12_GA_ACTIVE = True``.",
+      "description": "T009 — registry metadata for active primitive adapters.\n\nMirrors data-model.md § 4 verbatim. Spec 024 V1–V4 (applied via pydantic\n``@model_validator`` on :class:`GovAPITool`) and Spec 025 V6 + the Spec 031\nv1.2 dual-axis invariant (applied via ``@model_validator`` on this class at\nconstruction time; see :mod:`kosmos.security.v12_dual_axis`) remain the\nauthoritative enforcement points; :meth:`ToolRegistry.register` only\nadditionally validates :class:`GovAPITool` instances passed to it.\n``published_tier_minimum`` / ``nist_aal_hint`` are optional during the\npre-v1.2 compatibility window (FR-028) and become mandatory when the\n:mod:`kosmos.security.v12_dual_axis` backstop flips ``V12_GA_ACTIVE = True``.",
       "properties": {
-        "auth_type": {
-          "enum": [
-            "public",
-            "api_key",
-            "oauth"
-          ],
-          "title": "Auth Type",
+        "tool_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^([a-z][a-z0-9_]*|plugin\\.[a-z][a-z0-9_]*\\.(lookup|submit|verify))$",
+          "title": "Tool Id",
           "type": "string"
         },
-        "cache_ttl_seconds": {
-          "default": 0,
-          "title": "Cache Ttl Seconds",
-          "type": "integer"
-        },
-        "input_model_ref": {
-          "title": "Input Model Ref",
-          "type": "string"
-        },
-        "is_concurrency_safe": {
-          "default": false,
-          "title": "Is Concurrency Safe",
-          "type": "boolean"
+        "primitive": {
+          "$ref": "#/$defs/AdapterPrimitive"
         },
         "module_path": {
           "title": "Module Path",
           "type": "string"
         },
-        "nist_aal_hint": {
-          "anyOf": [
-            {
-              "enum": [
-                "AAL1",
-                "AAL2",
-                "AAL3"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Nist Aal Hint"
+        "input_model_ref": {
+          "title": "Input Model Ref",
+          "type": "string"
         },
-        "nonce": {
-          "anyOf": [
-            {
-              "maxLength": 128,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Nonce"
-        },
-        "policy": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AdapterRealDomainPolicy"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "primitive": {
-          "$ref": "#/$defs/AdapterPrimitive"
+        "source_mode": {
+          "$ref": "#/$defs/AdapterSourceMode"
         },
         "published_tier_minimum": {
           "anyOf": [
@@ -168,6 +117,33 @@
           "default": null,
           "title": "Published Tier Minimum"
         },
+        "nist_aal_hint": {
+          "anyOf": [
+            {
+              "enum": [
+                "AAL1",
+                "AAL2",
+                "AAL3"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nist Aal Hint"
+        },
+        "is_concurrency_safe": {
+          "default": false,
+          "title": "Is Concurrency Safe",
+          "type": "boolean"
+        },
+        "cache_ttl_seconds": {
+          "default": 0,
+          "title": "Cache Ttl Seconds",
+          "type": "integer"
+        },
         "rate_limit_per_minute": {
           "default": 10,
           "title": "Rate Limit Per Minute",
@@ -189,15 +165,38 @@
           "title": "Search Hint",
           "type": "object"
         },
-        "source_mode": {
-          "$ref": "#/$defs/AdapterSourceMode"
-        },
-        "tool_id": {
-          "maxLength": 128,
-          "minLength": 1,
-          "pattern": "^([a-z][a-z0-9_]*|plugin\\.[a-z][a-z0-9_]*\\.(lookup|submit|verify|subscribe))$",
-          "title": "Tool Id",
+        "auth_type": {
+          "enum": [
+            "public",
+            "api_key",
+            "oauth"
+          ],
+          "title": "Auth Type",
           "type": "string"
+        },
+        "policy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AdapterRealDomainPolicy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "nonce": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nonce"
         }
       },
       "required": [
@@ -225,16 +224,16 @@
       "additionalProperties": false,
       "description": "Nested manifest block required when ``processes_pii=True``.\n\nMirrors data-model.md § 2 verbatim. Encodes the PIPA §26 trustee chain\n(위탁자 / 수탁자 / 처리목적 / 처리범위 / 보유기간) so the validation\nworkflow can mechanically reject missing or hash-tampered\nacknowledgments. The actual hash equality check is enforced by the\nparent :meth:`PluginManifest._v_pipa_hash`; this model only carries\nfield-level shape constraints.",
       "properties": {
-        "acknowledgment_sha256": {
-          "description": "Lowercase hex SHA-256 of the canonical PIPA §26 text from docs/plugins/security-review.md. Must equal kosmos.plugins.canonical_acknowledgment.CANONICAL_ACKNOWLEDGMENT_SHA256.",
-          "pattern": "^[a-f0-9]{64}$",
-          "title": "Acknowledgment Sha256",
+        "trustee_org_name": {
+          "description": "Trustee 수탁자 organisation legal name.",
+          "minLength": 1,
+          "title": "Trustee Org Name",
           "type": "string"
         },
-        "legal_basis": {
-          "description": "PIPA article reference (e.g. 'PIPA §15-1-2').",
+        "trustee_contact": {
+          "description": "Trustee contact (email or phone).",
           "minLength": 1,
-          "title": "Legal Basis",
+          "title": "Trustee Contact",
           "type": "string"
         },
         "pii_fields_handled": {
@@ -246,16 +245,16 @@
           "title": "Pii Fields Handled",
           "type": "array"
         },
-        "trustee_contact": {
-          "description": "Trustee contact (email or phone).",
+        "legal_basis": {
+          "description": "PIPA article reference (e.g. 'PIPA §15-1-2').",
           "minLength": 1,
-          "title": "Trustee Contact",
+          "title": "Legal Basis",
           "type": "string"
         },
-        "trustee_org_name": {
-          "description": "Trustee 수탁자 organisation legal name.",
-          "minLength": 1,
-          "title": "Trustee Org Name",
+        "acknowledgment_sha256": {
+          "description": "Lowercase hex SHA-256 of the canonical PIPA §26 text from docs/plugins/security-review.md. Must equal kosmos.plugins.canonical_acknowledgment.CANONICAL_ACKNOWLEDGMENT_SHA256.",
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Acknowledgment Sha256",
           "type": "string"
         }
       },
@@ -270,27 +269,34 @@
       "type": "object"
     }
   },
-  "$id": "https://kosmos.dev/schemas/plugin-manifest/1.0.0.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Top-level Pydantic v2 manifest contract for a KOSMOS plugin release.\n\nMirrors data-model.md § 1 verbatim. A successfully constructed\ninstance is byte-equivalent to a valid ``manifest.yaml``; the JSON\nSchema export :data:`PluginManifest.model_json_schema` is contract-\npinned to ``contracts/manifest.schema.json`` (parity test in T008).\n\nSee module docstring for the 5 cross-field validators and ADR-007 for\nthe namespacing rule rationale.",
   "properties": {
+    "plugin_id": {
+      "description": "snake_case plugin identifier; immutable across versions. Used as the namespace prefix in adapter.tool_id.",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Plugin Id",
+      "type": "string"
+    },
+    "version": {
+      "description": "SemVer major.minor.patch (no pre-release suffix).",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Version",
+      "type": "string"
+    },
     "adapter": {
       "$ref": "#/$defs/AdapterRegistration",
       "description": "Embedded Spec 022/031 AdapterRegistration. The full V1-V6 invariant chain plus the v1.2 dual-axis backstop run on this field at construction time — there is no separate plugin validation path."
     },
-    "dpa_reference": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+    "tier": {
+      "description": "Plugin distribution tier. 'live' adapters call the real external API at runtime; 'mock' adapters replay recorded fixtures and MUST set mock_source_spec.",
+      "enum": [
+        "live",
+        "mock"
       ],
-      "default": null,
-      "description": "PIPA §26 data processing trustee reference URL or citation. Required (non-null) when adapter.policy derives pipa_class != 'non_personal' (Spec 024 V2 invariant). Distinct from pipa_trustee_acknowledgment — this is the agency-published policy URL the adapter cites for the data processing trustee relationship.",
-      "title": "Dpa Reference"
+      "title": "Tier",
+      "type": "string"
     },
     "mock_source_spec": {
       "anyOf": [
@@ -305,23 +311,11 @@
       "description": "Required (non-empty) when tier='mock'; MUST be None when tier='live'. URL or attribution string pointing to the public spec the mock mirrors (memory feedback_mock_evidence_based).",
       "title": "Mock Source Spec"
     },
-    "otel_attributes": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "OTEL span attributes emitted on every plugin tool invocation (Spec 021 extension). MUST contain key 'kosmos.plugin.id' with value equal to plugin_id (enforced by _v_otel_attribute).",
-      "title": "Otel Attributes",
-      "type": "object"
-    },
-    "permission_layer": {
-      "description": "Informational permission tier (1=green / 2=orange / 3=red, Migration tree § UI-C). Spec 033 is the actual enforcement point — this field drives the TUI consent overlay copy.",
-      "enum": [
-        1,
-        2,
-        3
-      ],
-      "title": "Permission Layer",
-      "type": "integer"
+    "processes_pii": {
+      "default": true,
+      "description": "Fail-closed default per Constitution §II. Set False only when the adapter has been audited and confirmed PII-free.",
+      "title": "Processes Pii",
+      "type": "boolean"
     },
     "pipa_trustee_acknowledgment": {
       "anyOf": [
@@ -335,24 +329,19 @@
       "default": null,
       "description": "Required (non-null) when processes_pii=True. PIPA §26 trustee chain. Hash equality vs canonical text is enforced by _v_pipa_hash."
     },
-    "plugin_id": {
-      "description": "snake_case plugin identifier; immutable across versions. Used as the namespace prefix in adapter.tool_id.",
-      "maxLength": 64,
-      "pattern": "^[a-z][a-z0-9_]*$",
-      "title": "Plugin Id",
+    "slsa_provenance_url": {
+      "description": "URL to the SLSA v1.0 provenance attestation (.intoto.jsonl) produced by slsa-framework/slsa-github-generator on tag push. Verified by slsa-verifier at install time (R-3).",
+      "pattern": "^https://github\\.com/",
+      "title": "Slsa Provenance Url",
       "type": "string"
     },
-    "processes_pii": {
-      "default": true,
-      "description": "Fail-closed default per Constitution §II. Set False only when the adapter has been audited and confirmed PII-free.",
-      "title": "Processes Pii",
-      "type": "boolean"
-    },
-    "search_hint_en": {
-      "description": "English search hint indexed alongside the Korean hint.",
-      "minLength": 1,
-      "title": "Search Hint En",
-      "type": "string"
+    "otel_attributes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "OTEL span attributes emitted on every plugin tool invocation (Spec 021 extension). MUST contain key 'kosmos.plugin.id' with value equal to plugin_id (enforced by _v_otel_attribute).",
+      "title": "Otel Attributes",
+      "type": "object"
     },
     "search_hint_ko": {
       "description": "Korean search hint indexed by BM25 (Spec 022). Recommended ≥ 3 Korean nouns extractable by Kiwipiepy (R-1 Q4-HINT-NOUNS).",
@@ -360,26 +349,34 @@
       "title": "Search Hint Ko",
       "type": "string"
     },
-    "slsa_provenance_url": {
-      "description": "URL to the SLSA v1.0 provenance attestation (.intoto.jsonl) produced by slsa-framework/slsa-github-generator on tag push. Verified by slsa-verifier at install time (R-3).",
-      "pattern": "^https://github\\.com/",
-      "title": "Slsa Provenance Url",
+    "search_hint_en": {
+      "description": "English search hint indexed alongside the Korean hint.",
+      "minLength": 1,
+      "title": "Search Hint En",
       "type": "string"
     },
-    "tier": {
-      "description": "Plugin distribution tier. 'live' adapters call the real external API at runtime; 'mock' adapters replay recorded fixtures and MUST set mock_source_spec.",
+    "permission_layer": {
+      "description": "Informational permission tier (1=green / 2=orange / 3=red, Migration tree § UI-C). Spec 033 is the actual enforcement point — this field drives the TUI consent overlay copy.",
       "enum": [
-        "live",
-        "mock"
+        1,
+        2,
+        3
       ],
-      "title": "Tier",
-      "type": "string"
+      "title": "Permission Layer",
+      "type": "integer"
     },
-    "version": {
-      "description": "SemVer major.minor.patch (no pre-release suffix).",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$",
-      "title": "Version",
-      "type": "string"
+    "dpa_reference": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "PIPA §26 data processing trustee reference URL or citation. Required (non-null) when adapter.policy derives pipa_class != 'non_personal' (Spec 024 V2 invariant). Distinct from pipa_trustee_acknowledgment — this is the agency-published policy URL the adapter cites for the data processing trustee relationship.",
+      "title": "Dpa Reference"
     }
   },
   "required": [
@@ -394,5 +391,7 @@
     "permission_layer"
   ],
   "title": "PluginManifest",
-  "type": "object"
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kosmos.dev/schemas/plugin-manifest/1.0.0.json"
 }

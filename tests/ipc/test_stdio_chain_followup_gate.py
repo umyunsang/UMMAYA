@@ -31,12 +31,10 @@ from kosmos.ipc.stdio import (
     _check_chain_prerequisite,
     _check_duplicate_submit_prerequisite,
     _check_location_terminated_without_resolve,
-    _check_lookup_wrong_primitive_prerequisite,
     _check_resolve_terminated_without_followup,
     _check_sensitive_lookup_auth_prerequisite,
     _check_sensitive_lookup_terminated_without_lookup,
     _check_submit_terminated_without_submit,
-    _check_subscribe_terminated_without_subscribe,
     _check_verify_terminated_without_verify,
     _check_verify_tool_choice_prerequisite,
     _conversation_has_successful_lookup,
@@ -975,36 +973,6 @@ def test_submit_arg_normalization_preserves_model_payload_values() -> None:
     assert params["applicant_name"] == "김철수"
     assert params["delivery_method"] == "postal"
     assert params["session_id"] == "GOV24-CUSTOM-SESSION-002"
-
-
-def test_subscribe_request_terminating_without_subscribe_is_rejected() -> None:
-    """Disaster-alert subscription requests must use the subscribe primitive."""
-    msg = _check_subscribe_terminated_without_subscribe(
-        [
-            _msg_assistant_tool_call(
-                "resolve_location",
-                {"query": "부산 사하구", "want": "coords_and_admcd"},
-            ),
-            _msg_tool_result("resolve_location", {"admcd": "2638000000"}),
-        ],
-        "부산 사하구 재난문자 알림을 구독해줘",
-    )
-
-    assert msg is not None
-    assert msg["tool_id"] == "mock_cbs_disaster_v1"
-    assert "subscribe(tool_id='mock_cbs_disaster_v1'" in msg["message"]
-
-
-def test_lookup_to_subscribe_adapter_is_rejected_as_wrong_primitive() -> None:
-    """CBS adapter must not be called through lookup."""
-    msg = _check_lookup_wrong_primitive_prerequisite(
-        "lookup",
-        {"tool_id": "mock_cbs_disaster_v1", "params": {"region": "부산 사하구"}},
-    )
-
-    assert msg is not None
-    assert msg["tool_id"] == "mock_cbs_disaster_v1"
-    assert "registered under subscribe" in msg["message"]
 
 
 def test_ganpyeon_query_terminating_without_verify_is_rejected() -> None:

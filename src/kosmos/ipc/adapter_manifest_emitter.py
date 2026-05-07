@@ -20,11 +20,9 @@ Three sources of adapter metadata are walked in priority order:
    this emitter.  Takes precedence over all other sources for the same
    ``tool_id``.
 
-2. **Submit / subscribe primitive sub-registries**:
+2. **Submit primitive sub-registry**:
    ``kosmos.primitives.submit._ADAPTER_REGISTRY`` →
        keyed by ``tool_id``; values are ``(AdapterRegistration, callable)``.
-   ``kosmos.primitives.subscribe._SUBSCRIBE_ADAPTERS`` →
-       keyed by ``tool_id``; values are ``(modality, callable)``.
    Adapters here emit an entry with ``source_mode=registration.source_mode``
    and ``policy_authority_url=registration.policy.real_classification_url``
    when the policy is populated.
@@ -163,24 +161,6 @@ def _build_entries(  # noqa: C901, ANN401 — three-source walker, refactor defe
         except Exception as exc:
             logger.warning("manifest_emitter: skipping submit adapter %s — %s", tool_id, exc)
 
-    # --- Source 2b: subscribe sub-registry -----------------------------------
-    try:
-        from kosmos.primitives.subscribe import (
-            _SUBSCRIBE_ADAPTERS as _subscribe_adapters,  # noqa: PLC0415, N811
-        )
-    except ImportError:
-        _subscribe_adapters = {}
-
-    for tool_id, (_modality, _adapter_fn) in _subscribe_adapters.items():
-        if tool_id in seen:
-            continue
-        # Subscribe adapters typically store GovAPITool in the main registry too;
-        # we defer to source 3 (main ToolRegistry) for their metadata.
-        # If not in main registry, emit a minimal internal-tagged entry.
-        logger.debug(
-            "manifest_emitter: subscribe adapter %s deferred to ToolRegistry lookup", tool_id
-        )
-
     # --- Source 2c: verify sub-registry --------------------------------------
     # Codex P1 #2445 fix: verify families register via register_verify_adapter()
     # which stores only (family, callable) — no AdapterRegistration is captured.
@@ -292,15 +272,13 @@ def _map_source_mode(raw: str) -> Literal["live", "mock", "internal"]:
 
 def _map_primitive(
     raw: Any,
-) -> Literal["lookup", "submit", "subscribe", "verify", "resolve_location"]:  # noqa: ANN401, E501
+) -> Literal["lookup", "submit", "verify", "resolve_location"]:  # noqa: ANN401
     """Normalise AdapterPrimitive enum value or string to the literal form."""
     s = raw.value if hasattr(raw, "value") else str(raw)
     if s == "lookup":
         return "lookup"
     if s == "submit":
         return "submit"
-    if s == "subscribe":
-        return "subscribe"
     if s == "verify":
         return "verify"
     if s == "resolve_location":

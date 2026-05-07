@@ -1,5 +1,108 @@
 {
   "$defs": {
+    "DelegationContext": {
+      "additionalProperties": false,
+      "description": "Carries a ``DelegationToken`` plus bilingual purpose strings for the permission UI.\n\nReturned by verify adapters (except ``mock_verify_module_any_id_sso``).\nPassed forward through the LLM's tool-call context to the next adapter.",
+      "properties": {
+        "citizen_did": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Citizen DID if the verify ceremony surfaced one (e.g. 'did:web:mobileid.go.kr' issuance). Optional.",
+          "title": "Citizen Did"
+        },
+        "purpose_en": {
+          "description": "English purpose statement shown in the permission UI.",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Purpose En",
+          "type": "string"
+        },
+        "purpose_ko": {
+          "description": "Korean purpose statement shown in the permission UI.",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Purpose Ko",
+          "type": "string"
+        },
+        "token": {
+          "$ref": "#/$defs/DelegationToken",
+          "description": "The opaque delegation credential."
+        }
+      },
+      "required": [
+        "token",
+        "purpose_ko",
+        "purpose_en"
+      ],
+      "title": "DelegationContext",
+      "type": "object"
+    },
+    "DelegationToken": {
+      "additionalProperties": false,
+      "description": "Opaque, scope-bound, time-bound credential issued by a verify adapter.\n\nIn Mock mode the ``vp_jwt`` header is ``{\"alg\":\"none\",\"typ\":\"vp+jwt\"}``;\nthe signature segment is the literal string ``\"mock-signature-not-cryptographic\"``.\n\nValidators:\n- ``expires_at > issued_at``\n- ``scope`` matches the multi-scope grammar\n- ``delegation_token`` starts with ``del_`` and has >= 24 chars after the prefix",
+      "properties": {
+        "_mode": {
+          "const": "mock",
+          "default": "mock",
+          "description": "Always 'mock' for Epic ε. Reserved for future 'live' value.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "delegation_token": {
+          "description": "Opaque bearer token consumed by submit/lookup adapters. Must start with 'del_' and have >= 24 chars after the prefix.",
+          "minLength": 1,
+          "title": "Delegation Token",
+          "type": "string"
+        },
+        "expires_at": {
+          "description": "UTC tz-aware expiry. Must be > issued_at. 24h max in Mock mode.",
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "issued_at": {
+          "description": "UTC tz-aware token mint time.",
+          "format": "date-time",
+          "title": "Issued At",
+          "type": "string"
+        },
+        "issuer_did": {
+          "description": "DID of the issuing verify adapter, e.g. 'did:web:mobileid.go.kr'.",
+          "minLength": 1,
+          "title": "Issuer Did",
+          "type": "string"
+        },
+        "scope": {
+          "description": "Comma-joined list of scope entries, each matching '<verb>:<adapter_family>.<action>'. Single-scope is also valid.",
+          "minLength": 1,
+          "title": "Scope",
+          "type": "string"
+        },
+        "vp_jwt": {
+          "description": "Verifiable Presentation as JWS (header.payload.signature dot-separated). In Mock mode: header=base64({alg:none,typ:vp+jwt}), signature='mock-signature-not-cryptographic'.",
+          "minLength": 1,
+          "title": "Vp Jwt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "vp_jwt",
+        "delegation_token",
+        "scope",
+        "issuer_did",
+        "issued_at",
+        "expires_at"
+      ],
+      "title": "DelegationToken",
+      "type": "object"
+    },
     "_HometaxSimplifiedOutput": {
       "additionalProperties": true,
       "description": "Placeholder output schema.\n\nReal shape tracks the 마이데이터 표준동의서 v240930 spec. Mock returns a\nsynthetic fixture stamped with the six transparency fields.",
@@ -12,8 +115,21 @@
   "additionalProperties": false,
   "description": "Input schema for mock_lookup_module_hometax_simplified.\n\nPydantic v2 strict model (extra='forbid', frozen=True).",
   "properties": {
+    "delegation_context": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DelegationContext"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Backend-injected DelegationContext from a prior verify turn. Do not ask the citizen for this value."
+    },
     "resident_id_prefix": {
-      "description": "주민등록번호 앞 6자리 (first six digits of resident ID). Used to scope the simplified data query in Mock mode.",
+      "default": "000000",
+      "description": "주민등록번호 앞 6자리 (first six digits of resident ID). Mock default: synthetic fixture value '000000' when omitted; do not ask the citizen for this value in mock flows.",
       "maxLength": 6,
       "minLength": 6,
       "pattern": "^\\d{6}$",
@@ -21,17 +137,13 @@
       "type": "string"
     },
     "year": {
-      "description": "귀속 연도 (year of income attribution). Example: 2024 for the 2024 tax year (신고 기한: 2025-05).",
+      "description": "귀속 연도 (year of income attribution). Mock default: previous attribution year when omitted. Example: 2024 for the 2024 tax year (신고 기한: 2025-05).",
       "maximum": 2030,
       "minimum": 2020,
       "title": "Year",
       "type": "integer"
     }
   },
-  "required": [
-    "year",
-    "resident_id_prefix"
-  ],
   "title": "mock_lookup_module_hometax_simplified",
   "type": "object"
 }

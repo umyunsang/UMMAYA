@@ -23,13 +23,11 @@ describe('executeConfig (FR-030)', () => {
     }
   });
 
-  it('secret entries are identified correctly', () => {
+  it('does not expose secret entries through /config', () => {
     const result = executeConfig();
     const secretEntries = result.entries.filter((e) => e.isSecret);
-    expect(secretEntries.length).toBeGreaterThan(0);
-    // API key must be secret
-    const apiKey = result.entries.find((e) => e.key === 'KOSMOS_FRIENDLI_TOKEN');
-    expect(apiKey?.isSecret).toBe(true);
+    expect(secretEntries).toHaveLength(0);
+    expect(result.entries.find((e) => e.key.includes('FRIENDLI'))).toBeUndefined();
   });
 
   it('openSecretEditorFor defaults to null', () => {
@@ -38,8 +36,8 @@ describe('executeConfig (FR-030)', () => {
   });
 
   it('openSecretEditorFor reflects the passed key', () => {
-    const result = executeConfig('KOSMOS_FRIENDLI_TOKEN');
-    expect(result.openSecretEditorFor).toBe('KOSMOS_FRIENDLI_TOKEN');
+    const result = executeConfig('KOSMOS_DATA_GO_KR_API_KEY');
+    expect(result.openSecretEditorFor).toBe('KOSMOS_DATA_GO_KR_API_KEY');
   });
 });
 

@@ -9,7 +9,6 @@
 //   LookupPermissionRequestAdapter    → bypasses (returns null; lookup is read-only)
 //   VerifyPermissionRequestAdapter    → Layer 1 (green ⓵)
 //   SubmitPermissionRequestAdapter    → Layer 2 / 3 based on is_irreversible
-//   SubscribePermissionRequestAdapter → Layer 2 (orange ⓶)
 //
 // CC reference: .references/claude-code-sourcemap/restored-src/src/components/
 //   permissions/PermissionRequest.tsx:47-82 (permissionComponentForTool switch).
@@ -179,36 +178,3 @@ export function SubmitPermissionRequestAdapter({
 }
 
 // ---------------------------------------------------------------------------
-// SubscribePermissionRequestAdapter — Layer 2 (orange ⓶)
-// ---------------------------------------------------------------------------
-
-export function SubscribePermissionRequestAdapter({
-  toolUseConfirm,
-  onDone,
-  onReject,
-  workerBadge,
-}: PermissionRequestProps): React.ReactNode {
-  const toolName = resolveToolDisplayName(
-    toolUseConfirm.input as Record<string, unknown>,
-  )
-
-  const handleDecisionMemo = useCallback(
-    (decision: PrimitiveDecision) => {
-      handleDecision(decision, toolUseConfirm, onDone, onReject)
-    },
-    [toolUseConfirm, onDone, onReject],
-  )
-
-  return (
-    <KosmosPrimitivePermissionRequest
-      primitive="subscribe"
-      toolName={toolName}
-      workerBadge={
-        workerBadge
-          ? { label: workerBadge.label, color: workerBadge.color }
-          : undefined
-      }
-      onDecision={handleDecisionMemo}
-    />
-  )
-}

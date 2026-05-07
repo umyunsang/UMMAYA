@@ -97,12 +97,12 @@ describe('toolToFunctionSchema - ResolveLocationPrimitive', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test 5 — getToolDefinitionsForFrame returns exactly 5 primitives
+// Test 5 — getToolDefinitionsForFrame returns exactly 4 active primitives
 // ---------------------------------------------------------------------------
 describe('getToolDefinitionsForFrame', () => {
-  test('returns exactly 5 published primitive entries', async () => {
+  test('returns exactly 4 published primitive entries', async () => {
     const defs = await getToolDefinitionsForFrame()
-    expect(defs.length).toBe(5)
+    expect(defs.length).toBe(4)
   })
 
   test('includes the expected primitive tool names', async () => {
@@ -113,7 +113,7 @@ describe('getToolDefinitionsForFrame', () => {
     expect(names.has('resolve_location')).toBe(true)
     expect(names.has('submit')).toBe(true)
     expect(names.has('verify')).toBe(true)
-    expect(names.has('subscribe')).toBe(true)
+    expect(names.has('subscribe')).toBe(false)
   })
 })
 

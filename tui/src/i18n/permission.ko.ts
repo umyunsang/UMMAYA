@@ -15,12 +15,10 @@ export interface PermissionI18nKo {
   // Per-primitive modal titles
   verifyModalTitle: string
   submitModalTitle: (isIrreversible: boolean) => string
-  subscribeModalTitle: string
 
   // Per-primitive modal body (tool_name injected by caller)
   verifyModalBody: (toolName: string) => string
   submitModalBody: (toolName: string, isIrreversible: boolean) => string
-  subscribeModalBody: (toolName: string) => string
 
   // Layer badge labels (reuse LAYER_VISUAL.ariaLabel in EN; here Korean)
   layer1Label: string
@@ -51,7 +49,6 @@ const permissionKo: PermissionI18nKo = {
   verifyModalTitle: '신원 확인 권한 요청',
   submitModalTitle: (isIrreversible) =>
     isIrreversible ? '취소 불가 제출 — 권한 요청' : '제출 권한 요청',
-  subscribeModalTitle: '구독 권한 요청',
 
   // Modal bodies
   verifyModalBody: (toolName) =>
@@ -68,11 +65,6 @@ const permissionKo: PermissionI18nKo = {
       : `"${toolName}" 도구가 정부 서비스 요청을 제출하려 합니다. ` +
         '귀하의 요청 데이터가 해당 기관에 전달됩니다. ' +
         '(개인정보보호법 제22조의2 — 고지 의무)',
-
-  subscribeModalBody: (toolName) =>
-    `"${toolName}" 도구가 실시간 알림 구독을 시작하려 합니다. ` +
-    '구독이 활성화되는 동안 지속적으로 데이터를 수신합니다. ' +
-    '(개인정보보호법 제22조의2 — 고지 의무)',
 
   // Layer labels
   layer1Label: '낮은 위험 (레이어 1)',

@@ -73,9 +73,9 @@ def _v_namespace(self) -> "PluginManifest":
             f"adapter.tool_id must start with '{expected_prefix}' (got {self.adapter.tool_id!r})"
         )
     suffix = self.adapter.tool_id[len(expected_prefix):]
-    if suffix not in {"lookup", "submit", "verify", "subscribe"}:
+    if suffix not in {"lookup", "submit", "verify"}:
         raise ValueError(
-            f"adapter.tool_id verb suffix must be one of 4 root primitives (got {suffix!r})"
+            f"adapter.tool_id verb suffix must be one of the active plugin primitives (got {suffix!r})"
         )
     return self
 ```

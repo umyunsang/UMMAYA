@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 """T034 — Registry-wide transparency scan (FR-006 / SC-005).
 
-Parameterised over all 20 Mock adapter IDs across the four surfaces:
+Parameterised over active mock adapter IDs:
   - 10 verify families  (kosmos.primitives.verify._VERIFY_ADAPTERS)
   - 5  submit adapters  (kosmos.primitives.submit._ADAPTER_REGISTRY)
-  - 3  subscribe adapters via get_transparency_metadata()
   - 2  lookup tools     (main ToolRegistry, adapter_mode='mock')
 
 Each adapter is invoked with minimal synthetic input and the six transparency
@@ -17,7 +16,6 @@ Contract: specs/2296-ax-mock-adapters/contracts/mock-adapter-response-shape.md �
 
 from __future__ import annotations
 
-import importlib
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -229,51 +227,6 @@ async def test_submit_adapter_receipt_carries_six_transparency_fields(adapter_id
 
 
 # ---------------------------------------------------------------------------
-# Subscribe surface — 3 adapters via get_transparency_metadata()
-# ---------------------------------------------------------------------------
-
-_SUBSCRIBE_ADAPTER_MODULES: list[tuple[str, str]] = [
-    ("mock_cbs_disaster_v1", "kosmos.tools.mock.cbs.disaster_feed"),
-    ("mock_rest_pull_tick_v1", "kosmos.tools.mock.data_go_kr.rest_pull_tick"),
-    ("mock_rss_public_notices_v1", "kosmos.tools.mock.data_go_kr.rss_notices"),
-]
-
-
-@pytest.mark.parametrize(
-    "adapter_id,module_path",
-    [(aid, mpath) for aid, mpath in _SUBSCRIBE_ADAPTER_MODULES],
-    ids=[aid for aid, _ in _SUBSCRIBE_ADAPTER_MODULES],
-)
-def test_subscribe_adapter_transparency_metadata_carries_six_fields(
-    adapter_id: str, module_path: str
-) -> None:
-    """Each subscribe adapter exposes get_transparency_metadata() with six fields.
-
-    Subscribe adapters yield streaming events rather than a single response dict.
-    Transparency fields are declared via a module-level get_transparency_metadata()
-    function per the Epic ε Phase 4B retrofit (T027).
-    """
-    module = importlib.import_module(module_path)
-
-    assert hasattr(module, "get_transparency_metadata"), (
-        f"subscribe/{adapter_id}: module {module_path!r} must expose "
-        f"get_transparency_metadata() (T027 retrofit requirement)"
-    )
-
-    metadata = module.get_transparency_metadata()
-
-    assert metadata.get("_mode") == "mock", (
-        f"subscribe/{adapter_id}: _mode must be 'mock', got {metadata.get('_mode')!r}"
-    )
-    for field in _SIX_FIELDS[1:]:
-        value = metadata.get(field)
-        assert value is not None and isinstance(value, str) and value.strip(), (
-            f"subscribe/{adapter_id}: transparency field {field!r} is missing or empty. "
-            f"Got: {value!r}"
-        )
-
-
-# ---------------------------------------------------------------------------
 # Lookup surface — 2 adapters in main ToolRegistry
 # ---------------------------------------------------------------------------
 
@@ -355,16 +308,15 @@ async def test_lookup_adapter_response_carries_six_transparency_fields(
 
 
 # ---------------------------------------------------------------------------
-# Coverage guard — enumerates all 20 IDs explicitly
+# Coverage guard — enumerates all active mock IDs explicitly
 # ---------------------------------------------------------------------------
 
 
 def _all_mock_adapter_ids() -> list[str]:
-    """Return the canonical list of all 20 Mock adapter IDs across the 4 surfaces."""
+    """Return the canonical list of active Mock adapter IDs."""
     return (
         _ALL_VERIFY_FAMILIES
         + _ALL_SUBMIT_IDS
-        + [aid for aid, _ in _SUBSCRIBE_ADAPTER_MODULES]
         + [
             "mock_lookup_module_hometax_simplified",
             "mock_lookup_module_gov24_certificate",
@@ -372,10 +324,10 @@ def _all_mock_adapter_ids() -> list[str]:
     )
 
 
-def test_canonical_mock_adapter_count_is_20() -> None:
-    """Guard: canonical mock adapter list must total exactly 20 entries."""
+def test_canonical_mock_adapter_count_is_17() -> None:
+    """Guard: canonical active mock adapter list must total exactly 17 entries."""
     ids = _all_mock_adapter_ids()
-    assert len(ids) == 20, f"Expected 20 canonical Mock adapter IDs, got {len(ids)}. IDs: {ids}"
+    assert len(ids) == 17, f"Expected 17 canonical Mock adapter IDs, got {len(ids)}. IDs: {ids}"
     assert len(set(ids)) == len(ids), (
         "Duplicate adapter IDs detected in canonical list — each adapter must "
         f"appear exactly once. Duplicates: "

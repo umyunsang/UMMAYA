@@ -2,8 +2,8 @@
 
 > **Status**: Shipped design (Spec 022 merged). This document is the historical record for the MVP 2-tool facade as shipped.
 > **Scope (as shipped)**: MVP ships **1 main tool** (`lookup`) and **1 primitive** (`resolve_location`) on top of the existing 6-layer architecture in `docs/vision.md`.
-> **Expansion**: The main-tool axis is being reset to a **5-primitive harness design** (analogous to Claude Code's ~5 always-loaded primitives — Read / Edit / Grep / Bash / Glob). Candidate primitives: `lookup`, `resolve_location`, `submit`, `subscribe`, `verify`. All ministry- and domain-specific knowledge (eligibility, payment, certificate issuance, application, slot reservation, alert subscription) collapses into adapters under `src/kosmos/tools/<ministry>/<adapter>.py`; the main surface stays domain-agnostic. A forthcoming Spec 031 will formalize the redesign; previous 8-verb proposal and its Discussion have been retired.
-> **Last updated**: 2026-04-19 (8-verb expansion retired; pending 5-primitive harness redesign. Body preserved at 2026-04-16 shipped-MVP state).
+> **Expansion**: The main-tool axis was reset to an active primitive harness design. Current active primitives are `lookup`, `resolve_location`, `submit`, and `verify`; `subscribe` is deferred until KOSMOS has an app/push-notification runtime. All ministry- and domain-specific knowledge (eligibility, payment, certificate issuance, application submission, slot reservation, notification handoff) collapses into adapters under `src/kosmos/tools/<ministry>/<adapter>.py`; the main surface stays domain-agnostic. The previous 8-verb proposal and its Discussion have been retired.
+> **Last updated**: 2026-05-07 (8-verb expansion retired; active primitive harness corrected after subscribe deferral. Body preserved at 2026-04-16 shipped-MVP state).
 
 ## 1. Scope and non-goals
 
@@ -13,7 +13,7 @@
 - A seed set of **4 per-API adapters** (KOROAD · KMA · HIRA · NMC) that exercise every canonical return shape (`collection`, `timeseries`) and every spatial-parameter convention (sido/gugun codes, KMA LCC grid, WGS84 coord+radius, distance-sorted WGS84) so `lookup` is validated end-to-end against real provider heterogeneity.
 
 ### Explicit non-goals
-- Domain-specific action verbs (eligibility check, payment, certificate issuance, application submission, slot reservation, alert subscription) — **deferred at shipped-MVP time (2026-04-16)** and **no longer tracked as main-tool verbs**. The forthcoming Spec 031 redesign treats these as adapter concerns beneath a small set of domain-agnostic harness primitives (`submit`, `subscribe`, `verify`, plus existing `lookup`/`resolve_location`). Legal/auth barriers for live promotion remain (student project, PASS TEE-bound, 공동인증서 NDA-closed); see `docs/vision.md § access matrix`.
+- Domain-specific action verbs (eligibility check, payment, certificate issuance, application submission, slot reservation, alert subscription) — **deferred at shipped-MVP time (2026-04-16)** and **no longer tracked as main-tool verbs**. Active primitives treat these as adapter concerns beneath `lookup`, `resolve_location`, `submit`, and `verify`. Legal/auth barriers for live promotion remain (student project, PASS TEE-bound, 공동인증서 NDA-closed); see `docs/vision.md § access matrix`.
 - Writing/mutating endpoints. MVP is **read-only**.
 - Full coverage of `data.go.kr`. MVP needs only enough adapters to prove the retrieval pattern works.
 - Multi-turn planning, permission pipeline depth beyond fail-closed defaults.

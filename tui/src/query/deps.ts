@@ -609,7 +609,7 @@ async function* queryModelWithStreaming(params: {
       // response, recreating the same stdio deadlock at the TUI layer.
       const fp = f as {
         request_id?: string
-        primitive_kind?: 'lookup' | 'resolve_location' | 'verify' | 'submit' | 'subscribe'
+        primitive_kind?: 'lookup' | 'resolve_location' | 'verify' | 'submit'
         description_ko?: string
         description_en?: string
         risk_level?: 'low' | 'medium' | 'high'

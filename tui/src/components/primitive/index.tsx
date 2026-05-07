@@ -6,11 +6,10 @@
  * no store writes.
  *
  * Dispatch strategy:
- *   1. Switch on payload.kind (5 primitive arms + unknown).
+ *   1. Switch on payload.kind (active primitive arms + unknown).
  *   2. Within lookup: switch on payload.subtype.
  *   3. Within submit / verify: switch on payload.ok.
- *   4. Within subscribe: switch on payload.closed.
- *   5. Unknown kind or subtype → <UnrecognizedPayload> (FR-033).
+ *   4. Unknown kind or subtype → <UnrecognizedPayload> (FR-033).
  *
  * TypeScript never-check ensures exhaustiveness at compile time.
  *
@@ -35,8 +34,6 @@ import { AddressBlock } from './AddressBlock'
 import { POIMarker } from './POIMarker'
 import { SubmitReceipt } from './SubmitReceipt'
 import { SubmitErrorBanner } from './SubmitErrorBanner'
-import { EventStream } from './EventStream'
-import { StreamClosed } from './StreamClosed'
 import { AuthContextCard } from './AuthContextCard'
 import { AuthWarningBanner } from './AuthWarningBanner'
 import { UnrecognizedPayload } from './UnrecognizedPayload'
@@ -46,7 +43,6 @@ import type {
   LookupPayload,
   ResolveLocationPayload,
   SubmitPayload,
-  SubscribePayload,
   VerifyPayload,
 } from './types'
 
@@ -118,13 +114,6 @@ function dispatchSubmit(payload: SubmitPayload): React.JSX.Element {
   return <SubmitErrorBanner payload={payload} />
 }
 
-function dispatchSubscribe(payload: SubscribePayload): React.JSX.Element {
-  if (payload.closed) {
-    return <StreamClosed payload={payload} />
-  }
-  return <EventStream payload={payload} />
-}
-
 function dispatchVerify(payload: VerifyPayload): React.JSX.Element {
   if (payload.ok) {
     return <AuthContextCard payload={payload} />
@@ -156,8 +145,6 @@ export function PrimitiveDispatcher({ payload }: PrimitiveDispatcherProps): Reac
       return dispatchResolveLocation(payload as ResolveLocationPayload)
     case 'submit':
       return dispatchSubmit(payload as SubmitPayload)
-    case 'subscribe':
-      return dispatchSubscribe(payload as SubscribePayload)
     case 'verify':
       return dispatchVerify(payload as VerifyPayload)
     default:
@@ -187,8 +174,6 @@ export { AddressBlock } from './AddressBlock'
 export { POIMarker } from './POIMarker'
 export { SubmitReceipt } from './SubmitReceipt'
 export { SubmitErrorBanner } from './SubmitErrorBanner'
-export { EventStream } from './EventStream'
-export { StreamClosed } from './StreamClosed'
 export { AuthContextCard } from './AuthContextCard'
 export { AuthWarningBanner } from './AuthWarningBanner'
 export { UnrecognizedPayload } from './UnrecognizedPayload'

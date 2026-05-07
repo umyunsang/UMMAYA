@@ -49,8 +49,8 @@
   source_rule: "docs/tool-adapters.md"
   check_type: static
   check_implementation: "kosmos.plugins.checks.q1_schema:check_input_model"
-  failure_message_ko: "schema.py 에 LookupInput / SubmitInput / VerifyInput / SubscribeInput 중 하나가 필요합니다."
-  failure_message_en: "schema.py must define one of LookupInput / SubmitInput / VerifyInput / SubscribeInput."
+  failure_message_ko: "schema.py 에 LookupInput / SubmitInput / VerifyInput 중 하나가 필요합니다."
+  failure_message_en: "schema.py must define one of LookupInput / SubmitInput / VerifyInput."
 
 - id: Q1-OUTPUT-MODEL
   description_ko: "output_schema 클래스 존재"
@@ -58,8 +58,8 @@
   source_rule: "docs/tool-adapters.md"
   check_type: static
   check_implementation: "kosmos.plugins.checks.q1_schema:check_output_model"
-  failure_message_ko: "schema.py 에 LookupOutput / SubmitOutput / VerifyOutput / SubscribeOutput 중 하나가 필요합니다."
-  failure_message_en: "schema.py must define one of LookupOutput / SubmitOutput / VerifyOutput / SubscribeOutput."
+  failure_message_ko: "schema.py 에 LookupOutput / SubmitOutput / VerifyOutput 중 하나가 필요합니다."
+  failure_message_en: "schema.py must define one of LookupOutput / SubmitOutput / VerifyOutput."
 
 - id: Q1-MANIFEST-VALID
   description_ko: "manifest.yaml 이 PluginManifest 검증 통과"
@@ -432,13 +432,13 @@
   failure_message_en: "host-reserved verbs (e.g. resolve_location) cannot be plugin-overridden."
 
 - id: Q8-VERB-IN-PRIMITIVES
-  description_ko: "verb ∈ 4 root primitive (lookup/submit/verify/subscribe)"
-  description_en: "verb is one of 4 root primitives"
+  description_ko: "verb ∈ active plugin primitive (lookup/submit/verify)"
+  description_en: "verb is one of the active plugin primitives"
   source_rule: "FR-004 + migration tree § L1-C C1"
   check_type: unit
   check_implementation: "kosmos.plugins.checks.q8_namespace:check_verb_in_primitives"
-  failure_message_ko: "verb 는 lookup / submit / verify / subscribe 중 하나여야 합니다."
-  failure_message_en: "verb must be one of lookup / submit / verify / subscribe."
+  failure_message_ko: "verb 는 lookup / submit / verify 중 하나여야 합니다."
+  failure_message_en: "verb must be one of lookup / submit / verify."
 
 # ---------------------------------------------------------------------------
 # Q9 — OTEL emission (2)

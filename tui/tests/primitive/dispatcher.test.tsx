@@ -28,9 +28,6 @@ import poiFixture from '../fixtures/resolve_location/poi-marker.json'
 import receiptFixture from '../fixtures/submit/submit-receipt.json'
 import submitErrorFixture from '../fixtures/submit/submit-error.json'
 
-import eventStreamFixture from '../fixtures/subscribe/event-stream.json'
-import streamClosedFixture from '../fixtures/subscribe/stream-closed.json'
-
 import authCardFixture from '../fixtures/verify/auth-context-card.json'
 import authWarningFixture from '../fixtures/verify/auth-warning-banner.json'
 
@@ -129,26 +126,6 @@ describe('PrimitiveDispatcher — submit', () => {
     const { lastFrame } = render(wrap(<PrimitiveDispatcher payload={submitErrorFixture.envelope} />))
     const frame = lastFrame() ?? ''
     expect(frame).toContain('AUTH_REQUIRED')
-    expect(frame).toMatchSnapshot()
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Subscribe dispatches
-// ---------------------------------------------------------------------------
-
-describe('PrimitiveDispatcher — subscribe', () => {
-  test('dispatches closed=false to EventStream', () => {
-    const { lastFrame } = render(wrap(<PrimitiveDispatcher payload={eventStreamFixture.envelope} />))
-    const frame = lastFrame() ?? ''
-    expect(frame).toContain('Live')
-    expect(frame).toMatchSnapshot()
-  })
-
-  test('dispatches closed=true to StreamClosed', () => {
-    const { lastFrame } = render(wrap(<PrimitiveDispatcher payload={streamClosedFixture.envelope} />))
-    const frame = lastFrame() ?? ''
-    expect(frame).toContain('Stream closed')
     expect(frame).toMatchSnapshot()
   })
 })

@@ -193,16 +193,14 @@ async def test_backend_emits_receipt_id_on_allow_once(  # noqa: C901
     )
     from kosmos.primitives import GATED_PRIMITIVES
 
-    prim_risk: dict[str, str] = {"verify": "low", "submit": "high", "subscribe": "medium"}
+    prim_risk: dict[str, str] = {"verify": "low", "submit": "high"}
     prim_ko: dict[str, str] = {
         "verify": "신원 확인을 위해 인증 위임을 요청합니다.",
         "submit": "정부 API에 데이터를 제출합니다.",
-        "subscribe": "공공 데이터 스트림을 구독합니다.",
     }
     prim_en: dict[str, str] = {
         "verify": "Request identity delegation.",
         "submit": "Submit data to a government API.",
-        "subscribe": "Subscribe to a public data stream.",
     }
 
     async def _simulated_check_gate(fname: str) -> bool:
@@ -371,7 +369,7 @@ async def test_backend_emits_receipt_id_on_allow_session(  # noqa: C901
     )
     from kosmos.primitives import GATED_PRIMITIVES
 
-    prim_risk: dict[str, str] = {"verify": "low", "submit": "high", "subscribe": "medium"}
+    prim_risk: dict[str, str] = {"verify": "low", "submit": "high"}
     prim_ko: dict[str, str] = {"submit": "정부 API에 데이터를 제출합니다."}
     prim_en: dict[str, str] = {"submit": "Submit data to a government API."}
 

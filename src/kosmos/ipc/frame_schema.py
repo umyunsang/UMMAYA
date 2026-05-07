@@ -459,7 +459,7 @@ class ToolCallFrame(_BaseFrame):
 
     kind: Literal["tool_call"] = Field(default="tool_call", description="Frame discriminator.")
     call_id: str = Field(description="ULID correlating this call to its subsequent tool_result.")
-    name: Literal["lookup", "resolve_location", "submit", "subscribe", "verify"] = Field(
+    name: Literal["lookup", "resolve_location", "submit", "verify"] = Field(
         description="Primitive name per Spec 031."
     )
     arguments: dict[str, object] = Field(
@@ -473,11 +473,11 @@ class ToolCallFrame(_BaseFrame):
 
 
 class ToolResultEnvelope(BaseModel):
-    """5-primitive discriminated union envelope (open schema)."""
+    """Active primitive discriminated union envelope (open schema)."""
 
     model_config = ConfigDict(frozen=True, extra="allow", populate_by_name=True)
 
-    kind: Literal["lookup", "resolve_location", "submit", "subscribe", "verify"] = Field(
+    kind: Literal["lookup", "resolve_location", "submit", "verify"] = Field(
         description="Primitive kind discriminator per Spec 031."
     )
 
@@ -488,7 +488,9 @@ class ToolResultFrame(_BaseFrame):
     kind: Literal["tool_result"] = Field(default="tool_result", description="Frame discriminator.")
     call_id: str = Field(description="ULID correlating this result to its originating tool_call.")
     envelope: ToolResultEnvelope = Field(
-        description="5-primitive discriminated union. Unknown kind falls to UnrecognizedPayload."
+        description=(
+            "Active primitive discriminated union. Unknown kind falls to UnrecognizedPayload."
+        )
     )
 
 
@@ -523,8 +525,8 @@ class WorkerStatusFrame(_BaseFrame):
     role_id: str = Field(
         description="Specialist label (e.g., transport-specialist, health-specialist)."
     )
-    current_primitive: Literal["lookup", "resolve_location", "submit", "subscribe", "verify"] = (
-        Field(description="Primitive currently being invoked by this worker.")
+    current_primitive: Literal["lookup", "resolve_location", "submit", "verify"] = Field(
+        description="Primitive currently being invoked by this worker."
     )
     status: Literal["idle", "running", "waiting_permission", "error"] = Field(
         description="Worker execution status."
@@ -546,7 +548,7 @@ class PermissionRequestFrame(_BaseFrame):
         description="ULID; round-trips in the matching permission_response frame."
     )
     worker_id: str = Field(description="Worker requesting permission.")
-    primitive_kind: Literal["lookup", "resolve_location", "submit", "subscribe", "verify"] = Field(
+    primitive_kind: Literal["lookup", "resolve_location", "submit", "verify"] = Field(
         description="The primitive the worker wants to invoke."
     )
     description_ko: str = Field(description="Korean-language description shown to the citizen.")
@@ -614,11 +616,9 @@ class PermissionResponseFrame(_BaseFrame):
     # context for the TUI to render a meaningful receipt row. Without these
     # fields the TUI's usePermissionReceiptWatcher hardcoded
     # `layer: 1, tool_name: 'unknown'` (UI-C-1 spec violation: Layer 2/3
-    # submits / subscribes were colour-coded green like a Layer 1 verify).
+    # submits were colour-coded green like a Layer 1 verify).
     # Both fields are optional so legacy backends remain wire-compatible.
-    primitive_kind: (
-        Literal["lookup", "resolve_location", "submit", "subscribe", "verify"] | None
-    ) = Field(
+    primitive_kind: Literal["lookup", "resolve_location", "submit", "verify"] | None = Field(
         default=None,
         description=(
             "The primitive that was authorised. The TUI feeds this into "
@@ -902,7 +902,7 @@ class HeartbeatFrame(_BaseFrame):
 
 
 class NotificationPushFrame(_BaseFrame):
-    """Push from subscription surfaces (Spec 031 SubscriptionHandle).
+    """Push from app/phone notification surfaces.
 
     Carried over the same stdio channel to keep a single correlation plane.
     role allow-list: notification.
@@ -912,7 +912,7 @@ class NotificationPushFrame(_BaseFrame):
     in-process from ``ink/useTerminalNotification.ts``. There is no
     push-based IPC notification arm in CC. KOSMOS adds this arm as a
     swap-2 addition for Korean civic push channels (KMA disaster CBS,
-    RSS newsroom subscribe, hospital-alert subscribe) carried over the
+    government newsroom alerts, hospital alerts) carried over the
     same stdio plane to keep a single correlation plane. Spec 2642
     Epic F · S7 audit recorded this finding (specs/cc-migration-audit/
     scope-S7-ipc-bridge.md § 5 Finding 3 — resolved as orthogonal
@@ -922,8 +922,8 @@ class NotificationPushFrame(_BaseFrame):
     kind: Literal["notification_push"] = Field(
         default="notification_push", description="Frame discriminator."
     )
-    subscription_id: str = Field(description="Handle from Spec 031 subscribe registration.")
-    adapter_id: str = Field(description="e.g., disaster_alert_cbs_push, rss_newsroom_subscribe.")
+    subscription_id: str = Field(description="Notification channel handle.")
+    adapter_id: str = Field(description="e.g., disaster_alert_cbs_push, gov_newsroom_push.")
     event_guid: str = Field(description="RSS guid or CBS event hash for duplicate suppression.")
     payload_content_type: Literal["text/plain", "application/json"] = Field(
         description="Inline payload MIME."
@@ -1169,7 +1169,7 @@ class AdapterManifestEntry(BaseModel):
         max_length=80,
         description="Human-readable display name; bilingual permitted.",
     )
-    primitive: Literal["lookup", "submit", "subscribe", "verify", "resolve_location"] = Field(
+    primitive: Literal["lookup", "submit", "verify", "resolve_location"] = Field(
         description="Primitive verb the adapter is registered under (I6).",
     )
     policy_authority_url: str | None = Field(

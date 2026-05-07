@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class ExpectedToolCall(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    name: Literal["verify", "lookup", "submit", "subscribe", "resolve_location"]
+    name: Literal["verify", "lookup", "submit", "resolve_location"]
     arguments: dict[str, str | list[str]] = Field(default_factory=dict)
 
 

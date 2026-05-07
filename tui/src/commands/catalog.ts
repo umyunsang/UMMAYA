@@ -64,9 +64,9 @@ export const UI_L2_SLASH_COMMANDS: readonly SlashCommandCatalogEntryT[] = [
   {
     name: '/agents',
     group: 'tool',
-    description_ko: '활성 부처 에이전트 상태를 표시합니다',
-    description_en: 'Show active ministry agent status',
-    arg_signature: '[--detail]',
+    description_ko: 'Manage agent configurations',
+    description_en: 'Manage agent configurations',
+    arg_signature: null,
     hidden: false,
   },
   {

@@ -20,7 +20,7 @@ Per Constitution Principle I and `AGENTS.md § Spec-driven workflow`, every plan
 Cross-spec inheritance applied:
 
 - **Spec 1632** (P0 baseline) — supplies the prior `bun test` baseline figure (576 pass) used as a floor reference in spec FR-010.
-- **Spec 1633** (P1 + P2) — confirms session JSONL paths (`~/.kosmos/memdir/user/sessions/`) referenced in adapter specs that document subscribe-side delivery.
+- **Spec 1633** (P1 + P2) — confirms session JSONL paths (`~/.kosmos/memdir/user/sessions/`) referenced by adapter specs.
 - **Spec 1634** (P3 tool wiring) — canonical 14-tool registry (`register_all.py`) is the iteration source for `scripts/build_schemas.py`. Composite removal (`road_risk_score`) sourced from this Epic's `register_all.py:116` comment.
 - **Spec 1635** (P4 UI L2) — supplies the onboarding state file path (`~/.kosmos/memdir/user/onboarding/state.json`) referenced in the smoke checklist.
 - **Spec 1636** (P5 plugin DX) — supplies the visual-evidence convention (file naming `<slug>.ansi.txt` + `<slug>.txt` pair), the contracts/ directory pattern, and the bilingual-search-hint approach.
@@ -83,7 +83,7 @@ The "Scope Boundaries & Deferred Items" section in spec.md was scanned per the g
 3. **Search hints** — bilingual list (Korean primary, English secondary), exactly as registered in `kosmos.tools.<adapter>.search_hint`.
 4. **Endpoint** — data.go.kr endpoint identifier + ministry source URL for Live; "fixture-replay only" + public-spec citation for Mock.
 5. **Permission tier rationale** — Spec 033 reference + per-adapter explanation (e.g., why `nmc_emergency_search` is L3-gated).
-6. **Worked example** — at least one `lookup(mode="fetch")` invocation (or `submit` / `verify` / `subscribe` for the corresponding primitive families) showing input envelope JSON, output envelope JSON, and a KOSMOS conversation snippet.
+6. **Worked example** — at least one `lookup(mode="fetch")` invocation (or `submit` / `verify` for the corresponding primitive families) showing input envelope JSON, output envelope JSON, and a KOSMOS conversation snippet.
 7. **Constraints** — rate limits, freshness windows, fixture coverage gaps, error envelope examples.
 
 The template also includes a YAML front matter block with `tool_id`, `primitive`, `tier`, and `permission_tier` — these are machine-readable so a future linter can automate the SC-001 structural check.
@@ -117,7 +117,7 @@ Sort keys at every level using `json.dumps(..., sort_keys=True, indent=2, ensure
 
 - **`pydantic.TypeAdapter(Model).json_schema()`** — equivalent; `Model.model_json_schema()` is shorter and doesn't require an extra wrapper.
 - **`apischema` or `jsonschema-rs`** — new dependency; rejected by AGENTS.md hard rule and FR-022.
-- **Hand-rolled JSON Schema authoring** — rejected: 24 schemas drift from Pydantic source; impossible to keep in sync.
+- **Hand-rolled JSON Schema authoring** — rejected: schemas drift from Pydantic source; impossible to keep in sync.
 
 ### R5 — `docs/tools/` → `docs/api/` migration mapping
 
@@ -136,11 +136,11 @@ Sort keys at every level using `json.dumps(..., sort_keys=True, indent=2, ensure
 | `kma.md` | `kma/README.md` | KMA ministry group index; lists 6 KMA adapters. |
 | `koroad.md` | `koroad/README.md` | KOROAD group index; lists 2 KOROAD adapters. |
 | `nfa119.md` | `nfa119/emergency_info_service.md` | tool_id = `nfa_emergency_info_service`. |
-| `README.md` | `api/README.md` | Promoted to docs/api/ root index, expanded to 24-adapter matrix. |
+| `README.md` | `api/README.md` | Promoted to docs/api/ root index, expanded to the active-adapter matrix. |
 | `road-risk-score.md` | (deleted) | Composite removed per Spec 1634. |
 | `ssis.md` | `mohw/welfare_eligibility_search.md` | tool_id = `mohw_welfare_eligibility_search`; renamed source folder from `ssis` to ministry name `mohw` for consistency. |
 
-In addition, **net-new specs** (no source in `docs/tools/`): `kma/forecast_fetch.md`, `hira/hospital_search.md`, `nmc/emergency_search.md`, plus all 11 Mock adapters under `verify/`, `submit/`, `subscribe/`. These are authored from scratch using the R3 template.
+In addition, **net-new specs** (no source in `docs/tools/`): `kma/forecast_fetch.md`, `hira/hospital_search.md`, `nmc/emergency_search.md`, plus active Mock adapters under `verify/` and `submit/`. Subscribe specs are deferred until KOSMOS has an app/push-notification runtime. These are authored from scratch using the R3 template.
 
 After migration, `docs/tools/` does not exist (FR-008 / SC-006).
 

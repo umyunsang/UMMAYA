@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Tests for aalToLayer — FR-005 matrix (8 cases).
+// Tests for aalToLayer — active FR-005 matrix.
 
 import { describe, test, expect } from 'bun:test'
 import { aalToLayer } from './aalToLayer'
@@ -32,9 +32,5 @@ describe('aalToLayer', () => {
 
   test('submit (irreversible=true) returns 3 (red ⓷)', () => {
     expect(aalToLayer('submit', true)).toBe(3)
-  })
-
-  test('subscribe returns 2 (orange ⓶, medium risk)', () => {
-    expect(aalToLayer('subscribe')).toBe(2)
   })
 })

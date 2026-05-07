@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """TUI operational configuration loaded from KOSMOS_TUI_* environment variables.
 
-All five variables are non-secret operational knobs with safe defaults.  They
+All four variables are non-secret operational knobs with safe defaults.  They
 are registered here — not in guard.py — because the startup guard only enforces
 *required* secrets.  The presence of this module ensures the #468 audit-env-registry
 script (`scripts/audit-env-registry.py`) treats every ``KOSMOS_TUI_*`` reference
@@ -10,7 +10,7 @@ found in ``src/`` as registered and does not flag them as unregistered leaked va
 Usage::
 
     from kosmos.config.env_registry import tui_settings
-    timeout = tui_settings.subscribe_timeout_s
+    theme = tui_settings.theme
 """
 
 from __future__ import annotations
@@ -53,17 +53,6 @@ class TUISettings(BaseSettings):
         ),
     )
     """Log verbosity for IPC bridge frames (KOSMOS_TUI_LOG_LEVEL)."""
-
-    subscribe_timeout_s: int = Field(
-        default=300,
-        ge=1,
-        description=(
-            "Subscribe-stream idle timeout in seconds.  The subscribe primitive "
-            "renderer closes the stream when no event arrives within this window. "
-            "Must be >= 1."
-        ),
-    )
-    """Subscribe-stream idle timeout in seconds (KOSMOS_TUI_SUBSCRIBE_TIMEOUT_S)."""
 
     ime_strategy: Literal["fork", "readline"] = Field(
         default="fork",

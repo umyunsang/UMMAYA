@@ -6,7 +6,6 @@
 //   verify (any AAL) → 1     (green ⓵, low risk)
 //   submit (non-irr) → 2     (orange ⓶, medium risk)
 //   submit (irr=true)→ 3     (red ⓷, high risk)
-//   subscribe        → 2     (orange ⓶, medium risk)
 //
 // Previously scattered across:
 //   src/kosmos/tools/policy_derivation.py:57
@@ -17,10 +16,10 @@
 import type { PermissionLayerT } from '../../schemas/ui-l2/permission.js'
 
 /**
- * KOSMOS primitive verb identifiers. Aligns with L1-C C1 four reserved
+ * KOSMOS active primitive verb identifiers. Aligns with L1-C C1 reserved
  * primitives declared in docs/requirements/kosmos-migration-tree.md.
  */
-export type KosmosPrimitive = 'lookup' | 'verify' | 'submit' | 'subscribe'
+export type KosmosPrimitive = 'lookup' | 'verify' | 'submit'
 
 /**
  * Map a KOSMOS primitive verb + optional irreversibility flag to a permission
@@ -44,7 +43,5 @@ export function aalToLayer(
       return 1
     case 'submit':
       return isIrreversible ? 3 : 2
-    case 'subscribe':
-      return 2
   }
 }

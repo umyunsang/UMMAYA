@@ -2,7 +2,7 @@
 
 > KOSMOS 플러그인이 host 와 어떻게 결합되는지 설명합니다. 기여자는 빠른 시작 직후 이 문서를 읽고 본격 작성에 들어가야 합니다 (quickstart.ko.md § 단계 3).
 >
-> 참고: [`docs/vision.md § Layer 2`](../vision.md), [Spec 022 BM25 retrieval](../../specs/022-mvp-main-tool/spec.md), [Spec 031 5-primitive harness](../../specs/031-five-primitive-harness/spec.md), [Migration tree § L1-B](../requirements/kosmos-migration-tree.md), [`AGENTS.md § New tool adapter`](../../AGENTS.md), [ADR-007 plugin namespace](../adr/ADR-007-plugin-tool-id-namespace.md).
+> 참고: [`docs/vision.md § Layer 2`](../vision.md), [Spec 022 BM25 retrieval](../../specs/022-mvp-main-tool/spec.md), active primitive harness notes in [`docs/onboarding/five-primitive-harness.md`](../onboarding/five-primitive-harness.md), [Migration tree § L1-B](../requirements/kosmos-migration-tree.md), [`AGENTS.md § New tool adapter`](../../AGENTS.md), [ADR-007 plugin namespace](../adr/ADR-007-plugin-tool-id-namespace.md).
 
 ---
 
@@ -20,23 +20,24 @@ KOSMOS 는 6-layer harness 입니다 (`docs/vision.md`). 플러그인은 **Layer
 
 ---
 
-## 4 root primitive 매핑
+## Active plugin primitive 매핑
 
-Migration tree § L1-C C1 이 정한 4개 reserved 동사:
+현재 플러그인이 binding 할 수 있는 active 동사:
 
 | Primitive | 의미 | 대표 사용처 |
 |---|---|---|
 | `lookup` | 조회 | KOROAD 사고 검색, KMA 일기예보, HIRA 병원 검색, 모든 `lookup(mode="search/fetch")` |
 | `submit` | 제출 (irreversible) | 정부24 민원 제출, 공동인증서 서명 후 제출 (Spec 024 V4 invariant 적용) |
 | `verify` | 검증 | KEC 차량 검사 결과, 신원 인증 결과 read-back |
-| `subscribe` | 구독 (push) | 재난 경보 CBS, RSS 뉴스룸, 주식 알림 (Spec 031 SubscriptionHandle) |
+
+`subscribe` 는 국민비서/정부 앱/휴대폰 푸시 같은 별도 delivery runtime 이 필요하므로 현재 플러그인 verb 에서 비활성입니다.
 
 > **resolve_location 은 plugin 이 override 할 수 없습니다** (Q8-NO-ROOT-OVERRIDE). 위치 해석은 host 가 소유한 built-in primitive 입니다.
 
 플러그인의 `tool_id` 는 반드시 다음 정규식을 따라야 합니다 (ADR-007):
 
 ```regex
-^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify|subscribe)$
+^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify)$
 ```
 
 예시:
@@ -200,6 +201,6 @@ manifest.yaml 의 `otel_attributes["kosmos.plugin.id"]` 는 **반드시 `plugin_
 | 카탈로그 | catalog | `kosmos-plugin-store/index/index.json`. |
 | 수탁자 | trustee | PIPA §26 수탁 측. |
 | 동의 영수증 | consent receipt | Spec 035 ledger 확장 (`plugin_install` / `plugin_uninstall`). |
-| 프리미티브 | primitive | 4 root 동사 (`lookup`, `submit`, `verify`, `subscribe`). |
+| 프리미티브 | primitive | active plugin 동사 (`lookup`, `submit`, `verify`). `subscribe` 는 앱/푸시 런타임 전까지 비활성. |
 | 1차 매핑 | byte mirror | `source_mode=OPENAPI`. |
 | 2차 매핑 | shape mirror | `source_mode=OOS`. |

@@ -41,7 +41,7 @@ JSON Schema + OpenAPI 참조 형태로 작성. (b) 통합 bun test 회귀 없음
 - `docs/api/nfa119/emergency_info_service.md`
 - `docs/api/mohw_ssis/welfare_eligibility_search.md`
 
-#### 공통 Mock (verify · submit · subscribe)
+#### 공통 Mock (verify · submit)
 - `docs/api/verify/digital_onepass.md`
 - `docs/api/verify/mobile_id.md`
 - `docs/api/verify/gongdong_injeungseo.md`
@@ -50,9 +50,6 @@ JSON Schema + OpenAPI 참조 형태로 작성. (b) 통합 bun test 회귀 없음
 - `docs/api/verify/mydata.md`
 - `docs/api/submit/fines_pay.md`
 - `docs/api/submit/welfare_application.md`
-- `docs/api/subscribe/disaster_feed.md`
-- `docs/api/subscribe/rss_notices.md`
-- `docs/api/subscribe/rest_pull_tick.md`
 
 #### resolve_location
 - `docs/api/resolve_location/index.md` (juso · sgis · kakao)
@@ -72,7 +69,7 @@ JSON Schema + OpenAPI 참조 형태로 작성. (b) 통합 bun test 회귀 없음
 
 #### 통합 bun run tui
 - 온보딩 5-step 수동 clickthrough
-- 4 primitive LLM 호출 시나리오 (lookup · submit mock · verify mock · subscribe)
+- Active primitive LLM 호출 시나리오 (lookup · submit mock · verify mock). Subscribe is deferred until KOSMOS has an app/push-notification runtime.
 - `/agents` · `/plugins` · `/consent list` · `/help` 검증
 - Error envelope 3종 수동 유발 테스트
 - PDF inline render 검증 (Kitty/iTerm2 환경)

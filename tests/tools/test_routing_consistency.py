@@ -51,14 +51,12 @@ class TestInvariant1PrimitiveDeclared:
             )
 
     def test_all_primitives_within_closed_enum(self, live_registry):
-        """Every declared primitive is one of the five reserved primitives."""
-        valid_primitives = frozenset(
-            {"lookup", "resolve_location", "submit", "subscribe", "verify"}
-        )
+        """Every declared primitive is one of the active reserved primitives."""
+        valid_primitives = frozenset({"lookup", "resolve_location", "submit", "verify"})
         registry, _ = live_registry
         for tool_id, tool in registry._tools.items():
             assert tool.primitive in valid_primitives, (
-                f"{tool_id}: primitive={tool.primitive!r} is outside the five-primitive "
+                f"{tool_id}: primitive={tool.primitive!r} is outside the active primitive "
                 f"closed set {valid_primitives}"
             )
 
@@ -166,7 +164,7 @@ class TestInvariant4UniqueToolId:
 # ---------------------------------------------------------------------------
 # Check 7 — Tool list closure
 # The Python-side registered tool set matches the 14-adapter closed set.
-# LLM-visible primitive names (lookup/submit/verify/subscribe) and auxiliary
+# LLM-visible primitive names (lookup/submit/verify) and auxiliary
 # tools live on the TUI side and are validated by `bun test` CI.
 # ---------------------------------------------------------------------------
 
@@ -208,10 +206,9 @@ class TestCheck7ToolListClosure:
             # citizen-OPAQUE chain (verify→lookup→submit) to be emittable.
             "verify",
             "submit",
-            "subscribe",
-            # Epic ζ #2297 path B (live smoke 2026-04-30) — 18 non-core mock
+            # Epic ζ #2297 path B (live smoke 2026-04-30) — 15 non-core mock
             # adapter wrappers bridged into the BM25 corpus by discovery_bridge
-            # so lookup(mode="search") surfaces verify/submit/subscribe
+            # so lookup(mode="search") surfaces verify/submit
             # candidates alongside lookup-class adapters. is_core=False; not
             # in the primary LLM tool list.
             # 10 verify family wrappers
@@ -231,10 +228,6 @@ class TestCheck7ToolListClosure:
             "mock_submit_module_public_mydata_action",
             "mock_traffic_fine_pay_v1",
             "mock_welfare_application_submit_v1",
-            # 3 subscribe wrappers
-            "mock_cbs_disaster_v1",
-            "mock_rest_pull_tick_v1",
-            "mock_rss_public_notices_v1",
         }
     )
 
