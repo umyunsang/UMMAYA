@@ -50,7 +50,7 @@ class LLMClientConfig(BaseSettings):
         validation_alias="KOSMOS_LLM_SESSION_BUDGET",
         description="Maximum tokens allowed per session.",
     )
-    timeout: float = Field(
+    timeout: float = Field(  # type: ignore[pydantic-alias]
         default=300.0,
         validation_alias=AliasChoices(
             "KOSMOS_LLM_TIMEOUT_SECONDS",

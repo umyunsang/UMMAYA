@@ -15,6 +15,7 @@ import base64
 import json
 import secrets
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any, Final
 
 from kosmos.memdir.consent_ledger import DelegationIssuedEvent, append_delegation_issued
@@ -160,7 +161,8 @@ def _issue_delegation_context(session_context: dict[str, object]) -> DelegationC
         purpose_en=str(session_context.get("purpose_en") or "MyData delegation"),
     )
 
-    ledger_root = session_context.get("ledger_root")
+    raw_ledger_root = session_context.get("ledger_root")
+    ledger_root = raw_ledger_root if isinstance(raw_ledger_root, Path) else None
     append_delegation_issued(
         DelegationIssuedEvent(
             ts=now,
@@ -171,7 +173,7 @@ def _issue_delegation_context(session_context: dict[str, object]) -> DelegationC
             issuer_did=_ISSUER_DID,
             verify_tool_id=_TOOL_ID,
         ),
-        ledger_root=ledger_root if not isinstance(ledger_root, str) else None,
+        ledger_root=ledger_root,
     )
     return context
 
@@ -179,8 +181,9 @@ def _issue_delegation_context(session_context: dict[str, object]) -> DelegationC
 def invoke(session_context: dict[str, Any]) -> MyDataContext:
     """Return the recorded fixture; override via session_context for test variants."""
     delegation_context = _issue_delegation_context(session_context)
-    if session_context.get("_fixture_override"):
-        overrides: dict[str, object] = dict(session_context["_fixture_override"])  # type: ignore[call-overload]
+    raw_override = session_context.get("_fixture_override")
+    if isinstance(raw_override, dict):
+        overrides: dict[str, object] = {str(key): value for key, value in raw_override.items()}
         base = _FIXTURE.model_dump(by_alias=True)
         if delegation_context is not None:
             base["delegation_context"] = delegation_context

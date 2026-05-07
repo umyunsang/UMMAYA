@@ -1057,7 +1057,8 @@ def _tool_result_payload_for_call(
     if not isinstance(content, str):
         return None
     try:
-        return _stdlib_json.loads(content)
+        payload: object = _stdlib_json.loads(content)
+        return payload
     except _stdlib_json.JSONDecodeError:
         return None
 
@@ -1136,7 +1137,8 @@ def _tool_result_payload_for_primitive_call(
     if not isinstance(content, str):
         return None
     try:
-        return _stdlib_json.loads(content)
+        payload: object = _stdlib_json.loads(content)
+        return payload
     except _stdlib_json.JSONDecodeError:
         return None
 
@@ -5046,7 +5048,7 @@ async def run(  # noqa: C901
                 verify_gate = _check_verify_terminated_without_verify(llm_messages, latest_user_utt)
                 if verify_gate is not None:
                     synth_call_id = str(uuid.uuid4())
-                    verify_args = {
+                    verify_args: dict[str, object] = {
                         "tool_id": verify_gate["verify_tool_id"],
                         "params": {
                             "scope_list": list(_requirement_scope_entries(verify_gate)),

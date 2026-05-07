@@ -532,7 +532,15 @@ async def resolve_location(  # noqa: C901
     inp: ResolveLocationInput,
     *,
     client: httpx.AsyncClient | None = None,
-) -> CoordResult | AdmCodeResult | AddressResult | POIResult | ResolveBundle | ResolveError:
+) -> (
+    CoordResult
+    | AdmCodeResult
+    | AddressResult
+    | POIResult
+    | RegionResult
+    | ResolveBundle
+    | ResolveError
+):
     """Resolve a natural-language place reference to structured location data.
 
     Deterministic resolver chain: kakao → juso → sgis.
@@ -797,8 +805,6 @@ async def resolve_location(  # noqa: C901
                         query,
                         getattr(doc_kw, "place_name", None),
                     )
-                    doc_kw = None
-                if doc_kw is None:
                     lat_kw = lon_kw = None
                 else:
                     try:
@@ -806,7 +812,7 @@ async def resolve_location(  # noqa: C901
                         lon_kw = float(doc_kw.x) if doc_kw.x else None
                     except (ValueError, TypeError):
                         lat_kw = lon_kw = None
-                if doc_kw is not None and lat_kw is not None and lon_kw is not None:
+                if lat_kw is not None and lon_kw is not None:
                     if coords_bundle is None:
                         coords_bundle = _with_kma_grid(
                             CoordResult(
