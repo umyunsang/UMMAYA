@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# SBOM scans should describe repository manifests and source artifacts.
+# The CI job creates .venv with `uv sync`; scanning that execution artifact can
+# catalog transient installed wheels and make the two-run divergence gate flaky.
+exclude:
+  - "./.venv/**"

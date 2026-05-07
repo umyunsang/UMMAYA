@@ -10,6 +10,7 @@ on:
     paths:
       - pyproject.toml
       - uv.lock
+      - .github/syft-sbom.yaml
       - .github/workflows/sbom.yml
   workflow_dispatch:
 
@@ -42,6 +43,7 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           path: .
+          config: .github/syft-sbom.yaml
           format: spdx-json
           output-file: sbom-spdx-run1.json
           upload-artifact: false
@@ -50,6 +52,7 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           path: .
+          config: .github/syft-sbom.yaml
           format: cyclonedx-json
           output-file: sbom-cyclonedx-run1.json
           upload-artifact: false
@@ -58,6 +61,7 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           path: .
+          config: .github/syft-sbom.yaml
           format: spdx-json
           output-file: sbom-spdx-run2.json
           upload-artifact: false
@@ -66,6 +70,7 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           path: .
+          config: .github/syft-sbom.yaml
           format: cyclonedx-json
           output-file: sbom-cyclonedx-run2.json
           upload-artifact: false
