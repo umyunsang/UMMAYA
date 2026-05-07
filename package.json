@@ -1,5 +1,5 @@
 {
-  "name": "kosax",
+  "name": "@umyunsang/kosax",
   "version": "0.1.0",
   "description": "Conversational multi-agent harness for Korean public-service channels",
   "license": "Apache-2.0",

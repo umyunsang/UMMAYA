@@ -8,7 +8,7 @@ registries.
 
 | Surface | Status | Install target |
 |---------|--------|----------------|
-| npm | First release surface | `kosax` package with `kosax` bin wrapper |
+| npm | First release surface | `@umyunsang/kosax` package with `kosax` bin wrapper |
 | Homebrew | First release follow-up | `umyunsang/homebrew-kosax` formula generated from the npm tarball |
 | PyPI | Removed from this release | No backend/PyPI publish in the current plan |
 
@@ -36,7 +36,7 @@ Run these commands before opening a release PR:
 ```bash
 npm run package:check
 npm pack --json
-npm install --global --prefix /tmp/kosax-npm-prefix-test ./kosax-0.1.0.tgz
+npm install --global --prefix /tmp/kosax-npm-prefix-test ./umyunsang-umyunsang-kosax-0.1.0.tgz
 /tmp/kosax-npm-prefix-test/bin/kosax --version
 ```
 
@@ -79,7 +79,7 @@ Configure npm Trusted Publishing for:
 
 | Field | Value |
 |-------|-------|
-| npm package | `kosax` |
+| npm package | `@umyunsang/kosax` |
 | Owner | `umyunsang` |
 | Repository | `KOSAX` |
 | Workflow | `publish-npm.yml` |

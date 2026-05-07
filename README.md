@@ -114,7 +114,7 @@ bun run tui --version
 After the npm release:
 
 ```bash
-npm install -g kosax
+npm install -g @umyunsang/kosax
 kosax --version
 kosax
 ```

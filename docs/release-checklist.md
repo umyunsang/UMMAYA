@@ -31,14 +31,14 @@ from a local machine.
 ```bash
 npm run package:check
 npm pack --json
-npm install --global --prefix /tmp/kosax-npm-prefix-test ./kosax-0.1.0.tgz
+npm install --global --prefix /tmp/kosax-npm-prefix-test ./umyunsang-umyunsang-kosax-0.1.0.tgz
 /tmp/kosax-npm-prefix-test/bin/kosax --version
 ```
 
 Record the npm tarball SHA-256:
 
 ```bash
-shasum -a 256 kosax-0.1.0.tgz
+shasum -a 256 umyunsang-kosax-0.1.0.tgz
 ```
 
 Render the formula for syntax review:
@@ -72,8 +72,8 @@ wait for it:
 ## Post-Release Smoke
 
 ```bash
-npm view kosax version
-npm install -g kosax
+npm view @umyunsang/kosax version
+npm install -g @umyunsang/kosax
 kosax --version
 ```
 

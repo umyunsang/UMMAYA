@@ -45,7 +45,7 @@ jobs:
       - name: Download npm tarball
         run: |
           version="${{ steps.version.outputs.version }}"
-          url="https://registry.npmjs.org/kosax/-/kosax-${version}.tgz"
+          url="https://registry.npmjs.org/@umyunsang/kosax/-/kosax-${version}.tgz"
           curl -fsSL "${url}" -o "kosax-${version}.tgz"
           sha256="$(sha256sum "kosax-${version}.tgz" | cut -d ' ' -f1)"
           echo "KOSAX_TARBALL_SHA256=${sha256}" >> "${GITHUB_ENV}"

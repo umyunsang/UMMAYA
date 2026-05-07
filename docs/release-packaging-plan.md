@@ -11,7 +11,7 @@ Research basis: `docs/research/release-packaging-deep-research.md`
 
 Proceed with npm first, then Homebrew.
 
-The npm package name is `kosax` and the installed command is `kosax`. The npm
+The npm package name is `@umyunsang/kosax` and the installed command is `kosax`. The npm
 tarball is the canonical v0.1.0 artifact: it carries the Bun TUI wrapper, TUI
 source needed for runtime execution, and the Python backend source used by the
 stdio bridge. The Python project remains `kosax` for local `uv` execution only;
@@ -42,7 +42,7 @@ Tasks:
 
 - Reuse the existing Infisical project and machine-identity pattern documented
   in `docs/configuration.md#infisical-operator-runbook`.
-- Configure npm Trusted Publishing for `kosax` with workflow
+- Configure npm Trusted Publishing for `@umyunsang/kosax` with workflow
   `publish-npm.yml` and environment `npm`.
 - Configure GitHub environment reviewer approval for `npm` and `homebrew`.
 - Store `KOSAX_HOMEBREW_TAP_TOKEN` under Infisical `/release` in `prod`.
@@ -83,7 +83,7 @@ Verification:
 ```bash
 npm run package:check
 npm pack --json
-npm install --global --prefix /tmp/kosax-npm-prefix-test ./kosax-0.1.0.tgz
+npm install --global --prefix /tmp/kosax-npm-prefix-test ./umyunsang-umyunsang-kosax-0.1.0.tgz
 /tmp/kosax-npm-prefix-test/bin/kosax --version
 ```
 
@@ -111,7 +111,7 @@ Implemented files:
 
 Formula strategy:
 
-- Source URL: `https://registry.npmjs.org/kosax/-/kosax-<version>.tgz`
+- Source URL: `https://registry.npmjs.org/@umyunsang/kosax/-/kosax-<version>.tgz`
 - SHA-256: computed from the npm registry tarball after publish.
 - Runtime dependencies: `uv` and Bun.
 - Bun dependency: `oven-sh/bun/bun`, because local Homebrew 5.1.9 has no core
@@ -179,8 +179,8 @@ Tasks:
 - Verify npm:
 
 ```bash
-npm view kosax version
-npm install -g kosax
+npm view @umyunsang/kosax version
+npm install -g @umyunsang/kosax
 kosax --version
 ```
 

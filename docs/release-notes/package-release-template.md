@@ -8,7 +8,7 @@ Commit: `<sha>`
 
 | Artifact | SHA-256 | Link |
 |----------|---------|------|
-| npm tarball | `<sha256>` | `https://registry.npmjs.org/kosax/-/kosax-X.Y.Z.tgz` |
+| npm tarball | `<sha256>` | `https://registry.npmjs.org/@umyunsang/kosax/-/kosax-X.Y.Z.tgz` |
 | Homebrew formula | `<formula-commit-sha>` | `https://github.com/umyunsang/homebrew-kosax/blob/main/Formula/kosax.rb` |
 
 ## Release Evidence
@@ -25,7 +25,7 @@ Commit: `<sha>`
 ## Smoke Results
 
 ```text
-npm install -g kosax
+npm install -g @umyunsang/kosax
 kosax --version
 brew tap oven-sh/bun
 brew tap umyunsang/kosax

@@ -4,8 +4,8 @@
 class Kosax < Formula
   desc "Conversational multi-agent harness for Korean public-service channels"
   homepage "https://github.com/umyunsang/KOSAX"
-  url "https://registry.npmjs.org/kosax/-/kosax-0.1.0.tgz"
-  sha256 "b4c05da7a726fbace2603e9fafbedd0b94ecc3acfac212472cbc7361a4825736"
+  url "https://registry.npmjs.org/@umyunsang/kosax/-/kosax-0.1.0.tgz"
+  sha256 "daf3fe77898d9936baf542fa34e6b37a10cc4a189f07ff8f1a5a2e732bd44c8b"
   license "Apache-2.0"
 
   depends_on "node" => :build

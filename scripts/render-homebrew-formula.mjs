@@ -23,7 +23,7 @@ const formula = `# typed: false
 class Kosax < Formula
   desc "Conversational multi-agent harness for Korean public-service channels"
   homepage "https://github.com/umyunsang/KOSAX"
-  url "https://registry.npmjs.org/kosax/-/kosax-${version}.tgz"
+  url "https://registry.npmjs.org/@umyunsang/kosax/-/kosax-${version}.tgz"
   sha256 "${sha256}"
   license "Apache-2.0"
 

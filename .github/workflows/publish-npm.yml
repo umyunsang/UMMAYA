@@ -51,18 +51,20 @@ jobs:
       - name: Clean global CLI smoke
         run: |
           prefix="${RUNNER_TEMP}/kosax-prefix"
-          npm install --global --prefix "${prefix}" ./kosax-0.1.0.tgz
+          tarball="$(node -e "const report = require('./package-evidence/npm-pack.json'); const pack = Array.isArray(report) ? report[0] : report; console.log(pack.filename)")"
+          npm install --global --prefix "${prefix}" "./${tarball}"
           "${prefix}/bin/kosax" --version
 
       - name: Record distribution hashes
         run: |
-          sha256sum kosax-0.1.0.tgz | tee package-evidence/SHA256SUMS
+          tarball="$(node -e "const report = require('./package-evidence/npm-pack.json'); const pack = Array.isArray(report) ? report[0] : report; console.log(pack.filename)")"
+          sha256sum "${tarball}" | tee package-evidence/SHA256SUMS
 
       - name: Upload npm distribution
         uses: actions/upload-artifact@v7
         with:
           name: npm-dist
-          path: kosax-0.1.0.tgz
+          path: "*.tgz"
           if-no-files-found: error
           retention-days: 90
 
