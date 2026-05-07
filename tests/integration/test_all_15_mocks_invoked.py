@@ -60,14 +60,30 @@ def _load_fixture(name: str) -> dict[str, object]:
     return result
 
 
-# ---------------------------------------------------------------------------
-# Verify family invocation counter (records which families were called)
-# ---------------------------------------------------------------------------
+_EXPECTED_VERIFY = {
+    "modid",
+    "kec",
+    "geumyung_module",
+    "simple_auth_module",
+    "any_id_sso",
+    "gongdong_injeungseo",
+    "geumyung_injeungseo",
+    "ganpyeon_injeung",
+    "mobile_id",
+    "mydata",
+}
 
-_VERIFY_INVOKED: set[str] = set()
-_LOOKUP_INVOKED: set[str] = set()
-_SUBMIT_INVOKED: set[str] = set()
-_SUBSCRIBE_INVOKED: set[str] = set()
+_EXPECTED_LOOKUP = {
+    "mock_lookup_module_hometax_simplified",
+    "mock_lookup_module_gov24_certificate",
+}
+
+_EXPECTED_SUBMIT = {
+    "mock_submit_module_hometax_taxreturn",
+    "mock_submit_module_gov24_minwon",
+}
+
+_EXPECTED_SUBSCRIBE = {"mock_cbs_disaster_v1"}
 
 
 # ---------------------------------------------------------------------------
@@ -75,9 +91,7 @@ _SUBSCRIBE_INVOKED: set[str] = set()
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("fixture_name", _ALL_FIXTURE_NAMES)
-async def test_verify_family_invoked(fixture_name: str) -> None:
+async def _invoke_verify_family(fixture_name: str) -> str:
     """Each verify family mock must return a non-error AuthContext variant.
 
     Confirms SC-004 (10 verify adapters) and that fixture schema is consistent
@@ -125,7 +139,14 @@ async def test_verify_family_invoked(fixture_name: str) -> None:
         "Check that the mock adapter is registered."
     )
 
-    _VERIFY_INVOKED.add(str(expected_family))
+    return str(expected_family)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fixture_name", _ALL_FIXTURE_NAMES)
+async def test_verify_family_invoked(fixture_name: str) -> None:
+    invoked_family = await _invoke_verify_family(fixture_name)
+    assert invoked_family in _EXPECTED_VERIFY
 
 
 # ---------------------------------------------------------------------------
@@ -133,8 +154,7 @@ async def test_verify_family_invoked(fixture_name: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_lookup_hometax_simplified_invoked(tmp_path: Path) -> None:
+async def _invoke_lookup_hometax_simplified() -> str:
     """mock_lookup_module_hometax_simplified invoked ≥1 time."""
     from kosmos.tools.mock.lookup_module_hometax_simplified import (
         HometaxSimplifiedInput,
@@ -147,11 +167,16 @@ async def test_lookup_hometax_simplified_invoked(tmp_path: Path) -> None:
     assert isinstance(result, dict), (
         f"Expected dict from hometax lookup, got {type(result).__name__}"
     )
-    _LOOKUP_INVOKED.add("mock_lookup_module_hometax_simplified")
+    return "mock_lookup_module_hometax_simplified"
 
 
 @pytest.mark.asyncio
-async def test_lookup_gov24_certificate_invoked() -> None:
+async def test_lookup_hometax_simplified_invoked() -> None:
+    invoked_adapter = await _invoke_lookup_hometax_simplified()
+    assert invoked_adapter in _EXPECTED_LOOKUP
+
+
+async def _invoke_lookup_gov24_certificate() -> str:
     """mock_lookup_module_gov24_certificate invoked ≥1 time."""
     from kosmos.tools.mock.lookup_module_gov24_certificate import (
         Gov24CertificateInput,
@@ -164,7 +189,13 @@ async def test_lookup_gov24_certificate_invoked() -> None:
     )
     result = await handle(inp, delegation_context=None)
     assert result is not None, "gov24_certificate lookup returned None"
-    _LOOKUP_INVOKED.add("mock_lookup_module_gov24_certificate")
+    return "mock_lookup_module_gov24_certificate"
+
+
+@pytest.mark.asyncio
+async def test_lookup_gov24_certificate_invoked() -> None:
+    invoked_adapter = await _invoke_lookup_gov24_certificate()
+    assert invoked_adapter in _EXPECTED_LOOKUP
 
 
 # ---------------------------------------------------------------------------
@@ -172,8 +203,7 @@ async def test_lookup_gov24_certificate_invoked() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_submit_hometax_taxreturn_invoked(tmp_path: Path) -> None:
+async def _invoke_submit_hometax_taxreturn(tmp_path: Path) -> str:
     """mock_submit_module_hometax_taxreturn invoked ≥1 time; receipt present."""
     import uuid
     from unittest.mock import patch
@@ -231,11 +261,16 @@ async def test_submit_hometax_taxreturn_invoked(tmp_path: Path) -> None:
     assert isinstance(receipt_id, str) and receipt_id.startswith("hometax-"), (
         f"Expected hometax- receipt, got {receipt_id!r}"
     )
-    _SUBMIT_INVOKED.add("mock_submit_module_hometax_taxreturn")
+    return "mock_submit_module_hometax_taxreturn"
 
 
 @pytest.mark.asyncio
-async def test_submit_gov24_minwon_invoked(tmp_path: Path) -> None:
+async def test_submit_hometax_taxreturn_invoked(tmp_path: Path) -> None:
+    invoked_adapter = await _invoke_submit_hometax_taxreturn(tmp_path)
+    assert invoked_adapter in _EXPECTED_SUBMIT
+
+
+async def _invoke_submit_gov24_minwon(tmp_path: Path) -> str:
     """mock_submit_module_gov24_minwon invoked ≥1 time."""
     import uuid
     from unittest.mock import patch
@@ -289,7 +324,13 @@ async def test_submit_gov24_minwon_invoked(tmp_path: Path) -> None:
     assert isinstance(result, SubmitOutput), (
         f"Expected SubmitOutput from gov24 minwon, got {type(result).__name__}"
     )
-    _SUBMIT_INVOKED.add("mock_submit_module_gov24_minwon")
+    return "mock_submit_module_gov24_minwon"
+
+
+@pytest.mark.asyncio
+async def test_submit_gov24_minwon_invoked(tmp_path: Path) -> None:
+    invoked_adapter = await _invoke_submit_gov24_minwon(tmp_path)
+    assert invoked_adapter in _EXPECTED_SUBMIT
 
 
 # ---------------------------------------------------------------------------
@@ -297,8 +338,7 @@ async def test_submit_gov24_minwon_invoked(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_subscribe_cbs_disaster_invoked() -> None:
+async def _invoke_subscribe_cbs_disaster() -> str:
     """mock_cbs_disaster_v1 invoked ≥1 time via subscribe() primitive."""
     from kosmos.primitives.subscribe import AdapterNotFoundError, SubscribeInput, subscribe
 
@@ -319,7 +359,13 @@ async def test_subscribe_cbs_disaster_invoked() -> None:
         break
 
     assert event_received, "CBS disaster subscribe iterator produced no events"
-    _SUBSCRIBE_INVOKED.add("mock_cbs_disaster_v1")
+    return "mock_cbs_disaster_v1"
+
+
+@pytest.mark.asyncio
+async def test_subscribe_cbs_disaster_invoked() -> None:
+    invoked_adapter = await _invoke_subscribe_cbs_disaster()
+    assert invoked_adapter in _EXPECTED_SUBSCRIBE
 
 
 # ---------------------------------------------------------------------------
@@ -327,39 +373,32 @@ async def test_subscribe_cbs_disaster_invoked() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_sc004_all_15_mocks_invoked() -> None:
-    """SC-004: assert all 15 mock adapters appear in the invoked sets.
+@pytest.mark.asyncio
+async def test_sc004_all_15_mocks_invoked(tmp_path: Path) -> None:
+    """SC-004: assert all 15 mock adapters can be invoked in one battery.
 
-    This test MUST run last (alphabetically after test_verify_* / test_lookup_*
-    / test_submit_* / test_subscribe_* — pytest default ordering by declaration
-    and parametrize order guarantees the fixtures run first in this module).
+    The aggregate check cannot depend on module globals populated by sibling
+    tests because CI runs this file under pytest-xdist (`pytest -n auto`), where
+    each worker has a separate Python process.
     """
-    expected_verify = {
-        "modid",
-        "kec",
-        "geumyung_module",
-        "simple_auth_module",
-        "any_id_sso",
-        "gongdong_injeungseo",
-        "geumyung_injeungseo",
-        "ganpyeon_injeung",
-        "mobile_id",
-        "mydata",
-    }
-    expected_lookup = {
-        "mock_lookup_module_hometax_simplified",
-        "mock_lookup_module_gov24_certificate",
-    }
-    expected_submit = {
-        "mock_submit_module_hometax_taxreturn",
-        "mock_submit_module_gov24_minwon",
-    }
-    expected_subscribe = {"mock_cbs_disaster_v1"}
+    invoked_verify: set[str] = set()
+    for fixture_name in _ALL_FIXTURE_NAMES:
+        invoked_verify.add(await _invoke_verify_family(fixture_name))
 
-    missing_verify = expected_verify - _VERIFY_INVOKED
-    missing_lookup = expected_lookup - _LOOKUP_INVOKED
-    missing_submit = expected_submit - _SUBMIT_INVOKED
-    missing_subscribe = expected_subscribe - _SUBSCRIBE_INVOKED
+    invoked_lookup = {
+        await _invoke_lookup_hometax_simplified(),
+        await _invoke_lookup_gov24_certificate(),
+    }
+    invoked_submit = {
+        await _invoke_submit_hometax_taxreturn(tmp_path / "hometax"),
+        await _invoke_submit_gov24_minwon(tmp_path / "gov24"),
+    }
+    invoked_subscribe = {await _invoke_subscribe_cbs_disaster()}
+
+    missing_verify = _EXPECTED_VERIFY - invoked_verify
+    missing_lookup = _EXPECTED_LOOKUP - invoked_lookup
+    missing_submit = _EXPECTED_SUBMIT - invoked_submit
+    missing_subscribe = _EXPECTED_SUBSCRIBE - invoked_subscribe
 
     assert not missing_verify, f"SC-004: verify families not invoked: {missing_verify}"
     assert not missing_lookup, f"SC-004: lookup adapters not invoked: {missing_lookup}"
