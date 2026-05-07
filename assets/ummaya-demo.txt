@@ -1,0 +1,4263 @@
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 작년 종합고 환급받을 수 있으면 환급 계좌까지 등록해줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 작년 종합고 환급받을 수 있으면 환급 계좌까지 등록해줘.
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ 작년 종합고 환급받을 수 있으면 환급 계좌까지 등록해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_hometax_simplified — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_hometax_simplified","status":"
+     demo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario TAX: Tax execution
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  Hometax 자료 조회와 신고 전 최종 검토 순서를 구성했습니다. 제출은 시민 확인 뒤
+  진행됩니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario TAX complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ 작년 종합고 환급받을 수 있으면 환급 계좌까지 등록해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_hometax_simplified — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_hometax_simplified","status":"
+     demo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario TAX: Tax execution
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  Hometax 자료 조회와 신고 전 최종 검토 순서를 구성했습니다. 제출은 시민 확인 뒤
+  진행됩니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario TAX complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ 작년 종합고 환급받을 수 있으면 환급 계좌까지 등록해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_hometax_simplified — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_hometax_simplified","status":"
+     demo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario TAX: Tax execution
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  Hometax 자료 조회와 신고 전 최종 검토 순서를 구성했습니다. 제출은 시민 확인 뒤
+  진행됩니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario TAX complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘.
+
+⏺ Scenario MOVE: Residence transfer
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario MOVE: Residence transfer
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  전입신고를 선행하고 자동차, 건강보험, 학교 주소 변경을 순서와 병렬 가능 항목으로
+  나눴습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario MOVE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario MOVE: Residence transfer
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  전입신고를 선행하고 자동차, 건강보험, 학교 주소 변경을 순서와 병렬 가능 항목으로
+  나눴습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario MOVE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario MOVE: Residence transfer
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  전입신고를 선행하고 자동차, 건강보험, 학교 주소 변경을 순서와 병렬 가능 항목으로
+  나눴습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario MOVE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 이번 달 재산세랑 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이번 달 재산세랑 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘.
+
+⏺ Scenario PAY: Payment consolidation
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이번 달 재산세랑 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_traffic_fine_lookup_v1 — 1건
+       {"kind":"lookup","tool_id":"mock_traffic_fine_lookup_v1","status":"demo_ok","
+     mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario PAY: Payment consolidation
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  재산세, 자동차세, 과태료를 항목별로 분리하고 납부 가능한 항목만 명시적 확인 뒤
+  처리합니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario PAY complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이번 달 재산세랑 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_traffic_fine_lookup_v1 — 1건
+       {"kind":"lookup","tool_id":"mock_traffic_fine_lookup_v1","status":"demo_ok","
+     mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario PAY: Payment consolidation
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  재산세, 자동차세, 과태료를 항목별로 분리하고 납부 가능한 항목만 명시적 확인 뒤
+  처리합니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario PAY complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 이번 달 재산세랑 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_traffic_fine_lookup_v1 — 1건
+       {"kind":"lookup","tool_id":"mock_traffic_fine_lookup_v1","status":"demo_ok","
+     mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario PAY: Payment consolidation
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  재산세, 자동차세, 과태료를 항목별로 분리하고 납부 가능한 항목만 명시적 확인 뒤
+  처리합니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario PAY complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘.
+
+⏺ Scenario BIRTH: Birth and welfare bundle
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mohw_welfare_eligibility_search — 1건
+       {"kind":"lookup","tool_id":"mohw_welfare_eligibility_search","status":"demo_o
+     k","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario BIRTH: Birth and welfare bundle
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록을 중복 신청 없이 묶었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario BIRTH complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mohw_welfare_eligibility_search — 1건
+       {"kind":"lookup","tool_id":"mohw_welfare_eligibility_search","status":"demo_o
+     k","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario BIRTH: Birth and welfare bundle
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록을 중복 신청 없이 묶었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario BIRTH complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mohw_welfare_eligibility_search — 1건
+       {"kind":"lookup","tool_id":"mohw_welfare_eligibility_search","status":"demo_o
+     k","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario BIRTH: Birth and welfare bundle
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록을 중복 신청 없이 묶었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario BIRTH complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 위험한 부분까지 체크해서
+  처리해줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 위험한 부분까지 체크해서
+처리해줘.
+
+✢ Pontificating…
+  ⎿  Tip: Hit Enter to queue up additional messages while Claude is working.
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                                       ● high · /effort
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 위험한 부분까지 체크해서
+처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_gov24_certificate — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_gov24_certificate","status":"d
+     emo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_deadline_watch — 1건
+       {"kind":"lookup","tool_id":"mock_deadline_watch","status":"demo_ok","mock":tr
+     ue}
+
+⏺ Scenario HOME: Housing transaction
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  확정일자, 임대차 신고, 보증 관련 위험 플래그와 공식 handoff 지점을 정리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario HOME complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+────────────────────────────────────────────────────────────────────────────────
+> cd /Users/um-yunsang/UMMAYA/tui && UMMAYA_FRIENDLI_TOKEN=sk-readme-demo UMMAYA_FRIENDLI
+_SESSION_ACTIVE=1 UMMAYA_ONBOARDING_AUTO_COMPLETE=1 UMMAYA_BACKEND_CMD='uv run python /Us
+ers/um-yunsang/UMMAYA/docs/demo/readme_scenario_backend.py' NODE_ENV=test IS_DEMO=1 /User
+s/um-yunsang/.bun/bin/bun run tui
+$ bun run src/entrypoints/cli.tsx
+tool_registry: 14 entries verified (4 primitives) in 0ms
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 위험한 부분까지 체크해서
+처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_gov24_certificate — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_gov24_certificate","status":"d
+     emo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_deadline_watch — 1건
+       {"kind":"lookup","tool_id":"mock_deadline_watch","status":"demo_ok","mock":tr
+     ue}
+
+⏺ Scenario HOME: Housing transaction
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  확정일자, 임대차 신고, 보증 관련 위험 플래그와 공식 handoff 지점을 정리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario HOME complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 위험한 부분까지 체크해서
+처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_gov24_certificate — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_gov24_certificate","status":"d
+     emo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_deadline_watch — 1건
+       {"kind":"lookup","tool_id":"mock_deadline_watch","status":"demo_ok","mock":tr
+     ue}
+
+⏺ Scenario HOME: Housing transaction
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  확정일자, 임대차 신고, 보증 관련 위험 플래그와 공식 handoff 지점을 정리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario HOME complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로
+  처리해줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로
+처리해줘.
+
+⏺ Scenario BIZ: Business start
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로
+처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_hometax_simplified — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_hometax_simplified","status":"
+     demo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_deadline_watch — 1건
+       {"kind":"lookup","tool_id":"mock_deadline_watch","status":"demo_ok","mock":tr
+     ue}
+
+⏺ Scenario BIZ: Business start
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비를 개업 전 의존 순서로 배열했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario BIZ complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로
+처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_hometax_simplified — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_hometax_simplified","status":"
+     demo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_deadline_watch — 1건
+       {"kind":"lookup","tool_id":"mock_deadline_watch","status":"demo_ok","mock":tr
+     ue}
+
+⏺ Scenario BIZ: Business start
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비를 개업 전 의존 순서로 배열했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario BIZ complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로
+처리해줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_lookup_module_hometax_simplified — 1건
+       {"kind":"lookup","tool_id":"mock_lookup_module_hometax_simplified","status":"
+     demo_ok","mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_deadline_watch — 1건
+       {"kind":"lookup","tool_id":"mock_deadline_watch","status":"demo_ok","mock":tr
+     ue}
+
+⏺ Scenario BIZ: Business start
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비를 개업 전 의존 순서로 배열했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario BIZ complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험
+  적용되는지도 알려줘
+─────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험 적용되는지도
+ 알려줘.
+
+⏺ Scenario ER: Emergency care
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험 적용되는지도
+ 알려줘.
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  nmc_emergency_search — 1건
+       {"kind":"lookup","tool_id":"nmc_emergency_search","status":"demo_ok","mock":t
+     rue}
+  ⎿  hira_hospital_search — 1건
+       {"kind":"lookup","tool_id":"hira_hospital_search","status":"demo_ok","mock":t
+     rue}
+
+⏺ Scenario ER: Emergency care
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  현재 위치 기준 응급실과 야간진료 후보를 우선순위로 제시하고 119 우선 안내를 유지합니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario ER complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험 적용되는지도
+ 알려줘.
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  nmc_emergency_search — 1건
+       {"kind":"lookup","tool_id":"nmc_emergency_search","status":"demo_ok","mock":t
+     rue}
+  ⎿  hira_hospital_search — 1건
+       {"kind":"lookup","tool_id":"hira_hospital_search","status":"demo_ok","mock":t
+     rue}
+
+⏺ Scenario ER: Emergency care
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  현재 위치 기준 응급실과 야간진료 후보를 우선순위로 제시하고 119 우선 안내를 유지합니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario ER complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험 적용되는지도
+ 알려줘.
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  nmc_emergency_search — 1건
+       {"kind":"lookup","tool_id":"nmc_emergency_search","status":"demo_ok","mock":t
+     rue}
+  ⎿  hira_hospital_search — 1건
+       {"kind":"lookup","tool_id":"hira_hospital_search","status":"demo_ok","mock":t
+     rue}
+
+⏺ Scenario ER: Emergency care
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  현재 위치 기준 응급실과 야간진료 후보를 우선순위로 제시하고 119 우선 안내를 유지합니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario ER complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동
+  방법 추천해줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동
+방법 추천해줘.
+
+⏺ Scenario ROUTE: Route safety
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동
+방법 추천해줘.
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  kma_forecast_lookup — 1건
+       {"kind":"lookup","tool_id":"kma_forecast_lookup","status":"demo_ok","mock":tr
+     ue}
+  ⎿  koroad_accident_hazard_search — 1건
+       {"kind":"lookup","tool_id":"koroad_accident_hazard_search","status":"demo_ok"
+     ,"mock":true}
+  ⎿  mock_safety_alert_watch — 1건
+       {"kind":"lookup","tool_id":"mock_safety_alert_watch","status":"demo_ok","mock
+     ":true}
+
+⏺ Scenario ROUTE: Route safety
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  날씨, 도로 위험, 대중교통 지연을 함께 보고 우회 경로와 출발 전 알림 계획을
+  만들었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario ROUTE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동
+방법 추천해줘.
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  kma_forecast_lookup — 1건
+       {"kind":"lookup","tool_id":"kma_forecast_lookup","status":"demo_ok","mock":tr
+     ue}
+  ⎿  koroad_accident_hazard_search — 1건
+       {"kind":"lookup","tool_id":"koroad_accident_hazard_search","status":"demo_ok"
+     ,"mock":true}
+  ⎿  mock_safety_alert_watch — 1건
+       {"kind":"lookup","tool_id":"mock_safety_alert_watch","status":"demo_ok","mock
+     ":true}
+
+⏺ Scenario ROUTE: Route safety
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  날씨, 도로 위험, 대중교통 지연을 함께 보고 우회 경로와 출발 전 알림 계획을
+  만들었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario ROUTE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동
+방법 추천해줘.
+  ⎿  위치 해석 결과
+     {"kind":"resolve_location","tool_id":"resolve_location","status":"demo_ok","moc
+     k":true}
+  ⎿  kma_forecast_lookup — 1건
+       {"kind":"lookup","tool_id":"kma_forecast_lookup","status":"demo_ok","mock":tr
+     ue}
+  ⎿  koroad_accident_hazard_search — 1건
+       {"kind":"lookup","tool_id":"koroad_accident_hazard_search","status":"demo_ok"
+     ,"mock":true}
+  ⎿  mock_safety_alert_watch — 1건
+       {"kind":"lookup","tool_id":"mock_safety_alert_watch","status":"demo_ok","mock
+     ":true}
+
+⏺ Scenario ROUTE: Route safety
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  날씨, 도로 위험, 대중교통 지연을 함께 보고 우회 경로와 출발 전 알림 계획을
+  만들었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario ROUTE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘.
+
+⏺ Scenario SAFE: Disaster response
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_cbs_disaster_feed — 1건
+       {"kind":"lookup","tool_id":"mock_cbs_disaster_feed","status":"demo_ok","mock"
+     :true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_safety_alert_watch — 1건
+       {"kind":"lookup","tool_id":"mock_safety_alert_watch","status":"demo_ok","mock
+     ":true}
+
+⏺ Scenario SAFE: Disaster response
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  피해 신고, 재난지원금, 임시주거, 전기/가스 안전 점검을 긴급도 순서로 묶었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario SAFE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_cbs_disaster_feed — 1건
+       {"kind":"lookup","tool_id":"mock_cbs_disaster_feed","status":"demo_ok","mock"
+     :true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_safety_alert_watch — 1건
+       {"kind":"lookup","tool_id":"mock_safety_alert_watch","status":"demo_ok","mock
+     ":true}
+
+⏺ Scenario SAFE: Disaster response
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  피해 신고, 재난지원금, 임시주거, 전기/가스 안전 점검을 긴급도 순서로 묶었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario SAFE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_cbs_disaster_feed — 1건
+       {"kind":"lookup","tool_id":"mock_cbs_disaster_feed","status":"demo_ok","mock"
+     :true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+  ⎿  mock_safety_alert_watch — 1건
+       {"kind":"lookup","tool_id":"mock_safety_alert_watch","status":"demo_ok","mock
+     ":true}
+
+⏺ Scenario SAFE: Disaster response
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  피해 신고, 재난지원금, 임시주거, 전기/가스 안전 점검을 긴급도 순서로 묶었습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario SAFE complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ /clear
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+
+⏺ Scenario DATA: Personal-data rights
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_public_mydata_inventory — 1건
+       {"kind":"lookup","tool_id":"mock_public_mydata_inventory","status":"demo_ok",
+     "mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario DATA: Personal-data rights
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  기관별 개인정보 이용 현황을 조회하고 주소와 연락처 정정 요청을 동의 추적으로
+  분리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario DATA complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_public_mydata_inventory — 1건
+       {"kind":"lookup","tool_id":"mock_public_mydata_inventory","status":"demo_ok",
+     "mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario DATA: Personal-data rights
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  기관별 개인정보 이용 현황을 조회하고 주소와 연락처 정정 요청을 동의 추적으로
+  분리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario DATA complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_public_mydata_inventory — 1건
+       {"kind":"lookup","tool_id":"mock_public_mydata_inventory","status":"demo_ok",
+     "mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario DATA: Personal-data rights
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  기관별 개인정보 이용 현황을 조회하고 주소와 연락처 정정 요청을 동의 추적으로
+  분리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario DATA complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                    statusline skipped · restart to fix
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_public_mydata_inventory — 1건
+       {"kind":"lookup","tool_id":"mock_public_mydata_inventory","status":"demo_ok",
+     "mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario DATA: Personal-data rights
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  기관별 개인정보 이용 현황을 조회하고 주소와 연락처 정정 요청을 동의 추적으로
+  분리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario DATA complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+  Press Ctrl-C again to exit                        statusline skipped · restart to fix
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_public_mydata_inventory — 1건
+       {"kind":"lookup","tool_id":"mock_public_mydata_inventory","status":"demo_ok",
+     "mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario DATA: Personal-data rights
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  기관별 개인정보 이용 현황을 조회하고 주소와 연락처 정정 요청을 동의 추적으로
+  분리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario DATA complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────
+  Press Ctrl-C again to exit                        statusline skipped · restart to fix
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+╭─── UMMAYA v0.1.0 ─────────────────────────────────────────────────────────────────────╮
+│                                                   │ Recent activity                   │
+│                   Welcome back!                   │ No recent activity                │
+│                       ▟▀▀▀▙                       │ ───────────────────────────────── │
+│                      ▟▛███▜▙                      │ What's new                        │
+│                     ▟███████▙                     │ Added `CLAUDE_CODE_SESSION_ID` e… │
+│                    ▝▜██▟█▙██▛▘                    │ Added `CLAUDE_CODE_DISABLE_ALTER… │
+│                       ▘▘ ▝▝                       │ Added a "Pasting…" footer hint w… │
+│   K-EXAONE with high effort · API Usage Billing   │ /release-notes for more           │
+│                   ~/UMMAYA/tui                    │                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear
+  ⎿  (no content)
+
+❯ 정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘.
+  ⎿  검증 결과: demo_ok
+  ⎿  mock_public_mydata_inventory — 1건
+       {"kind":"lookup","tool_id":"mock_public_mydata_inventory","status":"demo_ok",
+     "mock":true}
+  ⎿  ✓ 제출이 접수되었습니다.
+     상태: demo_ok
+
+⏺ Scenario DATA: Personal-data rights
+  공식 채널, 권한, 제출 가능 여부를 확인합니다.
+  기관별 개인정보 이용 현황을 조회하고 주소와 연락처 정정 요청을 동의 추적으로
+  분리했습니다.
+  모의 결과이며 실제 행정 제출은 시민의 최종 확인과 공식 채널 검증 뒤 진행됩니다.
+  Scenario DATA complete
+
+─────────────────────────────────────────────────────────────────────────────────────────
+❯ >
+─────────────────────────────────────────────────────────────────────────────────────────
+  Press Ctrl-C again to exit                        statusline skipped · restart to fix
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

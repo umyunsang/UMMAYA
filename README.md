@@ -8,163 +8,122 @@
 
 **U**nified **M**ulti-**M**inistry **A**gent for **Y**our **A**dministration
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-purple.svg)](CODE_OF_CONDUCT.md)
-[![GitHub Discussions](https://img.shields.io/badge/discussions-join-blueviolet)](https://github.com/umyunsang/UMMAYA/discussions)
+`npm install -g ummaya`
+or `brew install --cask ummaya`
 
-A conversational multi-agent harness that orchestrates data.go.kr's 5,000+ public APIs around LG AI Research's K-EXAONE through an agentic tool loop.
+UMMAYA is a local conversational multi-agent CLI for Korea's national AX public-service infrastructure. It keeps the Claude Code-style harness shape, swaps the model layer to FriendliAI Serverless + K-EXAONE, and swaps the tool surface to Korean public-service adapters.
 
-> Academic R&D project. Not affiliated with Anthropic, LG AI Research, or the Korean government.
+> Academic R&D project. Not affiliated with Anthropic, LG AI Research, FriendliAI, or the Korean government.
 
-## Vision
+![UMMAYA demo](assets/ummaya-demo.gif)
 
-Turn the 5,000+ fragmented public APIs on data.go.kr into a single conversational interface where citizens can resolve cross-ministry civil affairs (민원) in natural language — route safety, emergency services, welfare benefits, residence transfer, and more.
+The demo is recorded from the real Ink TUI against an offline IPC backend. It is generated from [`docs/demo/ummaya-readme.tape`](docs/demo/ummaya-readme.tape) with [VHS](https://github.com/charmbracelet/vhs).
 
-## Citizen Scenarios
+## Quickstart
 
-Five end-to-end flows the platform must handle for the vision to be considered met:
-
-```text
-시민:   "내일 부산에서 서울 가는데, 안전한 경로 추천해줘"
-UMMAYA: KOROAD accident data + KMA weather alerts + road-risk index
-        → "Gyeongbu Expressway Daejeon-Cheonan section: high risk,
-           fog advisory. Suggest Jungbu-Naeryuk detour."
-
-시민:   "아이가 열이 나는데 근처 야간 응급실 어디야?"
-UMMAYA: 119 emergency API + HIRA hospital info
-        → Available ERs ranked by location + current wait time
-
-시민:   "이사 준비 중인데, 전입신고랑 자동차 주소변경이랑
-        건강보험 주소변경 다 해야 하는데"
-UMMAYA: Coordinator dispatches Civil-affairs / Transport / Welfare workers
-        → "전입신고 선행 → 자동차·건강보험 병렬"
-```
-
-Citizens never learn which ministry runs which API. **UMMAYA does the routing.**
-
-## Architecture
-
-UMMAYA transfers six architectural layers from Claude Code into the public-service domain:
-
-<img src="docs/diagramsummaya_6_layer_architecture.svg" alt="UMMAYA 6-Layer Architecture" width="100%">
-
-The lineage of each layer:
-
-| Layer | Claude Code Origin | UMMAYA Adaptation |
-|---|---|---|
-| **Query Engine** | `while(true)` tool loop + 5-stage preprocessing | Civil-affairs state machine with ministry routing |
-| **Tool System** | `buildTool()` factory + Partition-Sort cache strategy | `buildGovAPI()` adapters for data.go.kr endpoints |
-| **Permission Pipeline** | 7-step gauntlet with bypass-immune checks | Citizen authentication + PII protection layers |
-| **Agent Swarms** | File-based mailbox IPC + Coordinator synthesis | Ministry-specialist agents over message queue |
-| **Context Assembly** | CLAUDE.md 6-tier memory + per-turn attachments | `CITIZEN.md` profile + live API status attachments |
-| **Error Recovery** | `withRetry` with 429/529/401 matrix | Public-API outage fallback + cross-ministry verification |
-
-For deep dives into the Query Engine loop, the Permission Pipeline gauntlet, and the Agent Swarm coordination model, see [`docs/presentation.md`](docs/presentation.md) and [`docs/vision.md`](docs/vision.md).
-
-## L1 Pillars (approved 2026-04-24)
-
-Canonical requirements tree: [`docs/requirementsummaya-migration-tree.md`](docs/requirementsummaya-migration-tree.md). Every subsequent spec and PR cites this tree as its source of truth.
-
-- **L1-A · LLM Harness Layer** — Single fixed provider: **FriendliAI Serverless + K-EXAONE** (model ID `LGAI-EXAONE/K-EXAONE-236B-A23B` — 236B MoE with 23B active params; native 256K context; `enable_thinking=True` is the model-card default, UMMAYA toggles via `UMMAYA_K_EXAONE_THINKING` env, default `true` — reasoning active by default, set to `false` to disable). CC agentic-loop preserved 1:1. Native K-EXAONE function calling (Hermes-parser compatible). Context from `prompts/system_v1.md` + compaction + prompt cache. Sessions in `~/.ummaya/memdir/user/sessions/` (JSONL). Error recovery: ordinary network retry only. Observability: 4-tier OTEL (GenAI / Tool / Permission / local Langfuse) with zero external egress.
-- **L1-B · Public-Service Tool System** — `Tool.ts` interface rewritten, registered on both TS and Python sides. Hybrid coverage (built-in live APIs + built-in mocks + plugin infra). Discovery via BM25 + dense `lookup`. Composite tools removed — LLM chains primitives. Full 5-tier plugin DX (template / guide / examples / submission / registry), Korean-primary, PIPA-trustee responsibility explicit.
-- **L1-C · Main-Verb Abstraction** — Four reserved primitives (`lookup` · `submit` · `verify` · `subscribe`) with a shared `PrimitiveInput/Output` envelope. Self-classifying adapters routed by central `build_routing_index()`. System prompt exposes primitive signatures only; BM25 surfaces everything else dynamically. Plugin extensions namespaced as `plugin.<id>.<verb>`.
-
-## Brand
-
-Home-call house mascot (5-row house character, CC-style eye poses, raised-roof arms) · warm service palette (`body #f59e0b` · `background #7c2d12`) · brand glyph `✻` · thread glyphs `⏺ · ⎿` (CC-preserved).
-
-## Architecture layers and L1 pillars
-
-The six-layer architecture above describes **how the harness is structured**. The three L1 pillars describe **what the harness delivers to citizens**. Both are canonical — layers answer the engineering "how", pillars answer the product "what". Every spec PR maps its changes to at least one pillar and one layer.
-
-## Execution phases (canonical)
-
-Migration from the CC port (Epic P0) to a shippable citizen harness is sequenced as seven phases. Each phase is a separate Epic issue citing the tree.
-
-| Phase | Epic | Scope |
-|---|---|---|
-| **P0** Baseline Runnable | [#1632](https://github.com/umyunsang/UMMAYA/issues/1632) (merged 2026-04-24) | CC 2.1.88 port compile/runtime recovery |
-| **P1** Dead code elimination | [#1633](https://github.com/umyunsang/UMMAYA/issues/1633) | ant-only branches · `feature()` flags · CC version migrations · CC telemetry |
-| **P2** Anthropic → FriendliAI | [#1633](https://github.com/umyunsang/UMMAYA/issues/1633) (combined with P1) | API · auth · OAuth → FriendliAI constants |
-| **P3** Tool-system wiring | #1634 (pending) | `Tool.ts` + Python stdio MCP · 4 primitives |
-| **P4** UI L2 implementation | #1635 (pending) | Components for REPL / Permission Gauntlet / Ministry Agent / aux |
-| **P5** Plugin DX | #1636 (pending) | template · CLI · docs · examples · registry |
-| **P6** Docs + smoke | #1637 (pending) | `docs/api` · `docs/plugins` · `bun run tui` validation |
-
-## Status
-
-Live integration against `data.go.kr` validated end-to-end for Scenario 1 (route safety) with 33/33 tests passing. Epic #1632 (P0) merged on 2026-04-24, restoring compile + runtime for the ported CC 2.1.88 harness. Epic #1633 (P1 + P2) spec in progress.
-
-## Installation
-
-The first public release surfaces are npm and Homebrew. The npm package is the
-canonical artifact: it installs the Bun TUI wrapper and carries the Python
-backend source used by the local stdio bridge. PyPI/backend distribution is not
-part of this release.
-
-From a source checkout:
-
-```bash
-uv sync --frozen --all-extras --dev
-cd tui && bun install --frozen-lockfile
-bun run tui --version
-```
-
-After the npm release:
+Install with npm:
 
 ```bash
 npm install -g ummaya
-ummaya --version
 ummaya
 ```
 
-After the Homebrew tap release:
+Install with Homebrew:
 
 ```bash
-brew tap oven-sh/bun
-brew tap umyunsang/ummaya
-brew install ummaya
-ummaya --version
-```
-
-Cask-compatible CLI install:
-
-```bash
-brew tap oven-sh/bun
-brew tap umyunsang/ummaya
 brew install --cask ummaya
-ummaya --version
+ummaya
 ```
 
-Public CLI users only provide a FriendliAI API key through `/login`. UMMAYA does
-not ask users for data.go.kr, Kakao, Juso, or SGIS keys; those provider
-credentials are operator-managed and must never be embedded in release
-artifacts.
+Use from a source checkout:
 
-See [`docs/packaging.md`](docs/packaging.md) for the packaging policy and
-release workflow.
+```bash
+uv sync --frozen --all-extras --dev
+cd tui
+bun install --frozen-lockfile
+bun run tui
+```
 
-## Policy Alignment
+UMMAYA requires a **FriendliAI API key** before it can send model requests. Start the TUI and run:
 
-UMMAYA's mission directly mirrors **Korea AI Action Plan 2026-2028** (국가인공지능전략위원회, 2026.2.25), Strategic Area 7 (공공AX), Task 58, Principle 9:
+```text
+/login
+```
 
-> "Open API와 OpenMCP를 제공해 민간에서도 공공서비스를 손쉽게 결합해서 국민들에게 제공할 수 있어야 한다."
-> *(Open API and OpenMCP must be provided so that the private sector can easily combine public services and deliver them to citizens.)*
+The FriendliAI key is session-scoped and is not saved to disk. Public-service provider credentials such as data.go.kr, Kakao, Juso, SGIS, identity, payment, utility, or certificate keys are operator-managed; released CLI users are not asked to provide those keys.
 
-Full citation set: [`docs/presentation.md § 1.5 정책 정합성`](docs/presentation.md#15-정책-정합성--대한민국-ai-행동계획-2026-2028).
+## What It Does
+
+UMMAYA turns fragmented public-service channels into one LLM-mediated administrative interface. Citizens should not need to know which ministry, portal, certificate, payment rail, or public-infrastructure operator owns a task.
+
+The runtime is organized around reserved primitives:
+
+| Primitive | Purpose |
+|---|---|
+| `lookup` | Search or retrieve public-service data and policy evidence |
+| `resolve_location` | Normalize addresses, regions, and route context |
+| `verify` | Gate identity, delegation, and consent-sensitive access |
+| `submit` | File an application, payment, correction, or official request after confirmation |
+| `subscribe` | Track deadlines, alerts, status changes, and follow-up events |
+
+Each agency capability is wrapped as one tool adapter. Live adapters call official callable channels when credentials and policy allow it. Mock adapters mirror policy-mandated or documented channels when a live public surface is unavailable. Opaque domains remain documented handoff scenarios.
+
+## Citizen Scenarios
+
+The README demo sweeps the canonical user scenarios that define UMMAYA's target state:
+
+| Scenario | Citizen request |
+|---|---|
+| Tax execution | "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘." |
+| Residence transfer | "이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘." |
+| Payment consolidation | "이번 달 재산세랑 자동차세, 과태료 밀린 거 확인하고 납부 가능한 건 처리해줘." |
+| Birth and welfare | "아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘." |
+| Housing transaction | "전세 계약했어. 확정일자, 임대차 신고, 전세보증 관련 절차를 위험한 부분까지 체크해서 처리해줘." |
+| Business start | "카페 창업하려고 해. 사업자등록, 영업신고, 위생교육, 카드가맹, 세금 준비까지 순서대로 처리해줘." |
+| Emergency care | "아이가 밤에 열이 높아. 지금 갈 수 있는 응급실이나 야간진료 병원 찾고 보험 적용되는지도 알려줘." |
+| Route safety | "내일 부산에서 서울 가는데 날씨, 도로 위험, 대중교통 지연까지 보고 가장 안전한 이동 방법 추천해줘." |
+| Disaster response | "집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘." |
+| Personal-data rights | "정부기관들이 내 정보를 어디에 쓰고 있는지 확인하고 잘못된 주소나 연락처는 고쳐줘." |
+
+The full target-state demand set lives in [`eval/scenarios/national_ax_citizen_requests_v1.yaml`](eval/scenarios/national_ax_citizen_requests_v1.yaml).
+
+## Architecture
+
+UMMAYA preserves the useful local-agent shape of Claude Code while changing the domain:
+
+| Layer | UMMAYA adaptation |
+|---|---|
+| Query engine | Tool loop for citizen administrative requests |
+| Tool system | `GovAPITool` adapters over Korean public-service channels |
+| Permission pipeline | Citizen authentication, consent, PII, and irreversible-action gates |
+| Agent swarms | Ministry-specialist workers coordinated through the harness |
+| Context assembly | System prompt, session compaction, citizen context, and attachments |
+| Error recovery | Network retry, public-channel outage handling, and cited handoff |
+
+The canonical design references are [`docs/vision.md`](docs/vision.md), [`docs/requirements/ummaya-migration-tree.md`](docs/requirements/ummaya-migration-tree.md), and the research-only Claude Code source map under `.references/`.
+
+## Status
+
+Current public release surface:
+
+- npm package: `ummaya`
+- Homebrew cask: `ummaya`
+- PyPI/backend package: intentionally excluded from this release surface
+
+UMMAYA is still a student portfolio and research project. Some public-service flows are live where official APIs and credentials exist; transactional civil-affairs, identity, certificate, payment, utility, and welfare flows may be mock or handoff until official callable channels are available.
+
+## Documentation
+
+- [`docs/vision.md`](docs/vision.md) - thesis, six-layer design, and reference catalog
+- [`docs/packaging.md`](docs/packaging.md) - packaging policy and release workflow
+- [`docs/plugins/README.md`](docs/plugins/README.md) - plugin and adapter contributor entry point
+- [`CHANGELOG.md`](CHANGELOG.md) - release history
+- [`SECURITY.md`](SECURITY.md) - vulnerability reporting
 
 ## Contributing
 
-Contributions are very welcome — issues, design discussions, tool adapters, and documentation. Start with:
-
-- [CONTRIBUTING.md](CONTRIBUTING.md) — workflow, branch and commit conventions, coding standards
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Contributor Covenant 2.1
-- [SECURITY.md](SECURITY.md) — private vulnerability reporting
-- [CHANGELOG.md](CHANGELOG.md) — release history
-
-For questions or design proposals, open a [Discussion](https://github.com/umyunsang/UMMAYA/discussions) before writing code on large ideas.
+Contributions are welcome through issues, discussions, documentation, and tool adapters. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) and open a [Discussion](https://github.com/umyunsang/UMMAYA/discussions) before large design changes.
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE). By contributing, you agree that your contributions will be licensed under the same terms.
+Licensed under the [Apache License 2.0](LICENSE).
