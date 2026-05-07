@@ -44,8 +44,7 @@ def check_otel_attr(ctx: CheckContext) -> CheckOutcome:
                 f"plugin_id {expected!r} 와 일치해야 함"
             ),
             en=(
-                f"otel_attributes['kosax.plugin.id'] = {actual!r} must equal "
-                f"plugin_id {expected!r}"
+                f"otel_attributes['kosax.plugin.id'] = {actual!r} must equal plugin_id {expected!r}"
             ),
         )
     return passed()

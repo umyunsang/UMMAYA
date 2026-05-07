@@ -194,9 +194,7 @@ async def test_outbound_assistant_chunk_span(
     attrs = dict(span.attributes or {})
 
     assert attrs.get("kosax.session.id") == session_id, f"kosax.session.id mismatch: {attrs}"
-    assert attrs.get("kosax.frame.kind") == "assistant_chunk", (
-        f"kosax.frame.kind mismatch: {attrs}"
-    )
+    assert attrs.get("kosax.frame.kind") == "assistant_chunk", f"kosax.frame.kind mismatch: {attrs}"
     assert attrs.get("kosax.frame.direction") == "outbound", (
         f"kosax.frame.direction mismatch: {attrs}"
     )

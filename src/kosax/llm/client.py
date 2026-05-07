@@ -80,9 +80,7 @@ from kosax.observability.semconv import (
 # (``tui/src/ink/constants.ts`` byte-copy relax to 4 ms), not to slow
 # the provider down. The pacing knobs survive for headless / no-Ink
 # callers that still want server-side cadence.
-_LLM_STREAM_CHUNK_MAX_CHARS = max(
-    1, int(os.environ.get("KOSAX_LLM_STREAM_CHUNK_MAX_CHARS", "999"))
-)
+_LLM_STREAM_CHUNK_MAX_CHARS = max(1, int(os.environ.get("KOSAX_LLM_STREAM_CHUNK_MAX_CHARS", "999")))
 _LLM_STREAM_PACE_S = max(0.0, float(os.environ.get("KOSAX_LLM_STREAM_PACE_MS", "0")) / 1000.0)
 
 

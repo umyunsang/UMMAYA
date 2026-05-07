@@ -322,9 +322,7 @@ class TestOtelEmissionSC007:
         assert result.exit_code == 0
         spans = list(exporter.get_finished_spans())
         install_spans = [s for s in spans if s.name == "kosax.plugin.install"]
-        assert install_spans, (
-            f"no kosax.plugin.install span emitted; got {[s.name for s in spans]}"
-        )
+        assert install_spans, f"no kosax.plugin.install span emitted; got {[s.name for s in spans]}"
         attrs = dict(install_spans[-1].attributes or {})
         assert attrs.get("kosax.plugin.id") == "timing_demo"
         assert attrs.get("kosax.plugin.version") == "1.0.0"
