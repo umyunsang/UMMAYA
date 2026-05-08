@@ -11,14 +11,12 @@
 
 ```bash
 npm install -g ummaya
-ummaya
 ```
 
 또는
 
 ```bash
 brew install --cask ummaya
-ummaya
 ```
 
 > 학술·연구개발 목적의 프로젝트입니다. Anthropic, LG AI Research, FriendliAI, 대한민국 정부 또는 특정 공공기관과 공식 제휴된 서비스가 아닙니다.
