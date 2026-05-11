@@ -35,6 +35,9 @@ jobs:
           enable-cache: false
           python-version: "3.12"
 
+      - name: README env table sync check
+        run: uv run python scripts/sync_readme_env.py --check
+
       - name: Install npm CLI
         run: npm install --global npm@11.5.1
 

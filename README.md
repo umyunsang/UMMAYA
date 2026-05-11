@@ -230,6 +230,108 @@ ummaya
 
 UMMAYA는 LLM 응답에 **K-EXAONE-236B-A23B** 모델을 사용하며, 요청을 보내려면 **FriendliAI API 키**가 필요합니다.
 
+추가 환경변수(자동 생성, `docs/configuration.md` 단일 소스):
+
+<!-- AUTO-GENERATED README ENV TABLE START -->
+<!-- AUTO-GENERATED: from docs/configuration.md (Quick Reference Table), Do not edit manually. -->
+- `UMMAYA_K_EXAONE_THINKING` (default `true`): `false` (case-insensitive; `1`/`yes` also accepted)
+| Variable | Required | Default | Consumed by |
+|---|---|---|---|
+| `UMMAYA_ENV` | No | `dev` | `ci` \ |
+| `UMMAYA_KAKAO_API_KEY` | No (operator-managed) | — | `ummaya.settings.UmmayaSettings.kakao_api_key` |
+| `UMMAYA_FRIENDLI_TOKEN` | No (user session) | — | `ummaya.llm.config.LLMClientConfig.token` |
+| `UMMAYA_DATA_GO_KR_API_KEY` | No (operator-managed) | — | `ummaya.settings.UmmayaSettings.data_go_kr_api_key` |
+| `UMMAYA_JUSO_CONFM_KEY` | No (optional fallback) | — | `ummaya.settings.UmmayaSettings.juso_confm_key` |
+| `UMMAYA_SGIS_KEY` | No (optional fallback) | — | `ummaya.settings.UmmayaSettings.sgis_key` |
+| `UMMAYA_SGIS_SECRET` | No (optional fallback) | — | `ummaya.settings.UmmayaSettings.sgis_secret` |
+| `UMMAYA_FRIENDLI_BASE_URL` | No | `https://api.friendli.ai/serverless/v1` | `ummaya.llm.config.LLMClientConfig.base_url` |
+| `UMMAYA_FRIENDLI_MODEL` | No | `LGAI-EXAONE/K-EXAONE-236B-A23B` | `ummaya.llm.config.LLMClientConfig.model` |
+| `UMMAYA_LLM_SESSION_BUDGET` | No | `100000` | `ummaya.llm.config.LLMClientConfig.session_budget` |
+| `UMMAYA_LLM_TIMEOUT_SECONDS` | No | `300` | `ummaya.llm.config.LLMClientConfig.timeout` |
+| `UMMAYA_LLM_TIMEOUT` | **Deprecated** | `300` | Legacy alias for `ummaya.llm.config.LLMClientConfig.timeout`; use `UMMAYA_LLM_TIMEOUT_SECONDS` |
+| `UMMAYA_AGENTIC_LOOP_MAX_TURNS` | No | `8` | `ummaya.ipc.stdio` (Spec 1978 T029 — bounds the CC query-engine agentic loop) |
+| `UMMAYA_REACT_MAX_TURNS` | No | `8` | `ummaya.ipc.stdio` (legacy alias for `UMMAYA_AGENTIC_LOOP_MAX_TURNS`; preserved for backward compatibility) |
+| `UMMAYA_TOOL_RESULT_TIMEOUT_SECONDS` | No | `120` | `ummaya.ipc.stdio` (Spec 1978 T030 — `asyncio.gather` timeout for primitive dispatch Futures, contracts/tool-bridge-protocol.md) |
+| `UMMAYA_PROMPTS_DIR` | No | `<repo_root>/prompts` | `ummaya.tools.verify_canonical_map._resolve_prompts_dir` (Epic ζ #2297 — overrides the path that `verify_canonical_map.py` parses to source the canonical 10-row `tool_id ↔ family_hint` mapping from `<verify_families>` in `system_v1.md`; defaults to walking up from the module's parent directories to find `prompts/`) |
+| `UMMAYA_PERMISSION_TIMEOUT_SECONDS` | No | `60` | `ummaya.ipc.stdio` (Spec 1978 T045 — permission_request → permission_response wait; D2 invariant default-deny on timeout) |
+| `UMMAYA_K_EXAONE_THINKING` | No | `true` | `false` (case-insensitive; `1`/`yes` also accepted) |
+| `UMMAYA_AVAILABLE_ADAPTERS_TOP_K` | No | `5` | `ummaya.ipc.stdio._build_available_adapters_suffix` (Spec 2521 — bounds how many BM25 candidates are emitted into the dynamic `<available_adapters>` system-prompt suffix per citizen turn; lower for prompt-cache friendliness, higher for broader recall) |
+| `UMMAYA_LLM_STREAM_CHUNK_MAX_CHARS` | No | `999` | `ummaya.llm.client._pace_text_chunk` (Spec 2521 — when set <999, splits provider deltas into sub-chunks for headless / no-Ink callers that want server-side cadence; default `999` is effectively "no extra splitting" because Ink frontend typewriter handles the in-TUI cadence) |
+| `UMMAYA_LLM_STREAM_PACE_MS` | No | `0` | `ummaya.llm.client._pace_text_chunk` (Spec 2521 — sleep between sub-chunk emissions for headless callers; default `0` disables backend pacing because Ink's `FRAME_INTERVAL_MS=4` throttle relax handles the cadence inside the TUI) |
+| `UMMAYA_LOOKUP_TOPK` | No | `5` | `ummaya.settings.UmmayaSettings.lookup_topk` |
+| `UMMAYA_NMC_FRESHNESS_MINUTES` | No | `30` | `ummaya.settings.UmmayaSettings.nmc_freshness_minutes` |
+| `UMMAYA_RETRIEVAL_BACKEND` | No | `bm25` | `dense` \ |
+| `UMMAYA_RETRIEVAL_COLD_START` | No | `lazy` | `lazy` |
+| `UMMAYA_RETRIEVAL_FUSION` | No | `rrf` | `ummaya.tools.retrieval.backend._parse_fusion_config` |
+| `UMMAYA_RETRIEVAL_FUSION_K` | No | `60` | `ummaya.tools.retrieval.backend._parse_fusion_config` |
+| `UMMAYA_RETRIEVAL_MODEL_ID` | No | `intfloat/multilingual-e5-small` | `ummaya.tools.retrieval.backend.build_retriever_from_env` |
+| `UMMAYA_MEMDIR_USER` | No | `~/.ummaya/memdir/user` | `ummaya.session.store._get_session_dir`; TUI memdir/session helpers |
+| `UMMAYA_SESSION_DIR` | No | `~/.ummaya/sessions` | `ummaya.session.store._get_session_dir` |
+| `UMMAYA_BACKEND_CMD` | No | `uv run python -m ummaya.ipc.mcp_server` | TUI-side `tui/src/services/api` IPC bridge spawner; `ummaya.ipc.demo.mock_backend` is the canonical Mock-backend value used by Spec 2296 PTY + vhs smoke artefacts |
+| `UMMAYA_BACKEND_LOG_FILE` | No | — | `ummaya.ipc.stdio.run` diagnostic FileHandler |
+| `UMMAYA_CHAT_REQUEST_DUMP` | No | `false` | `ummaya.ipc.stdio._diag_chat_request_enabled` |
+| `UMMAYA_CLI_HISTORY_SIZE` | No | `1000` | `ummaya.cli.config.CLIConfig.history_size` |
+| `UMMAYA_CLI_SHOW_USAGE` | No | `true` | `false` |
+| `UMMAYA_CLI_WELCOME_BANNER` | No | `true` | `false` |
+| `UMMAYA_THEME` | No | `default` | `dark` \ |
+| `UMMAYA_CLI_THEME` | No | `default` | `dark` \ |
+| `UMMAYA_OTEL_ENDPOINT` | Yes (prod only) | — | `ummaya.observability.otel (#501)` |
+| `UMMAYA_OTEL_COLLECTOR_PORT` | No | `4318` | `docker-compose.dev.yml` otelcol host port binding |
+| `UMMAYA_LANGFUSE_OTLP_ENDPOINT` | No | `http://langfuse-web:3000/api/public/otel` | `infra/otel-collector/config.yaml` otlphttp exporter |
+| `UMMAYA_LANGFUSE_OTLP_AUTH_HEADER` | No | `` (empty = anonymous) | `infra/otel-collector/config.yaml` exporter Authorization header |
+| `LANGFUSE_PUBLIC_KEY` | Yes (prod only) | — | `ummaya.observability.langfuse (#501)` |
+| `LANGFUSE_SECRET_KEY` | Yes (prod only) | — | `ummaya.observability.langfuse (#501)` |
+| `UMMAYA_PROMPT_REGISTRY_LANGFUSE` | No | `false` | `false` |
+| `UMMAYA_LANGFUSE_HOST` | No | — | `ummaya.context.prompt_loader.PromptLoader` |
+| `UMMAYA_LANGFUSE_PUBLIC_KEY` | No | — | `ummaya.context.prompt_loader.PromptLoader` |
+| `UMMAYA_LANGFUSE_SECRET_KEY` | No | — | `ummaya.context.prompt_loader.PromptLoader` |
+| `UMMAYA_{TOOL_ID}_API_KEY` | Override pattern | — | `ummaya.permissions.credentials._tool_specific_var` |
+| `UMMAYA_API_KEY` | **Deprecated** | — | `ummaya.permissions.credentials.resolve_credential` (global fallback) |
+| `UMMAYA_AGENT_MAILBOX_ROOT` | No | `~/.ummaya/mailbox` | `ummaya.settings.UmmayaSettings.agent_mailbox_root` |
+| `UMMAYA_AGENT_MAILBOX_MAX_MESSAGES` | No | `1000` | `ummaya.settings.UmmayaSettings.agent_mailbox_max_messages` |
+| `UMMAYA_AGENT_MAX_WORKERS` | No | `4` | `ummaya.settings.UmmayaSettings.agent_max_workers` |
+| `UMMAYA_AGENT_WORKER_TIMEOUT_SECONDS` | No | `120` | `ummaya.settings.UmmayaSettings.agent_worker_timeout_seconds` |
+| `UMMAYA_AGENT_COORDINATOR_PHASE` | OTel span attr | n/a | `ummaya.observability.semconv.UMMAYA_AGENT_COORDINATOR_PHASE` |
+| `UMMAYA_AGENT_ROLE` | OTel span attr | n/a | `ummaya.observability.semconv.UMMAYA_AGENT_ROLE` |
+| `UMMAYA_AGENT_SESSION_ID` | OTel span attr | n/a | `ummaya.observability.semconv.UMMAYA_AGENT_SESSION_ID` |
+| `UMMAYA_AGENT_MAILBOX_MSG_TYPE` | OTel span attr | n/a | `ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_MSG_TYPE` |
+| `UMMAYA_AGENT_MAILBOX_CORRELATION_ID` | OTel span attr | n/a | `ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_CORRELATION_ID` |
+| `UMMAYA_AGENT_MAILBOX_SENDER` | OTel span attr | n/a | `ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_SENDER` |
+| `UMMAYA_AGENT_MAILBOX_RECIPIENT` | OTel span attr | n/a | `ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_RECIPIENT` |
+| `UMMAYA_TUI_THEME` | No | `default` | `dark` \ |
+| `UMMAYA_TUI_LOG_LEVEL` | No | `WARN` | `INFO` \ |
+| `UMMAYA_TUI_IME_STRATEGY` | No | `fork` | `readline` |
+| `UMMAYA_TUI_SOAK_EVENTS_PER_SEC` | No | `100` | `ummaya.config.env_registry.TUISettings.soak_events_per_sec` |
+| `UMMAYA_IPC_RING_SIZE` | No | `256` | `ummaya.ipc.ring_buffer._DEFAULT_RING_SIZE` |
+| `UMMAYA_IPC_HWM` | No | `64` | `ummaya.ipc.backpressure._DEFAULT_HWM` / `ummaya.ipc.ring_buffer._DEFAULT_HWM` |
+| `UMMAYA_IPC_TX_CACHE_CAPACITY` | No | `512` | `ummaya.ipc.tx_cache._DEFAULT_CAPACITY` |
+| `UMMAYA_IPC_CORRELATION_ID` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_CORRELATION_ID` |
+| `UMMAYA_IPC_TRANSACTION_ID` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_TRANSACTION_ID` |
+| `UMMAYA_IPC_TX_CACHE_STATE` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_TX_CACHE_STATE` |
+| `UMMAYA_IPC_BACKPRESSURE_KIND` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_KIND` |
+| `UMMAYA_IPC_BACKPRESSURE_SEVERITY` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_SEVERITY` |
+| `UMMAYA_IPC_BACKPRESSURE_SOURCE` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_SOURCE` |
+| `UMMAYA_IPC_BACKPRESSURE_QUEUE_DEPTH` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_QUEUE_DEPTH` |
+| `UMMAYA_IPC_SCHEMA_HASH` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_SCHEMA_HASH` |
+| `UMMAYA_IPC_REPLAYED` | OTel span attr | n/a | `ummaya.ipc.otel_constants.UMMAYA_IPC_REPLAYED` |
+| `UMMAYA_PERMISSION_TIMEOUT_SEC` | No | `30` | `ummaya.settings.UmmayaSettings.permission_timeout_sec` |
+| `UMMAYA_PERMISSION_TTL_SESSION_SEC` | No | `3600` | `ummaya.settings.UmmayaSettings.permission_ttl_session_sec` |
+| `UMMAYA_PERMISSION_KEY_PATH` | No | `~/.ummaya/keys/ledger.key` | `ummaya.settings.UmmayaSettings.permission_key_path` |
+| `UMMAYA_PERMISSION_KEY_REGISTRY_PATH` | No | `~/.ummaya/keys/registry.json` | `ummaya.settings.UmmayaSettings.permission_key_registry_path` |
+| `UMMAYA_PERMISSION_LEDGER_PATH` | No | `~/.ummaya/consent_ledger.jsonl` | `ummaya.settings.UmmayaSettings.permission_ledger_path` |
+| `UMMAYA_PERMISSION_RULE_STORE_PATH` | No | `~/.ummaya/permissions.json` | `ummaya.settings.UmmayaSettings.permission_rule_store_path` |
+| `UMMAYA_PERMISSION_MODE` | OTel span attr | n/a | `ummaya.permissions.otel_integration.UMMAYA_PERMISSION_MODE` |
+| `UMMAYA_PERMISSION_DECISION` | OTel span attr | n/a | `ummaya.permissions.otel_integration.UMMAYA_PERMISSION_DECISION` |
+| `UMMAYA_CONSENT_RECEIPT_ID` | OTel span attr | n/a | `ummaya.permissions.otel_integration.UMMAYA_CONSENT_RECEIPT_ID` |
+| `UMMAYA_IPC_HANDLER` | No | `llm` | `echo` |
+| `UMMAYA_USER_MEMDIR_ROOT` | No | `~/.ummaya/memdir/user` | `ummaya.settings.UmmayaSettings.user_memdir_root` |
+| `UMMAYA_PLUGIN_INSTALL_ROOT` | No | `~/.ummaya/memdir/user/plugins` | `ummaya.settings.UmmayaSettings.plugin_install_root` |
+| `UMMAYA_PLUGIN_BUNDLE_CACHE` | No | `~/.ummaya/cache/plugin-bundles` | `ummaya.settings.UmmayaSettings.plugin_bundle_cache` |
+| `UMMAYA_PLUGIN_VENDOR_ROOT` | No | `~/.ummaya/vendor` | `ummaya.settings.UmmayaSettings.plugin_vendor_root` |
+| `UMMAYA_PLUGIN_CATALOG_URL` | No | `https://raw.githubusercontent.com/ummaya-plugin-store/index/main/index.json` | `ummaya.settings.UmmayaSettings.plugin_catalog_url` |
+| `UMMAYA_PLUGIN_SLSA_SKIP` | No | `false` | `false` |
+<!-- AUTO-GENERATED README ENV TABLE END -->
+
 UMMAYA를 실행한 뒤 아래 명령어를 입력합니다.
 
 ```text

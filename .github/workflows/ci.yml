@@ -40,6 +40,8 @@ jobs:
         run: uv run ruff check src tests
       - name: Ruff format check
         run: uv run ruff format --check src tests
+      - name: README env table sync check
+        run: uv run python scripts/sync_readme_env.py --check
       - name: Mypy strict
         run: uv run mypy src
       - name: Validate prompts/manifest.yaml against JSON Schema
