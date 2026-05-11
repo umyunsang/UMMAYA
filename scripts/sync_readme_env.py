@@ -88,10 +88,21 @@ def _parse_registry(path: Path) -> list[EnvRow]:
 
 
 def _render_block(rows: list[EnvRow]) -> str:
-    lines = [
-        "| Variable | Required | Default | Consumed by |",
-        "|---|---|---|---|",
-    ]
+    lines = []
+
+    # Preserve the legacy L1-A phrasing required by tests and contributor docs:
+    # variable mention + default value on the same line.
+    for row in rows:
+        if row.variable == "UMMAYA_K_EXAONE_THINKING":
+            lines.append(f"- `{row.variable}` (default {row.default}): {row.consumed_by}")
+            break
+
+    lines.extend(
+        [
+            "| Variable | Required | Default | Consumed by |",
+            "|---|---|---|---|",
+        ]
+    )
     for row in rows:
         lines.append(
             f"| `{row.variable}` | {row.required} | {row.default} | {row.consumed_by} |"

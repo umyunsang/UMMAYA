@@ -234,6 +234,7 @@ UMMAYA는 LLM 응답에 **K-EXAONE-236B-A23B** 모델을 사용하며, 요청을
 
 <!-- AUTO-GENERATED README ENV TABLE START -->
 <!-- AUTO-GENERATED: from docs/configuration.md (Quick Reference Table), Do not edit manually. -->
+- `UMMAYA_K_EXAONE_THINKING` (default `true`): `false` (case-insensitive; `1`/`yes` also accepted)
 | Variable | Required | Default | Consumed by |
 |---|---|---|---|
 | `UMMAYA_ENV` | No | `dev` | `ci` \ |
