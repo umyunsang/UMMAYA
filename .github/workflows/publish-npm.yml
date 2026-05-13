@@ -79,7 +79,7 @@ jobs:
   attest:
     name: Attest npm Distribution
     needs: build
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -104,7 +104,7 @@ jobs:
     needs:
       - build
       - attest
-    if: github.ref_type == 'tag' && github.event_name == 'push'
+    if: (github.ref_type == 'tag' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: npm
@@ -137,4 +137,6 @@ jobs:
 
       - name: Publish with npm Trusted Publishing
         if: steps.npm-version.outputs.exists != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish
