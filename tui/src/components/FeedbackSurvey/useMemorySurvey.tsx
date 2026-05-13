@@ -10,8 +10,8 @@ import type { Message } from '../../types/message.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { isEnvTruthy } from '../../utils/envUtils.js';
 import { isAutoManagedMemoryFile } from '../../utils/memoryFileDetection.js';
-import { getLastAssistantMessage } from '../../utils/messages.js';
 import { extractTextContent } from '../../utils/messageText.js';
+import { getLastAssistantMessage } from '../../utils/messageQueries.js';
 // utils/telemetry/events removed — UMMAYA telemetry handled by Spec 021 OTEL pipeline.
 const logOTelEvent = (_event: string, _attrs?: Record<string, unknown>): void => { /* no-op */ }
 import { submitTranscriptShare } from './submitTranscriptShare.js';

@@ -7,7 +7,7 @@ const isPolicyAllowed = (_policy: string): boolean => true
 import type { Message } from '../../types/message.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { isEnvTruthy } from '../../utils/envUtils.js';
-import { getLastAssistantMessage } from '../../utils/messages.js';
+import { getLastAssistantMessage } from '../../utils/messageQueries.js';
 import { getMainLoopModel } from '../../utils/model/model.js';
 import { getInitialSettings } from '../../utils/settings/settings.js';
 // utils/telemetry/events removed — UMMAYA telemetry handled by Spec 021 OTEL pipeline.

@@ -61,11 +61,11 @@ import {
   createCompactBoundaryMessage,
   createUserMessage,
   getAssistantMessageText,
-  getLastAssistantMessage,
   getMessagesAfterCompactBoundary,
   isCompactBoundaryMessage,
   normalizeMessagesForAPI,
 } from '../../utils/messages.js'
+import { getLastAssistantMessage } from '../../utils/messageQueries.js'
 import { expandPath } from '../../utils/path.js'
 import { getPlan, getPlanFilePath } from '../../utils/plans.js'
 import {

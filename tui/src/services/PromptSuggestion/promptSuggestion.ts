@@ -14,8 +14,8 @@ import type { REPLHookContext } from '../../utils/hooks/postSamplingHooks.js'
 import { logError } from '../../utils/log.js'
 import {
   createUserMessage,
-  getLastAssistantMessage,
 } from '../../utils/messages.js'
+import { getLastAssistantMessage } from '../../utils/messageQueries.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { isTeammate } from '../../utils/teammate.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
