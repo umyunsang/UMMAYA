@@ -86,6 +86,10 @@ def test_hospital_query_implies_followup() -> None:
     """Hospital / ER / pharmacy keywords trigger the follow-up requirement."""
     assert _query_implies_followup_lookup("강남역 근처 응급실")
     assert _query_implies_followup_lookup("부산 내과 병원 찾아줘")
+    assert _query_implies_followup_lookup(
+        "동아대학교 승학캠퍼스 근처 피부과나 내과 가까운 순서로 찾아줘"
+    )
+    assert _query_implies_followup_lookup("다대1동 주변 의원 진료 가능한 곳")
     assert _query_implies_followup_lookup("서울역 약국 위치")
 
 

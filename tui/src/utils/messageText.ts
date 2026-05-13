@@ -15,6 +15,7 @@
 // `messages.ts` re-exports these names so existing call sites keep working.
 
 import { NO_CONTENT_MESSAGE } from '../constants/messages.js'
+import { escapeRegExp } from './stringUtils.js'
 
 const STRIPPED_TAGS_RE =
   /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
@@ -61,4 +62,50 @@ export function extractTextContent(
     .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
     .map(b => b.text)
     .join(separator)
+}
+
+export function extractTag(html: string, tagName: string): string | null {
+  if (!html.trim() || !tagName.trim()) {
+    return null
+  }
+
+  const escapedTag = escapeRegExp(tagName)
+
+  const pattern = new RegExp(
+    `<${escapedTag}(?:\\s+[^>]*)?>` +
+      '([\\s\\S]*?)' +
+      `<\\/${escapedTag}>`,
+    'gi',
+  )
+
+  let match
+  let depth = 0
+  let lastIndex = 0
+  const openingTag = new RegExp(`<${escapedTag}(?:\\s+[^>]*?)?>`, 'gi')
+  const closingTag = new RegExp(`<\\/${escapedTag}>`, 'gi')
+
+  while ((match = pattern.exec(html)) !== null) {
+    const content = match[1]
+    const beforeMatch = html.slice(lastIndex, match.index)
+
+    depth = 0
+
+    openingTag.lastIndex = 0
+    while (openingTag.exec(beforeMatch) !== null) {
+      depth++
+    }
+
+    closingTag.lastIndex = 0
+    while (closingTag.exec(beforeMatch) !== null) {
+      depth--
+    }
+
+    if (depth === 0 && content) {
+      return content
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  return null
 }

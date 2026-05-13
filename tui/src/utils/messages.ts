@@ -83,6 +83,7 @@ import {
 import { quote } from './bash/shellQuote.js'
 import { formatNumber, formatTokens } from './format.js'
 import {
+  extractTag,
   extractTextContent,
   SYNTHETIC_MESSAGES,
   SYNTHETIC_MODEL,
@@ -94,6 +95,7 @@ import { jsonStringify } from './slowOperations.js'
 // has previously missed named exports declared deep inside messages.ts.
 export {
   extractTextContent,
+  extractTag,
   isEmptyMessageText,
   stripPromptXMLTags,
   SYNTHETIC_MESSAGES,
@@ -174,7 +176,6 @@ import {
   getPlanModeV2ExploreAgentCount,
   isPlanModeInterviewPhaseEnabled,
 } from './planModeV2.js'
-import { escapeRegExp } from './stringUtils.js'
 import { isTodoV2Enabled } from './tasks.js'
 
 // Lazy import to avoid circular dependency (teammateMailbox -> teammate -> ... -> messages)
@@ -633,62 +634,6 @@ export function createToolResultStopMessage(
     is_error: true,
     tool_use_id: toolUseID,
   }
-}
-
-export function extractTag(html: string, tagName: string): string | null {
-  if (!html.trim() || !tagName.trim()) {
-    return null
-  }
-
-  const escapedTag = escapeRegExp(tagName)
-
-  // Create regex pattern that handles:
-  // 1. Self-closing tags
-  // 2. Tags with attributes
-  // 3. Nested tags of the same type
-  // 4. Multiline content
-  const pattern = new RegExp(
-    `<${escapedTag}(?:\\s+[^>]*)?>` + // Opening tag with optional attributes
-      '([\\s\\S]*?)' + // Content (non-greedy match)
-      `<\\/${escapedTag}>`, // Closing tag
-    'gi',
-  )
-
-  let match
-  let depth = 0
-  let lastIndex = 0
-  const openingTag = new RegExp(`<${escapedTag}(?:\\s+[^>]*?)?>`, 'gi')
-  const closingTag = new RegExp(`<\\/${escapedTag}>`, 'gi')
-
-  while ((match = pattern.exec(html)) !== null) {
-    // Check for nested tags
-    const content = match[1]
-    const beforeMatch = html.slice(lastIndex, match.index)
-
-    // Reset depth counter
-    depth = 0
-
-    // Count opening tags before this match
-    openingTag.lastIndex = 0
-    while (openingTag.exec(beforeMatch) !== null) {
-      depth++
-    }
-
-    // Count closing tags before this match
-    closingTag.lastIndex = 0
-    while (closingTag.exec(beforeMatch) !== null) {
-      depth--
-    }
-
-    // Only include content if we're at the correct nesting level
-    if (depth === 0 && content) {
-      return content
-    }
-
-    lastIndex = match.index + match[0].length
-  }
-
-  return null
 }
 
 export function isNotEmptyMessage(message: Message): boolean {

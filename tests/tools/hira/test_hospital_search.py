@@ -568,6 +568,47 @@ class TestHiraHospitalSearchSpecialtyFilter:
         params = mock_client.get.call_args.kwargs["params"]
         assert params["dgsbjtCd"] == "13"
 
+    async def test_dgsbjt_single_digit_code_is_zero_padded(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """dgsbjt='1' or int 1 maps to the canonical HIRA code '01'."""
+        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-hira")
+        fixture = _load_fixture("hospital_search_happy.json")
+        mock_client = _make_mock_client(fixture)
+
+        inp = HiraHospitalSearchInput(xPos=127.028, yPos=37.498, radius=2000, dgsbjt=1)
+        await handle(inp, client=mock_client)
+
+        params = mock_client.get.call_args.kwargs["params"]
+        assert params["dgsbjtCd"] == "01"
+
+    async def test_dgsbjt_multi_specialty_fans_out_and_merges(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """dgsbjt='피부과,내과' makes one HIRA call per specialty code."""
+        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-hira")
+        fixture = _load_fixture("hospital_search_happy.json")
+        mock_client = _make_mock_client(fixture)
+
+        inp = HiraHospitalSearchInput(
+            xPos=127.028,
+            yPos=37.498,
+            radius=2000,
+            dgsbjt="피부과,내과",
+        )
+        result = await handle(inp, client=mock_client)
+
+        call_params = [call.kwargs["params"] for call in mock_client.get.call_args_list]
+        assert [params["dgsbjtCd"] for params in call_params] == ["14", "01"]
+        assert result["items"], "Merged multi-specialty result should keep fixture rows"
+        for item in result["items"]:
+            assert item["matchedDgsbjtCds"] == ["14", "01"]
+            assert item["matchedDgsbjtNms"] == ["피부과", "내과"]
+            assert item["matchedDgsbjtCd"] == "14,01"
+            assert item["matchedDgsbjtNm"] == "피부과,내과"
+
     def test_dgsbjt_unknown_raises_validation_error(self) -> None:
         """Unknown specialty name raises ValueError (→ executor invalid_params)."""
         with pytest.raises(ValueError, match="Unknown medical specialty"):

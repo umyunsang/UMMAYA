@@ -33,6 +33,7 @@ D + E fix (2026-05-04, snap-009 강남역 내과 lookup regression):
 from __future__ import annotations
 
 import logging
+import re
 from datetime import UTC, datetime
 from typing import Any
 
@@ -154,6 +155,36 @@ _DGSBJT_CODE_MAP: dict[str, str] = {
     "korean medicine": "80",
 }
 
+_DGSBJT_CODE_NAME_MAP: dict[str, str] = {
+    "01": "내과",
+    "02": "신경과",
+    "03": "정신건강의학과",
+    "04": "외과",
+    "05": "정형외과",
+    "06": "신경외과",
+    "07": "흉부외과",
+    "08": "성형외과",
+    "09": "마취통증의학과",
+    "10": "산부인과",
+    "11": "소아청소년과",
+    "12": "안과",
+    "13": "이비인후과",
+    "14": "피부과",
+    "15": "비뇨의학과",
+    "16": "영상의학과",
+    "17": "방사선종양학과",
+    "18": "병리과",
+    "19": "진단검사의학과",
+    "20": "결핵과",
+    "21": "재활의학과",
+    "22": "핵의학과",
+    "23": "가정의학과",
+    "24": "응급의학과",
+    "25": "직업환경의학과",
+    "26": "예방의학과",
+    "80": "한방",
+}
+
 # 종별코드 — HIRA clCd. Source: HIRA 활용가이드 (병원정보서비스). Verified live
 # 2026-05-04 with clCd=31 returning 673 / clCd=21 returning N (의원/병원 split).
 _CLCD_CODE_MAP: dict[str, str] = {
@@ -186,6 +217,69 @@ _CLCD_CODE_MAP: dict[str, str] = {
     "약국": "92",
     "pharmacy": "92",
 }
+
+_DGSBJT_MULTI_SPLIT_RE = re.compile(r"\s*(?:,|/|\+|·|ㆍ|및|또는|\bor\b|\band\b)\s*")
+
+
+def _split_dgsbjt_tokens(value: str) -> list[str]:
+    """Split citizen/model multi-specialty strings into individual tokens."""
+    normalized = re.sub(r"(?<=[가-힣])나\s+", ",", value.strip())
+    return [part.strip() for part in _DGSBJT_MULTI_SPLIT_RE.split(normalized) if part.strip()]
+
+
+def _resolve_dgsbjt_token(value: object) -> str:
+    """Map one natural-language specialty/code token to HIRA's 2-digit code."""
+    if isinstance(value, int):
+        value = str(value)
+    if not isinstance(value, str):
+        raise ValueError("Medical specialty must be a Korean name, English alias, or code.")
+
+    token = value.strip()
+    if not token:
+        raise ValueError("Medical specialty must not be empty.")
+    if token.isdigit():
+        if len(token) == 1:
+            token = f"0{token}"
+        if len(token) == 2:
+            return token
+
+    lookup_key = token.lower()
+    if lookup_key in _DGSBJT_CODE_MAP:
+        return _DGSBJT_CODE_MAP[lookup_key]
+    if token in _DGSBJT_CODE_MAP:
+        return _DGSBJT_CODE_MAP[token]
+
+    valid_examples = "내과 / 소아과 / 안과 / 이비인후과 / 정형외과 / 피부과"
+    raise ValueError(
+        f"Unknown medical specialty '{token}'. Pass either the Korean name "
+        f"(e.g. {valid_examples}) or a 2-digit dgsbjtCd (01–26, 80)."
+    )
+
+
+def _append_matched_dgsbjt(item: dict[str, Any], dgsbjt_code: str | None) -> None:
+    """Record which fan-out specialty call produced this item."""
+    if dgsbjt_code is None:
+        return
+
+    codes = item.setdefault("matchedDgsbjtCds", [])
+    if not isinstance(codes, list):
+        codes = [str(codes)]
+        item["matchedDgsbjtCds"] = codes
+    if dgsbjt_code not in codes:
+        codes.append(dgsbjt_code)
+
+    name = _DGSBJT_CODE_NAME_MAP.get(dgsbjt_code)
+    names = item.setdefault("matchedDgsbjtNms", [])
+    if not isinstance(names, list):
+        names = [str(names)]
+        item["matchedDgsbjtNms"] = names
+    if name and name not in names:
+        names.append(name)
+
+    item["matchedDgsbjtCd"] = ",".join(codes)
+    if names:
+        item["matchedDgsbjtNm"] = ",".join(names)
+
 
 # ---------------------------------------------------------------------------
 # Input schema (T054 — xPos + yPos + radius)
@@ -245,7 +339,9 @@ class HiraHospitalSearchInput(BaseModel):
             "'dermatology' / 'orthopedics'. WHEN TO USE: citizen mentions a "
             "specific 진료과 ('근처 내과 알려줘' → dgsbjt='내과'). When omitted, "
             "all specialties returned. Without this filter '근처 병원' returns "
-            "성형외과, 안과, 정형외과 etc. mixed — usually NOT what citizens want."
+            "성형외과, 안과, 정형외과 etc. mixed — usually NOT what citizens want. "
+            "If the citizen asks for multiple specialties, pass comma-separated "
+            "names/codes (e.g. '피부과,내과'); UMMAYA will fan out and merge."
         ),
     )
     clCd: str | None = Field(  # noqa: N815
@@ -275,31 +371,28 @@ class HiraHospitalSearchInput(BaseModel):
         description="Number of rows per page (1–100). Default 20.",
     )
 
-    @field_validator("dgsbjt")
+    @field_validator("dgsbjt", mode="before")
     @classmethod
-    def _resolve_dgsbjt(cls, v: str | None) -> str | None:
-        """Map natural-language specialty → 2-digit dgsbjtCd, or pass through code."""
+    def _resolve_dgsbjt(cls, v: object) -> str | None:
+        """Map specialty input to one or more comma-separated dgsbjtCd values."""
         if v is None:
             return None
-        v = v.strip()
-        if not v:
+        if isinstance(v, str) and not v.strip():
             return None
-        # If it's already a 2-digit code, accept as-is.
-        if v.isdigit() and len(v) == 2:
-            return v
-        # Lowercase for English-alias lookup, raw Korean for Korean lookup.
-        lookup_key = v.lower()
-        if lookup_key in _DGSBJT_CODE_MAP:
-            return _DGSBJT_CODE_MAP[lookup_key]
-        if v in _DGSBJT_CODE_MAP:
-            return _DGSBJT_CODE_MAP[v]
-        # Unrecognized — raise so the executor returns invalid_params with a
-        # clear hint rather than silently dropping the filter.
-        valid_examples = "내과 / 소아과 / 안과 / 이비인후과 / 정형외과 / 피부과"
-        raise ValueError(
-            f"Unknown medical specialty '{v}'. Pass either the Korean name "
-            f"(e.g. {valid_examples}) or a 2-digit dgsbjtCd (01–26, 80)."
-        )
+        raw_tokens: list[object]
+        if isinstance(v, list):
+            raw_tokens = v
+        elif isinstance(v, str):
+            raw_tokens = _split_dgsbjt_tokens(v)
+        else:
+            raw_tokens = [v]
+
+        codes: list[str] = []
+        for token in raw_tokens:
+            code = _resolve_dgsbjt_token(token)
+            if code not in codes:
+                codes.append(code)
+        return ",".join(codes) if codes else None
 
     @field_validator("clCd")
     @classmethod
@@ -361,11 +454,7 @@ async def handle(  # noqa: C901
         "numOfRows": inp.numOfRows,
         "_type": "json",
     }
-    # E-fix: forward server-side filters when the citizen specified a
-    # specialty / institution type. Validators have already mapped natural-
-    # language input to the canonical 2-digit codes.
-    if inp.dgsbjt is not None:
-        params["dgsbjtCd"] = inp.dgsbjt
+    dgsbjt_codes = inp.dgsbjt.split(",") if inp.dgsbjt else [None]
     if inp.clCd is not None:
         params["clCd"] = inp.clCd
 
@@ -391,8 +480,10 @@ async def handle(  # noqa: C901
         traced_async_client(timeout=60.0) if own_client else client  # type: ignore[assignment]
     )
 
-    try:
-        response = await _client.get(_BASE_URL, params=params)
+    async def _fetch_collection(
+        request_params: dict[str, str | int | float],
+    ) -> tuple[list[dict[str, Any]], int]:
+        response = await _client.get(_BASE_URL, params=request_params)
         response.raise_for_status()
 
         content_type = response.headers.get("content-type", "")
@@ -405,58 +496,73 @@ async def handle(  # noqa: C901
             )
 
         raw: dict[str, Any] = response.json()
+
+        # HIRA uses a nested response envelope: response → body → items / totalCount
+        response_body = raw.get("response", {})
+        header = response_body.get("header", {})
+        result_code = str(header.get("resultCode", ""))
+        result_msg = str(header.get("resultMsg", "Unknown"))
+
+        if result_code == "03":
+            # NODATA_ERROR — return empty collection
+            return [], 0
+
+        if result_code != "00":
+            raise ToolExecutionError(
+                "hira_hospital_search",
+                f"HIRA API error: resultCode={result_code!r} resultMsg={result_msg!r}",
+            )
+
+        body = response_body.get("body", {})
+        total_count = int(body.get("totalCount", 0))
+        raw_items = body.get("items", {})
+
+        item_list: list[dict[str, Any]] = []
+        if raw_items and not isinstance(raw_items, str):
+            raw_item = raw_items.get("item", [])
+            if isinstance(raw_item, dict):
+                item_list = [raw_item]
+            elif isinstance(raw_item, list):
+                item_list = raw_item
+
+        return [
+            {
+                "ykiho": item.get("ykiho", ""),
+                "yadmNm": item.get("yadmNm", ""),
+                "addr": item.get("addr", ""),
+                "telno": item.get("telno", ""),
+                "clCd": item.get("clCd", ""),
+                "clCdNm": item.get("clCdNm", ""),
+                "xPos": item.get("XPos"),
+                "yPos": item.get("YPos"),
+                "distance": item.get("distance"),
+                "sidoCdNm": item.get("sidoCdNm", ""),
+                "sgguCdNm": item.get("sgguCdNm", ""),
+            }
+            for item in item_list
+        ], total_count
+
+    try:
+        items: list[dict[str, Any]] = []
+        total_count = 0
+        seen_items: dict[str, dict[str, Any]] = {}
+        for dgsbjt_code in dgsbjt_codes:
+            request_params = dict(params)
+            if dgsbjt_code is not None:
+                request_params["dgsbjtCd"] = dgsbjt_code
+            fetched_items, fetched_total = await _fetch_collection(request_params)
+            total_count += fetched_total
+            for item in fetched_items:
+                key = str(item.get("ykiho") or (item.get("yadmNm"), item.get("addr")))
+                if key in seen_items:
+                    _append_matched_dgsbjt(seen_items[key], dgsbjt_code)
+                    continue
+                _append_matched_dgsbjt(item, dgsbjt_code)
+                seen_items[key] = item
+                items.append(item)
     finally:
         if own_client:
             await _client.aclose()
-
-    # HIRA uses a nested response envelope: response → body → items / totalCount
-    response_body = raw.get("response", {})
-    header = response_body.get("header", {})
-    result_code = str(header.get("resultCode", ""))
-    result_msg = str(header.get("resultMsg", "Unknown"))
-
-    if result_code == "03":
-        # NODATA_ERROR — return empty collection
-        return {
-            "kind": "collection",
-            "items": [],
-            "total_count": 0,
-        }
-
-    if result_code != "00":
-        raise ToolExecutionError(
-            "hira_hospital_search",
-            f"HIRA API error: resultCode={result_code!r} resultMsg={result_msg!r}",
-        )
-
-    body = response_body.get("body", {})
-    total_count = int(body.get("totalCount", 0))
-    raw_items = body.get("items", {})
-
-    item_list: list[dict[str, Any]] = []
-    if raw_items and not isinstance(raw_items, str):
-        raw_item = raw_items.get("item", [])
-        if isinstance(raw_item, dict):
-            item_list = [raw_item]
-        elif isinstance(raw_item, list):
-            item_list = raw_item
-
-    items = [
-        {
-            "ykiho": item.get("ykiho", ""),
-            "yadmNm": item.get("yadmNm", ""),
-            "addr": item.get("addr", ""),
-            "telno": item.get("telno", ""),
-            "clCd": item.get("clCd", ""),
-            "clCdNm": item.get("clCdNm", ""),
-            "xPos": item.get("XPos"),
-            "yPos": item.get("YPos"),
-            "distance": item.get("distance"),
-            "sidoCdNm": item.get("sidoCdNm", ""),
-            "sgguCdNm": item.get("sgguCdNm", ""),
-        }
-        for item in item_list
-    ]
 
     # D-fix: HIRA does NOT sort by distance server-side. Verified live
     # 2026-05-04: baseline call near 강남역 (37.498, 127.028) returned
@@ -508,15 +614,19 @@ _HIRA_DESCRIPTION = build_description_v4(
         "xPos = longitude (124–132). yPos = latitude (33–39). "
         "Citizen location → locate(kakao_keyword_search 또는 kakao_address_search) first. "
         "radius: 1500m '근처' / 3000m '주변' / max 10000m. "
-        "dgsbjt + clCd are optional natural-language filters (see short_reference)."
+        "dgsbjt + clCd are optional natural-language filters (see short_reference). "
+        "For multiple specialties, pass comma-separated dgsbjt names/codes."
     ),
     short_reference=(
-        "Lat/lon direct (no grid). Response: yadmNm, addr, telno, clCdNm, ykiho, distance.\n"
+        "Lat/lon direct (no grid). Response: yadmNm, addr, telno, clCdNm, ykiho, distance, "
+        "and matchedDgsbjtNm/Cd when dgsbjt was used.\n"
         "DGSBJT pass Korean: 내과→01, 신경과→02, 정신과→03, 외과→04, 정형외과→05, "
         "신경외과→06, 흉부외과→07, 성형외과→08, 산부인과→10, 소아과→11, 안과→12, "
         "이비인후과→13, 피부과→14, 비뇨기과→15, 영상의학과→16, 재활의학과→21, "
         "가정의학과→23, 응급의학과→24, 한의원→80. English: pediatrics/ENT/dermatology.\n"
         "CLCD: 의원→31, 병원/종합병원→21, 상급종합→11, 치과병원→29, 약국→92, 보건소→51.\n"
+        "Multiple specialties: dgsbjt='피부과,내과' fans out and merges by distance; use "
+        "matchedDgsbjtNms to group/list specialties correctly.\n"
         "Without dgsbjt result mixes 성형/안과/내과 — citizen rarely wants that."
     ),
     domain_quirk=(
@@ -530,7 +640,8 @@ _HIRA_DESCRIPTION = build_description_v4(
         "locate(kakao_keyword_search 또는 kakao_address_search) first. "
         "ORDERING: turn1=locate adapter, "
         "turn2=this tool. When citizen says '근처 내과' / '강남역 소아과' / "
-        "'큰 종합병원', map specialty/type to dgsbjt / clCd in the SAME call."
+        "'큰 종합병원', map specialty/type to dgsbjt / clCd in the SAME call. "
+        "For '피부과나 내과', use dgsbjt='피부과,내과'."
     ),
 )
 
