@@ -54,6 +54,7 @@ jobs:
           tarball="$(node -e "const report = require('./package-evidence/npm-pack.json'); const pack = Array.isArray(report) ? report[0] : report; console.log(pack.filename)")"
           npm install --global --prefix "${prefix}" "./${tarball}"
           "${prefix}/bin/ummaya" --version
+          "${prefix}/bin/ummaya" --help >/dev/null
 
       - name: Record distribution hashes
         run: |
