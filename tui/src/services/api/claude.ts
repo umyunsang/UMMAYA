@@ -96,7 +96,6 @@ import { errorMessage } from '../../utils/errors.js'
 import { computeFingerprintFromMessages } from '../../utils/fingerprint.js'
 import { captureAPIRequest, logError } from '../../utils/log.js'
 import {
-  createAssistantAPIErrorMessage,
   createUserMessage,
   ensureToolResultPairing,
   normalizeContentFromAPI,
@@ -105,6 +104,7 @@ import {
   stripCallerFieldFromAssistantMessage,
   stripToolReferenceBlocksFromUserMessage,
 } from '../../utils/messages.js'
+import { createAssistantAPIErrorMessage } from '../../utils/assistantMessageFactories.js'
 import {
   getDefaultOpusModel,
   getDefaultSonnetModel,

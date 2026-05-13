@@ -48,12 +48,12 @@ import {
   createUserInterruptionMessage,
   normalizeMessagesForAPI,
   createSystemMessage,
-  createAssistantAPIErrorMessage,
   getMessagesAfterCompactBoundary,
   createToolUseSummaryMessage,
   createMicrocompactBoundaryMessage,
   stripSignatureBlocks,
 } from './utils/messages.js'
+import { createAssistantAPIErrorMessage } from './utils/assistantMessageFactories.js'
 // services/toolUseSummary/toolUseSummaryGenerator removed (Spec 2293 cleanup); stub below.
 const generateToolUseSummary = async (_opts: unknown): Promise<string | null> => null
 import { prependUserContext, appendSystemContext } from './utils/api.js'

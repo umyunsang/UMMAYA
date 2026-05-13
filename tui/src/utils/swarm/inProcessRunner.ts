@@ -58,9 +58,9 @@ import { TEAM_DELETE_TOOL_NAME } from '../../tools/TeamDeleteTool/constants.js'
 import type { Message } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
 import {
-  createAssistantAPIErrorMessage,
   createUserMessage,
 } from '../../utils/messages.js'
+import { createAssistantAPIErrorMessage } from '../../utils/assistantMessageFactories.js'
 import { evictTaskOutput } from '../../utils/task/diskOutput.js'
 import { evictTerminalTask } from '../../utils/task/framework.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
