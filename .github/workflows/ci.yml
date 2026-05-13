@@ -187,7 +187,15 @@ jobs:
           fi
       - name: Smoke test live adapter gateway health endpoint
         run: |
-          container_id="$(docker run -d -p 8123:8080 ummaya-live-gateway:ci)"
+          container_id="$(
+            docker run -d -p 8123:8080 \
+              -e UMMAYA_DATA_GO_KR_API_KEY=ci-dummy-data-go-kr \
+              -e UMMAYA_KAKAO_API_KEY=ci-dummy-kakao \
+              -e UMMAYA_JUSO_CONFM_KEY=ci-dummy-juso \
+              -e UMMAYA_SGIS_KEY=ci-dummy-sgis-key \
+              -e UMMAYA_SGIS_SECRET=ci-dummy-sgis-secret \
+              ummaya-live-gateway:ci
+          )"
           cleanup() {
             docker logs "${container_id}" || true
             docker rm -f "${container_id}" >/dev/null 2>&1 || true
