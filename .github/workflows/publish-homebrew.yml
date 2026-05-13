@@ -58,6 +58,7 @@ jobs:
             Formula/ummaya.rb
 
       - name: Fetch Homebrew tap token from Infisical
+        continue-on-error: true
         uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995
         with:
           method: oidc
@@ -67,12 +68,35 @@ jobs:
           secret-path: "/"
           export-type: env
 
-      - name: Checkout tap
+      - name: Select Homebrew tap credential
+        id: tap-credential
+        env:
+          HOMEBREW_TAP_SSH_KEY: ${{ secrets.UMMAYA_HOMEBREW_TAP_SSH_KEY }}
+        run: |
+          if [ -n "${UMMAYA_HOMEBREW_TAP_TOKEN:-}" ]; then
+            echo "mode=token" >> "${GITHUB_OUTPUT}"
+          elif [ -n "${HOMEBREW_TAP_SSH_KEY:-}" ]; then
+            echo "mode=ssh" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::Missing Homebrew tap credential: set UMMAYA_HOMEBREW_TAP_TOKEN in Infisical or UMMAYA_HOMEBREW_TAP_SSH_KEY as a GitHub Actions environment secret."
+            exit 1
+          fi
+
+      - name: Checkout tap with token
+        if: steps.tap-credential.outputs.mode == 'token'
         uses: actions/checkout@v6
         with:
           repository: umyunsang/homebrew-ummaya
           path: tap
           token: ${{ env.UMMAYA_HOMEBREW_TAP_TOKEN }}
+
+      - name: Checkout tap with deploy key
+        if: steps.tap-credential.outputs.mode == 'ssh'
+        uses: actions/checkout@v6
+        with:
+          repository: umyunsang/homebrew-ummaya
+          path: tap
+          ssh-key: ${{ secrets.UMMAYA_HOMEBREW_TAP_SSH_KEY }}
 
       - name: Commit formula
         run: |
