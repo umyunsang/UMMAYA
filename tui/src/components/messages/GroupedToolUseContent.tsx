@@ -2,7 +2,7 @@ import type { ToolResultBlockParam, ToolUseBlockParam } from 'src/sdk-compat.js'
 import * as React from 'react';
 import { filterToolProgressMessages, findToolByName, type Tools } from '../../Tool.js';
 import type { GroupedToolUseMessage } from '../../types/message.js';
-import type { buildMessageLookups } from '../../utils/messages.js';
+import type { buildMessageLookups } from '../../utils/messageLookups.js';
 type Props = {
   message: GroupedToolUseMessage;
   tools: Tools;

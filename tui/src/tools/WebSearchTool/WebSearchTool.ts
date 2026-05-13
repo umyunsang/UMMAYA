@@ -11,7 +11,7 @@ const queryModelWithStreaming = async (_opts?: unknown): Promise<never> => { thr
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import { getMainLoopModel, getSmallFastModel } from '../../utils/model/model.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'

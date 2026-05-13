@@ -20,7 +20,7 @@ import {
   findInProcessTeammateTaskId,
   handlePlanApprovalResponse,
 } from '../utils/inProcessTeammateHelpers.js'
-import { createAssistantMessage } from '../utils/messages.js'
+import { createAssistantMessage } from '../utils/assistantMessageFactories.js'
 import {
   permissionModeFromString,
   toExternalPermissionMode,

@@ -18,11 +18,11 @@ import { count } from '../array.js'
 import { getCwd } from '../cwd.js'
 import { toError } from '../errors.js'
 import { logError } from '../log.js'
-import { createUserMessage } from '../messages.js'
 import { extractTag, extractTextContent } from '../messageText.js'
 import { getSmallFastModel } from '../model/model.js'
 import { jsonParse } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'
+import { createUserMessage } from '../userMessageFactories.js'
 import {
   type ApiQueryHookConfig,
   createApiQueryHook,

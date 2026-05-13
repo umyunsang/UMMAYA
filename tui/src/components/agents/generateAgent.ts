@@ -9,7 +9,7 @@ import { getEmptyToolPermissionContext } from 'src/Tool.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { prependUserContext } from 'src/utils/api.js'
 import { normalizeMessagesForAPI } from 'src/utils/messageApiNormalize.js'
-import { createUserMessage } from 'src/utils/messages.js'
+import { createUserMessage } from 'src/utils/userMessageFactories.js'
 import type { ModelName } from 'src/utils/model/model.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import {

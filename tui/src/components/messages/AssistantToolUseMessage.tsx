@@ -12,7 +12,7 @@ import { findToolByName, type Tool, type ToolProgressData, type Tools } from '..
 import type { ProgressMessage } from '../../types/message.js';
 import { useIsClassifierChecking } from '../../utils/classifierApprovalsHook.js';
 import { logError } from '../../utils/log.js';
-import type { buildMessageLookups } from '../../utils/messages.js';
+import type { buildMessageLookups } from '../../utils/messageLookups.js';
 import { MessageResponse } from '../MessageResponse.js';
 import { useSelectedMessageBg } from '../messageActions.js';
 import { SentryErrorBoundary } from '../SentryErrorBoundary.js';

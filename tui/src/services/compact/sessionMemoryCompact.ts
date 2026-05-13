@@ -7,7 +7,7 @@ import type { HookResultMessage, Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import {
   createCompactBoundaryMessage,
   isCompactBoundaryMessage,

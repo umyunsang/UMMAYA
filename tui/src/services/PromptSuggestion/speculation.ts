@@ -33,9 +33,7 @@ import { formatDuration, formatNumber } from '../../utils/format.js'
 import type { REPLHookContext } from '../../utils/hooks/postSamplingHooks.js'
 import { logError } from '../../utils/log.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
-import {
-  createUserMessage,
-} from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import { createSystemMessage } from '../../utils/systemMessageFactories.js'
 import {
   INTERRUPT_MESSAGE,

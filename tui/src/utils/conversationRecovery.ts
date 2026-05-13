@@ -26,12 +26,7 @@ import {
 import { logError } from './log.js'
 import { createAssistantMessage } from './assistantMessageFactories.js'
 import { normalizeMessages } from './messageNormalize.js'
-import {
-  filterOrphanedThinkingOnlyMessages,
-  filterUnresolvedToolUses,
-  filterWhitespaceOnlyAssistantMessages,
-  isToolUseResultMessage,
-} from './messages.js'
+import * as messageUtils from './messages.js'
 import { NO_RESPONSE_REQUESTED } from './messageText.js'
 import { copyPlanForResume } from './plans.js'
 import { processSessionStartHooks } from './sessionStart.js'
@@ -46,6 +41,13 @@ import {
   loadTranscriptFile,
   removeExtraFields,
 } from './sessionStorage.js'
+
+const {
+  filterOrphanedThinkingOnlyMessages,
+  filterUnresolvedToolUses,
+  filterWhitespaceOnlyAssistantMessages,
+  isToolUseResultMessage,
+} = messageUtils
 import type { ContentReplacementRecord } from './toolResultStorage.js'
 import { createUserMessage } from './userMessageFactories.js'
 

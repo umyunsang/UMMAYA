@@ -12,7 +12,7 @@ import type { AssistantMessage, AttachmentMessage as AttachmentMessageType, Coll
 import { type AdvisorBlock, isAdvisorBlock } from '../utils/advisor.js';
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js';
 import { logError } from '../utils/log.js';
-import type { buildMessageLookups } from '../utils/messages.js';
+import type { buildMessageLookups } from '../utils/messageLookups.js';
 import { CompactSummary } from './CompactSummary.js';
 import { AdvisorMessage } from './messages/AdvisorMessage.js';
 import { AssistantRedactedThinkingMessage } from './messages/AssistantRedactedThinkingMessage.js';

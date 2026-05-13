@@ -58,7 +58,7 @@ import {
 import { logError } from '../../utils/log.js'
 import { MEMORY_TYPE_VALUES } from '../../utils/memory/types.js'
 import { normalizeMessagesForAPI } from '../../utils/messageApiNormalize.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import {
   createCompactBoundaryMessage,
   getMessagesAfterCompactBoundary,

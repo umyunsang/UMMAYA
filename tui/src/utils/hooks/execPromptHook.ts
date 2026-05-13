@@ -9,11 +9,11 @@ import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import type { HookResult } from '../hooks.js'
 import { safeParseJSON } from '../json.js'
-import { createUserMessage } from '../messages.js'
 import { extractTextContent } from '../messageText.js'
 import { getSmallFastModel } from '../model/model.js'
 import type { PromptHook } from '../settings/types.js'
 import { asSystemPrompt } from '../systemPromptType.js'
+import { createUserMessage } from '../userMessageFactories.js'
 import { addArgumentsToPrompt, hookResponseSchema } from './hookHelpers.js'
 
 /**

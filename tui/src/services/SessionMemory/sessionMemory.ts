@@ -28,10 +28,8 @@ import {
   type REPLHookContext,
   registerPostSamplingHook,
 } from '../../utils/hooks/postSamplingHooks.js'
-import {
-  createUserMessage,
-  hasToolCallsInLastAssistantTurn,
-} from '../../utils/messages.js'
+import { hasToolCallsInLastAssistantTurn } from '../../utils/messagePredicates.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import {
   getSessionMemoryDir,
   getSessionMemoryPath,

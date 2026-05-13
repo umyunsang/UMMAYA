@@ -4,7 +4,7 @@ import { BashTool } from '../tools/BashTool/BashTool.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage, MalformedCommandError, ShellError } from './errors.js'
 import type { FrontmatterShell } from './frontmatterParser.js'
-import { createAssistantMessage } from './messages.js'
+import { createAssistantMessage } from './assistantMessageFactories.js'
 import { hasPermissionsToUseTool } from './permissions/permissions.js'
 import { processToolResultBlock } from './toolResultStorage.js'
 

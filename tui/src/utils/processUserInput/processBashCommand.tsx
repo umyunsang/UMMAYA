@@ -8,8 +8,7 @@ import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/me
 import type { ShellProgress } from 'src/types/tools.js';
 import { logEvent } from '../../services/analytics/index.js';
 import { errorMessage, ShellError } from '../errors.js';
-import { prepareUserContent } from '../messages.js';
-import { createSyntheticUserCaveatMessage, createUserInterruptionMessage, createUserMessage } from '../userMessageFactories.js';
+import { createSyntheticUserCaveatMessage, createUserInterruptionMessage, createUserMessage, prepareUserContent } from '../userMessageFactories.js';
 import { resolveDefaultShell } from '../shell/resolveDefaultShell.js';
 import { isPowerShellToolEnabled } from '../shell/shellToolUtils.js';
 import { processToolResultBlock } from '../toolResultStorage.js';

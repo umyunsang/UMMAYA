@@ -25,7 +25,7 @@ import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
 import { getInitialFastModeSetting, isFastModeEnabled, prefetchFastModeStatus, resolveFastModeStatusFromCache } from './utils/fastMode.js';
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
 import { createSystemMessage } from './utils/systemMessageFactories.js';
-import { createUserMessage } from './utils/messages.js';
+import { createUserMessage } from './utils/userMessageFactories.js';
 import { getPlatform } from './utils/platform.js';
 import { getBaseRenderOptions } from './utils/renderOptions.js';
 // UMMAYA: services/api/sessionIngress deleted. sessionIngressAuth stub kept for build compatibility.

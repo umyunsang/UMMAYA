@@ -1,7 +1,5 @@
 import type { ToolUseBlock } from 'src/sdk-compat.js'
-import {
-  createUserMessage,
-} from 'src/utils/messages.js'
+import { createUserMessage } from 'src/utils/userMessageFactories.js'
 import {
   REJECT_MESSAGE,
   withMemoryCorrectionHint,

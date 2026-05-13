@@ -30,7 +30,7 @@ import { VerifyPrimitive } from '../../tools/VerifyPrimitive/VerifyPrimitive.js'
 import { SubmitPrimitive } from '../../tools/SubmitPrimitive/SubmitPrimitive.js'
 import type { IPCFrame } from '../../ipc/frames.generated.js'
 import type { Tool } from '../../Tool.js'
-import { createAssistantMessage } from '../../utils/messages.js'
+import { createAssistantMessage } from '../../utils/assistantMessageFactories.js'
 import { getOrCreateUmmayaBridge } from '../../ipc/bridgeSingleton.js'
 
 // ---------------------------------------------------------------------------

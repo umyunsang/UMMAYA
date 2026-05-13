@@ -57,9 +57,7 @@ import { TEAM_CREATE_TOOL_NAME } from '../../tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '../../tools/TeamDeleteTool/constants.js'
 import type { Message } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
-import {
-  createUserMessage,
-} from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import { createAssistantAPIErrorMessage } from '../../utils/assistantMessageFactories.js'
 import { evictTaskOutput } from '../../utils/task/diskOutput.js'
 import { evictTerminalTask } from '../../utils/task/framework.js'

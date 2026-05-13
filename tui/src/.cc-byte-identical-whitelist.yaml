@@ -258,6 +258,22 @@ entries:
     cause: W15
     spec_ref: ".github/workflows/tui-boot-smoke.yml"
     notes: "Linux Bun loader requires direct messageText.js import for extractTag; behavior is unchanged."
+  - path: tui/src/components/messages/CollapsedReadSearchContent.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageLookups.js type import; behavior is unchanged."
+  - path: tui/src/components/messages/HookProgressMessage.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageLookups.js type import; behavior is unchanged."
+  - path: tui/src/components/messages/UserToolResultMessage/UserToolRejectMessage.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageLookups.js type import; behavior is unchanged."
+  - path: tui/src/components/messages/UserToolResultMessage/UserToolSuccessMessage.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageLookups.js type import; behavior is unchanged."
   - path: tui/src/components/messages/UserMemoryInputMessage.tsx
     cause: W15
     spec_ref: ".github/workflows/tui-boot-smoke.yml"

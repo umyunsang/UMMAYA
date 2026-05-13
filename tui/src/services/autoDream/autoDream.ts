@@ -15,9 +15,7 @@ import {
   createCacheSafeParams,
   runForkedAgent,
 } from '../../utils/forkedAgent.js'
-import {
-  createUserMessage,
-} from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import { createMemorySavedMessage } from '../../utils/systemMessageFactories.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'

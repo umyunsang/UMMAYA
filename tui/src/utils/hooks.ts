@@ -132,9 +132,9 @@ import { createCombinedAbortSignal } from './combinedAbortSignal.js'
 import type { PermissionResult } from './permissions/PermissionResult.js'
 import { registerPendingAsyncHook } from './hooks/AsyncHookRegistry.js'
 import { enqueuePendingNotification } from './messageQueueManager.js'
-import { wrapInSystemReminder } from './messages.js'
 import { extractTextContent } from './messageText.js'
 import { getLastAssistantMessage } from './messageQueries.js'
+import { wrapInSystemReminder } from './systemReminder.js'
 import {
   emitHookStarted,
   emitHookResponse,

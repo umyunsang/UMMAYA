@@ -12,9 +12,7 @@ import {
 } from '../../utils/forkedAgent.js'
 import type { REPLHookContext } from '../../utils/hooks/postSamplingHooks.js'
 import { logError } from '../../utils/log.js'
-import {
-  createUserMessage,
-} from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import { getLastAssistantMessage } from '../../utils/messageQueries.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { isTeammate } from '../../utils/teammate.js'

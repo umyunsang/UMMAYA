@@ -12,7 +12,7 @@ const formatAPIError = (err: unknown): string =>
 type NonNullableUsage = import('src/entrypoints/sdk/sdkUtilityTypes.js').NonNullableUsage
 import type { Message, SystemAPIErrorMessage } from '../types/message.js'
 import { type CacheSafeParams, runForkedAgent } from './forkedAgent.js'
-import { createUserMessage } from './messages.js'
+import { createUserMessage } from './userMessageFactories.js'
 import { extractTextContent } from './messageText.js'
 
 // Pattern to detect "/btw" at start of input (case-insensitive, word boundary)

@@ -40,8 +40,8 @@ Wire Python adapters (`src/ummaya/tools/`) as the LLM tool surface via stdio MCP
 - `tui/src/tools/{TodoWriteTool,ToolSearchTool,AskUserQuestionTool,SleepTool,MonitorTool,WorkflowTool,ScheduleCronTool,Task{Create,Get,List,Stop,Update}Tool,Team{Create,Delete}Tool}/`
 
 ### New — active primitive wrappers
-- `tui/src/tools/primitive/{lookup,submit,verify}.ts`
-- `locate` is a built-in meta-tool. `subscribe` is deferred until UMMAYA has an app/push-notification runtime.
+- `tui/src/tools/{LookupPrimitive,ResolveLocationPrimitive,SubmitPrimitive,VerifyPrimitive}/` expose the active root names `find`/`locate`/`send`/`check`.
+- `subscribe` is deferred until UMMAYA has an app/push-notification runtime.
 
 ### New — auxiliary tools
 - `tui/src/tools/{Translate,Calculator,DateParser,ExportPDF}/`

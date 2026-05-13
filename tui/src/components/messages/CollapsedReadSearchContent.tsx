@@ -12,7 +12,7 @@ import { getToolUseIdsFromCollapsedGroup } from '../../utils/collapseReadSearch.
 import { getDisplayPath } from '../../utils/file.js';
 import { formatDuration, formatSecondsShort } from '../../utils/format.js';
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
-import type { buildMessageLookups } from '../../utils/messages.js';
+import type { buildMessageLookups } from '../../utils/messageLookups.js';
 import type { ThemeName } from '../../utils/theme.js';
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
 import { useSelectedMessageBg } from '../messageActions.js';

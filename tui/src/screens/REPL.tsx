@@ -154,8 +154,11 @@ import { logEvent, type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPAT
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
 import { getContentText, textForResubmit } from '../utils/messageContent.js';
 import { getMessagesAfterCompactBoundary, isCompactBoundaryMessage } from '../utils/messageBoundary.js';
+import { formatCommandInputTags } from '../utils/commandMessageTags.js';
+import { handleMessageFromStream, type StreamingToolUse, type StreamingThinking } from '../utils/messageStream.js';
 import { createAgentsKilledMessage, createApiMetricsMessage, createCommandInputMessage, createSystemMessage, createTurnDurationMessage } from '../utils/systemMessageFactories.js';
-import { handleMessageFromStream, type StreamingToolUse, type StreamingThinking, createUserMessage, createAssistantMessage, formatCommandInputTags } from '../utils/messages.js';
+import { createAssistantMessage } from '../utils/assistantMessageFactories.js';
+import { createUserMessage } from '../utils/userMessageFactories.js';
 // utils/sessionTitle removed — Anthropic queryHaiku session title generator deleted (Spec 1633 / Epic #2293).;
 import { BASH_INPUT_TAG, COMMAND_MESSAGE_TAG, COMMAND_NAME_TAG, LOCAL_COMMAND_STDOUT_TAG } from '../constants/xml.js';
 import { escapeXml } from '../utils/xml.js';

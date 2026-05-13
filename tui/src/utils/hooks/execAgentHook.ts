@@ -15,13 +15,14 @@ import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import type { HookResult } from '../hooks.js'
-import { createUserMessage, handleMessageFromStream } from '../messages.js'
+import { handleMessageFromStream } from '../messageStream.js'
 import { getSmallFastModel } from '../model/model.js'
 import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { getAgentTranscriptPath, getTranscriptPath } from '../sessionStorage.js'
 import type { AgentHook } from '../settings/types.js'
 import { jsonStringify } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'
+import { createUserMessage } from '../userMessageFactories.js'
 import {
   addArgumentsToPrompt,
   createStructuredOutputTool,

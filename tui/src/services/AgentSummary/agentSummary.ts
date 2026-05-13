@@ -20,7 +20,7 @@ import {
   runForkedAgent,
 } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import { getAgentTranscript } from '../../utils/sessionStorage.js'
 
 const SUMMARY_INTERVAL_MS = 30_000

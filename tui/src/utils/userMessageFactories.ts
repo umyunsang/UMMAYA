@@ -13,6 +13,26 @@ import {
 } from './permissionMessages.js'
 import type { PermissionMode } from '../types/permissions.js'
 
+export function prepareUserContent({
+  inputString,
+  precedingInputBlocks,
+}: {
+  inputString: string
+  precedingInputBlocks: ContentBlockParam[]
+}): string | ContentBlockParam[] {
+  if (precedingInputBlocks.length === 0) {
+    return inputString
+  }
+
+  return [
+    ...precedingInputBlocks,
+    {
+      text: inputString,
+      type: 'text',
+    },
+  ]
+}
+
 export function createUserMessage({
   content,
   isMeta,

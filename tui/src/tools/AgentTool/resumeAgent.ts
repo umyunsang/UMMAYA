@@ -10,12 +10,8 @@ import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../utils/agentContext.js'
 import { runWithCwdOverride } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
-import {
-  createUserMessage,
-  filterOrphanedThinkingOnlyMessages,
-  filterUnresolvedToolUses,
-  filterWhitespaceOnlyAssistantMessages,
-} from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
+import * as messageUtils from '../../utils/messages.js'
 import { getAgentModel } from '../../utils/model/agent.js'
 import { getQuerySourceForAgent } from '../../utils/promptCategory.js'
 import {
@@ -33,6 +29,12 @@ import { FORK_AGENT, isForkSubagentEnabled } from './forkSubagent.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 import { isBuiltInAgent } from './loadAgentsDir.js'
 import { runAgent } from './runAgent.js'
+
+const {
+  filterOrphanedThinkingOnlyMessages,
+  filterUnresolvedToolUses,
+  filterWhitespaceOnlyAssistantMessages,
+} = messageUtils
 
 export type ResumeAgentResult = {
   agentId: string

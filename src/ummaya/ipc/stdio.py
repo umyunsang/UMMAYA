@@ -2548,8 +2548,11 @@ def _check_location_terminated_without_resolve(
         "Location resolution prerequisite missing: the citizen supplied a place, "
         "address, station, or nearby-search request, but this turn is about to "
         "answer without invoking locate. RECOVERY: in the next turn call "
-        "locate(query=<citizen supplied place/address text>, "
-        "want='coords_and_admcd') even when the text looks fake or incomplete. "
+        "locate(tool_id='kakao_keyword_search', params={'query': "
+        "<citizen supplied place/address text>}) for a place/POI/station, or "
+        "locate(tool_id='kakao_address_search', params={'query': "
+        "<citizen supplied address text>}) for a structured road/jibun address, "
+        "even when the text looks fake or incomplete. "
         "Only report not_found / 유효한 위치 없음 after the resolver returns it; "
         "do NOT invent coordinates."
     )

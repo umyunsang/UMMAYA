@@ -96,15 +96,9 @@ import { errorMessage } from '../../utils/errors.js'
 import { computeFingerprintFromMessages } from '../../utils/fingerprint.js'
 import { captureAPIRequest, logError } from '../../utils/log.js'
 import { normalizeMessagesForAPI } from '../../utils/messageApiNormalize.js'
-import {
-  createUserMessage,
-  ensureToolResultPairing,
-  normalizeContentFromAPI,
-  stripAdvisorBlocks,
-  stripCallerFieldFromAssistantMessage,
-  stripToolReferenceBlocksFromUserMessage,
-} from '../../utils/messages.js'
+import * as messageUtils from '../../utils/messages.js'
 import { createAssistantAPIErrorMessage } from '../../utils/assistantMessageFactories.js'
+import { createUserMessage } from '../../utils/userMessageFactories.js'
 import {
   getDefaultOpusModel,
   getDefaultSonnetModel,
@@ -281,6 +275,14 @@ import {
   type RetryContext,
   withRetry,
 } from './withRetry.js'
+
+const {
+  ensureToolResultPairing,
+  normalizeContentFromAPI,
+  stripAdvisorBlocks,
+  stripCallerFieldFromAssistantMessage,
+  stripToolReferenceBlocksFromUserMessage,
+} = messageUtils
 
 // Define a type that represents valid JSON values
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray
