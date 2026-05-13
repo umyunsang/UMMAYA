@@ -9,7 +9,7 @@ import type {
   Message,
   UserMessage,
 } from '../types/message.js'
-import { normalizeMessagesForAPI } from './messages.js'
+import { normalizeMessagesForAPI } from './messageApiNormalize.js'
 import { jsonStringify } from './slowOperations.js'
 
 type TokenStats = {

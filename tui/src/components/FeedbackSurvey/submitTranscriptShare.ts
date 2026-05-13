@@ -5,7 +5,7 @@ import { checkAndRefreshOAuthTokenIfNeeded } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getAuthHeaders, getUserAgent } from '../../utils/http.js'
-import { normalizeMessagesForAPI } from '../../utils/messages.js'
+import { normalizeMessagesForAPI } from '../../utils/messageApiNormalize.js'
 import {
   extractAgentIdsFromMessages,
   getTranscriptPath,

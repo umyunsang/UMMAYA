@@ -18,7 +18,7 @@ import { getCwd } from '../utils/cwd.js'
 import { env } from '../utils/env.js'
 import { getClaudeConfigHomeDir, isEnvTruthy } from '../utils/envUtils.js'
 import { getErrnoCode } from '../utils/errors.js'
-import { normalizeMessagesForAPI } from '../utils/messages.js'
+import { normalizeMessagesForAPI } from '../utils/messageApiNormalize.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 
 function shouldUseVCR(): boolean {

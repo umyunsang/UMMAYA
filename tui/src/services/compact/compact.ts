@@ -57,12 +57,12 @@ import {
 } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
 import { MEMORY_TYPE_VALUES } from '../../utils/memory/types.js'
+import { normalizeMessagesForAPI } from '../../utils/messageApiNormalize.js'
 import {
   createCompactBoundaryMessage,
   createUserMessage,
   getMessagesAfterCompactBoundary,
   isCompactBoundaryMessage,
-  normalizeMessagesForAPI,
 } from '../../utils/messages.js'
 import { getAssistantMessageText } from '../../utils/messageContent.js'
 import { getLastAssistantMessage } from '../../utils/messageQueries.js'

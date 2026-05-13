@@ -95,11 +95,11 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { computeFingerprintFromMessages } from '../../utils/fingerprint.js'
 import { captureAPIRequest, logError } from '../../utils/log.js'
+import { normalizeMessagesForAPI } from '../../utils/messageApiNormalize.js'
 import {
   createUserMessage,
   ensureToolResultPairing,
   normalizeContentFromAPI,
-  normalizeMessagesForAPI,
   stripAdvisorBlocks,
   stripCallerFieldFromAssistantMessage,
   stripToolReferenceBlocksFromUserMessage,
