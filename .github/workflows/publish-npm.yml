@@ -89,7 +89,7 @@ jobs:
       artifact-metadata: write
     steps:
       - name: Retrieve npm distribution
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: npm-dist
           path: dist/
