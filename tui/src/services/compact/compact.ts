@@ -60,11 +60,11 @@ import { MEMORY_TYPE_VALUES } from '../../utils/memory/types.js'
 import {
   createCompactBoundaryMessage,
   createUserMessage,
-  getAssistantMessageText,
   getMessagesAfterCompactBoundary,
   isCompactBoundaryMessage,
   normalizeMessagesForAPI,
 } from '../../utils/messages.js'
+import { getAssistantMessageText } from '../../utils/messageContent.js'
 import { getLastAssistantMessage } from '../../utils/messageQueries.js'
 import { expandPath } from '../../utils/path.js'
 import { getPlan, getPlanFilePath } from '../../utils/plans.js'

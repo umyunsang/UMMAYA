@@ -188,7 +188,8 @@ import {
   clearAllLSPDiagnostics,
 } from '../services/lsp/LSPDiagnosticRegistry.js'
 import { logForDebugging } from './debug.js'
-import { getUserMessageText, isThinkingMessage } from './messages.js'
+import { getUserMessageText } from './messageContent.js'
+import { isThinkingMessage } from './messages.js'
 import { extractTextContent } from './messageText.js'
 import { isHumanTurn } from './messagePredicates.js'
 import { isEnvTruthy, getClaudeConfigHomeDir } from './envUtils.js'

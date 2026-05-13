@@ -11,7 +11,7 @@ import { MessageResponse } from '../MessageResponse.js';
 import { basename, sep } from 'path';
 import { UserTextMessage } from './UserTextMessage.js';
 import { DiagnosticsDisplay } from '../DiagnosticsDisplay.js';
-import { getContentText } from 'src/utils/messages.js';
+import { getContentText } from 'src/utils/messageContent.js';
 import type { Theme } from 'src/utils/theme.js';
 import { UserImageMessage } from './UserImageMessage.js';
 import { toInkColor } from '../../utils/ink.js';

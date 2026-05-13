@@ -35,8 +35,8 @@ import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
 import { errorMessage } from '../utils/errors.js'
 import { getBranch, getRemoteUrl } from '../utils/git.js'
 import { toSDKMessages } from '../utils/messages/mappers.js'
+import { getContentText } from '../utils/messageContent.js'
 import {
-  getContentText,
   getMessagesAfterCompactBoundary,
   isSyntheticMessage,
 } from '../utils/messages.js'

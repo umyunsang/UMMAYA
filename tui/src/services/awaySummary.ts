@@ -10,10 +10,8 @@ import { APIUserAbortError } from 'src/sdk-compat.js'
 import { getEmptyToolPermissionContext } from '../Tool.js'
 import type { Message } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
-import {
-  createUserMessage,
-  getAssistantMessageText,
-} from '../utils/messages.js'
+import { getAssistantMessageText } from '../utils/messageContent.js'
+import { createUserMessage } from '../utils/messages.js'
 import { getSmallFastModel } from '../utils/model/model.js'
 import { asSystemPrompt } from '../utils/systemPromptType.js'
 import { queryModelWithoutStreaming } from './api/claude.js'
