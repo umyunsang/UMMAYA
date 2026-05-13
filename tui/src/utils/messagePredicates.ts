@@ -1,4 +1,5 @@
 import { NO_CONTENT_MESSAGE } from '../constants/messages.js'
+import type { ToolResultBlockParam, ToolUseBlock } from '../sdk-compat.js'
 import type { Message, UserMessage } from '../types/message.js'
 import { INTERRUPT_MESSAGE_FOR_TOOL_USE } from './permissionMessages.js'
 
@@ -15,6 +16,46 @@ export function isThinkingMessage(message: Message): boolean {
   return message.message.content.every(
     block => block.type === 'thinking' || block.type === 'redacted_thinking',
   )
+}
+
+export function hasSuccessfulToolCall(
+  messages: Message[],
+  toolName: string,
+): boolean {
+  let mostRecentToolUseId: string | undefined
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i]
+    if (!msg) continue
+    if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
+      const toolUse = msg.message.content.find(
+        (block): block is ToolUseBlock =>
+          block.type === 'tool_use' && block.name === toolName,
+      )
+      if (toolUse) {
+        mostRecentToolUseId = toolUse.id
+        break
+      }
+    }
+  }
+
+  if (!mostRecentToolUseId) return false
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i]
+    if (!msg) continue
+    if (msg.type === 'user' && Array.isArray(msg.message.content)) {
+      const toolResult = msg.message.content.find(
+        (block): block is ToolResultBlockParam =>
+          block.type === 'tool_result' &&
+          block.tool_use_id === mostRecentToolUseId,
+      )
+      if (toolResult) {
+        return toolResult.is_error !== true
+      }
+    }
+  }
+
+  return false
 }
 
 export function isNotEmptyMessage(message: Message): boolean {
