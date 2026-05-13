@@ -9,14 +9,19 @@
 > 사용자의 한 문장을 Query Engine이 의도로 분석하고, Reasoning Agent가 Agentic RAG 방식으로 필요한 공공 도메인과 도구를 찾고, 도구시스템이 AI의 손과 발이 되어 조회·확인·신청 흐름을 실행합니다.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/umyunsang/UMMAYA/main/install.sh | bash
+npm install -g ummaya
 ```
 
 또는
 
 ```bash
-brew tap umyunsang/ummaya
 brew install --cask ummaya
+```
+
+또는
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/umyunsang/UMMAYA/main/install.sh | bash
 ```
 
 > 학술·연구개발 목적의 프로젝트입니다. Anthropic, LG AI Research, FriendliAI, 대한민국 정부 또는 특정 공공기관과 공식 제휴된 서비스가 아닙니다.
@@ -225,7 +230,6 @@ ummaya
 Homebrew cask로 직접 설치:
 
 ```bash
-brew tap umyunsang/ummaya
 brew install --cask ummaya
 ummaya
 ```
