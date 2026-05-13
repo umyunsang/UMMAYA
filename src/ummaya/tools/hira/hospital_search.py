@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Any
 
@@ -379,7 +380,7 @@ class HiraHospitalSearchInput(BaseModel):
             return None
         if isinstance(v, str) and not v.strip():
             return None
-        raw_tokens: list[object]
+        raw_tokens: Sequence[object]
         if isinstance(v, list):
             raw_tokens = v
         elif isinstance(v, str):

@@ -83,24 +83,40 @@ import {
 import { quote } from './bash/shellQuote.js'
 import { formatNumber, formatTokens } from './format.js'
 import {
-  extractTag,
-  extractTextContent,
-  SYNTHETIC_MESSAGES,
-  SYNTHETIC_MODEL,
+  extractTag as extractTagFromMessageText,
+  extractTextContent as extractTextContentFromMessageText,
+  isEmptyMessageText as isEmptyMessageTextFromMessageText,
+  stripPromptXMLTags as stripPromptXMLTagsFromMessageText,
+  SYNTHETIC_MESSAGES as SYNTHETIC_MESSAGES_FROM_MESSAGE_TEXT,
+  SYNTHETIC_MODEL as SYNTHETIC_MODEL_FROM_MESSAGE_TEXT,
 } from './messageText.js'
 import { getPewterLedgerVariant } from './planModeV2.js'
 import { jsonStringify } from './slowOperations.js'
 
-// Keep these pure helper exports near the top of this large module. Linux Bun
-// has previously missed named exports declared deep inside messages.ts.
-export {
-  extractTextContent,
-  extractTag,
-  isEmptyMessageText,
-  stripPromptXMLTags,
-  SYNTHETIC_MESSAGES,
-  SYNTHETIC_MODEL,
-} from './messageText.js'
+// Keep these pure helper exports as local declarations near the top of this
+// large module. Linux Bun has previously missed named exports when messages.ts
+// only re-exported bindings from another module.
+export const SYNTHETIC_MESSAGES = SYNTHETIC_MESSAGES_FROM_MESSAGE_TEXT
+export const SYNTHETIC_MODEL = SYNTHETIC_MODEL_FROM_MESSAGE_TEXT
+
+export function stripPromptXMLTags(content: string): string {
+  return stripPromptXMLTagsFromMessageText(content)
+}
+
+export function isEmptyMessageText(text: string): boolean {
+  return isEmptyMessageTextFromMessageText(text)
+}
+
+export function extractTextContent(
+  blocks: readonly { readonly type: string }[],
+  separator = '',
+): string {
+  return extractTextContentFromMessageText(blocks, separator)
+}
+
+export function extractTag(html: string, tagName: string): string | null {
+  return extractTagFromMessageText(html, tagName)
+}
 
 // Hook attachments that have a hookName field (excludes HookPermissionDecisionAttachment)
 type HookAttachmentWithName = Exclude<
