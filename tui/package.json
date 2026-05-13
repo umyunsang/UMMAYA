@@ -13,7 +13,7 @@
     "diff:upstream": "bun run scripts/diff-upstream.ts",
     "tui:smoke": "bun run scripts/tui-smoke.ts",
     "test:soak": "bun test --timeout 600000 tests/soak",
-    "test": "bun test tests/adr-precheck.test.ts tests/entrypoints tests/hooks tests/i18n tests/ink tests/ipc tests/memdir tests/permissions tests/primitive tests/store tests/theme tests/unit",
+    "test": "bun test --max-concurrency=1 tests/adr-precheck.test.ts tests/entrypoints tests/hooks tests/i18n tests/ink tests/ipc tests/memdir tests/permissions tests/primitive tests/store tests/theme tests/unit",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "typecheck:full": "tsc --noEmit",
     "test:all": "bun test",
