@@ -93,7 +93,7 @@ describe('runPluginInit — happy path', () => {
 
     expect(manifest.plugin_id).toBe('demo_plugin')
     expect(manifest.adapter.tool_id).toBe('plugin.demo_plugin.find')
-    expect(manifest.adapter.primitive).toBe('lookup')
+    expect(manifest.adapter.primitive).toBe('find')
     expect(manifest.tier).toBe('live')
     expect(manifest.processes_pii).toBe(false)
     expect(manifest.pipa_trustee_acknowledgment).toBeNull()

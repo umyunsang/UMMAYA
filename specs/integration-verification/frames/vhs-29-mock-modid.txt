@@ -460,7 +460,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
@@ -509,7 +509,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
@@ -558,7 +558,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
@@ -607,7 +607,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
@@ -656,7 +656,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
@@ -705,7 +705,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
@@ -754,7 +754,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:
@@ -803,7 +803,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   시스템 상태 확인 결과:
   - mock_verify_module_modid: 등록되지 않음 (unknown_tool)
   - mock_verify_mobile_id: 등록되지 않음 (unknown_tool)
-  - verify: 등록되지 않음 (unknown_tool)
+  - check: 등록되지 않음 (unknown_tool)
   - mock_lookup_module_gov24_certificate: 등록되어 있으나 필수 파라미터가 필요
 
   모바일 ID 발급 시뮬레이션을 위한 일반적인 절차:

@@ -493,6 +493,75 @@ def _final_answer_looks_like_pending_tool_plan(text: str) -> bool:
     return any(marker in normalized.lower() for marker in pending_markers)
 
 
+def _final_answer_looks_like_recursive_tool_message(text: str) -> bool:
+    """Return true when final prose recursively quotes tool error wrappers."""
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+    return normalized.count("도구가 반환한 메시지") >= 3
+
+
+def _final_answer_looks_like_unclosed_markdown(text: str) -> bool:
+    """Return true when final prose appears to end with an open Markdown span."""
+    stripped = text.strip()
+    if not stripped:
+        return False
+    return stripped.endswith("**") and stripped.count("**") % 2 == 1
+
+
+def _final_answer_looks_like_tool_call_narration(text: str) -> bool:
+    """Return true when final prose narrates internal tool calls to the citizen."""
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+    head = normalized[:700]
+    if "도구" not in head:
+        return False
+    return any(
+        marker in head
+        for marker in (
+            "도구를 호출",
+            "도구를 사용",
+            "검색 도구",
+            "조회 도구",
+            "도구로 조회",
+        )
+    )
+
+
+def _final_answer_looks_like_generic_retry_after_success(text: str) -> bool:
+    """Return true when final prose ignores successful data and asks to retry."""
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+    lowered = normalized.lower()
+    retry_markers = (
+        "다른 검색어로 재시도",
+        "다른 검색어 / 다른 지역",
+        "다른 지역으로 재시도",
+        "재시도하시겠습니까",
+        "다시 검색해",
+        "try another search",
+        "try a different search",
+        "would you like me to retry",
+    )
+    if any(marker in lowered for marker in retry_markers):
+        return True
+
+    handoff_markers = (
+        "정확한 정보는",
+        "공식 홈페이지에서 확인",
+        "공식 사이트에서 확인",
+        "기관에 문의",
+    )
+    has_handoff = any(marker in normalized for marker in handoff_markers)
+    if not has_handoff:
+        return False
+    # A source citation may be useful as a footer. It is only suspect when the
+    # answer has no concrete returned values at all.
+    return not bool(re.search(r"\d", normalized))
+
+
 def _conversation_has_successful_any_primitive_result(llm_messages: list[Any]) -> bool:
     """Return True when the loop already has a successful primitive result."""
     return (
@@ -1007,7 +1076,7 @@ def _sensitive_lookup_verify_redirect_for_query(
     The citizen-visible flow must not render a red auth error for a predictable
     model ordering mistake when the latest citizen query already implies the
     required verify scope. In that case the API layer discards the premature
-    lookup call and forces the next turn to the canonical verify primitive.
+    find call and forces the next turn to the canonical check primitive.
     """
     if fname != "find":
         return None
@@ -1321,6 +1390,36 @@ def _latest_successful_primitive_result(
     """Return the most recent successful primitive result payload."""
     for msg in reversed(llm_messages):
         payload = _tool_result_payload_for_primitive(msg, primitive=primitive)
+        if payload is None or not _primitive_payload_is_success(payload, primitive=primitive):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        result = payload.get("result")
+        if isinstance(result, dict):
+            return cast("dict[str, object]", result)
+    return None
+
+
+def _latest_successful_primitive_result_for_tool(
+    llm_messages: list[Any],
+    *,
+    primitive: str,
+    tool_id: str,
+) -> dict[str, object] | None:
+    """Return the most recent successful primitive result payload for tool_id."""
+    matching_call_ids = _primitive_call_ids_for_tool(
+        llm_messages,
+        primitive=primitive,
+        tool_id=tool_id,
+    )
+    if not matching_call_ids:
+        return None
+    for msg in reversed(llm_messages):
+        payload = _tool_result_payload_for_primitive_call(
+            msg,
+            primitive=primitive,
+            matching_call_ids=matching_call_ids,
+        )
         if payload is None or not _primitive_payload_is_success(payload, primitive=primitive):
             continue
         if not isinstance(payload, dict):
@@ -2561,7 +2660,7 @@ def _check_chain_prerequisite(  # noqa: C901
     that message verbatim to the LLM via a tool_result envelope so the
     next agentic-loop turn can recover.
     """
-    # Only the `lookup` primitive carries adapter calls (mode='fetch'
+    # Only the `find` primitive carries adapter calls (fetch-only
     # routes to a registered GovAPITool). All other primitives are
     # either coord-free (verify) or carry their own param schema
     # (submit, locate).
@@ -2704,10 +2803,10 @@ def _check_chain_prerequisite(  # noqa: C901
 
 
 # ---------------------------------------------------------------------------
-# Follow-up lookup gate (G-class fabrication countermeasure — 2026-05-04)
+# Follow-up find gate (G-class fabrication countermeasure — 2026-05-04)
 # ---------------------------------------------------------------------------
 # Citizen query keywords that signal "the LLM needs to call a follow-up
-# adapter (lookup mode='fetch') after locate returns coordinates
+# adapter via find after locate returns coordinates
 # or admcd". Without the follow-up, LLM fabricates the data from parametric
 # memory (the donga-univ-poi-bug 1-day-newer regression: snap-001 captured
 # 4.7°C drift / 61%p humidity drift between LLM-claimed values and the raw
@@ -2874,25 +2973,68 @@ def _check_current_weather_terminated_without_observation(
     )
 
 
+def _weather_value_tokens(value: object) -> set[str]:
+    """Return compact numeric strings a final weather answer may cite."""
+    if isinstance(value, bool):
+        return set()
+    if isinstance(value, int):
+        return {str(value)}
+    if isinstance(value, float):
+        tokens = {f"{value:g}"}
+        rounded = round(value)
+        if abs(value - rounded) < 0.25:
+            tokens.add(str(rounded))
+        return tokens
+    return set()
+
+
+def _final_answer_missing_current_weather_observation_values(
+    text: str,
+    llm_messages: list[Any],
+    user_query: str,
+) -> bool:
+    """Return true when a current-weather answer omits successful KMA values."""
+    if not _query_implies_current_weather_observation(user_query):
+        return False
+    result = _latest_successful_primitive_result_for_tool(
+        llm_messages,
+        primitive="find",
+        tool_id="kma_current_observation",
+    )
+    if result is None:
+        return False
+    item = result.get("item")
+    if not isinstance(item, dict):
+        return False
+    tokens: set[str] = set()
+    for key in ("t1h", "rn1", "reh", "wsd"):
+        tokens.update(_weather_value_tokens(item.get(key)))
+    if not tokens:
+        return False
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return True
+    return not any(token in normalized for token in tokens)
+
+
 def _check_resolve_terminated_without_followup(  # noqa: C901
     llm_messages: list[Any],
     user_query: str,
 ) -> str | None:
     """Return chain-recovery error message when the LLM is about to terminate
-    a turn without invoking a follow-up ``lookup`` after ``locate``.
+    a turn without invoking a follow-up ``find`` after ``locate``.
 
     Triggers when ALL of the following hold:
     1. The conversation contains at least one assistant turn that called
        ``locate`` AND the corresponding ``role='tool'`` result.
-    2. The conversation contains NO assistant turn that called
-       ``lookup`` with ``mode='fetch'`` (or shape-equivalent bare
-       ``{tool_id, params}``) on a coord/admcd-input adapter.
+    2. The conversation contains NO assistant turn that called ``find``
+       (fetch-only; ``{tool_id, params}``) on a coord/admcd-input adapter.
     3. The user query mentions a location-bound observable that demands a
-       follow-up lookup (weather / hospital / ER / accident / 119 / welfare).
+       follow-up find call (weather / hospital / ER / accident / 119 / welfare).
 
     Returns ``None`` when the call is allowed; returns a descriptive
     error message that the caller injects as a synthetic tool_result so the
-    next agentic-loop turn produces the missing ``lookup`` call.
+    next agentic-loop turn produces the missing ``find`` call.
 
     CC reference parallel: ``Tool.validateInput`` rejection on missing
     prerequisite. The UMMAYA port runs at the *terminal-turn* boundary
@@ -3572,7 +3714,7 @@ async def run(  # noqa: C901
 
         Returns an empty string on any retrieval failure or when the
         query is blank — fail-open so a flaky retriever does not break
-        the citizen path (FR-002 mirror of the lookup primitive's own
+        the citizen path (FR-002 mirror of the find primitive's own
         fail-open contract). Logged warnings are picked up by the OTEL
         spans Spec 028 already wires.
         """
@@ -4320,7 +4462,7 @@ async def run(  # noqa: C901
                         }
 
                 elif fname == "find":
-                    # Spec 2521 (2026-05-01): the LLM-visible ``lookup``
+                    # Spec 2521 (2026-05-01): the LLM-visible ``find``
                     # surface is fetch-only. BM25 adapter discovery is a
                     # backend-internal mechanism (auto-injected into the
                     # ``<available_adapters>`` dynamic suffix) — the LLM
@@ -5238,6 +5380,51 @@ async def run(  # noqa: C901
                 if (
                     merged_prose.strip()
                     and has_successful_tool_result
+                    and _final_answer_looks_like_generic_retry_after_success(merged_prose)
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_tool_routing_observation(
+                        "rejected generic retry final answer after successful tool result",
+                        (
+                            "The previous assistant turn ignored successful tool results "
+                            "and gave a generic retry/handoff answer. Produce a concise "
+                            "Korean final answer using the latest successful tool_result. "
+                            "For KMA current observation results, include concrete returned "
+                            "values such as temperature, precipitation, humidity, wind, "
+                            "and the observation base time when present. Do not ask the "
+                            "citizen to retry unless the successful tool_result is "
+                            "insufficient for the request."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
+                    and _final_answer_missing_current_weather_observation_values(
+                        merged_prose,
+                        llm_messages,
+                        latest_user_utt,
+                    )
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_tool_routing_observation(
+                        "rejected current-weather final answer missing KMA values",
+                        (
+                            "The previous assistant turn had a successful "
+                            "kma_current_observation tool_result but omitted the returned "
+                            "observation values. Produce a concise Korean final answer "
+                            "that cites the current temperature, precipitation, humidity, "
+                            "wind, and observation base time from that tool_result."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
                     and _final_answer_looks_like_pending_tool_plan(merged_prose)
                     and empty_final_retry_count < 2
                 ):
@@ -5251,6 +5438,62 @@ async def run(  # noqa: C901
                             "successful tool_result. Include concrete returned values "
                             "when present. Do not say you will call or look up another "
                             "tool unless additional data is essential."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
+                    and _final_answer_looks_like_recursive_tool_message(merged_prose)
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_tool_routing_observation(
+                        "rejected recursive tool-message final answer after successful tool result",
+                        (
+                            "The previous assistant turn recursively quoted the phrase "
+                            "'도구가 반환한 메시지' instead of answering. Ignore previous "
+                            "error-wrapper prose and produce a concise Korean final answer "
+                            "using the latest successful tool_result. Include concrete "
+                            "returned values when present. Do not quote tool error wrappers."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
+                    and _final_answer_looks_like_unclosed_markdown(merged_prose)
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_tool_routing_observation(
+                        "rejected unclosed markdown final answer after successful tool result",
+                        (
+                            "The previous assistant turn ended with an unclosed Markdown "
+                            "emphasis marker. Produce the same concise Korean final answer "
+                            "using the latest successful tool_result, but finish the prose "
+                            "cleanly and remove any dangling formatting markers."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
+                    and _final_answer_looks_like_tool_call_narration(merged_prose)
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_tool_routing_observation(
+                        "rejected tool-call narration final answer after successful tool result",
+                        (
+                            "The previous assistant turn narrated internal tool calls "
+                            "to the citizen. Produce a concise Korean final answer that "
+                            "starts with the requested result, not with tool-operation "
+                            "history. You may cite official data sources, but do not say "
+                            "which internal tools were called."
                         ),
                     )
                     buffered_visible.clear()

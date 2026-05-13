@@ -23,7 +23,7 @@ def test_geumyung_invoke_returns_transparency_fields(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["submit:hometax.tax-return"],
+            "scope_list": ["send:hometax.tax-return"],
             "session_id": "sess-geumyung-001",
             "ledger_root": tmp_path / "ledger",
         }
@@ -50,7 +50,7 @@ def test_geumyung_international_reference(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["verify:geumyung.identity"],
+            "scope_list": ["check:geumyung.identity"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -64,7 +64,7 @@ def test_geumyung_reference_impl(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["verify:geumyung.identity"],
+            "scope_list": ["check:geumyung.identity"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -78,15 +78,15 @@ def test_geumyung_delegation_token_format(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["lookup:hometax.simplified", "submit:hometax.tax-return"],
+            "scope_list": ["find:hometax.simplified", "send:hometax.tax-return"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
     )
     assert result.delegation_context.token.delegation_token.startswith("del_")
     scope = result.delegation_context.token.scope
-    assert "lookup:hometax.simplified" in scope
-    assert "submit:hometax.tax-return" in scope
+    assert "find:hometax.simplified" in scope
+    assert "send:hometax.tax-return" in scope
 
 
 def test_geumyung_ledger_append(tmp_path: Path) -> None:
@@ -96,7 +96,7 @@ def test_geumyung_ledger_append(tmp_path: Path) -> None:
     ledger_dir = tmp_path / "ledger"
     invoke(
         {
-            "scope_list": ["verify:geumyung.identity"],
+            "scope_list": ["check:geumyung.identity"],
             "session_id": "sess-ledger-geumyung",
             "ledger_root": ledger_dir,
         }

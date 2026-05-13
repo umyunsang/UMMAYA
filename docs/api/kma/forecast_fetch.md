@@ -1,6 +1,6 @@
 ---
 tool_id: kma_forecast_fetch
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -15,7 +15,7 @@ Fetches a KMA short-term weather forecast (단기예보, ~3 days) for a location
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | KMA (기상청) — VilageFcstInfoService_2.0/getVilageFcst |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/kma/forecast_fetch.py` |
 
 ## Envelope

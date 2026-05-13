@@ -9,7 +9,7 @@ import { getEmptyToolPermissionContext } from '../../Tool.js';
 import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
 import { getTools } from '../../tools.js';
 import { formatNumber } from '../../utils/format.js';
-import { extractTag } from '../../utils/messages.js';
+import { extractTag } from '../../utils/messageText.js';
 import { Byline } from '../design-system/Byline.js';
 import { Dialog } from '../design-system/Dialog.js';
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';

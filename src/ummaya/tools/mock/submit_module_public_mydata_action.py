@@ -101,7 +101,7 @@ class PublicMydataActionParams(BaseModel):
         description="Consuming session ID (used for delegation session-binding check).",
     )
     delegation_context: DelegationContext = Field(
-        description="DelegationContext from the prior verify step.",
+        description="DelegationContext from the prior check step.",
     )
 
 

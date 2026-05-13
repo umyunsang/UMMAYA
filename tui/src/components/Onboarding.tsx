@@ -68,25 +68,25 @@ export function Onboarding({
         {/**
          * OrderedList misnumbers items when rendering conditionally,
          * so put all items in the if/else
-         */}
+        */}
         <OrderedList>
           <OrderedList.Item>
-            <Text>Claude can make mistakes</Text>
+            <Text>UMMAYA can make mistakes</Text>
             <Text dimColor wrap="wrap">
-              You should always review Claude&apos;s responses, especially when
+              You should always review UMMAYA&apos;s responses, especially before
               <Newline />
-              running code.
+              acting on public-service guidance or running code.
               <Newline />
             </Text>
           </OrderedList.Item>
           <OrderedList.Item>
             <Text>
-              Due to prompt injection risks, only use it with code you trust
+              Due to prompt injection risks, only use it with folders you trust
             </Text>
             <Text dimColor wrap="wrap">
               For more details see:
               <Newline />
-              <Link url="https://code.claude.com/docs/en/security" />
+              <Link url="https://github.com/umyunsang/UMMAYA/blob/main/SECURITY.md" />
             </Text>
           </OrderedList.Item>
         </OrderedList>
@@ -146,10 +146,10 @@ export function Onboarding({
     steps.push({
       id: 'terminal-setup',
       component: <Box flexDirection="column" gap={1} paddingLeft={1}>
-          <Text bold>Use Claude Code&apos;s terminal setup?</Text>
+          <Text bold>Use UMMAYA&apos;s terminal setup?</Text>
           <Box flexDirection="column" width={70} gap={1}>
             <Text>
-              For the optimal coding experience, enable the recommended settings
+              For the optimal terminal experience, enable the recommended settings
               <Newline />
               for your terminal:{' '}
               {env.terminal === 'Apple_Terminal' ? 'Option+Enter for newlines and visual bell' : 'Shift+Enter for newlines'}

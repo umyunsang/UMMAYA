@@ -150,10 +150,10 @@ class TestAuditPrimitiveValue:
             "mock_welfare_application_submit_v1",
         ],
     )
-    def test_primitive_equals_submit(self, tool_id: str) -> None:
-        """AdapterRegistration.primitive must equal AdapterPrimitive.submit."""
+    def test_primitive_equals_send(self, tool_id: str) -> None:
+        """AdapterRegistration.primitive must equal AdapterPrimitive.send."""
         reg = _get_registration(tool_id)
-        assert reg.primitive == AdapterPrimitive.submit, (
+        assert reg.primitive == AdapterPrimitive.send, (
             f"Expected primitive='send', got {reg.primitive!r} for {tool_id!r}"
         )
 
@@ -232,12 +232,12 @@ class TestAuditTransactionIdDerivation:
         )
         assert isinstance(result, SubmitOutput)
         assert result.status == SubmitStatus.succeeded
-        # transaction_id must carry the urn:ummaya:submit: prefix
-        assert result.transaction_id.startswith("urn:ummaya:submit:"), (
+        # transaction_id must carry the urn:ummaya:send: prefix
+        assert result.transaction_id.startswith("urn:ummaya:send:"), (
             f"transaction_id format invalid: {result.transaction_id!r}"
         )
         # The hex digest after the prefix is exactly 64 chars (SHA-256)
-        hex_part = result.transaction_id.removeprefix("urn:ummaya:submit:")
+        hex_part = result.transaction_id.removeprefix("urn:ummaya:send:")
         assert len(hex_part) == 64, (
             f"SHA-256 digest should be 64 chars, got {len(hex_part)}: {hex_part!r}"
         )

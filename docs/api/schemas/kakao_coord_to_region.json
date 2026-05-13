@@ -1,0 +1,34 @@
+{
+  "$defs": {
+    "_LocateOutput": {
+      "description": "Opaque locate output wrapper for registry metadata export.",
+      "title": "_LocateOutput"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kakao_coord_to_region.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Kakao Local ``coord2regioncode`` input.",
+  "properties": {
+    "lat": {
+      "description": "Latitude returned by a prior locate adapter.",
+      "maximum": 90,
+      "minimum": -90,
+      "title": "Lat",
+      "type": "number"
+    },
+    "lon": {
+      "description": "Longitude returned by a prior locate adapter.",
+      "maximum": 180,
+      "minimum": -180,
+      "title": "Lon",
+      "type": "number"
+    }
+  },
+  "required": [
+    "lat",
+    "lon"
+  ],
+  "title": "kakao_coord_to_region",
+  "type": "object"
+}

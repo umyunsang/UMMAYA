@@ -46,8 +46,8 @@ _CANONICAL_CASES: list[tuple[str, str]] = [
 
 _SAMPLE_PARAMS: dict[str, object] = {
     "scope_list": [
-        "lookup:hometax.simplified",
-        "submit:hometax.tax-return",
+        "find:hometax.simplified",
+        "send:hometax.tax-return",
     ],
     "purpose_ko": "종합소득세 신고",
     "purpose_en": "Comprehensive income tax filing",
@@ -106,7 +106,7 @@ def test_legacy_shape_passes_through_unchanged() -> None:
     legacy_input = {
         "family_hint": "modid",
         "session_context": {
-            "scope_list": ["lookup:hometax.simplified"],
+            "scope_list": ["find:hometax.simplified"],
             "purpose_ko": "홈택스 조회",
         },
     }
@@ -180,14 +180,14 @@ def test_double_validation_is_idempotent() -> None:
 
 
 def test_modid_citizen_shape_full_worked_example() -> None:
-    """Verify the worked example from prompts/system_v1.md <verify_chain_pattern>."""
+    """Verify the worked example from prompts/system_v1.md <check_chain_pattern>."""
     # This is the exact LLM emit shape from the system prompt's worked example.
     emit = {
         "tool_id": "mock_verify_module_modid",
         "params": {
             "scope_list": [
-                "lookup:hometax.simplified",
-                "submit:hometax.tax-return",
+                "find:hometax.simplified",
+                "send:hometax.tax-return",
             ],
             "purpose_ko": "종합소득세 신고",
             "purpose_en": "Comprehensive income tax filing",
@@ -205,7 +205,7 @@ def test_citizen_shape_flattens_nested_legacy_session_context() -> None:
     emit = {
         "tool_id": "mock_verify_module_modid",
         "params": {
-            "scope_list": ["submit:gov24.minwon"],
+            "scope_list": ["send:gov24.minwon"],
             "purpose_ko": "주민등록등본 발급 민원 신청",
             "purpose_en": "Gov24 civil petition application",
             "session_context": {"session_id": "GOV24-MINWON-SESSION-001"},

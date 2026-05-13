@@ -1,5 +1,5 @@
 /**
- * Snapshot tests for verify primitive renderers.
+ * Snapshot tests for check primitive renderers.
  * Uses ink-testing-library for output capture.
  * FR-030, FR-031, FR-032, FR-034, FR-035.
  */

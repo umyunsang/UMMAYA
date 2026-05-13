@@ -144,7 +144,7 @@
       "type": "integer"
     },
     "nx": {
-      "description": "KMA grid X coordinate (1-149). 시도/시군구 명칭이 아닌 KMA 격자 좌표. Obtain via locate(query='<지역명>') which returns nx/ny verbatim. Example: 서울 종로구 = 60, 부산 사하구 = 96.",
+      "description": "KMA grid X coordinate (1-149). 시도/시군구 명칭이 아닌 KMA 격자 좌표. Obtain via a coordinate-producing locate adapter which returns nx/ny verbatim. Example: 서울 종로구 = 60, 부산 사하구 = 96.",
       "maximum": 149,
       "minimum": 1,
       "title": "Nx",

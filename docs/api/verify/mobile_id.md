@@ -1,6 +1,6 @@
 ---
 tool_id: mock_verify_mobile_id
-primitive: verify
+primitive: check
 tier: mock
 permission_tier: 2
 ---
@@ -15,7 +15,7 @@ Verifies a citizen's 모바일 신분증 (Mobile ID) session — either a mobile
 |---|---|
 | Classification | Mock · Permission tier 2 |
 | Source | 행정안전부 모바일 신분증 SDK reference documentation (OOS shape-mirror) |
-| Primitive | `verify` |
+| Primitive | `check` |
 | Module | `src/ummaya/tools/mock/verify_mobile_id.py` |
 
 ## Envelope

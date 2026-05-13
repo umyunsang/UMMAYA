@@ -178,7 +178,7 @@ uv run pytest -m live tests/live/test_collector_pii_redaction.py
 
 This test emits a fixture span with `patient.name="TEST_OPERATOR"` and
 `ummaya.location.query="서울역"`, then queries the Langfuse public API to
-verify:
+check:
 - `patient.name` is **absent** from the stored span.
 - `ummaya.location.query` equals the SHA-256 hex hash of `"서울역"`.
 

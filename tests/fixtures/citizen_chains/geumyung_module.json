@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_module_geumyung",
       "params": {
-        "scope_list": ["verify:geumyung.identity"],
+        "scope_list": ["check:geumyung.identity"],
         "purpose_ko": "금융인증서 본인확인",
         "purpose_en": "Identity verification via financial certificate"
       }

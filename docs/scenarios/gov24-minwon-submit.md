@@ -11,7 +11,7 @@
 ## Citizen narrative
 
 1. **시민 발화**: "주민등록등본 발급해줘" 또는 "사업자 등록증 신청" 같은 정부24-class 민원 요청.
-2. **UMMAYA 응답 (Mock-mode)**: LLM 이 `verify(tool_id="mock_verify_module_simple_auth", params={scope_list: ["submit:gov24.minwon"], purpose_ko: "주민등록등본 발급"})` → `submit(tool_id="mock_submit_module_gov24_minwon", params={delegation_context, document_type: "resident_registration_extract"})` 를 emit. 합성 접수번호 + 안내 메시지 표시.
+2. **UMMAYA 응답 (Mock-mode)**: LLM 이 `verify(tool_id="mock_verify_module_simple_auth", params={scope_list: ["send:gov24.minwon"], purpose_ko: "주민등록등본 발급"})` → `submit(tool_id="mock_submit_module_gov24_minwon", params={delegation_context, document_type: "resident_registration_extract"})` 를 emit. 합성 접수번호 + 안내 메시지 표시.
 3. **Live-mode 전환**: UMMAYA 는 verify 단계까지만 자체 처리. submit 단계에서 정부24 의 민원별 deep-link 를 시민에게 안내 (예: 주민등록등본 = `https://www.gov.kr/portal/serviceInfo/B5500000038`). TUI 가 "정부24 에서 본인인증을 한번 더 진행하고 발급을 마무리해주세요" 메시지 + URL 출력.
 4. **시민 작업 (정부24 UI 내)**: 정부24 본 사이트로 이동, 간편 인증 또는 공동인증서로 본인인증 (UMMAYA 의 verify 영수증과 별개의 ceremony — 정부24 가 자체 세션을 발급), 민원 폼 작성, 제출. 즉시 발급 가능한 민원은 PDF 다운로드 (예: 등본), 처리 시간이 필요한 민원 (예: 사업자 등록증) 은 이메일/SMS 알림 으로 결과 수령.
 5. **시민이 UMMAYA 로 복귀**: 발급된 민원번호 또는 처리 결과를 UMMAYA 에 입력하면 향후 lookup 에 사용 가능. Consent ledger 에 hand-off 시점 기록.

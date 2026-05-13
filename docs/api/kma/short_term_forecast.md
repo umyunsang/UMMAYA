@@ -1,6 +1,6 @@
 ---
 tool_id: kma_short_term_forecast
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -15,7 +15,7 @@ Fetches the KMA short-term forecast (단기예보) for a grid point, covering ap
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | KMA (기상청) — VilageFcstInfoService_2.0/getVilageFcst |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/kma/kma_short_term_forecast.py` |
 
 ## Envelope

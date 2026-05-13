@@ -37,7 +37,7 @@ import type { PermissionDecision } from '../../src/ipc/codec'
 function makeRequest(overrides?: Partial<PendingPermissionRequest>): PendingPermissionRequest {
   return {
     request_id: 'req-t022-001',
-    primitive_kind: 'submit',
+    primitive_kind: 'send',
     description_ko: '출생신고 서류 제출',
     description_en: 'Submit birth registration document',
     risk_level: 'high',

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """E2E budget and token-tracking tests for Scenario 1 Route Safety (030 rebase).
 
-Tests verify:
+Tests check:
 - T013: Token usage is correctly tracked via engine-emitted usage_update events
   after a full happy-path E2E run.
 - T014: When the token budget is exhausted before a stream starts, the engine

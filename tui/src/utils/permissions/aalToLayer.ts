@@ -2,10 +2,10 @@
 // Spec 2294 — SSOT for AAL→Layer mapping.
 //
 // FR-005 matrix (canonical, do not duplicate elsewhere):
-//   lookup           → null  (bypass — no permission gauntlet)
-//   verify (any AAL) → 1     (green ⓵, low risk)
-//   submit (non-irr) → 2     (orange ⓶, medium risk)
-//   submit (irr=true)→ 3     (red ⓷, high risk)
+//   find             → null  (bypass — no permission gauntlet)
+//   check (any AAL)  → 1     (green ⓵, low risk)
+//   send (non-irr)   → 2     (orange ⓶, medium risk)
+//   send (irr=true)  → 3     (red ⓷, high risk)
 //
 // Previously scattered across:
 //   src/ummaya/tools/policy_derivation.py:57
@@ -27,10 +27,10 @@ export type UmmayaPrimitive = 'find' | 'check' | 'send'
  * or `null` for primitives that bypass the gauntlet entirely.
  *
  * @param primitive - The primitive verb declared by the tool adapter.
- * @param isIrreversible - For `submit`, whether the action is irreversible
+ * @param isIrreversible - For `send`, whether the action is irreversible
  *   (e.g., financial write, government record mutation). Ignored for other
  *   primitives. Defaults to `false`.
- * @returns The permission layer number, or `null` for bypass (lookup).
+ * @returns The permission layer number, or `null` for bypass (find).
  */
 export function aalToLayer(
   primitive: UmmayaPrimitive,

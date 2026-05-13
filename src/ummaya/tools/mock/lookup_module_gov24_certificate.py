@@ -57,7 +57,7 @@ _INTERNATIONAL_REF: Final = "Estonia X-Road"
 
 # Required delegation scope when a DelegationContext is present.
 _REQUIRED_SCOPE: Final = "find:gov24.certificate"
-_LEGACY_REQUIRED_SCOPE: Final = "lookup:gov24.certificate"
+_LEGACY_REQUIRED_SCOPE: Final = "find:gov24.certificate"
 
 # ---------------------------------------------------------------------------
 # Certificate type literals

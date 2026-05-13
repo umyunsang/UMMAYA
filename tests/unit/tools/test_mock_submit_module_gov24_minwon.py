@@ -50,7 +50,7 @@ _VP_JWT = (
 
 
 def _make_context(
-    scope: str = "submit:gov24.minwon",
+    scope: str = "send:gov24.minwon",
     expires_in: timedelta = timedelta(hours=1),
     issued_before: timedelta = timedelta(minutes=5),
 ) -> DelegationContext:
@@ -73,7 +73,7 @@ def _make_context(
 
 def _make_params(
     session_id: str = "sess-gov24-001",
-    scope: str = "submit:gov24.minwon",
+    scope: str = "send:gov24.minwon",
 ) -> dict:
     ctx = _make_context(scope=scope)
     return {

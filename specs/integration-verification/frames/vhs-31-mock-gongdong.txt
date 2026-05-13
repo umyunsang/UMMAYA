@@ -463,7 +463,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 
@@ -512,7 +512,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 
@@ -561,7 +561,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 
@@ -610,7 +610,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 
@@ -659,7 +659,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 
@@ -708,7 +708,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 
@@ -757,7 +757,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 
@@ -806,7 +806,7 @@ tool_registry: 14 entries verified (4 primitives) in 0ms
   결과 요약:
   - mock_verify_gongdong_injeungseo: 등록되지 않음
   - mock_verify_module_kec: 등록되지 않음
-  - verify: 등록되지 않음
+  - check: 등록되지 않음
   - mock_verify_geumyung_injeungseo: 등록되지 않음
   - mock_verify_module_geumyung: 등록되지 않음
 

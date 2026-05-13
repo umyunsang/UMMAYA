@@ -11,7 +11,7 @@
 ## Citizen narrative
 
 1. **시민 발화**: "내 통장 거래내역 보여줘" 또는 "내 신용카드 사용내역 가져와" 또는 "마이데이터로 내 자산 한 번에".
-2. **UMMAYA 응답 (Mock-mode demo)**: LLM 이 `verify(tool_id="mock_verify_mydata", params={scope_list: ["lookup:mydata.bank-account"], purpose_ko: "거래내역 조회"})` → `lookup(mode="fetch", tool_id="mock_lookup_module_mydata_bank_account", params={delegation_context})` 를 emit, 합성 거래내역 데이터를 반환. **이 데이터는 fixture 이지 시민의 실제 데이터가 아님** — 시민에게 명시적으로 안내.
+2. **UMMAYA 응답 (Mock-mode demo)**: LLM 이 `verify(tool_id="mock_verify_mydata", params={scope_list: ["find:mydata.bank-account"], purpose_ko: "거래내역 조회"})` → `lookup(mode="fetch", tool_id="mock_lookup_module_mydata_bank_account", params={delegation_context})` 를 emit, 합성 거래내역 데이터를 반환. **이 데이터는 fixture 이지 시민의 실제 데이터가 아님** — 시민에게 명시적으로 안내.
 3. **Live-mode 전환**: UMMAYA 는 "실제 마이데이터 조회는 UMMAYA 가 사업자 라이선스가 없어 대행할 수 없습니다. 본인이 직접 사용하시는 마이데이터 사업자 앱 (NH NongHyup, Kakao Pay, Toss, Bank Salad 등) 에서 조회해주세요" 안내 + 사업자 목록 URL.
 4. **시민 작업 (마이데이터 사업자 앱 내)**: 시민이 사용 중인 마이데이터 사업자 앱 설치/접속 → 본인인증 (PASS / 공동인증서 / 금융인증서 — UMMAYA 의 verify 영수증과 별개) → 마이데이터 사업자 별 동의 절차 → KFTC 통합인증센터 redirect → 데이터 제공기관 (은행/카드/증권 등) 별로 access_token 발급 + 데이터 조회. 실제 거래내역/자산현황 데이터는 사업자 앱 안에서 시민에게 표시.
 5. **시민이 UMMAYA 로 복귀**: 사업자 앱에서 본 데이터를 UMMAYA 에 다시 입력하거나, 사업자 앱이 제공하는 export/공유 기능으로 UMMAYA 에 데이터 일부 가져옴 (사업자별 지원 여부 다름). Consent ledger 에 "Live 데이터는 hand-off, mock demo 만 UMMAYA chain" 의 분리 + 사업자 이름이 기록됨.

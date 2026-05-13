@@ -1,6 +1,6 @@
 ---
 tool_id: mohw_welfare_eligibility_search
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -17,7 +17,7 @@ As of Spec 2522 US4, the adapter has a **real handle() implementation** (XML par
 |---|---|
 | Classification | Live · Permission tier 1 (read-only public catalog) |
 | Source | Ministry of Health and Welfare (MOHW) via Korea Social Security Information Service (SSIS) / data.go.kr |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/mohw/welfare_eligibility_search.py` |
 
 ## Envelope

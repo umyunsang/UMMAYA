@@ -20,7 +20,7 @@ the older ``GovAPITool`` surface; ``send`` uses a parallel lightweight
 mapping to avoid coupling the new envelope to the legacy BM25 / retrieval stack.
 
 T023 — deterministic ``transaction_id`` derivation:
-    ``urn:ummaya:submit:`` + SHA-256 over canonical JSON of
+    ``urn:ummaya:send:`` + SHA-256 over canonical JSON of
     ``{tool_id, params (sorted keys), adapter_nonce}``.
     Same inputs always produce the same URN. The ``adapter_nonce`` is sourced
     from :attr:`ummaya.tools.registry.AdapterRegistration.nonce` so the
@@ -198,7 +198,7 @@ def derive_transaction_id(
     *,
     adapter_nonce: str | None,
 ) -> str:
-    """Derive a deterministic ``urn:ummaya:submit:<sha256>`` transaction_id.
+    """Derive a deterministic ``urn:ummaya:send:<sha256>`` transaction_id.
 
     The content hash is SHA-256 over the canonical JSON encoding of::
 
@@ -214,7 +214,7 @@ def derive_transaction_id(
                        adapter to namespace its transaction space.
 
     Returns:
-        A ``urn:ummaya:submit:<sha256-hex>`` string (72 chars fixed length).
+        A ``urn:ummaya:send:<sha256-hex>`` string (72 chars fixed length).
     """
     canonical_payload: dict[str, object] = {
         "tool_id": tool_id,
@@ -228,7 +228,7 @@ def derive_transaction_id(
         separators=(",", ":"),
     )
     digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    return f"urn:ummaya:submit:{digest}"
+    return f"urn:ummaya:send:{digest}"
 
 
 # ---------------------------------------------------------------------------

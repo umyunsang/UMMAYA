@@ -432,13 +432,13 @@
   failure_message_en: "host-reserved verbs (e.g. resolve_location) cannot be plugin-overridden."
 
 - id: Q8-VERB-IN-PRIMITIVES
-  description_ko: "verb ∈ active plugin primitive (lookup/submit/verify)"
+  description_ko: "verb ∈ active plugin primitive (find/send/check)"
   description_en: "verb is one of the active plugin primitives"
   source_rule: "FR-004 + migration tree § L1-C C1"
   check_type: unit
   check_implementation: "ummaya.plugins.checks.q8_namespace:check_verb_in_primitives"
-  failure_message_ko: "verb 는 lookup / submit / verify 중 하나여야 합니다."
-  failure_message_en: "verb must be one of lookup / submit / verify."
+  failure_message_ko: "verb 는 find / send / check 중 하나여야 합니다."
+  failure_message_en: "verb must be one of find / send / check."
 
 # ---------------------------------------------------------------------------
 # Q9 — OTEL emission (2)

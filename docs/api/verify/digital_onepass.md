@@ -1,6 +1,6 @@
 ---
 tool_id: mock_verify_digital_onepass
-primitive: verify
+primitive: check
 tier: mock
 permission_tier: 2
 ---
@@ -15,7 +15,7 @@ Verifies a citizen's Digital Onepass (디지털원패스) identity session at Le
 |---|---|
 | Classification | Mock · Permission tier 2 |
 | Source | 행정안전부 디지털원패스 (OmniOne OpenDID shape-mirror, OOS) |
-| Primitive | `verify` |
+| Primitive | `check` |
 | Module | `src/ummaya/tools/mock/verify_digital_onepass.py` |
 
 ## Envelope

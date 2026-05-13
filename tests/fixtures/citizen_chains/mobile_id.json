@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_mobile_id",
       "params": {
-        "scope_list": ["verify:mobile_id.identity"],
+        "scope_list": ["check:mobile_id.identity"],
         "purpose_ko": "모바일 신분증 본인확인",
         "purpose_en": "Identity verification via mobile ID"
       }

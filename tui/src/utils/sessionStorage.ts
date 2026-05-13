@@ -85,7 +85,8 @@ import { getBranch } from './git.js'
 import { gracefulShutdownSync, isShuttingDown } from './gracefulShutdown.js'
 import { parseJSONL } from './json.js'
 import { logError } from './log.js'
-import { extractTag, isCompactBoundaryMessage } from './messages.js'
+import { isCompactBoundaryMessage } from './messages.js'
+import { extractTag } from './messageText.js'
 import { sanitizePath } from './path.js'
 import {
   extractJsonStringField,

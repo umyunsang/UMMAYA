@@ -1,0 +1,26 @@
+{
+  "$defs": {
+    "_LocateOutput": {
+      "description": "Opaque locate output wrapper for registry metadata export.",
+      "title": "_LocateOutput"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kakao_keyword_search.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Kakao Local ``search/keyword`` input.",
+  "properties": {
+    "query": {
+      "description": "Korean POI, campus, landmark, station, hospital, or business name. Use for named places such as '동아대학교 승학캠퍼스', '강남역', '서울대병원'.",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Query",
+      "type": "string"
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "title": "kakao_keyword_search",
+  "type": "object"
+}

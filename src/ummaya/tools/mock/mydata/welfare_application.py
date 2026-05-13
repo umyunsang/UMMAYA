@@ -15,7 +15,7 @@ SC-002 compliance: domain vocabulary (applicant details, benefit codes,
 household info) lives HERE in ``WelfareApplicationParams``, never on the
 main ``SubmitInput`` / ``SubmitOutput`` surface.
 
-Epic δ #2295: ``primitive=submit`` — application filing creates a government record (submit gate).
+Epic δ #2295: ``primitive=send`` — application filing creates a government record (send gate).
 """
 
 from __future__ import annotations
@@ -85,8 +85,8 @@ class WelfareApplicationParams(BaseModel):
     delegation_context: object | None = Field(
         default=None,
         description=(
-            "Optional auth artifact from the prior verify step. This older "
-            "shape-mirror mock does not validate delegation scope; the submit "
+            "Optional auth artifact from the prior check step. This older "
+            "shape-mirror mock does not validate delegation scope; the send "
             "primitive enforces the published tier gate before invocation."
         ),
     )

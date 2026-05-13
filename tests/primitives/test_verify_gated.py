@@ -229,7 +229,7 @@ async def test_verify_call_emits_permission_request_frame(
         {
             "tool_id": "mock_verify_module_modid",
             "params": {
-                "scope_list": ["lookup:test"],
+                "scope_list": ["find:test"],
                 "purpose_ko": "테스트",
                 "purpose_en": "test",
             },

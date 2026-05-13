@@ -67,7 +67,7 @@ FamilyHint = Literal[
 
 **Analysis** — three call-path candidates:
 
-1. **`VerifyInput` model** (line 45–51): declares `family_hint: FamilyHint`. **Used by**: only the 6 OLD verify mocks (`verify_ganpyeon_injeung.py`, `verify_mobile_id.py`, `verify_gongdong_injeungseo.py`, `verify_geumyung_injeungseo.py`, `verify_mydata.py` — 5 of them; the 6th was `verify_digital_onepass.py` which was deleted) — they declare `input_model_ref="ummaya.primitives.verify:VerifyInput"`. The 5 NEW `verify_module_*.py` mocks (Epic ε) explicitly do NOT declare `VerifyInput` as their input model — verified by `grep -nE "input_model_ref.*VerifyInput" src/ummaya/tools/mock/verify_module_*.py` returning 0 matches.
+1. **`VerifyInput` model** (line 45–51): declares `family_hint: FamilyHint`. **Used by**: only the 6 OLD verify mocks (`verify_ganpyeon_injeung.py`, `verify_mobile_id.py`, `verify_gongdong_injeungseo.py`, `verify_geumyung_injeungseo.py`, `verify_mydata.py` — 5 of them; the 6th was `verify_digital_onepass.py` which was deleted) — they declare `input_model_ref="ummaya.primitives.check:VerifyInput"`. The 5 NEW `verify_module_*.py` mocks (Epic ε) explicitly do NOT declare `VerifyInput` as their input model — verified by `grep -nE "input_model_ref.*VerifyInput" src/ummaya/tools/mock/verify_module_*.py` returning 0 matches.
 2. **`verify()` dispatcher** (line 420–440): takes `family_hint: str` (plain str, NOT Literal). Returns `AuthContext | VerifyMismatchError` from the full 11-arm union. **Used by**: every test in `test_verify_module_dispatch.py` and the citizen chain integration test.
 3. **`VerifyOutput` model** (line 385–399): `result` field is a 6-arm Annotated union (5 OLD families + `VerifyMismatchError`). **Used by**: search returns no production callers — only `output_model_ref` declarations in the 5 OLD mocks. The 5 NEW Epic ε mocks do NOT use `VerifyOutput` either.
 
@@ -108,7 +108,7 @@ The rewritten prompt MUST contain ONE worked chain example (per FR-004). Three c
 
 | Candidate | Pro | Con | Decision |
 |---|---|---|---|
-| **A. `verify(modid) → lookup(hometax_simplified) → submit(hometax_taxreturn)`** (US1 canonical) | Already covered by `test_e2e_citizen_taxreturn_chain.py` happy-path; receipt id format is the SC-001 test target; demonstrates 2-scope `scope_list` (`["lookup:hometax.simplified", "submit:hometax.tax-return"]`). | Tax filing is a high-stakes example — risk of citizen confusion. | **CHOSEN** — the SC-001/SC-002 tests assert this exact chain; teaching a different chain would break smoke. |
+| **A. `verify(modid) → lookup(hometax_simplified) → submit(hometax_taxreturn)`** (US1 canonical) | Already covered by `test_e2e_citizen_taxreturn_chain.py` happy-path; receipt id format is the SC-001 test target; demonstrates 2-scope `scope_list` (`["find:hometax.simplified", "send:hometax.tax-return"]`). | Tax filing is a high-stakes example — risk of citizen confusion. | **CHOSEN** — the SC-001/SC-002 tests assert this exact chain; teaching a different chain would break smoke. |
 | B. `verify(simple_auth_module) → submit(gov24_minwon)` (single-step) | Lower stakes; AAL2 default | Doesn't demonstrate lookup→submit ordering; doesn't exercise `delegation_context` carry-forward through 2 calls. | Rejected — under-teaches. |
 | C. `verify(any_id_sso) → … → (no submit)` | Demonstrates SSO-only exception (FR-008) | No submit call to demonstrate full chain. | Rejected — demonstrates the negation case but not the positive pattern. |
 
@@ -119,8 +119,8 @@ The rewritten prompt MUST contain ONE worked chain example (per FR-004). Three c
    ↓
 LLM step 1: verify(family_hint="modid",
                    session_context={
-                     "scope_list": ["lookup:hometax.simplified",
-                                    "submit:hometax.tax-return"],
+                     "scope_list": ["find:hometax.simplified",
+                                    "send:hometax.tax-return"],
                      "purpose_ko": "종합소득세 신고",
                      "purpose_en": "Comprehensive income tax filing"})
    → DelegationContext returned

@@ -225,7 +225,7 @@ async def test_happy_chain_verify_lookup_submit(tmp_path: Path) -> None:
 
     # Register the issuance session in the ledger BEFORE submit (so session-binding check passes).
     # Step 1: verify
-    scope_list = ["lookup:hometax.simplified", "submit:hometax.tax-return"]
+    scope_list = ["find:hometax.simplified", "send:hometax.tax-return"]
     verify_result = _invoke_modid_verify(session_id, scope_list, ledger_root)
 
     # Spec 2296 Codex P1 #2446 fix — verify mocks now return typed AuthContext
@@ -310,7 +310,7 @@ async def test_submit_succeeds_with_matching_scope(tmp_path: Path) -> None:
     ledger_root = tmp_path / "consent"
 
     # Issue a token with the submit scope.
-    scope_list = ["submit:hometax.tax-return"]
+    scope_list = ["send:hometax.tax-return"]
     verify_result = _invoke_modid_verify(session_id, scope_list, ledger_root)
     delegation_ctx = verify_result.delegation_context
 
@@ -353,13 +353,13 @@ async def test_scope_violation_rejected(tmp_path: Path) -> None:
     """Scenario 3: token with wrong scope → SubmitStatus.rejected (SC-007).
 
     The token is issued with only the lookup scope; the submit adapter requires
-    'submit:hometax.tax-return' — scope check fails.
+    'send:hometax.tax-return' — scope check fails.
     """
     session_id = _new_session_id()
     ledger_root = tmp_path / "consent"
 
     # Issue a token with ONLY the lookup scope (missing submit scope).
-    scope_list = ["lookup:hometax.simplified"]
+    scope_list = ["find:hometax.simplified"]
     verify_result = _invoke_modid_verify(session_id, scope_list, ledger_root)
     delegation_ctx = verify_result.delegation_context
 
@@ -414,7 +414,7 @@ async def test_all_transparency_fields_in_chain(tmp_path: Path) -> None:
     session_id = _new_session_id()
     ledger_root = tmp_path / "consent"
 
-    scope_list = ["lookup:hometax.simplified", "submit:hometax.tax-return"]
+    scope_list = ["find:hometax.simplified", "send:hometax.tax-return"]
 
     # Step 1: verify
     verify_result = _invoke_modid_verify(session_id, scope_list, ledger_root)

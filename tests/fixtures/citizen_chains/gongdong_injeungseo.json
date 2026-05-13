@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_gongdong_injeungseo",
       "params": {
-        "scope_list": ["verify:gongdong.identity"],
+        "scope_list": ["check:gongdong.identity"],
         "purpose_ko": "공동인증서 본인확인",
         "purpose_en": "Identity verification via joint certificate"
       }

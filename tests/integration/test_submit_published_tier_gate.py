@@ -58,7 +58,7 @@ def tier_gated_registration() -> AdapterRegistration:
     """An AdapterRegistration that requires ganpyeon_injeung_kakao_aal2."""
     return AdapterRegistration(
         tool_id="mock_tier_gated_submit_v1",
-        primitive=AdapterPrimitive.submit,
+        primitive=AdapterPrimitive.send,
         module_path="tests.integration.test_submit_published_tier_gate",
         input_model_ref="tests.integration.test_submit_published_tier_gate:_MinimalAuthContext",
         source_mode=AdapterSourceMode.HARNESS_ONLY,
@@ -164,7 +164,7 @@ async def test_submit_with_ax_aal3_tier_satisfies_aal2_requirement() -> None:
 
     registration = AdapterRegistration(
         tool_id="mock_mydata_submit_v1",
-        primitive=AdapterPrimitive.submit,
+        primitive=AdapterPrimitive.send,
         module_path="tests.integration.test_submit_published_tier_gate",
         input_model_ref="tests.integration.test_submit_published_tier_gate:_MinimalAuthContext",
         source_mode=AdapterSourceMode.HARNESS_ONLY,
@@ -211,7 +211,7 @@ async def test_submit_no_tier_minimum_always_passes(
 
     reg_no_tier = AdapterRegistration(
         tool_id="mock_no_tier_v1",
-        primitive=AdapterPrimitive.submit,
+        primitive=AdapterPrimitive.send,
         module_path="tests.integration.test_submit_published_tier_gate",
         input_model_ref="tests.integration.test_submit_published_tier_gate:_MinimalAuthContext",
         source_mode=AdapterSourceMode.HARNESS_ONLY,

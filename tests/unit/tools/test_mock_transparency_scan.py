@@ -89,7 +89,7 @@ _VERIFY_MODEL_FAMILIES = [
 _ALL_VERIFY_FAMILIES = _VERIFY_DICT_FAMILIES + _VERIFY_MODEL_FAMILIES
 
 _VERIFY_SYNTHETIC_INPUT: dict[str, Any] = {
-    "scope_list": ["verify:simple_auth.identity"],
+    "scope_list": ["check:simple_auth.identity"],
     "session_id": "transparency-scan-session",
 }
 
@@ -133,7 +133,7 @@ def test_verify_adapter_carries_six_transparency_fields(family: str) -> None:
 _DELEGATION_SUBMIT_CASES: list[tuple[str, str, dict[str, Any]]] = [
     (
         "mock_submit_module_hometax_taxreturn",
-        "submit:hometax.tax-return",
+        "send:hometax.tax-return",
         {
             "tax_year": 2024,
             "income_type": "근로소득",
@@ -144,7 +144,7 @@ _DELEGATION_SUBMIT_CASES: list[tuple[str, str, dict[str, Any]]] = [
     ),
     (
         "mock_submit_module_gov24_minwon",
-        "submit:gov24.minwon",
+        "send:gov24.minwon",
         {
             "minwon_type": "주민등록등본",
             "applicant_name": "김테스트",
@@ -155,7 +155,7 @@ _DELEGATION_SUBMIT_CASES: list[tuple[str, str, dict[str, Any]]] = [
     ),
     (
         "mock_submit_module_public_mydata_action",
-        "submit:public_mydata.action",
+        "send:public_mydata.action",
         {
             "action_type": "transfer_consent",
             "target_institution_code": "KSB001",

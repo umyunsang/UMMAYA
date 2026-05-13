@@ -5,10 +5,10 @@
       "title": "_LookupOutput"
     }
   },
-  "$id": "https://ummaya.example/api/schemas/submit.json",
+  "$id": "https://ummaya.example/api/schemas/send.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "LLM-visible send input schema — `{tool_id, params}` envelope.\n\nMirrors :class:`ummaya.primitives.submit.SubmitInput` but lives here so the\nOpenAI tool_calls schema published to FriendliAI for the ``send`` tool\nis the send envelope, NOT the find mode-discriminated union. (Codex\nP1 #2 on PR #2480 caught the original copy-paste bug where SUBMIT_TOOL\nwas declared with ``input_schema=_LookupInput``.)",
+  "description": "LLM-visible send input schema — `{tool_id, params}` envelope.\n\nMirrors :class:`ummaya.primitives.send.SubmitInput` but lives here so the\nOpenAI tool_calls schema published to FriendliAI for the ``send`` tool\nis the send envelope, NOT the find mode-discriminated union. (Codex\nP1 #2 on PR #2480 caught the original copy-paste bug where SUBMIT_TOOL\nwas declared with ``input_schema=_LookupInput``.)",
   "properties": {
     "params": {
       "additionalProperties": true,

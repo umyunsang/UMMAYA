@@ -1,6 +1,6 @@
 import type { ToolResultBlockParam } from 'src/sdk-compat.js';
 import * as React from 'react';
-import { extractTag } from 'src/utils/messages.js';
+import { extractTag } from 'src/utils/messageText.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
 import { FilePathLink } from '../../components/FilePathLink.js';
 import { MessageResponse } from '../../components/MessageResponse.js';

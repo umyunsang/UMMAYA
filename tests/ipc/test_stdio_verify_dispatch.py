@@ -21,7 +21,7 @@ Fix:
 This test asserts:
 1. All 10 canonical ``mock_verify_*`` ↔ family_hint pairs resolve
    correctly via the canonical map (single source-of-truth derived from
-   ``prompts/system_v1.md`` ``<verify_families>``).
+   ``prompts/system_v1.md`` ``<check_families>``).
 2. The full IPC dispatch path translates ``tool_id`` → ``family_hint``
    and finds the registered adapter (no VerifyMismatchError).
 3. Legacy ``family_hint`` (no tool_id) keeps working — backward
@@ -90,7 +90,7 @@ def test_resolve_family_covers_all_10_canonical_pairs(tool_id: str, expected_fam
     """All 10 canonical mock_verify_* tool_ids resolve to the right family_hint.
 
     This is the SOT-mirror assertion: prompt-side
-    ``<verify_families>`` and code-side mapping must agree.
+    ``<check_families>`` and code-side mapping must agree.
     """
     assert resolve_family(tool_id) == expected_family, (
         f"resolve_family({tool_id!r}) returned {resolve_family(tool_id)!r}, "
@@ -99,7 +99,7 @@ def test_resolve_family_covers_all_10_canonical_pairs(tool_id: str, expected_fam
 
 
 def test_canonical_map_has_exactly_ten_entries() -> None:
-    """FR-008b: the verify_families block must enumerate ≥10 entries."""
+    """FR-008b: the check_families block must enumerate ≥10 entries."""
     canonical = get_canonical_map()
     assert len(canonical) >= 10, (
         f"Expected at least 10 verify families, got {len(canonical)}: {dict(canonical)!r}"

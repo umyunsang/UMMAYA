@@ -50,7 +50,7 @@ _VP_JWT = (
 
 
 def _make_context(
-    scope: str = "submit:hometax.tax-return",
+    scope: str = "send:hometax.tax-return",
     expires_in: timedelta = timedelta(hours=1),
     issued_before: timedelta = timedelta(minutes=5),
 ) -> DelegationContext:
@@ -74,7 +74,7 @@ def _make_context(
 
 def _make_params(
     session_id: str = "sess-test-001",
-    scope: str = "submit:hometax.tax-return",
+    scope: str = "send:hometax.tax-return",
     expires_in: timedelta = timedelta(hours=1),
 ) -> dict:
     """Build valid params dict for invoke()."""
@@ -159,7 +159,7 @@ async def test_scope_violation_returns_rejected() -> None:
     """Scope violation → rejected with scope_violation outcome."""
     from ummaya.tools.mock.submit_module_hometax_taxreturn import invoke
 
-    params = _make_params(scope="submit:gov24.minwon")  # wrong scope
+    params = _make_params(scope="send:gov24.minwon")  # wrong scope
 
     with (
         mock.patch(

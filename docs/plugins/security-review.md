@@ -140,7 +140,7 @@ Q6 4 항목 (PIPA-PRESENT / PIPA-HASH / PIPA-ORG / PIPA-FIELDS-LIST) 모두 ✓ 
 
 ### L3 정의
 
-- 정부24 민원 제출 (`submit` primitive 가 irreversible)
+- 정부24 민원 제출 (`send` primitive 가 irreversible)
 - 신고 / 신청 / 결제 / 발급 등 **시민 행위가 외부 시스템 상태를 변경** 하는 모든 동작
 - KEC 차량검사 결과 read-back, NPKI 본인인증 후 read-only 도 AAL2 정책상 L3.
 
@@ -162,7 +162,7 @@ permission_layer: 3
 ### L3 release gate
 
 L3 어댑터는 단순 plugin-validation 외에 maintainer 의 보안 리뷰가 필수:
-- `submit` primitive 가 호출하는 외부 endpoint 의 **idempotency key** 처리 검토.
+- `send` primitive 가 호출하는 외부 endpoint 의 **idempotency key** 처리 검토.
 - `transaction_id` 발산 (Spec 031) 을 통한 중복 제출 방어 검토.
 - 실패 경로의 시민 통보 메시지 검토 (한국어 명확성).
 - SLSA provenance 가 UMMAYA 운영자 + plugin 작성자 양쪽 서명을 가지는지 확인.

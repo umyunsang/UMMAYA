@@ -13,7 +13,7 @@
   "description": "Input schema for koroad_accident_hazard_search.\n\nUses a 10-digit 행정동 code (adm_cd) and a calendar year to look up\nthe KOROAD accident hazard spots for that municipality.",
   "properties": {
     "adm_cd": {
-      "description": "10-digit 행정동 administrative code. Obtain from locate(want='adm_cd'). Example: '1111000000' for 서울특별시 종로구.",
+      "description": "10-digit 행정동 administrative code. Obtain from a locate adapter that returns adm_cd, such as kakao_address_search, juso_adm_cd_lookup, or sgis_adm_cd_lookup. Example: '1111000000' for 서울특별시 종로구.",
       "pattern": "^[0-9]{10}$",
       "title": "Adm Cd",
       "type": "string"

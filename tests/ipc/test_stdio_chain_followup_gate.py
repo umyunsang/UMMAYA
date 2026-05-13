@@ -41,6 +41,11 @@ from ummaya.ipc.stdio import (
     _conversation_has_successful_lookup,
     _conversation_has_successful_primitive,
     _effective_chat_max_tokens,
+    _final_answer_looks_like_generic_retry_after_success,
+    _final_answer_looks_like_recursive_tool_message,
+    _final_answer_looks_like_tool_call_narration,
+    _final_answer_looks_like_unclosed_markdown,
+    _final_answer_missing_current_weather_observation_values,
     _location_independent_resolve_redirect_for_query,
     _normalize_lookup_args_for_query,
     _normalize_nmc_lookup_args_from_prior_locate,
@@ -112,6 +117,96 @@ def test_non_followup_query_does_not_trigger() -> None:
     assert not _query_implies_followup_lookup("정부24 등본 발급")
     assert not _query_implies_followup_lookup("")
     assert not _query_implies_followup_lookup("안녕하세요")
+
+
+def test_recursive_tool_message_final_answer_is_rejected() -> None:
+    """A final answer must not recursively quote tool error wrapper prose."""
+    assert _final_answer_looks_like_recursive_tool_message(
+        '도구가 반환한 메시지: "도구가 반환한 메시지: \\"도구가 반환한 메시지: ...\\""'
+    )
+    assert not _final_answer_looks_like_recursive_tool_message(
+        '도구가 반환한 메시지: "Adapter returned a schema error."'
+    )
+    assert not _final_answer_looks_like_recursive_tool_message(
+        "기상청 자료에 따르면 현재 기온은 16.0°C입니다."
+    )
+
+
+def test_unclosed_markdown_final_answer_is_rejected() -> None:
+    """A final answer must not end with a dangling Markdown emphasis marker."""
+    assert _final_answer_looks_like_unclosed_markdown("**응급실:**\n- 큐병원\n\n**")
+    assert not _final_answer_looks_like_unclosed_markdown("**응급실:**\n- 큐병원")
+    assert not _final_answer_looks_like_unclosed_markdown(
+        "기상청 자료에 따르면 현재 기온은 16.0°C입니다."
+    )
+
+
+def test_tool_call_narration_final_answer_is_rejected() -> None:
+    """A final answer should start with citizen-facing results, not tool history."""
+    assert _final_answer_looks_like_tool_call_narration(
+        "방금 카카오 키워드 검색 도구를 호출해 위치를 조회했습니다. 결과는 다음과 같습니다."
+    )
+    assert _final_answer_looks_like_tool_call_narration(
+        "HIRA 병원 검색 도구로 조회한 결과, 가까운 병원은 부산본병원입니다."
+    )
+    assert not _final_answer_looks_like_tool_call_narration(
+        "가까운 병원은 부산본병원이며, 자료 출처는 건강보험심사평가원입니다."
+    )
+
+
+def test_generic_retry_final_answer_after_success_is_rejected() -> None:
+    """A final answer must not ask for retry after successful data returned."""
+    assert _final_answer_looks_like_generic_retry_after_success(
+        "정확한 정보는 기상청 https://www.weather.go.kr 또는 기상특보 131에서 "
+        "확인하시기 바랍니다.\n\n"
+        "다른 검색어로 재시도하시겠습니까?"
+    )
+    assert not _final_answer_looks_like_generic_retry_after_success(
+        "기상청 관측 기준 현재 기온은 15.8°C이고 강수량은 0mm입니다. "
+        "정확한 특보는 기상청에서 확인할 수 있습니다."
+    )
+
+
+def test_current_weather_final_answer_must_include_kma_values() -> None:
+    """Successful KMA current observation must be reflected in final prose."""
+    messages = [
+        _msg_assistant_tool_call(
+            "find",
+            {
+                "tool_id": "kma_current_observation",
+                "params": {"nx": 97, "ny": 74, "base_date": "20260514", "base_time": "0400"},
+            },
+        ),
+        _msg_tool_result(
+            "find",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "record",
+                    "item": {
+                        "base_date": "20260514",
+                        "base_time": "0400",
+                        "nx": 97,
+                        "ny": 74,
+                        "t1h": 15.8,
+                        "rn1": 0,
+                        "reh": 79,
+                        "wsd": 1,
+                    },
+                },
+            },
+        ),
+    ]
+    assert _final_answer_missing_current_weather_observation_values(
+        "정확한 정보는 기상청에서 확인하시기 바랍니다. 다른 검색어로 재시도하시겠습니까?",
+        messages,
+        "부산 사하구 다대1동 지금 날씨 알려줘",
+    )
+    assert not _final_answer_missing_current_weather_observation_values(
+        "기상청 관측 기준 현재 기온은 15.8°C, 강수량은 0mm, 습도는 79%입니다.",
+        messages,
+        "부산 사하구 다대1동 지금 날씨 알려줘",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -398,7 +493,7 @@ def test_hometax_taxreturn_canonicalizes_lookup_adapter_scope_alias() -> None:
         "tool_id": "mock_verify_module_modid",
         "params": {
             "scope_list": [
-                "lookup:mock.lookup_module_hometax_simplified",
+                "find:mock.lookup_module_hometax_simplified",
                 "send:hometax.tax-return",
             ],
             "purpose_ko": "종합소득세 신고",
@@ -749,12 +844,12 @@ def test_traffic_fine_verify_normalizes_lookup_and_payment_scope_aliases() -> No
         "tool_id": "mock_verify_ganpyeon_injeung",
         "params": {
             "scope_list": [
-                "lookup:traffic_fine.check",
-                "lookup:traffic.fine",
-                "lookup:traffic.fine.inquiry",
-                "lookup:traffic.fine.search",
-                "submit:traffic_fine.payment",
-                "submit:traffic.fine.pay",
+                "find:traffic_fine.check",
+                "find:traffic.fine",
+                "find:traffic.fine.inquiry",
+                "find:traffic.fine.search",
+                "send:traffic_fine.payment",
+                "send:traffic.fine.pay",
             ],
             "purpose_ko": "교통 과태료 확인 및 납부",
             "purpose_en": "Traffic fine check and payment",
@@ -814,7 +909,7 @@ def test_submit_followup_gate_passes_after_successful_submit() -> None:
             {
                 "kind": "send",
                 "result": {
-                    "transaction_id": "urn:ummaya:submit:test",
+                    "transaction_id": "urn:ummaya:send:test",
                     "status": "succeeded",
                     "adapter_receipt": {"receipt_id": "gov24-2026-05-07-MW-TEST"},
                 },
@@ -852,7 +947,7 @@ def test_duplicate_submit_after_success_is_rejected() -> None:
             {
                 "kind": "send",
                 "result": {
-                    "transaction_id": "urn:ummaya:submit:test",
+                    "transaction_id": "urn:ummaya:send:test",
                     "status": "succeeded",
                     "adapter_receipt": {"receipt_id": "gov24-2026-05-07-MW-TEST"},
                 },
@@ -921,8 +1016,8 @@ def test_gov24_minwon_drops_certificate_lookup_scope_alias() -> None:
         "tool_id": "mock_verify_module_simple_auth",
         "params": {
             "scope_list": [
-                "lookup:gov24.certificate",
-                "lookup:gov24.simplified",
+                "find:gov24.certificate",
+                "find:gov24.simplified",
                 "send:gov24.minwon",
             ],
             "purpose_ko": "주민등록등본 발급 민원 신청",
@@ -951,7 +1046,7 @@ def test_gov24_minwon_drops_query_bound_lookup_scope_prefix() -> None:
         "tool_id": "mock_verify_module_simple_auth",
         "params": {
             "scope_list": [
-                "lookup:gov24.resident_certificate",
+                "find:gov24.resident_certificate",
                 "send:gov24.minwon",
             ],
             "purpose_ko": "주민등록등본 발급 민원 신청",
@@ -1046,8 +1141,8 @@ def test_ganpyeon_query_rejects_mobile_id_verify_substitution() -> None:
             "tool_id": "mock_verify_module_modid",
             "params": {
                 "scope_list": [
-                    "lookup:admin_service_registry",
-                    "lookup:user_permission_query",
+                    "find:admin_service_registry",
+                    "find:user_permission_query",
                 ],
                 "purpose_ko": "행정서비스 이용 권한 확인",
                 "purpose_en": "Check administrative service usage rights",
@@ -1070,8 +1165,8 @@ def test_ganpyeon_query_rejects_any_id_sso_scope_substitution() -> None:
             "tool_id": "mock_verify_module_any_id_sso",
             "params": {
                 "scope_list": [
-                    "lookup:admin_service.permission_check",
-                    "submit:admin_service.permission_management",
+                    "find:admin_service.permission_check",
+                    "send:admin_service.permission_management",
                 ],
                 "purpose_ko": "간편인증 로그인",
                 "purpose_en": "Simple authentication login",
@@ -1111,7 +1206,7 @@ def test_mobile_id_query_rejects_identity_lookup_alias_scopes() -> None:
         {
             "tool_id": "mock_verify_mobile_id",
             "params": {
-                "scope_list": ["lookup:identity.info", "lookup:identity.verify"],
+                "scope_list": ["find:identity.info", "find:identity.verify"],
                 "purpose_ko": "모바일 신분증 본인확인",
                 "purpose_en": "Mobile ID identity verification",
             },
@@ -1237,7 +1332,7 @@ def test_mobile_id_query_keeps_generic_verify_tool_id_on_wrong_scope() -> None:
     original: dict[str, object] = {
         "tool_id": "check",
         "params": {
-            "scope_list": ["lookup:identity.info"],
+            "scope_list": ["find:identity.info"],
             "purpose_ko": "모바일 신분증 본인확인",
             "purpose_en": "Mobile ID identity verification",
         },
@@ -1267,8 +1362,8 @@ def test_mydata_action_query_requires_submit_scope_for_verify() -> None:
             "tool_id": "mock_verify_mydata",
             "params": {
                 "scope_list": [
-                    "lookup:mydata.consent_status",
-                    "submit:mydata.provide_consent",
+                    "find:mydata.consent_status",
+                    "send:mydata.provide_consent",
                 ],
                 "purpose_ko": "마이데이터 동의 상태 확인",
                 "purpose_en": "Check MyData consent status",
@@ -1325,13 +1420,13 @@ def test_welfare_application_normalizes_lookup_and_mock_submit_scope_aliases() -
             "tool_id": "mock_verify_mydata",
             "params": {
                 "scope_list": [
-                    "lookup:mohw.welfare_eligibility_search",
-                    "lookup:pub.mohw.welfare_eligibility",
-                    "lookup:mydata.welfare_eligibility_search",
-                    "lookup:public_mydata.welfare_eligibility_search",
-                    "lookup:mydata.welfare",
-                    "submit:mock.welfare_application_submit_v1",
-                    "submit:pub.mohw.welfare_application",
+                    "find:mohw.welfare_eligibility_search",
+                    "find:pub.mohw.welfare_eligibility",
+                    "find:mydata.welfare_eligibility_search",
+                    "find:public_mydata.welfare_eligibility_search",
+                    "find:mydata.welfare",
+                    "send:mock.welfare_application_submit_v1",
+                    "send:pub.mohw.welfare_application",
                 ],
                 "purpose_ko": "한부모가족 아동양육비 지원 신청",
                 "purpose_en": "Single-parent family child support application",
@@ -1350,14 +1445,14 @@ def test_welfare_application_session_context_drops_public_lookup_scope_alias() -
             "tool_id": "mock_verify_mydata",
             "params": {
                 "scope_list": [
-                    "lookup:mohw.welfare_eligibility_search",
-                    "lookup:pub.mohw.welfare_eligibility",
-                    "lookup:mydata.welfare_eligibility_search",
-                    "lookup:public_mydata.welfare_eligibility_search",
-                    "lookup:mydata.welfare",
-                    "submit:mock.welfare_application_submit_v1",
-                    "submit:pub.mohw.welfare_application",
-                    "submit:mock_welfare_application_submit_v1",
+                    "find:mohw.welfare_eligibility_search",
+                    "find:pub.mohw.welfare_eligibility",
+                    "find:mydata.welfare_eligibility_search",
+                    "find:public_mydata.welfare_eligibility_search",
+                    "find:mydata.welfare",
+                    "send:mock.welfare_application_submit_v1",
+                    "send:pub.mohw.welfare_application",
+                    "send:mock_welfare_application_submit_v1",
                 ],
                 "purpose_ko": "한부모가족 아동양육비 지원 신청",
             },

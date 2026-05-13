@@ -2,7 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import type { TextBlockParam } from 'src/sdk-compat.js';
 import * as React from 'react';
 import { Box, Text } from '../../ink.js';
-import { extractTag } from '../../utils/messages.js';
+import { extractTag } from '../../utils/messageText.js';
 type Props = {
   addMargin: boolean;
   param: TextBlockParam;

@@ -26,9 +26,9 @@ UMMAYA 는 6-layer harness 입니다 (`docs/vision.md`). 플러그인은 **Layer
 
 | Primitive | 의미 | 대표 사용처 |
 |---|---|---|
-| `lookup` | 조회 | KOROAD 사고 검색, KMA 일기예보, HIRA 병원 검색, 모든 `lookup(mode="search/fetch")` |
-| `submit` | 제출 (irreversible) | 정부24 민원 제출, 공동인증서 서명 후 제출 (Spec 024 V4 invariant 적용) |
-| `verify` | 검증 | KEC 차량 검사 결과, 신원 인증 결과 read-back |
+| `find` | 조회 | KOROAD 사고 검색, KMA 일기예보, HIRA 병원 검색 |
+| `send` | 제출 (irreversible) | 정부24 민원 제출, 공동인증서 서명 후 제출 (Spec 024 V4 invariant 적용) |
+| `check` | 검증 | KEC 차량 검사 결과, 신원 인증 결과 read-back |
 
 `subscribe` 는 국민비서/정부 앱/휴대폰 푸시 같은 별도 delivery runtime 이 필요하므로 현재 플러그인 verb 에서 비활성입니다.
 
@@ -37,7 +37,7 @@ UMMAYA 는 6-layer harness 입니다 (`docs/vision.md`). 플러그인은 **Layer
 플러그인의 `tool_id` 는 반드시 다음 정규식을 따라야 합니다 (ADR-007):
 
 ```regex
-^plugin\.[a-z][a-z0-9_]*\.(lookup|submit|verify)$
+^plugin\.[a-z][a-z0-9_]*\.(find|send|check)$
 ```
 
 예시:
@@ -201,6 +201,6 @@ manifest.yaml 의 `otel_attributes["ummaya.plugin.id"]` 는 **반드시 `plugin_
 | 카탈로그 | catalog | `ummaya-plugin-store/index/index.json`. |
 | 수탁자 | trustee | PIPA §26 수탁 측. |
 | 동의 영수증 | consent receipt | Spec 035 ledger 확장 (`plugin_install` / `plugin_uninstall`). |
-| 프리미티브 | primitive | active plugin 동사 (`lookup`, `submit`, `verify`). `subscribe` 는 앱/푸시 런타임 전까지 비활성. |
+| 프리미티브 | primitive | active plugin 동사 (`find`, `send`, `check`). `subscribe` 는 앱/푸시 런타임 전까지 비활성. |
 | 1차 매핑 | byte mirror | `source_mode=OPENAPI`. |
 | 2차 매핑 | shape mirror | `source_mode=OOS`. |

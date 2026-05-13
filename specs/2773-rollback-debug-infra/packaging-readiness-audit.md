@@ -125,7 +125,7 @@ specs/2773-rollback-debug-infra/captures/p0-targeted-urlheader-2026-05-07/
 ```text
 specs/2773-rollback-debug-infra/captures/p0-targeted-welfare-scope-2026-05-07/
 => WELFARE-APPLICATION-001 pass; visible verify scope collapsed to
-   ["submit:mydata.welfare_application"]
+   ["send:mydata.welfare_application"]
 ```
 
 ```text
@@ -175,9 +175,9 @@ No vhs artifact exceeds 1 MB.
   cross-domain lookup scopes before permission gating.
 - Identity-only Mobile ID requests force the first verify tool choice only until
   verification succeeds.
-- Hometax submit canonicalizes `lookup:mock.lookup_module_hometax_simplified`
-  and `lookup:mock_lookup_module_hometax_simplified` to
-  `lookup:hometax.simplified`.
+- Hometax submit canonicalizes `find:mock.lookup_module_hometax_simplified`
+  and `find:mock_lookup_module_hometax_simplified` to
+  `find:hometax.simplified`.
 - Hometax submit matrix timeout was raised to 300 seconds for the valid
   verify/lookup/submit sequence under K-EXAONE reasoning latency.
 - Welfare application audit forbid regex now rejects actual user-handoff prose

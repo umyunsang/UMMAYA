@@ -1,6 +1,6 @@
 ---
 tool_id: kma_weather_alert_status
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -15,7 +15,7 @@ Retrieves the current list of active weather warnings and watches issued by the 
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | Korea Meteorological Administration (KMA) / data.go.kr |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/kma/kma_weather_alert_status.py` |
 
 ## Envelope

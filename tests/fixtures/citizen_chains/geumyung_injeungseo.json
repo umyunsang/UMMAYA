@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_geumyung_injeungseo",
       "params": {
-        "scope_list": ["verify:geumyung_injeungseo.identity"],
+        "scope_list": ["check:geumyung_injeungseo.identity"],
         "purpose_ko": "금융인증서 KFTC 본인인증",
         "purpose_en": "Identity verification via KFTC financial certificate"
       }

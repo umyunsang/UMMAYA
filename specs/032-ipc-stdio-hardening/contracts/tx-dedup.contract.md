@@ -129,7 +129,7 @@ On replay, the executor rebuilds the response via `ToolCallResponse.model_valida
 
 When a TUI client submits the SAME `transaction_id` twice (e.g., user double-clicks "제출"):
 
-1. First submit: generates `transaction_id` client-side as a UUIDv7, sends `tool_call` frame.
+1. First send: generates `transaction_id` client-side as a UUIDv7, sends `tool_call` frame.
 2. Second submit (if client re-emits same `transaction_id`): backend dedup hits cache → returns first response.
 3. User sees "이미 제출되었습니다. 접수번호: ..." HUD (generated from `cached_response.receipt_id` when present).
 

@@ -46,7 +46,7 @@ function makeFrame(
     kind: 'permission_request',
     request_id: 'req-rb-001',
     worker_id: '',
-    primitive_kind: 'verify',
+    primitive_kind: 'check',
     description_ko: '인증 기관 확인.',
     description_en: 'Verify with authority.',
     risk_level: 'low',
@@ -165,15 +165,15 @@ describe('REPL permission-bridge — register+push integration', () => {
     expect(queue.length).toBe(2)
   })
 
-  it('Test 5 — primitive_kind=verify → VerifyPrimitive; =submit → SubmitPrimitive', () => {
+  it('Test 5 — primitive_kind=check → VerifyPrimitive; =send → SubmitPrimitive', () => {
     const { received, setter } = makeAccumulatingSetter()
     registerIpcToolUseConfirmQueue(setter)
 
     const origWrite = process.stdout.write.bind(process.stdout)
     process.stdout.write = mock(() => true) as typeof process.stdout.write
     try {
-      pushIpcPermissionRequest(makeFrame({ primitive_kind: 'verify', request_id: 'req-rb-t5v' }))
-      pushIpcPermissionRequest(makeFrame({ primitive_kind: 'submit', request_id: 'req-rb-t5s' }))
+      pushIpcPermissionRequest(makeFrame({ primitive_kind: 'check', request_id: 'req-rb-t5v' }))
+      pushIpcPermissionRequest(makeFrame({ primitive_kind: 'send', request_id: 'req-rb-t5s' }))
     } finally {
       process.stdout.write = origWrite
     }

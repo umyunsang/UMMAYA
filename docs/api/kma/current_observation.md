@@ -1,6 +1,6 @@
 ---
 tool_id: kma_current_observation
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -15,7 +15,7 @@ Fetches the KMA ultra-short-term current observation (초단기실황) for a gri
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | KMA (기상청) — VilageFcstInfoService_2.0/getUltraSrtNcst |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/kma/kma_current_observation.py` |
 
 ## Envelope

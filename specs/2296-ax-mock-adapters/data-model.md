@@ -17,7 +17,7 @@ Opaque, scope-bound, time-bound, session-bound credential issued by a verify ada
 |---|---|---|---|
 | `vp_jwt` | `str` | non-empty, dot-separated JWS-shape (header.payload.signature) | Verifiable Presentation as JWS. In Mock mode, header is `{"alg":"none","typ":"vp+jwt"}`, payload is the issuance claims, signature is `"mock-signature-not-cryptographic"` |
 | `delegation_token` | `str` | non-empty, prefix `del_`, 24+ chars after prefix | Opaque token consumed by submit/lookup |
-| `scope` | `str` | non-empty, format `<verb>:<adapter_family>.<action>` | e.g., `submit:hometax.tax-return` or `lookup:hometax.simplified` |
+| `scope` | `str` | non-empty, format `<verb>:<adapter_family>.<action>` | e.g., `send:hometax.tax-return` or `find:hometax.simplified` |
 | `issuer_did` | `str` | non-empty, DID method form `did:web:<host>` or `did:key:<multibase>` | e.g., `did:web:mobileid.go.kr` |
 | `issued_at` | `datetime` | UTC tz-aware | Token mint time |
 | `expires_at` | `datetime` | UTC tz-aware, must be > `issued_at` | 24h max in Mock mode |
@@ -219,7 +219,7 @@ Same retrofit applies to the existing submit context type(s) in `src/ummaya/prim
 For one citizen US1 chain (verify → lookup → submit), the ledger appends three events in order:
 
 ```
-1. {kind:"delegation_issued",   ts:T0,    delegation_token:tok, scope:"submit:hometax.tax-return", verify_tool_id:"mock_verify_module_modid"}
+1. {kind:"delegation_issued",   ts:T0,    delegation_token:tok, scope:"send:hometax.tax-return", verify_tool_id:"mock_verify_module_modid"}
 2. {kind:"delegation_used",     ts:T0+5s, delegation_token:tok, consumer_tool_id:"mock_lookup_module_hometax_simplified", outcome:"success"}
 3. {kind:"delegation_used",     ts:T0+12s,delegation_token:tok, consumer_tool_id:"mock_submit_module_hometax_taxreturn",  receipt_id:"hometax-2026-04-30-XXXX", outcome:"success"}
 ```

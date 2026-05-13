@@ -1,5 +1,5 @@
 /**
- * Snapshot tests for lookup primitive renderers.
+ * Snapshot tests for find primitive renderers.
  * Each renderer is exercised against its corresponding fixture JSON.
  * Uses ink-testing-library for output capture.
  * FR-034, FR-035.

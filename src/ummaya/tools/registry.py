@@ -49,10 +49,6 @@ class AdapterPrimitive(StrEnum):
     locate = "locate"
     send = "send"
     check = "check"
-    lookup = "find"
-    resolve_location = "locate"
-    submit = "send"
-    verify = "check"
 
 
 class AdapterSourceMode(StrEnum):

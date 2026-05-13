@@ -219,8 +219,8 @@ def test_bm25_discovery_english_keyword() -> None:
 
 @pytest.mark.asyncio
 async def test_handle_with_matching_scope_succeeds() -> None:
-    """Matching scope 'lookup:gov24.certificate' passes delegation check."""
-    delegation = _make_delegation_context("lookup:gov24.certificate")
+    """Matching scope 'find:gov24.certificate' passes delegation check."""
+    delegation = _make_delegation_context("find:gov24.certificate")
     result = await handle(_VALID_INPUT_RESIDENT, delegation_context=delegation)
 
     assert result.get("kind") == "record", f"Expected success record, got {result!r}"
@@ -232,7 +232,7 @@ async def test_handle_with_matching_scope_succeeds() -> None:
 
 @pytest.mark.asyncio
 async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
-    """Wrong scope 'submit:hometax.tax-return' triggers a LookupError envelope.
+    """Wrong scope 'send:hometax.tax-return' triggers a LookupError envelope.
 
     Scope-violation maps to the closed-set ``LookupErrorReason.auth_required``
     (the closed enum has no ``scope_violation`` member). Transparency fields
@@ -240,7 +240,7 @@ async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
     ``extra='forbid'``; ``meta.source`` (injected later by ``normalize()``)
     carries adapter identity instead.
     """
-    delegation = _make_delegation_context("submit:hometax.tax-return")
+    delegation = _make_delegation_context("send:hometax.tax-return")
     result = await handle(_VALID_INPUT_FAMILY, delegation_context=delegation)
 
     assert result.get("kind") == "error"
@@ -248,14 +248,14 @@ async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
     assert result.get("retryable") is False
     # Scope context is preserved in the message for citizen-facing diagnostics.
     msg = result.get("message", "")
-    assert "lookup:gov24.certificate" in msg
-    assert "submit:hometax.tax-return" in msg
+    assert "find:gov24.certificate" in msg
+    assert "send:hometax.tax-return" in msg
 
 
 @pytest.mark.asyncio
 async def test_handle_with_multi_scope_containing_required_passes() -> None:
-    """Multi-scope token that includes 'lookup:gov24.certificate' passes."""
-    delegation = _make_delegation_context("lookup:gov24.certificate,submit:gov24.minwon")
+    """Multi-scope token that includes 'find:gov24.certificate' passes."""
+    delegation = _make_delegation_context("find:gov24.certificate,send:gov24.minwon")
     result = await handle(_VALID_INPUT_BUSINESS, delegation_context=delegation)
 
     assert result.get("kind") == "record", (

@@ -83,7 +83,7 @@ Five JSON files. Schema enforced at load time.
     }
   },
   "expected_family_hint": "modid",
-  "notes": "US1 canonical chain. Downstream chain: lookup(hometax_simplified) → submit(hometax_taxreturn). scope_list MUST include both lookup:hometax.simplified and submit:hometax.tax-return."
+  "notes": "US1 canonical chain. Downstream chain: lookup(hometax_simplified) → submit(hometax_taxreturn). scope_list MUST include both find:hometax.simplified and send:hometax.tax-return."
 }
 ```
 

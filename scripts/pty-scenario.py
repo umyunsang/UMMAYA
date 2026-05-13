@@ -31,7 +31,7 @@ Exit codes: 0 = scenario passed, 1 = scenario failed, 2 = harness error.
 
 This file is dependency-free Python stdlib only. ``UMMAYA_FRIENDLI_TOKEN`` is
 required for greeting / lookup; ``UMMAYA_DATA_GO_KR_API_KEY`` may be required
-for live lookup runs. Mock-based scenarios (submit / verify / subscribe) need
+for live find runs. Mock-based scenarios (send / check / subscribe) need
 no external secrets once Phase F adapter registration lands.
 """
 
@@ -478,7 +478,7 @@ def cmd_submit_fine_pay(args: argparse.Namespace) -> HarnessResult:  # noqa: C90
         result.boot_ms = int((time.time() - started) * 1000)
         log.debug("boot done in %dms", result.boot_ms)
 
-        # Phase 2: send citizen prompt that triggers submit primitive.
+        # Phase 2: send citizen prompt that triggers send primitive.
         _send(fd, "교통 범칙금 납부할게\r".encode(), f"{scenario}-input")
         send_ts = time.time()
 

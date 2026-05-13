@@ -41,9 +41,9 @@ export const C = {
 
 // Primitive → dot color lookup
 export const PRIMITIVE_DOT = {
-  lookup: C.lookupDot,
-  submit: C.submitDot,
-  verify: C.verifyDot,
+  find: C.lookupDot,
+  send: C.submitDot,
+  check: C.verifyDot,
   subscribe: C.subscribeDot,
   plugin: C.pluginDot,
 }

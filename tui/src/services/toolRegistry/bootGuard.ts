@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Epic γ #2294 · T004 · ToolRegistry boot guard.
 //
-// Walks every active registered UMMAYA primitive (lookup / locate /
-// submit / verify) at process boot and asserts that
+// Walks every active registered UMMAYA primitive (find / locate /
+// send / check) at process boot and asserts that
 // each one exposes the full `Tool<>` 9-member surface from
 // `tui/src/Tool.ts` (byte-identical to CC `Tool.ts`). Fails closed with a
 // Korean diagnostic if any member is missing.

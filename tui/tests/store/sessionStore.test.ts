@@ -39,7 +39,7 @@ function resetStore(): void {
 function makeRequest(overrides?: Partial<PendingPermissionRequest>): PendingPermissionRequest {
   return {
     request_id: 'req-001',
-    primitive_kind: 'submit',
+    primitive_kind: 'send',
     description_ko: '출생신고 서류 제출',
     description_en: 'Submit birth registration document',
     risk_level: 'high',
@@ -281,7 +281,7 @@ describe('T019 — pendingPermissionSlot lifecycle (contracts/pending-permission
     const active = getActivePermission()
     expect(active).not.toBeNull()
     expect(active!.request_id).toBe('req-case1')
-    expect(active!.primitive_kind).toBe('submit')
+    expect(active!.primitive_kind).toBe('send')
     expect(active!.description_ko).toBe('출생신고 서류 제출')
     expect(active!.risk_level).toBe('high')
     expect(active!.receipt_id).toBe('rcpt-abc123')

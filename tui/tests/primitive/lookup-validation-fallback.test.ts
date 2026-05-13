@@ -112,7 +112,7 @@ describe('LookupPrimitive.validateInput: tier-1 backend manifest resolution', ()
         {
           tool_id: 'nmc_emergency_search',
           name: 'NMC Emergency Bed Availability',
-          primitive: 'lookup',
+          primitive: 'find',
           policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
           source_mode: 'live',
         },
@@ -145,7 +145,7 @@ describe('LookupPrimitive.validateInput: tier-2 internal tools fallback', () => 
         {
           tool_id: 'nmc_emergency_search',
           name: 'NMC Emergency Bed Availability',
-          primitive: 'lookup',
+          primitive: 'find',
           policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
           source_mode: 'live',
         },
@@ -174,7 +174,7 @@ describe('LookupPrimitive.validateInput: AdapterNotFound fail-closed', () => {
         {
           tool_id: 'nmc_emergency_search',
           name: 'NMC Emergency Bed Availability',
-          primitive: 'lookup',
+          primitive: 'find',
           policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
           source_mode: 'live',
         },

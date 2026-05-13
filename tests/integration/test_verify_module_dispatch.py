@@ -40,7 +40,7 @@ async def test_verify_modid_returns_typed_modid_context() -> None:
     result = await verify(
         family_hint="modid",
         session_context={
-            "scope_list": ["lookup:hometax.simplified", "submit:hometax.tax-return"],
+            "scope_list": ["find:hometax.simplified", "send:hometax.tax-return"],
             "session_id": "test-modid",
         },
     )
@@ -60,7 +60,7 @@ async def test_verify_simple_auth_module_returns_typed_context() -> None:
     result = await verify(
         family_hint="simple_auth_module",
         session_context={
-            "scope_list": ["verify:simple_auth.identity"],
+            "scope_list": ["check:simple_auth.identity"],
             "session_id": "test-sa",
         },
     )
@@ -75,7 +75,7 @@ async def test_verify_kec_returns_typed_context() -> None:
     result = await verify(
         family_hint="kec",
         session_context={
-            "scope_list": ["verify:kec.identity"],
+            "scope_list": ["check:kec.identity"],
             "session_id": "test-kec",
         },
     )
@@ -90,7 +90,7 @@ async def test_verify_geumyung_module_returns_typed_context() -> None:
     result = await verify(
         family_hint="geumyung_module",
         session_context={
-            "scope_list": ["verify:geumyung.identity"],
+            "scope_list": ["check:geumyung.identity"],
             "session_id": "test-geumyung",
         },
     )

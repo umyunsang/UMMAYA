@@ -2,7 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import type { ToolResultBlockParam } from 'src/sdk-compat.js';
 import * as React from 'react';
 import { stripUnderlineAnsi } from 'src/components/shell/OutputLine.js';
-import { extractTag } from 'src/utils/messages.js';
+import { extractTag } from 'src/utils/messageText.js';
 import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js';
 import { Box, Text } from '../ink.js';
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';

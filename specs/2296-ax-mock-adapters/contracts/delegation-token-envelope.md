@@ -24,7 +24,7 @@ A `DelegationToken` is **consumed** by exactly one submit or lookup adapter per 
 1. Extract the token from the call context (typically a `DelegationContext` parameter)
 2. Invoke `_validate_delegation(token, expected_scope=<adapter-declared-scope-prefix>, current_session_id)` which returns `Ok` or one of four rejection reasons:
    - `Expired` — `token.expires_at <= now()`
-   - `ScopeViolation` — `token.scope` doesn't match the adapter's declared scope prefix (e.g., adapter declares `submit:hometax.tax-return`; token scope is `submit:gov24.minwon` → reject)
+   - `ScopeViolation` — `token.scope` doesn't match the adapter's declared scope prefix (e.g., adapter declares `send:hometax.tax-return`; token scope is `send:gov24.minwon` → reject)
    - `SessionViolation` — token was issued in a different session than the consuming call
    - `Revoked` — the token appears in the session's in-memory revocation set
 3. On rejection: append a `delegation_used` event with `outcome` set to the rejection reason; return error to caller; do NOT execute the agency action
@@ -43,15 +43,15 @@ action         = lowercase identifier with optional hyphens, identifying the act
 ```
 
 **Examples**:
-- `submit:hometax.tax-return` — the `mock_submit_module_hometax_taxreturn` adapter's required scope
-- `lookup:hometax.simplified` — the `mock_lookup_module_hometax_simplified` adapter's required scope
-- `submit:gov24.minwon` — the `mock_submit_module_gov24_minwon` adapter's required scope
+- `send:hometax.tax-return` — the `mock_submit_module_hometax_taxreturn` adapter's required scope
+- `find:hometax.simplified` — the `mock_lookup_module_hometax_simplified` adapter's required scope
+- `send:gov24.minwon` — the `mock_submit_module_gov24_minwon` adapter's required scope
 
-A token whose scope is `submit:hometax.tax-return` permits BOTH the submit adapter AND a lookup adapter that declares scope-prefix-match (e.g., a lookup that declares `lookup:hometax.simplified` does NOT match — the verbs differ; the scope must be reissued for the lookup verb). However, the cleanest UX is for the verify adapter to issue a **multi-scope token** by using a comma-joined scope string in the future. Epic ε ships **single-scope tokens only**; multi-scope is a deferred enhancement.
+A token whose scope is `send:hometax.tax-return` permits BOTH the submit adapter AND a lookup adapter that declares scope-prefix-match (e.g., a lookup that declares `find:hometax.simplified` does NOT match — the verbs differ; the scope must be reissued for the lookup verb). However, the cleanest UX is for the verify adapter to issue a **multi-scope token** by using a comma-joined scope string in the future. Epic ε ships **single-scope tokens only**; multi-scope is a deferred enhancement.
 
-**Implication for US1 chain**: the citizen's "내 종합소득세 신고해줘" request requires the LLM to call `verify` requesting a scope that covers BOTH `lookup:hometax.simplified` AND `submit:hometax.tax-return`. Epic ε's solution: the verify adapter's input includes a `scope_list: list[str]` parameter, and the issued token's `scope` field stores the comma-joined string `"lookup:hometax.simplified,submit:hometax.tax-return"`. The validator regex updates to accept the comma-joined form: `^((lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+)(,(lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+)*$`.
+**Implication for US1 chain**: the citizen's "내 종합소득세 신고해줘" request requires the LLM to call `verify` requesting a scope that covers BOTH `find:hometax.simplified` AND `send:hometax.tax-return`. Epic ε's solution: the verify adapter's input includes a `scope_list: list[str]` parameter, and the issued token's `scope` field stores the comma-joined string `"find:hometax.simplified,send:hometax.tax-return"`. The validator regex updates to accept the comma-joined form: `^((lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+)(,(lookup|submit|verify|subscribe):[a-z0-9_]+\.[a-z0-9_-]+)*$`.
 
-The scope-violation acceptance scenario (US1 acceptance #3) tests that a token with `scope="lookup:hometax.simplified,submit:hometax.tax-return"` is rejected by `mock_submit_module_gov24_minwon` (which requires `submit:gov24.minwon` — not in the token's comma-list).
+The scope-violation acceptance scenario (US1 acceptance #3) tests that a token with `scope="find:hometax.simplified,send:hometax.tax-return"` is rejected by `mock_submit_module_gov24_minwon` (which requires `send:gov24.minwon` — not in the token's comma-list).
 
 ## 4. Token-validation function
 
@@ -101,7 +101,7 @@ async def validate_delegation(
 
 
 def _scope_matches(token_scope: str, required: str) -> bool:
-    """Return True if `required` (e.g., 'submit:hometax.tax-return') is one
+    """Return True if `required` (e.g., 'send:hometax.tax-return') is one
     of the comma-joined scope entries in `token_scope`.
     """
     return required in token_scope.split(",")
@@ -114,7 +114,7 @@ Every issuance + use + revocation appends exactly one JSONL line to `~/.ummaya/m
 **Per US1 chain run** (one citizen request, no scope violations), exactly **3** new ledger lines:
 
 ```jsonl
-{"kind":"delegation_issued","ts":"2026-04-29T10:15:23.456Z","session_id":"sess-abc","delegation_token":"del_xyz123...","scope":"lookup:hometax.simplified,submit:hometax.tax-return","expires_at":"2026-04-30T10:15:23.456Z","issuer_did":"did:web:mobileid.go.kr","verify_tool_id":"mock_verify_module_modid","_mode":"mock"}
+{"kind":"delegation_issued","ts":"2026-04-29T10:15:23.456Z","session_id":"sess-abc","delegation_token":"del_xyz123...","scope":"find:hometax.simplified,send:hometax.tax-return","expires_at":"2026-04-30T10:15:23.456Z","issuer_did":"did:web:mobileid.go.kr","verify_tool_id":"mock_verify_module_modid","_mode":"mock"}
 {"kind":"delegation_used","ts":"2026-04-29T10:15:28.789Z","session_id":"sess-abc","delegation_token":"del_xyz123...","consumer_tool_id":"mock_lookup_module_hometax_simplified","receipt_id":null,"outcome":"success"}
 {"kind":"delegation_used","ts":"2026-04-29T10:15:35.012Z","session_id":"sess-abc","delegation_token":"del_xyz123...","consumer_tool_id":"mock_submit_module_hometax_taxreturn","receipt_id":"hometax-2026-04-29-RX-7K2J9","outcome":"success"}
 ```

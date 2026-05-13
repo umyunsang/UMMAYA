@@ -306,7 +306,7 @@ The following changes implement this design. **Each item is a candidate sub-issu
 | A1 | Define `AdapterRealDomainPolicy` Pydantic model (replaces deleted Spec 033 invented schema) | Low |
 | A2 | Annotate every existing adapter with `policy.real_classification_url` + `policy.last_verified` | Low |
 | A3 | Migrate adapter metadata from `permission_tier=N` to `citizen_facing_gate.kind` lookup | Medium |
-| A4 | `compute_permission_tier()` becomes a thin lookup: `kind → 1/2/3 hint for UI colour only` | Low |
+| A4 | `compute_permission_tier()` becomes a thin find: `kind → 1/2/3 hint for UI colour only` | Low |
 | A5 | Remove `pipa_class` / `auth_level` enums from adapter model — replace with `real_classification: str` (free-form citation) | Medium |
 
 ### B. Adapter cleanup based on research findings

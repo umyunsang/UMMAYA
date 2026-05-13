@@ -106,11 +106,11 @@ Scenario shape:
     - get_refund
     - register_account
   expected_ax_chain:
-    - primitive: verify
+    - primitive: check
       purpose: identity_and_tax_delegation
-    - primitive: lookup
+    - primitive: find
       purpose: collect_income_withholding_deductions_and_prior_filing_status
-    - primitive: submit
+    - primitive: send
       purpose: file_tax_return_after_final_citizen_confirmation
   permission_requirements:
     identity_assurance: high

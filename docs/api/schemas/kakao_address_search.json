@@ -1,0 +1,26 @@
+{
+  "$defs": {
+    "_LocateOutput": {
+      "description": "Opaque locate output wrapper for registry metadata export.",
+      "title": "_LocateOutput"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kakao_address_search.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Kakao Local ``search/address`` input.",
+  "properties": {
+    "query": {
+      "description": "Structured Korean road/jibun address or administrative place text. Use for addresses such as '서울 강남구 테헤란로 152' or '부산 사하구 하단동'.",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Query",
+      "type": "string"
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "title": "kakao_address_search",
+  "type": "object"
+}

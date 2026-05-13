@@ -14,19 +14,19 @@ import {
 } from '../../src/query/toolSerialization.js'
 
 // ---------------------------------------------------------------------------
-// Test 1 — lookup-primitive emits Draft 2020-12 schema
+// Test 1 — find primitive emits Draft 2020-12 schema
 // ---------------------------------------------------------------------------
 describe('toolToFunctionSchema - LookupPrimitive', () => {
-  test('lookup-primitive emits Draft 2020-12 schema (Spec 2521 fetch-only)', async () => {
+  test('find primitive emits Draft 2020-12 schema (Spec 2521 fetch-only)', async () => {
     const def = await toolToFunctionSchema(LookupPrimitive)
 
-    expect(def.function.name).toBe('lookup')
+    expect(def.function.name).toBe('find')
     expect(def.type).toBe('function')
 
     const params = def.function.parameters as Record<string, unknown>
     // zod/v4 toJSONSchema emits $schema for Draft 2020-12
     expect(params['$schema']).toBe('https://json-schema.org/draft/2020-12/schema')
-    // Spec 2521 (2026-05-01): the LLM-visible lookup surface is a single
+    // Spec 2521 (2026-05-01): the LLM-visible find surface is a single
     // object {tool_id, params} — BM25 search is a backend-internal
     // mechanism, not a callable mode. The previous anyOf discriminated
     // union (search|fetch) collapsed to a flat object.
@@ -43,10 +43,10 @@ describe('toolToFunctionSchema - LookupPrimitive', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test 2 — submit-primitive .describe(...) strings are preserved
+// Test 2 — send primitive .describe(...) strings are preserved
 // ---------------------------------------------------------------------------
 describe('toolToFunctionSchema - SubmitPrimitive', () => {
-  test('submit-primitive .describe() strings preserved in JSON Schema descriptions', async () => {
+  test('send primitive .describe() strings preserved in JSON Schema descriptions', async () => {
     const def = await toolToFunctionSchema(SubmitPrimitive)
 
     const params = def.function.parameters as Record<string, unknown>
@@ -54,7 +54,7 @@ describe('toolToFunctionSchema - SubmitPrimitive', () => {
     expect(properties).toBeDefined()
 
     // SubmitPrimitive.inputSchema has:
-    //   tool_id: z.string().min(1).describe('Registered adapter identifier (obtain via lookup mode=search)')
+    //   tool_id: z.string().min(1).describe('Registered adapter identifier ...')
     const toolIdProp = properties!['tool_id']
     expect(toolIdProp).toBeDefined()
     expect(toolIdProp.description).toContain('Registered adapter identifier')
@@ -78,21 +78,21 @@ describe('toolToFunctionSchema - LookupPrimitive required fields', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test 4 — resolve_location emits the canonical geocoding schema
+// Test 4 — locate emits the canonical geocoding schema
 // ---------------------------------------------------------------------------
 describe('toolToFunctionSchema - ResolveLocationPrimitive', () => {
-  test('resolve_location emits query/want/near schema', async () => {
+  test('locate emits adapter envelope schema', async () => {
     const def = await toolToFunctionSchema(ResolveLocationPrimitive)
 
-    expect(def.function.name).toBe('resolve_location')
+    expect(def.function.name).toBe('locate')
     const params = def.function.parameters as Record<string, unknown>
     const properties = params['properties'] as Record<string, unknown>
     const required = params['required'] as string[]
 
-    expect(properties['query']).toBeDefined()
-    expect(properties['want']).toBeDefined()
-    expect(properties['near']).toBeDefined()
-    expect(required).toContain('query')
+    expect(properties['tool_id']).toBeDefined()
+    expect(properties['params']).toBeDefined()
+    expect(required).toContain('tool_id')
+    expect(required).toContain('params')
   })
 })
 
@@ -109,10 +109,10 @@ describe('getToolDefinitionsForFrame', () => {
     const defs = await getToolDefinitionsForFrame()
     const names = new Set(defs.map(d => d.function.name))
 
-    expect(names.has('lookup')).toBe(true)
-    expect(names.has('resolve_location')).toBe(true)
-    expect(names.has('submit')).toBe(true)
-    expect(names.has('verify')).toBe(true)
+    expect(names.has('find')).toBe(true)
+    expect(names.has('locate')).toBe(true)
+    expect(names.has('send')).toBe(true)
+    expect(names.has('check')).toBe(true)
     expect(names.has('subscribe')).toBe(false)
   })
 })

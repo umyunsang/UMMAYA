@@ -1,6 +1,6 @@
 ---
 tool_id: nfa_emergency_info_service
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -17,7 +17,7 @@ This tool is **not** a safety-instruction, AED-location, emergency-dispatch, or 
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | National Fire Agency (NFA / 소방청) / data.go.kr |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/nfa119/emergency_info_service.py` |
 | Wire research | `specs/2522-tool-surface-v4/research-nfa-wire.md` |
 

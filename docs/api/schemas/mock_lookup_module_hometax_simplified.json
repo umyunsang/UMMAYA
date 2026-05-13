@@ -125,7 +125,7 @@
         }
       ],
       "default": null,
-      "description": "Backend-injected DelegationContext from a prior check turn. Do not ask the citizen for this value."
+      "description": "Backend-injected DelegationContext from a prior verify turn. Do not ask the citizen for this value."
     },
     "resident_id_prefix": {
       "default": "000000",

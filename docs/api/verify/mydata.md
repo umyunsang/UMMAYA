@@ -1,6 +1,6 @@
 ---
 tool_id: mock_verify_mydata
-primitive: verify
+primitive: check
 tier: mock
 permission_tier: 2
 ---
@@ -15,7 +15,7 @@ Verifies a citizen's 마이데이터 (MyData) OAuth 2.0 + mTLS session with a li
 |---|---|
 | Classification | Mock · Permission tier 2 |
 | Source | 마이데이터 표준 API 규격서 v240930 (금융위원회 / KFTC MyData, OOS shape-mirror) |
-| Primitive | `verify` |
+| Primitive | `check` |
 | Module | `src/ummaya/tools/mock/verify_mydata.py` |
 
 ## Envelope

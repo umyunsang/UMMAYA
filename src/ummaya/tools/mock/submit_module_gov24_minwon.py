@@ -99,14 +99,14 @@ class Gov24MinwonParams(BaseModel):
         max_length=128,
         description=(
             "Consuming session ID used for delegation session-binding check. "
-            "Must equal the session_id supplied to the preceding verify params/session_context."
+            "Must equal the session_id supplied to the preceding check params/session_context."
         ),
     )
     delegation_context: DelegationContext = Field(
         description=(
-            "DelegationContext from the prior verify step. Keep it nested under "
+            "DelegationContext from the prior check step. Keep it nested under "
             "this field only; do not spread token/citizen_did/purpose fields "
-            "into top-level submit params."
+            "into top-level send params."
         ),
     )
 

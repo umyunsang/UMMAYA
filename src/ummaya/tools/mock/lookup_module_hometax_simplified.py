@@ -59,7 +59,7 @@ _INTERNATIONAL_REF: Final = "UK HMRC Making Tax Digital"
 
 # Required delegation scope when a DelegationContext is present.
 _REQUIRED_SCOPE: Final = "find:hometax.simplified"
-_LEGACY_REQUIRED_SCOPE: Final = "lookup:hometax.simplified"
+_LEGACY_REQUIRED_SCOPE: Final = "find:hometax.simplified"
 
 
 def _default_tax_year() -> int:

@@ -1,6 +1,6 @@
 ---
 tool_id: koroad_accident_hazard_search
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -17,7 +17,7 @@ Queries the KOROAD accident hazard spot dataset for a Korean municipality by 10-
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | KOROAD (도로교통공단) — B552061/frequentzoneLg |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/koroad/accident_hazard_search.py` |
 
 ## Envelope

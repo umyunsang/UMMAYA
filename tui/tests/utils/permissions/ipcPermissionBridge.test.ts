@@ -8,9 +8,9 @@
 //   4. onAllow triggers a second setter call to remove the item from the queue
 //   5. onReject triggers a second setter call to remove the item
 //   6. null registration clears the setter (unregister path)
-//   7. primitive_kind='verify' → VerifyPrimitive
-//   8. primitive_kind='submit' → SubmitPrimitive
-//   9. primitive_kind='lookup' → LookupPrimitive
+//   7. primitive_kind='check' → VerifyPrimitive
+//   8. primitive_kind='send' → SubmitPrimitive
+//   9. primitive_kind='find' → LookupPrimitive
 
 import { describe, it, expect, mock, beforeEach } from 'bun:test'
 
@@ -56,7 +56,7 @@ function makeFrame(
     kind: 'permission_request',
     request_id: 'req-fu4-001',
     worker_id: '',
-    primitive_kind: 'verify',
+    primitive_kind: 'check',
     description_ko: '인증 기관에 본인 정보를 전달합니다.',
     description_en: 'Verify identity with authentication authority.',
     risk_level: 'medium',
@@ -140,38 +140,38 @@ describe('ipcPermissionBridge — setter registered', () => {
 })
 
 describe('ipcPermissionBridge — primitive_kind → Tool mapping', () => {
-  it('primitive_kind=verify → VerifyPrimitive', () => {
+  it('primitive_kind=check → VerifyPrimitive', () => {
     const { setter, calls } = captureQueue()
     registerIpcToolUseConfirmQueue(setter)
 
-    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'verify' }))
+    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'check' }))
 
     expect(calls[0]![0]!.tool).toBe(VerifyPrimitive)
   })
 
-  it('primitive_kind=submit → SubmitPrimitive', () => {
+  it('primitive_kind=send → SubmitPrimitive', () => {
     const { setter, calls } = captureQueue()
     registerIpcToolUseConfirmQueue(setter)
 
-    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'submit' }))
+    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'send' }))
 
     expect(calls[0]![0]!.tool).toBe(SubmitPrimitive)
   })
 
-  it('primitive_kind=lookup → LookupPrimitive', () => {
+  it('primitive_kind=find → LookupPrimitive', () => {
     const { setter, calls } = captureQueue()
     registerIpcToolUseConfirmQueue(setter)
 
-    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'lookup' }))
+    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'find' }))
 
     expect(calls[0]![0]!.tool).toBe(LookupPrimitive)
   })
 
-  it('primitive_kind=resolve_location → LookupPrimitive (geo alias)', () => {
+  it('primitive_kind=locate → LookupPrimitive (geo alias)', () => {
     const { setter, calls } = captureQueue()
     registerIpcToolUseConfirmQueue(setter)
 
-    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'resolve_location' }))
+    pushIpcPermissionRequest(makeFrame({ primitive_kind: 'locate' }))
 
     expect(calls[0]![0]!.tool).toBe(LookupPrimitive)
   })

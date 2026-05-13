@@ -102,7 +102,7 @@ describe('SubmitPrimitive.validateInput: citation from manifest', () => {
         {
           tool_id: 'mock_submit_module_hometax_taxreturn',
           name: 'Mock — Hometax Tax Return Submission',
-          primitive: 'submit',
+          primitive: 'send',
           policy_authority_url:
             'https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=12892&cntntsId=8104',
           source_mode: 'mock',
@@ -131,7 +131,7 @@ describe('SubmitPrimitive.validateInput: citation from manifest', () => {
         {
           tool_id: 'lookup',
           name: 'Lookup',
-          primitive: 'lookup',
+          primitive: 'find',
           policy_authority_url: undefined,
           source_mode: 'internal',
         },
@@ -162,7 +162,7 @@ describe('SubmitPrimitive.validateInput: AdapterNotFound', () => {
         {
           tool_id: 'mock_submit_module_hometax_taxreturn',
           name: 'Mock — Hometax Tax Return Submission',
-          primitive: 'submit',
+          primitive: 'send',
           policy_authority_url:
             'https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=12892&cntntsId=8104',
           source_mode: 'mock',

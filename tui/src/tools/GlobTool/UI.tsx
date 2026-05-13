@@ -1,7 +1,7 @@
 import type { ToolResultBlockParam } from 'src/sdk-compat.js';
 import React from 'react';
 import { MessageResponse } from 'src/components/MessageResponse.js';
-import { extractTag } from 'src/utils/messages.js';
+import { extractTag } from 'src/utils/messageText.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
 import { Text } from '../../ink.js';

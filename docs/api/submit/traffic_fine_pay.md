@@ -1,6 +1,6 @@
 ---
 tool_id: mock_traffic_fine_pay_v1
-primitive: submit
+primitive: send
 tier: mock
 permission_tier: 2
 ---
@@ -15,7 +15,7 @@ Submits a traffic fine payment request on behalf of a citizen and returns a dete
 |---|---|
 | Classification | Mock · Permission tier 2 |
 | Source | 경찰청 교통범칙금 납부 (eFine, https://www.efine.go.kr/) — shape-mirrored from public data.go.kr 교통 범칙금 REST API |
-| Primitive | `submit` |
+| Primitive | `send` |
 | Module | `src/ummaya/tools/mock/data_go_kr/fines_pay.py` |
 
 ## Envelope
@@ -51,7 +51,7 @@ Submits a traffic fine payment request on behalf of a citizen and returns a dete
 
 ## Permission tier rationale
 
-This adapter sits at permission tier 2 (orange ⓶) because it submits an irreversible financial transaction that processes personal payment data (PIPA class `personal_standard`). Spec 033 defines tier 2 as the layer for actions that are consequential and reversible only outside UMMAYA (e.g., via bank dispute). The adapter declares `is_irreversible=True` per the V1 data-model invariant (`primitive=submit` ∧ `pipa_class=personal_standard` → `is_irreversible=True`), requires OAuth AAL2 (`ganpyeon_injeung_kakao_aal2`), and enforces `requires_auth=True`. A citizen must confirm the payment in the permission gauntlet modal (`[Y 한번만 / A 세션 자동 / N 거부]`) before the dispatcher forwards the call.
+This adapter sits at permission tier 2 (orange ⓶) because it sends an irreversible financial transaction that processes personal payment data (PIPA class `personal_standard`). Spec 033 defines tier 2 as the layer for actions that are consequential and reversible only outside UMMAYA (e.g., via bank dispute). The adapter declares `is_irreversible=True` per the V1 data-model invariant (`primitive=send` ∧ `pipa_class=personal_standard` → `is_irreversible=True`), requires OAuth AAL2 (`ganpyeon_injeung_kakao_aal2`), and enforces `requires_auth=True`. A citizen must confirm the payment in the permission gauntlet modal (`[Y 한번만 / A 세션 자동 / N 거부]`) before the dispatcher forwards the call.
 
 ## Worked example
 

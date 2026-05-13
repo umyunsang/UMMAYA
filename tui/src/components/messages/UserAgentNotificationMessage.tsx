@@ -3,7 +3,7 @@ import type { TextBlockParam } from 'src/sdk-compat.js';
 import * as React from 'react';
 import { BLACK_CIRCLE } from '../../constants/figures.js';
 import { Box, Text, type TextProps } from '../../ink.js';
-import { extractTag } from '../../utils/messages.js';
+import { extractTag } from '../../utils/messageText.js';
 type Props = {
   addMargin: boolean;
   param: TextBlockParam;

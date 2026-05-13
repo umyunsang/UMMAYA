@@ -71,11 +71,11 @@ describe.skip('dispatchPrimitive (server-side-ack) — superseded by register-an
     registry = new PendingCallRegistry()
   })
 
-  test('lookup returns ok=true with ack envelope', async () => {
+  test('find returns ok=true with ack envelope', async () => {
     const result = (await dispatchPrimitive({
       primitive: 'find',
       args: { mode: 'search', query: '날씨' },
-      context: fakeContext('lookup-use-1'),
+      context: fakeContext('find-use-1'),
       registry,
       bridge: fakeBridge(),
     })) as unknown as { data: { ok: boolean; result?: Record<string, unknown> } }
@@ -83,10 +83,10 @@ describe.skip('dispatchPrimitive (server-side-ack) — superseded by register-an
     expect(result.data.ok).toBe(true)
     expect(result.data.result?.['dispatched_via']).toBe('backend-server-side')
     expect(result.data.result?.['primitive']).toBe('find')
-    expect(result.data.result?.['tool_use_id']).toBe('lookup-use-1')
+    expect(result.data.result?.['tool_use_id']).toBe('find-use-1')
   })
 
-  test('verify forwards args verbatim — tool_id preserved (FR-009 / I-V6)', async () => {
+  test('check forwards args verbatim — tool_id preserved (FR-009 / I-V6)', async () => {
     const args = {
       tool_id: 'mock_verify_module_modid',
       params: {
@@ -99,7 +99,7 @@ describe.skip('dispatchPrimitive (server-side-ack) — superseded by register-an
     const result = (await dispatchPrimitive({
       primitive: 'check',
       args,
-      context: fakeContext('verify-use-1'),
+      context: fakeContext('check-use-1'),
       registry,
       bridge: fakeBridge(),
     })) as unknown as { data: { ok: boolean; result?: Record<string, unknown> } }
@@ -112,11 +112,11 @@ describe.skip('dispatchPrimitive (server-side-ack) — superseded by register-an
     expect(args.params.scope_list).toEqual(['find:hometax.simplified'])
   })
 
-  test('submit returns ack with submit primitive name', async () => {
+  test('send returns ack with send primitive name', async () => {
     const result = (await dispatchPrimitive({
       primitive: 'send',
       args: { tool_id: 'mock_submit_module_hometax_taxreturn' },
-      context: fakeContext('submit-use-1'),
+      context: fakeContext('send-use-1'),
       registry,
       bridge: fakeBridge(),
     })) as unknown as { data: { ok: boolean; result?: Record<string, unknown> } }

@@ -52,12 +52,13 @@ causes:
 entries:
   # ── W1: @anthropic-ai/sdk → src/sdk-compat.js (mostly 2-line diffs) ──
   - path: tui/src/components/FallbackToolUseErrorMessage.tsx
-    cause: W1
-    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
-    notes: "Single SDK type import substitution."
+    cause: W1,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; .github/workflows/tui-boot-smoke.yml"
+    notes: "Single SDK type import substitution; Linux Bun loader requires direct messageText.js import for extractTag."
   - path: tui/src/components/MessageSelector.tsx
-    cause: W1
-    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
+    cause: W1,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; .github/workflows/tui-boot-smoke.yml"
+    notes: "SDK type import substitution; Linux Bun loader requires direct messageText.js import for extractTag."
   - path: tui/src/components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx
     cause: W1
     spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
@@ -68,17 +69,20 @@ entries:
     cause: W1
     spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
   - path: tui/src/components/messages/UserAgentNotificationMessage.tsx
-    cause: W1
-    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
+    cause: W1,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; .github/workflows/tui-boot-smoke.yml"
+    notes: "SDK type import substitution; Linux Bun loader requires direct messageText.js import for extractTag."
   - path: tui/src/components/messages/UserBashInputMessage.tsx
-    cause: W1
-    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
+    cause: W1,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; .github/workflows/tui-boot-smoke.yml"
+    notes: "SDK type import substitution; Linux Bun loader requires direct messageText.js import for extractTag."
   - path: tui/src/components/messages/UserChannelMessage.tsx
     cause: W1
     spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
   - path: tui/src/components/messages/UserCommandMessage.tsx
-    cause: W1
-    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
+    cause: W1,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; .github/workflows/tui-boot-smoke.yml"
+    notes: "SDK type import substitution; Linux Bun loader requires direct messageText.js import for extractTag."
   - path: tui/src/components/messages/UserPromptMessage.tsx
     cause: W1
     spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
@@ -89,8 +93,9 @@ entries:
     cause: W1
     spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
   - path: tui/src/components/messages/UserTextMessage.tsx
-    cause: W1
-    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
+    cause: W1,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; .github/workflows/tui-boot-smoke.yml"
+    notes: "SDK type import substitution; Linux Bun loader requires direct messageText.js import for extractTag."
   - path: tui/src/components/messages/UserToolResultMessage/UserToolErrorMessage.tsx
     cause: W1
     spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A"
@@ -124,6 +129,14 @@ entries:
     cause: W2
     spec_ref: "docs/requirements/ummaya-migration-tree.md § 마스코트 · 브랜딩 확정"
     notes: "Anthropic Opus 1M context promo replaced with UMMAYA K-EXAONE tagline."
+  - path: tui/src/components/Onboarding.tsx
+    cause: W2
+    spec_ref: "specs/034-tui-component-catalog/artifacts/catalog-fragment-root.md; docs/requirements/ummaya-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "Fresh-install onboarding visible text must identify UMMAYA and link UMMAYA security guidance while preserving CC step/keybinding structure."
+  - path: tui/src/components/TrustDialog/TrustDialog.tsx
+    cause: W2
+    spec_ref: "specs/034-tui-component-catalog/artifacts/catalog-fragment-safety.md; docs/requirements/ummaya-migration-tree.md § 마스코트 · 브랜딩 확정"
+    notes: "Fresh-install project trust prompt visible text must identify UMMAYA and link UMMAYA security guidance while preserving CC trust semantics."
 
   # ── W3: mascot rewrite (Clawd → UFO, palette violet) ──
   - path: tui/src/components/LogoV2/AnimatedClawd.tsx
@@ -222,6 +235,22 @@ entries:
     cause: W15,W8
     spec_ref: ".github/workflows/package-npm.yml, .github/workflows/publish-npm.yml"
     notes: "Linux Bun loader requires direct messageText.js import for text/synthetic-message helpers; behavior is unchanged and package boot smoke stays deterministic."
+  - path: tui/src/components/messages/UserBashOutputMessage.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageText.js import for extractTag; behavior is unchanged."
+  - path: tui/src/components/messages/UserLocalCommandOutputMessage.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageText.js import for extractTag; behavior is unchanged."
+  - path: tui/src/components/messages/UserMemoryInputMessage.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageText.js import for extractTag; behavior is unchanged."
+  - path: tui/src/components/tasks/AsyncAgentDetailDialog.tsx
+    cause: W15
+    spec_ref: ".github/workflows/tui-boot-smoke.yml"
+    notes: "Linux Bun loader requires direct messageText.js import for extractTag; behavior is unchanged."
   - path: tui/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx
     cause: W13,W1
     spec_ref: "#1633 (Anthropic queryHaiku auto-naming removal), #2293 (utils/auth removal)"

@@ -1,6 +1,6 @@
 ---
 tool_id: kma_pre_warning
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -15,7 +15,7 @@ Retrieves the list of weather pre-warning (기상예비특보) announcements fro
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | Korea Meteorological Administration (KMA) / data.go.kr |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/kma/kma_pre_warning.py` |
 
 ## Envelope

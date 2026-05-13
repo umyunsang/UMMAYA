@@ -104,8 +104,8 @@ def test_build_verify_session_context_normalizes_tool_id_scopes() -> None:
             "tool_id": "mock_verify_mydata",
             "params": {
                 "scope_list": [
-                    "lookup:mohw_welfare_eligibility_search",
-                    "submit:mock_welfare_application_submit_v1",
+                    "find:mohw_welfare_eligibility_search",
+                    "send:mock_welfare_application_submit_v1",
                 ],
             },
         },
@@ -124,8 +124,8 @@ def test_build_verify_session_context_canonicalizes_gov24_submit_tool_scope() ->
             "tool_id": "mock_verify_module_simple_auth",
             "params": {
                 "scope_list": [
-                    "submit:mock_submit_module_gov24_minwon",
-                    "submit:mock.submit_module_gov24_minwon",
+                    "send:mock_submit_module_gov24_minwon",
+                    "send:mock.submit_module_gov24_minwon",
                 ],
             },
         },
@@ -143,7 +143,7 @@ def test_build_verify_session_context_flattens_nested_legacy_context() -> None:
         {
             "tool_id": "mock_verify_module_modid",
             "params": {
-                "scope_list": ["submit:gov24.minwon"],
+                "scope_list": ["send:gov24.minwon"],
                 "purpose_ko": "주민등록등본 발급 민원 신청",
                 "session_context": {"session_id": "GOV24-MINWON-SESSION-001"},
             },
@@ -430,7 +430,7 @@ def test_ensure_mock_disclosure_removes_unsupported_gov24_next_steps() -> None:
                 "안내사항:",
                 "인증 절차 완료: 간편인증 모듈을 통해 위임 토큰 발급",
                 "민원 신청 완료: 정부24 시스템에 정식 접수",
-                "신청 ID: urn:ummaya:submit:abc",
+                "신청 ID: urn:ummaya:send:abc",
                 "접수번호를 보관하시면 조회 시 필요합니다.",
                 "접수번호를 확인하시고 필요시 보관해주세요.",
                 "발급 완료 시 등록된 연락처로 알림이 발송됩니다.",
@@ -491,7 +491,7 @@ def test_ensure_mock_disclosure_normalizes_gov24_mock_submit_summary() -> None:
                 "정부24 주민등록등본 발급 민원 신청이 완료되었습니다!",
                 "접수번호: gov24-2026-05-07-MW-4FA74579",
                 "거래 ID: "
-                "urn:ummaya:submit:807823304ad5dfeb0b4d8b938bf8f493c76ea9f30d2b7abecee3401179faaf84",
+                "urn:ummaya:send:807823304ad5dfeb0b4d8b938bf8f493c76ea9f30d2b7abecee3401179faaf84",
                 "신청자: 홍길동",
                 "수령 방법: 온라인 발급",
                 "세션 ID: GOV24-MINWON-SESSION-001",
@@ -510,7 +510,7 @@ def test_ensure_mock_disclosure_normalizes_gov24_mock_submit_summary() -> None:
     assert "시연 환경에서 접수되었습니다" in disclosed
     assert "gov24-2026-05-07-MW-4FA74579 (시연용)" in disclosed
     assert (
-        "urn:ummaya:submit:807823304ad5dfeb0b4d8b938bf8f493c76ea9f30d2b7abecee3401179faaf84"
+        "urn:ummaya:send:807823304ad5dfeb0b4d8b938bf8f493c76ea9f30d2b7abecee3401179faaf84"
         in disclosed
     )
     assert "홍길동" in disclosed
@@ -535,7 +535,7 @@ def test_ensure_mock_disclosure_normalizes_hometax_mock_submit_summary() -> None
                 "작년 종합소득세 신고 절차가 완료되었습니다.",
                 "접수번호: hometax-2026-05-07-RX-76814FEF",
                 "거래 ID: "
-                "urn:ummaya:submit:72d28a717acb576351be4106aa78b4a8cd552bd889b6e79b5875242f76b7507b",
+                "urn:ummaya:send:72d28a717acb576351be4106aa78b4a8cd552bd889b6e79b5875242f76b7507b",
                 "총 신고 소득: 42,000,000원",
                 "홈택스 로그인 후 신고 내역에서 확인 가능합니다.",
                 "기한 내 추가 수정이 필요하면 홈택스에서 직접 진행하실 수 있습니다.",
@@ -546,7 +546,7 @@ def test_ensure_mock_disclosure_normalizes_hometax_mock_submit_summary() -> None
     assert "홈택스 종합소득세 신고가 시연 환경에서 접수되었습니다" in disclosed
     assert "hometax-2026-05-07-RX-76814FEF (시연용)" in disclosed
     assert (
-        "urn:ummaya:submit:72d28a717acb576351be4106aa78b4a8cd552bd889b6e79b5875242f76b7507b"
+        "urn:ummaya:send:72d28a717acb576351be4106aa78b4a8cd552bd889b6e79b5875242f76b7507b"
         in disclosed
     )
     assert "42,000,000원" in disclosed

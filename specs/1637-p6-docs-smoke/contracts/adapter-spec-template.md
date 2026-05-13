@@ -113,7 +113,7 @@ UMMAYA: <expected Korean answer summarizing the adapter response>
 
 ## Lint rules (codify in implement phase)
 
-A structural linter (proposed `scripts/lint_adapter_specs.py`, deferred to "Auto-generated adapter spec stubs from Pydantic docstrings" follow-up Epic) MUST verify:
+A structural linter (proposed `scripts/lint_adapter_specs.py`, deferred to "Auto-generated adapter spec stubs from Pydantic docstrings" follow-up Epic) MUST check:
 
 1. YAML front matter parses; `tool_id`, `primitive`, `tier`, `permission_tier` all present and within allowed values.
 2. All seven `## ...` headings present in the listed order.

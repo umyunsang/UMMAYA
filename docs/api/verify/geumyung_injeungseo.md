@@ -1,6 +1,6 @@
 ---
 tool_id: mock_verify_geumyung_injeungseo
-primitive: verify
+primitive: check
 tier: mock
 permission_tier: 2
 ---
@@ -15,7 +15,7 @@ Verifies a citizen's 금융인증서 (Financial Certificate, KFTC) session store
 |---|---|
 | Classification | Mock · Permission tier 2 |
 | Source | 금융결제원 금융인증서 API specification (OOS shape-mirror) |
-| Primitive | `verify` |
+| Primitive | `check` |
 | Module | `src/ummaya/tools/mock/verify_geumyung_injeungseo.py` |
 
 ## Envelope

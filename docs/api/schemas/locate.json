@@ -1,0 +1,32 @@
+{
+  "$defs": {
+    "_ResolveLocationOutput": {
+      "description": "Placeholder output schema for locate tool registration.",
+      "title": "_ResolveLocationOutput"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/locate.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "LLM-visible locate input — provider-adapter envelope.\n\nLocation resolution is no longer a monolithic ``query/want`` façade. The\nmodel chooses a provider endpoint adapter from ``<available_adapters>`` and\nfills that adapter's schema directly.",
+  "properties": {
+    "params": {
+      "additionalProperties": true,
+      "description": "Validated against the selected locate adapter's input_schema.",
+      "title": "Params",
+      "type": "object"
+    },
+    "tool_id": {
+      "description": "Locate adapter id from <available_adapters>, e.g. 'kakao_keyword_search', 'kakao_address_search', 'kakao_coord_to_region', 'juso_adm_cd_lookup', or 'sgis_adm_cd_lookup'.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Tool Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tool_id",
+    "params"
+  ],
+  "title": "locate",
+  "type": "object"
+}

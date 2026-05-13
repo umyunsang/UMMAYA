@@ -513,7 +513,7 @@ def check_rejected_submit(text: str, allow_rejected: bool) -> CheckResult:
         name="submit_rejected_status",
         status="fail",
         details=(
-            "A submit primitive returned status='rejected'. This is an "
+            "A send primitive returned status='rejected'. This is an "
             "abnormal terminal flow for a happy-path scenario."
         ),
         evidence=[reason[:240]],

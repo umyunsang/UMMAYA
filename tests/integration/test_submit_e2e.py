@@ -75,7 +75,7 @@ class TestSubmitFinesPayHappyPath:
         )
         assert isinstance(result, SubmitOutput)
         assert result.status == SubmitStatus.succeeded
-        assert result.transaction_id.startswith("urn:ummaya:submit:")
+        assert result.transaction_id.startswith("urn:ummaya:send:")
         assert isinstance(result.adapter_receipt, dict)
         assert len(result.adapter_receipt) > 0
 
@@ -103,7 +103,7 @@ class TestSubmitFinesPayHappyPath:
 
     @pytest.mark.asyncio
     async def test_submit_transaction_id_is_urn(self) -> None:
-        """transaction_id must be a URN in urn:ummaya:submit: format (FR-004)."""
+        """transaction_id must be a URN in urn:ummaya:send: format (FR-004)."""
         from pydantic import BaseModel, ConfigDict
 
         class _MinimalAuthContext(BaseModel):
@@ -117,9 +117,9 @@ class TestSubmitFinesPayHappyPath:
             auth_context=auth_ctx,
         )
         assert isinstance(result, SubmitOutput)
-        assert result.transaction_id.startswith("urn:ummaya:submit:")
+        assert result.transaction_id.startswith("urn:ummaya:send:")
         # SHA-256 hex is 64 chars; total URN length tracks the active project prefix.
-        assert len(result.transaction_id) == len("urn:ummaya:submit:") + 64
+        assert len(result.transaction_id) == len("urn:ummaya:send:") + 64
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +155,7 @@ class TestSubmitWelfareApplicationHappyPath:
         )
         assert isinstance(result, SubmitOutput)
         assert result.status == SubmitStatus.succeeded
-        assert result.transaction_id.startswith("urn:ummaya:submit:")
+        assert result.transaction_id.startswith("urn:ummaya:send:")
 
     @pytest.mark.asyncio
     async def test_submit_welfare_adapter_receipt_contains_benefit_code(self) -> None:
@@ -223,7 +223,7 @@ def test_adapter_registry_carries_primitive_and_tool_id_separately() -> None:
     )
 
     # The primitive field must identify the verb, not the adapter
-    assert registration.primitive == AdapterPrimitive.submit, (
+    assert registration.primitive == AdapterPrimitive.send, (
         f"Expected primitive='send', got {registration.primitive!r}"
     )
 

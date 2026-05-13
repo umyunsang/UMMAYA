@@ -14,7 +14,7 @@ References
 ----------
 - ``specs/2297-zeta-e2e-smoke/data-model.md § 2`` — validation rules
 - ``specs/2297-zeta-e2e-smoke/contracts/verify-input-shape.md`` — I-V4
-- ``prompts/system_v1.md <verify_families>`` — canonical source-of-truth
+- ``prompts/system_v1.md <check_families>`` — canonical source-of-truth
 """
 
 from __future__ import annotations

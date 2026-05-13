@@ -12,7 +12,7 @@ check / send so the citizen-OPAQUE chain
 (check → find → send) the system prompt teaches is actually callable.
 
 For ``check``, the input_schema declares ``family_hint: str`` permissively —
-the system prompt's ``<verify_families>`` table is the source of valid family
+the system prompt's ``<check_families>`` table is the source of valid family
 values (10 active families per Epic ε #2296). The dispatcher's
 ``_VERIFY_ADAPTERS`` registry validates the value at call time and returns
 ``VerifyMismatchError`` if a non-registered family is passed (FR-007 / FR-010
@@ -262,7 +262,7 @@ class _SubmitInputForLLM(BaseModel):
         description=(
             "Registered send adapter id (e.g. mock_submit_module_hometax_"
             "taxreturn). MUST match a tool_id from the system prompt's "
-            "<verify_chain_pattern> 기본 매핑 section."
+            "<check_chain_pattern> 기본 매핑 section."
         ),
     )
     params: dict[str, object] = Field(
@@ -280,7 +280,7 @@ class _VerifyInputForLLM(BaseModel):
     """LLM-visible check input schema — accepts both citizen-shape and legacy-shape.
 
     **Citizen-facing shape** (emitted by K-EXAONE per ``prompts/system_v1.md``
-    v2 ``<verify_chain_pattern>``):
+    v2 ``<check_chain_pattern>``):
 
     .. code-block:: json
 
@@ -331,8 +331,8 @@ class _VerifyInputForLLM(BaseModel):
     tool_id: str | None = Field(
         default=None,
         description=(
-            "Verify adapter tool_id. MUST match a row in the system prompt's "
-            "<verify_families> table "
+            "Check adapter tool_id. MUST match a row in the system prompt's "
+            "<check_families> table "
             "(e.g. 'mock_verify_module_modid'). "
             "Pre-validator translates this to family_hint."
         ),
@@ -356,7 +356,7 @@ class _VerifyInputForLLM(BaseModel):
         default="",
         description=(
             "(legacy) Authentication family identifier. One of the 10 active "
-            "values documented in the system prompt's <verify_families> table: "
+            "values documented in the system prompt's <check_families> table: "
             "gongdong_injeungseo / geumyung_injeungseo / ganpyeon_injeung / "
             "mobile_id / mydata / simple_auth_module / modid / kec / "
             "geumyung_module / any_id_sso. "
@@ -472,7 +472,7 @@ VERIFY_TOOL = GovAPITool(
         "param into the subsequent find(mode='fetch', params={'delegation_"
         "context': ctx}) and send(delegation_context=ctx) calls.\n\n"
         "family_hint values + canonical AAL hints are documented in the "
-        "system prompt's <verify_families> table. The LLM defaults to the "
+        "system prompt's <check_families> table. The LLM defaults to the "
         "lowest AAL satisfying the citizen's stated purpose.\n\n"
         "Exception: family_hint='any_id_sso' returns an IdentityAssertion "
         "with no DelegationToken — do NOT chain a send after this check."
@@ -514,7 +514,7 @@ SUBMIT_TOOL = GovAPITool(
     input_schema=_SubmitInputForLLM,
     output_schema=_LookupOutput,
     llm_description=(
-        "Submit primitive — invokes a write-transaction adapter (홈택스 신고, "
+        "send primitive — invokes a write-transaction adapter (홈택스 신고, "
         "정부24 민원, mydata 액션 등). REQUIRES a valid DelegationContext "
         "from a prior check call with matching scope. tool_id MUST be one of "
         "the registered send adapters (e.g. mock_submit_module_hometax_"

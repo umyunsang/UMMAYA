@@ -32,16 +32,16 @@ function makeManifestFrame(
     {
       tool_id: 'nmc_emergency_search',
       name: 'NMC Emergency Bed Availability',
-      primitive: 'lookup',
+      primitive: 'find',
       policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
       source_mode: 'live',
     },
     {
-      tool_id: 'resolve_location',
-      name: 'Resolve Location',
-      primitive: 'resolve_location',
+      tool_id: 'kakao_address_search',
+      name: 'Kakao Address Search',
+      primitive: 'locate',
       policy_authority_url: undefined,
-      source_mode: 'internal',
+      source_mode: 'live',
     },
   ]
   return {
@@ -99,7 +99,7 @@ describe('ingestManifestFrame: cache replace semantics (FR-016)', () => {
         {
           tool_id: 'nmc_emergency_search',
           name: 'NMC Emergency',
-          primitive: 'lookup',
+          primitive: 'find',
           policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
           source_mode: 'live',
         },
@@ -114,7 +114,7 @@ describe('ingestManifestFrame: cache replace semantics (FR-016)', () => {
         {
           tool_id: 'kma_forecast_fetch',
           name: 'KMA Weather Forecast',
-          primitive: 'lookup',
+          primitive: 'find',
           policy_authority_url: 'https://www.data.go.kr/data/15059093/openapi.do',
           source_mode: 'live',
         },
@@ -138,7 +138,7 @@ describe('ingestManifestFrame: cache replace semantics (FR-016)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// resolveAdapter — lookup by tool_id
+// resolveAdapter — resolve by tool_id
 // ---------------------------------------------------------------------------
 
 describe('resolveAdapter', () => {
@@ -151,7 +151,7 @@ describe('resolveAdapter', () => {
     const entry = resolveAdapter('nmc_emergency_search')
     expect(entry).toBeDefined()
     expect(entry!.tool_id).toBe('nmc_emergency_search')
-    expect(entry!.primitive).toBe('lookup')
+    expect(entry!.primitive).toBe('find')
     expect(entry!.policy_authority_url).toBe('https://www.e-gen.or.kr/nemc/main.do')
   })
 
@@ -160,11 +160,11 @@ describe('resolveAdapter', () => {
     expect(resolveAdapter('bogus_tool_xyz')).toBeUndefined()
   })
 
-  test('internal entry resolves without policy_authority_url', () => {
+  test('locate entry resolves without policy_authority_url', () => {
     ingestManifestFrame(makeManifestFrame())
-    const entry = resolveAdapter('resolve_location')
+    const entry = resolveAdapter('kakao_address_search')
     expect(entry).toBeDefined()
-    expect(entry!.source_mode).toBe('internal')
+    expect(entry!.source_mode).toBe('live')
     expect(entry!.policy_authority_url == null || entry!.policy_authority_url === undefined).toBe(true)
   })
 })

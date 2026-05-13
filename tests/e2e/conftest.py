@@ -946,7 +946,7 @@ def _build_registry_and_executor() -> tuple[ToolRegistry, ToolExecutor]:
     Registers executor adapters for:
     - resolve_location: wraps resolve_location() coroutine; httpx.AsyncClient.get
       is patched at the class level by run_scenario() so no explicit client arg needed.
-    - lookup: wraps lookup() coroutine; captures registry + executor in closure so
+    - find: wraps lookup() coroutine; captures registry + executor in closure so
       lookup(mode=search) can use the BM25 index and lookup(mode=fetch) can invoke
       the concrete data adapters via executor.invoke().
     - koroad_accident_hazard_search: KOROAD data adapter (V1-V6 validated).
@@ -974,7 +974,7 @@ def _build_registry_and_executor() -> tuple[ToolRegistry, ToolExecutor]:
     recovery = RecoveryExecutor()
     executor = ToolExecutor(registry, recovery_executor=recovery)
 
-    # Register MVP LLM-visible surface (resolve_location + lookup)
+    # Register MVP LLM-visible surface (locate + find)
     from ummaya.tools.mvp_surface import register_mvp_surface
 
     register_mvp_surface(registry)
@@ -1039,10 +1039,10 @@ def _map_stop_reason(events: list[QueryEvent]) -> str:
 
 
 def _extract_fetched_adapters(events: list[QueryEvent]) -> list[str]:
-    """Return adapter IDs from actual tool_use events (lookup mode=fetch).
+    """Return adapter IDs from actual fetch-only find tool_use events.
 
     Derived from emitted QueryEvents rather than the scripted ScenarioScript
-    so that regressions where lookup(fetch) targets the wrong tool_id are caught.
+    so that regressions where find targets the wrong tool_id are caught.
     """
     result: list[str] = []
     for event in events:

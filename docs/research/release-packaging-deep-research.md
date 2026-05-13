@@ -51,7 +51,9 @@ Name and registry checks as of 2026-05-07:
 npm package state after implementation:
 
 - Root `package.json` is named `ummaya`, version `0.1.0`.
-- `bin/ummaya` is executable and requires Bun `>=1.3.0`.
+- `bin/ummaya` is executable, can be launched by Node or Bun, and selects a
+  compatible Bun `>=1.3.0` from `UMMAYA_BUN`, `PATH`, `~/.bun/bin/bun`, or
+  common Homebrew locations before loading the Bun TUI entrypoint.
 - `files` allowlist includes only the npm wrapper, TUI runtime source, Python
   backend source, prompts, and canonical plugin-validation runtime files.
 - `scripts/check-npm-package.mjs` enforces content, size, and entry-count gates.
@@ -70,7 +72,8 @@ Homebrew state after implementation:
 - The cask depends on `oven-sh/bun/bun` and `uv`, installs npm package
   dependencies in `preflight`, and writes a Caskroom-local wrapper that
   executes `#{HOMEBREW_PREFIX}/opt/bun/bin/bun` directly so stale user PATH
-  entries do not select an older Bun.
+  entries do not select an older Bun. The package launcher still re-checks Bun
+  `>=1.3.0` at runtime and reports all checked candidates when none qualify.
 - The npm package includes `bun.lock` for cask/Bun dependency installation and
   `npm-shrinkwrap.json` for npm consumers. Future cask installs can use Bun's
   frozen lockfile path. Older tarballs without `bun.lock` fall back to

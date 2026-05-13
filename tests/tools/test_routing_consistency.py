@@ -164,7 +164,7 @@ class TestInvariant4UniqueToolId:
 # ---------------------------------------------------------------------------
 # Check 7 — Tool list closure
 # The Python-side registered tool set matches the 14-adapter closed set.
-# LLM-visible primitive names (lookup/submit/verify) and auxiliary
+# LLM-visible primitive names (find/locate/send/check) and auxiliary
 # tools live on the TUI side and are validated by `bun test` CI.
 # ---------------------------------------------------------------------------
 

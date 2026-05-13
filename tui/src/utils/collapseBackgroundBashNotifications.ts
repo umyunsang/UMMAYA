@@ -9,7 +9,7 @@ import type {
   RenderableMessage,
 } from '../types/message.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
-import { extractTag } from './messages.js'
+import { extractTag } from './messageText.js'
 
 function isCompletedBackgroundBash(
   msg: RenderableMessage,

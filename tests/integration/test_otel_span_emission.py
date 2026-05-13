@@ -93,7 +93,7 @@ async def test_submit_emits_gen_ai_tool_loop_iteration_span(
     tool_id = "mock_otel_parity_submit_v1"
     registration = AdapterRegistration(
         tool_id=tool_id,
-        primitive=AdapterPrimitive.submit,
+        primitive=AdapterPrimitive.send,
         module_path="tests.integration.test_otel_span_emission",
         input_model_ref="tests.integration.test_otel_span_emission:_NoopIn",
         source_mode=AdapterSourceMode.HARNESS_ONLY,
@@ -114,7 +114,7 @@ async def test_submit_emits_gen_ai_tool_loop_iteration_span(
 
     async def _invoke(_params: dict[str, object]) -> SubmitOutput:
         return SubmitOutput(
-            transaction_id="urn:ummaya:submit:test",
+            transaction_id="urn:ummaya:send:test",
             status=SubmitStatus.succeeded,
             adapter_receipt={"ok": True},
         )

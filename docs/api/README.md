@@ -1,6 +1,6 @@
 # UMMAYA API Catalog
 
-This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637). Twenty-one adapters span seven Korean ministries and agencies: twelve call live `data.go.kr` or public-infrastructure endpoints, eight replay public-spec-mirrored fixtures (six identity-verification and two submission), and one is the `resolve_location` meta-tool. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
+This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637). Active adapters span seven Korean ministries and agencies: live `find` adapters call `data.go.kr` or public-infrastructure endpoints, live `locate` adapters wrap provider-specific geocoding APIs, and mock `send`/`check` adapters replay public-spec-mirrored fixtures. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
 
 The catalog is intended for three audiences:
 
@@ -12,7 +12,7 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 
 ## How to use this catalog
 
-1. **Find an adapter** — scan Matrix A (by source) when the ministry is known, Matrix B (by primitive) when the verb (`lookup` / `submit` / `verify`) is known. Both matrices are sorted alphabetically by `tool_id`.
+1. **Find an adapter** — scan Matrix A (by source) when the ministry is known, Matrix B (by primitive) when the verb (`find` / `locate` / `send` / `check`) is known. Both matrices are sorted alphabetically by `tool_id`.
 2. **Read the spec** — open the linked Markdown file. The seven mandatory sections give classification, envelope reference, bilingual search hints, endpoint, permission rationale, worked example, and constraints.
 3. **Consume the schema** — the JSON Schema file linked from each row is Draft 2020-12 and validates against any generic schema validator. Re-run `python scripts/build_schemas.py --check` to verify the on-disk schemas still match the source Pydantic models.
 
@@ -20,31 +20,35 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 
 | Source | tool_id | Primitive | Tier | Permission | Spec | Schema |
 |---|---|---|---|---|---|---|
-| KOROAD | `koroad_accident_search` | `lookup` | live | 1 | [koroad/accident_search.md](./koroad/accident_search.md) | [koroad_accident_search.json](./schemas/koroad_accident_search.json) |
-| KOROAD | `koroad_accident_hazard_search` | `lookup` | live | 1 | [koroad/accident_hazard_search.md](./koroad/accident_hazard_search.md) | [koroad_accident_hazard_search.json](./schemas/koroad_accident_hazard_search.json) |
-| KMA | `kma_current_observation` | `lookup` | live | 1 | [kma/current_observation.md](./kma/current_observation.md) | [kma_current_observation.json](./schemas/kma_current_observation.json) |
-| KMA | `kma_short_term_forecast` | `lookup` | live | 1 | [kma/short_term_forecast.md](./kma/short_term_forecast.md) | [kma_short_term_forecast.json](./schemas/kma_short_term_forecast.json) |
-| KMA | `kma_ultra_short_term_forecast` | `lookup` | live | 1 | [kma/ultra_short_term_forecast.md](./kma/ultra_short_term_forecast.md) | [kma_ultra_short_term_forecast.json](./schemas/kma_ultra_short_term_forecast.json) |
-| KMA | `kma_weather_alert_status` | `lookup` | live | 1 | [kma/weather_alert_status.md](./kma/weather_alert_status.md) | [kma_weather_alert_status.json](./schemas/kma_weather_alert_status.json) |
-| KMA | `kma_pre_warning` | `lookup` | live | 1 | [kma/pre_warning.md](./kma/pre_warning.md) | [kma_pre_warning.json](./schemas/kma_pre_warning.json) |
-| KMA | `kma_forecast_fetch` | `lookup` | live | 1 | [kma/forecast_fetch.md](./kma/forecast_fetch.md) | [kma_forecast_fetch.json](./schemas/kma_forecast_fetch.json) |
-| HIRA | `hira_hospital_search` | `lookup` | live | 1 | [hira/hospital_search.md](./hira/hospital_search.md) | [hira_hospital_search.json](./schemas/hira_hospital_search.json) |
-| NMC | `nmc_emergency_search` | `lookup` | live | 3 | [nmc/emergency_search.md](./nmc/emergency_search.md) | [nmc_emergency_search.json](./schemas/nmc_emergency_search.json) |
-| NFA119 | `nfa_emergency_info_service` | `lookup` | live | 1 | [nfa119/emergency_info_service.md](./nfa119/emergency_info_service.md) | [nfa_emergency_info_service.json](./schemas/nfa_emergency_info_service.json) |
-| MOHW | `mohw_welfare_eligibility_search` | `lookup` | live | 1 | [mohw/welfare_eligibility_search.md](./mohw/welfare_eligibility_search.md) | [mohw_welfare_eligibility_search.json](./schemas/mohw_welfare_eligibility_search.json) |
-| Mock — Verify | `mock_verify_digital_onepass` | `verify` | mock | 2 | [verify/digital_onepass.md](./verify/digital_onepass.md) | [mock_verify_digital_onepass.json](./schemas/mock_verify_digital_onepass.json) |
-| Mock — Verify | `mock_verify_mobile_id` | `verify` | mock | 2 | [verify/mobile_id.md](./verify/mobile_id.md) | [mock_verify_mobile_id.json](./schemas/mock_verify_mobile_id.json) |
-| Mock — Verify | `mock_verify_gongdong_injeungseo` | `verify` | mock | 3 | [verify/gongdong_injeungseo.md](./verify/gongdong_injeungseo.md) | [mock_verify_gongdong_injeungseo.json](./schemas/mock_verify_gongdong_injeungseo.json) |
-| Mock — Verify | `mock_verify_geumyung_injeungseo` | `verify` | mock | 2 | [verify/geumyung_injeungseo.md](./verify/geumyung_injeungseo.md) | [mock_verify_geumyung_injeungseo.json](./schemas/mock_verify_geumyung_injeungseo.json) |
-| Mock — Verify | `mock_verify_ganpyeon_injeung` | `verify` | mock | 2 | [verify/ganpyeon_injeung.md](./verify/ganpyeon_injeung.md) | [mock_verify_ganpyeon_injeung.json](./schemas/mock_verify_ganpyeon_injeung.json) |
-| Mock — Verify | `mock_verify_mydata` | `verify` | mock | 2 | [verify/mydata.md](./verify/mydata.md) | [mock_verify_mydata.json](./schemas/mock_verify_mydata.json) |
-| Mock — Submit | `mock_traffic_fine_pay_v1` | `submit` | mock | 2 | [submit/traffic_fine_pay.md](./submit/traffic_fine_pay.md) | [mock_traffic_fine_pay_v1.json](./schemas/mock_traffic_fine_pay_v1.json) |
-| Mock — Submit | `mock_welfare_application_submit_v1` | `submit` | mock | 2 | [submit/welfare_application.md](./submit/welfare_application.md) | [mock_welfare_application_submit_v1.json](./schemas/mock_welfare_application_submit_v1.json) |
-| Geocoding | `resolve_location` | `lookup` (meta) | live | 1 | [resolve_location/index.md](./resolve_location/index.md) | [resolve_location.json](./schemas/resolve_location.json) |
+| KOROAD | `koroad_accident_search` | `find` | live | 1 | [koroad/accident_search.md](./koroad/accident_search.md) | [koroad_accident_search.json](./schemas/koroad_accident_search.json) |
+| KOROAD | `koroad_accident_hazard_search` | `find` | live | 1 | [koroad/accident_hazard_search.md](./koroad/accident_hazard_search.md) | [koroad_accident_hazard_search.json](./schemas/koroad_accident_hazard_search.json) |
+| KMA | `kma_current_observation` | `find` | live | 1 | [kma/current_observation.md](./kma/current_observation.md) | [kma_current_observation.json](./schemas/kma_current_observation.json) |
+| KMA | `kma_short_term_forecast` | `find` | live | 1 | [kma/short_term_forecast.md](./kma/short_term_forecast.md) | [kma_short_term_forecast.json](./schemas/kma_short_term_forecast.json) |
+| KMA | `kma_ultra_short_term_forecast` | `find` | live | 1 | [kma/ultra_short_term_forecast.md](./kma/ultra_short_term_forecast.md) | [kma_ultra_short_term_forecast.json](./schemas/kma_ultra_short_term_forecast.json) |
+| KMA | `kma_weather_alert_status` | `find` | live | 1 | [kma/weather_alert_status.md](./kma/weather_alert_status.md) | [kma_weather_alert_status.json](./schemas/kma_weather_alert_status.json) |
+| KMA | `kma_pre_warning` | `find` | live | 1 | [kma/pre_warning.md](./kma/pre_warning.md) | [kma_pre_warning.json](./schemas/kma_pre_warning.json) |
+| KMA | `kma_forecast_fetch` | `find` | live | 1 | [kma/forecast_fetch.md](./kma/forecast_fetch.md) | [kma_forecast_fetch.json](./schemas/kma_forecast_fetch.json) |
+| HIRA | `hira_hospital_search` | `find` | live | 1 | [hira/hospital_search.md](./hira/hospital_search.md) | [hira_hospital_search.json](./schemas/hira_hospital_search.json) |
+| NMC | `nmc_emergency_search` | `find` | live | 3 | [nmc/emergency_search.md](./nmc/emergency_search.md) | [nmc_emergency_search.json](./schemas/nmc_emergency_search.json) |
+| NFA119 | `nfa_emergency_info_service` | `find` | live | 1 | [nfa119/emergency_info_service.md](./nfa119/emergency_info_service.md) | [nfa_emergency_info_service.json](./schemas/nfa_emergency_info_service.json) |
+| MOHW | `mohw_welfare_eligibility_search` | `find` | live | 1 | [mohw/welfare_eligibility_search.md](./mohw/welfare_eligibility_search.md) | [mohw_welfare_eligibility_search.json](./schemas/mohw_welfare_eligibility_search.json) |
+| Mock — Check | `mock_verify_digital_onepass` | `check` | mock | 2 | [verify/digital_onepass.md](./verify/digital_onepass.md) | [mock_verify_digital_onepass.json](./schemas/mock_verify_digital_onepass.json) |
+| Mock — Check | `mock_verify_mobile_id` | `check` | mock | 2 | [verify/mobile_id.md](./verify/mobile_id.md) | [mock_verify_mobile_id.json](./schemas/mock_verify_mobile_id.json) |
+| Mock — Check | `mock_verify_gongdong_injeungseo` | `check` | mock | 3 | [verify/gongdong_injeungseo.md](./verify/gongdong_injeungseo.md) | [mock_verify_gongdong_injeungseo.json](./schemas/mock_verify_gongdong_injeungseo.json) |
+| Mock — Check | `mock_verify_geumyung_injeungseo` | `check` | mock | 2 | [verify/geumyung_injeungseo.md](./verify/geumyung_injeungseo.md) | [mock_verify_geumyung_injeungseo.json](./schemas/mock_verify_geumyung_injeungseo.json) |
+| Mock — Check | `mock_verify_ganpyeon_injeung` | `check` | mock | 2 | [verify/ganpyeon_injeung.md](./verify/ganpyeon_injeung.md) | [mock_verify_ganpyeon_injeung.json](./schemas/mock_verify_ganpyeon_injeung.json) |
+| Mock — Check | `mock_verify_mydata` | `check` | mock | 2 | [verify/mydata.md](./verify/mydata.md) | [mock_verify_mydata.json](./schemas/mock_verify_mydata.json) |
+| Mock — Send | `mock_traffic_fine_pay_v1` | `send` | mock | 2 | [submit/traffic_fine_pay.md](./submit/traffic_fine_pay.md) | [mock_traffic_fine_pay_v1.json](./schemas/mock_traffic_fine_pay_v1.json) |
+| Mock — Send | `mock_welfare_application_submit_v1` | `send` | mock | 2 | [submit/welfare_application.md](./submit/welfare_application.md) | [mock_welfare_application_submit_v1.json](./schemas/mock_welfare_application_submit_v1.json) |
+| Geocoding | `juso_adm_cd_lookup` | `locate` | live | 1 | [locate/index.md](./locate/index.md) | [juso_adm_cd_lookup.json](./schemas/juso_adm_cd_lookup.json) |
+| Geocoding | `kakao_address_search` | `locate` | live | 1 | [locate/index.md](./locate/index.md) | [kakao_address_search.json](./schemas/kakao_address_search.json) |
+| Geocoding | `kakao_coord_to_region` | `locate` | live | 1 | [locate/index.md](./locate/index.md) | [kakao_coord_to_region.json](./schemas/kakao_coord_to_region.json) |
+| Geocoding | `kakao_keyword_search` | `locate` | live | 1 | [locate/index.md](./locate/index.md) | [kakao_keyword_search.json](./schemas/kakao_keyword_search.json) |
+| Geocoding | `sgis_adm_cd_lookup` | `locate` | live | 1 | [locate/index.md](./locate/index.md) | [sgis_adm_cd_lookup.json](./schemas/sgis_adm_cd_lookup.json) |
 
 ## Matrix B — adapters by primitive
 
-### `lookup` (13 entries — 12 ministry adapters + `resolve_location` meta)
+### `find` (12 ministry adapters)
 
 | tool_id | Source | Tier | Permission | Spec |
 |---|---|---|---|---|
@@ -60,16 +64,25 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | `mohw_welfare_eligibility_search` | MOHW | live | 1 | [mohw/welfare_eligibility_search.md](./mohw/welfare_eligibility_search.md) |
 | `nfa_emergency_info_service` | NFA119 | live | 1 | [nfa119/emergency_info_service.md](./nfa119/emergency_info_service.md) |
 | `nmc_emergency_search` | NMC | live | 3 (gated) | [nmc/emergency_search.md](./nmc/emergency_search.md) |
-| `resolve_location` | Geocoding (juso/sgis/kakao) | live (meta) | 1 | [resolve_location/index.md](./resolve_location/index.md) |
 
-### `submit` (2 entries)
+### `locate` (5 provider adapters)
+
+| tool_id | Source | Tier | Permission | Spec |
+|---|---|---|---|---|
+| `juso_adm_cd_lookup` | JUSO address-link | live | 1 | [locate/index.md](./locate/index.md) |
+| `kakao_address_search` | Kakao Local address search | live | 1 | [locate/index.md](./locate/index.md) |
+| `kakao_coord_to_region` | Kakao Local coord2regioncode | live | 1 | [locate/index.md](./locate/index.md) |
+| `kakao_keyword_search` | Kakao Local keyword search | live | 1 | [locate/index.md](./locate/index.md) |
+| `sgis_adm_cd_lookup` | SGIS reverse geocoding | live | 1 | [locate/index.md](./locate/index.md) |
+
+### `send` (2 entries)
 
 | tool_id | Source | Tier | Permission | Spec |
 |---|---|---|---|---|
 | `mock_traffic_fine_pay_v1` | data.go.kr (mock) | mock | 2 | [submit/traffic_fine_pay.md](./submit/traffic_fine_pay.md) |
 | `mock_welfare_application_submit_v1` | KFTC MyData (mock) | mock | 2 | [submit/welfare_application.md](./submit/welfare_application.md) |
 
-### `verify` (6 entries)
+### `check` (6 entries)
 
 | tool_id | Family | Tier | Permission | Spec |
 |---|---|---|---|---|
@@ -80,11 +93,17 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | `mock_verify_mobile_id` | 모바일 신분증 | mock | 2 | [verify/mobile_id.md](./verify/mobile_id.md) |
 | `mock_verify_mydata` | 마이데이터 | mock | 2 | [verify/mydata.md](./verify/mydata.md) |
 
-## Meta surface — `lookup`
+## Meta surface — `find`
 
-The `lookup` meta-tool is the LLM's primary entry point for `lookup`-class operations. It accepts `mode` (`"search"` for BM25 retrieval, `"fetch"` for adapter invocation) plus `tool_id` + `params` and dispatches to the correct adapter under the hood. `lookup` itself has its own JSON Schema export at [`schemas/lookup.json`](./schemas/lookup.json) but is NOT a content-bearing adapter — it is the dispatch surface every adapter row above flows through.
+The `find` meta-tool is the LLM's primary entry point for public-service read operations. It is fetch-only: the backend performs adapter discovery internally and injects candidate `tool_id` values into the system prompt, then the model calls `find({tool_id, params})`. Its active JSON Schema export is [`schemas/find.json`](./schemas/find.json).
 
 For implementation details see [`src/ummaya/tools/lookup.py`](../../src/ummaya/tools/lookup.py) and the BM25 + dense hybrid retrieval backend under [`src/ummaya/tools/retrieval/`](../../src/ummaya/tools/retrieval/).
+
+## Meta surface — `locate`
+
+The `locate` meta-tool is the LLM's provider-specific entry point for public location resolution. The model chooses one of the injected locate adapter IDs and calls `locate({tool_id, params})`. Its active JSON Schema export is [`schemas/locate.json`](./schemas/locate.json), and the provider adapter schemas are listed in Matrix A.
+
+For implementation details see [`src/ummaya/tools/location_adapters.py`](../../src/ummaya/tools/location_adapters.py) and backend helpers under [`src/ummaya/tools/geocoding/`](../../src/ummaya/tools/geocoding/).
 
 ## Conventions
 

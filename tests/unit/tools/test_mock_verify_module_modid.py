@@ -23,7 +23,7 @@ def test_modid_invoke_returns_transparency_fields(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["submit:hometax.tax-return"],
+            "scope_list": ["send:hometax.tax-return"],
             "session_id": "sess-modid-001",
             "ledger_root": tmp_path / "ledger",
         }
@@ -50,7 +50,7 @@ def test_modid_international_reference(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["verify:modid.identity"],
+            "scope_list": ["check:modid.identity"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -64,7 +64,7 @@ def test_modid_security_wrapping(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["verify:modid.identity"],
+            "scope_list": ["check:modid.identity"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -78,7 +78,7 @@ def test_modid_citizen_did_is_set(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["verify:modid.identity"],
+            "scope_list": ["check:modid.identity"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -94,7 +94,7 @@ def test_modid_delegation_token_prefix(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["submit:hometax.tax-return"],
+            "scope_list": ["send:hometax.tax-return"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -109,7 +109,7 @@ def test_modid_ledger_append(tmp_path: Path) -> None:
     ledger_dir = tmp_path / "ledger"
     invoke(
         {
-            "scope_list": ["lookup:hometax.simplified,submit:hometax.tax-return"],
+            "scope_list": ["find:hometax.simplified,send:hometax.tax-return"],
             "session_id": "sess-ledger-modid",
             "ledger_root": ledger_dir,
         }

@@ -45,8 +45,16 @@ export type OfficialMarketplaceSkipReason =
  * Check if official marketplace auto-install is disabled via environment variable.
  */
 export function isOfficialMarketplaceAutoInstallDisabled(): boolean {
-  return isEnvTruthy(
-    process.env.CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL,
+  if (
+    isEnvTruthy(
+      process.env.CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL,
+    )
+  ) {
+    return true
+  }
+
+  return !isEnvTruthy(
+    process.env.UMMAYA_ENABLE_ANTHROPIC_MARKETPLACE_AUTOINSTALL,
   )
 }
 

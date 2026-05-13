@@ -206,7 +206,7 @@ With macOS VoiceOver enabled (Cmd+F5 in Terminal.app), launch the TUI and naviga
 
 ## 15 · CI gate checklist
 
-Before opening the Epic H PR, verify:
+Before opening the Epic H PR, check:
 
 - [X] `bun test` passes (full TUI suite) — 367 pass, 0 fail.
 - [X] `uv run pytest` passes (full Python suite for Epic H deliverables) — `tests/memdir/` + `tests/tools/test_main_router.py` all green.

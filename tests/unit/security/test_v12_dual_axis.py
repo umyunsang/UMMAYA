@@ -55,7 +55,7 @@ def _base_kwargs(**overrides: object) -> dict[str, object]:
     """
     base: dict[str, object] = {
         "tool_id": "fake_v12_adapter",
-        "primitive": AdapterPrimitive.submit,
+        "primitive": AdapterPrimitive.send,
         "module_path": "ummaya.tools.mock.data_go_kr.fake_v12_adapter",
         "input_model_ref": "ummaya.tools.mock.data_go_kr.fake_v12_adapter:FakeInput",
         "source_mode": AdapterSourceMode.HARNESS_ONLY,

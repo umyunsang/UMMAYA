@@ -10,7 +10,7 @@
   "$id": "https://ummaya.example/api/schemas/hira_hospital_search.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Input schema for hira_hospital_search.\n\nQueries HIRA's hospital basis list endpoint by WGS84 coordinate and\nradius. All three parameters are required.\n\nObtain xPos / yPos from locate(want='coords') before calling\nthis tool — never guess coordinate values from model memory.",
+  "description": "Input schema for hira_hospital_search.\n\nQueries HIRA's hospital basis list endpoint by WGS84 coordinate and\nradius. All three parameters are required.\n\nObtain xPos / yPos from a coordinate-producing locate adapter before calling\nthis tool — never guess coordinate values from model memory.",
   "properties": {
     "clCd": {
       "anyOf": [
@@ -35,7 +35,7 @@
         }
       ],
       "default": null,
-      "description": "Optional medical-specialty filter (HIRA 진료과목코드). Accepts either the natural-language Korean name or the 2-digit code. Examples: '내과' → 01, '소아과' → 11, '안과' → 12, '이비인후과' → 13, '피부과' → 14, '정형외과' → 05, '산부인과' → 10, '치과' (use clCd=치과병원 instead). ENGLISH aliases: 'internal medicine' / 'pediatrics' / 'ENT' / 'dermatology' / 'orthopedics'. WHEN TO USE: citizen mentions a specific 진료과 ('근처 내과 알려줘' → dgsbjt='내과'). Single-digit codes are zero-padded. Multiple specialties may be comma-separated (e.g. '피부과,내과'); UMMAYA fans out, merges by distance, and annotates each result with matchedDgsbjtNm/Cd so callers can group specialties correctly. When omitted, all specialties returned. Without this filter '근처 병원' returns 성형외과, 안과, 정형외과 etc. mixed — usually NOT what citizens want.",
+      "description": "Optional medical-specialty filter (HIRA 진료과목코드). Accepts either the natural-language Korean name or the 2-digit code. Examples: '내과' → 01, '소아과' → 11, '안과' → 12, '이비인후과' → 13, '피부과' → 14, '정형외과' → 05, '산부인과' → 10, '치과' (use clCd=치과병원 instead). ENGLISH aliases: 'internal medicine' / 'pediatrics' / 'ENT' / 'dermatology' / 'orthopedics'. WHEN TO USE: citizen mentions a specific 진료과 ('근처 내과 알려줘' → dgsbjt='내과'). When omitted, all specialties returned. Without this filter '근처 병원' returns 성형외과, 안과, 정형외과 etc. mixed — usually NOT what citizens want. If the citizen asks for multiple specialties, pass comma-separated names/codes (e.g. '피부과,내과'); UMMAYA will fan out and merge.",
       "title": "Dgsbjt"
     },
     "numOfRows": {
@@ -62,14 +62,14 @@
       "type": "integer"
     },
     "xPos": {
-      "description": "Longitude (WGS84, decimal degrees). Korean peninsula range: 124–132. Obtain from locate(want='coords'). Never guess.",
+      "description": "Longitude (WGS84, decimal degrees). Korean peninsula range: 124–132. Obtain from a coordinate-producing locate adapter. Never guess.",
       "maximum": 132.0,
       "minimum": 124.0,
       "title": "Xpos",
       "type": "number"
     },
     "yPos": {
-      "description": "Latitude (WGS84, decimal degrees). Korean peninsula range: 33–39. Obtain from locate(want='coords'). Never guess.",
+      "description": "Latitude (WGS84, decimal degrees). Korean peninsula range: 33–39. Obtain from a coordinate-producing locate adapter. Never guess.",
       "maximum": 39.0,
       "minimum": 33.0,
       "title": "Ypos",

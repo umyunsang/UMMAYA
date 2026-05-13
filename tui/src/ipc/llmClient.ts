@@ -537,7 +537,7 @@ export class LLMClient {
           this.pendingCallRegistry.resolve(trFrame.call_id, trFrame)
 
           // Emit the canonical FR-013 / I-P2 checkpoint marker exactly once
-          // when a submit primitive's tool_result envelope contains a
+          // when a send primitive's tool_result envelope contains a
           // hometax receipt id matching the regex. This is the convergence
           // marker the PTY smoke harness (T015 .expect script) greps for.
           if (process.env['UMMAYA_SMOKE_CHECKPOINTS'] === 'true') {

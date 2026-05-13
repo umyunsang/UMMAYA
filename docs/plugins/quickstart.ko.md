@@ -88,7 +88,7 @@ plugin_id: busan_bike
 version: 0.1.0
 adapter:
   tool_id: plugin.busan_bike.find
-  primitive: lookup
+  primitive: find
   module_path: plugin_busan_bike.adapter
   input_model_ref: plugin_busan_bike.schema:LookupInput
   source_mode: OPENAPI

@@ -119,14 +119,14 @@ describe('US2 Scenario 1: nmc_emergency_search resolves through synced manifest'
       {
         tool_id: 'nmc_emergency_search',
         name: 'NMC Emergency Bed Availability (Live)',
-        primitive: 'lookup',
+        primitive: 'find',
         policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
         source_mode: 'live',
       },
       {
         tool_id: 'resolve_location',
         name: 'Resolve Location',
-        primitive: 'resolve_location',
+        primitive: 'locate',
         policy_authority_url: undefined,
         source_mode: 'internal',
       },
@@ -171,7 +171,7 @@ describe('US2 Scenario 2: WebFetch resolves through internal-tools fallback', ()
       {
         tool_id: 'nmc_emergency_search',
         name: 'NMC Emergency Bed Availability (Live)',
-        primitive: 'lookup',
+        primitive: 'find',
         policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
         source_mode: 'live',
       },
@@ -205,7 +205,7 @@ describe('US2 Scenario 3: cache replaces on second frame (FR-016)', () => {
       {
         tool_id: 'nmc_emergency_search',
         name: 'NMC Emergency Bed Availability (Live)',
-        primitive: 'lookup',
+        primitive: 'find',
         policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
         source_mode: 'live',
       },
@@ -218,7 +218,7 @@ describe('US2 Scenario 3: cache replaces on second frame (FR-016)', () => {
       {
         tool_id: 'kma_forecast_fetch',
         name: 'KMA Short-Term Forecast (Live)',
-        primitive: 'lookup',
+        primitive: 'find',
         policy_authority_url: 'https://www.data.go.kr/data/15059093/openapi.do',
         source_mode: 'live',
       },
@@ -249,7 +249,7 @@ describe('US2 Scenario 4: bogus tool_id fails with named AdapterNotFound', () =>
       {
         tool_id: 'nmc_emergency_search',
         name: 'NMC Emergency Bed Availability (Live)',
-        primitive: 'lookup',
+        primitive: 'find',
         policy_authority_url: 'https://www.e-gen.or.kr/nemc/main.do',
         source_mode: 'live',
       },
@@ -281,7 +281,7 @@ describe('US2 Scenario 4: bogus tool_id fails with named AdapterNotFound', () =>
       {
         tool_id: 'mock_submit_module_hometax_taxreturn',
         name: 'Mock Hometax Submit',
-        primitive: 'submit', // NOTE: this is a submit primitive, not lookup
+        primitive: 'send', // NOTE: this is a send primitive, not find
         policy_authority_url: 'https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=12892&cntntsId=8104',
         source_mode: 'mock',
       },
@@ -291,6 +291,6 @@ describe('US2 Scenario 4: bogus tool_id fails with named AdapterNotFound', () =>
     // The entry exists in the manifest regardless of primitive.
     const entry = resolveAdapter('mock_submit_module_hometax_taxreturn')
     expect(entry).toBeDefined()
-    expect(entry!.primitive).toBe('submit')
+    expect(entry!.primitive).toBe('send')
   })
 })

@@ -1,6 +1,6 @@
 ---
 tool_id: mock_verify_ganpyeon_injeung
-primitive: verify
+primitive: check
 tier: mock
 permission_tier: 2
 ---
@@ -15,7 +15,7 @@ Verifies a citizen's 간편인증 (Simple/App-cert) session from a provider such
 |---|---|
 | Classification | Mock · Permission tier 2 |
 | Source | Barocert SDK documentation (https://developers.barocert.com/, OOS shape-mirror) |
-| Primitive | `verify` |
+| Primitive | `check` |
 | Module | `src/ummaya/tools/mock/verify_ganpyeon_injeung.py` |
 
 ## Envelope

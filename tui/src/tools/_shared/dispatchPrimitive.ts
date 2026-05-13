@@ -266,7 +266,7 @@ export async function dispatchPrimitive<O = unknown>(
   // [H1] (2026-05-04) — Inner-payload error classification.
   //
   // The legacy unwrap above only flips ``ok=false`` when the envelope has a
-  // top-level ``error: string`` field. But the verify primitive (and several
+  // top-level ``error: string`` field. But the check primitive (and several
   // mock adapters) signals failure inside ``result`` instead — for example
   // ``VerifyMismatchError`` from ``ummaya.primitives.verify`` is dumped as
   // ``{ family: "mismatch_error", reason: "family_mismatch", message: ... }``

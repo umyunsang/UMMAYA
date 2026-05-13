@@ -28,7 +28,7 @@ def test_simple_auth_invoke_returns_transparency_fields(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["submit:hometax.tax-return"],
+            "scope_list": ["send:hometax.tax-return"],
             "session_id": "test-sess-001",
             "ledger_root": tmp_path / "ledger",
         }
@@ -55,7 +55,7 @@ def test_simple_auth_international_reference(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["verify:simple_auth.identity"],
+            "scope_list": ["check:simple_auth.identity"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -69,7 +69,7 @@ def test_simple_auth_reference_impl(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["verify:simple_auth.identity"],
+            "scope_list": ["check:simple_auth.identity"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -83,7 +83,7 @@ def test_simple_auth_delegation_context_shape(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["submit:hometax.tax-return"],
+            "scope_list": ["send:hometax.tax-return"],
             "session_id": "s1",
             "ledger_root": tmp_path / "ledger",
         }
@@ -93,7 +93,7 @@ def test_simple_auth_delegation_context_shape(tmp_path: Path) -> None:
     )
     token = result.delegation_context.token
     assert token.delegation_token.startswith("del_")
-    assert token.scope == "submit:hometax.tax-return"
+    assert token.scope == "send:hometax.tax-return"
 
 
 def test_simple_auth_multi_scope(tmp_path: Path) -> None:
@@ -102,14 +102,14 @@ def test_simple_auth_multi_scope(tmp_path: Path) -> None:
 
     result = invoke(
         {
-            "scope_list": ["lookup:hometax.simplified", "submit:hometax.tax-return"],
+            "scope_list": ["find:hometax.simplified", "send:hometax.tax-return"],
             "session_id": "s-multi",
             "ledger_root": tmp_path / "ledger",
         }
     )
     scope = result.delegation_context.token.scope
-    assert "lookup:hometax.simplified" in scope.split(",")
-    assert "submit:hometax.tax-return" in scope.split(",")
+    assert "find:hometax.simplified" in scope.split(",")
+    assert "send:hometax.tax-return" in scope.split(",")
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +145,7 @@ def test_simple_auth_ledger_append(tmp_path: Path) -> None:
     ledger_dir = tmp_path / "ledger"
     invoke(
         {
-            "scope_list": ["submit:hometax.tax-return"],
+            "scope_list": ["send:hometax.tax-return"],
             "session_id": "sess-ledger-test",
             "ledger_root": ledger_dir,
         }
@@ -160,7 +160,7 @@ def test_simple_auth_ledger_append(tmp_path: Path) -> None:
     assert event["kind"] == "delegation_issued"
     assert event["session_id"] == "sess-ledger-test"
     assert event["delegation_token"].startswith("del_")
-    assert event["scope"] == "submit:hometax.tax-return"
+    assert event["scope"] == "send:hometax.tax-return"
     assert event["verify_tool_id"] == "mock_verify_module_simple_auth"
 
 

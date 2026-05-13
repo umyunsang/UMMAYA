@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_module_simple_auth",
       "params": {
-        "scope_list": ["verify:simple_auth.identity"],
+        "scope_list": ["check:simple_auth.identity"],
         "purpose_ko": "간편인증 본인확인",
         "purpose_en": "Identity verification via simplified authentication"
       }

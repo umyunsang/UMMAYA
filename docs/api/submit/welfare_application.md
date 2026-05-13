@@ -1,6 +1,6 @@
 ---
 tool_id: mock_welfare_application_submit_v1
-primitive: submit
+primitive: send
 tier: mock
 permission_tier: 2
 ---
@@ -15,7 +15,7 @@ Submits a welfare benefit application on behalf of a citizen and returns a deter
 |---|---|
 | Classification | Mock · Permission tier 2 |
 | Source | 보건복지부 마이데이터 복지 서비스 신청 API (KFTC MyData v240930 / 마이데이터 기본 API) — shape-mirrored (OOS) from the MyData standard welfare-application surface |
-| Primitive | `submit` |
+| Primitive | `send` |
 | Module | `src/ummaya/tools/mock/mydata/welfare_application.py` |
 
 ## Envelope
@@ -54,7 +54,7 @@ Submits a welfare benefit application on behalf of a citizen and returns a deter
 
 ## Permission tier rationale
 
-This adapter sits at permission tier 2 (orange ⓶) because it submits an application that creates an official government welfare record and processes sensitive personal data including household composition and applicant identity (PIPA class `personal_standard`). Spec 033 defines tier 2 for consequential, authenticated actions where the side effect persists in a government registry but is reversible through official withdrawal procedures outside UMMAYA. The adapter declares `is_irreversible=True` per the V1 invariant (`primitive=submit` ∧ `pipa_class=personal_standard` → `is_irreversible=True`), requires OAuth AAL2 (`mydata_individual_aal2`), and enforces `requires_auth=True`. Citizens are prompted in the permission gauntlet before the dispatcher forwards the call.
+This adapter sits at permission tier 2 (orange ⓶) because it sends an application that creates an official government welfare record and processes sensitive personal data including household composition and applicant identity (PIPA class `personal_standard`). Spec 033 defines tier 2 for consequential, authenticated actions where the side effect persists in a government registry but is reversible through official withdrawal procedures outside UMMAYA. The adapter declares `is_irreversible=True` per the V1 invariant (`primitive=send` ∧ `pipa_class=personal_standard` → `is_irreversible=True`), requires OAuth AAL2 (`mydata_individual_aal2`), and enforces `requires_auth=True`. Citizens are prompted in the permission gauntlet before the dispatcher forwards the call.
 
 ## Worked example
 

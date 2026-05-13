@@ -54,6 +54,7 @@ Column definitions:
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_RATE_LIMIT_PER_MINUTE` | No | `120` | Integer >= 1 | `ummaya.gateway.app._enforce_gateway_rate_limit` | [Live adapter gateway](#ummaya_live_adapter_gateway_rate_limit_per_minute) |
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES` | No | `65536` | Integer >= 1024 | `ummaya.gateway.app.request_size_guard` | [Live adapter gateway](#ummaya_live_adapter_gateway_max_body_bytes) |
 | `UMMAYA_PACKAGE_ROOT` | No (internal wrapper) | — | Absolute package path | `bin/ummaya`, `ummaya.tools.live_proxy.should_use_live_adapter_proxy` | [Live adapter gateway](#ummaya_package_root) |
+| `UMMAYA_ENABLE_ANTHROPIC_MARKETPLACE_AUTOINSTALL` | No | `false` | `true` \| `false` (case-insensitive; `1`/`yes` also accepted) | `tui/src/utils/plugins/officialMarketplaceStartupCheck.ts` | [Plugin marketplace auto-install](#ummaya_enable_anthropic_marketplace_autoinstall) |
 | `UMMAYA_JUSO_CONFM_KEY` | No (optional fallback) | — | Confirmation key string | `ummaya.settings.UmmayaSettings.juso_confm_key` | [도로명주소 개발자센터](https://business.juso.go.kr) |
 | `UMMAYA_SGIS_KEY` | No (operator-managed) | — | Consumer key string | `ummaya.settings.UmmayaSettings.sgis_key` | [SGIS API](https://sgis.mods.go.kr) |
 | `UMMAYA_SGIS_SECRET` | No (operator-managed) | — | Consumer secret string | `ummaya.settings.UmmayaSettings.sgis_secret` | [SGIS API](https://sgis.mods.go.kr) |
@@ -280,6 +281,15 @@ before adapter dispatch.
 Internal path set by the npm/Homebrew `bin/ummaya` wrapper. In `UMMAYA_LIVE_ADAPTER_MODE=auto`,
 presence of this value marks a packaged CLI execution and selects the live adapter gateway for
 eligible Kakao/data.go.kr-style adapters. Users should not set this manually.
+
+---
+
+### <a id="ummaya_enable_anthropic_marketplace_autoinstall"></a>`UMMAYA_ENABLE_ANTHROPIC_MARKETPLACE_AUTOINSTALL`
+
+Opt-in switch for the upstream Anthropic plugin marketplace auto-install path inherited from
+Claude Code. UMMAYA disables this by default so a fresh public-service CLI install does not clone
+or register third-party Anthropic marketplace state during startup. Set this only for compatibility
+testing of the inherited plugin marketplace code path.
 
 ---
 

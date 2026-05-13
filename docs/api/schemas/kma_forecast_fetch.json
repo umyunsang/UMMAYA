@@ -30,14 +30,14 @@
       "type": "string"
     },
     "lat": {
-      "description": "WGS-84 latitude of the target location, in decimal degrees. For Korean locations this is typically 33–38. Obtain from locate(want='coords').",
+      "description": "WGS-84 latitude of the target location, in decimal degrees. For Korean locations this is typically 33–38. Obtain from a coordinate-producing locate adapter.",
       "maximum": 90,
       "minimum": -90,
       "title": "Lat",
       "type": "number"
     },
     "lon": {
-      "description": "WGS-84 longitude of the target location, in decimal degrees. For Korean locations this is typically 126–130. Obtain from locate(want='coords').",
+      "description": "WGS-84 longitude of the target location, in decimal degrees. For Korean locations this is typically 126–130. Obtain from a coordinate-producing locate adapter.",
       "maximum": 180,
       "minimum": -180,
       "title": "Lon",

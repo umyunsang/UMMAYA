@@ -198,7 +198,7 @@ def _delegation(scope: str) -> object:
 async def test_gov24_scope_violation_returns_error_envelope() -> None:
     """Wrong-scope delegation produces a normalize()-clean LookupError."""
     raw = await gov24_handle(
-        _GOV24_INPUT, delegation_context=_delegation("submit:hometax.tax-return")
+        _GOV24_INPUT, delegation_context=_delegation("send:hometax.tax-return")
     )
 
     assert raw["kind"] == "error"
@@ -226,7 +226,7 @@ async def test_hometax_scope_violation_returns_error_envelope() -> None:
     """Wrong-scope delegation on hometax produces a normalize()-clean LookupError."""
     raw = await hometax_handle(
         _HOMETAX_INPUT,
-        delegation_context=_delegation("submit:gov24.minwon"),
+        delegation_context=_delegation("send:gov24.minwon"),
     )
 
     assert raw["kind"] == "error"

@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_ganpyeon_injeung",
       "params": {
-        "scope_list": ["verify:ganpyeon.identity"],
+        "scope_list": ["check:ganpyeon.identity"],
         "purpose_ko": "간편인증 본인확인",
         "purpose_en": "Identity verification via simplified authentication (Kakao/Naver/Toss)"
       }

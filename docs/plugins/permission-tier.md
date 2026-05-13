@@ -99,7 +99,7 @@ adapter:
 **언제 사용**: 어댑터 호출이 외부 시스템의 상태를 변경하는 모든 경우. 재호출로 되돌릴 수 없는 행위.
 
 **예시**:
-- 정부24 민원 제출 (`submit` primitive)
+- 정부24 민원 제출 (`send` primitive)
 - KEC 차량 검사 결과 발급 + 결제
 - NPKI 본인인증 후 read-back
 - 신고 / 신청 / 발급 / 결제 / 송금 등 모든 시민 행위
@@ -158,7 +158,7 @@ processes_pii: true   # 본인 PII 처리
 
 → Q5-LAYER-MATCHES-PII fail. PII 를 처리하면 최소 Layer 2.
 
-### ❌ "submit 인데 Layer 2"
+### ❌ "send 인데 Layer 2"
 
 ```yaml
 permission_layer: 2
@@ -166,7 +166,7 @@ adapter:
   is_irreversible: true
 ```
 
-→ 작동하지만 시민 안전 약화. submit + irreversible = Layer 3 가 정답.
+→ 작동하지만 시민 안전 약화. send + irreversible = Layer 3 가 정답.
 
 ### ❌ "AAL1 이지만 is_irreversible 합리화"
 

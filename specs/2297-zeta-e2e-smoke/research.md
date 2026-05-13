@@ -30,7 +30,7 @@ The η-Lead's "TUI Tool.call() stub blocker" hypothesis (η spec § Mid-Epic fin
 1. **`prompts/system_v1.md` v2 `<verify_chain_pattern>` worked example** teaches the LLM to call:
    ```text
    verify(tool_id="mock_verify_module_modid",
-          params={"scope_list": ["lookup:hometax.simplified", "submit:hometax.tax-return"],
+          params={"scope_list": ["find:hometax.simplified", "send:hometax.tax-return"],
                   "purpose_ko": "종합소득세 신고",
                   "purpose_en": "Comprehensive income tax filing"})
    ```

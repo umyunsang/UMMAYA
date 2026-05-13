@@ -6,10 +6,6 @@
         "find",
         "locate",
         "send",
-        "check",
-        "find",
-        "locate",
-        "send",
         "check"
       ],
       "title": "AdapterPrimitive",

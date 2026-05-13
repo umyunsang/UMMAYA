@@ -1,5 +1,6 @@
 import type { ChildProcess, ExecFileException } from 'child_process'
 import { execFile, spawn } from 'child_process'
+import { existsSync } from 'fs'
 import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import * as path from 'path'
@@ -32,15 +33,22 @@ const getRipgrepConfig = memoize((): RipgrepConfig => {
   const userWantsSystemRipgrep = isEnvDefinedFalsy(
     process.env.USE_BUILTIN_RIPGREP,
   )
+  const findSystemRipgrep = (): RipgrepConfig | null => {
+    const { cmd: systemPath } = findExecutable('rg', [])
+    if (systemPath === 'rg') {
+      return null
+    }
+    // SECURITY: Use command name 'rg' instead of systemPath to prevent PATH
+    // hijacking. The existence check above only confirms PATH can resolve rg;
+    // process spawning still uses the platform resolver protections.
+    return { mode: 'system', command: 'rg', args: [] }
+  }
 
   // Try system ripgrep if user wants it
   if (userWantsSystemRipgrep) {
-    const { cmd: systemPath } = findExecutable('rg', [])
-    if (systemPath !== 'rg') {
-      // SECURITY: Use command name 'rg' instead of systemPath to prevent PATH hijacking
-      // If we used systemPath, a malicious ./rg.exe in current directory could be executed
-      // Using just 'rg' lets the OS resolve it safely with NoDefaultCurrentDirectoryInExePath protection
-      return { mode: 'system', command: 'rg', args: [] }
+    const systemConfig = findSystemRipgrep()
+    if (systemConfig !== null) {
+      return systemConfig
     }
   }
 
@@ -60,6 +68,13 @@ const getRipgrepConfig = memoize((): RipgrepConfig => {
     process.platform === 'win32'
       ? path.resolve(rgRoot, `${process.arch}-win32`, 'rg.exe')
       : path.resolve(rgRoot, `${process.arch}-${process.platform}`, 'rg')
+
+  if (!existsSync(command)) {
+    const systemConfig = findSystemRipgrep()
+    if (systemConfig !== null) {
+      return systemConfig
+    }
+  }
 
   return { mode: 'builtin', command, args: [] }
 })

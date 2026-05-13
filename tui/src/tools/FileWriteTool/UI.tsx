@@ -5,7 +5,7 @@ import { isAbsolute, relative, resolve } from 'path';
 import * as React from 'react';
 import { Suspense, use, useState } from 'react';
 import { MessageResponse } from 'src/components/MessageResponse.js';
-import { extractTag } from 'src/utils/messages.js';
+import { extractTag } from 'src/utils/messageText.js';
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js';

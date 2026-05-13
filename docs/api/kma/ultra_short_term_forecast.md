@@ -1,6 +1,6 @@
 ---
 tool_id: kma_ultra_short_term_forecast
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 ---
@@ -15,7 +15,7 @@ Fetches the KMA ultra-short-term forecast (초단기예보) for a grid point, co
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | KMA (기상청) — VilageFcstInfoService_2.0/getUltraSrtFcst |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/kma/kma_ultra_short_term_forecast.py` |
 
 ## Envelope

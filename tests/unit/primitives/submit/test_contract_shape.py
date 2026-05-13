@@ -212,7 +212,7 @@ def test_valid_input_fixture_shape(input_schema: dict[str, object]) -> None:
 def test_valid_output_fixture_shape(output_schema: dict[str, object]) -> None:
     """A canonical valid SubmitOutput payload must satisfy the schema structure."""
     fixture = {
-        "transaction_id": "urn:ummaya:submit:abc123",
+        "transaction_id": "urn:ummaya:send:abc123",
         "status": "succeeded",
         "adapter_receipt": {"receipt_number": "2026-04-19-0001"},
     }
@@ -230,7 +230,7 @@ def test_valid_output_fixture_shape(output_schema: dict[str, object]) -> None:
 def test_rejected_output_fixture_shape(output_schema: dict[str, object]) -> None:
     """A 'rejected' status payload (e.g. tier gate) must be schema-valid."""
     fixture = {
-        "transaction_id": "urn:ummaya:submit:rejected001",
+        "transaction_id": "urn:ummaya:send:rejected001",
         "status": "rejected",
         "adapter_receipt": {"reason": "published_tier_minimum not met"},
     }

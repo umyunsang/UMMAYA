@@ -43,12 +43,12 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Lightweight params shell for verify (LLM-facing input schema)
+# Lightweight params shell for check (LLM-facing input schema)
 # ---------------------------------------------------------------------------
 
 
 class _VerifyParamsShell(BaseModel):
-    """LLM-facing verify params — citizen-shape `{scope_list, purpose_ko, purpose_en}`."""
+    """LLM-facing check params — citizen-shape `{scope_list, purpose_ko, purpose_en}`."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -56,7 +56,7 @@ class _VerifyParamsShell(BaseModel):
         default_factory=list,
         description=(
             "List of '<verb>:<adapter_family>.<action>' scope strings the "
-            "downstream lookup/submit calls will need. The verify ceremony "
+            "downstream find/send calls will need. The check ceremony "
             "issues a DelegationToken bound to exactly this scope set."
         ),
     )
@@ -354,7 +354,7 @@ def _submit_to_govapitool(
         input_schema=input_model,
         output_schema=_OpaqueOutput,
         llm_description=(
-            f"Submit primitive — {tool_id}. REQUIRES a DelegationContext from a prior "
+            f"send primitive — {tool_id}. REQUIRES a DelegationContext from a prior "
             "check call with matching scope. params MUST include 'delegation_context' "
             "(returned by check) plus the adapter-specific payload defined in this "
             "tool's input_schema. On success: returns transaction_id (deterministic URN) "

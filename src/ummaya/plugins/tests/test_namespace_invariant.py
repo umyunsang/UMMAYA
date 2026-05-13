@@ -6,7 +6,7 @@ The three checks in this file mirror the validation-workflow IDs:
 * **Q8-NAMESPACE** — every plugin adapter's ``tool_id`` MUST match
   ``plugin.<plugin_id>.<verb>``.
 * **Q8-NO-ROOT-OVERRIDE** — ``<verb>`` MUST be one of the active plugin
-  primitive verbs (``lookup`` / ``submit`` / ``verify``).
+  primitive verbs (``find`` / ``send`` / ``check``).
   ``resolve_location`` is explicitly excluded — it is a built-in
   primitive whose surface a plugin cannot override.
 * **Q8-VERB-IN-PRIMITIVES** — the verb suffix collisions with ADR-007's

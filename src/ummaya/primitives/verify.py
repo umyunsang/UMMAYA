@@ -254,7 +254,7 @@ class MyDataContext(_AuthContextBase):
         default=None,
         description=(
             "Scope-bound delegation credential issued when the caller requests "
-            "downstream MyData lookup/submit authority."
+            "downstream MyData find/send authority."
         ),
     )
 
@@ -410,7 +410,7 @@ class VerifyMismatchError(BaseModel):
 
 
 class VerifyOutput(BaseModel):
-    """Top-level output envelope for the verify primitive."""
+    """Top-level output envelope for the check primitive."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

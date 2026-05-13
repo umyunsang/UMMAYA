@@ -102,7 +102,7 @@ Worked-example walkthrough. Plain Markdown numbered list inside the tag.
 3. **Step 3 — submit**: `submit(tool_id="<해당 어댑터>", delegation_context=<ctx>, params={...})` → 접수번호 반환.
 
 **Worked example** — 시민: "내 종합소득세 신고해줘"
-1. `verify(family_hint="modid", session_context={"scope_list": ["lookup:hometax.simplified", "submit:hometax.tax-return"], "purpose_ko": "종합소득세 신고", "purpose_en": "Comprehensive income tax filing"})`
+1. `verify(family_hint="modid", session_context={"scope_list": ["find:hometax.simplified", "send:hometax.tax-return"], "purpose_ko": "종합소득세 신고", "purpose_en": "Comprehensive income tax filing"})`
 2. `lookup(mode="fetch", tool_id="mock_lookup_module_hometax_simplified", params={"delegation_context": <ctx>})`
 3. `submit(tool_id="mock_submit_module_hometax_taxreturn", delegation_context=<ctx>, params={...})` → `접수번호: hometax-YYYY-MM-DD-RX-XXXXX`
 
@@ -122,7 +122,7 @@ Worked-example walkthrough. Plain Markdown numbered list inside the tag.
 - `adapter_family` 는 어댑터 도메인 root (예: `hometax`, `gov24`, `modid`, `kec`)
 - `action` 은 액션 식별자 (예: `tax-return`, `minwon`, `simplified`)
 
-**예시** — 단일: `submit:hometax.tax-return` · 콤마 결합 (multi-scope): `lookup:hometax.simplified,submit:hometax.tax-return`.
+**예시** — 단일: `send:hometax.tax-return` · 콤마 결합 (multi-scope): `find:hometax.simplified,send:hometax.tax-return`.
 
 `scope_list` 는 후속 모든 호출의 scope 를 한꺼번에 포함하여 단일 verify 에서 발급. 부족하면 새 verify 가 필요 (token 재발급).
 </scope_grammar>

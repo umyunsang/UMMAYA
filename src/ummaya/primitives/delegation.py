@@ -59,7 +59,7 @@ _SCOPE_VERB_ALIASES: dict[str, str] = {
 
 
 class DelegationToken(BaseModel):
-    """Opaque, scope-bound, time-bound credential issued by a verify adapter.
+    """Opaque, scope-bound, time-bound credential issued by a check adapter.
 
     In Mock mode the ``vp_jwt`` header is ``{"alg":"none","typ":"vp+jwt"}``;
     the signature segment is the literal string ``"mock-signature-not-cryptographic"``.
@@ -96,7 +96,7 @@ class DelegationToken(BaseModel):
     )
     issuer_did: str = Field(
         min_length=1,
-        description="DID of the issuing verify adapter, e.g. 'did:web:mobileid.go.kr'.",
+        description="DID of the issuing check adapter, e.g. 'did:web:mobileid.go.kr'.",
     )
     issued_at: datetime = Field(description="UTC tz-aware token mint time.")
     expires_at: datetime = Field(
@@ -172,7 +172,7 @@ class DelegationContext(BaseModel):
     citizen_did: str | None = Field(
         default=None,
         description=(
-            "Citizen DID if the verify ceremony surfaced one "
+            "Citizen DID if the check ceremony surfaced one "
             "(e.g. 'did:web:mobileid.go.kr' issuance). Optional."
         ),
     )

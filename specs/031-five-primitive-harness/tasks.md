@@ -85,7 +85,7 @@ Single Python package layout per `plan.md § Project Structure`:
 
 - [X] T021 [US1] Create `src/ummaya/primitives/submit.py` with `SubmitInput`, `SubmitStatus` StrEnum, `SubmitOutput` Pydantic models matching `data-model.md § 1`
 - [X] T022 [US1] Implement `submit(tool_id, params) -> SubmitOutput | AdapterNotFoundError | AdapterInvocationError` dispatcher in `src/ummaya/primitives/submit.py` — resolves registry entry, validates `params` against adapter's typed model, awaits `invoke()`, emits Spec 024 `ToolCallAuditRecord` (delegated to existing audit sink) + Spec 021 OTEL span `gen_ai.tool_loop.iteration`
-- [X] T023 [US1] Implement deterministic `transaction_id` derivation — SHA-256 over `canonical_json(tool_id, params, adapter_nonce)` + `urn:ummaya:submit:` prefix
+- [X] T023 [US1] Implement deterministic `transaction_id` derivation — SHA-256 over `canonical_json(tool_id, params, adapter_nonce)` + `urn:ummaya:send:` prefix
 - [X] T024 [US1] Update `src/ummaya/primitives/__init__.py` to export real `submit` symbol (replacing Phase 1 placeholder)
 - [X] T025 [P] [US1] Create first mock adapter `src/ummaya/tools/mock/data_go_kr/fines_pay.py` — `FinesPayParams` Pydantic model + `async def invoke()` + `AdapterRegistration` with `tool_id="mock_traffic_fine_pay_v1"`, matching the worked example in `quickstart.md § 3`
 - [X] T026 [P] [US1] Create second mock adapter `src/ummaya/tools/mock/mydata/welfare_application.py` (different ministry, shared envelope) — `tool_id="mock_welfare_application_submit_v1"` — to prove Acceptance Scenario 2

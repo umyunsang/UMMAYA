@@ -100,11 +100,10 @@ function primitiveKindToTool(kind: PrimitiveKind): Tool {
     case 'send':
       return SubmitPrimitive
     default: {
-      // Exhaustive fallback — future primitive kinds fall through to verify
-      // (Layer 1, safest default per Constitution §II fail-closed).
       const _exhaustive: never = kind
-      console.warn(`[ummaya.ipc.permission] unknown primitive_kind=${String(_exhaustive)}, falling back to VerifyPrimitive`)
-      return VerifyPrimitive
+      throw new Error(
+        `[ummaya.ipc.permission] unknown primitive_kind=${String(_exhaustive)}`,
+      )
     }
   }
 }

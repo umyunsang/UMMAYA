@@ -20,7 +20,7 @@ Three sources of adapter metadata are walked in priority order:
    this emitter.  Takes precedence over all other sources for the same
    ``tool_id``.
 
-2. **Submit primitive sub-registry**:
+2. **Send primitive sub-registry**:
    ``ummaya.primitives.submit._ADAPTER_REGISTRY`` →
        keyed by ``tool_id``; values are ``(AdapterRegistration, callable)``.
    Adapters here emit an entry with ``source_mode=registration.source_mode``

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Spec 2294 — UmmayaPrimitivePermissionRequest tests.
 //
-// Tests the active primitive arms (verify / submit-reversible / submit-irreversible)
+// Tests the active primitive arms (check / send-reversible / send-irreversible)
 // × the 3 decision paths (allow_once / allow_session / deny).
 // Render is done via ink-testing-library; we assert on lastFrame() text.
 
@@ -83,7 +83,7 @@ function Wrap({ children }: { children: React.ReactNode }): React.ReactElement {
 // ---------------------------------------------------------------------------
 
 function makeProps(
-  primitive: 'verify' | 'submit',
+  primitive: 'check' | 'send',
   isIrreversible = false,
   overrides: Partial<{
     toolName: string
@@ -129,12 +129,12 @@ function key(overrides: Partial<Key>): Key {
 }
 
 // ---------------------------------------------------------------------------
-// verify arm (Layer 1)
+// check arm (Layer 1)
 // ---------------------------------------------------------------------------
 
-describe('UmmayaPrimitivePermissionRequest — verify (Layer 1)', () => {
+describe('UmmayaPrimitivePermissionRequest — check (Layer 1)', () => {
   test('renders layer 1 glyph ⓵', () => {
-    const props = makeProps('verify')
+    const props = makeProps('check')
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -143,8 +143,8 @@ describe('UmmayaPrimitivePermissionRequest — verify (Layer 1)', () => {
     expect(lastFrame()).toContain('⓵')
   })
 
-  test('renders verify modal title (contains 신원)', () => {
-    const props = makeProps('verify')
+  test('renders check modal title (contains 신원)', () => {
+    const props = makeProps('check')
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -154,7 +154,7 @@ describe('UmmayaPrimitivePermissionRequest — verify (Layer 1)', () => {
   })
 
   test('renders tool name in body', () => {
-    const props = makeProps('verify', false, { toolName: 'hira_hospital_search' })
+    const props = makeProps('check', false, { toolName: 'hira_hospital_search' })
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -164,7 +164,7 @@ describe('UmmayaPrimitivePermissionRequest — verify (Layer 1)', () => {
   })
 
   test('renders PIPA notice (contains 22)', () => {
-    const props = makeProps('verify')
+    const props = makeProps('check')
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -176,12 +176,12 @@ describe('UmmayaPrimitivePermissionRequest — verify (Layer 1)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// submit — reversible arm (Layer 2)
+// send — reversible arm (Layer 2)
 // ---------------------------------------------------------------------------
 
-describe('UmmayaPrimitivePermissionRequest — submit reversible (Layer 2)', () => {
+describe('UmmayaPrimitivePermissionRequest — send reversible (Layer 2)', () => {
   test('renders layer 2 glyph ⓶', () => {
-    const props = makeProps('submit', false)
+    const props = makeProps('send', false)
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -190,8 +190,8 @@ describe('UmmayaPrimitivePermissionRequest — submit reversible (Layer 2)', () 
     expect(lastFrame()).toContain('⓶')
   })
 
-  test('does NOT render "취소 불가" for reversible submit', () => {
-    const props = makeProps('submit', false)
+  test('does NOT render "취소 불가" for reversible send', () => {
+    const props = makeProps('send', false)
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -202,12 +202,12 @@ describe('UmmayaPrimitivePermissionRequest — submit reversible (Layer 2)', () 
 })
 
 // ---------------------------------------------------------------------------
-// submit — irreversible arm (Layer 3)
+// send — irreversible arm (Layer 3)
 // ---------------------------------------------------------------------------
 
-describe('UmmayaPrimitivePermissionRequest — submit irreversible (Layer 3)', () => {
+describe('UmmayaPrimitivePermissionRequest — send irreversible (Layer 3)', () => {
   test('renders layer 3 glyph ⓷', () => {
-    const props = makeProps('submit', true)
+    const props = makeProps('send', true)
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -217,7 +217,7 @@ describe('UmmayaPrimitivePermissionRequest — submit irreversible (Layer 3)', (
   })
 
   test('renders irreversible warning text (contains 취소)', () => {
-    const props = makeProps('submit', true)
+    const props = makeProps('send', true)
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -231,14 +231,14 @@ describe('UmmayaPrimitivePermissionRequest — submit irreversible (Layer 3)', (
 // lookup arm — null layer → component returns null (bypass)
 // ---------------------------------------------------------------------------
 
-describe('UmmayaPrimitivePermissionRequest — lookup (bypass)', () => {
-  test('renders nothing for lookup primitive', () => {
+describe('UmmayaPrimitivePermissionRequest — find (bypass)', () => {
+  test('renders nothing for find primitive', () => {
     const onDecision = mock(() => {})
     const onDismiss = mock(() => {})
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest
-          primitive="lookup"
+          primitive="find"
           toolName="resolve_location"
           onDecision={onDecision}
           onDismiss={onDismiss}
@@ -258,7 +258,7 @@ describe('UmmayaPrimitivePermissionRequest — lookup (bypass)', () => {
 // ---------------------------------------------------------------------------
 
 describe('UmmayaPrimitivePermissionRequest — selector labels', () => {
-  for (const primitive of ['verify', 'submit'] as const) {
+  for (const primitive of ['check', 'send'] as const) {
     test(`${primitive}: shows selector labels without UMMAYA-only hotkey prefixes`, () => {
       const props = makeProps(primitive)
       const { lastFrame } = render(
@@ -300,7 +300,7 @@ describe('UmmayaPrimitivePermissionRequest — selector labels', () => {
 
   test('Down Down Enter selects deny through live stdin', async () => {
     const onDecision = mock(() => {})
-    const props = makeProps('verify', false, { onDecision })
+    const props = makeProps('check', false, { onDecision })
     const streams = makeLocalInkStreams()
     const instance = await renderInk(
       <Wrap>
@@ -333,7 +333,7 @@ describe('UmmayaPrimitivePermissionRequest — selector labels', () => {
 
   test('numeric option 3 selects deny through live stdin', async () => {
     const onDecision = mock(() => {})
-    const props = makeProps('verify', false, { onDecision })
+    const props = makeProps('check', false, { onDecision })
     const streams = makeLocalInkStreams()
     const instance = await renderInk(
       <Wrap>
@@ -367,7 +367,7 @@ describe('UmmayaPrimitivePermissionRequest — selector labels', () => {
 
 describe('UmmayaPrimitivePermissionRequest — receiptId footer', () => {
   test('shows receipt ID when provided', () => {
-    const props = makeProps('verify', false, { receiptId: 'rcpt-abc12345' })
+    const props = makeProps('check', false, { receiptId: 'rcpt-abc12345' })
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
@@ -377,7 +377,7 @@ describe('UmmayaPrimitivePermissionRequest — receiptId footer', () => {
   })
 
   test('no receipt ID text when omitted', () => {
-    const props = makeProps('verify')
+    const props = makeProps('check')
     const { lastFrame } = render(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />

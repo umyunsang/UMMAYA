@@ -11,7 +11,7 @@
 {
   "tool_id": "mock_verify_module_modid",
   "params": {
-    "scope_list": ["lookup:hometax.simplified", "submit:hometax.tax-return"],
+    "scope_list": ["find:hometax.simplified", "send:hometax.tax-return"],
     "purpose_ko": "종합소득세 신고",
     "purpose_en": "Comprehensive income tax filing"
   }

@@ -2,9 +2,9 @@
 """Build JSON Schema files for all registered UMMAYA tool adapters.
 
 Covers the active registries:
-  1. ummaya.tools.registry.ToolRegistry  — lookup-side tools (14 adapters)
-  2. ummaya.primitives.submit._ADAPTER_REGISTRY  — submit adapters (2 mocks)
-  3. ummaya.primitives.verify._VERIFY_ADAPTERS   — verify adapters (6 mocks)
+  1. ummaya.tools.registry.ToolRegistry  — find-side tools (14 adapters)
+  2. ummaya.primitives.submit._ADAPTER_REGISTRY  — send adapters (2 mocks)
+  3. ummaya.primitives.verify._VERIFY_ADAPTERS   — check adapters (6 mocks)
 
 Subscribe schemas are intentionally not generated. National notification
 delivery is deferred until UMMAYA has an app/push runtime that can own delivery.
@@ -134,14 +134,14 @@ def _resolve_model_ref(ref: str) -> type | None:
 
 def _collect_primitive_adapters() -> list[tuple[str, type, type]]:
     """Collect (tool_id, input_model_class, output_model_class) from active
-    primitive registries: submit and verify.
+    primitive registries: send and check.
 
     The caller must have already imported ``ummaya.tools.mock`` (which triggers
     all adapter self-registration side-effects) before calling this function.
 
-    For verify adapters the tool_id is sourced from the per-module
+    For check adapters the tool_id is sourced from the per-module
     ``ADAPTER_REGISTRATION.tool_id`` rather than the family key used internally
-    by ``_VERIFY_ADAPTERS``.  If a verify adapter module cannot be located the
+    by ``_VERIFY_ADAPTERS``.  If a check adapter module cannot be located the
     family string is used as a fallback tool_id.
 
     Returns:

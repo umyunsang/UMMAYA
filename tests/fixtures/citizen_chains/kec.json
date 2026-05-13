@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_module_kec",
       "params": {
-        "scope_list": ["verify:kec.identity"],
+        "scope_list": ["check:kec.identity"],
         "purpose_ko": "사업자 등록증 발급 본인확인",
         "purpose_en": "Identity verification for business registration certificate"
       }

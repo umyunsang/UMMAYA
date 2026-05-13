@@ -7,7 +7,7 @@
     "arguments": {
       "tool_id": "mock_verify_mydata",
       "params": {
-        "scope_list": ["verify:mydata.oauth"],
+        "scope_list": ["check:mydata.oauth"],
         "purpose_ko": "마이데이터 OAuth 본인인증",
         "purpose_en": "MyData OAuth 2.0 identity verification"
       }

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """stdio-MCP server stub for the UMMAYA tool surface (Spec 1634 FR-021).
 
-This module exposes the active primitive surface (`lookup`, `submit`, `verify`)
+This module exposes the active primitive surface (`find`, `locate`, `send`, `check`)
 plus the auxiliary tool set to an MCP-speaking client over
 stdio. It implements a minimal JSON-RPC 2.0 + MCP protocol layer on top of
 stdin/stdout; it intentionally does **not** re-implement any Spec 032
@@ -161,8 +161,8 @@ class MCPServer:
 
         # Tool-call dispatch: for P3 MVP we route through the existing
         # executor machinery. A full implementation would invoke the
-        # primitive layer (ummaya.primitives.*) for submit/verify
-        # and the Spec 022 lookup for lookup — but that wiring lives in
+        # primitive layer (ummaya.primitives.*) for send/check
+        # and the Spec 022 finder for find — but that wiring lives in
         # T028 (registry closure fan-in) and is exercised by T029's
         # integration test. This stub returns a structured placeholder
         # so the handshake + tools/list paths can be verified independently.

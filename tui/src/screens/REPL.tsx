@@ -3365,6 +3365,63 @@ export function REPL({
         }
       };
 
+      if (_ummayaCmd === 'login') {
+        const loginCommand = commands.find(cmd => isCommandEnabled(cmd) && (cmd.name === _ummayaCmd || cmd.aliases?.includes(_ummayaCmd) || getCommandName(cmd) === _ummayaCmd));
+        if (loginCommand?.type === 'local-jsx') {
+          setInputValue('');
+          helpers.setCursorOffset(0);
+          helpers.clearBuffer();
+          let doneWasCalled = false;
+          const onDone = (result?: string, doneOptions?: {
+            display?: CommandResultDisplay;
+            metaMessages?: string[];
+          }): void => {
+            doneWasCalled = true;
+            setToolJSX({
+              jsx: null,
+              shouldHidePromptInput: false,
+              clearLocalJSX: true
+            });
+            const newMessages: MessageType[] = [];
+            if (result && doneOptions?.display !== 'skip') {
+              addNotification({
+                key: 'ummaya-login',
+                text: result,
+                priority: 'immediate'
+              });
+              if (!isFullscreenEnvEnabled()) {
+                newMessages.push(
+                  createCommandInputMessage(formatCommandInputTags(getCommandName(loginCommand), _ummayaArgs)),
+                  createCommandInputMessage(`<${LOCAL_COMMAND_STDOUT_TAG}>${escapeXml(result)}</${LOCAL_COMMAND_STDOUT_TAG}>`)
+                );
+              }
+            }
+            if (doneOptions?.metaMessages?.length) {
+              newMessages.push(...doneOptions.metaMessages.map(content => createUserMessage({
+                content,
+                isMeta: true
+              })));
+            }
+            if (newMessages.length) {
+              setMessages(prev => [...prev, ...newMessages]);
+            }
+          };
+          const context = getToolUseContext(messagesRef.current, [], createAbortController(), mainLoopModel);
+          void loginCommand.load().then(mod => mod.call(onDone, context, _ummayaArgs)).then(jsx => {
+            if (jsx && !doneWasCalled) {
+              setToolJSX({
+                jsx,
+                shouldHidePromptInput: true,
+                isLocalJSXCommand: false
+              });
+            }
+          }).catch(err => {
+            _ummayaCloseJSX(err instanceof Error ? err.message : String(err));
+          });
+          return;
+        }
+      }
+
       if (_ummayaCmd === 'help') {
         setInputValue('');
         helpers.setCursorOffset(0);

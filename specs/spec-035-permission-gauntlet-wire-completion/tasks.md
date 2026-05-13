@@ -98,7 +98,7 @@
 1. Functional component `<UmmayaPermissionRequest>` (~ 80 LOC).
 2. Props: `permissionRequest` (Spec 032 IPC frame shape), `onApprove(decision: 'allow_once'|'allow_session')`, `onDeny`, `bypassMode: boolean`.
 3. 4-arm switch on `primitive`:
-   - lookup: return `null` (no modal).
+   - find: return `null` (no modal).
    - verify/submit/subscribe: 호출 `aalToLayer` → `LAYER_VISUAL[layer]` → 본문 i18n 호출 → `<PermissionDialog>` mount.
 4. bypassMode=true 시 `<UmmayaBypassReinforcement>` (T005) 를 wrapper 로 mount.
 5. Y/A 응답 시 `onApprove(decision)` 호출 — `addReceipt` 호출은 T007 (REPL wire) 에서 수행.

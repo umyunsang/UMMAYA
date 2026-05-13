@@ -19,9 +19,9 @@ A Korean citizen tells UMMAYA "내 종합소득세 신고해줘". The LLM recogn
 
 **Acceptance Scenarios**:
 
-1. **Given** the LLM has the new mock-verify and mock-submit adapters registered, **When** the citizen says "내 종합소득세 신고해줘", **Then** the LLM emits exactly one `verify` call with `scope` containing `submit:hometax.tax-return`, exactly one `lookup` call carrying the returned delegation token, and exactly one `submit` call carrying the same token.
+1. **Given** the LLM has the new mock-verify and mock-submit adapters registered, **When** the citizen says "내 종합소득세 신고해줘", **Then** the LLM emits exactly one `verify` call with `scope` containing `send:hometax.tax-return`, exactly one `lookup` call carrying the returned delegation token, and exactly one `submit` call carrying the same token.
 2. **Given** a `DelegationToken` has been issued by `mock_verify_module_modid` with a 24-hour `expires_at`, **When** `mock_submit_module_hometax_taxreturn` is invoked with that token, **Then** the submit succeeds with a synthetic 접수번호 and the audit ledger records `delegation_used` with the same `delegation_token` value as the earlier `delegation_issued` line.
-3. **Given** the `DelegationToken` was issued with `scope=submit:hometax.tax-return`, **When** the LLM attempts to invoke `mock_submit_module_gov24_minwon` with that same token, **Then** the submit fails closed with a scope-violation error and the audit ledger records the rejection.
+3. **Given** the `DelegationToken` was issued with `scope=send:hometax.tax-return`, **When** the LLM attempts to invoke `mock_submit_module_gov24_minwon` with that same token, **Then** the submit fails closed with a scope-violation error and the audit ledger records the rejection.
 4. **Given** any adapter response, **When** the consumer inspects the JSON payload, **Then** the six transparency fields (`_mode`, `_reference_implementation`, `_actual_endpoint_when_live`, `_security_wrapping_pattern`, `_policy_authority`, `_international_reference`) are all present and non-empty.
 
 ---
@@ -139,7 +139,7 @@ A reviewer (operator, auditor, policy stakeholder) can observe the full mock cat
 - **SC-004**: Zero `mock_verify_digital_onepass` matches when BM25 is searched for "디지털원패스" or "digital_onepass".
 - **SC-005**: A registry-wide transparency scan invokes every Mock adapter once and reports zero missing transparency fields across all 20 Mock surfaces (10 verify + 5 submit + 3 subscribe + 2 lookup).
 - **SC-006**: A direct primitive call `lookup(mode='fetch', tool_id='nmc_emergency_search', params={...})` from the TUI reaches the backend's `call()` method (verified via OTEL span attribute `ummaya.tool.id=nmc_emergency_search`), with zero `AdapterNotFound` errors.
-- **SC-007**: A scope-violation regression test confirms that a token issued with `scope=submit:hometax.tax-return` is rejected when presented to `mock_submit_module_gov24_minwon`, with the rejection logged in the consent ledger.
+- **SC-007**: A scope-violation regression test confirms that a token issued with `scope=send:hometax.tax-return` is rejected when presented to `mock_submit_module_gov24_minwon`, with the rejection logged in the consent ledger.
 - **SC-008**: Zero new entries appear in `pyproject.toml` `[project.dependencies]` and zero new entries appear in `tui/package.json` `dependencies` after the merge.
 - **SC-009**: The vhs Layer 4 tape produces three named PNG keyframes whose pixel content (visually verified via Read tool by Lead Opus) shows the citizen branding (boot), the typed citizen query (input), and the surfaced 접수번호 (action) respectively.
 

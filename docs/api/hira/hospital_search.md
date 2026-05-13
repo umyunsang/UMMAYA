@@ -1,6 +1,6 @@
 ---
 tool_id: hira_hospital_search
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 1
 spec_version: v4
@@ -25,7 +25,7 @@ phone number, institution type, and distance.
 |---|---|
 | Classification | Live · Permission tier 1 |
 | Source | Health Insurance Review and Assessment Service (HIRA) / data.go.kr |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/hira/hospital_search.py` |
 | Evidence | `/tmp/ummaya-evidence/medical-evidence.md § 1. HIRA` |
 

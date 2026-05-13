@@ -76,7 +76,7 @@ The LLM autonomously:
 
 1. Recognises the request as a `submit` class against the `hometax` adapter family
 2. Recognises the `hometax` family is OPAQUE without prior verify
-3. Emits `verify(method='modid', scope_list=['lookup:hometax.simplified', 'submit:hometax.tax-return'], purpose_ko='2024년 귀속 종합소득세 신고', purpose_en='Filing 2024 comprehensive income tax return')`
+3. Emits `verify(method='modid', scope_list=['find:hometax.simplified', 'send:hometax.tax-return'], purpose_ko='2024년 귀속 종합소득세 신고', purpose_en='Filing 2024 comprehensive income tax return')`
 
 The TUI surfaces the permission prompt (CC-style `<PermissionRequest>`):
 
@@ -98,7 +98,7 @@ The TUI surfaces the permission prompt (CC-style `<PermissionRequest>`):
 The citizen presses `Y`. The verify adapter:
 
 - Simulates the modid biometric ceremony (3-second simulated wait — actually instant in Mock for smoke speed)
-- Constructs a `DelegationToken` with `scope="lookup:hometax.simplified,submit:hometax.tax-return"`, `expires_at=now+24h`, `issuer_did="did:web:mobileid.go.kr"`
+- Constructs a `DelegationToken` with `scope="find:hometax.simplified,send:hometax.tax-return"`, `expires_at=now+24h`, `issuer_did="did:web:mobileid.go.kr"`
 - Appends a `delegation_issued` event to `~/.ummaya/memdir/user/consent/<today>.jsonl`
 - Returns the token in a `DelegationContext` to the LLM
 
@@ -108,7 +108,7 @@ The LLM stores the token in tool-call context and emits:
 lookup(mode='fetch', tool_id='mock_lookup_module_hometax_simplified', params={year: 2024}, delegation=<context>)
 ```
 
-The lookup adapter validates the token (scope match: `lookup:hometax.simplified` ∈ token's comma-list ✓), returns synthetic 간소화 자료 with the six transparency fields, and appends a `delegation_used` event with `outcome="success"`.
+The lookup adapter validates the token (scope match: `find:hometax.simplified` ∈ token's comma-list ✓), returns synthetic 간소화 자료 with the six transparency fields, and appends a `delegation_used` event with `outcome="success"`.
 
 The LLM analyses the data and emits:
 
@@ -116,7 +116,7 @@ The LLM analyses the data and emits:
 submit(tool_id='mock_submit_module_hometax_taxreturn', params={...신고내용...}, delegation=<context>)
 ```
 
-The submit adapter validates the token (scope match: `submit:hometax.tax-return` ∈ token's comma-list ✓), produces a synthetic 접수번호 (e.g., `hometax-2026-04-29-RX-7K2J9`), and appends a `delegation_used` event with `outcome="success"` and the 접수번호.
+The submit adapter validates the token (scope match: `send:hometax.tax-return` ∈ token's comma-list ✓), produces a synthetic 접수번호 (e.g., `hometax-2026-04-29-RX-7K2J9`), and appends a `delegation_used` event with `outcome="success"` and the 접수번호.
 
 The TUI renders the LLM's final response:
 
@@ -134,7 +134,7 @@ tail -3 ~/.ummaya/memdir/user/consent/$(date +%Y-%m-%d).jsonl | jq -c .
 Expected output (3 lines, all sharing the same `delegation_token` value):
 
 ```jsonl
-{"kind":"delegation_issued","ts":"...","session_id":"...","delegation_token":"del_xyz...","scope":"lookup:hometax.simplified,submit:hometax.tax-return","expires_at":"...","issuer_did":"did:web:mobileid.go.kr","verify_tool_id":"mock_verify_module_modid","_mode":"mock"}
+{"kind":"delegation_issued","ts":"...","session_id":"...","delegation_token":"del_xyz...","scope":"find:hometax.simplified,send:hometax.tax-return","expires_at":"...","issuer_did":"did:web:mobileid.go.kr","verify_tool_id":"mock_verify_module_modid","_mode":"mock"}
 {"kind":"delegation_used","ts":"...","session_id":"...","delegation_token":"del_xyz...","consumer_tool_id":"mock_lookup_module_hometax_simplified","receipt_id":null,"outcome":"success"}
 {"kind":"delegation_used","ts":"...","session_id":"...","delegation_token":"del_xyz...","consumer_tool_id":"mock_submit_module_hometax_taxreturn","receipt_id":"hometax-2026-04-29-RX-7K2J9","outcome":"success"}
 ```

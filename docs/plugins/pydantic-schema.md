@@ -92,13 +92,13 @@ LLM-visible primitive 와 1:1:
 
 | Primitive | input class | output class |
 |---|---|---|
-| `lookup` | `LookupInput` | `LookupOutput` |
-| `submit` | `SubmitInput` | `SubmitOutput` |
-| `verify` | `VerifyInput` | `VerifyOutput` |
+| `find` | `FindInput` | `FindOutput` |
+| `send` | `SendInput` | `SendOutput` |
+| `check` | `CheckInput` | `CheckOutput` |
 
 (Q1-INPUT-MODEL / Q1-OUTPUT-MODEL 이 위 3쌍 중 하나가 존재하는지 확인.)
 
-내부 모델 (`SubwayArrival`, `TrackingEvent` 등) 은 자유 명명. 단 `LookupInput` 의 필드 type 으로 사용되는 nested model 은 동일한 `model_config` 규약 적용.
+내부 모델 (`SubwayArrival`, `TrackingEvent` 등) 은 자유 명명. 단 primitive input 의 필드 type 으로 사용되는 nested model 은 동일한 `model_config` 규약 적용.
 
 ---
 

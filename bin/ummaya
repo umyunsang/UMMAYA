@@ -1,29 +1,108 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 // SPDX-License-Identifier: Apache-2.0
 
-import { dirname, join } from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { existsSync, realpathSync } from 'node:fs'
+import { delimiter, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-function bunVersionAtLeast(version: string, minimum: string): boolean {
-  const current = version.split('.').map((part) => Number(part))
-  const required = minimum.split('.').map((part) => Number(part))
+const MINIMUM_BUN_VERSION = '1.3.0'
+const launcherPath = realpathSync(fileURLToPath(import.meta.url))
+
+function bunVersionAtLeast(version, minimum) {
+  const current = String(version)
+    .split('.')
+    .map((part) => Number.parseInt(part, 10))
+  const required = minimum
+    .split('.')
+    .map((part) => Number.parseInt(part, 10))
   for (let index = 0; index < required.length; index += 1) {
     const left = current[index] ?? 0
     const right = required[index] ?? 0
+    if (!Number.isFinite(left) || !Number.isFinite(right)) return false
     if (left > right) return true
     if (left < right) return false
   }
   return true
 }
 
-if (!bunVersionAtLeast(Bun.version, '1.3.0')) {
+function addCandidate(candidates, seen, candidate) {
+  if (!candidate || seen.has(candidate)) return
+  seen.add(candidate)
+  candidates.push(candidate)
+}
+
+function collectBunCandidates() {
+  const candidates = []
+  const seen = new Set()
+  addCandidate(candidates, seen, process.env.UMMAYA_BUN)
+
+  for (const entry of (process.env.PATH ?? '').split(delimiter)) {
+    if (entry) addCandidate(candidates, seen, join(entry, 'bun'))
+  }
+
+  if (process.env.HOME) {
+    addCandidate(candidates, seen, join(process.env.HOME, '.bun', 'bin', 'bun'))
+  }
+  addCandidate(candidates, seen, '/opt/homebrew/opt/bun/bin/bun')
+  addCandidate(candidates, seen, '/opt/homebrew/bin/bun')
+  addCandidate(candidates, seen, '/usr/local/opt/bun/bin/bun')
+  addCandidate(candidates, seen, '/usr/local/bin/bun')
+
+  return candidates
+}
+
+function probeBunVersion(candidate) {
+  if (candidate.includes('/') && !existsSync(candidate)) return null
+  const result = spawnSync(candidate, ['--version'], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  if (result.error || result.status !== 0) return null
+  return (result.stdout || result.stderr).trim()
+}
+
+function launchWithCompatibleBun(currentVersion = null) {
+  const checked = []
+  for (const candidate of collectBunCandidates()) {
+    const version = probeBunVersion(candidate)
+    if (!version) {
+      checked.push(`${candidate} (unavailable)`)
+      continue
+    }
+    if (!bunVersionAtLeast(version, MINIMUM_BUN_VERSION)) {
+      checked.push(`${candidate} (${version})`)
+      continue
+    }
+
+    const result = spawnSync(candidate, [launcherPath, ...process.argv.slice(2)], {
+      env: process.env,
+      stdio: 'inherit',
+    })
+    if (result.error) {
+      process.stderr.write(`Failed to launch UMMAYA with ${candidate}: ${result.error.message}\n`)
+      process.exit(1)
+    }
+    process.exit(result.status ?? (result.signal ? 1 : 0))
+  }
+
+  const current = currentVersion ? ` Current Bun: ${currentVersion}.` : ''
   process.stderr.write(
-    `UMMAYA requires Bun >= 1.3.0; found ${Bun.version}. Install or upgrade Bun before running ummaya.\n`,
+    `UMMAYA requires Bun >= ${MINIMUM_BUN_VERSION}.${current} Install or upgrade Bun, or set UMMAYA_BUN to a compatible Bun binary.\n` +
+      `Checked candidates:\n${checked.map((item) => `  - ${item}`).join('\n')}\n`,
   )
   process.exit(1)
 }
 
-const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
+const runningBun = globalThis.Bun
+if (!runningBun) {
+  launchWithCompatibleBun()
+}
+if (!bunVersionAtLeast(runningBun.version, MINIMUM_BUN_VERSION)) {
+  launchWithCompatibleBun(runningBun.version)
+}
+
+const packageRoot = dirname(dirname(launcherPath))
 
 process.env.UMMAYA_PACKAGE_ROOT ??= packageRoot
 process.env.UMMAYA_BACKEND_CMD_JSON ??= JSON.stringify([

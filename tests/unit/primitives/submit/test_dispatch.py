@@ -29,7 +29,7 @@ class _SuccessParams:
 
 async def _invoke_success(params: object) -> SubmitOutput:
     return SubmitOutput(
-        transaction_id="urn:ummaya:submit:aabbcc",
+        transaction_id="urn:ummaya:send:aabbcc",
         status=SubmitStatus.succeeded,
         adapter_receipt={"receipt_number": "TEST-001"},
     )
@@ -95,7 +95,7 @@ async def test_invalid_tool_id_shape_returns_structured_error() -> None:
 def test_submit_output_has_only_envelope_fields() -> None:
     """SubmitOutput must only expose transaction_id, status, adapter_receipt."""
     SubmitOutput(
-        transaction_id="urn:ummaya:submit:test001",
+        transaction_id="urn:ummaya:send:test001",
         status=SubmitStatus.succeeded,
         adapter_receipt={"ref": "2026"},
     )
@@ -110,7 +110,7 @@ def test_submit_output_has_only_envelope_fields() -> None:
 def test_submit_output_no_domain_data_leaks_through_adapter_receipt() -> None:
     """adapter_receipt is opaque dict — domain data lives there, not on envelope."""
     out = SubmitOutput(
-        transaction_id="urn:ummaya:submit:test002",
+        transaction_id="urn:ummaya:send:test002",
         status=SubmitStatus.succeeded,
         adapter_receipt={"접수번호": "2026-04-19-0001", "ministry": "data_go_kr"},
     )

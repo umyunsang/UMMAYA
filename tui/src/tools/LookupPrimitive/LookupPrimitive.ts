@@ -2,9 +2,8 @@
 // UMMAYA-original — Epic #1634 P3 · FindPrimitive.
 //
 // LLM-visible tool name: "find"
-// Primitive wrapper over Spec 022 ummaya.tools.find — two modes:
-//   search: BM25+dense hybrid retrieval over registered adapters
-//   fetch:  direct adapter invocation by tool_id
+// Primitive wrapper over Spec 022 ummaya.tools.find — fetch-only; adapter
+// discovery runs inside the backend and is injected into the system prompt.
 //
 // Epic γ #2294 · T006/T007: real validateInput + renderToolResultMessage.
 //

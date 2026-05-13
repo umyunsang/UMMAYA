@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Per-call outbound HTTP trace capture (Spec 2521 — verbose tool view).
 
-Adapters wrap their httpx client with :func:`traced_async_client`. The lookup /
-submit / verify primitive dispatcher in :mod:`ummaya.ipc.stdio` opens a trace
+Adapters wrap their httpx client with :func:`traced_async_client`. The find /
+send / check primitive dispatcher in :mod:`ummaya.ipc.stdio` opens a trace
 scope around each call so every external request the adapter makes
 (``data.go.kr`` shape, agency endpoint, cached vendor, etc.) is recorded and
 attached to the result envelope as ``outbound_traces``.

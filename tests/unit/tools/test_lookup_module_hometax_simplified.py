@@ -180,8 +180,8 @@ def test_bm25_discovery_year_end_tax_keyword() -> None:
 
 @pytest.mark.asyncio
 async def test_handle_with_matching_scope_succeeds() -> None:
-    """Matching scope 'lookup:hometax.simplified' passes delegation check."""
-    delegation = _make_delegation_context("lookup:hometax.simplified")
+    """Matching scope 'find:hometax.simplified' passes delegation check."""
+    delegation = _make_delegation_context("find:hometax.simplified")
     result = await handle(_VALID_INPUT, delegation_context=delegation)
 
     # Happy path — record envelope with transparency stamped inside item.
@@ -194,7 +194,7 @@ async def test_handle_with_matching_scope_succeeds() -> None:
 
 @pytest.mark.asyncio
 async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
-    """Wrong scope 'submit:gov24.minwon' triggers a LookupError envelope.
+    """Wrong scope 'send:gov24.minwon' triggers a LookupError envelope.
 
     Scope-violation maps to the closed-set ``LookupErrorReason.auth_required``
     (the closed enum has no ``scope_violation`` member). Transparency fields
@@ -202,7 +202,7 @@ async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
     ``extra='forbid'``; ``meta.source`` (injected later by ``normalize()``)
     carries adapter identity instead.
     """
-    delegation = _make_delegation_context("submit:gov24.minwon")
+    delegation = _make_delegation_context("send:gov24.minwon")
     result = await handle(_VALID_INPUT, delegation_context=delegation)
 
     assert result.get("kind") == "error"
@@ -210,14 +210,14 @@ async def test_handle_with_mismatched_scope_returns_scope_violation() -> None:
     assert result.get("retryable") is False
     # Scope context is preserved in the message for citizen-facing diagnostics.
     msg = result.get("message", "")
-    assert "lookup:hometax.simplified" in msg
-    assert "submit:gov24.minwon" in msg
+    assert "find:hometax.simplified" in msg
+    assert "send:gov24.minwon" in msg
 
 
 @pytest.mark.asyncio
 async def test_handle_with_multi_scope_containing_required_passes() -> None:
-    """Multi-scope token that includes 'lookup:hometax.simplified' passes."""
-    delegation = _make_delegation_context("lookup:hometax.simplified,submit:hometax.tax-return")
+    """Multi-scope token that includes 'find:hometax.simplified' passes."""
+    delegation = _make_delegation_context("find:hometax.simplified,send:hometax.tax-return")
     result = await handle(_VALID_INPUT, delegation_context=delegation)
 
     assert result.get("kind") == "record", (
@@ -307,7 +307,7 @@ def test_input_schema_null_values_apply_mock_defaults() -> None:
 @pytest.mark.asyncio
 async def test_input_schema_accepts_backend_injected_delegation_context() -> None:
     """Backend-injected DelegationContext validates before adapter dispatch."""
-    delegation = _make_delegation_context("lookup:hometax.simplified")
+    delegation = _make_delegation_context("find:hometax.simplified")
     payload = {
         "year": 2024,
         "resident_id_prefix": "000000",

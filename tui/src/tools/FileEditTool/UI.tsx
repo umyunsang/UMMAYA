@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Suspense, use, useState } from 'react';
 import { FileEditToolUseRejectedMessage } from 'src/components/FileEditToolUseRejectedMessage.js';
 import { MessageResponse } from 'src/components/MessageResponse.js';
-import { extractTag } from 'src/utils/messages.js';
+import { extractTag } from 'src/utils/messageText.js';
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js';
 import { FilePathLink } from '../../components/FilePathLink.js';

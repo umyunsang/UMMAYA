@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Spec 1978 Phase 5 — AuthContextDisplay component (T066).
 //
-// Renders an AuthContext-shaped object returned by the verify primitive in a
+// Renders an AuthContext-shaped object returned by the check primitive in a
 // citizen-readable form. Mirrors the field set of the Python
 // _AuthContextBase + per-family variants from src/ummaya/primitives/verify.py.
 //

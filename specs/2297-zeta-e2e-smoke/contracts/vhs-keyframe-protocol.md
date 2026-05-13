@@ -28,7 +28,7 @@
 
 **Given** `smoke-keyframe-3-receipt.png` is committed.
 
-**Then** Lead Opus MUST use the Read tool on this PNG (multimodal vision) and verify:
+**Then** Lead Opus MUST use the Read tool on this PNG (multimodal vision) and check:
 - The image renders the citizen-facing assistant message containing `접수번호: hometax-2026-MM-DD-RX-XXXXX`.
 - The UMMAYA branding is visible at the top.
 - No stub markers (`status: stub`, `Lollygagging…` mid-spinner) are present in the final state.

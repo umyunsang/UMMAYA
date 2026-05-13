@@ -1,5 +1,5 @@
 /**
- * Snapshot tests for submit primitive renderers.
+ * Snapshot tests for send primitive renderers.
  * Uses ink-testing-library for output capture.
  * FR-026, FR-027, FR-034, FR-035.
  */

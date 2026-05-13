@@ -1,0 +1,26 @@
+{
+  "$defs": {
+    "_LocateOutput": {
+      "description": "Opaque locate output wrapper for registry metadata export.",
+      "title": "_LocateOutput"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/juso_adm_cd_lookup.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "JUSO address-link administrative code lookup input.",
+  "properties": {
+    "query": {
+      "description": "Korean road/jibun address text for JUSO admCd lookup.",
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Query",
+      "type": "string"
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "title": "juso_adm_cd_lookup",
+  "type": "object"
+}

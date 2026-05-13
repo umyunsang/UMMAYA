@@ -215,7 +215,7 @@ async def _invoke_submit_hometax_taxreturn(tmp_path: Path) -> str:
     # Issue delegation via modid verify.
     verify_result = verify_invoke(
         {
-            "scope_list": ["submit:hometax.tax-return"],
+            "scope_list": ["send:hometax.tax-return"],
             "session_id": session_id,
             "purpose_ko": "종합소득세 신고",
             "purpose_en": "Filing comprehensive income tax",
@@ -281,7 +281,7 @@ async def _invoke_submit_gov24_minwon(tmp_path: Path) -> str:
 
     verify_result = verify_invoke(
         {
-            "scope_list": ["submit:gov24.minwon"],
+            "scope_list": ["send:gov24.minwon"],
             "session_id": session_id,
             "purpose_ko": "정부24 민원 신청",
             "purpose_en": "Gov24 civil petition submission",

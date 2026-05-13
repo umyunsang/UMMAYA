@@ -12,8 +12,8 @@
 import { test, expect, describe } from 'bun:test'
 import { render } from 'ink-testing-library'
 import type React from 'react'
-import { CheckPrimitive } from './CheckPrimitive.js'
-import type { Output } from './CheckPrimitive.js'
+import { VerifyPrimitive } from './VerifyPrimitive.js'
+import type { Output } from './VerifyPrimitive.js'
 
 // ---------------------------------------------------------------------------
 // Helpers

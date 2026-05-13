@@ -119,7 +119,7 @@ Patch the TUI to send `frame.tools = []` (skip Step 2 emission), then verify bac
 
 ```bash
 UMMAYA_TUI_FORCE_EMPTY_TOOLS=1 python3 /tmp/run_pty_step3.py "강남구 응급실"
-# verify: same SC-001 hallucination check passes (because backend fallback inject ran)
+# check: same SC-001 hallucination check passes (because backend fallback inject ran)
 ```
 
 ### Step 5 — tool_use stream-event projection

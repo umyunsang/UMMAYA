@@ -1,6 +1,6 @@
 ---
 tool_id: nmc_emergency_search
-primitive: lookup
+primitive: find
 tier: live
 permission_tier: 3
 spec_version: v4
@@ -17,7 +17,7 @@ Queries the National Medical Center (국립중앙의료원) emergency medical in
 |---|---|
 | Classification | Live · Permission tier 3 |
 | Source | National Medical Center (NMC) / data.go.kr B552657 |
-| Primitive | `lookup` |
+| Primitive | `find` |
 | Module | `src/ummaya/tools/nmc/emergency_search.py` |
 | Spec version | v4 (Spec 2522 — URL encoding safety + 5-section description + endpoint doc correction) |
 

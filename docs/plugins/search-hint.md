@@ -181,7 +181,7 @@ Spec 022 의 BM25 는 다음 weights:
 
 ## Reference
 
-- [Spec 022 BM25 retrieval](../../specs/022-mvp-main-tool/spec.md) — `lookup(mode="search")` 의 ranking 모델
+- [Spec 022 BM25 retrieval](../../specs/022-mvp-main-tool/spec.md) — `find` 후보 선별에 쓰는 BM25 ranking 모델
 - [Q4 row 그룹](review-checklist.md#q4--discovery--docs-8) — 50-item 검증 매트릭스의 8 항목
 - [`src/ummaya/plugins/checks/q4_discovery.py`](../../src/ummaya/plugins/checks/q4_discovery.py) — 검사 구현
 - [Kiwipiepy 문서](https://github.com/bab2min/kiwipiepy) — Korean morphology library

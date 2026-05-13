@@ -17,7 +17,7 @@ SC-005 compliance: ``published_tier_minimum="ganpyeon_injeung_kakao_aal2"`` gate
 access to AAL2+ callers. Tier gate enforcement is the dispatcher's responsibility
 (``ummaya.primitives.submit.submit()``); this module only declares the requirement.
 
-Epic δ #2295: ``primitive=submit`` — payment is irreversible (submit gate).
+Epic δ #2295: ``primitive=send`` — payment is irreversible (send gate).
 """
 
 from __future__ import annotations
