@@ -23,6 +23,8 @@ brew install --cask ummaya
 
 ![UMMAYA demo](assets/ummaya-demo.gif)
 
+<sub>README 데모는 실제 `ummaya` 터미널 세션을 실행하고, 라이브 LLM이 공공 API 도구를 선택하는 흐름을 `t-rec`으로 기록합니다. 재생성: `npm run demo:readme`</sub>
+
 ---
 
 ## 엄마야, 이거 뭐부터 해야 해?
@@ -243,6 +245,7 @@ ummaya
 
 UMMAYA는 LLM 응답에 **K-EXAONE-236B-A23B** 모델을 사용하며, 요청을 보내려면 **FriendliAI API 키**가 필요합니다.
 
+릴리즈 패키지 사용자는 Kakao, data.go.kr, JUSO, SGIS 키를 따로 설정하지 않습니다. 라이브 공공 API 어댑터는 운영자가 관리하는 게이트웨이를 통해 호출됩니다.
 
 UMMAYA를 실행한 뒤 아래 명령어를 입력합니다.
 

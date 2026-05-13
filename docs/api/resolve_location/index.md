@@ -103,8 +103,9 @@ JUSO (`UMMAYA_JUSO_CONFM_KEY`) and SGIS (`UMMAYA_SGIS_KEY`) were not set during 
 
 #### Variant C — 통계청 SGIS 통계지리정보 (`source: "sgis"`)
 
-- **Endpoint**: Auth `GET https://sgisapi.kostat.go.kr/OpenAPI3/auth/authentication.json` → rgeocode `GET https://sgisapi.kostat.go.kr/OpenAPI3/addr/rgeocode.json`
-- **Source URL**: https://sgis.kostat.go.kr/developer/
+- **Endpoint**: Auth `GET https://sgisapi.mods.go.kr/OpenAPI3/auth/authentication.json` → WGS84 reverse geocode `GET https://sgisapi.mods.go.kr/OpenAPI3/addr/rgeocodewgs84.json`
+- **Source URL**: https://sgis.mods.go.kr/developer/; local reference copy:
+  `docs/references/SGIS_OpenAPI_definition.pdf`
 - **Authentication**: Two-step — consumer key + secret (`UMMAYA_SGIS_KEY`, `UMMAYA_SGIS_SECRET`) to obtain a short-lived `accessToken`, then `accessToken` on the rgeocode call.
 - **Used for**: `adm_cd` fallback when JUSO fails; requires coordinates from Kakao as input.
 - **Returns**: 8-digit `adm_cd` (padded to 10 digits) + `adm_nm`. Level derived from trailing zeros.

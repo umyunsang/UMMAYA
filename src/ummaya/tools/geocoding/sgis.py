@@ -15,7 +15,9 @@ and to allow direct unit-testing of the backend method.
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 
 import httpx
 
@@ -23,8 +25,8 @@ from ummaya.tools._outbound_trace import traced_async_client
 
 logger = logging.getLogger(__name__)
 
-_SGIS_AUTH_URL = "https://sgisapi.kostat.go.kr/OpenAPI3/auth/authentication.json"
-_SGIS_RGEOCODE_URL = "https://sgisapi.kostat.go.kr/OpenAPI3/addr/rgeocode.json"
+_SGIS_AUTH_URL = "https://sgisapi.mods.go.kr/OpenAPI3/auth/authentication.json"
+_SGIS_RGEOCODE_URL = "https://sgisapi.mods.go.kr/OpenAPI3/addr/rgeocodewgs84.json"
 
 
 async def lookup_adm_cd_by_coords(
@@ -41,7 +43,7 @@ async def lookup_adm_cd_by_coords(
 
     Two-step process:
       1. Obtain short-lived SGIS access token.
-      2. Call rgeocode with (lon, lat) to get 행정동 code.
+      2. Call rgeocodewgs84 with (lon, lat) to get 행정동 code.
 
     Args:
         lat: WGS-84 latitude.
@@ -56,16 +58,18 @@ async def lookup_adm_cd_by_coords(
         through to the next resolver.
     """
     own_client = client is None
-    _client: httpx.AsyncClient = traced_async_client(timeout=10.0) if own_client else client  # type: ignore[assignment]
+    _client: httpx.AsyncClient = traced_async_client(timeout=30.0) if own_client else client  # type: ignore[assignment]
 
     try:
         # Step 1: Obtain access token
-        token_resp = await _client.get(
-            _SGIS_AUTH_URL,
-            params={
-                "consumer_key": consumer_key,
-                "consumer_secret": consumer_secret,
-            },
+        token_resp = await _sgis_retry(
+            lambda: _client.get(
+                _SGIS_AUTH_URL,
+                params={
+                    "consumer_key": consumer_key,
+                    "consumer_secret": consumer_secret,
+                },
+            )
         )
         token_resp.raise_for_status()
         token_data = token_resp.json()
@@ -74,15 +78,19 @@ async def lookup_adm_cd_by_coords(
             logger.debug("sgis: authentication returned empty accessToken")
             return None
 
-        # Step 2: Coordinate to region lookup
-        coord_resp = await _client.get(
-            _SGIS_RGEOCODE_URL,
-            params={
-                "accessToken": access_token,
-                "x_coor": str(lon),
-                "y_coor": str(lat),
-                "addr_type": "20",  # 행정동
-            },
+        # Step 2: Coordinate to region lookup. UMMAYA locate adapters pass
+        # WGS84 lat/lon, so use SGIS' WGS84 reverse-geocoding endpoint rather
+        # than the UTM-K-only rgeocode endpoint.
+        coord_resp = await _sgis_retry(
+            lambda: _client.get(
+                _SGIS_RGEOCODE_URL,
+                params={
+                    "accessToken": access_token,
+                    "x_coor": str(lon),
+                    "y_coor": str(lat),
+                    "addr_type": "20",  # 행정동
+                },
+            )
         )
         coord_resp.raise_for_status()
         coord_data = coord_resp.json()
@@ -93,16 +101,22 @@ async def lookup_adm_cd_by_coords(
             return None
 
         item = result_list[0]
-        adm_cd_raw = str(item.get("adm_cd", ""))
+        adm_cd_raw = str(
+            item.get("adm_cd") or item.get("adm_dr_cd") or _compose_sgis_adm_cd(item) or ""
+        )
         if not adm_cd_raw or len(adm_cd_raw) < 8:
             logger.debug("sgis: adm_cd missing or too short: %r", adm_cd_raw)
             return None
 
         # SGIS returns 8-digit code; pad to 10 digits
         adm_cd = adm_cd_raw.ljust(10, "0")[:10]
-        adm_nm = str(item.get("adm_nm", ""))
+        adm_nm = str(item.get("adm_nm") or item.get("full_addr") or _compose_sgis_name(item))
 
-        if adm_cd.endswith("00000000"):
+        if item.get("emdong_cd"):
+            level = "eupmyeondong"
+        elif item.get("sgg_cd"):
+            level = "sigungu"
+        elif adm_cd.endswith("00000000"):
             level = "sido"
         elif adm_cd.endswith("0000"):
             level = "sigungu"
@@ -127,3 +141,38 @@ async def lookup_adm_cd_by_coords(
     finally:
         if own_client:
             await _client.aclose()
+
+
+async def _sgis_retry[T](operation: Callable[[], Awaitable[T]]) -> T:
+    last_exc: Exception | None = None
+    for delay_seconds in (0.0, 0.4, 1.2):
+        if delay_seconds:
+            await asyncio.sleep(delay_seconds)
+        try:
+            return await operation()
+        except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ConnectError) as exc:
+            last_exc = exc
+    assert last_exc is not None
+    raise last_exc
+
+
+def _compose_sgis_adm_cd(item: dict[str, object]) -> str | None:
+    sido_cd = str(item.get("sido_cd") or "").strip()
+    sgg_cd = str(item.get("sgg_cd") or "").strip()
+    emdong_cd = str(item.get("emdong_cd") or "").strip()
+    if not sido_cd:
+        return None
+    if sgg_cd and emdong_cd:
+        return f"{sido_cd}{sgg_cd}{emdong_cd}"
+    if sgg_cd:
+        return f"{sido_cd}{sgg_cd}000"
+    return f"{sido_cd}000000"
+
+
+def _compose_sgis_name(item: dict[str, object]) -> str:
+    parts = [
+        str(item.get("sido_nm") or "").strip(),
+        str(item.get("sgg_nm") or "").strip(),
+        str(item.get("emdong_nm") or "").strip(),
+    ]
+    return " ".join(part for part in parts if part)

@@ -14,6 +14,7 @@ Usage::
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -53,6 +54,39 @@ class UmmayaSettings(BaseSettings):
 
     data_go_kr_api_key: str = Field(default="")
     """공공데이터포털 통합 API 키, shared by KOROAD / KMA / HIRA / NMC / NFA / MOHW."""
+
+    # --- Live adapter gateway (release CLI path) ---
+    live_adapter_mode: Literal["auto", "proxy", "direct"] = Field(default="auto")
+    """Live adapter route (UMMAYA_LIVE_ADAPTER_MODE).
+
+    ``auto`` routes packaged CLI executions through the operator-managed proxy
+    and source-tree executions through direct local adapters. ``proxy`` forces
+    the gateway route; ``direct`` forces the legacy local-env route.
+    """
+
+    live_adapter_proxy_url: str = Field(
+        default="https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters"
+    )
+    """Operator-managed live adapter gateway base URL.
+
+    Public release users should not need Kakao/data.go.kr credentials locally;
+    the gateway keeps those operator credentials server-side.
+    """
+
+    live_adapter_proxy_timeout_seconds: float = Field(default=30.0, gt=0)
+    """HTTP timeout for operator-managed live adapter proxy calls."""
+
+    live_adapter_proxy_token: str = Field(default="")
+    """Optional bearer token for private/self-hosted live adapter gateways."""
+
+    live_adapter_gateway_token: str = Field(default="")
+    """Optional bearer token required by the hosted live adapter gateway server."""
+
+    live_adapter_gateway_rate_limit_per_minute: int = Field(default=120, ge=1, le=10_000)
+    """Per-client, per-tool request limit enforced by the hosted gateway."""
+
+    live_adapter_gateway_max_body_bytes: int = Field(default=65_536, ge=1024, le=1_048_576)
+    """Maximum live adapter gateway request body size in bytes."""
 
     # --- Safety pipeline (Epic #466) ---
     safety: SafetySettings = Field(default_factory=SafetySettings)

@@ -46,9 +46,17 @@ Column definitions:
 | `UMMAYA_KAKAO_API_KEY` | No (operator-managed) | — | REST API key string | `ummaya.settings.UmmayaSettings.kakao_api_key` | [Kakao Developers Console](https://developers.kakao.com) |
 | `UMMAYA_FRIENDLI_TOKEN` | No (user session) | — | Bearer token | `ummaya.llm.config.LLMClientConfig.token` | [FriendliAI Suite](https://suite.friendli.ai) |
 | `UMMAYA_DATA_GO_KR_API_KEY` | No (operator-managed) | — | API key string | `ummaya.settings.UmmayaSettings.data_go_kr_api_key` | [공공데이터포털](https://www.data.go.kr) |
+| `UMMAYA_LIVE_ADAPTER_MODE` | No | `auto` | `auto` \| `proxy` \| `direct` | `ummaya.tools.live_proxy.should_use_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_mode) |
+| `UMMAYA_LIVE_ADAPTER_PROXY_URL` | No | `https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters` | HTTPS URL | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_url) |
+| `UMMAYA_LIVE_ADAPTER_PROXY_TIMEOUT_SECONDS` | No | `30.0` | Float > 0 | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_timeout_seconds) |
+| `UMMAYA_LIVE_ADAPTER_PROXY_TOKEN` | No (operator-managed) | — | Bearer token | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_token) |
+| `UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN` | No (operator-managed) | — | Bearer token | `ummaya.gateway.app._require_gateway_token` | [Live adapter gateway](#ummaya_live_adapter_gateway_token) |
+| `UMMAYA_LIVE_ADAPTER_GATEWAY_RATE_LIMIT_PER_MINUTE` | No | `120` | Integer >= 1 | `ummaya.gateway.app._enforce_gateway_rate_limit` | [Live adapter gateway](#ummaya_live_adapter_gateway_rate_limit_per_minute) |
+| `UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES` | No | `65536` | Integer >= 1024 | `ummaya.gateway.app.request_size_guard` | [Live adapter gateway](#ummaya_live_adapter_gateway_max_body_bytes) |
+| `UMMAYA_PACKAGE_ROOT` | No (internal wrapper) | — | Absolute package path | `bin/ummaya`, `ummaya.tools.live_proxy.should_use_live_adapter_proxy` | [Live adapter gateway](#ummaya_package_root) |
 | `UMMAYA_JUSO_CONFM_KEY` | No (optional fallback) | — | Confirmation key string | `ummaya.settings.UmmayaSettings.juso_confm_key` | [도로명주소 개발자센터](https://business.juso.go.kr) |
-| `UMMAYA_SGIS_KEY` | No (optional fallback) | — | Consumer key string | `ummaya.settings.UmmayaSettings.sgis_key` | [SGIS API](https://sgis.kostat.go.kr) |
-| `UMMAYA_SGIS_SECRET` | No (optional fallback) | — | Consumer secret string | `ummaya.settings.UmmayaSettings.sgis_secret` | [SGIS API](https://sgis.kostat.go.kr) |
+| `UMMAYA_SGIS_KEY` | No (operator-managed) | — | Consumer key string | `ummaya.settings.UmmayaSettings.sgis_key` | [SGIS API](https://sgis.mods.go.kr) |
+| `UMMAYA_SGIS_SECRET` | No (operator-managed) | — | Consumer secret string | `ummaya.settings.UmmayaSettings.sgis_secret` | [SGIS API](https://sgis.mods.go.kr) |
 | `UMMAYA_FRIENDLI_BASE_URL` | No | `https://api.friendli.ai/serverless/v1` | Valid HTTPS URL | `ummaya.llm.config.LLMClientConfig.base_url` | FriendliAI Suite |
 | `UMMAYA_FRIENDLI_MODEL` | No | `LGAI-EXAONE/K-EXAONE-236B-A23B` | Model identifier string | `ummaya.llm.config.LLMClientConfig.model` | FriendliAI Suite |
 | `UMMAYA_LLM_SESSION_BUDGET` | No | `100000` | Integer > 0 (tokens) | `ummaya.llm.config.LLMClientConfig.session_budget` | This doc |
@@ -57,9 +65,9 @@ Column definitions:
 | `UMMAYA_AGENTIC_LOOP_MAX_TURNS` | No | `8` | Integer >= 1 (turns) | `ummaya.ipc.stdio` (Spec 1978 T029 — bounds the CC query-engine agentic loop) | Spec 1978 |
 | `UMMAYA_REACT_MAX_TURNS` | No | `8` | Integer >= 1 (turns) | `ummaya.ipc.stdio` (legacy alias for `UMMAYA_AGENTIC_LOOP_MAX_TURNS`; preserved for backward compatibility) | Spec 1978 |
 | `UMMAYA_TOOL_RESULT_TIMEOUT_SECONDS` | No | `120` | Float > 0 (seconds) | `ummaya.ipc.stdio` (Spec 1978 T030 — `asyncio.gather` timeout for primitive dispatch Futures, contracts/tool-bridge-protocol.md) | Spec 1978 |
-| `UMMAYA_PROMPTS_DIR` | No | `<repo_root>/prompts` | Absolute or relative directory path | `ummaya.tools.verify_canonical_map._resolve_prompts_dir` (Epic ζ #2297 — overrides the path that `verify_canonical_map.py` parses to source the canonical 10-row `tool_id ↔ family_hint` mapping from `<verify_families>` in `system_v1.md`; defaults to walking up from the module's parent directories to find `prompts/`) | Epic #2297 |
 | `UMMAYA_PERMISSION_TIMEOUT_SECONDS` | No | `60` | Float > 0 (seconds) | `ummaya.ipc.stdio` (Spec 1978 T045 — permission_request → permission_response wait; D2 invariant default-deny on timeout) | Spec 1978 |
 | `UMMAYA_K_EXAONE_THINKING` | No | `true` | `true` \| `false` (case-insensitive; `1`/`yes` also accepted) | `ummaya.llm.client._build_payload` (Epic #2077 / Spec 2521 — opts in to K-EXAONE-236B-A23B's chain-of-thought channel via `chat_template_kwargs.enable_thinking`; default `true` per K-EXAONE model card and τ²-Bench measurement conditions; set `false` for sub-second first-token latency at the cost of losing the citizen-visible `∴ Thinking` glyph) | Epic #2077 / Spec 2521 |
+| `UMMAYA_CHAT_MAX_TOKENS` | No | `8192` | Integer [512, 32000] | `ummaya.ipc.stdio._effective_chat_max_tokens` | Spec 2521 |
 | `UMMAYA_AVAILABLE_ADAPTERS_TOP_K` | No | `5` | Integer >= 1 | `ummaya.ipc.stdio._build_available_adapters_suffix` (Spec 2521 — bounds how many BM25 candidates are emitted into the dynamic `<available_adapters>` system-prompt suffix per citizen turn; lower for prompt-cache friendliness, higher for broader recall) | Spec 2521 |
 | `UMMAYA_LLM_STREAM_CHUNK_MAX_CHARS` | No | `999` | Integer >= 1 (chars) | `ummaya.llm.client._pace_text_chunk` (Spec 2521 — when set <999, splits provider deltas into sub-chunks for headless / no-Ink callers that want server-side cadence; default `999` is effectively "no extra splitting" because Ink frontend typewriter handles the in-TUI cadence) | Spec 2521 |
 | `UMMAYA_LLM_STREAM_PACE_MS` | No | `0` | Float >= 0 (milliseconds) | `ummaya.llm.client._pace_text_chunk` (Spec 2521 — sleep between sub-chunk emissions for headless callers; default `0` disables backend pacing because Ink's `FRAME_INTERVAL_MS=4` throttle relax handles the cadence inside the TUI) | Spec 2521 |
@@ -136,7 +144,7 @@ Column definitions:
 | `UMMAYA_PLUGIN_CATALOG_URL` | No | `https://raw.githubusercontent.com/ummaya-plugin-store/index/main/index.json` | https:// URL or `file://` path (tests only) | `ummaya.settings.UmmayaSettings.plugin_catalog_url` | [Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier) |
 | `UMMAYA_PLUGIN_SLSA_SKIP` | No | `false` | `true` \| `false` | `ummaya.settings.UmmayaSettings.plugin_slsa_skip` | [Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier) |
 
-> **Row count**: 52 rows (47 `UMMAYA_*` active + 2 `LANGFUSE_*` + 1 `UMMAYA_OTEL_ENDPOINT` +
+> **Row count**: 55 rows (50 `UMMAYA_*` active + 2 `LANGFUSE_*` + 1 `UMMAYA_OTEL_ENDPOINT` +
 > 1 override-family pattern + 1 deprecated). `UMMAYA_KOROAD_API_KEY` and
 > `UMMAYA_KOROAD_ACCIDENT_SEARCH_API_KEY` are concrete expansions of the
 > `UMMAYA_{TOOL_ID}_API_KEY` override-family pattern and are covered by that row.
@@ -204,11 +212,82 @@ Source: [공공데이터포털](https://www.data.go.kr) → 마이페이지 → 
 
 ---
 
+### <a id="ummaya_live_adapter_mode"></a>`UMMAYA_LIVE_ADAPTER_MODE`
+
+Controls how live public-API adapters are invoked.
+
+- `auto` (default): packaged CLI executions route eligible live adapters through the
+  operator-managed gateway; source-tree executions use direct local adapters.
+- `proxy`: force the operator-managed gateway route.
+- `direct`: force the legacy local-env route for source/self-hosted development.
+
+This keeps public release users from needing Kakao/data.go.kr credentials while avoiding
+packaging those operator-managed credentials into npm/Homebrew artifacts.
+
+---
+
+### <a id="ummaya_live_adapter_proxy_url"></a>`UMMAYA_LIVE_ADAPTER_PROXY_URL`
+
+Base URL for the operator-managed live adapter gateway. The CLI posts validated adapter
+parameters to `{UMMAYA_LIVE_ADAPTER_PROXY_URL}/{tool_id}` and expects the same Lookup/Locate
+envelope shape a local adapter would return.
+
+This value is not a secret and may be packaged as a default. It must point to a service whose
+server-side runtime holds `UMMAYA_KAKAO_API_KEY`, `UMMAYA_DATA_GO_KR_API_KEY`, and any other
+operator-managed public API credentials in a secret manager.
+
+---
+
+### <a id="ummaya_live_adapter_proxy_timeout_seconds"></a>`UMMAYA_LIVE_ADAPTER_PROXY_TIMEOUT_SECONDS`
+
+Positive HTTP timeout, in seconds, for the operator-managed live adapter gateway.
+
+---
+
+### <a id="ummaya_live_adapter_proxy_token"></a>`UMMAYA_LIVE_ADAPTER_PROXY_TOKEN`
+
+Optional bearer token for private or self-hosted live adapter gateways. Public release users
+should not need to set this. If a gateway requires it, provision it through the operator's
+deployment environment or secure credential store rather than checking it into the package.
+
+---
+
+### <a id="ummaya_live_adapter_gateway_token"></a>`UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN`
+
+Optional server-side bearer token enforced by `ummaya-live-gateway`. When set, gateway
+requests must include `Authorization: Bearer <token>`. Keep this value in the gateway
+deployment secret store only. Do not package it into npm/Homebrew artifacts.
+
+---
+
+### <a id="ummaya_live_adapter_gateway_rate_limit_per_minute"></a>`UMMAYA_LIVE_ADAPTER_GATEWAY_RATE_LIMIT_PER_MINUTE`
+
+Server-side per-client, per-tool rate limit for `ummaya-live-gateway`. This is an
+instance-local abuse-control guard and should be paired with platform controls such as Cloud
+Run maximum instances and Cloud Armor/API gateway limits for public deployments.
+
+---
+
+### <a id="ummaya_live_adapter_gateway_max_body_bytes"></a>`UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES`
+
+Maximum accepted request body size for `ummaya-live-gateway`. Oversized requests are rejected
+before adapter dispatch.
+
+---
+
+### <a id="ummaya_package_root"></a>`UMMAYA_PACKAGE_ROOT`
+
+Internal path set by the npm/Homebrew `bin/ummaya` wrapper. In `UMMAYA_LIVE_ADAPTER_MODE=auto`,
+presence of this value marks a packaged CLI execution and selects the live adapter gateway for
+eligible Kakao/data.go.kr-style adapters. Users should not set this manually.
+
+---
+
 ### <a id="ummaya_juso_confm_key"></a>`UMMAYA_JUSO_CONFM_KEY`
 
-행정안전부 도로명주소 API 확인키. **Optional fallback** — when unset, the JUSO geocoding branch
-in `resolve_location.py` logs-and-skips gracefully (the adapter falls through to SGIS / Kakao).
-Consumed by `UmmayaSettings.juso_confm_key`.
+행정안전부 도로명주소 API 확인키. Operator-managed live gateway deployments require this value
+so every registered locate provider can run without fallback. Source-tree direct development may
+omit it when not exercising the JUSO adapter.
 
 Source: [도로명주소 개발자센터](https://business.juso.go.kr) → 신청 및 현황 → 개발자 확인키.
 
@@ -216,19 +295,20 @@ Source: [도로명주소 개발자센터](https://business.juso.go.kr) → 신�
 
 ### <a id="ummaya_sgis_key"></a>`UMMAYA_SGIS_KEY`
 
-SGIS (통계지리정보서비스) consumer key, paired with `UMMAYA_SGIS_SECRET`. **Optional fallback** —
-when either is unset, the SGIS branch in `resolve_location.py` logs-and-skips gracefully.
+SGIS (통계지리정보서비스) consumer key, paired with `UMMAYA_SGIS_SECRET`. Operator-managed live
+gateway deployments require the complete key/secret pair. The Data API authentication endpoint
+requires both `consumer_key` and `consumer_secret`.
 
-Source: [SGIS API](https://sgis.kostat.go.kr) → 활용신청 → 서비스ID/인증키.
+Source: [SGIS API](https://sgis.mods.go.kr) → 활용신청 → 서비스ID/서비스 Secret.
 
 ---
 
 ### <a id="ummaya_sgis_secret"></a>`UMMAYA_SGIS_SECRET`
 
-SGIS consumer secret paired with `UMMAYA_SGIS_KEY`. **Optional fallback** — see
-`UMMAYA_SGIS_KEY` above for the skip-when-unset behaviour.
+SGIS consumer secret paired with `UMMAYA_SGIS_KEY`. Operator-managed live gateway deployments
+fail startup when this value is missing.
 
-Source: [SGIS API](https://sgis.kostat.go.kr) → 활용신청 → 서비스ID/인증키.
+Source: [SGIS API](https://sgis.mods.go.kr) → 활용신청 → 서비스ID/서비스 Secret.
 
 ---
 

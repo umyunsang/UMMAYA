@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.markup import escape
 
 from ummaya._dotenv import load_repo_dotenv
+from ummaya._version import __version__
 from ummaya.cli.config import CLIConfig
 from ummaya.cli.renderer import EventRenderer
 from ummaya.cli.repl import REPLLoop
@@ -20,9 +21,6 @@ from ummaya.config.guard import verify_startup
 from ummaya.observability import setup_tracing
 
 logger = logging.getLogger(__name__)
-
-# UMMAYA version string
-__version__ = "0.1.1"
 
 # Typer application
 _app = typer.Typer(

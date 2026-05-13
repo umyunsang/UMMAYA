@@ -3,14 +3,17 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-clear
-cd "$ROOT_DIR/tui"
+cd "$ROOT_DIR"
 
-export UMMAYA_FRIENDLI_TOKEN="sk-readme-demo"
-export UMMAYA_FRIENDLI_SESSION_ACTIVE="1"
-export UMMAYA_ONBOARDING_AUTO_COMPLETE="1"
-export UMMAYA_BACKEND_CMD="uv run python $ROOT_DIR/docs/demo/readme_scenario_backend.py"
-export NODE_ENV="test"
-export IS_DEMO="1"
+if [[ -d /opt/homebrew/opt/bun/bin ]]; then
+  export PATH="/opt/homebrew/opt/bun/bin:$PATH"
+fi
+if [[ -d /opt/homebrew/opt/uv/bin ]]; then
+  export PATH="/opt/homebrew/opt/uv/bin:$PATH"
+fi
 
-exec bun src/entrypoints/cli.tsx
+if command -v ummaya >/dev/null 2>&1; then
+  exec ummaya
+fi
+
+exec "$ROOT_DIR/bin/ummaya"

@@ -81,6 +81,8 @@ _GITHUB_BUILTINS = frozenset({
     "COLUMNS",
     # Coverage / test infra
     "COVERAGE_PROCESS_START",
+    # Platform-managed container ingress port (Cloud Run, Heroku-style hosts).
+    "PORT",
 })
 
 # Prefix string indicating "GITHUB_" family — all such names are builtins.

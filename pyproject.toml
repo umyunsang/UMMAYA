@@ -1,6 +1,6 @@
 [project]
 name = "ummaya"
-version = "0.1.1"
+version = "0.1.2"
 description = "Conversational multi-agent platform for Korean public APIs"
 readme = "README.md"
 license = "Apache-2.0"
@@ -56,6 +56,7 @@ dependencies = [
 
 [project.scripts]
 ummaya = "ummaya.cli.app:main"
+ummaya-live-gateway = "ummaya.gateway.app:main"
 # ummaya-permissions = "ummaya.permissions.cli:main" — removed Epic δ #2295 (Codex P1).
 # The UMMAYA-invented Spec 033 permission CLI (mode/rules/killswitch ops) is
 # deleted alongside its module. Spec 035 receipt-ledger verification has its
@@ -98,6 +99,10 @@ dev = [
 # spec-driven carve-out).  Install with: `uv sync --extra langfuse`.
 langfuse = [
     "langfuse>=2.60",
+]
+gateway = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
 ]
 
 [build-system]
@@ -309,7 +314,7 @@ min_confidence = 80
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.1"
+version = "0.1.2"
 tag_format = "v$version"
 
 # PyTorch CPU-only wheel for Docker image size discipline (SC-1: ≤ 2 GB).

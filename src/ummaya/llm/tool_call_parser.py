@@ -59,6 +59,12 @@ logger = logging.getLogger(__name__)
 # extracted independently. ``re.DOTALL`` so Korean / multi-line bodies match.
 _TOOL_CALL_RE = re.compile(r"<tool_call>(.*?)</tool_call>", re.DOTALL)
 
+# K-EXAONE can leak residual thinking tags into the visible content channel
+# even when reasoning is disabled or routed through reasoning_content.
+_THINK_BLOCK_RE = re.compile(r"<think\b[^>]*>.*?</think>", re.DOTALL | re.IGNORECASE)
+_THINK_OPEN_TAIL_RE = re.compile(r"<think\b[^>]*>.*$", re.DOTALL | re.IGNORECASE)
+_THINK_CLOSE_RE = re.compile(r"</think\s*>", re.IGNORECASE)
+
 # Identifier shape for both tool names and JSON keys we synthesise from.
 _IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
@@ -115,6 +121,16 @@ def extract_textual_tool_calls(text: str) -> tuple[list[ParsedToolCall], str]:
 
     cleaned = _TOOL_CALL_RE.sub("", text)
     return parsed, cleaned
+
+
+def strip_leaked_thinking_markers(text: str) -> str:
+    """Remove model thinking XML that leaked into citizen-visible prose."""
+    if "<think" not in text.lower() and "</think" not in text.lower():
+        return text
+    cleaned = _THINK_BLOCK_RE.sub("", text)
+    cleaned = _THINK_OPEN_TAIL_RE.sub("", cleaned)
+    cleaned = _THINK_CLOSE_RE.sub("", cleaned)
+    return cleaned.lstrip()
 
 
 def _try_parse_block(body: str) -> ParsedToolCall | None:

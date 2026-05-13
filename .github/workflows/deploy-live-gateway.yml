@@ -1,0 +1,139 @@
+name: Deploy Live Adapter Gateway
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Container tag suffix. Defaults to the commit SHA."
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-live-gateway-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Build and Deploy Gateway
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: live-gateway
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate required deployment variables
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+          GCP_ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
+          GCP_RUN_SERVICE: ${{ vars.GCP_RUN_SERVICE }}
+          GCP_RUN_RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUN_RUNTIME_SERVICE_ACCOUNT }}
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          GCP_SECRET_DATA_GO_KR_API_KEY: ${{ vars.GCP_SECRET_DATA_GO_KR_API_KEY }}
+          GCP_SECRET_KAKAO_API_KEY: ${{ vars.GCP_SECRET_KAKAO_API_KEY }}
+          GCP_SECRET_JUSO_CONFM_KEY: ${{ vars.GCP_SECRET_JUSO_CONFM_KEY }}
+          GCP_SECRET_SGIS_KEY: ${{ vars.GCP_SECRET_SGIS_KEY }}
+          GCP_SECRET_SGIS_SECRET: ${{ vars.GCP_SECRET_SGIS_SECRET }}
+        run: |
+          missing=0
+          for name in \
+            GCP_PROJECT_ID \
+            GCP_REGION \
+            GCP_ARTIFACT_REGISTRY_REPOSITORY \
+            GCP_RUN_SERVICE \
+            GCP_RUN_RUNTIME_SERVICE_ACCOUNT \
+            GCP_WORKLOAD_IDENTITY_PROVIDER \
+            GCP_DEPLOY_SERVICE_ACCOUNT \
+            GCP_SECRET_DATA_GO_KR_API_KEY \
+            GCP_SECRET_KAKAO_API_KEY \
+            GCP_SECRET_JUSO_CONFM_KEY \
+            GCP_SECRET_SGIS_KEY \
+            GCP_SECRET_SGIS_SECRET
+          do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing required repository/environment variable: ${name}"
+              missing=1
+            fi
+          done
+          exit "${missing}"
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Artifact Registry Docker auth
+        run: gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
+
+      - name: Resolve image name
+        id: image
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+          GCP_ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
+        run: |
+          tag="${INPUT_TAG:-${GITHUB_SHA}}"
+          image="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY_REPOSITORY}/ummaya-live-gateway:${tag}"
+          echo "image=${image}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build gateway image
+        run: docker build -f docker/Dockerfile.gateway -t "${{ steps.image.outputs.image }}" .
+
+      - name: Push gateway image
+        run: docker push "${{ steps.image.outputs.image }}"
+
+      - name: Resolve Cloud Run secrets
+        id: cloudrun-secrets
+        env:
+          GCP_SECRET_DATA_GO_KR_API_KEY: ${{ vars.GCP_SECRET_DATA_GO_KR_API_KEY }}
+          GCP_SECRET_KAKAO_API_KEY: ${{ vars.GCP_SECRET_KAKAO_API_KEY }}
+          GCP_SECRET_JUSO_CONFM_KEY: ${{ vars.GCP_SECRET_JUSO_CONFM_KEY }}
+          GCP_SECRET_SGIS_KEY: ${{ vars.GCP_SECRET_SGIS_KEY }}
+          GCP_SECRET_SGIS_SECRET: ${{ vars.GCP_SECRET_SGIS_SECRET }}
+          GCP_SECRET_LIVE_ADAPTER_GATEWAY_TOKEN: ${{ vars.GCP_SECRET_LIVE_ADAPTER_GATEWAY_TOKEN }}
+        run: |
+          {
+            echo "value<<EOF"
+            echo "UMMAYA_DATA_GO_KR_API_KEY=${GCP_SECRET_DATA_GO_KR_API_KEY}:latest"
+            echo "UMMAYA_KAKAO_API_KEY=${GCP_SECRET_KAKAO_API_KEY}:latest"
+            echo "UMMAYA_JUSO_CONFM_KEY=${GCP_SECRET_JUSO_CONFM_KEY}:latest"
+            echo "UMMAYA_SGIS_KEY=${GCP_SECRET_SGIS_KEY}:latest"
+            echo "UMMAYA_SGIS_SECRET=${GCP_SECRET_SGIS_SECRET}:latest"
+            if [ -n "${GCP_SECRET_LIVE_ADAPTER_GATEWAY_TOKEN:-}" ]; then
+              echo "UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN=${GCP_SECRET_LIVE_ADAPTER_GATEWAY_TOKEN}:latest"
+            fi
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - id: deploy
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          region: ${{ vars.GCP_REGION }}
+          service: ${{ vars.GCP_RUN_SERVICE }}
+          image: ${{ steps.image.outputs.image }}
+          env_vars: |-
+            UMMAYA_ENV=prod
+            UMMAYA_LIVE_ADAPTER_MODE=direct
+          secrets: ${{ steps.cloudrun-secrets.outputs.value }}
+          flags: >-
+            --allow-unauthenticated
+            --port=8080
+            --execution-environment=gen2
+            --cpu=1
+            --memory=1Gi
+            --concurrency=20
+            --min-instances=0
+            --max-instances=10
+            --service-account=${{ vars.GCP_RUN_RUNTIME_SERVICE_ACCOUNT }}
+
+      - name: Smoke test deployed gateway
+        run: curl -fsS "${{ steps.deploy.outputs.url }}/readyz"

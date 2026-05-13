@@ -13,6 +13,7 @@ from ummaya.llm.tool_call_parser import (
     ParsedToolCall,
     StreamGate,
     extract_textual_tool_calls,
+    strip_leaked_thinking_markers,
 )
 
 
@@ -140,6 +141,16 @@ def test_xml_attr_with_korean_argument_value() -> None:
     calls, _ = extract_textual_tool_calls(text)
     assert len(calls) == 1
     assert calls[0].arguments == {"city": "부산광역시"}
+
+
+def test_strip_leaked_thinking_markers_removes_dangling_close_tag() -> None:
+    text = "</think>\n\n현재 날씨를 확인했습니다."
+    assert strip_leaked_thinking_markers(text) == "현재 날씨를 확인했습니다."
+
+
+def test_strip_leaked_thinking_markers_removes_complete_block() -> None:
+    text = "<think>internal trace</think>\n최종 답변입니다."
+    assert strip_leaked_thinking_markers(text) == "최종 답변입니다."
 
 
 # ---------------------------------------------------------------------------

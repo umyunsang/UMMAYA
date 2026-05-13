@@ -4844,7 +4844,7 @@ async def run(  # noqa: C901
                     LLMChatMessage(
                         role="user",
                         content=(
-                            "[UMMAYA_TOOL_ROUTING_OBSERVATION]\n"
+                            "[UMMAYA TOOL ROUTING OBSERVATION]\n"
                             f"{message}\n"
                             "Use the available tool descriptions and adapter metadata to "
                             "choose the next primitive call yourself. Do not answer from "
@@ -5153,7 +5153,11 @@ async def run(  # noqa: C901
                     buffered_visible.clear()
                     continue
 
-                merged_prose = "".join(buffered_visible)
+                from ummaya.llm.tool_call_parser import (  # noqa: PLC0415
+                    strip_leaked_thinking_markers,
+                )
+
+                merged_prose = strip_leaked_thinking_markers("".join(buffered_visible))
                 if mock_disclosure_required:
                     merged_prose = _ensure_mock_disclosure(
                         merged_prose,

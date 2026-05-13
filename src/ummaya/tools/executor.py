@@ -12,7 +12,7 @@ import json
 import logging
 import time
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
@@ -63,9 +63,14 @@ def _classify_adapter_exception(exc: Exception) -> tuple[LookupErrorReason, bool
 
     from ummaya.tools.errors import Layer3GateViolation  # noqa: PLC0415
     from ummaya.tools.kma.projection import KMADomainError  # noqa: PLC0415
+    from ummaya.tools.live_proxy import (  # noqa: PLC0415
+        LiveAdapterProxyConfigurationError,
+    )
 
     if isinstance(exc, Layer3GateViolation):
         # Programming error: stub handler was reached despite auth-gate — never retry.
+        return (LookupErrorReason.upstream_unavailable, False)
+    if isinstance(exc, LiveAdapterProxyConfigurationError):
         return (LookupErrorReason.upstream_unavailable, False)
     if isinstance(exc, (ValueError, TypeError, KMADomainError)):
         return (LookupErrorReason.invalid_params, False)
@@ -99,6 +104,7 @@ class ToolExecutor:
         recovery_executor: RecoveryExecutor | None = None,
         metrics: MetricsCollector | None = None,
         event_logger: ObservabilityEventLogger | None = None,
+        live_adapter_mode: Literal["auto", "proxy", "direct"] | None = None,
     ) -> None:
         """Initialize the executor with a ToolRegistry.
 
@@ -111,12 +117,16 @@ class ToolExecutor:
                 When absent, metrics instrumentation is skipped (backward-compatible).
             event_logger: Optional ObservabilityEventLogger for structured events.
                 When absent, event emission is skipped (backward-compatible).
+            live_adapter_mode: Optional route override for live public-API
+                adapters. Gateway processes set this to ``"direct"`` so an
+                inbound proxy request cannot recurse into the proxy client.
         """
         self._registry = registry
         self._adapters: dict[str, AdapterFn] = {}
         self._recovery_executor = recovery_executor
         self._metrics: MetricsCollector | None = metrics
         self._event_logger: ObservabilityEventLogger | None = event_logger
+        self._live_adapter_mode = live_adapter_mode
 
     def register_adapter(self, tool_id: str, adapter: AdapterFn) -> None:
         """Register an async adapter function for a tool.
@@ -219,8 +229,21 @@ class ToolExecutor:
             )
 
         try:
+            from ummaya.tools.live_proxy import (  # noqa: PLC0415
+                invoke_live_adapter_proxy,
+                should_use_live_adapter_proxy,
+            )
+
             rate_limiter.record()
-            raw_output = await adapter(validated_input)
+            if should_use_live_adapter_proxy(tool, mode_override=self._live_adapter_mode):
+                raw_output = await invoke_live_adapter_proxy(
+                    tool=tool,
+                    params=validated_input.model_dump(mode="json"),
+                    request_id=request_id,
+                    session_identity=session_identity,
+                )
+            else:
+                raw_output = await adapter(validated_input)
         except Exception as exc:
             _log_adapter_exception("invoke_raw: adapter", tool_id, exc)
             reason, retryable = _classify_adapter_exception(exc)
@@ -440,7 +463,22 @@ class ToolExecutor:
         _stage_span.set_attribute("ummaya.tool.stage", "fetch")
         _stage_fetch_start = time.monotonic_ns()
         try:
-            raw_output = await adapter(validated_input)
+            from ummaya.tools.live_proxy import (  # noqa: PLC0415
+                invoke_live_adapter_proxy,
+                should_use_live_adapter_proxy,
+            )
+
+            if should_use_live_adapter_proxy(tool, mode_override=self._live_adapter_mode):
+                _stage_span.set_attribute("ummaya.tool.route", "proxy")
+                raw_output = await invoke_live_adapter_proxy(
+                    tool=tool,
+                    params=validated_input.model_dump(mode="json"),
+                    request_id=request_id,
+                    session_identity=session_identity,
+                )
+            else:
+                _stage_span.set_attribute("ummaya.tool.route", "direct")
+                raw_output = await adapter(validated_input)
         except Exception as exc:
             _stage_span.set_attribute("ummaya.tool.stage", "fetch_failed")
             _stage_span.set_attribute(
