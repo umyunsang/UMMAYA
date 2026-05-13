@@ -243,8 +243,8 @@ entries:
   - path: tui/src/components/PromptInput/PromptInputQueuedCommands.tsx
     cause: W15
     spec_ref: ".github/workflows/tui-boot-smoke.yml; docs/requirements/ummaya-migration-tree.md § L1-A"
-    notes: "Linux Bun loader requires direct messageLookups.js import for EMPTY_LOOKUPS; behavior is unchanged."
-    expected_sha256: e4d3c3b02c88bbd2914aa6e2beef9345de90fdc613bf256e6fcccb46f940dcdf
+    notes: "Linux Bun loader requires direct messageLookups.js/messageNormalize.js/userMessageFactories.js imports for small named exports; behavior is unchanged."
+    expected_sha256: 6aef2446dacbc06bf8b39d6effb9c107b52d9c0c5a1d62fd0ec3a0fcf506bce4
   - path: tui/src/components/messages/AttachmentMessage.tsx
     cause: W15
     spec_ref: ".github/workflows/tui-boot-smoke.yml; docs/requirements/ummaya-migration-tree.md § L1-A"

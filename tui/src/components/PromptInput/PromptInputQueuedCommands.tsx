@@ -9,8 +9,9 @@ import { useCommandQueue } from '../../hooks/useCommandQueue.js';
 import type { QueuedCommand } from '../../types/textInputTypes.js';
 import { isQueuedCommandVisible } from '../../utils/messageQueueManager.js';
 import { EMPTY_LOOKUPS } from '../../utils/messageLookups.js';
-import { createUserMessage, normalizeMessages } from '../../utils/messages.js';
+import { normalizeMessages } from '../../utils/messageNormalize.js';
 import { jsonParse } from '../../utils/slowOperations.js';
+import { createUserMessage } from '../../utils/userMessageFactories.js';
 import { Message } from '../Message.js';
 const EMPTY_SET = new Set<string>();
 

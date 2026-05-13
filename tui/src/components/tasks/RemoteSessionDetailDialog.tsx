@@ -19,7 +19,7 @@ import { errorMessage } from '../../utils/errors.js';
 import { formatDuration, truncateToWidth } from '../../utils/format.js';
 import { toInternalMessages } from '../../utils/messages/mappers.js';
 import { EMPTY_LOOKUPS } from '../../utils/messageLookups.js';
-import { normalizeMessages } from '../../utils/messages.js';
+import { normalizeMessages } from '../../utils/messageNormalize.js';
 import { plural } from '../../utils/stringUtils.js';
 // UMMAYA-1633 P1+P2 / UMMAYA-1978 T011 — utils/teleport deleted.
 const teleportResumeCodeSession = async (..._args: unknown[]): Promise<{ success: boolean; sessionId?: string; error?: string }> => ({ success: false, error: 'UMMAYA: teleport disabled' });

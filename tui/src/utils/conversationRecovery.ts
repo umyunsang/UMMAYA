@@ -24,14 +24,13 @@ import {
   type FileHistorySnapshot,
 } from './fileHistory.js'
 import { logError } from './log.js'
+import { createAssistantMessage } from './assistantMessageFactories.js'
+import { normalizeMessages } from './messageNormalize.js'
 import {
-  createAssistantMessage,
-  createUserMessage,
   filterOrphanedThinkingOnlyMessages,
   filterUnresolvedToolUses,
   filterWhitespaceOnlyAssistantMessages,
   isToolUseResultMessage,
-  normalizeMessages,
 } from './messages.js'
 import { NO_RESPONSE_REQUESTED } from './messageText.js'
 import { copyPlanForResume } from './plans.js'
@@ -48,6 +47,7 @@ import {
   removeExtraFields,
 } from './sessionStorage.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
+import { createUserMessage } from './userMessageFactories.js'
 
 // Dead code elimination: ant-only tool names are conditionally required so
 // their strings don't leak into external builds. Static imports always bundle.

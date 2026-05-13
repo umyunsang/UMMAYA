@@ -23,7 +23,8 @@ import { isEnvTruthy } from '../../utils/envUtils.js';
 import { AbortError, errorMessage, toError } from '../../utils/errors.js';
 import type { CacheSafeParams } from '../../utils/forkedAgent.js';
 import { lazySchema } from '../../utils/lazySchema.js';
-import { createUserMessage, isSyntheticMessage, normalizeMessages } from '../../utils/messages.js';
+import { isSyntheticMessage } from '../../utils/messages.js';
+import { normalizeMessages } from '../../utils/messageNormalize.js';
 import { extractTextContent } from '../../utils/messageText.js';
 import { getAgentModel } from '../../utils/model/agent.js';
 import { permissionModeSchema } from '../../utils/permissions/PermissionMode.js';
@@ -37,6 +38,7 @@ import { asSystemPrompt } from '../../utils/systemPromptType.js';
 import { getTaskOutputPath } from '../../utils/task/diskOutput.js';
 import { getParentSessionId, isTeammate } from '../../utils/teammate.js';
 import { isInProcessTeammate } from '../../utils/teammateContext.js';
+import { createUserMessage } from '../../utils/userMessageFactories.js';
 // UMMAYA-original: CC teleport (remote session) not used — no-op.
 const teleportToRemote = async (_opts?: unknown): Promise<null> => null
 import { getAssistantMessageContentLength } from '../../utils/tokens.js';
