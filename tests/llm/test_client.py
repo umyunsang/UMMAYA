@@ -720,6 +720,7 @@ async def test_complete_default_payload_parameters(
         f"presence_penalty={payload.get('presence_penalty')!r}"
     )
     assert payload.get("max_tokens") == 1024, f"max_tokens={payload.get('max_tokens')!r}"
+    assert payload.get("chat_template_kwargs") == {"enable_thinking": False}
 
 
 @respx.mock
@@ -754,6 +755,28 @@ async def test_complete_explicit_overrides_take_precedence(
 
 
 @respx.mock
+async def test_k_exaone_thinking_env_opt_in(
+    _clean_env: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The reasoning channel remains available when explicitly opted in."""
+    captured: list[dict] = []
+
+    def _capture(request: httpx.Request) -> httpx.Response:
+        captured.append(json.loads(request.content))
+        return httpx.Response(200, json=_SUCCESS_RESPONSE)
+
+    monkeypatch.setenv("UMMAYA_K_EXAONE_THINKING", "true")
+    respx.post(CHAT_COMPLETIONS_URL).mock(side_effect=_capture)
+
+    config = LLMClientConfig()
+    async with LLMClient(config) as client:
+        await client.complete([ChatMessage(role="user", content="hi")])
+
+    assert captured[0].get("chat_template_kwargs") == {"enable_thinking": True}
+
+
+@respx.mock
 async def test_stream_default_payload_parameters(
     _clean_env: None,
 ) -> None:
@@ -782,3 +805,4 @@ async def test_stream_default_payload_parameters(
     assert payload.get("top_p") == 0.95
     assert payload.get("presence_penalty") == 0.0
     assert payload.get("max_tokens") == 1024
+    assert payload.get("chat_template_kwargs") == {"enable_thinking": False}

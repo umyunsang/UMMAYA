@@ -29,6 +29,25 @@ export function isEmptyMessageText(text: string): boolean {
   )
 }
 
+export const SYNTHETIC_MODEL = '<synthetic>'
+
+const INTERRUPT_MESSAGE = '[Request interrupted by user]'
+const INTERRUPT_MESSAGE_FOR_TOOL_USE =
+  '[Request interrupted by user for tool use]'
+const CANCEL_MESSAGE =
+  "The user doesn't want to take this action right now. STOP what you are doing and wait for the user to tell you how to proceed."
+const REJECT_MESSAGE =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed."
+const NO_RESPONSE_REQUESTED = 'No response requested.'
+
+export const SYNTHETIC_MESSAGES = new Set([
+  INTERRUPT_MESSAGE,
+  INTERRUPT_MESSAGE_FOR_TOOL_USE,
+  CANCEL_MESSAGE,
+  REJECT_MESSAGE,
+  NO_RESPONSE_REQUESTED,
+])
+
 /**
  * Extract text from an array of content blocks, joining text blocks with the
  * given separator. Works with ContentBlock, ContentBlockParam, BetaContentBlock,

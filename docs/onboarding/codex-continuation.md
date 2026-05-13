@@ -195,8 +195,10 @@ As of 2026-05-04:
 
 Known documentation/config drift to resolve in a small follow-up PR:
 
-- `AGENTS.md` and some specs state `UMMAYA_K_EXAONE_THINKING` defaults to `false`, while
-  `src/ummaya/llm/client.py` currently defaults the environment read to `true`.
+- Historical Spec 2521 notes state `UMMAYA_K_EXAONE_THINKING` defaults to `true`; the
+  production source of truth now defaults it to `false` so visible answers arrive on
+  the content channel. Treat old `true` references as historical unless a task is
+  explicitly about reasoning-channel benchmarks.
 - `docs/configuration.md` lists `UMMAYA_LLM_SESSION_BUDGET` default as `100000`, while
   `src/ummaya/llm/config.py` defaults to `1_000_000`.
 - `docs/testing.md` fixture recording still mentions the stale

@@ -203,11 +203,11 @@ async def test_stream_content_assembly(
 
 
 @respx.mock
-async def test_stream_drops_reasoning_content(
+async def test_stream_separates_reasoning_content(
     llm_client: LLMClient,
     sample_messages: list[ChatMessage],
 ) -> None:
-    """K-EXAONE reasoning_content chunks are silently dropped (not emitted)."""
+    """K-EXAONE reasoning_content chunks stay separate from visible content."""
     body = _build_sse_body(
         _reasoning_chunk("Let me think about this..."),
         _reasoning_chunk("The user wants a greeting."),
@@ -220,7 +220,7 @@ async def test_stream_drops_reasoning_content(
     async for event in llm_client.stream(sample_messages):
         events.append(event)
 
-    # Only regular content should appear — reasoning_content is dropped
+    # Only regular content should appear in the visible-content channel.
     content_events = [e for e in events if e.type == "content_delta"]
     assert len(content_events) == 1
     assert content_events[0].content == "Hello!"

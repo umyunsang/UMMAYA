@@ -40,11 +40,8 @@ async def test_live_llm_stream_basic(friendli_token: str) -> None:
     events: list[StreamEvent] = []
 
     async with LLMClient() as client:
-        # K-EXAONE is a reasoning-first model: it emits reasoning_content tokens
-        # (dropped by the client) before content tokens. A large max_tokens
-        # budget is required, but on short prompts the model can still spend
-        # the entire budget on reasoning and produce zero content tokens —
-        # that is valid model behavior, not a client defect.
+        # The production default disables K-EXAONE reasoning mode so visible
+        # answers arrive on the content channel instead of reasoning_content.
         async for event in client.stream(messages, max_tokens=4096):
             events.append(event)
 
@@ -55,14 +52,10 @@ async def test_live_llm_stream_basic(friendli_token: str) -> None:
     # The "done" event must be the last event in the sequence.
     assert events[-1].type == "done", f"Expected last event to be 'done', got {events[-1].type!r}"
 
-    # The stream must have made progress: either a content_delta or a usage
-    # event (emitted when the upstream reports token usage). Zero content
-    # deltas is acceptable when reasoning consumed the entire max_tokens
-    # budget — the test still proves streaming worked end-to-end.
-    progress_events = [e for e in events if e.type in {"content_delta", "usage"}]
+    # The stream must have made visible progress in the production default.
+    progress_events = [e for e in events if e.type == "content_delta"]
     assert len(progress_events) >= 1, (
-        f"Expected at least one content_delta or usage event, "
-        f"got event types: {[e.type for e in events]}"
+        f"Expected at least one content_delta event, got event types: {[e.type for e in events]}"
     )
 
 
@@ -102,7 +95,6 @@ async def test_live_llm_stream_with_tool_definitions(friendli_token: str) -> Non
     events: list[StreamEvent] = []
 
     async with LLMClient() as client:
-        # K-EXAONE uses reasoning_content tokens before content tokens.
         async for event in client.stream(messages, tools=[weather_tool], max_tokens=300):
             events.append(event)
 

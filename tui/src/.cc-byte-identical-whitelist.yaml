@@ -219,9 +219,9 @@ entries:
     spec_ref: "#1633 (services/api/errors removal), #2293 (secureStorage removal)"
     notes: "API error message constants inlined; isMacOsKeychainLocked stubbed → false; sdk-compat."
   - path: tui/src/components/messageActions.tsx
-    cause: W15
+    cause: W15,W8
     spec_ref: ".github/workflows/package-npm.yml, .github/workflows/publish-npm.yml"
-    notes: "Linux Bun loader requires direct messageText.js import for text helpers; behavior is unchanged and package boot smoke stays deterministic."
+    notes: "Linux Bun loader requires direct messageText.js import for text/synthetic-message helpers; behavior is unchanged and package boot smoke stays deterministic."
   - path: tui/src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx
     cause: W13,W1
     spec_ref: "#1633 (Anthropic queryHaiku auto-naming removal), #2293 (utils/auth removal)"

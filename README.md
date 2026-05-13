@@ -243,7 +243,7 @@ ummaya
 
 실행 참고:
 
-- `UMMAYA_K_EXAONE_THINKING` default `true`: K-EXAONE의 분리된 reasoning 채널을 사용합니다. 응답/도구 페인팅 지연을 분리해서 진단할 때만 `false`로 낮춥니다.
+- `UMMAYA_K_EXAONE_THINKING` default `false`: 기본 실행은 답변을 일반 content 채널로 받아 사용자가 바로 볼 수 있게 합니다. reasoning 채널을 진단하거나 벤치마크할 때만 `true`로 켭니다.
 
 ### 2. AI 요청을 위한 로그인
 

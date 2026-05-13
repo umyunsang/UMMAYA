@@ -958,10 +958,9 @@ class LLMClient:
         uses the caller's values — defaults are set at the call site.
 
         K-EXAONE specific: ``chat_template_kwargs.enable_thinking`` controls
-        the model's reasoning mode. UMMAYA intentionally defaults this to
-        ``True`` per Spec 2521 FR-010; set ``UMMAYA_K_EXAONE_THINKING=false``
-        only for diagnostic runs that isolate visible response/tool cadence
-        from the separated reasoning channel.
+        the model's reasoning mode. UMMAYA defaults this to ``False`` for
+        production UX: citizen-visible answers must arrive on ``delta.content``
+        without requiring users to opt into a hidden latency/debug mode.
 
         Empirical channel behaviour (probe_friendli_channels.py, 2026-05-01):
             enable_thinking=False → answer streams out on ``delta.content`` at
@@ -976,14 +975,13 @@ class LLMClient:
                                      First-paragraph latency: 60-180 s.
 
         UI/storage handling mirrors the CC restored source: the reasoning
-        channel may stream for live progress, but it is not treated as normal
-        assistant text and the TUI can choose whether to persist it. The
-        model-card-recommended benchmark/evaluation path remains thinking ON
-        by default (τ²-Bench Retail 78.6 / Airline 60.4 / Telecom 73.5).
+        channel may stream for live progress when explicitly enabled, but it
+        is not treated as normal assistant text and is never required for the
+        default CLI/TUI path.
         """
         import os  # noqa: PLC0415 — local import keeps top-level imports thin
 
-        enable_thinking = os.environ.get("UMMAYA_K_EXAONE_THINKING", "true").lower() in (
+        enable_thinking = os.environ.get("UMMAYA_K_EXAONE_THINKING", "false").lower() in (
             "true",
             "1",
             "yes",

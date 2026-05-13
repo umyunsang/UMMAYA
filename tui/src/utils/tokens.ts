@@ -1,7 +1,7 @@
 import type { BetaUsage as Usage } from 'src/sdk-compat.js'
 import { roughTokenCountEstimationForMessages } from '../services/tokenEstimation.js'
 import type { AssistantMessage, Message } from '../types/message.js'
-import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages.js'
+import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messageText.js'
 import { jsonStringify } from './slowOperations.js'
 
 export function getTokenUsage(message: Message): Usage | undefined {

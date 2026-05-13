@@ -82,7 +82,11 @@ import {
 } from './attachments.js'
 import { quote } from './bash/shellQuote.js'
 import { formatNumber, formatTokens } from './format.js'
-import { extractTextContent } from './messageText.js'
+import {
+  extractTextContent,
+  SYNTHETIC_MESSAGES,
+  SYNTHETIC_MODEL,
+} from './messageText.js'
 import { getPewterLedgerVariant } from './planModeV2.js'
 import { jsonStringify } from './slowOperations.js'
 
@@ -92,6 +96,8 @@ export {
   extractTextContent,
   isEmptyMessageText,
   stripPromptXMLTags,
+  SYNTHETIC_MESSAGES,
+  SYNTHETIC_MODEL,
 } from './messageText.js'
 
 // Hook attachments that have a hookName field (excludes HookPermissionDecisionAttachment)
@@ -305,16 +311,6 @@ export function buildClassifierUnavailableMessage(
     `Note: reading files, searching code, and other read-only operations do not require the classifier and can still be used.`
   )
 }
-
-export const SYNTHETIC_MODEL = '<synthetic>'
-
-export const SYNTHETIC_MESSAGES = new Set([
-  INTERRUPT_MESSAGE,
-  INTERRUPT_MESSAGE_FOR_TOOL_USE,
-  CANCEL_MESSAGE,
-  REJECT_MESSAGE,
-  NO_RESPONSE_REQUESTED,
-])
 
 export function isSyntheticMessage(message: Message): boolean {
   return (
