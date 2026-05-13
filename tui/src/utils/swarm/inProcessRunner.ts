@@ -72,7 +72,7 @@ import { cloneFileStateCache } from '../fileStateCache.js'
 import {
   SUBAGENT_REJECT_MESSAGE,
   SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
-} from '../messages.js'
+} from '../permissionMessages.js'
 import type { ModelAlias } from '../model/aliases.js'
 import {
   applyPermissionUpdates,

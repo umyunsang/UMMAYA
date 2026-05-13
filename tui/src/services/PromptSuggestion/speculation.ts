@@ -36,9 +36,11 @@ import type { SetAppState } from '../../utils/messageQueueManager.js'
 import {
   createSystemMessage,
   createUserMessage,
+} from '../../utils/messages.js'
+import {
   INTERRUPT_MESSAGE,
   INTERRUPT_MESSAGE_FOR_TOOL_USE,
-} from '../../utils/messages.js'
+} from '../../utils/permissionMessages.js'
 import { getClaudeTempDir } from '../../utils/permissions/filesystem.js'
 import { extractReadFilesFromMessages } from '../../utils/queryHelpers.js'
 import { getTranscriptPath } from '../../utils/sessionStorage.js'

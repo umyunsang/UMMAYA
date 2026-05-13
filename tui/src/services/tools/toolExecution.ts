@@ -70,13 +70,15 @@ import {
 import { executePermissionDeniedHooks } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
 import {
-  CANCEL_MESSAGE,
   createProgressMessage,
   createStopHookSummaryMessage,
   createToolResultStopMessage,
   createUserMessage,
-  withMemoryCorrectionHint,
 } from '../../utils/messages.js'
+import {
+  CANCEL_MESSAGE,
+  withMemoryCorrectionHint,
+} from '../../utils/permissionMessages.js'
 import type {
   PermissionDecisionReason,
   PermissionResult,

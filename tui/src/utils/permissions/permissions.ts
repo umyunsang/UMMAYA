@@ -87,7 +87,7 @@ import {
   buildClassifierUnavailableMessage,
   buildYoloRejectionMessage,
   DONT_ASK_REJECT_MESSAGE,
-} from '../messages.js'
+} from '../permissionMessages.js'
 // UMMAYA-original: model cost calculation not used — FriendliAI pricing N/A.
 const calculateCostFromTokens = (_model?: string, _usage?: unknown): undefined => undefined
 /* eslint-enable @typescript-eslint/no-require-imports */
