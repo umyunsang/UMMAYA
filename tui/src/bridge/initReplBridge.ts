@@ -36,10 +36,8 @@ import { errorMessage } from '../utils/errors.js'
 import { getBranch, getRemoteUrl } from '../utils/git.js'
 import { toSDKMessages } from '../utils/messages/mappers.js'
 import { getContentText } from '../utils/messageContent.js'
-import {
-  getMessagesAfterCompactBoundary,
-  isSyntheticMessage,
-} from '../utils/messages.js'
+import { getMessagesAfterCompactBoundary } from '../utils/messages.js'
+import { isSyntheticMessage } from '../utils/messageSynthetic.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import { getCurrentSessionTitle } from '../utils/sessionStorage.js'
 // utils/sessionTitle removed — Anthropic queryHaiku-based session title generator (Spec 1633 / Epic #2293).
