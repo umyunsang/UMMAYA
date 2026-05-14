@@ -8,7 +8,8 @@ should be used before opening or updating a PR.
 
 Codex is the development agent for this repository. It is not the UMMAYA runtime model.
 UMMAYA remains a FriendliAI Serverless + K-EXAONE client-side reference implementation, per
-`AGENTS.md`, `docs/vision.md`, and `docs/requirements/ummaya-migration-tree.md`.
+`docs/vision.md`, `docs/requirements/ummaya-migration-tree.md`, and the local agent setup
+files restored in each developer checkout.
 
 Do not replace `UMMAYA_FRIENDLI_MODEL` with GPT-5.5 in product code. Use GPT-5.5 for Codex
 planning, code review, and research assistance only.
@@ -28,17 +29,30 @@ Expected Codex state:
 
 - `openaiDeveloperDocs` is enabled in `codex mcp list`.
 - The local project is trusted in `~/.codex/config.toml`.
-- `.agents/skills/speckit-*` is available to Codex for Spec Kit workflows.
-- `.claude/settings.local.json` is not copied into Codex.
+- `.agents/skills/speckit-*` is restored locally and available to Codex for Spec Kit workflows.
+- `.claude/settings.local.json` is not copied into Codex or committed.
 - Branch names and PR titles follow `docs/conventions.md`, not Codex plugin defaults.
 
-Repository-persisted setup surfaces:
+Tracked setup surfaces:
 
-- `AGENTS.md` contains the operational rule Codex must load first.
 - This document contains the runnable setup and handoff checklist.
 - `docs/research/codex-llm-quality-setup.md` contains the deeper LLM quality-gate proposal.
+- `docs/vision.md`, `docs/requirements/ummaya-migration-tree.md`, `docs/conventions.md`,
+  and `docs/testing.md` contain the shared engineering contract.
+- `prompts/manifest.yaml` and `prompts/*.md` are production prompt assets and stay versioned.
 - `eval/scenarios/national_ax_citizen_requests_v1.yaml` is the target-state citizen-demand
   dataset for national infrastructure AX work.
+
+Ignored local LLMOps surfaces:
+
+- `AGENTS.md`, `CLAUDE.md`, `CLAUDE.local.md`, `CODEX.local.md`, `.agents/`, `.claude/`,
+  and `.codex/` are local agent runtime files for this checkout.
+- Keep machine-local runbooks, scratchpads, and auto-memory under `.llmops/` or
+  `*.local.md`; do not place them under `docs/` unless they are intended to be reviewed and
+  versioned.
+- If these files are lost after pulling or recloning, restore them from local git history or
+  your local backup; do not reintroduce them to GitHub unless the project deliberately changes
+  its agent-instruction policy.
 
 ## Codex Environment
 
@@ -78,9 +92,10 @@ Official references:
 
 ## Claude Skills In Codex
 
-The repository has both `.claude/skills/` and `.agents/skills/`. They are byte-identical by
-SHA-256 as of 2026-05-04. Codex loads the `.agents/skills/speckit-*` copies in this project,
-so the Spec Kit workflow is usable from Codex without editing `.claude/skills/`.
+The local checkout has both `.claude/skills/` and `.agents/skills/`. They are ignored by Git and
+act as developer-local LLMOps runtime files. Codex loads the `.agents/skills/speckit-*` copies
+in this project, so the Spec Kit workflow is usable from Codex without editing
+`.claude/skills/`.
 
 Use the skill names directly in Codex requests:
 
@@ -97,9 +112,10 @@ Use the skill names directly in Codex requests:
 - `speckit-git-commit`
 - `speckit-git-initialize`
 
-Do not edit `.claude/skills/`; `AGENTS.md` marks it as a protected Spec Kit area. If a skill
-needs to change, update the Codex-facing `.agents/skills/` copy only in a spec-driven PR, then
-decide separately whether the Claude copy should be regenerated from the source template.
+Do not edit `.claude/skills/` for product behavior. If a skill needs to change, update the
+Codex-facing `.agents/skills/` copy in the local checkout first, verify it, then decide
+separately whether the change belongs in a tracked project document, a reusable skill package,
+or local-only memory.
 
 `.claude/settings.local.json` is Claude-local state, not a Codex input. Do not copy its allowlist
 into Codex. Treat it as secret-adjacent local configuration because allowlist entries can embed
@@ -126,7 +142,8 @@ Operator-managed live-adapter secrets for real local execution:
 `UMMAYA_FRIENDLI_TOKEN` is a user session credential. Public CLI users enter it through `/login`;
 do not store it in Infisical operator environments.
 
-Never commit `.env`, `secrets/`, local Codex config, or Claude local settings.
+Never commit `.env`, `secrets/`, local Codex config, local agent memory, or Claude local
+settings.
 
 ## Release Packaging Operational Memory
 
@@ -155,6 +172,20 @@ root `package.json`, `package-lock.json`, `npm-shrinkwrap.json`, `pyproject.toml
 `uv.lock`, and `tui/package.json`. The TUI `--version` output reads
 `tui/package.json` through `tui/src/stubs/macro-preload.ts`, so root-only bumps
 can publish a new tarball whose CLI still reports the previous version.
+
+All-platform release rule:
+
+- A release is incomplete until the final `main` commit is green, `vX.Y.Z` points at that
+  final commit, GitHub Release exists and is current, npm `ummaya@X.Y.Z` is published,
+  Homebrew/Cask version and SHA match the npm registry tarball, and a clean install smoke
+  has run from the published artifact.
+- Do not stop after a version bump, npm publish, tag push, or GitHub Release creation.
+- After every push, tag push, workflow dispatch, GitHub Release publish, npm publish,
+  Homebrew/Cask update, or deployment dispatch, monitor GitHub Actions to terminal state.
+- If npm asks for browser/WebAuthn/passkey/fingerprint approval, use the interactive
+  TTY/browser approval path. Do not ask for an OTP first unless npm explicitly requires OTP.
+- The final release report must include a matrix for commit, tag, GitHub Release, npm,
+  Homebrew/Cask, CI, and clean install smoke.
 
 ## Baseline Verification
 

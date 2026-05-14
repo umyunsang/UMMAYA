@@ -7,9 +7,18 @@
 *.pem
 secrets/
 
-# Local agent instructions
+# Local LLMOps / agent runtime instructions.
+# Shared project guidance belongs in docs/, prompts/, eval/, or .github/.
 /AGENTS.md
+/AGENTS.local.md
 /CLAUDE.md
+/CLAUDE.local.md
+/CODEX.md
+/CODEX.local.md
+/LLMOPS.local.md
+/MEMORY.local.md
+*.local.md
+.llmops/
 
 # Python
 __pycache__/
@@ -72,7 +81,8 @@ htmlcov/
 # Local references (cloned repos)
 .references/
 
-# Claude Code local state
+# Local agent runtime state
+.codex/
 .agents/skills/ummaya-reference-first/
 .agents/
 .claude/
