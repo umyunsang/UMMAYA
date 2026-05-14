@@ -1,7 +1,10 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-banner-dark.svg">
-  <img alt="UMMAYA banner with the Umma mascot and Unified Multi-Ministry Agent for Your Administration wordmark" src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-banner-light.svg" width="100%">
-</picture>
+<img alt="UMMAYA banner with the Umma mascot and Unified Multi-Ministry Agent for Your Administration wordmark" src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-banner-light.png" width="100%">
+
+<a href="https://github.com/umyunsang/UMMAYA/blob/main/assets/ummaya-demo.mp4">
+  <img src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-demo.gif" alt="UMMAYA terminal demo showing public-service prompts, separated tool calls, compact tool results, and final assistant answers" width="100%">
+</a>
+
+<sub>데모를 클릭하면 MP4로 볼 수 있습니다. 이 영상은 실제 `ummaya` 터미널 세션을 `t-rec`으로 녹화한 결과입니다. 긴 대기 구간만 편집했고, 프롬프트, UI, 답변, 도구 호출은 합성하지 않았습니다.</sub>
 
 # UMMAYA
 
@@ -30,14 +33,6 @@ curl -fsSL https://raw.githubusercontent.com/umyunsang/UMMAYA/main/install.sh | 
 | 지금 어디까지 되나요? | 위치·날씨·응급실·병원·도로안전 같은 공개 정보는 live adapter로 조회하고, 본인확인·신청·납부처럼 보호된 업무는 mock 또는 공식 채널 handoff에서 멈춥니다. |
 | 어떤 모델을 쓰나요? | FriendliAI Serverless 위의 `LGAI-EXAONE/K-EXAONE-236B-A23B`를 사용합니다. |
 | 사용자가 준비할 키는요? | `/login`에서 넣는 FriendliAI API 키 하나입니다. 공공 API 키는 공개 CLI 사용자에게 요구하지 않습니다. |
-
-## 데모
-
-<a href="https://github.com/umyunsang/UMMAYA/blob/main/assets/ummaya-demo.mp4">
-  <img src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-demo.gif" alt="UMMAYA terminal demo showing public-service prompts, separated tool calls, compact tool results, and final assistant answers" width="100%">
-</a>
-
-<sub>데모를 클릭하면 MP4로 볼 수 있습니다. 이 영상은 실제 `ummaya` 터미널 세션을 `t-rec`으로 녹화한 결과입니다. 긴 대기 구간만 편집했고, 프롬프트, UI, 답변, 도구 호출은 합성하지 않았습니다.</sub>
 
 ## 왜 만들었나
 
