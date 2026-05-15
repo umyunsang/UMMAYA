@@ -1,0 +1,42 @@
+digraph {
+  compound=true
+  graph [fontname="Arial", rankdir=LR, ranksep=1.0, nodesep=1.0]
+  node [fontname="Arial", shape=box, margin="0.4,0.3"]
+  edge [fontname="Arial"]
+  label=<<br /><font point-size="34">Component View: UMMAYA - Query Engine</font><br /><font point-size="24">Inside the query engine.</font>>
+
+  subgraph cluster_3 {
+    margin=25
+    label=<<font point-size="24"><br />UMMAYA</font><br /><font point-size="19">[Software System]</font>>
+    labelloc=b
+    color="#444444"
+    fontcolor="#444444"
+    fillcolor="#444444"
+
+    subgraph cluster_5 {
+      margin=25
+      label=<<font point-size="24"><br />Query Engine</font><br /><font point-size="19">[Container]</font>>
+      labelloc=b
+      color="#444444"
+      fontcolor="#444444"
+      fillcolor="#444444"
+
+      10 [id=10,shape=rect, label=<<font point-size="34">Gate</font><br /><font point-size="19">[Component]</font>>, style=filled, color="#a16207", fillcolor="#fefce8", fontcolor="#422006"]
+      11 [id=11,shape=rect, label=<<font point-size="34">Dispatch</font><br /><font point-size="19">[Component]</font>>, style=filled, color="#a16207", fillcolor="#fefce8", fontcolor="#422006"]
+      12 [id=12,shape=rect, label=<<font point-size="34">Stop</font><br /><font point-size="19">[Component]</font>>, style=filled, color="#a16207", fillcolor="#fefce8", fontcolor="#422006"]
+      6 [id=6,shape=rect, label=<<font point-size="34">Context</font><br /><font point-size="19">[Component]</font>>, style=filled, color="#a16207", fillcolor="#fefce8", fontcolor="#422006"]
+      7 [id=7,shape=rect, label=<<font point-size="34">Retrieve</font><br /><font point-size="19">[Component]</font>>, style=filled, color="#a16207", fillcolor="#fefce8", fontcolor="#422006"]
+      8 [id=8,shape=rect, label=<<font point-size="34">Primitives</font><br /><font point-size="19">[Component]</font>>, style=filled, color="#a16207", fillcolor="#fefce8", fontcolor="#422006"]
+      9 [id=9,shape=rect, label=<<font point-size="34">Validate</font><br /><font point-size="19">[Component]</font>>, style=filled, color="#a16207", fillcolor="#fefce8", fontcolor="#422006"]
+    }
+
+  }
+
+  6 -> 7 [id=43, label=<<font point-size="24">narrow</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  7 -> 8 [id=44, label=<<font point-size="24">surface</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  8 -> 9 [id=45, label=<<font point-size="24">shape</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  9 -> 10 [id=46, label=<<font point-size="24">safe?</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  10 -> 11 [id=47, label=<<font point-size="24">run</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  11 -> 12 [id=48, label=<<font point-size="24">decide</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+
+}

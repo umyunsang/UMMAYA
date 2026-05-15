@@ -1,0 +1,818 @@
+[
+  {
+    "consumed_by": "`ci` \\",
+    "default": "`dev`",
+    "range": "`dev` \\",
+    "required": "No",
+    "source_doc": "`prod`",
+    "variable": "UMMAYA_ENV"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.kakao_api_key`",
+    "default": "—",
+    "range": "REST API key string",
+    "required": "No (operator-managed)",
+    "source_doc": "[Kakao Developers Console](https://developers.kakao.com)",
+    "variable": "UMMAYA_KAKAO_API_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.llm.config.LLMClientConfig.token`",
+    "default": "—",
+    "range": "Bearer token",
+    "required": "No (user session)",
+    "source_doc": "[FriendliAI Suite](https://suite.friendli.ai)",
+    "variable": "UMMAYA_FRIENDLI_TOKEN"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.data_go_kr_api_key`",
+    "default": "—",
+    "range": "API key string",
+    "required": "No (operator-managed)",
+    "source_doc": "[공공데이터포털](https://www.data.go.kr)",
+    "variable": "UMMAYA_DATA_GO_KR_API_KEY"
+  },
+  {
+    "consumed_by": "`proxy` \\",
+    "default": "`auto`",
+    "range": "`auto` \\",
+    "required": "No",
+    "source_doc": "`direct`",
+    "variable": "UMMAYA_LIVE_ADAPTER_MODE"
+  },
+  {
+    "consumed_by": "`ummaya.tools.live_proxy.invoke_live_adapter_proxy`",
+    "default": "`https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters`",
+    "range": "HTTPS URL",
+    "required": "No",
+    "source_doc": "[Live adapter gateway](#ummaya_live_adapter_proxy_url)",
+    "variable": "UMMAYA_LIVE_ADAPTER_PROXY_URL"
+  },
+  {
+    "consumed_by": "`ummaya.tools.live_proxy.invoke_live_adapter_proxy`",
+    "default": "`30.0`",
+    "range": "Float > 0",
+    "required": "No",
+    "source_doc": "[Live adapter gateway](#ummaya_live_adapter_proxy_timeout_seconds)",
+    "variable": "UMMAYA_LIVE_ADAPTER_PROXY_TIMEOUT_SECONDS"
+  },
+  {
+    "consumed_by": "`ummaya.tools.live_proxy.invoke_live_adapter_proxy`",
+    "default": "—",
+    "range": "Bearer token",
+    "required": "No (operator-managed)",
+    "source_doc": "[Live adapter gateway](#ummaya_live_adapter_proxy_token)",
+    "variable": "UMMAYA_LIVE_ADAPTER_PROXY_TOKEN"
+  },
+  {
+    "consumed_by": "`ummaya.gateway.app._require_gateway_token`",
+    "default": "—",
+    "range": "Bearer token",
+    "required": "No (operator-managed)",
+    "source_doc": "[Live adapter gateway](#ummaya_live_adapter_gateway_token)",
+    "variable": "UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN"
+  },
+  {
+    "consumed_by": "`ummaya.gateway.app._enforce_gateway_rate_limit`",
+    "default": "`120`",
+    "range": "Integer >= 1",
+    "required": "No",
+    "source_doc": "[Live adapter gateway](#ummaya_live_adapter_gateway_rate_limit_per_minute)",
+    "variable": "UMMAYA_LIVE_ADAPTER_GATEWAY_RATE_LIMIT_PER_MINUTE"
+  },
+  {
+    "consumed_by": "`ummaya.gateway.app.request_size_guard`",
+    "default": "`65536`",
+    "range": "Integer >= 1024",
+    "required": "No",
+    "source_doc": "[Live adapter gateway](#ummaya_live_adapter_gateway_max_body_bytes)",
+    "variable": "UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES"
+  },
+  {
+    "consumed_by": "`bin/ummaya`, `ummaya.tools.live_proxy.should_use_live_adapter_proxy`",
+    "default": "—",
+    "range": "Absolute package path",
+    "required": "No (internal wrapper)",
+    "source_doc": "[Live adapter gateway](#ummaya_package_root)",
+    "variable": "UMMAYA_PACKAGE_ROOT"
+  },
+  {
+    "consumed_by": "`false` (case-insensitive; `1`/`yes` also accepted)",
+    "default": "`false`",
+    "range": "`true` \\",
+    "required": "No",
+    "source_doc": "`tui/src/utils/plugins/officialMarketplaceStartupCheck.ts`",
+    "variable": "UMMAYA_ENABLE_ANTHROPIC_MARKETPLACE_AUTOINSTALL"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.juso_confm_key`",
+    "default": "—",
+    "range": "Confirmation key string",
+    "required": "No (optional fallback)",
+    "source_doc": "[도로명주소 개발자센터](https://business.juso.go.kr)",
+    "variable": "UMMAYA_JUSO_CONFM_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.sgis_key`",
+    "default": "—",
+    "range": "Consumer key string",
+    "required": "No (operator-managed)",
+    "source_doc": "[SGIS API](https://sgis.mods.go.kr)",
+    "variable": "UMMAYA_SGIS_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.sgis_secret`",
+    "default": "—",
+    "range": "Consumer secret string",
+    "required": "No (operator-managed)",
+    "source_doc": "[SGIS API](https://sgis.mods.go.kr)",
+    "variable": "UMMAYA_SGIS_SECRET"
+  },
+  {
+    "consumed_by": "`ummaya.llm.config.LLMClientConfig.base_url`",
+    "default": "`https://api.friendli.ai/serverless/v1`",
+    "range": "Valid HTTPS URL",
+    "required": "No",
+    "source_doc": "FriendliAI Suite",
+    "variable": "UMMAYA_FRIENDLI_BASE_URL"
+  },
+  {
+    "consumed_by": "`ummaya.llm.config.LLMClientConfig.model`",
+    "default": "`LGAI-EXAONE/K-EXAONE-236B-A23B`",
+    "range": "Model identifier string",
+    "required": "No",
+    "source_doc": "FriendliAI Suite",
+    "variable": "UMMAYA_FRIENDLI_MODEL"
+  },
+  {
+    "consumed_by": "`ummaya.llm.config.LLMClientConfig.session_budget`",
+    "default": "`100000`",
+    "range": "Integer > 0 (tokens)",
+    "required": "No",
+    "source_doc": "This doc",
+    "variable": "UMMAYA_LLM_SESSION_BUDGET"
+  },
+  {
+    "consumed_by": "`ummaya.llm.config.LLMClientConfig.timeout`",
+    "default": "`300`",
+    "range": "Float > 0 (seconds)",
+    "required": "No",
+    "source_doc": "This doc",
+    "variable": "UMMAYA_LLM_TIMEOUT_SECONDS"
+  },
+  {
+    "consumed_by": "Legacy alias for `ummaya.llm.config.LLMClientConfig.timeout`; use `UMMAYA_LLM_TIMEOUT_SECONDS`",
+    "default": "`300`",
+    "range": "Float > 0 (seconds)",
+    "required": "**Deprecated**",
+    "source_doc": "This doc",
+    "variable": "UMMAYA_LLM_TIMEOUT"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio` (Spec 1978 T029 — bounds the CC query-engine agentic loop)",
+    "default": "`8`",
+    "range": "Integer >= 1 (turns)",
+    "required": "No",
+    "source_doc": "Spec 1978",
+    "variable": "UMMAYA_AGENTIC_LOOP_MAX_TURNS"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio` (legacy alias for `UMMAYA_AGENTIC_LOOP_MAX_TURNS`; preserved for backward compatibility)",
+    "default": "`8`",
+    "range": "Integer >= 1 (turns)",
+    "required": "No",
+    "source_doc": "Spec 1978",
+    "variable": "UMMAYA_REACT_MAX_TURNS"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio` (Spec 1978 T030 — `asyncio.gather` timeout for primitive dispatch Futures, contracts/tool-bridge-protocol.md)",
+    "default": "`120`",
+    "range": "Float > 0 (seconds)",
+    "required": "No",
+    "source_doc": "Spec 1978",
+    "variable": "UMMAYA_TOOL_RESULT_TIMEOUT_SECONDS"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio` (Spec 1978 T045 — permission_request → permission_response wait; D2 invariant default-deny on timeout)",
+    "default": "`60`",
+    "range": "Float > 0 (seconds)",
+    "required": "No",
+    "source_doc": "Spec 1978",
+    "variable": "UMMAYA_PERMISSION_TIMEOUT_SECONDS"
+  },
+  {
+    "consumed_by": "`false` (case-insensitive; `1`/`yes` also accepted)",
+    "default": "`false`",
+    "range": "`true` \\",
+    "required": "No",
+    "source_doc": "`ummaya.llm.client._build_payload` (Epic #2077 / Spec 2521 — default `false` keeps citizen-visible answers on K-EXAONE's `delta.content` channel; set `true` only for reasoning-channel diagnostics or benchmark runs that explicitly need `reasoning_content` / `∴ Thinking`)",
+    "variable": "UMMAYA_K_EXAONE_THINKING"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio._effective_chat_max_tokens`",
+    "default": "`8192`",
+    "range": "Integer [512, 32000]",
+    "required": "No",
+    "source_doc": "Spec 2521",
+    "variable": "UMMAYA_CHAT_MAX_TOKENS"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio._build_available_adapters_suffix` (Spec 2521 — bounds how many BM25 candidates are emitted into the dynamic `<available_adapters>` system-prompt suffix per citizen turn; lower for prompt-cache friendliness, higher for broader recall)",
+    "default": "`5`",
+    "range": "Integer >= 1",
+    "required": "No",
+    "source_doc": "Spec 2521",
+    "variable": "UMMAYA_AVAILABLE_ADAPTERS_TOP_K"
+  },
+  {
+    "consumed_by": "`ummaya.llm.client._pace_text_chunk` (Spec 2521 — when set <999, splits provider deltas into sub-chunks for headless / no-Ink callers that want server-side cadence; default `999` is effectively \"no extra splitting\" because Ink frontend typewriter handles the in-TUI cadence)",
+    "default": "`999`",
+    "range": "Integer >= 1 (chars)",
+    "required": "No",
+    "source_doc": "Spec 2521",
+    "variable": "UMMAYA_LLM_STREAM_CHUNK_MAX_CHARS"
+  },
+  {
+    "consumed_by": "`ummaya.llm.client._pace_text_chunk` (Spec 2521 — sleep between sub-chunk emissions for headless callers; default `0` disables backend pacing because Ink's `FRAME_INTERVAL_MS=4` throttle relax handles the cadence inside the TUI)",
+    "default": "`0`",
+    "range": "Float >= 0 (milliseconds)",
+    "required": "No",
+    "source_doc": "Spec 2521",
+    "variable": "UMMAYA_LLM_STREAM_PACE_MS"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.lookup_topk`",
+    "default": "`5`",
+    "range": "Integer [1, 20]",
+    "required": "No",
+    "source_doc": "This doc",
+    "variable": "UMMAYA_LOOKUP_TOPK"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.nmc_freshness_minutes`",
+    "default": "`30`",
+    "range": "Integer [1, 1440] (minutes)",
+    "required": "No",
+    "source_doc": "Epic #507",
+    "variable": "UMMAYA_NMC_FRESHNESS_MINUTES"
+  },
+  {
+    "consumed_by": "`dense` \\",
+    "default": "`bm25`",
+    "range": "`bm25` \\",
+    "required": "No",
+    "source_doc": "`hybrid`",
+    "variable": "UMMAYA_RETRIEVAL_BACKEND"
+  },
+  {
+    "consumed_by": "`lazy`",
+    "default": "`lazy`",
+    "range": "`eager` \\",
+    "required": "No",
+    "source_doc": "`ummaya.tools.retrieval.backend._parse_cold_start`",
+    "variable": "UMMAYA_RETRIEVAL_COLD_START"
+  },
+  {
+    "consumed_by": "`ummaya.tools.retrieval.backend._parse_fusion_config`",
+    "default": "`rrf`",
+    "range": "`rrf`",
+    "required": "No",
+    "source_doc": "Epic #585",
+    "variable": "UMMAYA_RETRIEVAL_FUSION"
+  },
+  {
+    "consumed_by": "`ummaya.tools.retrieval.backend._parse_fusion_config`",
+    "default": "`60`",
+    "range": "Integer >= 1",
+    "required": "No",
+    "source_doc": "Epic #585",
+    "variable": "UMMAYA_RETRIEVAL_FUSION_K"
+  },
+  {
+    "consumed_by": "`ummaya.tools.retrieval.backend.build_retriever_from_env`",
+    "default": "`intfloat/multilingual-e5-small`",
+    "range": "Hugging Face model ID string",
+    "required": "No",
+    "source_doc": "Epic #585",
+    "variable": "UMMAYA_RETRIEVAL_MODEL_ID"
+  },
+  {
+    "consumed_by": "`ummaya.session.store._get_session_dir`; TUI memdir/session helpers",
+    "default": "`~/.ummaya/memdir/user`",
+    "range": "Filesystem path (expanduser)",
+    "required": "No",
+    "source_doc": "Spec 027",
+    "variable": "UMMAYA_MEMDIR_USER"
+  },
+  {
+    "consumed_by": "`ummaya.session.store._get_session_dir`",
+    "default": "`~/.ummaya/sessions`",
+    "range": "Filesystem path (expanduser)",
+    "required": "No",
+    "source_doc": "Epic #287",
+    "variable": "UMMAYA_SESSION_DIR"
+  },
+  {
+    "consumed_by": "TUI-side `tui/src/services/api` IPC bridge spawner; `ummaya.ipc.demo.mock_backend` is the canonical Mock-backend value used by Spec 2296 PTY + vhs smoke artefacts",
+    "default": "`uv run python -m ummaya.ipc.mcp_server`",
+    "range": "Shell command string spawned by the TUI as the backend process",
+    "required": "No",
+    "source_doc": "Epic #2296",
+    "variable": "UMMAYA_BACKEND_CMD"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio.run` diagnostic FileHandler",
+    "default": "—",
+    "range": "Filesystem path",
+    "required": "No",
+    "source_doc": "Spec multi-turn contamination",
+    "variable": "UMMAYA_BACKEND_LOG_FILE"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.stdio._diag_chat_request_enabled`",
+    "default": "`false`",
+    "range": "`1` enables diagnostic dumps; unset disables",
+    "required": "No",
+    "source_doc": "Spec multi-turn contamination",
+    "variable": "UMMAYA_CHAT_REQUEST_DUMP"
+  },
+  {
+    "consumed_by": "`ummaya.cli.config.CLIConfig.history_size`",
+    "default": "`1000`",
+    "range": "Integer >= 0",
+    "required": "No",
+    "source_doc": "This doc",
+    "variable": "UMMAYA_CLI_HISTORY_SIZE"
+  },
+  {
+    "consumed_by": "`false`",
+    "default": "`true`",
+    "range": "`true` \\",
+    "required": "No",
+    "source_doc": "`ummaya.cli.config.CLIConfig.show_usage`",
+    "variable": "UMMAYA_CLI_SHOW_USAGE"
+  },
+  {
+    "consumed_by": "`false`",
+    "default": "`true`",
+    "range": "`true` \\",
+    "required": "No",
+    "source_doc": "`ummaya.cli.config.CLIConfig.welcome_banner`",
+    "variable": "UMMAYA_CLI_WELCOME_BANNER"
+  },
+  {
+    "consumed_by": "`dark` \\",
+    "default": "`default`",
+    "range": "`default` \\",
+    "required": "No",
+    "source_doc": "`light`",
+    "variable": "UMMAYA_THEME"
+  },
+  {
+    "consumed_by": "`dark` \\",
+    "default": "`default`",
+    "range": "`default` \\",
+    "required": "No",
+    "source_doc": "`light`",
+    "variable": "UMMAYA_CLI_THEME"
+  },
+  {
+    "consumed_by": "`ummaya.observability.otel (#501)`",
+    "default": "—",
+    "range": "Valid HTTPS URL",
+    "required": "Yes (prod only)",
+    "source_doc": "Epic #501",
+    "variable": "UMMAYA_OTEL_ENDPOINT"
+  },
+  {
+    "consumed_by": "`docker-compose.dev.yml` otelcol host port binding",
+    "default": "`4318`",
+    "range": "Integer (TCP port)",
+    "required": "No",
+    "source_doc": "Epic #501, spec 028",
+    "variable": "UMMAYA_OTEL_COLLECTOR_PORT"
+  },
+  {
+    "consumed_by": "`infra/otel-collector/config.yaml` otlphttp exporter",
+    "default": "`http://langfuse-web:3000/api/public/otel`",
+    "range": "Valid HTTP(S) URL (base, no `/v1/traces` suffix)",
+    "required": "No",
+    "source_doc": "Epic #501, spec 028",
+    "variable": "UMMAYA_LANGFUSE_OTLP_ENDPOINT"
+  },
+  {
+    "consumed_by": "`infra/otel-collector/config.yaml` exporter Authorization header",
+    "default": "`` (empty = anonymous)",
+    "range": "`Basic <base64(pk:sk)>` string",
+    "required": "No",
+    "source_doc": "Epic #501, spec 028",
+    "variable": "UMMAYA_LANGFUSE_OTLP_AUTH_HEADER"
+  },
+  {
+    "consumed_by": "`ummaya.observability.langfuse (#501)`",
+    "default": "—",
+    "range": "`pk-lf-…` format string",
+    "required": "Yes (prod only)",
+    "source_doc": "[Langfuse Cloud](https://cloud.langfuse.com)",
+    "variable": "LANGFUSE_PUBLIC_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.observability.langfuse (#501)`",
+    "default": "—",
+    "range": "`sk-lf-…` format string",
+    "required": "Yes (prod only)",
+    "source_doc": "[Langfuse Cloud](https://cloud.langfuse.com)",
+    "variable": "LANGFUSE_SECRET_KEY"
+  },
+  {
+    "consumed_by": "`false`",
+    "default": "`false`",
+    "range": "`true` \\",
+    "required": "No",
+    "source_doc": "`ummaya.context.prompt_loader.PromptLoader`",
+    "variable": "UMMAYA_PROMPT_REGISTRY_LANGFUSE"
+  },
+  {
+    "consumed_by": "`ummaya.context.prompt_loader.PromptLoader`",
+    "default": "—",
+    "range": "Valid HTTPS URL",
+    "required": "No",
+    "source_doc": "Epic #467",
+    "variable": "UMMAYA_LANGFUSE_HOST"
+  },
+  {
+    "consumed_by": "`ummaya.context.prompt_loader.PromptLoader`",
+    "default": "—",
+    "range": "`pk-lf-…` format string",
+    "required": "No",
+    "source_doc": "[Langfuse Cloud](https://cloud.langfuse.com)",
+    "variable": "UMMAYA_LANGFUSE_PUBLIC_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.context.prompt_loader.PromptLoader`",
+    "default": "—",
+    "range": "`sk-lf-…` format string",
+    "required": "No",
+    "source_doc": "[Langfuse Cloud](https://cloud.langfuse.com)",
+    "variable": "UMMAYA_LANGFUSE_SECRET_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.permissions.credentials._tool_specific_var`",
+    "default": "—",
+    "range": "API key string",
+    "required": "Override pattern",
+    "source_doc": "[Per-tool override pattern](#per-tool-override-pattern)",
+    "variable": "UMMAYA_{TOOL_ID}_API_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.permissions.credentials.resolve_credential` (global fallback)",
+    "default": "—",
+    "range": "API key string",
+    "required": "**Deprecated**",
+    "source_doc": "[Deprecation notice](#ummaya_api_key-deprecated)",
+    "variable": "UMMAYA_API_KEY"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.agent_mailbox_root`",
+    "default": "`~/.ummaya/mailbox`",
+    "range": "Absolute directory path",
+    "required": "No",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_MAILBOX_ROOT"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.agent_mailbox_max_messages`",
+    "default": "`1000`",
+    "range": "Integer [100, 10000]",
+    "required": "No",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_MAILBOX_MAX_MESSAGES"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.agent_max_workers`",
+    "default": "`4`",
+    "range": "Integer [1, 16]",
+    "required": "No",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_MAX_WORKERS"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.agent_worker_timeout_seconds`",
+    "default": "`120`",
+    "range": "Integer [10, 600]",
+    "required": "No",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_WORKER_TIMEOUT_SECONDS"
+  },
+  {
+    "consumed_by": "`ummaya.observability.semconv.UMMAYA_AGENT_COORDINATOR_PHASE`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_COORDINATOR_PHASE"
+  },
+  {
+    "consumed_by": "`ummaya.observability.semconv.UMMAYA_AGENT_ROLE`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_ROLE"
+  },
+  {
+    "consumed_by": "`ummaya.observability.semconv.UMMAYA_AGENT_SESSION_ID`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_SESSION_ID"
+  },
+  {
+    "consumed_by": "`ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_MSG_TYPE`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_MAILBOX_MSG_TYPE"
+  },
+  {
+    "consumed_by": "`ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_CORRELATION_ID`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_MAILBOX_CORRELATION_ID"
+  },
+  {
+    "consumed_by": "`ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_SENDER`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_MAILBOX_SENDER"
+  },
+  {
+    "consumed_by": "`ummaya.observability.semconv.UMMAYA_AGENT_MAILBOX_RECIPIENT`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Agent Swarm (Epic #13)](#agent-swarm-epic-13)",
+    "variable": "UMMAYA_AGENT_MAILBOX_RECIPIENT"
+  },
+  {
+    "consumed_by": "`dark` \\",
+    "default": "`default`",
+    "range": "`default` \\",
+    "required": "No",
+    "source_doc": "`light`",
+    "variable": "UMMAYA_TUI_THEME"
+  },
+  {
+    "consumed_by": "`INFO` \\",
+    "default": "`WARN`",
+    "range": "`DEBUG` \\",
+    "required": "No",
+    "source_doc": "`WARN` \\",
+    "variable": "UMMAYA_TUI_LOG_LEVEL"
+  },
+  {
+    "consumed_by": "`readline`",
+    "default": "`fork`",
+    "range": "`fork` \\",
+    "required": "No",
+    "source_doc": "`ummaya.config.env_registry.TUISettings.ime_strategy`",
+    "variable": "UMMAYA_TUI_IME_STRATEGY"
+  },
+  {
+    "consumed_by": "`ummaya.config.env_registry.TUISettings.soak_events_per_sec`",
+    "default": "`100`",
+    "range": "Integer >= 1",
+    "required": "No",
+    "source_doc": "[Spec 287 TUI (Epic #287)](#tui-ink-react-bun-epic-287)",
+    "variable": "UMMAYA_TUI_SOAK_EVENTS_PER_SEC"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.ring_buffer._DEFAULT_RING_SIZE`",
+    "default": "`256`",
+    "range": "Integer >= 1",
+    "required": "No",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_RING_SIZE"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.backpressure._DEFAULT_HWM` / `ummaya.ipc.ring_buffer._DEFAULT_HWM`",
+    "default": "`64`",
+    "range": "Integer >= 1",
+    "required": "No",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_HWM"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.tx_cache._DEFAULT_CAPACITY`",
+    "default": "`512`",
+    "range": "Integer >= 1",
+    "required": "No",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_TX_CACHE_CAPACITY"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_CORRELATION_ID`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_CORRELATION_ID"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_TRANSACTION_ID`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_TRANSACTION_ID"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_TX_CACHE_STATE`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_TX_CACHE_STATE"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_KIND`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_BACKPRESSURE_KIND"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_SEVERITY`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_BACKPRESSURE_SEVERITY"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_SOURCE`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_BACKPRESSURE_SOURCE"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_BACKPRESSURE_QUEUE_DEPTH`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_BACKPRESSURE_QUEUE_DEPTH"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_SCHEMA_HASH`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_SCHEMA_HASH"
+  },
+  {
+    "consumed_by": "`ummaya.ipc.otel_constants.UMMAYA_IPC_REPLAYED`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 032 IPC (Epic #1298)](#ipc-stdio-hardening-epic-1298)",
+    "variable": "UMMAYA_IPC_REPLAYED"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.permission_timeout_sec`",
+    "default": "`30`",
+    "range": "Integer [1, 300] (seconds)",
+    "required": "No",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_TIMEOUT_SEC"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.permission_ttl_session_sec`",
+    "default": "`3600`",
+    "range": "Integer [60, 86400] (seconds)",
+    "required": "No",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_TTL_SESSION_SEC"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.permission_key_path`",
+    "default": "`~/.ummaya/keys/ledger.key`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_KEY_PATH"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.permission_key_registry_path`",
+    "default": "`~/.ummaya/keys/registry.json`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_KEY_REGISTRY_PATH"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.permission_ledger_path`",
+    "default": "`~/.ummaya/consent_ledger.jsonl`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_LEDGER_PATH"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.permission_rule_store_path`",
+    "default": "`~/.ummaya/permissions.json`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_RULE_STORE_PATH"
+  },
+  {
+    "consumed_by": "`ummaya.permissions.otel_integration.UMMAYA_PERMISSION_MODE`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_MODE"
+  },
+  {
+    "consumed_by": "`ummaya.permissions.otel_integration.UMMAYA_PERMISSION_DECISION`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_PERMISSION_DECISION"
+  },
+  {
+    "consumed_by": "`ummaya.permissions.otel_integration.UMMAYA_CONSENT_RECEIPT_ID`",
+    "default": "n/a",
+    "range": "String span attribute key",
+    "required": "OTel span attr",
+    "source_doc": "[Spec 033 Permission v2 (Epic #1297)](#permission-v2-epic-1297)",
+    "variable": "UMMAYA_CONSENT_RECEIPT_ID"
+  },
+  {
+    "consumed_by": "`echo`",
+    "default": "`llm`",
+    "range": "`llm` \\",
+    "required": "No",
+    "source_doc": "`ummaya.ipc.stdio.run`",
+    "variable": "UMMAYA_IPC_HANDLER"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.user_memdir_root`",
+    "default": "`~/.ummaya/memdir/user`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier)",
+    "variable": "UMMAYA_USER_MEMDIR_ROOT"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.plugin_install_root`",
+    "default": "`~/.ummaya/memdir/user/plugins`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier)",
+    "variable": "UMMAYA_PLUGIN_INSTALL_ROOT"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.plugin_bundle_cache`",
+    "default": "`~/.ummaya/cache/plugin-bundles`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier)",
+    "variable": "UMMAYA_PLUGIN_BUNDLE_CACHE"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.plugin_vendor_root`",
+    "default": "`~/.ummaya/vendor`",
+    "range": "Absolute filesystem path",
+    "required": "No",
+    "source_doc": "[Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier)",
+    "variable": "UMMAYA_PLUGIN_VENDOR_ROOT"
+  },
+  {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.plugin_catalog_url`",
+    "default": "`https://raw.githubusercontent.com/ummaya-plugin-store/index/main/index.json`",
+    "range": "https:// URL or `file://` path (tests only)",
+    "required": "No",
+    "source_doc": "[Spec 1636 P5 plugin DX (Epic #1636)](#epic-1636-plugin-dx-5-tier)",
+    "variable": "UMMAYA_PLUGIN_CATALOG_URL"
+  },
+  {
+    "consumed_by": "`false`",
+    "default": "`false`",
+    "range": "`true` \\",
+    "required": "No",
+    "source_doc": "`ummaya.settings.UmmayaSettings.plugin_slsa_skip`",
+    "variable": "UMMAYA_PLUGIN_SLSA_SKIP"
+  }
+]

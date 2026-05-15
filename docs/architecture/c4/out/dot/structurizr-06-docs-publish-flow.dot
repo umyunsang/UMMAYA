@@ -1,0 +1,28 @@
+digraph {
+  compound=true
+  graph [fontname="Arial", rankdir=LR, ranksep=1.0, nodesep=1.0]
+  node [fontname="Arial", shape=box, margin="0.4,0.3"]
+  edge [fontname="Arial"]
+  label=<<br /><font point-size="34">Dynamic View: UMMAYA</font><br /><font point-size="24">Docs publishing path.</font>>
+
+  subgraph cluster_3 {
+    margin=25
+    label=<<font point-size="24"><br />UMMAYA</font><br /><font point-size="19">[Software System]</font>>
+    labelloc=b
+    color="#444444"
+    fontcolor="#444444"
+    fillcolor="#444444"
+
+    18 [id=18,shape=rect, label=<<font point-size="34">Docs</font><br /><font point-size="19">[Container]</font>>, style=filled, color="#047857", fillcolor="#ecfdf5", fontcolor="#052e16"]
+  }
+
+  2 [id=2,shape=rect, label=<<font point-size="34">Evaluator</font><br /><font point-size="19">[Person]</font>>, style=filled, color="#475569", fillcolor="#f8fafc", fontcolor="#111827"]
+  22 [id=22,shape=rect, label=<<font point-size="34">Cloudflare Pages</font><br /><font point-size="19">[Software System]</font>>, style=filled, color="#0369a1", fillcolor="#e0f2fe", fontcolor="#0f172a"]
+  23 [id=23,shape=rect, label=<<font point-size="34">GitHub Actions</font><br /><font point-size="19">[Software System]</font>>, style=filled, color="#0369a1", fillcolor="#e0f2fe", fontcolor="#0f172a"]
+
+  2 -> 18 [id=26, label=<<font point-size="24">1. read</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  23 -> 18 [id=52, label=<<font point-size="24">2. build</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  23 -> 22 [id=54, label=<<font point-size="24">3. deploy</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  22 -> 18 [id=55, label=<<font point-size="24">4. serve</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+
+}

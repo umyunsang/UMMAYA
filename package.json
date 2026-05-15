@@ -35,6 +35,11 @@
   ],
   "scripts": {
     "demo:readme": "bash docs/demo/record-readme-demo.sh",
+    "docs:dev": "cd docs-site && bun run dev",
+    "docs:c4": "bash scripts/render_c4_diagrams.sh",
+    "docs:generate": "uv run python scripts/docs_generate.py",
+    "docs:check": "uv run python scripts/docs_generate.py --check && cd docs-site && bun run build",
+    "docs:build": "cd docs-site && bun run build",
     "package:dry-run": "mkdir -p package-evidence && npm pack --dry-run --json > package-evidence/npm-pack-dry-run.json",
     "package:check": "npm run package:dry-run && node scripts/check-npm-package.mjs package-evidence/npm-pack-dry-run.json"
   },
@@ -49,7 +54,7 @@
   "bugs": {
     "url": "https://github.com/umyunsang/UMMAYA/issues"
   },
-  "homepage": "https://github.com/umyunsang/UMMAYA#readme",
+  "homepage": "https://ummaya-docs.pages.dev/",
   "publishConfig": {
     "access": "public",
     "provenance": true

@@ -10,11 +10,14 @@
 
 [![npm version](https://img.shields.io/npm/v/ummaya.svg?style=flat-square)](https://www.npmjs.com/package/ummaya)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
+[![docs](https://img.shields.io/badge/docs-Cloudflare%20Pages-0f172a.svg?style=flat-square)](https://ummaya-docs.pages.dev/)
 
 **Unified Multi-Ministry Agent for Your Administration.**
 읽으면, **엄마야**.
 
 UMMAYA is a terminal agent for Korean public-service workflows. You describe the outcome in natural language, and UMMAYA routes the request through four main tools: `find`, `locate`, `check`, and `send`.
+
+Read the full documentation at [ummaya-docs.pages.dev](https://ummaya-docs.pages.dev/). Start with the [Korean user guide](https://ummaya-docs.pages.dev/ko/start/why-ummaya/) if you want the product purpose first, or use [llms.txt](https://ummaya-docs.pages.dev/llms.txt) when an agent needs machine-readable project context.
 
 ```bash
 npm install -g ummaya
@@ -134,54 +137,6 @@ Typical use:
 ```
 
 For now, `send` is where UMMAYA demonstrates how a terminal agent should stop, summarize, and hand off when the next step requires official identity or submission authority.
-
-## How It Works
-
-Claude Code describes an agent loop as context gathering, action, and verification. UMMAYA applies the same shape to public-service tasks: understand the request, call the right public-service tools, inspect the result, and continue until the answer is useful or the workflow reaches a permissioned boundary.
-
-```mermaid
-flowchart TD
-  USER["User request<br/>natural language outcome"] --> LOOP["Agent loop<br/>understand, act, verify"]
-  LOOP --> NEED{"What does the task need?"}
-
-  NEED -->|Place or address context| LOCATE["locate<br/>resolve place, address, district, coordinates"]
-  NEED -->|Public information| FIND["find<br/>weather, hospital, emergency, road, welfare lookup"]
-  NEED -->|Identity or eligibility| CHECK["check<br/>permissioned verification step"]
-  NEED -->|Submission or handoff| SEND["send<br/>receipt, checklist, official path"]
-
-  LOCATE --> RESULT["Tool result<br/>compact timeline entry"]
-  FIND --> RESULT
-  CHECK --> RESULT
-  SEND --> RESULT
-
-  RESULT --> REVIEW{"Enough to answer?"}
-  REVIEW -->|Need another step| LOOP
-  REVIEW -->|Ready| ANSWER["Assistant answer<br/>grounded in tool results"]
-  REVIEW -->|Protected boundary| HANDOFF["Stop or hand off<br/>no fake completion"]
-```
-
-The visible terminal flow matters. Tool calls should appear as separate timeline events, because users need to understand the sequence: first `locate`, then `find`, then maybe `check` or `send`. Long tool results should stay compact; the user can expand details when needed.
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant TUI as Terminal UI
-  participant Agent
-  participant Tools as UMMAYA primitives
-  participant Adapter as Public-service adapter
-
-  User->>TUI: Ask a local public-service question
-  TUI->>Agent: Stream prompt into agent loop
-  Agent->>Tools: locate(...)
-  Tools->>Adapter: Resolve place or address
-  Adapter-->>Tools: Normalized location result
-  Tools-->>TUI: Compact locate result
-  Agent->>Tools: find(...)
-  Tools->>Adapter: Query live public API
-  Adapter-->>Tools: Normalized public-service result
-  Tools-->>TUI: Compact find result
-  Agent-->>TUI: Final answer from found results
-```
 
 ## Permissioned Work
 

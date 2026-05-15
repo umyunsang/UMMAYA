@@ -1,0 +1,34 @@
+digraph {
+  compound=true
+  graph [fontname="Arial", rankdir=LR, ranksep=1.0, nodesep=1.0]
+  node [fontname="Arial", shape=box, margin="0.4,0.3"]
+  edge [fontname="Arial"]
+  label=<<br /><font point-size="34">Dynamic View: UMMAYA</font><br /><font point-size="24">One query loop.</font>>
+
+  subgraph cluster_3 {
+    margin=25
+    label=<<font point-size="24"><br />UMMAYA</font><br /><font point-size="19">[Software System]</font>>
+    labelloc=b
+    color="#444444"
+    fontcolor="#444444"
+    fillcolor="#444444"
+
+    13 [id=13,shape=rect, label=<<font point-size="34">Sessions</font><br /><font point-size="19">[Container]</font>>, style=filled, color="#047857", fillcolor="#ecfdf5", fontcolor="#052e16"]
+    14 [id=14,shape=rect, label=<<font point-size="34">Registry</font><br /><font point-size="19">[Container]</font>>, style=filled, color="#047857", fillcolor="#ecfdf5", fontcolor="#052e16"]
+    17 [id=17,shape=rect, label=<<font point-size="34">K-EXAONE Client</font><br /><font point-size="19">[Container]</font>>, style=filled, color="#047857", fillcolor="#ecfdf5", fontcolor="#052e16"]
+    4 [id=4,shape=rect, label=<<font point-size="34">UI</font><br /><font point-size="19">[Container]</font>>, style=filled, color="#047857", fillcolor="#ecfdf5", fontcolor="#052e16"]
+    5 [id=5,shape=rect, label=<<font point-size="34">Query Engine</font><br /><font point-size="19">[Container]</font>>, style=filled, color="#047857", fillcolor="#ecfdf5", fontcolor="#052e16"]
+  }
+
+  1 [id=1,shape=rect, label=<<font point-size="34">Citizen</font><br /><font point-size="19">[Person]</font>>, style=filled, color="#475569", fillcolor="#f8fafc", fontcolor="#111827"]
+  19 [id=19,shape=rect, label=<<font point-size="34">K-EXAONE</font><br /><font point-size="19">[Software System]</font>>, style=filled, color="#0369a1", fillcolor="#e0f2fe", fontcolor="#0f172a"]
+
+  1 -> 4 [id=25, label=<<font point-size="24">1. ask</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  4 -> 5 [id=31, label=<<font point-size="24">2. route</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  5 -> 13 [id=32, label=<<font point-size="24">3. context</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  5 -> 14 [id=33, label=<<font point-size="24">4. select</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  5 -> 17 [id=34, label=<<font point-size="24">5. reason</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  17 -> 19 [id=35, label=<<font point-size="24">6. model</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+  5 -> 4 [id=42, label=<<font point-size="24">7. answer</font>>, style="dashed", color="#475569", fontcolor="#475569"]
+
+}

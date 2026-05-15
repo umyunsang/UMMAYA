@@ -1,0 +1,170 @@
+[
+  {
+    "docs_path": "docs/api/hira/hospital_search.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/hira_hospital_search.json",
+    "tier": "live",
+    "tool_id": "hira_hospital_search"
+  },
+  {
+    "docs_path": "docs/api/kma/current_observation.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kma_current_observation.json",
+    "tier": "live",
+    "tool_id": "kma_current_observation"
+  },
+  {
+    "docs_path": "docs/api/kma/forecast_fetch.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kma_forecast_fetch.json",
+    "tier": "live",
+    "tool_id": "kma_forecast_fetch"
+  },
+  {
+    "docs_path": "docs/api/kma/pre_warning.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kma_pre_warning.json",
+    "tier": "live",
+    "tool_id": "kma_pre_warning"
+  },
+  {
+    "docs_path": "docs/api/kma/short_term_forecast.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kma_short_term_forecast.json",
+    "tier": "live",
+    "tool_id": "kma_short_term_forecast"
+  },
+  {
+    "docs_path": "docs/api/kma/ultra_short_term_forecast.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kma_ultra_short_term_forecast.json",
+    "tier": "live",
+    "tool_id": "kma_ultra_short_term_forecast"
+  },
+  {
+    "docs_path": "docs/api/kma/weather_alert_status.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kma_weather_alert_status.json",
+    "tier": "live",
+    "tool_id": "kma_weather_alert_status"
+  },
+  {
+    "docs_path": "docs/api/koroad/accident_hazard_search.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/koroad_accident_hazard_search.json",
+    "tier": "live",
+    "tool_id": "koroad_accident_hazard_search"
+  },
+  {
+    "docs_path": "docs/api/koroad/accident_search.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/koroad_accident_search.json",
+    "tier": "live",
+    "tool_id": "koroad_accident_search"
+  },
+  {
+    "docs_path": "docs/api/locate/index.md",
+    "permission_tier": 1,
+    "primitive": "locate",
+    "schema_path": "docs/api/schemas/locate.json",
+    "tier": "live",
+    "tool_id": "locate"
+  },
+  {
+    "docs_path": "docs/api/mohw/welfare_eligibility_search.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/mohw_welfare_eligibility_search.json",
+    "tier": "live",
+    "tool_id": "mohw_welfare_eligibility_search"
+  },
+  {
+    "docs_path": "docs/api/nfa119/emergency_info_service.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/nfa_emergency_info_service.json",
+    "tier": "live",
+    "tool_id": "nfa_emergency_info_service"
+  },
+  {
+    "docs_path": "docs/api/nmc/emergency_search.md",
+    "permission_tier": 3,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/nmc_emergency_search.json",
+    "tier": "live",
+    "tool_id": "nmc_emergency_search"
+  },
+  {
+    "docs_path": "docs/api/submit/traffic_fine_pay.md",
+    "permission_tier": 2,
+    "primitive": "send",
+    "schema_path": "docs/api/schemas/mock_traffic_fine_pay_v1.json",
+    "tier": "mock",
+    "tool_id": "mock_traffic_fine_pay_v1"
+  },
+  {
+    "docs_path": "docs/api/submit/welfare_application.md",
+    "permission_tier": 2,
+    "primitive": "send",
+    "schema_path": "docs/api/schemas/mock_welfare_application_submit_v1.json",
+    "tier": "mock",
+    "tool_id": "mock_welfare_application_submit_v1"
+  },
+  {
+    "docs_path": "docs/api/verify/digital_onepass.md",
+    "permission_tier": 2,
+    "primitive": "check",
+    "schema_path": "docs/api/schemas/mock_verify_digital_onepass.json",
+    "tier": "mock",
+    "tool_id": "mock_verify_digital_onepass"
+  },
+  {
+    "docs_path": "docs/api/verify/ganpyeon_injeung.md",
+    "permission_tier": 2,
+    "primitive": "check",
+    "schema_path": "docs/api/schemas/mock_verify_ganpyeon_injeung.json",
+    "tier": "mock",
+    "tool_id": "mock_verify_ganpyeon_injeung"
+  },
+  {
+    "docs_path": "docs/api/verify/geumyung_injeungseo.md",
+    "permission_tier": 2,
+    "primitive": "check",
+    "schema_path": "docs/api/schemas/mock_verify_geumyung_injeungseo.json",
+    "tier": "mock",
+    "tool_id": "mock_verify_geumyung_injeungseo"
+  },
+  {
+    "docs_path": "docs/api/verify/gongdong_injeungseo.md",
+    "permission_tier": 3,
+    "primitive": "check",
+    "schema_path": "docs/api/schemas/mock_verify_gongdong_injeungseo.json",
+    "tier": "mock",
+    "tool_id": "mock_verify_gongdong_injeungseo"
+  },
+  {
+    "docs_path": "docs/api/verify/mobile_id.md",
+    "permission_tier": 2,
+    "primitive": "check",
+    "schema_path": "docs/api/schemas/mock_verify_mobile_id.json",
+    "tier": "mock",
+    "tool_id": "mock_verify_mobile_id"
+  },
+  {
+    "docs_path": "docs/api/verify/mydata.md",
+    "permission_tier": 2,
+    "primitive": "check",
+    "schema_path": "docs/api/schemas/mock_verify_mydata.json",
+    "tier": "mock",
+    "tool_id": "mock_verify_mydata"
+  }
+]

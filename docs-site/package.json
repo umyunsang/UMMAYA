@@ -1,0 +1,26 @@
+{
+  "name": "@ummaya/docs-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "astro preview --host 127.0.0.1",
+    "check": "astro check",
+    "generate": "uv run python ../scripts/docs_generate.py",
+    "generate:check": "uv run python ../scripts/docs_generate.py --check"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/starlight": "^0.39.2",
+    "astro": "^6.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^6.0.3"
+  }
+}

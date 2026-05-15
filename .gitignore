@@ -40,12 +40,22 @@ dist/
 build/
 package-evidence/
 *.tgz
+!docs-site/src/content/docs/build/
+!docs-site/src/content/docs/build/**
+!docs-site/src/content/docs/*/build/
+!docs-site/src/content/docs/*/build/**
+!docs-site/public/_llm/pages/build/
+!docs-site/public/_llm/pages/build/**
+!docs-site/public/_llm/pages/*/build/
+!docs-site/public/_llm/pages/*/build/**
 
 # Node
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 .pnpm-store/
+docs-site/dist/
+docs-site/.astro/
 
 # IDE
 .vscode/

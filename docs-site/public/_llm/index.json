@@ -1,0 +1,1982 @@
+{
+  "pages": [
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "检索、推理、工具调用、权限和 stop reason 如何在一个 UMMAYA turn 中协作。",
+      "raw_path": "/_llm/pages/ch/architecture/agentic-rag-query-engine.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/architecture/agentic-rag-query-engine.md",
+      "title": "Agentic RAG And Query Engine",
+      "url_path": "/ch/architecture/agentic-rag-query-engine/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "为什么 UMMAYA 要把 Claude Code 的 harness 迁移到国家基础设施 AX。",
+      "raw_path": "/_llm/pages/ch/architecture/harness-migration.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/architecture/harness-migration.md",
+      "title": "Harness Migration",
+      "url_path": "/ch/architecture/harness-migration/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "为什么 UMMAYA 只把小型 action vocabulary 暴露给模型。",
+      "raw_path": "/_llm/pages/ch/architecture/main-primitives.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/architecture/main-primitives.md",
+      "title": "Main Primitives",
+      "url_path": "/ch/architecture/main-primitives/"
+    },
+    {
+      "audience": [
+        "adapter_author",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "贡献者如何把一个公共服务 channel 包装成带 evidence 的 UMMAYA adapter。",
+      "raw_path": "/_llm/pages/ch/build/adapter-authoring.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "docs/plugins/security-review.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/build/adapter-authoring.md",
+      "title": "Adapter Authoring",
+      "url_path": "/ch/build/adapter-authoring/"
+    },
+    {
+      "audience": [
+        "maintainer",
+        "llm_agent",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA 如何保持 human docs、LLM-readable docs、generated metadata 和 deployment outputs 对齐。",
+      "raw_path": "/_llm/pages/ch/build/llmops.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py",
+        ".github/workflows/docs.yml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/build/llmops.md",
+      "title": "面向文档的 LLMOps",
+      "url_path": "/ch/build/llmops/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "UMMAYA coverage、adapter status 和 primitive support 背后的 evidence ledger。",
+      "raw_path": "/_llm/pages/ch/coverage/adapter-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/coverage/adapter-matrix.md",
+      "title": "Adapter Matrix",
+      "url_path": "/ch/coverage/adapter-matrix/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "按用户任务、状态标签和证据来源说明 UMMAYA 当前 capability。",
+      "raw_path": "/_llm/pages/ch/coverage/current-coverage.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/coverage/current-coverage.md",
+      "title": "当前覆盖范围",
+      "url_path": "/ch/coverage/current-coverage/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "UMMAYA 如何把 domain 从 target-state scenario 推进到 mock，再到 live capability。",
+      "raw_path": "/_llm/pages/ch/coverage/domain-roadmap.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/coverage/domain-roadmap.md",
+      "title": "Domain Roadmap",
+      "url_path": "/ch/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "用于判断 UMMAYA 是否覆盖真实公共服务需求的 target-state citizen scenarios。",
+      "raw_path": "/_llm/pages/ch/coverage/scenario-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/coverage/scenario-matrix.md",
+      "title": "Scenario Matrix",
+      "url_path": "/ch/coverage/scenario-matrix/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "用于使用、评估和扩展 UMMAYA 这个韩国 national-infrastructure AX harness 的文档。",
+      "raw_path": "/_llm/pages/ch.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/research/ummaya-docs-audience-audit-2026-05-15.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/index.md",
+      "title": "UMMAYA 文档",
+      "url_path": "/ch/"
+    },
+    {
+      "audience": [
+        "llm_agent",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "让 agent 不用 scraping site 就能检查 UMMAYA 的 generated documentation surfaces。",
+      "raw_path": "/_llm/pages/ch/reference/llm-readable-docs.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/reference/llm-readable-docs.md",
+      "title": "LLM-Readable Docs",
+      "url_path": "/ch/reference/llm-readable-docs/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "第一次运行应当显示什么，以及它绝不能声称什么。",
+      "raw_path": "/_llm/pages/ch/start/first-successful-session.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/start/first-successful-session.md",
+      "title": "第一次成功会话",
+      "url_path": "/ch/start/first-successful-session/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user"
+      ],
+      "description": "安装打包后的 UMMAYA CLI，启动会话，并运行一个安全的公共服务 prompt。",
+      "raw_path": "/_llm/pages/ch/start/quickstart.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "README.md",
+        "package.json"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/start/quickstart.md",
+      "title": "快速开始",
+      "url_path": "/ch/start/quickstart/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "以用户语言解释 query routing、tool call、permission gate 和 final answer。",
+      "raw_path": "/_llm/pages/ch/start/what-happens-after-you-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/start/what-happens-after-you-ask.md",
+      "title": "你提问之后会发生什么",
+      "url_path": "/ch/start/what-happens-after-you-ask/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "按用户任务、状态标签和证据边界解释当前 capability。",
+      "raw_path": "/_llm/pages/ch/start/what-ummaya-can-do-today.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/start/what-ummaya-can-do-today.md",
+      "title": "UMMAYA 今天能做什么",
+      "url_path": "/ch/start/what-ummaya-can-do-today/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "按公共服务结果来 prompt UMMAYA，而不是按 agency API 或内部 adapter 名称。",
+      "raw_path": "/_llm/pages/ch/start/what-you-can-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/start/what-you-can-ask.md",
+      "title": "你可以问什么",
+      "url_path": "/ch/start/what-you-can-ask/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "为什么 UMMAYA 作为 national-infrastructure AX harness 存在。",
+      "raw_path": "/_llm/pages/ch/start/why-ummaya.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/start/why-ummaya.md",
+      "title": "为什么是 UMMAYA",
+      "url_path": "/ch/start/why-ummaya/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "UMMAYA 本地保存什么、credential 意味着什么，以及 session evidence 如何保持可检查。",
+      "raw_path": "/_llm/pages/ch/trust/data-credentials-local-sessions.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/trust/data-credentials-local-sessions.md",
+      "title": "数据、凭证与本地会话",
+      "url_path": "/ch/trust/data-credentials-local-sessions/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "这些状态标签让 UMMAYA 诚实说明自己实际能做什么。",
+      "raw_path": "/_llm/pages/ch/trust/live-mock-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/trust/live-mock-handoff.md",
+      "title": "Live、Mock 与 Handoff",
+      "url_path": "/ch/trust/live-mock-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "当 UMMAYA 到达只有 official service 能完成的边界时应发生什么。",
+      "raw_path": "/_llm/pages/ch/trust/official-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/trust/official-handoff.md",
+      "title": "官方 Handoff",
+      "url_path": "/ch/trust/official-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA 如何区分 public lookup 和 protected public-service actions。",
+      "raw_path": "/_llm/pages/ch/trust/permissions-and-consent.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/trust/permissions-and-consent.md",
+      "title": "权限与同意",
+      "url_path": "/ch/trust/permissions-and-consent/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "这些边界防止 UMMAYA 听起来比它实际更 official。",
+      "raw_path": "/_llm/pages/ch/trust/what-ummaya-will-not-do.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/trust/what-ummaya-will-not-do.md",
+      "title": "UMMAYA 不会做什么",
+      "url_path": "/ch/trust/what-ummaya-will-not-do/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "用 UMMAYA 查找公共安全信息，同时把紧急和受保护决定留在 official channels。",
+      "raw_path": "/_llm/pages/ch/use/emergency-healthcare-weather-safety.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/use/emergency-healthcare-weather-safety.md",
+      "title": "应急、医疗、天气与安全",
+      "url_path": "/ch/use/emergency-healthcare-weather-safety/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "理解今天通常需要 Mock 或 official Handoff 的 identity-bound workflows。",
+      "raw_path": "/_llm/pages/ch/use/identity-certificates-mydata.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/use/identity-certificates-mydata.md",
+      "title": "身份、证书与 MyData",
+      "url_path": "/ch/use/identity-certificates-mydata/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "准备跨机构搬家和住房 workflow，而不假装已经修改 official records。",
+      "raw_path": "/_llm/pages/ch/use/moving-housing-local-records.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/use/moving-housing-local-records.md",
+      "title": "搬家、住房与地方记录",
+      "url_path": "/ch/use/moving-housing-local-records/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "理解 UMMAYA 如何通过 session、receipt 和 context compression 让长 workflow 可检查。",
+      "raw_path": "/_llm/pages/ch/use/sessions-receipts-history.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/use/sessions-receipts-history.md",
+      "title": "Sessions、Receipts 与 History",
+      "url_path": "/ch/use/sessions-receipts-history/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "准备高后果 payment 和 filing workflows，而不把 mock path 误写成 official completion。",
+      "raw_path": "/_llm/pages/ch/use/tax-fines-payments-utilities.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/use/tax-fines-payments-utilities.md",
+      "title": "税务、罚款、支付与公用事业账单",
+      "url_path": "/ch/use/tax-fines-payments-utilities/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "maintainer"
+      ],
+      "description": "先解决用户可见问题，再进入 maintainer debugging。",
+      "raw_path": "/_llm/pages/ch/use/troubleshooting.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/testing.md",
+        "docs/onboarding/codex-continuation.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/use/troubleshooting.md",
+      "title": "故障排查",
+      "url_path": "/ch/use/troubleshooting/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "用 UMMAYA 理解 welfare guidance、preparation、eligibility boundaries 和 official application handoff。",
+      "raw_path": "/_llm/pages/ch/use/welfare-household-support.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/use/welfare-household-support.md",
+      "title": "福利与家庭支持",
+      "url_path": "/ch/use/welfare-household-support/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "How retrieval, reasoning, tool calling, permission gates, and stop reasons work in one UMMAYA turn.",
+      "raw_path": "/_llm/pages/en/architecture/agentic-rag-query-engine.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "specs/005-query-engine/spec.md",
+        "specs/006-tool-system/spec.md",
+        "specs/026-retrieval-dense-embeddings/spec.md",
+        "specs/032-stdio-tui-to-python-ipc-hardening/spec.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/architecture/agentic-rag-query-engine.md",
+      "title": "Agentic RAG And Query Engine",
+      "url_path": "/en/architecture/agentic-rag-query-engine/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "Why UMMAYA migrates Claude Code harness mechanics from developer work to national-infrastructure work.",
+      "raw_path": "/_llm/pages/en/architecture/harness-migration.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        ".references/claude-code-sourcemap/restored-src/",
+        "specs/2521-llm-swap-cc-rebuild/spec.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/architecture/harness-migration.md",
+      "title": "Harness Migration",
+      "url_path": "/en/architecture/harness-migration/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "The small verb surface UMMAYA exposes to the model while adapters carry domain detail.",
+      "raw_path": "/_llm/pages/en/architecture/main-primitives.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/schemas/find.json",
+        "docs/api/schemas/locate.json",
+        "docs/api/schemas/check.json",
+        "docs/api/schemas/send.json"
+      ],
+      "source_path": "docs-site/src/content/docs/en/architecture/main-primitives.md",
+      "title": "Main Primitives",
+      "url_path": "/en/architecture/main-primitives/"
+    },
+    {
+      "audience": [
+        "adapter_author",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "How contributors should wrap one public-service channel as one evidence-bearing UMMAYA adapter.",
+      "raw_path": "/_llm/pages/en/build/adapter-authoring.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "docs/plugins/security-review.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/build/adapter-authoring.md",
+      "title": "Adapter Authoring",
+      "url_path": "/en/build/adapter-authoring/"
+    },
+    {
+      "audience": [
+        "maintainer",
+        "llm_agent",
+        "public_sector_evaluator"
+      ],
+      "description": "How UMMAYA keeps human docs, LLM-readable docs, generated metadata, and deployment outputs aligned.",
+      "raw_path": "/_llm/pages/en/build/llmops.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py",
+        ".github/workflows/docs.yml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/build/llmops.md",
+      "title": "LLMOps For Docs",
+      "url_path": "/en/build/llmops/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "The evidence ledger behind UMMAYA coverage, adapter status, and primitive support.",
+      "raw_path": "/_llm/pages/en/coverage/adapter-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/coverage/adapter-matrix.md",
+      "title": "Adapter Matrix",
+      "url_path": "/en/coverage/adapter-matrix/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "Current UMMAYA capability by user task, status label, and evidence source.",
+      "raw_path": "/_llm/pages/en/coverage/current-coverage.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/coverage/current-coverage.md",
+      "title": "Current Coverage",
+      "url_path": "/en/coverage/current-coverage/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "How UMMAYA moves domains from target-state scenario to mock to live capability.",
+      "raw_path": "/_llm/pages/en/coverage/domain-roadmap.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/coverage/domain-roadmap.md",
+      "title": "Domain Roadmap",
+      "url_path": "/en/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "Target-state citizen scenarios used to judge whether UMMAYA covers real public-service demand.",
+      "raw_path": "/_llm/pages/en/coverage/scenario-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/coverage/scenario-matrix.md",
+      "title": "Scenario Matrix",
+      "url_path": "/en/coverage/scenario-matrix/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Documentation for using, evaluating, and extending UMMAYA as a Korean national-infrastructure AX harness.",
+      "raw_path": "/_llm/pages/en.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/research/ummaya-docs-audience-audit-2026-05-15.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/index.md",
+      "title": "UMMAYA Docs",
+      "url_path": "/en/"
+    },
+    {
+      "audience": [
+        "llm_agent",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "The generated documentation surfaces that let agents inspect UMMAYA without scraping the site.",
+      "raw_path": "/_llm/pages/en/reference/llm-readable-docs.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py"
+      ],
+      "source_path": "docs-site/src/content/docs/en/reference/llm-readable-docs.md",
+      "title": "LLM-Readable Docs",
+      "url_path": "/en/reference/llm-readable-docs/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "What a successful first run should show, and what it must not claim.",
+      "raw_path": "/_llm/pages/en/start/first-successful-session.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/en/start/first-successful-session.md",
+      "title": "First Successful Session",
+      "url_path": "/en/start/first-successful-session/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user"
+      ],
+      "description": "Install the packaged UMMAYA CLI, start a session, and run one safe public-service prompt.",
+      "raw_path": "/_llm/pages/en/start/quickstart.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "README.md",
+        "package.json"
+      ],
+      "source_path": "docs-site/src/content/docs/en/start/quickstart.md",
+      "title": "Quickstart",
+      "url_path": "/en/start/quickstart/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "A user-level view of query routing, tool calls, permission gates, and final answers.",
+      "raw_path": "/_llm/pages/en/start/what-happens-after-you-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/en/start/what-happens-after-you-ask.md",
+      "title": "What Happens After You Ask",
+      "url_path": "/en/start/what-happens-after-you-ask/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Current capability explained by user task, status label, and evidence boundary.",
+      "raw_path": "/_llm/pages/en/start/what-ummaya-can-do-today.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/start/what-ummaya-can-do-today.md",
+      "title": "What UMMAYA Can Do Today",
+      "url_path": "/en/start/what-ummaya-can-do-today/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Prompt UMMAYA by public-service outcome, not by agency API or internal adapter name.",
+      "raw_path": "/_llm/pages/en/start/what-you-can-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/start/what-you-can-ask.md",
+      "title": "What You Can Ask",
+      "url_path": "/en/start/what-you-can-ask/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Why UMMAYA exists as a national-infrastructure AX harness.",
+      "raw_path": "/_llm/pages/en/start/why-ummaya.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/start/why-ummaya.md",
+      "title": "Why UMMAYA",
+      "url_path": "/en/start/why-ummaya/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "What UMMAYA stores locally, what credentials mean, and how session evidence should remain inspectable.",
+      "raw_path": "/_llm/pages/en/trust/data-credentials-local-sessions.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/trust/data-credentials-local-sessions.md",
+      "title": "Data, Credentials, And Local Sessions",
+      "url_path": "/en/trust/data-credentials-local-sessions/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "The status labels that keep UMMAYA honest about what it can actually do.",
+      "raw_path": "/_llm/pages/en/trust/live-mock-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/trust/live-mock-handoff.md",
+      "title": "Live, Mock, And Handoff",
+      "url_path": "/en/trust/live-mock-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "What should happen when UMMAYA reaches a boundary that only an official service can complete.",
+      "raw_path": "/_llm/pages/en/trust/official-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/trust/official-handoff.md",
+      "title": "Official Handoff",
+      "url_path": "/en/trust/official-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "How UMMAYA separates public lookup from protected public-service actions.",
+      "raw_path": "/_llm/pages/en/trust/permissions-and-consent.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/trust/permissions-and-consent.md",
+      "title": "Permissions And Consent",
+      "url_path": "/en/trust/permissions-and-consent/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "The boundaries that prevent UMMAYA from sounding more official than it is.",
+      "raw_path": "/_llm/pages/en/trust/what-ummaya-will-not-do.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/trust/what-ummaya-will-not-do.md",
+      "title": "What UMMAYA Will Not Do",
+      "url_path": "/en/trust/what-ummaya-will-not-do/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Use UMMAYA for public safety information while keeping urgent and protected decisions on official channels.",
+      "raw_path": "/_llm/pages/en/use/emergency-healthcare-weather-safety.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/use/emergency-healthcare-weather-safety.md",
+      "title": "Emergency, Healthcare, Weather, And Safety",
+      "url_path": "/en/use/emergency-healthcare-weather-safety/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Understand identity-bound workflows that usually require Mock or official Handoff today.",
+      "raw_path": "/_llm/pages/en/use/identity-certificates-mydata.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/use/identity-certificates-mydata.md",
+      "title": "Identity, Certificates, And MyData",
+      "url_path": "/en/use/identity-certificates-mydata/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Prepare multi-agency move and housing workflows without pretending to change official records.",
+      "raw_path": "/_llm/pages/en/use/moving-housing-local-records.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/use/moving-housing-local-records.md",
+      "title": "Moving, Housing, And Local Records",
+      "url_path": "/en/use/moving-housing-local-records/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "Understand how UMMAYA keeps long workflows inspectable across sessions, receipts, and context compression.",
+      "raw_path": "/_llm/pages/en/use/sessions-receipts-history.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/use/sessions-receipts-history.md",
+      "title": "Sessions, Receipts, And History",
+      "url_path": "/en/use/sessions-receipts-history/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Prepare consequential payment and filing workflows without confusing mock paths with official completion.",
+      "raw_path": "/_llm/pages/en/use/tax-fines-payments-utilities.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/use/tax-fines-payments-utilities.md",
+      "title": "Tax, Fines, Payments, And Utility Bills",
+      "url_path": "/en/use/tax-fines-payments-utilities/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "maintainer"
+      ],
+      "description": "Fix common user-facing problems before moving into maintainer debugging.",
+      "raw_path": "/_llm/pages/en/use/troubleshooting.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/testing.md",
+        "docs/onboarding/codex-continuation.md"
+      ],
+      "source_path": "docs-site/src/content/docs/en/use/troubleshooting.md",
+      "title": "Troubleshooting",
+      "url_path": "/en/use/troubleshooting/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Use UMMAYA to understand welfare guidance, preparation, eligibility boundaries, and official application handoff.",
+      "raw_path": "/_llm/pages/en/use/welfare-household-support.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/en/use/welfare-household-support.md",
+      "title": "Welfare And Household Support",
+      "url_path": "/en/use/welfare-household-support/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "検索、推論、tool calling、permission、stop reason が一つの UMMAYA turn で協調する仕組みです。",
+      "raw_path": "/_llm/pages/jg/architecture/agentic-rag-query-engine.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/architecture/agentic-rag-query-engine.md",
+      "title": "Agentic RAG And Query Engine",
+      "url_path": "/jg/architecture/agentic-rag-query-engine/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Claude Code の harness を国家インフラ AX に移す理由です。",
+      "raw_path": "/_llm/pages/jg/architecture/harness-migration.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/architecture/harness-migration.md",
+      "title": "Harness Migration",
+      "url_path": "/jg/architecture/harness-migration/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA が model に小さな action vocabulary だけを見せる理由です。",
+      "raw_path": "/_llm/pages/jg/architecture/main-primitives.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/architecture/main-primitives.md",
+      "title": "Main Primitives",
+      "url_path": "/jg/architecture/main-primitives/"
+    },
+    {
+      "audience": [
+        "adapter_author",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "一つの public-service channel を evidence-bearing UMMAYA adapter として wrap する方法。",
+      "raw_path": "/_llm/pages/jg/build/adapter-authoring.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "docs/plugins/security-review.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/build/adapter-authoring.md",
+      "title": "Adapter Authoring",
+      "url_path": "/jg/build/adapter-authoring/"
+    },
+    {
+      "audience": [
+        "maintainer",
+        "llm_agent",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA が human docs、LLM-readable docs、generated metadata、deployment outputs を aligned に保つ方法。",
+      "raw_path": "/_llm/pages/jg/build/llmops.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py",
+        ".github/workflows/docs.yml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/build/llmops.md",
+      "title": "Docs のための LLMOps",
+      "url_path": "/jg/build/llmops/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "UMMAYA coverage、adapter status、primitive support の背後にある evidence ledger。",
+      "raw_path": "/_llm/pages/jg/coverage/adapter-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/coverage/adapter-matrix.md",
+      "title": "Adapter Matrix",
+      "url_path": "/jg/coverage/adapter-matrix/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "user task、status label、evidence source で UMMAYA の現在 capability を説明します。",
+      "raw_path": "/_llm/pages/jg/coverage/current-coverage.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/coverage/current-coverage.md",
+      "title": "現在の coverage",
+      "url_path": "/jg/coverage/current-coverage/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "UMMAYA が domains を target-state scenario から mock、live capability へ進める方法。",
+      "raw_path": "/_llm/pages/jg/coverage/domain-roadmap.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/coverage/domain-roadmap.md",
+      "title": "Domain Roadmap",
+      "url_path": "/jg/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "UMMAYA が実際の public-service demand を覆うか判断する target-state citizen scenarios。",
+      "raw_path": "/_llm/pages/jg/coverage/scenario-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/coverage/scenario-matrix.md",
+      "title": "Scenario Matrix",
+      "url_path": "/jg/coverage/scenario-matrix/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Korean national-infrastructure AX harness として UMMAYA を使い、評価し、拡張するための documentation。",
+      "raw_path": "/_llm/pages/jg.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/research/ummaya-docs-audience-audit-2026-05-15.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/index.md",
+      "title": "UMMAYA Docs",
+      "url_path": "/jg/"
+    },
+    {
+      "audience": [
+        "llm_agent",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "agents が site scraping なしに UMMAYA を inspect できる generated documentation surfaces。",
+      "raw_path": "/_llm/pages/jg/reference/llm-readable-docs.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/reference/llm-readable-docs.md",
+      "title": "LLM-Readable Docs",
+      "url_path": "/jg/reference/llm-readable-docs/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "最初の実行で何が見えるべきか、そして何を主張してはいけないか。",
+      "raw_path": "/_llm/pages/jg/start/first-successful-session.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/start/first-successful-session.md",
+      "title": "最初の成功セッション",
+      "url_path": "/jg/start/first-successful-session/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user"
+      ],
+      "description": "packaged UMMAYA CLI をインストールし、セッションを開始し、安全な public-service prompt を一つ実行します。",
+      "raw_path": "/_llm/pages/jg/start/quickstart.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "README.md",
+        "package.json"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/start/quickstart.md",
+      "title": "クイックスタート",
+      "url_path": "/jg/start/quickstart/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "query routing、tool calls、permission gates、final answers をユーザー視点で説明します。",
+      "raw_path": "/_llm/pages/jg/start/what-happens-after-you-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/start/what-happens-after-you-ask.md",
+      "title": "質問した後に起きること",
+      "url_path": "/jg/start/what-happens-after-you-ask/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "current capability を user task、status label、evidence boundary で説明します。",
+      "raw_path": "/_llm/pages/jg/start/what-ummaya-can-do-today.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/start/what-ummaya-can-do-today.md",
+      "title": "UMMAYA が今日できること",
+      "url_path": "/jg/start/what-ummaya-can-do-today/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "agency API や internal adapter name ではなく、public-service outcome で UMMAYA に prompt します。",
+      "raw_path": "/_llm/pages/jg/start/what-you-can-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/start/what-you-can-ask.md",
+      "title": "何を質問できるか",
+      "url_path": "/jg/start/what-you-can-ask/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA が national-infrastructure AX harness として存在する理由。",
+      "raw_path": "/_llm/pages/jg/start/why-ummaya.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/start/why-ummaya.md",
+      "title": "なぜ UMMAYA なのか",
+      "url_path": "/jg/start/why-ummaya/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "UMMAYA がローカルに何を保存し、credentials が何を意味し、session evidence がどう検査可能であるべきか。",
+      "raw_path": "/_llm/pages/jg/trust/data-credentials-local-sessions.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/trust/data-credentials-local-sessions.md",
+      "title": "データ、認証情報、ローカルセッション",
+      "url_path": "/jg/trust/data-credentials-local-sessions/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA が実際に何をできるかを正直に保つ status labels。",
+      "raw_path": "/_llm/pages/jg/trust/live-mock-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/trust/live-mock-handoff.md",
+      "title": "Live、Mock、Handoff",
+      "url_path": "/jg/trust/live-mock-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA が official service だけが完了できる boundary に達したとき起きるべきこと。",
+      "raw_path": "/_llm/pages/jg/trust/official-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/trust/official-handoff.md",
+      "title": "公式 Handoff",
+      "url_path": "/jg/trust/official-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA が public lookup と protected public-service actions をどう分けるか。",
+      "raw_path": "/_llm/pages/jg/trust/permissions-and-consent.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/trust/permissions-and-consent.md",
+      "title": "権限と同意",
+      "url_path": "/jg/trust/permissions-and-consent/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA が実際以上に official に聞こえることを防ぐ boundaries。",
+      "raw_path": "/_llm/pages/jg/trust/what-ummaya-will-not-do.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/trust/what-ummaya-will-not-do.md",
+      "title": "UMMAYA がしないこと",
+      "url_path": "/jg/trust/what-ummaya-will-not-do/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA で公共安全情報を使い、緊急判断と protected decisions は official channels に残します。",
+      "raw_path": "/_llm/pages/jg/use/emergency-healthcare-weather-safety.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/use/emergency-healthcare-weather-safety.md",
+      "title": "緊急、医療、天気、安全",
+      "url_path": "/jg/use/emergency-healthcare-weather-safety/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "今日、多くが Mock または official Handoff を必要とする identity-bound workflows を理解します。",
+      "raw_path": "/_llm/pages/jg/use/identity-certificates-mydata.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/use/identity-certificates-mydata.md",
+      "title": "ID、証明書、MyData",
+      "url_path": "/jg/use/identity-certificates-mydata/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "official records を変更したふりをせず、multi-agency move と housing workflows を準備します。",
+      "raw_path": "/_llm/pages/jg/use/moving-housing-local-records.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/use/moving-housing-local-records.md",
+      "title": "引っ越し、住宅、地方記録",
+      "url_path": "/jg/use/moving-housing-local-records/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "UMMAYA が sessions、receipts、context compression で長い workflows を inspectable に保つ方法。",
+      "raw_path": "/_llm/pages/jg/use/sessions-receipts-history.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/use/sessions-receipts-history.md",
+      "title": "Sessions、Receipts、History",
+      "url_path": "/jg/use/sessions-receipts-history/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "mock path を official completion と混同せず、重要な payment と filing workflows を準備します。",
+      "raw_path": "/_llm/pages/jg/use/tax-fines-payments-utilities.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/use/tax-fines-payments-utilities.md",
+      "title": "税、罰金、支払い、公共料金",
+      "url_path": "/jg/use/tax-fines-payments-utilities/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "maintainer"
+      ],
+      "description": "maintainer debugging に進む前に、user-facing problems を解決します。",
+      "raw_path": "/_llm/pages/jg/use/troubleshooting.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/testing.md",
+        "docs/onboarding/codex-continuation.md"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/use/troubleshooting.md",
+      "title": "トラブルシューティング",
+      "url_path": "/jg/use/troubleshooting/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA で welfare guidance、preparation、eligibility boundaries、official application handoff を理解します。",
+      "raw_path": "/_llm/pages/jg/use/welfare-household-support.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/use/welfare-household-support.md",
+      "title": "福祉と世帯支援",
+      "url_path": "/jg/use/welfare-household-support/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "검색, 추론, 도구 호출, 권한, stop reason이 한 턴에서 협력하는 방식입니다.",
+      "raw_path": "/_llm/pages/ko/architecture/agentic-rag-query-engine.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/architecture/agentic-rag-query-engine.md",
+      "title": "Agentic RAG And Query Engine",
+      "url_path": "/ko/architecture/agentic-rag-query-engine/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "Claude Code 하네스 구조를 개발자 작업에서 국가 인프라 작업으로 옮기는 이유입니다.",
+      "raw_path": "/_llm/pages/ko/architecture/harness-migration.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/architecture/harness-migration.md",
+      "title": "Harness Migration",
+      "url_path": "/ko/architecture/harness-migration/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "도메인 세부사항은 adapter가 담당하고 모델에는 작은 동사 표면만 노출합니다.",
+      "raw_path": "/_llm/pages/ko/architecture/main-primitives.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/architecture/main-primitives.md",
+      "title": "Main Primitives",
+      "url_path": "/ko/architecture/main-primitives/"
+    },
+    {
+      "audience": [
+        "adapter_author",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "하나의 공공서비스 채널을 하나의 증거 기반 UMMAYA 어댑터로 감싸는 방법입니다.",
+      "raw_path": "/_llm/pages/ko/build/adapter-authoring.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "docs/plugins/security-review.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/build/adapter-authoring.md",
+      "title": "어댑터 작성",
+      "url_path": "/ko/build/adapter-authoring/"
+    },
+    {
+      "audience": [
+        "maintainer",
+        "llm_agent",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA가 human docs, LLM-readable docs, generated metadata, deployment output을 같은 상태로 유지하는 방식입니다.",
+      "raw_path": "/_llm/pages/ko/build/llmops.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py",
+        ".github/workflows/docs.yml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/build/llmops.md",
+      "title": "문서를 위한 LLMOps",
+      "url_path": "/ko/build/llmops/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "UMMAYA coverage, adapter status, primitive support의 evidence ledger입니다.",
+      "raw_path": "/_llm/pages/ko/coverage/adapter-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/coverage/adapter-matrix.md",
+      "title": "Adapter Matrix",
+      "url_path": "/ko/coverage/adapter-matrix/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "현재 UMMAYA capability를 user task, status label, evidence source로 설명합니다.",
+      "raw_path": "/_llm/pages/ko/coverage/current-coverage.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/coverage/current-coverage.md",
+      "title": "현재 커버리지",
+      "url_path": "/ko/coverage/current-coverage/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "UMMAYA가 domain을 target-state scenario에서 mock, live capability로 이동시키는 방식입니다.",
+      "raw_path": "/_llm/pages/ko/coverage/domain-roadmap.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/coverage/domain-roadmap.md",
+      "title": "Domain Roadmap",
+      "url_path": "/ko/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "public_sector_evaluator",
+        "maintainer",
+        "llm_agent"
+      ],
+      "description": "UMMAYA가 실제 public-service demand를 다루는지 판단하는 target-state citizen scenario입니다.",
+      "raw_path": "/_llm/pages/ko/coverage/scenario-matrix.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/coverage/scenario-matrix.md",
+      "title": "Scenario Matrix",
+      "url_path": "/ko/coverage/scenario-matrix/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "대한민국 국가 인프라 AX harness로서 UMMAYA를 사용하고, 평가하고, 확장하기 위한 문서입니다.",
+      "raw_path": "/_llm/pages/ko.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/research/ummaya-docs-audience-audit-2026-05-15.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/index.md",
+      "title": "UMMAYA 문서",
+      "url_path": "/ko/"
+    },
+    {
+      "audience": [
+        "llm_agent",
+        "maintainer",
+        "public_sector_evaluator"
+      ],
+      "description": "agent가 site scraping 없이 UMMAYA를 검사할 수 있게 하는 generated documentation surface입니다.",
+      "raw_path": "/_llm/pages/ko/reference/llm-readable-docs.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "scripts/docs_generate.py"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/reference/llm-readable-docs.md",
+      "title": "LLM-Readable Docs",
+      "url_path": "/ko/reference/llm-readable-docs/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "첫 실행이 무엇을 보여야 하고 무엇을 주장하면 안 되는지 설명합니다.",
+      "raw_path": "/_llm/pages/ko/start/first-successful-session.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/start/first-successful-session.md",
+      "title": "첫 성공 세션",
+      "url_path": "/ko/start/first-successful-session/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "considering_user"
+      ],
+      "description": "packaged UMMAYA CLI를 설치하고 session을 시작한 뒤 안전한 public-service prompt를 실행합니다.",
+      "raw_path": "/_llm/pages/ko/start/quickstart.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "README.md",
+        "package.json"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/start/quickstart.md",
+      "title": "Quickstart",
+      "url_path": "/ko/start/quickstart/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "query routing, tool calls, permission gates, final answer를 사용자 수준에서 설명합니다.",
+      "raw_path": "/_llm/pages/ko/start/what-happens-after-you-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs-site/src/data/generated/adapters.json"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/start/what-happens-after-you-ask.md",
+      "title": "질문한 뒤 일어나는 일",
+      "url_path": "/ko/start/what-happens-after-you-ask/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "new_user",
+        "public_sector_evaluator"
+      ],
+      "description": "현재 capability를 user task, status label, evidence boundary로 설명합니다.",
+      "raw_path": "/_llm/pages/ko/start/what-ummaya-can-do-today.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/start/what-ummaya-can-do-today.md",
+      "title": "UMMAYA가 오늘 할 수 있는 일",
+      "url_path": "/ko/start/what-ummaya-can-do-today/"
+    },
+    {
+      "audience": [
+        "new_user",
+        "active_user",
+        "public_sector_evaluator"
+      ],
+      "description": "agency API나 internal adapter 이름이 아니라 public-service outcome으로 UMMAYA에 질문합니다.",
+      "raw_path": "/_llm/pages/ko/start/what-you-can-ask.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/start/what-you-can-ask.md",
+      "title": "무엇을 물어볼 수 있나",
+      "url_path": "/ko/start/what-you-can-ask/"
+    },
+    {
+      "audience": [
+        "non_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA가 국가 인프라 AX harness로 존재해야 하는 이유입니다.",
+      "raw_path": "/_llm/pages/ko/start/why-ummaya.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/vision.md",
+        "docs/requirements/ummaya-migration-tree.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/start/why-ummaya.md",
+      "title": "왜 UMMAYA인가",
+      "url_path": "/ko/start/why-ummaya/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "UMMAYA가 local에 무엇을 저장하고 credential이 무엇을 의미하며 session evidence가 어떻게 inspect 가능해야 하는지 설명합니다.",
+      "raw_path": "/_llm/pages/ko/trust/data-credentials-local-sessions.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/vision.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/trust/data-credentials-local-sessions.md",
+      "title": "데이터, 자격 증명, 로컬 세션",
+      "url_path": "/ko/trust/data-credentials-local-sessions/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA가 실제로 할 수 있는 일을 정직하게 표시하는 status label입니다.",
+      "raw_path": "/_llm/pages/ko/trust/live-mock-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/trust/live-mock-handoff.md",
+      "title": "Live, Mock, Handoff",
+      "url_path": "/ko/trust/live-mock-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA가 official service만 완료할 수 있는 경계에 도달했을 때 일어나야 하는 일입니다.",
+      "raw_path": "/_llm/pages/ko/trust/official-handoff.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/trust/official-handoff.md",
+      "title": "Official Handoff",
+      "url_path": "/ko/trust/official-handoff/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA가 public lookup과 protected public-service action을 분리하는 방식입니다.",
+      "raw_path": "/_llm/pages/ko/trust/permissions-and-consent.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md",
+        "docs/api/README.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/trust/permissions-and-consent.md",
+      "title": "Permissions And Consent",
+      "url_path": "/ko/trust/permissions-and-consent/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "UMMAYA가 실제보다 더 official하게 들리지 않도록 막는 boundary입니다.",
+      "raw_path": "/_llm/pages/ko/trust/what-ummaya-will-not-do.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/api/README.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/trust/what-ummaya-will-not-do.md",
+      "title": "UMMAYA가 하지 않는 것",
+      "url_path": "/ko/trust/what-ummaya-will-not-do/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "공개 안전 정보를 활용하되 긴급 판단과 보호된 결정은 공식 채널에 남기는 방법입니다.",
+      "raw_path": "/_llm/pages/ko/use/emergency-healthcare-weather-safety.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/use/emergency-healthcare-weather-safety.md",
+      "title": "응급, 의료, 날씨, 안전",
+      "url_path": "/ko/use/emergency-healthcare-weather-safety/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "대부분 Mock 또는 official Handoff가 필요한 신원 기반 workflow를 이해합니다.",
+      "raw_path": "/_llm/pages/ko/use/identity-certificates-mydata.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/use/identity-certificates-mydata.md",
+      "title": "신원, 증명서, MyData",
+      "url_path": "/ko/use/identity-certificates-mydata/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "공식 기록을 바꾼 것처럼 말하지 않으면서 여러 기관에 걸친 이사와 주거 workflow를 준비합니다.",
+      "raw_path": "/_llm/pages/ko/use/moving-housing-local-records.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/use/moving-housing-local-records.md",
+      "title": "이사, 주거, 지역 기록",
+      "url_path": "/ko/use/moving-housing-local-records/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "public_sector_evaluator",
+        "maintainer"
+      ],
+      "description": "긴 workflow가 session, receipt, context compression을 통해 inspect 가능하게 유지되는 방식을 설명합니다.",
+      "raw_path": "/_llm/pages/ko/use/sessions-receipts-history.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "specs/033-permission-v2-spectrum-consent-ledger/spec.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/use/sessions-receipts-history.md",
+      "title": "세션, 영수증, 기록",
+      "url_path": "/ko/use/sessions-receipts-history/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "Mock path와 official completion을 혼동하지 않으면서 중요한 납부와 신고 workflow를 준비합니다.",
+      "raw_path": "/_llm/pages/ko/use/tax-fines-payments-utilities.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/use/tax-fines-payments-utilities.md",
+      "title": "세금, 과태료, 납부, 공공요금",
+      "url_path": "/ko/use/tax-fines-payments-utilities/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "maintainer"
+      ],
+      "description": "maintainer debugging으로 들어가기 전에 common user-facing problem을 해결합니다.",
+      "raw_path": "/_llm/pages/ko/use/troubleshooting.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs/testing.md",
+        "docs/onboarding/codex-continuation.md"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/use/troubleshooting.md",
+      "title": "Troubleshooting",
+      "url_path": "/ko/use/troubleshooting/"
+    },
+    {
+      "audience": [
+        "citizen_user",
+        "considering_user",
+        "public_sector_evaluator"
+      ],
+      "description": "복지 안내, 준비, eligibility boundary, official application handoff를 이해합니다.",
+      "raw_path": "/_llm/pages/ko/use/welfare-household-support.md",
+      "source_of_truth": [
+        "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
+        "docs-site/src/data/generated/adapters.json",
+        "eval/scenarios/national_ax_citizen_requests_v1.yaml"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/use/welfare-household-support.md",
+      "title": "복지와 가구 지원",
+      "url_path": "/ko/use/welfare-household-support/"
+    }
+  ]
+}
