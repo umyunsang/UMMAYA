@@ -1,0 +1,6 @@
+HTTP/1.1 200 OK
+Content-Length: 2866
+Content-Type: application/xml
+Date: Fri, 15 May 2026 15:49:52 GMT
+Server: Apache/2.2.22 (Red Hat Enterprise Web Server) DAV/2 mod_auth_kerb/5.4 mod_cluster/1.2.4.Final mod_jk/1.2.37 CovalentSNMP/2.3.0
+Vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers

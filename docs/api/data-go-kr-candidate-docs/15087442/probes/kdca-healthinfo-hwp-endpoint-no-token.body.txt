@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XML>
+    <HEAD>
+        <CODE>S001</CODE>
+        <MESSAGE>OK</MESSAGE>
+    </HEAD>
+    <svc>
+    <cntntsClList>
+    <cntntsCl>
+    <CNTNTS_CL_NM><![CDATA[요약문]]></CNTNTS_CL_NM>
+    <CNTNTSCLSN><![CDATA[3666]]></CNTNTSCLSN>
+    <CNTNTS_CL_CN><![CDATA['이것만은 꼭 기억하세요'
+• 저칼륨혈증은 이뇨제 사용이나 심한 구토·설사로 몸속의 칼륨이 과도하게 빠져나갈 때 주로 발생합니다.
+• 이유 없이 기운이 없고 근육에 쥐가 자주 나거나, 심한 변비가 계속되면 의심할 수 있습니다.
+• 심하면 두근거림(부정맥)이나 실신 등으로 이어질 수 있어, 이런 증상이 있으면 병원 진료가 필요합니다.
+• 치료는 원인에 따라 약이나 수액으로 칼륨을 보충하며, 재발 위험이 있으면 비상약을 처방받을 수 있습니다.]]></CNTNTS_CL_CN>
+    </cntntsCl>
+    <cntntsCl>
+    <CNTNTS_CL_NM><![CDATA[정의]]></CNTNTS_CL_NM>
+    <CNTNTSCLSN><![CDATA[102]]></CNTNTSCLSN>
+    <CNTNTS_CL_CN><![CDATA[칼륨(K⁺)은 근육, 신경 기능, 심장 박동 유지에 중요한 전해질입니다.  정상적인 세포내액의 칼륨 농도는 100~110 mmol/L이며, 세포외액의 칼륨 농도는 3.5~5.5 mmol/L입니다. 칼륨은 오렌지,포도, 토마토, 바나나, 아보카도 등 과일에 많이 들어 있습니다. 섭취한 칼륨의 약 90%가 신장을 통해 배설되고, 나머지 약 10%가 위장관으로 배설됩니다.
+혈액 내 칼륨 수치가 낮아지면 근력저하·피로뿐 아니라, 일부 상황에서는 부정맥 위험이 커질 수 있습니다. 혈액검사에서 칼륨(K⁺) 농도가 3.5 mmol/L 미만이면 저칼륨혈증이라고 합니다.]]></CNTNTS_CL_CN>
+    </cntntsCl>
+    <cntntsCl>
+    <CNTNTS_CL_NM><![CDATA[원인]]></CNTNTS_CL_NM>
+    <CNTNTSCLSN><![CDATA[104]]></CNTNTSCLSN>
+    <CNTNTS_CL_CN><![CDATA[저칼륨혈증은 칼륨 섭취 부족보다는 주로 이뇨제 사용이나 심한 구토·설사로 인해 칼륨이 몸 밖으로 과도하게 배출될 때 발생합니다. 또한 인슐린 사용이나 특정 질환이나 상태(고알도스테론혈증, 알칼리혈증) 등 다양한 원인에 의해 생길 수 있습니다.]]></CNTNTS_CL_CN>
+    </cntntsCl>
+    <cntntsCl>
+    <CNTNTS_CL_NM><![CDATA[증상]]></CNTNTS_CL_NM>
+    <CNTNTSCLSN><![CDATA[108]]></CNTNTSCLSN>
+    <CNTNTS_CL_CN><![CDATA[신경·근육계: 근력약화, 근육경련, 근육통, 감각이상, 전신 무기력증, 피로감 등이 나타납니다.소화기계: 장 운동이 느려져 변비가 생기거나, 심하면 장이 멈추는 장 운동 마비가 올 수 있습니다.심장계: 가장 위험한 증상으로, 맥박이 불규칙하게 뛰는 부정맥이나 심정지가 발생할 수 있습니다.
+   ※ 주의: 칼륨 수치가 매우 낮게 떨어지면(2 mmol/L 이하) 심각한 근육 마비가 진행될 수 있어 즉각적인 처치가 필요합니다.]]></CNTNTS_CL_CN>
+    </cntntsCl>
+    <cntntsCl>
+    <CNTNTS_CL_NM><![CDATA[치료]]></CNTNTS_CL_NM>
+    <CNTNTSCLSN><![CDATA[110]]></CNTNTSCLSN>
+    <CNTNTS_CL_CN><![CDATA[병원에서 의사의진료 후 혈액검사를 통해 저칼륨혈증이 진단되면, 부족한 칼륨을 먹는 약이나 수액으로 보충합니다. 단순히 칼륨만 채우는 것이 아니라, 근본 원인을 찾기 위해 혈액검사, 소변검사와 함께 유전자 검사를 할 수도 있습니다.
+이후 원인에 따라 칼륨 배출을 막는 약이나 예방 약물을 사용하며. 또한 갑작스러운 증상 발생에 대비해 비상용 칼륨 약제를 미리 처방받을 수 있습니다.]]></CNTNTS_CL_CN>
+    </cntntsCl>
+    </cntntsClList>
+    <relateCntntsSnLIst>
+    </relateCntntsSnLIst>
+    </svc>
+</XML>

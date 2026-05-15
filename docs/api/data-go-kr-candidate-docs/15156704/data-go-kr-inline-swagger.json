@@ -1,0 +1,549 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "한국서부발전에서 제공하는 발전소 전력사용량 조회 서비스는 발전소 내 전력사용량과 관련된 운전 데이터를 체계적으로 조회할 수 있도록 제공되는 서비스입니다. 제공되는 데이터는 호기 코드, 분류 코드, 태그명, 태그 데이터 생성 시간, 태그 값, FLAG로 구성되며, 발전소 설비별 전력 사용 상태와 주요 측정값을 시간 단위로 확인할 수 있습니다.\\n본 서비스는 발전소 전력사용량과 관련된 태그명으로 구성된 API입니다. 각 태그의 값은 사전에 정의된 TAG 정보의 TAG 최소값과 TAG 최대값 범위를 기준으로 비교되며, 그 결과에 따라 FLAG 코드가 부여됩니다. 태그 값이 최소값보다 작으면 FLAG 코드는 -1, 최대값보다 크면 FLAG 코드는 1, 정상 범위 내에 있으면 FLAG 코드는 0으로 표시됩니다.\\n이를 통해 사용자는 각 태그 값이 설정된 최소·최대 허용 범위 내에 있는지 여부를 쉽게 확인할 수 있습니다. 또한 범위 초과 데이터나 이상값을 식별하여 데이터 품질을 점검하고, AI 모델 학습 전 필요한 데이터 정제 과정에 활용할 수 있습니다. 따라서 본 서비스는 발전소 전력사용량 데이터를 기반으로 한 AI 학습용 데이터 구축, 전력 사용 패턴 분석, 설비 운영 효율 개선 등에 유용하게 활용될 수 있습니다.",
+    "version": "1.0.0",
+    "title": "한국서부발전(주)_(AI친화)전력사용량 조회 서비스"
+  },
+  "host": "apis.data.go.kr/B552522/PowerUsageService",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getPowerUsageService": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "pwst_nm": {
+                              "type": "string",
+                              "description": "발전소 명",
+                              "properties": {}
+                            },
+                            "tag_data_nvl": {
+                              "type": "string",
+                              "description": "태그 값",
+                              "properties": {}
+                            },
+                            "meno_nm": {
+                              "type": "string",
+                              "description": "호기 명",
+                              "properties": {}
+                            },
+                            "tag_data_crt_hr": {
+                              "type": "string",
+                              "description": "태그 데이터 생성 시간",
+                              "properties": {}
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "태그 설명",
+                              "properties": {}
+                            },
+                            "flag_cd": {
+                              "type": "string",
+                              "description": "FLAG",
+                              "properties": {}
+                            },
+                            "tag_nm": {
+                              "type": "string",
+                              "description": "태그명",
+                              "properties": {}
+                            },
+                            "eng_unit": {
+                              "type": "string",
+                              "description": "태그 단위",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "전력사용량 조회",
+        "description": "발전소명, 호기명, 태그명 및 태그 데이터 생성시간을 기준으로 단위, 태그 값, 센서타입, flag코드를 조회한다.",
+        "operationId": "getPowerUsageService",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey ",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "fromDate",
+          "description": "시작날짜",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "toDate",
+          "description": "종료날짜",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "plant",
+          "description": "발전소명",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "clsf_cd",
+          "description": "분류 코드",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "hogi",
+          "description": "호기명",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "tag",
+          "description": "태그명",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "type",
+          "description": "응답데이터 포맷",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getPowerUsageService_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "pwst_nm": {
+                      "type": "string",
+                      "description": "발전소 명"
+                    },
+                    "tag_data_nvl": {
+                      "type": "string",
+                      "description": "태그 값"
+                    },
+                    "meno_nm": {
+                      "type": "string",
+                      "description": "호기 명"
+                    },
+                    "tag_data_crt_hr": {
+                      "type": "string",
+                      "description": "태그 데이터 생성 시간"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "태그 설명"
+                    },
+                    "flag_cd": {
+                      "type": "string",
+                      "description": "FLAG"
+                    },
+                    "tag_nm": {
+                      "type": "string",
+                      "description": "태그명"
+                    },
+                    "eng_unit": {
+                      "type": "string",
+                      "description": "태그 단위"
+                    }
+                  }
+                }
+              }
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "http://110.15.192.182:443/api/data/PowerUsageService",
+      "oprtinNm": "전력사용량 조회",
+      "oprtinDc": "발전소명, 호기명, 태그명 및 태그 데이터 생성시간을 기준으로 단위, 태그 값, 센서타입, flag코드를 조회한다.",
+      "gwSvcNm": "getPowerUsageService",
+      "operationId": "getPowerUsageService",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "serviceKey ",
+          "paramtrDc": "공공데이터포털에서 받은 인증키",
+          "paramtrBassValue": "-",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "fromDate",
+          "paramtrDc": "시작날짜",
+          "paramtrBassValue": "2024-12-03",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "toDate",
+          "paramtrDc": "종료날짜",
+          "paramtrBassValue": "2024-12-04",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "plant",
+          "paramtrDc": "발전소명",
+          "paramtrBassValue": "WTTATA",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "clsf_cd",
+          "paramtrDc": "분류 코드",
+          "paramtrBassValue": "P4",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "hogi",
+          "paramtrDc": "호기명",
+          "paramtrBassValue": "WTTATA10",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "tag",
+          "paramtrDc": "태그명",
+          "paramtrBassValue": "T3.10M.10UM_NMW",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "pageNo",
+          "paramtrDc": "페이지번호",
+          "paramtrBassValue": "1",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "numOfRows",
+          "paramtrDc": "한 페이지 결과 수",
+          "paramtrBassValue": "20",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "type",
+          "paramtrDc": "응답데이터 포맷",
+          "paramtrBassValue": "JSON",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/getPowerUsageService-header",
+          "subDefNm": "getPowerUsageService-header",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "resultMsg",
+              "paramtrDc": "결과메시지",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "resultCode",
+              "paramtrDc": "결과코드",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/getPowerUsageService-body",
+          "subDefNm": "getPowerUsageService-body",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "totalCount",
+              "paramtrDc": "전체 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "items",
+              "paramtrDc": "items",
+              "arrayYn": "N",
+              "paramtrDefNm": "#/definitions/getPowerUsageService-items",
+              "subDefNm": "getPowerUsageService-items",
+              "paramtrTy": "object",
+              "paramtrDivision": "필수",
+              "ck": true,
+              "subParam": [
+                {
+                  "paramtrNm": "item",
+                  "paramtrDc": "item",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "#/definitions/getPowerUsageService-item",
+                  "subDefNm": "getPowerUsageService-item",
+                  "paramtrTy": "object",
+                  "paramtrDivision": "필수",
+                  "ck": true,
+                  "subParam": [
+                    {
+                      "paramtrNm": "pwst_nm",
+                      "paramtrDc": "발전소 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "tag_data_nvl",
+                      "paramtrDc": "태그 값",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "meno_nm",
+                      "paramtrDc": "호기 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "tag_data_crt_hr",
+                      "paramtrDc": "태그 데이터 생성 시간",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "description",
+                      "paramtrDc": "태그 설명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "flag_cd",
+                      "paramtrDc": "FLAG",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "tag_nm",
+                      "paramtrDc": "태그명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "eng_unit",
+                      "paramtrDc": "태그 단위",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "paramtrNm": "pageNo",
+              "paramtrDc": "페이지번호",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "numOfRows",
+              "paramtrDc": "한 페이지 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

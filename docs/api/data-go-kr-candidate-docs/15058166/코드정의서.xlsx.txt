@@ -1,0 +1,68 @@
+# sheet: Sheet1
+    속성    설명    코드명    코드값    비고
+    state    입찰진행상황    1    신규공고
+            2    수정공고
+            3    재공고
+            4    유찰
+            5    낙찰(계약완료)
+            6    취소
+            8    낙찰(계약진행)    (사용안함)
+            9    낙찰무효(전자입찰시에만)
+            10    계약취소(직접입찰시에만)
+            99    낙찰취소후신규공고    (조달청전용코드)
+    area    지역코드    42    강원
+            41    경기
+            48    경남
+            47    경북
+            29    광주
+            27    대구
+            30    대전
+            26    부산
+            11    서울
+            31    울산
+            28    인천
+            46    전남
+            45    전북
+            50    제주
+            44    충남
+            43    충북
+            36    세종
+    code_classify_type_1    입찰 구분 타입1    01    주택관리업자
+            02    사업자
+    code_classify_type_2    입찰 구분 타입2    01    공동주택위탁관리    code_classify_type_1="01"일때
+            02    공사    code_classify_type_1="02"일때
+            03    용역    code_classify_type_1="02"일때
+            04    물품    code_classify_type_1="02"일때
+            05    기타    code_classify_type_1="02"일때
+    code_classify_type_3    입찰 구분 타입3    01    하자보수    code_classify_type_2="02"일때
+            02    장기수선    code_classify_type_2="02"일때
+            03    일반보수    code_classify_type_2="02"일때
+            04    경비    code_classify_type_2="03"일때
+            05    청소    code_classify_type_2="03"일때
+            06    승강기유지    code_classify_type_2="03"일때
+            07    지능형홈네트워크    code_classify_type_2="03"일때
+            08    전기안전관리    code_classify_type_2="03"일때
+            09    정화조청소, 관리    code_classify_type_2="03"일때
+            10    저수조 청소    code_classify_type_2="03"일때
+            11    건축물 안전진단    code_classify_type_2="03"일때
+            12    기타 용역    code_classify_type_2="03"일때
+            13    구입    code_classify_type_2="04"일때
+            14    매각    code_classify_type_2="04"일때
+            15    잡수입    code_classify_type_2="05"일때
+            16    보험계약    code_classify_type_2="05"일때
+            13    소독    code_classify_type_2="03"일때(기타에서 용역으로 변경)
+            14    주민운동시설의 위탁    code_classify_type_2="03"일때(기타에서 용역으로 변경)
+            15    회계감사    code_classify_type_2="03"일때(2020.01.20 추가)
+    code_way    입찰방법    00    직접입찰
+            01    전자입찰
+    code_kind    입찰종류    01    일반경쟁
+            02    제한경쟁
+            03    지명경쟁
+    code_suc_way    낙찰방법    01    최저(고) 낙찰    사용중지
+            02    적격심사    직접입찰(code_way = "00") 일때
+            03    최저 낙찰    전자입찰(code_way = "01") 일때
+            04    최고 낙찰    전자입찰(code_way = "01") 일때
+            05    적격심사(최저)    사용중지
+            06    적격심사(최고)    사용중지
+    con_type    선정 방법    01    경쟁입찰
+            02    수의계약

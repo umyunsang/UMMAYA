@@ -1,0 +1,356 @@
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 307 Temporary Redirect
+Location: https://www.moj.go.kr/purchasesgoodsApi/stay_person_counter/getstaypersoncounter?pageNo=1&numOfRows=5&searchYm=202504&serviceKey=${UMMAYA_DATA_GO_KR_API_KEY}
+Set-Cookie: <redacted>
+Cache-Control: no-cache
+Connection: close
+Content-Length: 0

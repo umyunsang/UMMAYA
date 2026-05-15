@@ -1,0 +1,3604 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "(공동주택입찰정보)「공동주택관리법 시행령 」 및 「주택관리업자 및 사업자 선정 지침」에 따라 실시하는  의무관리대상공동주택의 공사 및 용역 등 사업자를 선정하는 경우 전자입찰 방식으로 사업자를 선정할 수 있으며, 공동주택관리정보시스템으로 제공되는 전자입찰시스템을 이용할 수 있음. 이에 따라 시스템에 축적된 공동주택별 공동주택위탁관리, 공사, 용역, 물품, 기타에 관한 입찰 관련 정보 제공하고 있고  k-apt 사이트뿐만 아니라 민간입찰사이트를 통한 입찰공고, 투찰, 낙찰 등의 정보도 함께 제공하고 있음.",
+    "version": "1.0.0",
+    "title": "국토교통부_공동주택 입찰공고 정보제공 서비스"
+  },
+  "host": "apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferServiceV2",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getHsmpNmSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "단지명 조회",
+        "description": "단지명, 검색년도를 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getHsmpNmSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "bidKaptname",
+          "description": "단지명",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "searchYear",
+          "description": "검색년도(YYYY)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getBidMethodSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "integer",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "integer",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "입찰 방법 조회",
+        "description": "입찰 방법코드, 검색년도를 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getBidMethodSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "codeWay",
+          "description": "00:직접입찰 01:전자입찰",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "searchYear",
+          "description": "겸색년도(YYYY)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getBidPblAncNmSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "국토교통부_입찰 공고명 조회",
+        "description": "입찰 공고명, 검색년도를 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getBidPblAncNmSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "bidTitle",
+          "description": "입찰공고명",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "searchYear",
+          "description": "검색년도(YYYY)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getBidClosDeSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "입찰 마감일 조회",
+        "description": "입찰 마감일을 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getBidClosDeSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "startDate",
+          "description": "검색시작일",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "endDate",
+          "description": "검색종료일",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getBidKndSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "입찰 종류 조회",
+        "description": "입찰 종류 코드, 검색년도를 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getBidKndSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "codeAuth",
+          "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "searchYear",
+          "description": "검색년도(YYYY)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getBidSttusSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "입찰 상태 조회",
+        "description": "입찰 상태 코드, 검색년도를 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getBidSttusSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "bidState",
+          "description": "1:신규공고 2:수정공고 3:재공고",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "searchYear",
+          "description": "검색년도(YYYY)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getPblAncDeSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "입찰 공고일 조회",
+        "description": "입찰 공고일을 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getPblAncDeSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "startDate",
+          "description": "입찰공고 시작일",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "endDate",
+          "description": "입찰공고 종료일",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getHsmpCdSearchV2": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "00:성공",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "items",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidNum": {
+                            "type": "string",
+                            "description": "입찰번호",
+                            "properties": {}
+                          },
+                          "aptCode": {
+                            "type": "string",
+                            "description": "단지코드",
+                            "properties": {}
+                          },
+                          "bidArea": {
+                            "type": "number",
+                            "description": "법정동시도코드",
+                            "properties": {}
+                          },
+                          "bidTitle": {
+                            "type": "string",
+                            "description": "입찰제목",
+                            "properties": {}
+                          },
+                          "bidContent": {
+                            "type": "string",
+                            "description": "내용",
+                            "properties": {}
+                          },
+                          "bidRegDate": {
+                            "type": "string",
+                            "description": "입찰공고일",
+                            "properties": {}
+                          },
+                          "bidDeadline": {
+                            "type": "string",
+                            "description": "입찰마감일",
+                            "properties": {}
+                          },
+                          "bidKaptname": {
+                            "type": "string",
+                            "description": "단지명",
+                            "properties": {}
+                          },
+                          "bidState": {
+                            "type": "string",
+                            "description": "1:신규공고 2:수정공고 3:재공고",
+                            "properties": {}
+                          },
+                          "codeAuth": {
+                            "type": "string",
+                            "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                            "properties": {}
+                          },
+                          "codeKind": {
+                            "type": "string",
+                            "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                            "properties": {}
+                          },
+                          "codeClassifyType1": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType2": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "codeClassifyType3": {
+                            "type": "string",
+                            "description": "코드정의서 참조",
+                            "properties": {}
+                          },
+                          "bidEmrgYn": {
+                            "type": "string",
+                            "description": "Y:긴급 N:일반",
+                            "properties": {}
+                          },
+                          "codeWay": {
+                            "type": "string",
+                            "description": "00:직접입찰 01:전자입찰",
+                            "properties": {}
+                          },
+                          "codeSucWay": {
+                            "type": "string",
+                            "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                            "properties": {}
+                          },
+                          "bidCreditConfYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidFieldDesDate": {
+                            "type": "string",
+                            "description": "현장설명 일시",
+                            "properties": {}
+                          },
+                          "bidFieldDesLoc": {
+                            "type": "string",
+                            "description": "현장설명 장소",
+                            "properties": {}
+                          },
+                          "bidMngCertYn": {
+                            "type": "string",
+                            "description": "Y:제출 N:미제출",
+                            "properties": {}
+                          },
+                          "bidReqDocs": {
+                            "type": "string",
+                            "description": "구비서류",
+                            "properties": {}
+                          },
+                          "bidDocsDeadline": {
+                            "type": "string",
+                            "description": "서류제출마감일",
+                            "properties": {}
+                          },
+                          "bidGuaranteeYn": {
+                            "type": "string",
+                            "description": "Y:입찰가격의 [5]% 이상제출",
+                            "properties": {}
+                          },
+                          "bidTermsOfPayment": {
+                            "type": "string",
+                            "description": "지급조건",
+                            "properties": {}
+                          },
+                          "bidReason": {
+                            "type": "string",
+                            "description": "낙찰/유찰사유",
+                            "properties": {}
+                          },
+                          "bidFileSeq": {
+                            "type": "string",
+                            "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                            "properties": {}
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "열 갯수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "현재 페이지",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 조회건수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "단지코드 조회",
+        "description": "단지코드와 등록일자를 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+        "operationId": "getHsmpCdSearchV2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "kaptCode",
+          "description": "아파트 코드",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "regDate",
+          "description": "등록일자",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한번에 보이는 열 개수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getHsmpNmSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    },
+    "getBidMethodSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "integer",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "integer",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "integer",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    },
+    "getBidPblAncNmSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    },
+    "getBidKndSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    },
+    "getBidSttusSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    },
+    "getPblAncDeSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    },
+    "getHsmpCdSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    },
+    "getBidClosDeSearchV2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "00:성공"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "items",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bidNum": {
+                    "type": "string",
+                    "description": "입찰번호"
+                  },
+                  "aptCode": {
+                    "type": "string",
+                    "description": "단지코드"
+                  },
+                  "bidArea": {
+                    "type": "number",
+                    "description": "법정동시도코드"
+                  },
+                  "bidTitle": {
+                    "type": "string",
+                    "description": "입찰제목"
+                  },
+                  "bidContent": {
+                    "type": "string",
+                    "description": "내용"
+                  },
+                  "bidRegDate": {
+                    "type": "string",
+                    "description": "입찰공고일"
+                  },
+                  "bidDeadline": {
+                    "type": "string",
+                    "description": "입찰마감일"
+                  },
+                  "bidKaptname": {
+                    "type": "string",
+                    "description": "단지명"
+                  },
+                  "bidState": {
+                    "type": "string",
+                    "description": "1:신규공고 2:수정공고 3:재공고"
+                  },
+                  "codeAuth": {
+                    "type": "string",
+                    "description": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체"
+                  },
+                  "codeKind": {
+                    "type": "string",
+                    "description": "01:일반경쟁 02:제한경쟁 03:지명경쟁"
+                  },
+                  "codeClassifyType1": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType2": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "codeClassifyType3": {
+                    "type": "string",
+                    "description": "코드정의서 참조"
+                  },
+                  "bidEmrgYn": {
+                    "type": "string",
+                    "description": "Y:긴급 N:일반"
+                  },
+                  "codeWay": {
+                    "type": "string",
+                    "description": "00:직접입찰 01:전자입찰"
+                  },
+                  "codeSucWay": {
+                    "type": "string",
+                    "description": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)"
+                  },
+                  "bidCreditConfYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidFieldDesDate": {
+                    "type": "string",
+                    "description": "현장설명 일시"
+                  },
+                  "bidFieldDesLoc": {
+                    "type": "string",
+                    "description": "현장설명 장소"
+                  },
+                  "bidMngCertYn": {
+                    "type": "string",
+                    "description": "Y:제출 N:미제출"
+                  },
+                  "bidReqDocs": {
+                    "type": "string",
+                    "description": "구비서류"
+                  },
+                  "bidDocsDeadline": {
+                    "type": "string",
+                    "description": "서류제출마감일"
+                  },
+                  "bidGuaranteeYn": {
+                    "type": "string",
+                    "description": "Y:입찰가격의 [5]% 이상제출"
+                  },
+                  "bidTermsOfPayment": {
+                    "type": "string",
+                    "description": "지급조건"
+                  },
+                  "bidReason": {
+                    "type": "string",
+                    "description": "낙찰/유찰사유"
+                  },
+                  "bidFileSeq": {
+                    "type": "string",
+                    "description": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq"
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "열 갯수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "현재 페이지"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 조회건수"
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "http://27.101.224.48/svc/openapi/service/ApHusBidPblAncInfoOfferService/getHsmpCdSearch",
+      "oprtinNm": "단지코드 조회",
+      "oprtinDc": "단지코드와 등록일자를 이용해 입찰 번호, 단지코드, 법정동시도코드, 입찰제목, 내용, 입찰공고일, 입찰마감일, 단지명, 입찰공고상태코드, 입찰업체코드, 입찰종류코드, 입찰분류1코드, 입찰분류2코드, 입찰분류3코드, 긴급입찰여부, 입찰방법코드, 낙찰방법코드, 신용평가등급확인서 제출여부, 현장설명 일시, 현장설명 장소, 관리(공사용역) 실적 증명서 제출여부, 구비서류, 서류제출마감일, 입찰보증보험증권, 지급조건, 낙찰/유찰사유, 첨부파일을 조회할 수 있는 공동주택 입찰공고 정보제공 서비스",
+      "gwSvcNm": "getHsmpCdSearchV2",
+      "operationId": "getHsmpCdSearchV2",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "serviceKey",
+          "paramtrDc": "공공데이터포털에서 받은 인증키",
+          "paramtrBassValue": "인증키 (URL Encode)",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "kaptCode",
+          "paramtrDc": "아파트 코드",
+          "paramtrBassValue": "A54032023",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "regDate",
+          "paramtrDc": "등록일자",
+          "paramtrBassValue": "20180101",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "pageNo",
+          "paramtrDc": "페이지 수",
+          "paramtrBassValue": "1",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "numOfRows",
+          "paramtrDc": "한번에 보이는 열 개수",
+          "paramtrBassValue": "10",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/_header",
+          "subDefNm": "_header",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "resultCode",
+              "paramtrDc": "00:성공",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "resultMsg",
+              "paramtrDc": "결과메세지",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/_body",
+          "subDefNm": "_body",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "items",
+              "paramtrDc": "items",
+              "arrayYn": "Y",
+              "paramtrDefNm": "#/definitions/_items",
+              "subDefNm": "_items",
+              "paramtrTy": "object",
+              "paramtrDivision": "필수",
+              "ck": true,
+              "subParam": [
+                {
+                  "paramtrNm": "bidNum",
+                  "paramtrDc": "입찰번호",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "aptCode",
+                  "paramtrDc": "단지코드",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidArea",
+                  "paramtrDc": "법정동시도코드",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "number",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidTitle",
+                  "paramtrDc": "입찰제목",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidContent",
+                  "paramtrDc": "내용",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidRegDate",
+                  "paramtrDc": "입찰공고일",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidDeadline",
+                  "paramtrDc": "입찰마감일",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidKaptname",
+                  "paramtrDc": "단지명",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidState",
+                  "paramtrDc": "1:신규공고 2:수정공고 3:재공고",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "codeAuth",
+                  "paramtrDc": "01:K-APT 02:조달청 03:아파트비드포유 04:KG2B전자입찰 05:나이스아파트 06:이 아파트 99:기타민간업체",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "codeKind",
+                  "paramtrDc": "01:일반경쟁 02:제한경쟁 03:지명경쟁",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "codeClassifyType1",
+                  "paramtrDc": "코드정의서 참조",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "codeClassifyType2",
+                  "paramtrDc": "코드정의서 참조",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "codeClassifyType3",
+                  "paramtrDc": "코드정의서 참조",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidEmrgYn",
+                  "paramtrDc": "Y:긴급 N:일반",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "codeWay",
+                  "paramtrDc": "00:직접입찰 01:전자입찰",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "codeSucWay",
+                  "paramtrDc": "01:최저(고) 낙찰 02:적격심사 03:최저 낙찰 04:최고 낙찰 05:적격심사(최저) 06:적격심사(최고)",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidCreditConfYn",
+                  "paramtrDc": "Y:제출 N:미제출",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidFieldDesDate",
+                  "paramtrDc": "현장설명 일시",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidFieldDesLoc",
+                  "paramtrDc": "현장설명 장소",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidMngCertYn",
+                  "paramtrDc": "Y:제출 N:미제출",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidReqDocs",
+                  "paramtrDc": "구비서류",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidDocsDeadline",
+                  "paramtrDc": "서류제출마감일",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidGuaranteeYn",
+                  "paramtrDc": "Y:입찰가격의 [5]% 이상제출",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidTermsOfPayment",
+                  "paramtrDc": "지급조건",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidReason",
+                  "paramtrDc": "낙찰/유찰사유",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                },
+                {
+                  "paramtrNm": "bidFileSeq",
+                  "paramtrDc": "파일다운로드 URL http://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=bidFileSeq",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "",
+                  "paramtrTy": "string",
+                  "paramtrDivision": "필수",
+                  "ck": true
+                }
+              ]
+            },
+            {
+              "paramtrNm": "numOfRows",
+              "paramtrDc": "열 갯수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "pageNo",
+              "paramtrDc": "현재 페이지",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "totalCount",
+              "paramtrDc": "전체 조회건수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

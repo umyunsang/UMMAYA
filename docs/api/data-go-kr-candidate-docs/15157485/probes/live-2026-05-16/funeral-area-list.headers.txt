@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+Content-Length: 1016
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https://cdn.jsdelivr.net; font-src 'self'; connect-src 'self'; frame-ancestors 'self';
+Content-Type: application/json
+Date: Fri, 15 May 2026 15:44:00 GMT
+Permissions-Policy: geolocation=(), camera=(), microphone=()
+Referrer-Policy: strict-origin-when-cross-origin
+Server: nginx
+Vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Xss-Protection: 1; mode=block

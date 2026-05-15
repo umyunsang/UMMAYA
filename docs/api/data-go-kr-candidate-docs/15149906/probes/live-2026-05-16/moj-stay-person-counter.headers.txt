@@ -1,0 +1,6 @@
+HTTP/1.1 502 Bad Gateway
+Content-Type: text/plain; charset=utf-8
+Vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+X-Content-Type-Options: nosniff
+Date: Fri, 15 May 2026 15:52:14 GMT
+Content-Length: 43

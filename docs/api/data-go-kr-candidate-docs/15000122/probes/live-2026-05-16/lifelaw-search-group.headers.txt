@@ -1,0 +1,13 @@
+HTTP/1.1 301 Moved Permanently
+Date: Fri, 15 May 2026 15:49:48 GMT
+Server: Apache
+Location: https://www.easylaw.go.kr/OPENAPI/soap/LifeLawSearchService
+Content-Length: 267
+Content-Type: text/html; charset=iso-8859-1
+
+HTTP/1.1 500 500
+Date: Fri, 15 May 2026 15:49:48 GMT
+Server: Apache
+Content-Length: 225
+Connection: close
+Content-Type: text/xml;charset=UTF-8

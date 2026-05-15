@@ -1,0 +1,17 @@
+{
+  "id": "15157923",
+  "url": "https://www.data.go.kr/data/15157923/openapi.do",
+  "source_kind": "category",
+  "source_value": "교통물류",
+  "category": "교통물류",
+  "provider_type": "자치행정기관",
+  "org": "광주광역시",
+  "title_hint": "광주광역시_광주버스정보",
+  "og_title": "광주광역시_광주버스정보",
+  "og_description": "1. 광주광역시 BIS 노선-정류소 정보 : 광주광역시에서 운영 중인 버스 노선별 정류소 정보를 제공하는 API 입니다.\r 2. 광주광역시 BIS 노선 정보 : 광주광역시에서 운영 중인 버스 노선에 대한 운행 시간 및 배차 간격 등 정보를 제공하는 API 입니다.\r 3. 광주광역시 BIS 정류소 정보 : 광주광역시에서 운영 중인 정류소에 대한 정보를 제공하는 API 입니다.\r 4. 광주광역시 BIS 도착 정보 : 광주광역시에서 운영 중인 특정 정류소에 버스 도착정보를 제공하는 API 입니다.\r 5. 광주광역시 BIS 노선 버스위치정보 : 광주광역시에서 운영 중인 특정 노선에 대하여 버스위정보를 제공하는 API 입니다.",
+  "swagger_url": "",
+  "has_inline_swagger": true,
+  "downloaded_docs": [
+    "OPENAPI활용가이드_광주버스 v1.0.docx"
+  ]
+}

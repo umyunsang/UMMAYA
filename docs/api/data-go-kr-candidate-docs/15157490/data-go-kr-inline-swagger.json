@@ -1,0 +1,455 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "본 데이터는 부산시설공단이 운영·관리하는 공영주차장의 시설 현황 정보를 Open API 형태로 제공합니다. \\n주차장명, 주차가능 대수, 현재 주차대수, 최대 주차가능 대수, 최종 갱신일시, 최대 주차가능 대수 등 주차 현황 정보를 실시간으로 제공하며, 시민과 방문객이 주차시설을 편리하게 이용할 수 있도록 지원합니다.\\n이를 통해 주차 정보의 투명성을 확보하고, 시민의 주차 편의성 향상, 불법 주정차 감소 유도 효과가 있습니다. 또한 내비게이션 및 주차 안내 앱 개발, 주차 안내 서비스 개발 및 교통 정책 수립을 위한 기초자료로 활용될 수 있습니다.",
+    "version": "1.0.0",
+    "title": "부산시설공단_공영주차장 시설 현황 조회 서비스"
+  },
+  "host": "apis.data.go.kr/B552587/ParkingInfoService_v2",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getParkingList_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "parknm": {
+                              "type": "string",
+                              "description": "주차장명",
+                              "properties": {}
+                            },
+                            "parkgcd": {
+                              "type": "string",
+                              "description": "주차장구분코드",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "주차장 목록 조회",
+        "description": "공영주차장 목록 조회",
+        "operationId": "getParkingList_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getParkingInfoList_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "parkingcnt": {
+                              "type": "string",
+                              "description": "현재 주차대수(현재(최종 갱신시각 기준) 주차되어 있는 주차대수)",
+                              "properties": {}
+                            },
+                            "parknm": {
+                              "type": "string",
+                              "description": "주차장명",
+                              "properties": {}
+                            },
+                            "curravacnt": {
+                              "type": "string",
+                              "description": "주차가능 대수(현재(최종 갱신 시각기준) 주차 가능한 주차대수)",
+                              "properties": {}
+                            },
+                            "lastupdatetime": {
+                              "type": "string",
+                              "description": "최종 갱신일시(해당 실시간 주차정보의 최종 갱신일시)",
+                              "properties": {}
+                            },
+                            "maxcnt": {
+                              "type": "string",
+                              "description": "최대 주차가능 대수(해당 주차장의 최대 주차대수)",
+                              "properties": {}
+                            },
+                            "parkgcd": {
+                              "type": "string",
+                              "description": "주차장구분코드",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "실시간 주차현황 조회",
+        "description": "공영주차장 실시간 주차현황 조회",
+        "operationId": "getParkingInfoList_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pParkGCd",
+          "description": "주차장코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getParkingList_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "parknm": {
+                      "type": "string",
+                      "description": "주차장명"
+                    },
+                    "parkgcd": {
+                      "type": "string",
+                      "description": "주차장구분코드"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            }
+          }
+        }
+      }
+    },
+    "getParkingInfoList_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "parkingcnt": {
+                      "type": "string",
+                      "description": "현재 주차대수(현재(최종 갱신시각 기준) 주차되어 있는 주차대수)"
+                    },
+                    "parknm": {
+                      "type": "string",
+                      "description": "주차장명"
+                    },
+                    "curravacnt": {
+                      "type": "string",
+                      "description": "주차가능 대수(현재(최종 갱신 시각기준) 주차 가능한 주차대수)"
+                    },
+                    "lastupdatetime": {
+                      "type": "string",
+                      "description": "최종 갱신일시(해당 실시간 주차정보의 최종 갱신일시)"
+                    },
+                    "maxcnt": {
+                      "type": "string",
+                      "description": "최대 주차가능 대수(해당 주차장의 최대 주차대수)"
+                    },
+                    "parkgcd": {
+                      "type": "string",
+                      "description": "주차장구분코드"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    }
+  }
+}

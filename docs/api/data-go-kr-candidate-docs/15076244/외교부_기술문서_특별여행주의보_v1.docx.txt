@@ -1,0 +1,1081 @@
+
+
+
+외교부_국가∙지역별 특별여행주의보
+Open API 활용가이드
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+목 차
+
+목 차
+1.    API 서비스 명세    3
+1.1 외교부_국가∙지역별 특별여행주의보    3
+가. API 서비스 개요    3
+나. 상세기능 목록    4
+나. 참고 1 – ISO 국가코드(파라메터 참고용)목록    7
+2. OpenAPI 에러 코드정리    19
+
+
+
+
+
+
+
+
+
+
+
+    •    API 서비스 명세
+    •    외교부_국가∙지역별 특별여행주의보
+서비스 개요
+API 서비스 정보
+서비스명(국문)
+국가∙지역별 특별여행주의보
+
+서비스명(영문)
+SpTravelWarningServiceV2
+
+API 설명
+한글 국가명 또는 ISO국가코드(다.참고 1 ISO국가코드 이용 )로 특별여행주의보 목록 조회
+- 외교부에서 지정하는 여행유의, 자제, 제한 등 특별여행주의  대상국가 목록을 제공하는 공공데이터 API 서비스
+API 서비스 보안
+적용 기술 수준
+
+서비스 인증/권한
+[O] 서비스 Key [ ] 인증서 (GPKI)
+[] Basic (ID/PW) [ ] 없음
+
+메시지 레벨  암호화
+[  ] 전자서명    [ ] 암호화    [O] 없음
+
+전송 레벨 암호화
+[  ] SSL            [ O] 없음
+
+인터페이스 표준
+[  ] SOAP 1.2
+(RPC-Encoded, Document Literal, Document Literal Wrapped)
+[ O ] REST (GET)
+[ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타
+
+교환 데이터 표준
+[ O ] XML    [ O ] JSON   [ ] MIME    [ ] MTOM
+API 서비스
+배포정보
+
+서비스 URL
+http://apis.data.go.kr/1262000/SpTravelWarningServiceV2
+
+서비스 WADL
+http://apis.data.go.kr/1262000/SpTravelWarningServiceV2
+
+서비스 버전
+1.0
+
+서비스 시작일
+N/A
+서비스 배포일
+N/A
+
+서비스 이력
+N/A
+
+메시지교환유형
+[O] Request-Response    [ ] Publish-Subscribe
+[ ] Fire-and-Forgot    [ ] Notification
+
+데이터 갱신주기
+매일 00시
+상세기능 목록
+일련번호
+서비스명(국문)
+상세기능명(영문)
+상세기능명(국문)
+1
+국가∙지역별
+특별여행주의보
+getSptravelWarningListV2
+국가∙지역별
+특별여행주의보 목록조회
+나.1  [국가∙지역별 특별여행주의보 목록조회] 상세기능 명세
+상세기능
+정보
+상세기능 번호
+1
+상세기능 유형
+조회(목록)
+
+상세기능명(국문)
+국가∙지역별 특별여행주의보 목록 조회
+
+상세기능 설명
+한글 국가명 또는 ISO국가코드(다.참고 1 ISO국가코드 이용)로
+국가∙지역별 특별여행주의보 목록 조회
+
+Call Back URL
+N/A
+
+최대 메시지 사이즈
+[ 4000bytes]
+
+평균 응답 시간
+[ 500 ms]
+초당 최대 트랜잭션
+[ 30 tps]
+    •    요청 메시지 명세
+항목명(영문)
+항목명(국문)
+항목크기
+항목구분
+샘플데이터
+항목설명
+ServiceKey
+인증키
+100
+1
+인증키 (URL- Encode)
+공공데이터포털에서 발급받은 인증키
+numOfRows
+한 페이지 결과 수
+4
+0
+10
+한 페이지 결과 수
+pageNo
+페이지 번호
+4
+0
+1
+페이지 번호
+cond[country_nm::EQ]
+한글 국가명
+50
+0
+가나
+한글 국가명
+cond[country_iso_alp2::EQ]
+ISO 2자리 코드
+50
+0
+GH
+ISO 2자리 코드
+returnType
+데이터 표출 방식
+4
+0
+JSON
+XML 또는 JSON
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+
+
+    •    응답 메시지 명세
+항목명(영문)
+항목명(국문)
+항목크기
+항목구분
+샘플데이터
+항목설명
+resultCode
+결과코드
+2
+1
+00
+결과코드
+resultMsg
+결과메시지
+50
+1
+정상
+결과메시지
+numOfRows
+한 페이지 결과 수
+4
+1
+10
+한 페이지 결과 수
+pageNo
+페이지 번호
+4
+1
+1
+페이지 번호
+totalCount
+전체 결과 수
+4
+1
+1
+전체 결과 수
+continent_cd
+대륙코드
+2
+1
+50
+대륙코드
+continent_nm
+한글 대륙명
+100
+1
+아프리카
+한글 대륙명
+continent_eng_nm
+영문 대륙명
+200
+1
+Ghana
+영문 대륙명
+country_nm
+한글 국가명
+100
+1
+가나
+한글 국가명
+country_eng_nm
+영문 국가명
+200
+0
+Ghana
+영문 국가명
+country_iso_alp2
+ISO 2자리 코드
+2
+1
+GH
+ISO 2자리 코드
+evacuate_region_ty
+
+1000
+1
+일부
+철수권고 여부
+forbidden_region_ty
+
+1000
+0
+일부
+여행금지 여부
+evacuate_rcmnd_remark
+
+4000
+0
+3,4단계 지정 지역을 제외한 지역
+철수권고 비고
+forbidden_rcmnd_remark
+
+4000
+0
+3,4단계 지정 지역을 제외한 지역
+여행금지 비고
+map_download_url
+지도 다운로드 경로
+4000
+0
+https://opendata.mofa.go.kr:8444/fileDownload/images/country_images/maps/220/20220318_170446225.png
+지도 다운로드 경로
+flag_download_url
+국기 다운로드 경로
+4000
+0
+https://opendata.mofa.go.kr:8444/fileDownload/images/country_images/flags/220/20241015_095005953.png
+국기 다운로드 경로
+dang_map_download_url
+위험지도 다운로드 경로
+4000
+0
+https://www.0404.go.kr/files/image/COUNTRY_313/3
+위험지도 다운로드 경로
+written_dt
+작성일
+10
+1
+2026-03-20
+작성일
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+    •    요청 / 응답 메시지 예제
+REST(URI)
+ http://apis.data.go.kr/1262000/SptravelWarningServiceV2/getSpTravelWarningListV2?ServiceKey=[서비스키]& cond[country_iso_alp2::EQ]=GH&returnType=json
+응답 메시지
+{"response":{"body":{"dataType":"JSON","items":{"item":[{"continent_cd":"50","continent_eng_nm":"Africa","continent_nm":"아프리카","country_eng_nm":"Ghana","country_iso_alp2":"GH","country_nm":"가나","dang_map_download_url":"https://www.0404.go.kr/files/image/FILE_000000000010504/3","evacuate_rcmnd_remark":null,"evacuate_region_ty":null,"flag_download_url":"https://opendata.mofa.go.kr:8444/fileDownload/images/country_images/flags/15/20220318_161935687.gif","forbidden_rcmnd_remark":null,"forbidden_region_ty":null,"map_download_url":"https://opendata.mofa.go.kr:8444/fileDownload/images/country_images/maps/15/20220318_161935742.png","written_dt":null}]},"numOfRows":10,"pageNo":1,"totalCount":1},"header":{"resultCode":"0","resultMsg":"정상"}}}
+참고 1 – ISO 국가코드(파라메터 참고용)목록
+2자리코드
+한글명
+영문명
+GH
+가나
+Ghana
+GA
+가봉
+Gabon
+GY
+가이아나
+Guyana
+GM
+감비아
+Gambia
+GG
+건지
+Bailiwick of Guernsey
+GP
+과들루프
+Guadeloupe
+GT
+과테말라
+Guatemala
+GU
+괌
+Guam
+VA
+교황청
+Vatican
+GD
+그레나다
+Grenada
+GR
+그리스
+Greece
+GL
+그린란드
+Greenland
+GN
+기니
+Guinea
+GW
+기니비사우
+Guinea-Bissau
+NA
+나미비아
+Namibia
+NR
+나우루
+Nauru
+NG
+나이지리아
+Nigeria
+SS
+남수단
+South Sudan
+ZA
+남아프리카공화국
+South Africa
+NL
+네덜란드
+Netherlands
+AN
+네덜란드령 안틸레스
+Netherlands Antilles
+NP
+네팔연방
+Nepal
+NO
+노르웨이
+Norway
+NF
+노퍽섬
+Norfolk Island
+NC
+뉴 칼레도니아
+New Caledonia
+NZ
+뉴질랜드
+New Zealand
+NU
+니우에
+Niue
+NE
+니제르
+Niger
+NI
+니카라과
+Nicaragua
+TW
+대만
+Taiwan
+KR
+대한민국
+Korea
+DK
+덴마크
+Denmark
+DO
+도미니카공화국
+Dominican Republic
+DM
+도미니카연방
+Dominica
+DE
+독일
+Germany
+TL
+동티모르
+Timor-Leste
+LA
+라오스
+Laos
+LR
+라이베리아
+Liberia
+LV
+라트비아
+Latvia
+RU
+러시아
+Russia
+LB
+레바논
+Lebanon
+LS
+레소토
+Lesotho
+RE
+레위니옹
+Réunion
+RO
+루마니아
+Romania
+LU
+룩셈부르크
+Luxembourg
+RW
+르완다
+Rwanda
+LY
+리비아
+Libya
+LT
+리투아니아
+Lithuania
+LI
+리히텐슈타인
+Liechtenstein
+MG
+마다가스카르
+Madagascar
+MQ
+마르티니크
+Martinique
+MH
+마셜제도
+Marshall Islands
+YT
+마요트
+Mayotte
+FM
+마이크로네시아연방
+Federated States of Micronesia
+MO
+마카오
+Macao
+MW
+말라위
+Malawi
+MY
+말레이시아
+Malaysia
+ML
+말리
+Mali
+IM
+맨 섬
+Isle of Man
+MX
+멕시코
+Mexico
+MC
+모나코
+Monaco
+MA
+모로코
+Morocco
+MU
+모리셔스
+Mauritius
+MR
+모리타니아
+Mauritania
+MZ
+모잠비크
+Mazambique
+ME
+몬테네그로
+Montenegro
+MS
+몬트세랫
+Montserrat
+MD
+몰도바
+Moldova
+MV
+몰디브
+Maldives
+MT
+몰타
+Malta
+MN
+몽골
+Mongolia
+UM
+미국령 군소 제도
+United States Minor Outlying Islands
+VI
+미국령 버진아일랜드
+Virgin Islands (US)
+MM
+미얀마
+Myanmar
+US
+미합중국
+United States of America
+VU
+바누아투
+Vanuatu
+BH
+바레인
+Bahrain
+BB
+바베이도스
+Barbados
+BS
+바하마
+Bahamas
+BD
+방글라데시
+Bangladesh
+BM
+버뮤다
+Bermuda
+BJ
+베냉
+Benin
+VE
+베네수엘라볼리바르
+Venezuela
+VN
+베트남
+Vietnam
+BE
+벨기에
+Belgium
+BY
+벨라루스
+Belarus
+BZ
+벨리즈
+Belize
+BQ
+보네르섬
+Bonaire
+BA
+보스니아헤르체고비나
+Bosnia-Herzegovina
+BW
+보츠와나
+Botswana
+BO
+볼리비아
+Bolivia
+BI
+부룬디
+Burundi
+BF
+부르키나파소
+Burkina Faso
+BT
+부탄
+Bhutan
+MP
+북마리아나 군도
+Northern Mariana Islands
+MK
+북마케도니아
+North Macedonia
+BG
+불가리아
+Bulgaria
+BR
+브라질
+Brazil
+BN
+브루나이
+Brunei
+WS
+사모아
+Samoa
+SA
+사우디아라비아
+Saudi Arabia
+CY
+사이프러스
+Cyprus
+EH
+사하라 아랍민주공화국(서부사하라)
+Sahara Arab Democratic Republic
+SM
+산마리노
+San Marino
+ST
+상투메프린시페
+Sâo Tomé & Principe
+BL
+생바르텔레미
+Saint Barthelemy
+PM
+생피에르·미클롱
+St. Pierre and Miquelon
+SN
+세네갈
+Senegal
+RS
+세르비아
+Serbia
+SC
+세이셸
+Seychelles
+SH
+세인트 헬레나 섬
+St Helena
+LC
+세인트루시아
+St. Lucia
+MF
+세인트마틴 섬
+Saint Martin
+VC
+세인트빈센트그레나딘
+St. Vincent & the Grenadines
+KN
+세인트키츠네비스
+St. Kitts-Nevis
+SO
+소말리아
+Somalia
+SB
+솔로몬제도
+Solomon Islands
+SD
+수단
+Sudan
+SR
+수리남
+Suriname
+LK
+스리랑카
+Sri Lanka
+SE
+스웨덴
+Sweden
+CH
+스위스
+Swiss
+ES
+스페인
+Spain
+SK
+슬로바키아
+Slovakia
+SI
+슬로베니아
+Slovenia
+SY
+시리아
+Syria
+SL
+시에라리온
+Sierra Leone
+SX
+신트마르턴
+Sint Maarten
+SG
+싱가포르
+Singapore
+AE
+아랍에미리트
+United Arab Emirates : UAE
+AW
+아루바
+Aruba
+AM
+아르메니아
+Armenia
+AR
+아르헨티나
+Argentina
+IS
+아이슬란드
+Iceland
+HT
+아이티
+Haiti
+IE
+아일랜드
+Ireland
+AZ
+아제르바이잔
+Azerbaijan
+AF
+아프가니스탄
+Afghanistan
+AD
+안도라
+Andorra
+AL
+알바니아
+Albania
+DZ
+알제리
+Algeria
+AO
+앙골라
+Angola
+AG
+앤티가바부다
+Antigua and Barbuda
+AI
+앵귈라
+Anguilla
+ER
+에리트레아
+Eritrea
+SZ
+에스와티니
+Eswatini
+EE
+에스토니아
+Estonia
+EC
+에콰도르
+Ecuador
+ET
+에티오피아
+ETC
+SV
+엘살바도르
+El Salvador
+GB
+영국
+United Kingdom
+AQ
+영국령 남극지역
+British Antarctic Territory
+VG
+영국령 버진 아일랜드
+British Virgin Islands
+IO
+영국령 인도양 제도
+British Indian Ocean Territory
+YE
+예멘
+Yemen
+OM
+오만
+Oman
+AT
+오스트리아
+Austria
+HN
+온두라스
+Honduras
+WF
+왈리스·퓌튀나
+Wallis and Futuna
+JO
+요르단
+Jordan
+UG
+우간다
+Uganda
+UY
+우루과이
+Uruguay
+UZ
+우즈베키스탄
+Uzbekistan
+UA
+우크라이나
+Ukraine
+EU
+유럽연합
+European Union : EU
+IQ
+이라크
+Iraq
+IR
+이란
+Iran
+IL
+이스라엘
+Israel
+EG
+이집트
+Egypt
+IT
+이탈리아
+Italia
+IN
+인도
+India
+ID
+인도네시아
+Indonesia
+JP
+일본
+Japan
+JM
+자메이카
+Jamaica
+ZM
+잠비아
+Zambia
+JE
+저지
+Bailiwick of Jersey
+GQ
+적도기니
+Equatorial Guinea
+KP
+조선민주주의인민공화국
+North Korea
+GE
+조지아
+Georgia
+CN
+중국
+China
+CF
+중앙아프리카
+Central African Republic
+DJ
+지부티
+Djibouti
+GI
+지브롤터
+Gibraltar
+ZW
+짐바브웨
+Zimbabwe
+TD
+차드
+Chad
+CZ
+체코
+Czech
+CL
+칠레
+Chile
+CM
+카메룬
+Cameroon
+CV
+카보베르데
+Cape Verde
+KZ
+카자흐스탄
+Kazakhstan
+QA
+카타르
+Qatar
+KH
+캄보디아
+Cambodia
+CA
+캐나다
+Canada
+KE
+케냐
+Kenya
+KY
+케이맨제도
+Cayman Islands
+KM
+코모로
+Comoros
+XK
+코소보
+Kosovo
+CR
+코스타리카
+Costa Rica
+CC
+코코스제도
+Cocos (Keeling) Islands
+CI
+코트디부아르
+Côte D'Ivoire
+CO
+콜롬비아
+Colombia
+CG
+콩고
+Congo
+CD
+콩고민주공화국
+Democratic Republic of Congo
+CU
+쿠바
+Cuba
+KW
+쿠웨이트
+Kuwait
+CK
+쿡제도
+Cook Islands
+CW
+퀴라소
+Curacao
+HR
+크로아티아
+Croatia
+CX
+크리스마스섬
+Christmas Island
+KG
+키르기즈공화국
+Kyrgyz Republic
+KI
+키리바시
+Kiribati
+TJ
+타지키스탄
+Tajikistan
+TZ
+탄자니아
+Tanzania
+TH
+태국
+Thailand
+TC
+터크스·케이커스 제도
+Turks and Caicos Islands
+TG
+토고
+Togo
+TK
+토켈라우군도
+Tokelau
+TO
+통가
+Tonga
+TM
+투르크메니스탄
+Turkmenistan
+TV
+투발루
+Tuvalu
+TN
+튀니지
+Tunisia
+TR
+튀르키예공화국
+Republic of Turkiye
+TT
+트리니다드토바고
+Trinidad & Tobago
+PA
+파나마
+Panama
+PY
+파라과이
+Paraguay
+PK
+파키스탄
+Pakistan
+PG
+파푸아뉴기니
+Papua New Guinea : PNG
+PW
+팔라우
+Palau
+PS
+팔레스타인
+Palestine
+FO
+페로제도
+Faroe Islands
+PE
+페루
+Peru
+PT
+포르투갈
+Portugal
+FK
+포클랜드 제도
+Falkland Islands
+PL
+폴란드
+Poland
+PR
+푸에르토리코
+Puerto Rico
+FR
+프랑스
+France
+GF
+프랑스령 기아나
+French Guiana
+PF
+프랑스령 폴리네시아
+French Polynesia
+FJ
+피지
+Fiji
+FI
+핀란드
+Finland
+PH
+필리핀
+Philippines
+PN
+핏케언 섬
+Pitcairn Islands
+HU
+헝가리
+Hungary
+AU
+호주
+Australia
+HK
+홍콩
+Hongkong
+
+
+2. OpenAPI 에러 코드정리
+에러코드
+에러메시지
+설명
+1
+APPLICATION_ERROR
+어플리케이션 에러
+10
+INVALID_REQUEST_PARAMETER_ERROR
+잘못된 요청 파라메터 에러
+12
+NO_OPENAPI_SERVICE_ERROR
+해당 오픈API서비스가 없거나 폐기됨
+20
+SERVICE_ACCESS_DENIED_ERROR
+서비스 접근거부
+22
+LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR
+서비스 요청제한횟수 초과에러
+30
+SERVICE_KEY_IS_NOT_REGISTERED_ERROR
+등록되지 않은 서비스키
+31
+DEADLINE_HAS_EXPIRED_ERROR
+기한만료된 서비스키
+32
+UNREGISTERED_IP_ERROR
+등록되지 않은 IP
+99
+UNKNOWN_ERROR
+기타에러
+    •

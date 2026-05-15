@@ -1,0 +1,97 @@
+공공데이터 오픈API 활용가이드
+1. 서비스 명세    3
+1.1 공공데이터 오픈API 조회 서비스    3
+가. 병원평가정보서비스 API 서비스 개요    3
+나. 상세기능 목록    4
+다. 상세기능내역    4
+1) [병원평가상세등급조회] 상세기능명세    4
+2. OpenAPI 에러 코드정리    9
+1. 서비스 명세
+1.1 공공데이터 오픈API 조회 서비스
+가. API 서비스 개요
+나. 상세기능 목록
+다. 상세기능내역
+1) [병원평가상세등급조회] 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+d) 요청/응답 메시지 예제
+2. OpenAPI 에러 코드정리
+API 서비스 정보    API명(영문)    hospAsmInfoService1    hospAsmInfoService1    hospAsmInfoService1
+API 서비스 정보    API명(국문)    병원평가정보서비스    병원평가정보서비스    병원평가정보서비스
+API 서비스 정보    API 설명    암호화된 요양기관 기호, 평가항목 등을 기준으로 요양기관의 평가항목별 병원평가결과를 조회하는 서비스    암호화된 요양기관 기호, 평가항목 등을 기준으로 요양기관의 평가항목별 병원평가결과를 조회하는 서비스    암호화된 요양기관 기호, 평가항목 등을 기준으로 요양기관의 평가항목별 병원평가결과를 조회하는 서비스
+API 서비스 / 보안적용 / 기술 수준    서비스 인증/권한    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음
+API 서비스 / 보안적용 / 기술 수준    메시지 레벨 / 암호화    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    전송 레벨 암호화    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    인터페이스 표준    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타
+API 서비스 / 보안적용 / 기술 수준    교환 데이터 표준 / (중복선택가능)    [O] XML   [ ] JSON   [ ] MIME   [ ] MTOM    [O] XML   [ ] JSON   [ ] MIME   [ ] MTOM    [O] XML   [ ] JSON   [ ] MIME   [ ] MTOM
+API 서비스 / 배포정보    서비스 URL    http://apis.data.go.kr/B551182/hospAsmInfoService1    http://apis.data.go.kr/B551182/hospAsmInfoService1    http://apis.data.go.kr/B551182/hospAsmInfoService1
+API 서비스 / 배포정보    서비스 명세 URL / (WSDL 또는 WADL)    N/A    N/A    N/A
+API 서비스 / 배포정보    서비스 버전    1.0    1.0    1.0
+API 서비스 / 배포정보    서비스 시작일    2021-11-05    서비스 배포일    2021-11-05
+API 서비스 / 배포정보    서비스 이력    2021-11-05: 서비스 시작    2021-11-05: 서비스 시작    2021-11-05: 서비스 시작
+API 서비스 / 배포정보    메시지 교환유형    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification
+API 서비스 / 배포정보    서비스 제공자    건강보험심사평가원    건강보험심사평가원    건강보험심사평가원
+API 서비스 / 배포정보    데이터 갱신주기    일 1회    일 1회    일 1회
+번호    API명(국문)    상세기능명(영문)    상세기능명(국문)
+1    병원평가정보서비스    getHospAsmInfo1    병원평가상세등급조회
+상세기능 번호    1    상세기능 유형    조회(목록)
+상세기능명(국문)    병원평가상세등급조회    병원평가상세등급조회    병원평가상세등급조회
+상세기능 설명    평가대상 요양기관의 다양한 평가항목에 대한 평가결과 등급을 조회하는 상세등급조회 기능    평가대상 요양기관의 다양한 평가항목에 대한 평가결과 등급을 조회하는 상세등급조회 기능    평가대상 요양기관의 다양한 평가항목에 대한 평가결과 등급을 조회하는 상세등급조회 기능
+Call Back URL    http://apis.data.go.kr/B551182/hospAsmInfoService1/getHospAsmInfo1    http://apis.data.go.kr/B551182/hospAsmInfoService1/getHospAsmInfo1    http://apis.data.go.kr/B551182/hospAsmInfoService1/getHospAsmInfo1
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+serviceKey    서비스키    400    1    인증키 / (URL Encode)    공공데이터포털에서 발급받은 인증키
+pageNo    페이지 번호    4    1    1    페이지 번호
+numOfRows    한 페이지 결과 수    4    1    10    한 페이지 결과 수
+ykiho    암호화된 요양기호    100    0    JDQ4MTg4MSM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ4OSQyNjE4MzIjNTEjJDEjJDYjJDgz    암호화된 요양기호 / (확인방법: 건강보험심사평가원 오픈API[병원정보서비스>병원기본목록(getHospBasisList1)](암호화된요양기호(ykiho)))
+항목명(영문)    항목명(영문)    항목명(국문)    항목 / 크기    항목 / 구분    샘플데이터    항목설명
+resultCode    resultCode    결과코드    2    1    00    결과코드
+resultMsg    resultMsg    결과메세지    50    1    NORMAL SERVICE    결과메시지
+numOfRows    numOfRows    한 페이지 결과 수    4    1    10    한 페이지당 표출 데이터 수
+pageNo    pageNo    페이지 번호    4    1    1    페이지 번호
+totalCount    totalCount    전체 결과 수    4    1    17    데이터 전체 결과 수
+    ykiho    암호화된 요양기호    100    1    {생략}    암호화된 요양기호
+    yadmNm    요양기관명    200    1    서울특별시 / ○○병원    요양기관명
+    clCd    종별코드    2    1    11    종별코드
+    clCdNm    종별코드명    50    1    종합병원    종별코드명
+    addr    주소    500    0    서울특별시 ○○○구 ○○로 124(○○동)    주소
+    asmGrd01    평가항목 평가등급1    10    0        급성기뇌졸중 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd03    평가항목 평가등급3    10    0    2    혈액투석 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd04    평가항목 평가등급4    10    0        의료급여정신과 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd05    평가항목 평가등급5    10    0    3    수술부위 감염예방 항생제 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd06    평가항목 평가등급6    10    0        관상동맥우회술 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd07    평가항목 평가등급7    10    0    3    급성상기도감염 항생제 처방률 / 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd08    평가항목 평가등급8    10    0    3    주사제 처방률 / 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd09    평가항목 평가등급9    10    0    4    약품목수 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd10    평가항목 평가등급10    10    0        요양병원 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd12    평가항목 평가등급12    10    0    등급제외    대장암 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd13    평가항목 평가등급13    10    0    등급제외    위암 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd14    평가항목 평가등급14    10    0        유방암 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd15    평가항목 평가등급15    10    0        폐암 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd16    평가항목 평가등급16    10    0        천식 병원평가등급 / (양호한 기관 공개)
+    asmGrd17    평가항목 평가등급17    10    0    1    만성폐쇄성폐질환 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd18    평가항목 평가등급18    10    0    1    폐렴 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd19    평가항목 평가등급19    10    0    3    중환자실 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd20    평가항목 평가등급20    10    0        신생아중환자실 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd21    평가항목 평가등급21    10    0    5    마취 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd22    평가항목 평가등급22    10    0        정신건강 입원영역 / 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd23    평가항목 평가등급23    10    0    2    급성하기도감염 항생제 처방률 / 병원평가등급 / (1~5등급, 등급제외)
+    asmGrd24    평가항목 평가등급24    10    0    1    고혈압·당뇨병 / 병원평가등급 / (1~5등급, 등급제외)
+요청메시지
+http://apis.data.go.kr/B551182/hospAsmInfoService1/getHospAsmInfo1?serviceKey=인증키(URLEncode)&numOfRows=10&pageNo=1&ykiho=JDQ4MTg4MSM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ4OSQyNjE4MzIjNTEjJDEjJDYjJDgz
+응답메시지
+<response> / <header> / <resultCode>00</resultCode> / <resultMsg>NORMAL SERVICE.</resultMsg> / </header> / <body> / <items> / <item> / <ykiho> JDQ4MTg4MSM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ4OSQyNjE4MzIjNTEjJDEjJDYjJDgz </ykiho> / <yadmNm>서울특별시 ○○병원</yadmNm> / <clCd>11</clCd> / <clCdNm>○○병원</clCdNm> / <addr>서울특별시 ○○○구 ○○로 124 (○○동)</addr> / <asmGrd03>2</asmGrd03> / <asmGrd05>3</asmGrd05> / <asmGrd07>3</asmGrd07> / <asmGrd08>3</asmGrd08> / <asmGrd09>4</asmGrd09> / <asmGrd12>등급제외</asmGrd12> / <asmGrd13>등급제외</asmGrd13> / <asmGrd17>1</asmGrd17> / <asmGrd18>1</asmGrd18> / <asmGrd19>3</asmGrd19> / <asmGrd21>5</asmGrd21> / <asmGrd23>2</asmGrd23> / <asmGrd24>1</asmGrd24> / </item> / </items> / <numOfRows>10</numOfRows> / <pageNo>1</pageNo> / <totalCount>1</totalCount> / </body> / </response>
+에러코드    에러메시지    설명
+1    APPLICATION_ERROR    어플리케이션 에러
+10    INVALID_REQUEST_PARAMETER_ERROR    잘못된 요청 파라메터 에러
+12    NO_OPENAPI_SERVICE_ERROR    해당 오픈API서비스가 없거나 폐기됨
+20    SERVICE_ACCESS_DENIED_ERROR    서비스 접근거부
+22    LIMITED_NUMBER_OF_SERVICE_REQUESTS_ / EXCEEDS_ERROR    서비스 요청제한횟수 초과에러
+30    SERVICE_KEY_IS_NOT_REGISTERED_ERROR    등록되지 않은 서비스키
+31    DEADLINE_HAS_EXPIRED_ERROR    활용기간 만료
+32    UNREGISTERED_IP_ERROR    등록되지 않은 IP
+99    UNKNOWN_ERROR    기타에러

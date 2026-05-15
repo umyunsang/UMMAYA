@@ -1,0 +1,15 @@
+{
+  "id": "15152558",
+  "url": "https://www.data.go.kr/data/15152558/openapi.do",
+  "source_kind": "provider_type",
+  "source_value": "입법기관",
+  "category": "공공행정",
+  "provider_type": "입법기관",
+  "org": "국회 국회사무처",
+  "title_hint": "국회 국회사무처_법률안 제안이유 및 주요내용",
+  "og_title": "국회 국회사무처_법률안 제안이유 및 주요내용",
+  "og_description": "국회 의정활동 정보는 국회가 보유·관리하는 각종 정보와 국회 회의록을 체계적·효과적으로 등록·공개·제공을 통해 국민의 알권리 및 국회 정보 이용권을 보장하기 위한 정보입니다",
+  "swagger_url": "",
+  "has_inline_swagger": true,
+  "downloaded_docs": []
+}

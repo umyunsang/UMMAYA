@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Date: Fri, 15 May 2026 15:11:12 GMT
+Server: Apache
+Set-Cookie: <redacted>
+Access-Control-Allow-Headers: x-requested-with, origin, content-type, accept
+Referrer-Policy: strict-origin-when-cross-origin
+Access-Control-Allow-Origin: *
+Content-Length: 500
+Content-Language: en-US
+Access-Control-Allow-Methods: POST,GET,OPTIONS,DELETE
+Access-Control-Max-Age: 3600
+Content-Type: text/html;charset=utf-8
+Set-Cookie: <redacted>

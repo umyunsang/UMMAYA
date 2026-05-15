@@ -1,0 +1,284 @@
+조달청 공공데이터 개방
+OpenAPI 참고자료
+
+1. 서비스 명세    3
+1.1 나라장터 공공데이터개방표준서비스    3
+가. 서비스 개요    3
+나. 오퍼레이션 목록    4
+개정 이력
+1. 서비스 명세
+1.1 나라장터 공공데이터개방표준서비스
+서비스 개요
+오퍼레이션 목록
+[데이터셋 개방표준에 따른 입찰공고정보] 오퍼레이션 명세
+요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+[데이터셋 개방표준에 따른 낙찰정보] 오퍼레이션 명세
+요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+[데이터셋 개방표준에 따른 계약정보] 오퍼레이션 명세
+요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+OPEN API 에러코드별 조치방안
+버 전    변경일    변경 구분    변경사유
+1.0    2025    최초 개정    최초 개정
+1.1    2025.08    항목추가    데이터셋 개방표준에 따른 계약정보 / 요청메시지 : [기관구분코드:insttDivCd , 기관코드:insttCd] 항목 추가
+1.2    2026.4.30    조회기간 변경    데이터셋 개방표준에 따른 계약정보 / - 계약체결일자 범위 축소(1개월 ->1주일)
+서비스 정보    서비스 ID    서비스 ID    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService
+서비스 정보    서비스명(국문)    서비스명(국문)    나라장터 공공데이터개방표준서비스    나라장터 공공데이터개방표준서비스    나라장터 공공데이터개방표준서비스    나라장터 공공데이터개방표준서비스    나라장터 공공데이터개방표준서비스    나라장터 공공데이터개방표준서비스
+서비스 정보    서비스명(영문)    서비스명(영문)    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService    PubDataOpnStdService
+서비스 정보    서비스 설명    서비스 설명    나라장터 입찰, 낙찰, 계약정보 데이터를 행안부 고시 공공데이터 개방표준에 따라 제공하는 공공데이터개방표준서비스    나라장터 입찰, 낙찰, 계약정보 데이터를 행안부 고시 공공데이터 개방표준에 따라 제공하는 공공데이터개방표준서비스    나라장터 입찰, 낙찰, 계약정보 데이터를 행안부 고시 공공데이터 개방표준에 따라 제공하는 공공데이터개방표준서비스    나라장터 입찰, 낙찰, 계약정보 데이터를 행안부 고시 공공데이터 개방표준에 따라 제공하는 공공데이터개방표준서비스    나라장터 입찰, 낙찰, 계약정보 데이터를 행안부 고시 공공데이터 개방표준에 따라 제공하는 공공데이터개방표준서비스    나라장터 입찰, 낙찰, 계약정보 데이터를 행안부 고시 공공데이터 개방표준에 따라 제공하는 공공데이터개방표준서비스
+서비스 보안    서비스 인증/권한    서비스 인증/권한    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [ ]WS-Security
+서비스 보안    메시지 레벨 암호화    메시지 레벨 암호화    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [ ]WS-Security
+서비스 보안    전송 레벨 암호화    전송 레벨 암호화    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음
+적용 기술 수준    인터페이스 표준    인터페이스 표준    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타
+적용 기술 수준    교환 데이터 표준    교환 데이터 표준    [ O ] XML    [ O ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ O ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ O ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ O ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ O ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ O ] JSON    [ ] MIME    [ ] MTOM
+서비스 URL    개발환경    개발환경    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService
+서비스 URL    운영환경    운영환경    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService    http://apis.data.go.kr/1230000/ao/PubDataOpnStdService
+서비스 WADL    개발환경    개발환경    N/A    N/A    N/A    N/A    N/A    N/A
+서비스 WADL    운영환경    운영환경    N/A    N/A    N/A    N/A    N/A    N/A
+서비스 배포 정보    서비스 버전    서비스 버전    1.0    1.0    1.0    1.0    1.0    1.0
+서비스 배포 정보    서비스 시작일    서비스 시작일    2025-01-06    2025-01-06    배포 일자    배포 일자    2025-01-06    2025-01-06
+서비스 배포 정보    서비스 이력    서비스 이력    N/A    N/A    N/A    N/A    N/A    N/A
+메시지 교환 유형    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification
+메시지 로깅 수준    성공    [O] Header [ ] Body    [O] Header [ ] Body    실패    실패    [O] Header [O] Body    [O] Header [O] Body    [O] Header [O] Body
+사용 제약 사항 (비고)    N/A    N/A    N/A    N/A    N/A    N/A    N/A    N/A
+서비스 제공자    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr    안정우 / 조달청 조달데이터관리팀 / 042-724-7685 / eureka3112@korea.kr
+데이터 갱신주기    수시    수시    수시    수시    수시    수시    수시    수시
+일련번호    서비스명(국문)    오퍼레이션명(영문)    오퍼레이션명(국문)    메시지명(영문)
+1    나라장터 공공데이터개방표준서비스    getDataSetOpnStdBidPblancInfo    데이터셋 개방표준에 따른 입찰공고정보    N/A
+2    나라장터 공공데이터개방표준서비스    getDataSetOpnStdScsbidInfo    데이터셋 개방표준에 따른 낙찰정보    N/A
+3    나라장터 공공데이터개방표준서비스    getDataSetOpnStdCntrctInfo    데이터셋 개방표준에 따른 계약정보    N/A
+오퍼레이션 정보    오퍼레이션 번호    1    오퍼레이션명(국문)    데이터셋 개방표준에 따른 입찰공고정보    데이터셋 개방표준에 따른 입찰공고정보
+오퍼레이션 정보    오퍼레이션 유형    조회(목록)    오퍼레이션명(영문)    getDataSetOpnStdBidPblancInfo    getDataSetOpnStdBidPblancInfo
+오퍼레이션 정보    오퍼레이션 설명    검색조건을 입찰공고일시로 하여 입찰공고번호, 입찰공고차수, 나라장터공고여부, 입찰공고명, 입찰공고상태명, 입찰공고일자, 입찰공고시각, 업무구분명, 국제입찰여부 등 나라장터에 등록된 입찰공고정보 조회    검색조건을 입찰공고일시로 하여 입찰공고번호, 입찰공고차수, 나라장터공고여부, 입찰공고명, 입찰공고상태명, 입찰공고일자, 입찰공고시각, 업무구분명, 국제입찰여부 등 나라장터에 등록된 입찰공고정보 조회    검색조건을 입찰공고일시로 하여 입찰공고번호, 입찰공고차수, 나라장터공고여부, 입찰공고명, 입찰공고상태명, 입찰공고일자, 입찰공고시각, 업무구분명, 국제입찰여부 등 나라장터에 등록된 입찰공고정보 조회    검색조건을 입찰공고일시로 하여 입찰공고번호, 입찰공고차수, 나라장터공고여부, 입찰공고명, 입찰공고상태명, 입찰공고일자, 입찰공고시각, 업무구분명, 국제입찰여부 등 나라장터에 등록된 입찰공고정보 조회
+오퍼레이션 정보    Call Back URL    N/A    N/A    N/A    N/A
+오퍼레이션 정보    최대 메시지 사이즈    [ 4000bytes]    [ 4000bytes]    [ 4000bytes]    [ 4000bytes]
+오퍼레이션 정보    평균 응답 시간    [     500    ms]    초당 최대 트랜잭션    초당 최대 트랜잭션    [     30    tps]
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+numOfRows    한 페이지 결과 수    4    0    10    한 페이지 결과 수
+pageNo    페이지 번호    4    0    1    페이지 번호
+ServiceKey    서비스키    400    1    공공데이터포털에서 받은 인증키    공공데이터포털에서 받은 인증키
+type    타입    4    0    json    오픈API 리턴 타입을 JSON으로 받고 싶을 경우 'json' 으로 지정함
+bidNtceBgnDt    입찰공고시작일시    12    1    202507010000    검색하고자하는 입찰공고일시범위 시작 'YYYYMMDDHHMM' / (입찰공고일시 범위는 1개월 로 제한)
+bidNtceEndDt    입찰공고종료일시    12    1    202507012359    검색하고자하는 입찰공고일시범위 종료 'YYYYMMDDHHMM' / (입찰공고일시 범위는 1개월 로 제한)
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메세지    50    1    정상    결과메세지
+numOfRows    한 페이지 결과 수    4    1    10    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+totalCount    전체 결과 수    4    1    1    전체 결과 수
+bidNtceNo    입찰공고번호    13    1    R25BK00933743    입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은    년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용 / *차세대나라장터 번호체계 개편 :R+년도(2)+BK+순번(8) 총 13자리 구성 적용 / *2025년 공고건부터 적용
+bidNtceOrd    입찰공고차수    2    0    000    입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수
+refNtceNo    참조공고번호    40    0    R25BK00933743    조달청 입찰공고의 경우 참조공고번호는 기타 전자조달시스템에서 관리하는 공고번호를 의미하며 기타 전자조달시스템의 경우 참조공고번호는 나라장터(G2B) 입찰공고번호를 의미함
+refNtceOrd    참조공고차수    3    0    000    참조공고번호에 대한 공고 차수
+ppsNtceYn    나라장터공고여부    1    1    Y    조달청에서 관리하는 나라장터 (https://www.g2b.go.kr)를 통해서도 입찰공고를 하는지의 여부
+bidNtceNm    입찰공고명    1000    1    2025년 경기미 가공저장시설 스마트화 지원사업 현미 색채선별기 구매(긴급)    공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름
+bidNtceSttusNm    입찰공고상태명    100    1    일반공고    해당 공고의 상태가 일반 또는 긴급공고, 정정(또는 연기)공고, 재공고입찰, 취소공고를 구분하기 위한 명
+bidNtceDate    입찰공고일자    10    1    2025-07-01    입찰공고서를 공고한 일자
+bidNtceBgn    입찰공고시각    5    1    07:49    입찰공고서를 공고한 시각
+bsnsDivNm    업무구분명    20    1    물품    입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자로 구분함
+intrntnlBidYn    국제입찰여부    1    0    N    국제입찰대상인지의 여부를 나타내며 국제입찰 대상은 내외국인 또는 외국인을 대상으로 하여 물품, 공사 및 용역을 조달하기 위하여 행하는 입찰을   말하며 수의계약을 포함한다. 국가계약법 제4조(지방계약법 제5조)에 의해   추정가격이 고시금액(국제입찰 적용 대상 기준금액으로 기획재정부장관 및  행정안전부장관이 매 2년마다 고시한 금액을 말하며 WTO 또는 양자간(FTA) 정부조달협정에 따르면 국제입찰 대상 기준 금액이 SDR(Special Drawing Rights:특별인출권) 통화단위로 되어 있어 주무부 장관이 이를 2년마다 원화로 환산하여 고시) 이상일 경우 국제입찰대상이 됨
+cmmnCntrctYn    공동계약여부    1    0    Y    공동계약의 경우 공사/제조 기타의 계약에 있어서 필요하다고 인정할 때 계약 상대자를 2인 이상과 체결하는 계약이며 단독계약은 계약상대자를 1인으로 하는 통상적인 계약을 의미함.
+cmmnReciptMethdNm    공동수급방식명    100    0    공동이행    공동수급이라 함은 구성원을 2인 이상으로 하여 수급인이 해당계약을 공동으로 수행하기 위하여 잠정적으로 결성한 실체를 의미하며 공동수급체가도급을 받아 이행하는 방식을 구분하는 명임
+elctrnBidYn    전자입찰여부    1    1    Y    입찰의 방식이 전자입찰방식인지 일반입찰(직접입찰 및 우편)방식인지의 여부
+cntrctCnclsSttusNm    계약체결형태명    30    1    총액계약    계약체결형태를 구분하는 명 / *총액계약은 계약목적물 전체에 대하여 단가가 아닌 총액으로 체결하는 계약형태 / *단가계약은 수요 빈도가 많은 품목에 대하여 단가에 의해 예정수량을 명시하고 체결하는 계약형태, / *제3자단가계약은 각 수요기관에서 공통적으로 필요로 하는 수요물자를 계약시 미리 단가만을 정하여 계약을 체결하고 각 수요기관에서 직접 납품요구하여 구매하는 계약형태
+cntrctCnclsMthdNm    계약체결방법명    30    1    제한경쟁    계약체결의 방법을 구분하는 명 / *일반경쟁계약은 계약 대상 물품의 규격 및 시방서와 계약조건 등을 널리 공고하여 일정한 자격을 가진 불특정 다수인의 입찰희망자를 모두 경쟁 입찰하는 계약방법 / *제한경쟁계약은 일반·지명경쟁계약제도의 단점을 보완하기 위해 실적제한, 기술보유제한, 특정물품제한, 지역제한 등을 두는 계약방법 / *지명경쟁계약은 계약상대자의 신용과 실적 등에 있어 적당하다고 인정하는 특정 다수의 경쟁 참가자를 지명하여 계약 상대방을 결정하는 계약방법 / *수의계약은 계약상대자를 결정함에 있어 경쟁방법에 의하지 않고 특정인을 선정하여 계약하는 계약방법
+bidwinrDcsnMthdNm    낙찰자결정방법명    30    0    최저가 낙찰제    해당 공고건에 대해 낙찰자를 결정하는 방법
+ntceInsttNm    공고기관명    200    1    신김포농업협동조합 양촌미곡사업소    수요기관의 의뢰를 받아 공고하는 기관의 명
+ntceInsttCd    공고기관코드    7    0    Z013176    공고를 하는 기관의 코드로 행정안전부에서 부여한 기관코드임
+ntceInsttOfclDeptNm    공고기관담당자부서명    100    0    경영관리과    공고기관의 공고를 담당하는 담당부서의 명
+ntceInsttOfclNm    공고기관담당자명    35    0    홍길동    공고기관의 공고를 담당하는 담당자의 명
+ntceInsttOfclTel    공고기관담당자전화번호    13    0    070-000-0000    공고기관의 공고를 담당하는 담당자의 전화번호
+ntceInsttOfclEmailAdrs    공고기관담당자이메일주소    100    0    abcd@korea.kr    공고기관의 공고를 담당하는 담당자의 이메일주소
+dmndInsttNm    수요기관명    200    1    재단법인 대전테크노파크    중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음
+dmndInsttCd    수요기관코드    7    0    B552732    실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임
+dmndInsttOfclDeptNm    수요기관담당자부서명    100    0    구매과    수요기관의 공고를 담당하는 담당부서의 명
+dmndInsttOfclNm    수요기관담당자명    35    0    홍길동    수요기관의 공고를 담당하는 담당자의 명
+dmndInsttOfclTel    수요기관담당자전화번호    13    0    042-000-0000    수요기관의 공고를 담당하는 담당자의 전화번호
+dmndInsttOfclEmailAdrs    수요기관담당자이메일주소    100    0    abcd@korea.kr    수요기관의 공고를 담당하는 담당자의 이메일주소
+presnatnOprtnYn    설명회실시여부    1    0    Y    해당 공고에 대한 현장/입찰/과업 설명회를 실시하는지의 여부
+presnatnOprtnDate    설명회실시일자    10    0    2027-09-01    해당 공고에 대한 현장/입찰/과업 설명회를 실시하는 일자
+presnatnOprtnTm    설명회실시시각    5    0    13:00    해당 공고에 대한 현장/입찰/과업 설명회를 실시하는 시각
+presnatnOprtnPlce    설명회실시장소    100    0    대전지방조달청 1층    해당 공고에 대한 설명회를 실시하는 경우 현장/입찰/과업 설명회를 실시하는 장소
+bidPrtcptQlfctRgstClseDate    입찰참가자격등록마감일자    10    0    2025-07-07    입찰참가등록이란 입찰사무를 효과적으로 집행하기 위하여 사전에 입찰참가자격등록을 해두었다가 필요 시 입찰에 참여하는 제도로 해당 공고에 대한 입찰참가자격의 등록이 완료되어야 하는 시점(일자)을 의미함
+bidPrtcptQlfctRgstClseTm    입찰참가자격등록마감시각    5    0    14:00    입찰참가등록이란 입찰사무를 효과적으로 집행하기 위하여 사전에 입찰참가자격등록을 해두었다가 필요 시 입찰에 참여하는 제도로 해당 공고에 대한 입찰참가자격의 등록이 완료되어야 하는 시점(시각)을 의미함
+cmmnReciptAgrmntClseDate    공동수급협정마감일자    10    0    2016-09-27    공동계약이 허용된 공고에 대해 공동수급체를 구성하여 입찰에 참여하고자 할 경우 구성원이 일정 분담내용에 따라 나누어 공동으로 이행하는 약속을 한 공동수급협정서를 작성하여야 하며 이때 공동수급협정서의 등록(작성) 마감 시점(일자)을 의미함
+cmmnReciptAgrmntClseTm    공동수급협정마감시각    5    0    18:00    공동계약이 허용된 공고에 대해 공동수급체를 구성하여 입찰에 참여하고자 할 경우 구성원이 일정 분담내용에 따라 나누어 공동으로 이행하는 약속을 한 공동수급협정서를 작성하여야 하며 이때 공동수급협정서의 등록(작성) 마감 시점(시각)을 의미함
+bidBeginDate    입찰개시일자    10    0    2025-07-01    입찰서의 제출을 개시하는 일자
+bidBeginTm    입찰개시시각    5    0    10:00    입찰서의 제출을 개시하는 시각
+bidClseDate    입찰마감일자    10    0    2025-07-08    입찰서의 제출을 마감하는 일자
+bidClseTm    입찰마감시각    5    0    15:00    입찰서의 제출을 마감하는 시각
+opengDate    개찰일자    10    1    2025-07-08    조달업체가 제출한 입찰서를 개찰하는 일자
+opengTm    개찰시각    5    1    16:00    조달업체가 제출한 입찰서를 개찰하는 시각
+opengPlce    개찰장소    100    1    국가종합전자조달시스템(나라장터)    조달업체가 제출한 입찰서를 개찰하는 장소
+asignBdgtAmt    배정예산금액(설계금액)    22    0    97240000    사업목적물을 달성하기 위하여 배정된 예산액 또는 설계금액(원화,원)
+presmptPrce    추정가격    25    0    88400000    물품/공사/용역 등의 조달 계약을 체결함에 있어 국제입찰 대상여부를  판단하는 기준 등으로 삼기 위하여 예정가격이 결정되기 전에 국가계약법 시행령   등에서 정한 ‘추정가격의 산정’ 규정에 의하여 산정된 가격으로 부가가치세  및 관급자재비를 제외한 금액(원화,원)
+rsrvtnPrceDcsnMthdNm    예정가격결정방법명    20    0    단일예가    예정가격의 결정을 위해 복수예정가격방식으로 산정하는지 단일 예정가격으로 산정하는지를 구분하는 명
+rgnLmtYn    지역제한여부    1    0    Y    해당 공고 입찰 시 지역제한을 두는지의 여부
+prtcptPsblRgnNm    참가가능지역명    200    0    대전광역시    지역제한이 Y일 경우 참여가능한 지역의 명칭을 콤마(,)로 나열함
+indstrytyLmtYn    업종제한여부    1    0    Y    해당 공고 입찰 시 업종(면허)제한을 두는지의 여부
+bidprcPsblIndstrytyNm    투찰가능업종명    4000    0    전기공사업    업종제한이 Y일 경우 제한되는 업종의 명칭을 콤마(,)로 나열함
+bidNtceUrl    입찰공고URL    500    0    https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R25BK00933743&bidPbancOrd=000    해당 입찰공고를 인터넷상에서 확인할 수 있는 URL주소
+dataBssDate    데이터기준일자    10    1    2016-09-30    데이터 작성 기준일자
+REST(URI)
+http://apis.data.go.kr/1230000/ao/PubDataOpnStdService/getDataSetOpnStdBidPblancInfo?numOfRows=10&pageNo=1&bidNtceBgnDt=202507010000&bidNtceEndDt=202507010000&ServiceKey=인증키
+응답 메시지
+<response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>정상</resultMsg> /     </header> /     <body> /         <items> /             <item> /                 <bidNtceNo>R25BK00933743</bidNtceNo> /                 <bidNtceOrd>000</bidNtceOrd> /                 <refNtceNo>R25BK00933743</refNtceNo> /                 <refNtceOrd>000</refNtceOrd> /                 <ppsNtceYn>Y</ppsNtceYn> /                 <bidNtceNm>2025년 경기미 가공저장시설 스마트화 지원사업 현미 색채선별기 구매(긴급)</bidNtceNm> /                 <bidNtceSttusNm>일반공고</bidNtceSttusNm> /                 <bidNtceDate>2025-07-01</bidNtceDate> /                 <bidNtceBgn>07:49</bidNtceBgn> /                 <bsnsDivNm>물품</bsnsDivNm> /                 <intrntnlBidYn>N</intrntnlBidYn> /                 <cmmnCntrctYn>Y</cmmnCntrctYn> /                 <cmmnReciptMethdNm></cmmnReciptMethdNm> /                 <elctrnBidYn>Y</elctrnBidYn> /                 <cntrctCnclsSttusNm>총액계약</cntrctCnclsSttusNm> /                 <cntrctCnclsMthdNm>제한경쟁</cntrctCnclsMthdNm> /                 <bidwinrDcsnMthdNm>적격심사제</bidwinrDcsnMthdNm> /                 <ntceInsttNm>신김포농업협동조합 양촌미곡사업소</ntceInsttNm> /                 <ntceInsttCd>Z013176</ntceInsttCd> /                 <ntceInsttOfclDeptNm></ntceInsttOfclDeptNm> /                 <ntceInsttOfclNm>박형준</ntceInsttOfclNm> /                 <ntceInsttOfclTel>***-***-*****</ntceInsttOfclTel> /                 <ntceInsttOfclEmailAdrs>nh241040-1@nonghyup.com</ntceInsttOfclEmailAdrs> /                 <dmndInsttNm>신김포농업협동조합 양촌미곡사업소</dmndInsttNm> /                 <dmndInsttCd>Z013176</dmndInsttCd> /                 <dmndInsttOfclDeptNm></dmndInsttOfclDeptNm> /                 <dmndInsttOfclNm>박형준</dmndInsttOfclNm> /                 <dmndInsttOfclTel>***********</dmndInsttOfclTel> /                 <dmndInsttOfclEmailAdrs></dmndInsttOfclEmailAdrs> /                 <presnatnOprtnYn></presnatnOprtnYn> /                 <presnatnOprtnDate></presnatnOprtnDate> /                 <presnatnOprtnTm></presnatnOprtnTm> /                 <presnatnOprtnPlce></presnatnOprtnPlce> /                 <bidPrtcptQlfctRgstClseDate>2025-07-07</bidPrtcptQlfctRgstClseDate> /                 <bidPrtcptQlfctRgstClseTm>14:00</bidPrtcptQlfctRgstClseTm> /                 <cmmnReciptAgrmntClseDate></cmmnReciptAgrmntClseDate> /                 <cmmnReciptAgrmntClseTm></cmmnReciptAgrmntClseTm> /                 <bidBeginDate>2025-07-01</bidBeginDate> /                 <bidBeginTm>10:00</bidBeginTm> /                 <bidClseDate>2025-07-08</bidClseDate> /                 <bidClseTm>15:00</bidClseTm> /                 <opengDate>2025-07-08</opengDate> /                 <opengTm>16:00</opengTm> /                 <opengPlce>국가종합전자조달시스템(나라장터)</opengPlce> /                 <asignBdgtAmt>97240000</asignBdgtAmt> /                 <presmptPrce>88400000</presmptPrce> /                 <rsrvtnPrceDcsnMthdNm>단일예가</rsrvtnPrceDcsnMthdNm> /                 <rgnLmtYn>N</rgnLmtYn> /                 <prtcptPsblRgnNm>...(이하생략 나라장터참조)</prtcptPsblRgnNm> /                 <indstrytyLmtYn>N</indstrytyLmtYn> /                 <bidprcPsblIndstrytyNm></bidprcPsblIndstrytyNm> /                 <bidNtceUrl>https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R25BK00933743&amp;bidPbancOrd=000</bidNtceUrl> /                 <dataBssDate>2025-08-07</dataBssDate> /             </item> /         </items> /         <numOfRows>10</numOfRows> /         <pageNo>1</pageNo> /         <totalCount>1417</totalCount> /     </body> / </response>
+오퍼레이션 정보    오퍼레이션 번호    2    오퍼레이션명(국문)    데이터셋 개방표준에 따른 낙찰정보    데이터셋 개방표준에 따른 낙찰정보
+오퍼레이션 정보    오퍼레이션 유형    조회(목록)    오퍼레이션명(영문)    getDataSetOpnStdScsbidInfo    getDataSetOpnStdScsbidInfo
+오퍼레이션 정보    오퍼레이션 설명    검색조건을 개찰일시, 업무구분명으로 입찰공고번호, 입찰공고차수, 입찰공고명, 업무구분명, 계약체결형태명, 계약체결방법명, 낙찰자결정방법명, 공고기관명, 공고기관코드 등 나라장터에 등록된 낙찰정보 조회    검색조건을 개찰일시, 업무구분명으로 입찰공고번호, 입찰공고차수, 입찰공고명, 업무구분명, 계약체결형태명, 계약체결방법명, 낙찰자결정방법명, 공고기관명, 공고기관코드 등 나라장터에 등록된 낙찰정보 조회    검색조건을 개찰일시, 업무구분명으로 입찰공고번호, 입찰공고차수, 입찰공고명, 업무구분명, 계약체결형태명, 계약체결방법명, 낙찰자결정방법명, 공고기관명, 공고기관코드 등 나라장터에 등록된 낙찰정보 조회    검색조건을 개찰일시, 업무구분명으로 입찰공고번호, 입찰공고차수, 입찰공고명, 업무구분명, 계약체결형태명, 계약체결방법명, 낙찰자결정방법명, 공고기관명, 공고기관코드 등 나라장터에 등록된 낙찰정보 조회
+오퍼레이션 정보    Call Back URL    N/A    N/A    N/A    N/A
+오퍼레이션 정보    최대 메시지 사이즈    [ 4000bytes]    [ 4000bytes]    [ 4000bytes]    [ 4000bytes]
+오퍼레이션 정보    평균 응답 시간    [     500    ms]    초당 최대 트랜잭션    초당 최대 트랜잭션    [     30    tps]
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+numOfRows    한 페이지 결과 수    4    0    10    한 페이지 결과 수
+pageNo    페이지 번호    4    0    1    페이지 번호
+ServiceKey    서비스키    400    1    공공데이터포털에서 받은 인증키    공공데이터포털에서 받은 인증키
+type    타입    4    0    json    오픈API 리턴 타입을 JSON으로 받고 싶을 경우 'json' 으로 지정
+bsnsDivCd    업무구분코드    2    1    3    업무구분코드가 1이면 물품, 2면 외자, 3이면 공사, 5면 용역
+opengBgnDt    개찰시작일시    12    1    202507010000    검색하고자하는 개찰일시범위 시작 'YYYYMMDDHHMM' (개찰일시 범위는 1주일로 제한)
+opengEndDt    개찰종료일시    12    1    202507022359    검색하고자하는 개찰일시범위 종료 'YYYYMMDDHHMM' (개찰일시 범위는 1주일로 제한)
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메세지    50    1    정상    결과메세지
+numOfRows    한 페이지 결과 수    4    1    10    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+totalCount    전체 결과 수    4    1    1    전체 결과 수
+bidNtceNo    입찰공고번호    13    1    R25BK00925778    입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은    년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용 / *차세대나라장터 번호체계 개편 :R+년도(2)+BK+순번(8) 총 13자리 구성 적용 / *2025년 공고건부터 적용
+bidNtceOrd    입찰공고차수    3    0    000    입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수
+bidNtceNm    입찰공고명    1000    1    [부여]국도40호 가탑삼거리 교차로개선사업    공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름
+bsnsDivNm    업무구분명    20    1    공사    입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자로 구분함
+cntrctCnclsSttusNm    계약체결형태명    30    1    총액계약    계약체결형태를 구분하는 명 / *총액계약은 계약목적물 전체에 대하여 단가가 아닌 총액으로 체결하는 계약형태 / *단가계약은 수요 빈도가 많은 품목에 대하여 단가에 의해 예정수량을 명시하고 체결하는 계약형태, / *제3자단가계약은 각 수요기관에서 공통적으로 필요로 하는 수요물자를 계약시 미리 단가만을 정하여 계약을 체결하고 각 수요기관에서 직접 납품요구하여 구매하는 계약형태
+cntrctCnclsMthdNm    계약체결방법명    30    1    수의계약    계약체결의 방법을 구분하는 명 / *일반경쟁계약은 계약 대상 물품의 규격 및 시방서와 계약조건 등을 널리 공고하여 일정한 자격을 가진 불특정 다수인의 입찰희망자를 모두 경쟁 입찰하는 계약방법 / *제한경쟁계약은 일반·지명경쟁계약제도의 단점을 보완하기 위해 실적제한, 기술보유제한, 특정물품제한, 지역제한 등을 두는 계약방법 / *지명경쟁계약은 계약상대자의 신용과 실적 등에 있어 적당하다고 인정하는 특정 다수의 경쟁 참가자를 지명하여 계약 상대방을 결정하는 계약방법 / *수의계약은 계약상대자를 결정함에 있어 경쟁방법에 의하지 않고 특정인을 선정하여 계약하는 계약방법
+bidwinrDcsnMthdNm    낙찰자결정방법명    30    0    소액수의견적    해당 공고건에 대해 낙찰자를 결정하는 방법
+ntceInsttNm    공고기관명    200    1    충청남도 건설본부 건설사업부 동부사무소    수요기관의 의뢰를 받아 공고하는 기관의 명
+ntceInsttCd    공고기관코드    7    0    6441502    공고를 하는 기관의 코드로 행정안전부에서 부여한 기관코드임
+dmndInsttNm    수요기관명    200    1    충청남도 건설본부 건설사업부 동부사무소    중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음
+dmndInsttCd    수요기관코드    7    0    6441502    실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임
+sucsfLwstlmtRt    낙찰하한율    22    0    89.745    적격심사제도나 중소기업간경쟁물품에 대한 계약이행능력심사시 입찰가격을 제외한 다른 항목은 모두 만점을 받을 경우를 가정하여 낙찰가능한 최소한의 예정가격 대비 가격 투찰율을 말하며 이 하한율 아래로 투찰하면 낙찰되지 못하는 비율을 말함
+presmptPrce    추정가격    25    0    124209091    물품/공사/용역 등의 조달 계약을 체결함에 있어 국제입찰 대상여부를  판단하는 기준 등으로 삼기 위하여 예정가격이 결정되기 전에 국가계약법 시행령 등에서 정한 ‘추정가격의 산정’ 규정에 의하여 산정된 가격으로 부가가치세  및 관급자재비를 제외한 금액(원화,원)
+rsrvtnPrce    예정가격    21    0    135898725    입찰 또는 계약 체결 전에 낙찰자 및 계약금액의 결정기준으로 삼기 위하여 미리 작성/비치하여 두는 가액(원화,원)
+bssAmt    기초금액    21    0    136630000    예정가격 작성 과정에서 거래실례가격, 원가계산가격 등에 의하여 조사한 가격이나 설계가격에 대하여 계약담당공무원이 그 적정여부를 검토조정한 가격(복수 예비가격 산정을 위한 기준금액)(원화,원)
+opengDate    개찰일자    10    1    2025-07-01    조달업체가 제출한 입찰서를 개찰하는 일자
+opengTm    개찰시각    5    1    10:00    조달업체가 제출한 입찰서를 개찰하는 시각
+opengRsltDivNm    개찰결과구분명    30    1    개찰완료    해당 공고건에 대한 개찰결과를 구분하는 것으로 개찰이 완료되었는지, 유찰되었는지, 재입찰 할것인지 등을 구분하는 명
+opengRank    개찰순위    4    0    1    개찰순위는 낙찰자결정방법에 따라 개찰한 결과에 대한 업체별 순위이며, 협상에 의한 계약의 경우 협상기술능력 평가점수와 입찰가격 평가점수의 합산하여 고득점 순에 따라 결정되며 협상순위를 의미함
+bidprcCorpBizrno    투찰업체사업자등록번호    12    0    3088103521    투찰한 업체의 사업자등록번호
+bidprcCorpNm    투찰업체명    100    0    대륜건설(주)    투찰한 업체의 명
+bidprcCorpCeoNm    투찰업체대표자명    35    0    손현구    투찰한 업체의 대표자의 명
+bidprcAmt    투찰금액    21    0    122845000    투찰한 금액(원화,원)
+bidprcRt    투찰율    10    0    90.394    예정가격에 대한 투찰금액의 비율로 투찰금액/예정가격 *100 임(%)
+bidprcDate    투찰일자    10    0    2025-06-27    투찰업체가 투찰한 일자
+bidprcTm    투찰시각    5    0    08:19    투찰업체가 투찰한 시각
+sucsfYn    낙찰여부    1    0    Y    투찰업체의 해당 입찰공고건에 대한 낙찰여부
+dqlfctnRsn    부적격사유    30    0    정상    투찰업체에 대한 개찰 결과가 부적격으로 판명될 경우 그 부적격으로 판명된 사유
+fnlSucsfAmt    최종낙찰금액    21    0    122845000    최종낙찰은 개찰순위 순서대로 협상등을 통해 최종 낙찰된정보를 의미하며 최종낙찰금액은 최종낙찰된 금액으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임 (원화,원)
+fnlSucsfRt    최종낙찰율    10    0    90.394    예정가격대비 최종낙찰금액으로 최종낙찰금액/예정가격 * 100 으로 계산되며 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임 (%)
+fnlSucsfDate    최종낙찰일자    10    0    2025-07-02    최종낙찰된 일자로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임
+fnlSucsfCorpNm    최종낙찰업체명    100    0    대륜건설(주)    최종낙찰된 업체의 명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임
+fnlSucsfCorpCeoNm    최종낙찰업체대표자명    35    0    홍삼동    최종낙찰된 업체의 대표자명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임
+fnlSucsfCorpOfclNm    최종낙찰업체담당자명    35    0    홍사동    최종낙찰된 업체의 담당자명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임
+fnlSucsfCorpBizrno    최종낙찰업체사업자등록번호    12    0    308-81-03521    최종낙찰된 업체의 사업자등록번호임
+fnlSucsfCorpAdrs    최종낙찰업체주소    200    0    충청남도 부여군 부여읍 성왕로161    최종낙찰된 업체의 주소임
+fnlSucsfCorpContactTel    최종낙찰업체연락전화번호    13    0    042-000-0000    최종낙찰된 업체의 연락 전화번호임
+dataBssDate    데이터기준일자    10    1    2016-09-30    데이터 작성 기준일자
+REST(URI)
+http://apis.data.go.kr/1230000/ao/PubDataOpnStdService/getDataSetOpnStdScsbidInfo? numOfRows=10&pageNo=1&opengBgnDt=201701010000&opengEndDt=201701062359&bsnsDivCd=1&ServiceKey=인증키
+응답 메시지
+<response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>정상</resultMsg> /     </header> /     <body> /         <items> /             <item> /                 <bidNtceNo>R25BK00925778</bidNtceNo> /                 <bidNtceOrd>000</bidNtceOrd> /                 <bidNtceNm>[부여]국도40호 가탑삼거리 교차로개선사업</bidNtceNm> /                 <bsnsDivNm>공사</bsnsDivNm> /                 <cntrctCnclsSttusNm>총액계약</cntrctCnclsSttusNm> /                 <cntrctCnclsMthdNm>수의계약</cntrctCnclsMthdNm> /                 <bidwinrDcsnMthdNm>소액수의견적</bidwinrDcsnMthdNm> /                 <ntceInsttNm>충청남도 건설본부 건설사업부 동부사무소</ntceInsttNm> /                 <ntceInsttCd>6441502</ntceInsttCd> /                 <dmndInsttNm>충청남도 건설본부 건설사업부 동부사무소</dmndInsttNm> /                 <dmndInsttCd>6441502</dmndInsttCd> /                 <sucsfLwstlmtRt>89.745</sucsfLwstlmtRt> /                 <presmptPrce>124209091</presmptPrce> /                 <rsrvtnPrce>135898725</rsrvtnPrce> /                 <bssAmt>136630000</bssAmt> /                 <opengDate>2025-07-01</opengDate> /                 <opengTm>10:00</opengTm> /                 <opengRsltDivNm>개찰완료</opengRsltDivNm> /                 <opengRank>1</opengRank> /                 <bidprcCorpBizrno>3088103521</bidprcCorpBizrno> /                 <bidprcCorpNm>대륜건설(주)</bidprcCorpNm> /                 <bidprcCorpCeoNm>손현구</bidprcCorpCeoNm> /                 <bidprcAmt>122845000</bidprcAmt> /                 <bidprcRt>90.394</bidprcRt> /                 <bidprcDate>2025-06-27</bidprcDate> /                 <bidprcTm>08:19</bidprcTm> /                 <sucsfYn>Y</sucsfYn> /                 <dqlfctnRsn>정상</dqlfctnRsn> /                 <fnlSucsfAmt>122845000</fnlSucsfAmt> /                 <fnlSucsfRt>90.394</fnlSucsfRt> /                 <fnlSucsfDate>2025-07-02</fnlSucsfDate> /                 <fnlSucsfCorpNm>대륜건설(주)</fnlSucsfCorpNm> /                 <fnlSucsfCorpCeoNm>손현구</fnlSucsfCorpCeoNm> /                 <fnlSucsfCorpOfclNm></fnlSucsfCorpOfclNm> /                 <fnlSucsfCorpBizrno>308-81-03521</fnlSucsfCorpBizrno> /                 <fnlSucsfCorpAdrs>충청남도 부여군 부여읍 성왕로161 </fnlSucsfCorpAdrs> /                 <fnlSucsfCorpContactTel>042-826-6220</fnlSucsfCorpContactTel> /                 <dataBssDate>2025-08-08</dataBssDate> /             </item> /         </items> /         <numOfRows>10</numOfRows> /         <pageNo>1</pageNo> /         <totalCount>315130</totalCount> /     </body> / </response>
+오퍼레이션 정보    오퍼레이션 번호    3    오퍼레이션명(국문)    데이터셋 개방표준에 따른 계약정보    데이터셋 개방표준에 따른 계약정보
+오퍼레이션 정보    오퍼레이션 유형    조회(목록)    오퍼레이션명(영문)    getDataSetOpnStdCntrctInfo    getDataSetOpnStdCntrctInfo
+오퍼레이션 정보    오퍼레이션 설명    검색조건을 계약체결일자로 계약번호, 통합계약번호, 계약차수, 계약명, 업무구분명, 계약체결형태명, 계약체결방법명, 장기계속구분명, 공동계약여부, 계약체결일자, 계약기간, 계약금액 등 나라장터에 등록된 계약정보 조회    검색조건을 계약체결일자로 계약번호, 통합계약번호, 계약차수, 계약명, 업무구분명, 계약체결형태명, 계약체결방법명, 장기계속구분명, 공동계약여부, 계약체결일자, 계약기간, 계약금액 등 나라장터에 등록된 계약정보 조회    검색조건을 계약체결일자로 계약번호, 통합계약번호, 계약차수, 계약명, 업무구분명, 계약체결형태명, 계약체결방법명, 장기계속구분명, 공동계약여부, 계약체결일자, 계약기간, 계약금액 등 나라장터에 등록된 계약정보 조회    검색조건을 계약체결일자로 계약번호, 통합계약번호, 계약차수, 계약명, 업무구분명, 계약체결형태명, 계약체결방법명, 장기계속구분명, 공동계약여부, 계약체결일자, 계약기간, 계약금액 등 나라장터에 등록된 계약정보 조회
+오퍼레이션 정보    Call Back URL    N/A    N/A    N/A    N/A
+오퍼레이션 정보    최대 메시지 사이즈    [ 4000bytes]    [ 4000bytes]    [ 4000bytes]    [ 4000bytes]
+오퍼레이션 정보    평균 응답 시간    [     500    ms]    초당 최대 트랜잭션    초당 최대 트랜잭션    [     30    tps]
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+numOfRows    한 페이지 결과 수    4    1    10    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+ServiceKey    서비스키    400    1    공공데이터포털에서 받은 인증키    공공데이터포털에서 받은 인증키
+type    타입    4    0    json    오픈API 리턴 타입을 JSON으로 받고 싶을 경우 'json' 으로 지정
+cntrctCnclsBgnDate    계약체결시작일자    8    1    20250305    검색하고자하는 계약체결일자 시작 'YYYYMMDD' (계약체결일자 범위는 1주일 로 제한)
+cntrctCnclsEndDate    계약체결종료일자    8    1    20250305    검색하고자하는 계약체결일자 종료 'YYYYMMDD' (계약체결일자 범위는 1주일 로 제한)
+insttDivCd    기관구분값    1    0    1    검색하고자 하는 기관구분값 1인 경우 계약기관, 2인 경우 수요기관
+insttCd    기관코드    7    0    4490000    기관구분코드이 1 일경우 계약기관코드 / 기관구분코드 2일경우 수요기관코드
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메세지    50    1    정상    결과메세지
+numOfRows    한 페이지 결과 수    4    1    10    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+totalCount    전체 결과 수    4    1    1    전체 결과 수
+cntrctNo    계약번호    35    1    R25TA00247713    계약서를 식별하기 위한 관리번호
+untyCntrctNo    통합계약번호    13    0    R25TA00247713    조달청 나라장터g2b.go.kr)에서 조달청에서 발주하는 중앙조달과 자체조달기관에서 발생되는 자체조달 계약의 통합 관리를 위해 채번되는 번호
+cntrctOrd    계약차수    2    1    00    계약의 변경 시 변경된 차수
+cntrctNm    계약명    500    1    2025년 시내버스 노후LED 전광판 교체사업    공사명 또는 사업명이라고도 하며 계약내용을 요약한 이름
+bsnsDivNm    업무구분명    20    1    물품    입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자, 비축으로 구분함
+cntrctCnclsSttusNm    계약체결형태명    30    1    총액계약    계약체결형태를 구분하는 명 / *총액계약은 계약목적물 전체에 대하여 단가가 아닌 총액으로 체결하는 계약형태 / *단가계약은 수요 빈도가 많은 품목에 대하여 단가에 의해 예정수량을 명시하고 체결하는 계약형태, / *제3자단가계약은 각 수요기관에서 공통적으로 필요로 하는 수요물자를 계약시 미리 단가만을 정하여 계약을 체결하고 각 수요기관에서 직접 납품요구하여 구매하는 계약형태
+cntrctCnclsMthdNm    계약체결방법명    30    1    수의계약    계약체결의 방법을 구분하는 명 / *일반경쟁계약은 계약 대상 물품의 규격 및 시방서와 계약조건 등을 널리 공고하여 일정한 자격을 가진 불특정 다수인의 입찰희망자를 모두 경쟁 입찰하는 계약방법 / *제한경쟁계약은 일반·지명경쟁계약제도의 단점을 보완하기 위해 실적제한, 기술보유제한, 특정물품제한, 지역제한 등을 두는 계약방법 / *지명경쟁계약은 계약상대자의 신용과 실적 등에 있어 적당하다고 인정하는 특정 다수의 경쟁 참가자를 지명하여 계약 상대방을 결정하는 계약방법 / *수의계약은 계약상대자를 결정함에 있어 경쟁방법에 의하지 않고 특정인을 선정하여 계약하는 계약방법
+lngtrmCtnuDivNm    장기계속구분명    30    0    단년도계약    계약이행에 수년을 요하는 계약을 장기계속계약이라 하며 해당 계약이 단기계약인지 장기계속계약 또는 계속비계약인지를 구분하는 명
+cmmnCntrctYn    공동계약여부    1    0    N    공동계약의 경우 공사/제조 기타의 계약에 있어서 필요하다고 인정할 때 계약 상대자를 2인 이상과 체결하는 계약이며 단독계약은 계약상대자를 1인으로 하는 통상적인 계약을 의미함.
+cntrctCnclsDate    계약체결일자    10    1    2025-03-05    계약이 성립된 체결일자
+cntrctPrd    계약기간    70    1    2025.03.05.    계약의 효력이 있는 기간
+cntrctAmt    계약금액    25    1    214345450    당해연도계약의 경우 계약금액을 의미하며 장기계속계약의 경우 금차계약금액을 의미함(원화,원)
+ttalCntrctAmt    총계약금액    25    0    0    장기계속계약의 경우에만 발생되며 장기계속계약 전체 계약금액(총부기금액) 을 의미함(원화,원)
+cntrctInfoUrl    계약정보URL    500    0    https://www.g2b.go.kr/link/FIUA027_01/single/?ctrtNo=R25TA00348817& ctrtChgOrd=00& prcmBsneSeCd=조070001&srchName=ctrtCrst& openUrl=Y    계약정보를 인터넷상에서 확인할 수 있는 URL주소
+bidNtceNo    입찰공고번호    13    0    R25BK00646279    입찰공고 관리번호이며 조달청나라장터 공고건의 형식은 년도(4)+월(2)+순번(5)이며 자체전자조달시스템 보유기관은 각 기관별 형식 별도 사용 / *차세대나라장터 번호체계 개편 : 테스트여부(1)+년도(2)+번호구분(2)+순번(8) 총 13자리 구성 / (테스트여부 : T(모의)/R(실제), 번호구분 : BK(입찰공고번호)/TA(계약번호) 예시 : R24TA00000001 ☞ `24년 실제 계약번호이며 순번은 00000001)
+bidNtceOrd    입찰공고차수    3    0    000    입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수
+bidNtceNm    입찰공고명    1000    0    2025년 시내버스 노후LED 전광판 교체사업    공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름
+opengDate    개찰일자    10    0    2025-02-26    조달업체가 제출한 입찰서를 개찰하는 일자
+opengTm    개찰시각    5    0    15:00    조달업체가 제출한 입찰서를 개찰하는 시각
+rsrvtnPrce    예정가격    21    0    235387050    입찰 또는 계약 체결 전에 낙찰자 및 계약금액의 결정기준으로 삼기 위하여 미리 작성/비치하여 두는 가액
+prvtcntrctRsn    수의계약사유    1000    0    중소벤처기업부장관이 지정 공고한 물품 [지방계약법 022조 000항 010호 000목]    계약상대자를 결정함에 있어 경쟁입찰방법에 의하지 않고 특정인을 계약상대방으로 선정하여 계약을 체결 시 그 사유내용임[국가계약법 시행령 제26조, 지방계약법 시행령 제25조]
+bidNtceUrl    입찰공고URL    500    0    https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R25BK00646279&bidPbancOrd=000    해당 입찰공고를 인터넷상에서 확인할 수 있는 URL주소
+cntrctInsttDivNm    계약기관구분명    200    1    지방자치단체    계약기관이 국가기관인지 지자체인지 등을 구분하는 명
+cntrctInsttNm    계약기관명    200    1    충청남도 천안시    계약의 주체가 되는 기관의 명
+cntrctInsttCd    계약기관코드    7    0    4490000    계약의 주체가 되는 기관의 코드로 행정안전부에서 부여한 기관코드임
+cntrctInsttChrgDeptNm    계약기관담당부서명    100    0    천안시 회계과    계약기관의 담당 부서명
+cntrctInsttOfclNm    계약기관담당자명    100    0    홍길동    계약기관의 담당자 명
+cntrctInsttOfclTel    계약기관담당자전화번호    13    0    070-000-0000    계약기관의 담당자 전화번호
+cntrctInsttOfcl    계약기관담당자이메일주소    100    0    aa@b.co.kr    계약기관의 담당자 이메일주소
+dmndInsttDivNm    수요기관구분명    200    1    지방자치단체    수요기관이 국가기관인지 지자체인지 등을 구분하는 명
+dmndInsttNm    수요기관명    200    1    충청남도 천안시    중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음
+dmndInsttCd    수요기관코드    7    0    4490000    실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임
+dmndInsttOfclDeptNm    수요기관담당자부서명    100    0    천안시 회계과    수요기관의 계약을 담당하는 담당자의 명
+dmndInsttOfclNm    수요기관담당자명    35    0    홍이동    수요기관의 계약을 담당하는 담당부서의 명
+dmndInsttOfclTel    수요기관담당자전화번호    13    0    042-000-0000    수요기관의 계약을 담당하는 담당자의 전화번호
+dmndInsttOfclEmailAdrs    수요기관담당자이메일주소    100    0    abcd@korea.kr    수요기관의 계약을 담당하는 담당자의 이메일주소
+rprsntCorpNm    대표업체명    100    1    주식회사 티이케이    계약의 상대 중 대표가 되는 업체의 명
+dmstcCorpYn    국내업체여부    1    0    Y    계약 상대업체가 국내업체인지의 여부
+rprsntCorpCeoNm    대표업체대표자명    35    0    홍삼동    대표업체의 대표자 성명
+rprsntCorpOfclNm    대표업체담당자명    35    0    홍사동    대표업체의 담당자 명
+rprsntCorpBizrno    대표업체사업자등록번호    12    0    123-45-67890    대표업체의 사업자등록번호
+rprsntCorpAdrs    대표업체주소    200    0    충청남도 천안시 서북구 백석공단1로    대표업체의 사업장 주소
+rprsntCorpContactTel    대표업체연락전화번호    13    0    041-000-0000    대표업체의 연락 전화번호
+dataBssDate    데이터기준일자    10    1    2025-08-05    데이터 작성 기준일자
+REST(URI)
+http://apis.data.go.kr/1230000/ao/PubDataOpnStdService/getDataSetOpnStdCntrctInfo? numOfRows=10&pageNo=1&cntrctCnclsBgnDate=20250305&cntrctCnclsEndDate=20250305&ServiceKey=인증키
+응답 메시지
+<response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>정상</resultMsg> /     </header> /     <body> /         <items> /             <item> /                 <cntrctNo>R25TA00247713</cntrctNo> /                 <untyCntrctNo>R25TE01743533</untyCntrctNo> /                 <cntrctOrd>00</cntrctOrd> /                 <cntrctNm>2025년 시내버스 노후LED 전광판 교체사업</cntrctNm> /                 <bsnsDivNm>물품</bsnsDivNm> /                 <cntrctCnclsSttusNm>총액계약</cntrctCnclsSttusNm> /                 <cntrctCnclsMthdNm>지명경쟁</cntrctCnclsMthdNm> /                 <lngtrmCtnuDivNm>단년도계약</lngtrmCtnuDivNm> /                 <cmmnCntrctYn>N</cmmnCntrctYn> /                 <cntrctCnclsDate>2025-03-05</cntrctCnclsDate> /                 <cntrctPrd>2025.03.05.</cntrctPrd> /                 <cntrctAmt>214345450</cntrctAmt> /                 <ttalCntrctAmt></ttalCntrctAmt> /                 <cntrctInfoUrl>https://www.g2b.go.kr/link/FIUA027_01/single/?ctrtNo=R25TA00247713&ctrtChgOrd=00&prcmBsneSeCd=조070001&srchName=ctrtCrst&openUrl=Y</cntrctInfoUrl> /                 <bidNtceNo>R25BK00646279</bidNtceNo> /                 <bidNtceOrd>000</bidNtceOrd> /                 <bidNtceNm>2025년 시내버스 노후LED 전광판 교체사업</bidNtceNm> /                 <opengDate>2025-02-26</opengDate> /                 <opengTm>15:00</opengTm> /                 <rsrvtnPrce>235387050</rsrvtnPrce> /                 <prvtcntrctRsn>중소벤처기업부장관이 지정 공고한 물품 [지방계약법 022조 000항 010호 000목]</prvtcntrctRsn> /                 <bidNtceUrl>https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo=R25BK00646279& bidPbancOrd=000</bidNtceUrl> /                 <cntrctInsttDivNm>지방자치단체</cntrctInsttDivNm> /                 <cntrctInsttNm>충청남도 천안시</cntrctInsttNm> /                 <cntrctInsttCd>4490000</cntrctInsttCd> /                 <cntrctInsttChrgDeptNm>천안시 회계과</cntrctInsttChrgDeptNm> /                 <cntrctInsttOfclNm>안선후</cntrctInsttOfclNm> /                 <cntrctInsttOfclTel>0415215289</cntrctInsttOfclTel> /                 <cntrctInsttOfcl>cact@korea.kr</cntrctInsttOfcl> /                 <dmndInsttDivNm>지방자치단체</dmndInsttDivNm> /                 <dmndInsttNm>충청남도 천안시</dmndInsttNm> /                 <dmndInsttCd>4490000</dmndInsttCd> /                 <dmndInsttOfclDeptNm>천안시 회계과</dmndInsttOfclDeptNm> /                 <dmndInsttOfclNm>안선후</dmndInsttOfclNm> /                 <dmndInsttOfclTel>0415215289</dmndInsttOfclTel> /                 <dmndInsttOfclEmailAdrs>cact@korea.kr</dmndInsttOfclEmailAdrs> /                 <rprsntCorpNm>주식회사 티이케이</rprsntCorpNm> /                 <dmstcCorpYn>Y</dmstcCorpYn> /                 <rprsntCorpCeoNm>윤민아</rprsntCorpCeoNm> /                 <rprsntCorpOfclNm>윤민아</rprsntCorpOfclNm> /                 <rprsntCorpBizrno>783-81-03488</rprsntCorpBizrno> /                 <rprsntCorpAdrs>충청남도 천안시 서북구 백석공단1로</rprsntCorpAdrs> /                 <rprsntCorpContactTel>0419065360</rprsntCorpContactTel> /                 <dataBssDate>2025-08-05</dataBssDate> /             </item> /         </items> /         <numOfRows>10</numOfRows> /         <pageNo>1</pageNo> /         <totalCount>8302</totalCount> /     </body> / </response>
+Code    코드값    설명    조치방안
+01    Application Error    제공기관 서비스 제공 상태가 원할하지 않습니다.    서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+02    DB Error    제공기관 서비스 제공 상태가 원할하지 않습니다.    서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+03    No Data    데이터 없음 에러
+04    HTTP Error    제공기관 서비스 제공 상태가 원할하지 않습니다.    서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+05    service time out    제공기관 서비스 제공 상태가 원할하지 않습니다    서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+06    날짜Format 에러    날짜 Default, Format Error    날짜형식을 확인 하시기 바랍니다.
+07    입력범위값 초과 에러    요청하신 OpenAPI의 파라미터 입력값 범위가 초과 되었습니다.    기술문서를 다시 한번 확인하여 주시기 바랍니다.
+08    필수값 입력 에러    요청하신 OpenAPI의 필수 파라미터가 누락되었습니다.    기술문서를 다시 한번 확인하여 주시기 바랍니다.
+10    잘못된 요청 파라미터 에러    OpenAPI 요청시 ServiceKey 파라미터가 없음    -OpenAPI 요청시 ServiceKey 파라미터가 누락되었습니다. / -OpenAPI 요청 URL을 확인하시기 바랍니다.
+11    필수 요청 파라미터가 없음    요청하신 OpenAPI의 필수 파라미터가 누락되었습니다.    기술문서를 다시 한번 확인하시어 주시기 바랍니다.
+12    해당 오픈API 서비스가 없거나 폐기됨    OpenAPI 호출시 URL이 잘못됨    -제공기관 관리자에게 폐기된 서비스인지 확인바랍니다. / 폐기된 서비스가 아니면 개발가이드에서 OpenAPI요청 URL을 다시 확인하시기 바랍니다.
+20    서비스 접근 거부    활용승인이 되지 않은 OpenAPI호출    -OpenAPI활용신청정보의 승인상태를 확인하시기 바랍니다. / -활용신청에 대해 제공기관 담당자가 확인 후 '승인'이후 부터 사용할 수 있습니다. / -신청 후 2~3일 소요되고 결과는 회원가입 시 등록한 e-mail로 발송됩니다.
+22    서비스 요청 제한 횟수 초과 에러    일일 활용건수가 초과함(활용건수 증가 필요)    -OpenAPI활용신청정보의 서비스 상세기능별 일일 트래픽량을 확인하시기 바랍니다. / -개발계정의 경우 제공기관에서 정의한 트래픽을 초과하여 활용할 수 없습니다. / -운영계정의 경우 변경신청을 통해서 일일트래픽량을 변경 할 수 있습니다.
+30    등록되지 않은 서비스 키    잘못된 서비스키를 사용하였거나 서비스키를 URL인코딩하지 않음    -OpenAPI활용신청정보의 발급받은 서비스키를 다시 확인하시기 바랍니다. / - 서비스키 값이 같다면 서비스키가 URL 인코등 되었는지 다시 확인하시기 바랍니다.
+31    기한 만료된 서비스 키    OpenAPI 사용기간이 만료됨 / (활용연장신청 후 사용가능)    -OpenAPI 활용신청정보의 활용기간을 확인합니다. / -활용기간이 지난 서비스는 이용할 수 없으며 연장신청을 통해 승인 받은 후 다시 이용가능 합니다.
+32    등록되지 않은 도메인명 또는 IP주소    활용신청한 서버의 IP와 실제 OpenAPI호출한 서버가 다를 경우    -OpenAPI 활용신청정보의 등록된 도메인명이나 IP주소를 다시 확인합니다. / -IP나 도메인의 정보를 변경하기 위해 변경신청을 할 수 있습니다.

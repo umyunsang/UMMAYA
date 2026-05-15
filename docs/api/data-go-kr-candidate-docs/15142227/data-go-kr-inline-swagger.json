@@ -1,0 +1,549 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "이 데이터는 해양수산부 국립해양조사원에서 해양수치예측모델(ROMS; Regional Oceanic Modeling System) 기반 해양환경 변화 예측값 정보를 제공하기 위해 제작되었습니다.\\n검색 대상 영역의 최대/최저 위·경도 등 값을 파라미터로 데이터를 조회할 수 있으며, 본 데이터의 주요 내용은 예측일, 예측시간, 예측지점의 위도, 경도 및 예측된 표층 유향과 유속, 수온 정보로 구성되어 있습니다.\\n본 데이터는 관계 기관에서 시계열 분석 기반 해양 환경 모니터링, 해양 재난 대비, 해양 연구 및 교육활동 수행 등을 위한 기초 자료로 활용될 수 있습니다.",
+    "version": "1.0.0",
+    "title": "해양수산부 국립해양조사원_ROMS 수치예측모델 조회"
+  },
+  "host": "apis.data.go.kr/1192136/roms",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/GetRomsApiService": {
+      "get": {
+        "responses": {
+          "3": {
+            "description": "데이터없음 에러"
+          },
+          "10": {
+            "description": "잘못된 요청 파라메터 에러"
+          },
+          "11": {
+            "description": "필수요청 파라메터가 없음"
+          },
+          "99": {
+            "description": "기타에러"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "응답 메시지 코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "응답 메시지 내용",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "데이터 타입",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "정보 목록",
+                      "properties": {
+                        "item": {
+                          "type": "array",
+                          "description": "item",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "crdir": {
+                                "type": "number",
+                                "description": "유향",
+                                "properties": {}
+                              },
+                              "crsp": {
+                                "type": "number",
+                                "description": "유속",
+                                "properties": {}
+                              },
+                              "wtem": {
+                                "type": "number",
+                                "description": "수온",
+                                "properties": {}
+                              },
+                              "predcDt": {
+                                "type": "string",
+                                "description": "예측일시",
+                                "properties": {}
+                              },
+                              "lat": {
+                                "type": "number",
+                                "description": "위도",
+                                "properties": {}
+                              },
+                              "lot": {
+                                "type": "number",
+                                "description": "경도",
+                                "properties": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                      "description": "응답 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "integer",
+                      "description": "페이지 번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "integer",
+                      "description": "한 페이지당 데이터 갯수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "ROMS 수치예측모델",
+        "description": "요청받은 좌표와 가장 가까운 예측점의 예측 수온(72시간)과 예측 유향 유속(148시간) 정보를 제공하는 ROMS 수치예측모델 API 서비스",
+        "operationId": "GetRomsApiService",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "type",
+          "description": "json/xml 중 택 1",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "ymin",
+          "description": "최저위도",
+          "type": "number",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "ymax",
+          "description": "최고위도",
+          "type": "number",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "xmin",
+          "description": "최저경도",
+          "type": "number",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "xmax",
+          "description": "최고경도",
+          "type": "number",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 번호 기본값: 1",
+          "type": "integer",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지당 데이터 개수 기본값: 10, 최대값: 300",
+          "type": "integer",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "include",
+          "description": "출력하고자 하는 항목명 (ex lat,lot)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "exclude",
+          "description": "출력 제외하고자하는 항목명 (ex lat,lot)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "GetRomsApiService_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "응답 메시지 코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "응답 메시지 내용"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "데이터 타입"
+            },
+            "items": {
+              "type": "object",
+              "description": "정보 목록",
+              "properties": {
+                "item": {
+                  "type": "array",
+                  "description": "item",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "crdir": {
+                        "type": "number",
+                        "description": "유향"
+                      },
+                      "crsp": {
+                        "type": "number",
+                        "description": "유속"
+                      },
+                      "wtem": {
+                        "type": "number",
+                        "description": "수온"
+                      },
+                      "predcDt": {
+                        "type": "string",
+                        "description": "예측일시"
+                      },
+                      "lat": {
+                        "type": "number",
+                        "description": "위도"
+                      },
+                      "lot": {
+                        "type": "number",
+                        "description": "경도"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "integer",
+              "description": "응답 결과 수"
+            },
+            "pageNo": {
+              "type": "integer",
+              "description": "페이지 번호"
+            },
+            "numOfRows": {
+              "type": "integer",
+              "description": "한 페이지당 데이터 갯수"
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "https://www.khoa.go.kr/oceandata/odmiapi/GetRomsApiService.do",
+      "oprtinNm": "ROMS 수치예측모델",
+      "oprtinDc": "요청받은 좌표와 가장 가까운 예측점의 예측 수온(72시간)과 예측 유향 유속(148시간) 정보를 제공하는 ROMS 수치예측모델 API 서비스",
+      "gwSvcNm": "GetRomsApiService",
+      "operationId": "GetRomsApiService",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "serviceKey",
+          "paramtrDc": "공공데이터포털에서 발급받은 인증키",
+          "paramtrBassValue": "인증키(URLEncode)",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "type",
+          "paramtrDc": "json/xml 중 택 1",
+          "paramtrBassValue": "json",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "ymin",
+          "paramtrDc": "최저위도",
+          "paramtrBassValue": "39.59335",
+          "paramtrTy": "number",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "ymax",
+          "paramtrDc": "최고위도",
+          "paramtrBassValue": "40.19335",
+          "paramtrTy": "number",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "xmin",
+          "paramtrDc": "최저경도",
+          "paramtrBassValue": "127",
+          "paramtrTy": "number",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "xmax",
+          "paramtrDc": "최고경도",
+          "paramtrBassValue": "128",
+          "paramtrTy": "number",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "pageNo",
+          "paramtrDc": "페이지 번호 기본값: 1",
+          "paramtrBassValue": "1",
+          "paramtrTy": "integer",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "numOfRows",
+          "paramtrDc": "한 페이지당 데이터 개수 기본값: 10, 최대값: 300",
+          "paramtrBassValue": "10",
+          "paramtrTy": "integer",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "include",
+          "paramtrDc": "출력하고자 하는 항목명 (ex lat,lot)",
+          "paramtrBassValue": "",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "exclude",
+          "paramtrDc": "출력 제외하고자하는 항목명 (ex lat,lot)",
+          "paramtrBassValue": "",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/oper-1-header",
+          "subDefNm": "oper-1-header",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "resultCode",
+              "paramtrDc": "응답 메시지 코드",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "resultMsg",
+              "paramtrDc": "응답 메시지 내용",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/oper-1-body",
+          "subDefNm": "oper-1-body",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "type",
+              "paramtrDc": "데이터 타입",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "items",
+              "paramtrDc": "정보 목록",
+              "arrayYn": "N",
+              "paramtrDefNm": "#/definitions/oper-1-items",
+              "subDefNm": "oper-1-items",
+              "paramtrTy": "object",
+              "paramtrDivision": "필수",
+              "ck": true,
+              "subParam": [
+                {
+                  "paramtrNm": "item",
+                  "paramtrDc": "item",
+                  "arrayYn": "Y",
+                  "paramtrDefNm": "#/definitions/oper-1-item",
+                  "subDefNm": "oper-1-item",
+                  "paramtrTy": "object",
+                  "paramtrDivision": "필수",
+                  "ck": true,
+                  "subParam": [
+                    {
+                      "paramtrNm": "crdir",
+                      "paramtrDc": "유향",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "number",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "crsp",
+                      "paramtrDc": "유속",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "number",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "wtem",
+                      "paramtrDc": "수온",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "number",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "predcDt",
+                      "paramtrDc": "예측일시",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lat",
+                      "paramtrDc": "위도",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "number",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lot",
+                      "paramtrDc": "경도",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "number",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "paramtrNm": "totalCount",
+              "paramtrDc": "응답 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "integer",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "pageNo",
+              "paramtrDc": "페이지 번호",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "integer",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "numOfRows",
+              "paramtrDc": "한 페이지당 데이터 갯수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "integer",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

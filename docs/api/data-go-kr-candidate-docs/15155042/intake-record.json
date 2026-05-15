@@ -1,0 +1,19 @@
+{
+  "id": "15155042",
+  "url": "https://www.data.go.kr/data/15155042/openapi.do",
+  "source_kind": "category",
+  "source_value": "공공질서및안전 - 안전관리",
+  "category": "공공질서및안전 - 안전관리",
+  "provider_type": "central_government",
+  "org": "행정안전부",
+  "department": "지역디지털협력과",
+  "title_hint": "행정안전부_CCTV정보 조회서비스",
+  "og_title": "행정안전부_CCTV정보 조회서비스",
+  "og_description": "CCTV정보 데이터는 교통정보, 범죄예방 등의 공공목적용으로 실외에 설치된 CCTV 데이터로 관리기관명, 설치위치, 설치목적, 카메라대수 등의 데이터로 설치목적 구분, 소재지 주소 및 위·경도 기반 위치 정보와 함께 카메라 대수, 화소수, 촬영방면 등 장비 특성 정보와 설치연월, 관리기관명·연락처 등 관리 정보를 제공합니다.",
+  "swagger_url": "",
+  "has_inline_swagger": true,
+  "downloaded_docs": [
+    "개방자치단체코드_영업상태코드.xlsx",
+    "개방자치단체코드_영업상태코드.xlsx.txt"
+  ]
+}

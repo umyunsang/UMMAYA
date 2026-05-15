@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "대구광역시_수질정보 조회 서비스_GW",
+  "description": "대구광역시상수도사업본부 수질정보(수질통계)를 조회하기 위한 서비스로 수질정보(수질통계)를 조회할 수 있습니다. 수질정보조회 서비스 API는 대구광역시 상수도사업본부에서 제공하는 공공데이터 API로, 사용자가 연도를 입력하면 해당 연도의 1월부터 12월까지 월별 수질 측정 정보를 조회할 수 있습니다. 제공되는 수질 항목은 탁도, pH, 잔류염소이며, 매곡, 문산, 공산, 고산, 가창 등 대구 지역 주요 정수장의 데이터를 포함합니다. 이 API는 수돗물의 수질 변화 추이 분석, 정수장별 수질 관리 현황 파악, 시민 대상 수질 정보 제공 서비스 구축 등에 활용될 수 있으며, 상수도 품질 관리 및 환경 모니터링에 중요한 자료를 제공합니다.",
+  "url": "https://data.go.kr/data/15158980/openapi.do",
+  "keywords": [
+    "대구,상수도,수질,수질통계,수질측정정보"
+  ],
+  "license": "https://data.go.kr/ugs/selectPortalPolicyView.do",
+  "creator": {
+    "@type": "Organization",
+    "name": "대구광역시",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "상수도사업본부",
+      "telephone": "+82-0536702165"
+    }
+  },
+  "dateCreated": "2014-05-15",
+  "dateModified": "2026-05-13",
+  "datePublished": "2014-05-15",
+  "includedInDataCatalog": {
+    "@type": "DataCatalog",
+    "name": "data.go.kr"
+  },
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "JSON",
+      "contentUrl": "https://data.go.kr/data/15158980/openapi.do"
+    }
+  ],
+  "datasetTimeInterval": "실시간"
+}

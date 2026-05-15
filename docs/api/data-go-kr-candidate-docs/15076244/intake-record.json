@@ -1,0 +1,19 @@
+{
+  "id": "15076244",
+  "url": "https://www.data.go.kr/data/15076244/openapi.do",
+  "source_kind": "category",
+  "source_value": "통일·외교 - 외교",
+  "category": "통일·외교 - 외교",
+  "provider_type": "central_government",
+  "org": "외교부",
+  "department": "기획조정실 정보화담당관",
+  "title_hint": "외교부_국가∙지역별 특별여행주의보",
+  "og_title": "외교부_국가∙지역별 특별여행주의보",
+  "og_description": "한글 국가명 또는 ISO국가코드를 이용하여 외교부가 지정하는 특별여행주의보 대상 국가·지역 목록과 상세정보를 조회하는 API 서비스입니다.",
+  "swagger_url": "",
+  "has_inline_swagger": true,
+  "downloaded_docs": [
+    "외교부_기술문서_특별여행주의보_v1.docx",
+    "외교부_기술문서_특별여행주의보_v1.docx.txt"
+  ]
+}

@@ -1,0 +1,853 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "CCTV정보 데이터는 교통정보, 범죄예방 등의 공공목적용으로 실외에 설치된 CCTV 데이터로 관리기관명, 설치위치, 설치목적, 카메라대수 등의 데이터로 설치목적 구분, 소재지 주소 및 위·경도 기반 위치 정보와 함께 카메라 대수, 화소수, 촬영방면 등 장비 특성 정보와 설치연월, 관리기관명·연락처 등 관리 정보를 제공합니다.\\r\\n- 공공데이터 제공 표준 기준, 전국 자치단체에서 관리하는 CCTV 정보를 일괄 취합하여 전국 데이터로 제공 \\r\\n- 자료는 동일한 서식과 용어로 정리하여 CCTV정보를 일관되게 안내\\r\\n- 해당 데이터에 대한 추가적인 자료 요청시 지자체 및 소관기관 담당자에게 문의\\r\\n- 해당 데이터 법령 소관기관 및 문의처 : 개인정보보호위원회 신기술개인정보과 / 02-2100-3064\\r\\n * 좌표계 : WGS(World Geodetic System)84 위경도좌표계 사용",
+    "version": "1.0.0",
+    "title": "행정안전부_CCTV정보 조회서비스"
+  },
+  "host": "apis.data.go.kr/1741000/cctv_info",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/info": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "response": {
+                  "type": "object",
+                  "description": "response",
+                  "properties": {
+                    "header": {
+                      "type": "object",
+                      "description": "응답 데이터의 헤더",
+                      "properties": {
+                        "resultCode": {
+                          "type": "string",
+                          "description": "응답의 결과 코드",
+                          "properties": {}
+                        },
+                        "resultMsg": {
+                          "type": "string",
+                          "description": "응답의 결과 메세지",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "body": {
+                      "type": "object",
+                      "description": "응답 데이터의 바디",
+                      "properties": {
+                        "items": {
+                          "type": "object",
+                          "description": "items",
+                          "properties": {
+                            "item": {
+                              "type": "array",
+                              "description": "item",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "INSTL_PRPS_SE_NM": {
+                                    "type": "string",
+                                    "description": "설치목적구분",
+                                    "properties": {}
+                                  },
+                                  "OPN_ATMY_GRP_CD": {
+                                    "type": "string",
+                                    "description": "개방자치단체코드",
+                                    "properties": {}
+                                  },
+                                  "MNG_NO": {
+                                    "type": "string",
+                                    "description": "관리번호",
+                                    "properties": {}
+                                  },
+                                  "MNG_INST_NM": {
+                                    "type": "string",
+                                    "description": "관리기관명",
+                                    "properties": {}
+                                  },
+                                  "LCTN_ROAD_NM_ADDR": {
+                                    "type": "string",
+                                    "description": "소재지도로명주소",
+                                    "properties": {}
+                                  },
+                                  "LCTN_LOTNO_ADDR": {
+                                    "type": "string",
+                                    "description": "소재지지번주소",
+                                    "properties": {}
+                                  },
+                                  "CAM_CNTOM": {
+                                    "type": "string",
+                                    "description": "카메라대수",
+                                    "properties": {}
+                                  },
+                                  "CAM_PIXEL_CNT": {
+                                    "type": "string",
+                                    "description": "카메라화소수",
+                                    "properties": {}
+                                  },
+                                  "SHT_ANGLE_INFO": {
+                                    "type": "string",
+                                    "description": "촬영방면정보",
+                                    "properties": {}
+                                  },
+                                  "KPNG_DAY_CNT": {
+                                    "type": "string",
+                                    "description": "보관일수",
+                                    "properties": {}
+                                  },
+                                  "INSTL_YM": {
+                                    "type": "string",
+                                    "description": "설치연월",
+                                    "properties": {}
+                                  },
+                                  "MNG_INST_TELNO": {
+                                    "type": "string",
+                                    "description": "관리기관전화번호",
+                                    "properties": {}
+                                  },
+                                  "WGS84_LAT": {
+                                    "type": "string",
+                                    "description": "WGS84위도",
+                                    "properties": {}
+                                  },
+                                  "WGS84_LOT": {
+                                    "type": "string",
+                                    "description": "WGS84경도",
+                                    "properties": {}
+                                  },
+                                  "DAT_CRTR_YMD": {
+                                    "type": "string",
+                                    "description": "데이터 기준일자(YYYYMMDD)",
+                                    "properties": {}
+                                  },
+                                  "LAST_MDFCN_PNT": {
+                                    "type": "string",
+                                    "description": "최종수정시점(YYYYMMDDHHMMSS)",
+                                    "properties": {}
+                                  },
+                                  "DAT_UPDT_PNT": {
+                                    "type": "string",
+                                    "description": "데이터갱신시점(YYYYMMDDHHMMSS)",
+                                    "properties": {}
+                                  },
+                                  "DAT_UPDT_SE": {
+                                    "type": "string",
+                                    "description": "데이터갱신구분",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "dataType": {
+                          "type": "string",
+                          "description": "응답의 데이터 타입",
+                          "properties": {}
+                        },
+                        "numOfRows": {
+                          "type": "integer",
+                          "description": "한 페이지 결과 수",
+                          "properties": {}
+                        },
+                        "pageNo": {
+                          "type": "integer",
+                          "description": "페이지번호",
+                          "properties": {}
+                        },
+                        "totalCount": {
+                          "type": "integer",
+                          "description": "응답 데이터의 수",
+                          "properties": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "-3": {
+            "description": "등록되지 않은 서비스 입니다."
+          },
+          "-4": {
+            "description": "등록되지 않은 인증키 입니다."
+          },
+          "-5": {
+            "description": "API 서버 오류가 발생하였습니다."
+          },
+          "-9": {
+            "description": "종료된 서비스 입니다."
+          },
+          "-10": {
+            "description": "트래픽 허용 횟수를 초과하였습니다."
+          },
+          "-11": {
+            "description": "필수 파라미터가 입력되지 않았습니다."
+          },
+          "-999": {
+            "description": "UNKNOWN"
+          },
+          "-1": {
+            "description": "시스템 내부 오류가 발생하였습니다."
+          },
+          "-2": {
+            "description": "요청하신 파라미터가 적합하지 않습니다."
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "CCTV정보 데이터 조회",
+        "description": "CCTV정보 데이터를 조회 하기 위한 오퍼레이션 입니다.<br/>해당 데이터는 매일 갱신되는 데이터로 2일전 기준으로 현행화 됩니다.",
+        "operationId": "info",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수(max: 100)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "returnType",
+          "description": "응답의 데이터 타입",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_UPDT_PNT::GTE]",
+          "description": "데이터갱신시점 이상의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_UPDT_PNT::LT]",
+          "description": "데이터갱신시점 미만의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[LCTN_ROAD_NM_ADDR::LIKE]",
+          "description": "소재지도로명주소 을(를) 포함하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[INSTL_YM::GTE]",
+          "description": "설치연월 이상의 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[OPN_ATMY_GRP_CD::EQ]",
+          "description": "개방자치단체코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_CRTR_YMD::GTE]",
+          "description": "데이터기준일자 이상의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_CRTR_YMD::LT]",
+          "description": "데이터기준일자 미만의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/history": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "response": {
+                  "type": "object",
+                  "description": "response",
+                  "properties": {
+                    "header": {
+                      "type": "object",
+                      "description": "응답 데이터의 헤더",
+                      "properties": {
+                        "resultCode": {
+                          "type": "string",
+                          "description": "응답의 결과 코드",
+                          "properties": {}
+                        },
+                        "resultMsg": {
+                          "type": "string",
+                          "description": "응답의 결과 메세지",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "body": {
+                      "type": "object",
+                      "description": "응답 데이터의 바디",
+                      "properties": {
+                        "dataType": {
+                          "type": "string",
+                          "description": "응답의 데이터 타입",
+                          "properties": {}
+                        },
+                        "numOfRows": {
+                          "type": "integer",
+                          "description": "한 페이지 결과 수",
+                          "properties": {}
+                        },
+                        "pageNo": {
+                          "type": "integer",
+                          "description": "페이지번호",
+                          "properties": {}
+                        },
+                        "totalCount": {
+                          "type": "integer",
+                          "description": "응답 데이터의 수",
+                          "properties": {}
+                        },
+                        "items": {
+                          "type": "object",
+                          "description": "items",
+                          "properties": {
+                            "item": {
+                              "type": "array",
+                              "description": "item",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "OPN_ATMY_GRP_CD": {
+                                    "type": "string",
+                                    "description": "개방자치단체코드",
+                                    "properties": {}
+                                  },
+                                  "MNG_NO": {
+                                    "type": "string",
+                                    "description": "관리번호",
+                                    "properties": {}
+                                  },
+                                  "MNG_INST_NM": {
+                                    "type": "string",
+                                    "description": "관리기관명",
+                                    "properties": {}
+                                  },
+                                  "LCTN_ROAD_NM_ADDR": {
+                                    "type": "string",
+                                    "description": "소재지도로명주소",
+                                    "properties": {}
+                                  },
+                                  "LCTN_LOTNO_ADDR": {
+                                    "type": "string",
+                                    "description": "소재지지번주소",
+                                    "properties": {}
+                                  },
+                                  "INSTL_PRPS_SE": {
+                                    "type": "string",
+                                    "description": "설치목적구분",
+                                    "properties": {}
+                                  },
+                                  "CAM_CNTOM": {
+                                    "type": "string",
+                                    "description": "카메라대수",
+                                    "properties": {}
+                                  },
+                                  "CAM_PIXEL_CNT": {
+                                    "type": "string",
+                                    "description": "카메라화소수",
+                                    "properties": {}
+                                  },
+                                  "SHT_ANGLE_INFO": {
+                                    "type": "string",
+                                    "description": "촬영방면정보",
+                                    "properties": {}
+                                  },
+                                  "KPNG_DAY_CNT": {
+                                    "type": "string",
+                                    "description": "보관일수",
+                                    "properties": {}
+                                  },
+                                  "INSTL_YM": {
+                                    "type": "string",
+                                    "description": "설치연월",
+                                    "properties": {}
+                                  },
+                                  "MNG_INST_TELNO": {
+                                    "type": "string",
+                                    "description": "관리기관전화번호",
+                                    "properties": {}
+                                  },
+                                  "WGS84_LAT": {
+                                    "type": "string",
+                                    "description": "WGS84위도",
+                                    "properties": {}
+                                  },
+                                  "WGS84_LOT": {
+                                    "type": "string",
+                                    "description": "WGS84경도",
+                                    "properties": {}
+                                  },
+                                  "DAT_CRTR_YMD": {
+                                    "type": "string",
+                                    "description": "데이터기준일자",
+                                    "properties": {}
+                                  },
+                                  "LAST_MDFCN_PNT": {
+                                    "type": "string",
+                                    "description": "최종수정시점",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "-1": {
+            "description": "시스템 내부 오류가 발생하였습니다."
+          },
+          "-2": {
+            "description": "요청하신 파라미터가 적합하지 않습니다."
+          },
+          "-3": {
+            "description": "등록되지 않은 서비스 입니다."
+          },
+          "-4": {
+            "description": "등록되지 않은 인증키 입니다."
+          },
+          "-5": {
+            "description": "API 서버 오류가 발생하였습니다."
+          },
+          "-9": {
+            "description": "종료된 서비스 입니다."
+          },
+          "-10": {
+            "description": "트래픽 허용 횟수를 초과하였습니다."
+          },
+          "-11": {
+            "description": "필수 파라미터가 입력되지 않았습니다."
+          },
+          "-999": {
+            "description": "UNKNOWN"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "CCTV정보 데이터 이력조회",
+        "description": "CCTV정보 데이터의 이력을 조회하기 위한 오퍼레이션 입니다.입력한 데이터기준일자를 기준으로 과거시점에 개방되었던 데이터를 조회할 수 있습니다.데이터기준일자는 2026.01.01부터 조회일 전일까지 입력 가능합니다.",
+        "operationId": "history",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수(max: 100)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "returnType",
+          "description": "응답의 데이터 타입",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[BASE_DATE::EQ]",
+          "description": "데이터기준일자(YYYYMMDD) 미만의 값(해당 일자기준의 상태값을 확인할 수 있습니다.)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "cond[OPN_ATMY_GRP_CD::EQ]",
+          "description": "개방자치단체코드",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_CRTR_YMD::GTE]",
+          "description": "데이터작성기준일자 이상의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_CRTR_YMD::LT]",
+          "description": "데이터작성기준일자 미만의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[LAST_MDFCN_PNT::GTE]",
+          "description": "최종수정시점 이상의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[LAST_MDFCN_PNT::LT]",
+          "description": "최종수정시점 미만의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[LCTN_ROAD_NM_ADDR::LIKE]",
+          "description": "소재지도로명주소 을(를) 포함하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[INSTL_YM::GTE]",
+          "description": "설치연월 이상의 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "info_response": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "type": "object",
+          "description": "response",
+          "properties": {
+            "header": {
+              "type": "object",
+              "description": "응답 데이터의 헤더",
+              "properties": {
+                "resultCode": {
+                  "type": "string",
+                  "description": "응답의 결과 코드"
+                },
+                "resultMsg": {
+                  "type": "string",
+                  "description": "응답의 결과 메세지"
+                }
+              }
+            },
+            "body": {
+              "type": "object",
+              "description": "응답 데이터의 바디",
+              "properties": {
+                "items": {
+                  "type": "object",
+                  "description": "items",
+                  "properties": {
+                    "item": {
+                      "type": "array",
+                      "description": "item",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "INSTL_PRPS_SE_NM": {
+                            "type": "string",
+                            "description": "설치목적구분"
+                          },
+                          "OPN_ATMY_GRP_CD": {
+                            "type": "string",
+                            "description": "개방자치단체코드"
+                          },
+                          "MNG_NO": {
+                            "type": "string",
+                            "description": "관리번호"
+                          },
+                          "MNG_INST_NM": {
+                            "type": "string",
+                            "description": "관리기관명"
+                          },
+                          "LCTN_ROAD_NM_ADDR": {
+                            "type": "string",
+                            "description": "소재지도로명주소"
+                          },
+                          "LCTN_LOTNO_ADDR": {
+                            "type": "string",
+                            "description": "소재지지번주소"
+                          },
+                          "CAM_CNTOM": {
+                            "type": "string",
+                            "description": "카메라대수"
+                          },
+                          "CAM_PIXEL_CNT": {
+                            "type": "string",
+                            "description": "카메라화소수"
+                          },
+                          "SHT_ANGLE_INFO": {
+                            "type": "string",
+                            "description": "촬영방면정보"
+                          },
+                          "KPNG_DAY_CNT": {
+                            "type": "string",
+                            "description": "보관일수"
+                          },
+                          "INSTL_YM": {
+                            "type": "string",
+                            "description": "설치연월"
+                          },
+                          "MNG_INST_TELNO": {
+                            "type": "string",
+                            "description": "관리기관전화번호"
+                          },
+                          "WGS84_LAT": {
+                            "type": "string",
+                            "description": "WGS84위도"
+                          },
+                          "WGS84_LOT": {
+                            "type": "string",
+                            "description": "WGS84경도"
+                          },
+                          "DAT_CRTR_YMD": {
+                            "type": "string",
+                            "description": "데이터 기준일자(YYYYMMDD)"
+                          },
+                          "LAST_MDFCN_PNT": {
+                            "type": "string",
+                            "description": "최종수정시점(YYYYMMDDHHMMSS)"
+                          },
+                          "DAT_UPDT_PNT": {
+                            "type": "string",
+                            "description": "데이터갱신시점(YYYYMMDDHHMMSS)"
+                          },
+                          "DAT_UPDT_SE": {
+                            "type": "string",
+                            "description": "데이터갱신구분"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "dataType": {
+                  "type": "string",
+                  "description": "응답의 데이터 타입"
+                },
+                "numOfRows": {
+                  "type": "integer",
+                  "description": "한 페이지 결과 수"
+                },
+                "pageNo": {
+                  "type": "integer",
+                  "description": "페이지번호"
+                },
+                "totalCount": {
+                  "type": "integer",
+                  "description": "응답 데이터의 수"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "history_response": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "type": "object",
+          "description": "response",
+          "properties": {
+            "header": {
+              "type": "object",
+              "description": "응답 데이터의 헤더",
+              "properties": {
+                "resultCode": {
+                  "type": "string",
+                  "description": "응답의 결과 코드"
+                },
+                "resultMsg": {
+                  "type": "string",
+                  "description": "응답의 결과 메세지"
+                }
+              }
+            },
+            "body": {
+              "type": "object",
+              "description": "응답 데이터의 바디",
+              "properties": {
+                "dataType": {
+                  "type": "string",
+                  "description": "응답의 데이터 타입"
+                },
+                "numOfRows": {
+                  "type": "integer",
+                  "description": "한 페이지 결과 수"
+                },
+                "pageNo": {
+                  "type": "integer",
+                  "description": "페이지번호"
+                },
+                "totalCount": {
+                  "type": "integer",
+                  "description": "응답 데이터의 수"
+                },
+                "items": {
+                  "type": "object",
+                  "description": "items",
+                  "properties": {
+                    "item": {
+                      "type": "array",
+                      "description": "item",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "OPN_ATMY_GRP_CD": {
+                            "type": "string",
+                            "description": "개방자치단체코드"
+                          },
+                          "MNG_NO": {
+                            "type": "string",
+                            "description": "관리번호"
+                          },
+                          "MNG_INST_NM": {
+                            "type": "string",
+                            "description": "관리기관명"
+                          },
+                          "LCTN_ROAD_NM_ADDR": {
+                            "type": "string",
+                            "description": "소재지도로명주소"
+                          },
+                          "LCTN_LOTNO_ADDR": {
+                            "type": "string",
+                            "description": "소재지지번주소"
+                          },
+                          "INSTL_PRPS_SE": {
+                            "type": "string",
+                            "description": "설치목적구분"
+                          },
+                          "CAM_CNTOM": {
+                            "type": "string",
+                            "description": "카메라대수"
+                          },
+                          "CAM_PIXEL_CNT": {
+                            "type": "string",
+                            "description": "카메라화소수"
+                          },
+                          "SHT_ANGLE_INFO": {
+                            "type": "string",
+                            "description": "촬영방면정보"
+                          },
+                          "KPNG_DAY_CNT": {
+                            "type": "string",
+                            "description": "보관일수"
+                          },
+                          "INSTL_YM": {
+                            "type": "string",
+                            "description": "설치연월"
+                          },
+                          "MNG_INST_TELNO": {
+                            "type": "string",
+                            "description": "관리기관전화번호"
+                          },
+                          "WGS84_LAT": {
+                            "type": "string",
+                            "description": "WGS84위도"
+                          },
+                          "WGS84_LOT": {
+                            "type": "string",
+                            "description": "WGS84경도"
+                          },
+                          "DAT_CRTR_YMD": {
+                            "type": "string",
+                            "description": "데이터기준일자"
+                          },
+                          "LAST_MDFCN_PNT": {
+                            "type": "string",
+                            "description": "최종수정시점"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

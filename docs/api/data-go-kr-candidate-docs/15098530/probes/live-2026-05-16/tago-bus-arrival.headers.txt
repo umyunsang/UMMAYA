@@ -1,0 +1,6 @@
+HTTP/1.1 200 OK
+Content-Length: 248
+Content-Type: application/xml
+Date: Fri, 15 May 2026 15:49:52 GMT
+Server: Apache
+Vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers

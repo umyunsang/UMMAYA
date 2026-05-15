@@ -1,0 +1,830 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "한국무역보험공사가 국내에서 유일하게 보유한 해외기업 결제 데이터를 기반으로 우리나라 수출기업이 거래하는 해외 수출시장의 수출대금 결제동향을 분석한 데이터입니다. 공사는 무역보험 업무 운영과정에서 발생한 실제 수출대금 결제정보 빅데이터 약 100만 건을 활용, 종합적인 통계분석 작업을 수행하여 수출기업, 수출지원기관 등 해외수출 관련 이해관계자들이 수출실무에 활용할 수 있는 스마트 수출결제정보 데이터를 제공하고 있습니다. 해당 데이터를 통해 국가, 업종별 결제조건, 결제기간, 연체율, 연체기간 등의 정보를 확인할 수 있습니다.",
+    "version": "1.0.0",
+    "title": "한국무역보험공사_수출결제정보"
+  },
+  "host": "apis.data.go.kr/B552696/exportPayment",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getPaymentInfo": {
+      "get": {
+        "responses": {
+          "3": {
+            "description": "데이터 없음"
+          },
+          "10": {
+            "description": "잘못된 요청 파라메터 에러"
+          },
+          "11": {
+            "description": "필수요청 파라메터 없음"
+          },
+          "98": {
+            "description": "기타 에러"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "lastUpdateDate": {
+                              "type": "string",
+                              "description": "최종 업데이트 일자",
+                              "properties": {}
+                            },
+                            "yearList": {
+                              "type": "array",
+                              "description": "조회 년도 목록",
+                              "items": {
+                                "type": "string",
+                                "properties": {}
+                              }
+                            },
+                            "paymentTerms": {
+                              "type": "array",
+                              "description": "결제조건",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "CODE": {
+                                    "type": "string",
+                                    "description": "코드",
+                                    "properties": {}
+                                  },
+                                  "CODE_NM": {
+                                    "type": "string",
+                                    "description": "코드명",
+                                    "properties": {}
+                                  },
+                                  "PAYMENT_TERMS": {
+                                    "type": "array",
+                                    "description": "결제목록",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "YEAR": {
+                                          "type": "string",
+                                          "description": "년도",
+                                          "properties": {}
+                                        },
+                                        "CNT": {
+                                          "type": "string",
+                                          "description": "건수",
+                                          "properties": {}
+                                        },
+                                        "VALUE": {
+                                          "type": "string",
+                                          "description": "값",
+                                          "properties": {}
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "averagePaymentPeriod": {
+                              "type": "array",
+                              "description": "평균결제기간",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "YEAR": {
+                                    "type": "string",
+                                    "description": "년도",
+                                    "properties": {}
+                                  },
+                                  "VALUE": {
+                                    "type": "string",
+                                    "description": "값",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            },
+                            "latePaymentRate": {
+                              "type": "array",
+                              "description": "연체율",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "YEAR": {
+                                    "type": "string",
+                                    "description": "년도",
+                                    "properties": {}
+                                  },
+                                  "VALUE": {
+                                    "type": "string",
+                                    "description": "값",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            },
+                            "averagelatePaymentPeriod": {
+                              "type": "array",
+                              "description": "평균연체기간",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "YEAR": {
+                                    "type": "string",
+                                    "description": "년도",
+                                    "properties": {}
+                                  },
+                                  "VALUE": {
+                                    "type": "string",
+                                    "description": "값",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            },
+                            "paymentPeriod": {
+                              "type": "array",
+                              "description": "결제기간",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "PAYMENT_PERIOD": {
+                                    "type": "array",
+                                    "description": "결제기간",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "VALUE": {
+                                          "type": "string",
+                                          "description": "값",
+                                          "properties": {}
+                                        },
+                                        "YEAR": {
+                                          "type": "string",
+                                          "description": "년도",
+                                          "properties": {}
+                                        },
+                                        "CNT": {
+                                          "type": "string",
+                                          "description": "건수",
+                                          "properties": {}
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "CODE": {
+                                    "type": "string",
+                                    "description": "코드",
+                                    "properties": {}
+                                  },
+                                  "CODE_NM": {
+                                    "type": "string",
+                                    "description": "코드명",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "수출 결제정보 조회",
+        "description": "조회조건 별 수출 결제정보 조회",
+        "operationId": "getPaymentInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "ctryCd",
+          "description": "국가코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "industryLagCd",
+          "description": "업종 대분류 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "industryMidCd",
+          "description": "업종 중분류 코드 (업종 대분류 입력 시)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getPaymentInfo_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "lastUpdateDate": {
+                      "type": "string",
+                      "description": "최종 업데이트 일자"
+                    },
+                    "yearList": {
+                      "type": "array",
+                      "description": "조회 년도 목록",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "paymentTerms": {
+                      "type": "array",
+                      "description": "결제조건",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "CODE": {
+                            "type": "string",
+                            "description": "코드"
+                          },
+                          "CODE_NM": {
+                            "type": "string",
+                            "description": "코드명"
+                          },
+                          "PAYMENT_TERMS": {
+                            "type": "array",
+                            "description": "결제목록",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "YEAR": {
+                                  "type": "string",
+                                  "description": "년도"
+                                },
+                                "CNT": {
+                                  "type": "string",
+                                  "description": "건수"
+                                },
+                                "VALUE": {
+                                  "type": "string",
+                                  "description": "값"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "averagePaymentPeriod": {
+                      "type": "array",
+                      "description": "평균결제기간",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "YEAR": {
+                            "type": "string",
+                            "description": "년도"
+                          },
+                          "VALUE": {
+                            "type": "string",
+                            "description": "값"
+                          }
+                        }
+                      }
+                    },
+                    "latePaymentRate": {
+                      "type": "array",
+                      "description": "연체율",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "YEAR": {
+                            "type": "string",
+                            "description": "년도"
+                          },
+                          "VALUE": {
+                            "type": "string",
+                            "description": "값"
+                          }
+                        }
+                      }
+                    },
+                    "averagelatePaymentPeriod": {
+                      "type": "array",
+                      "description": "평균연체기간",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "YEAR": {
+                            "type": "string",
+                            "description": "년도"
+                          },
+                          "VALUE": {
+                            "type": "string",
+                            "description": "값"
+                          }
+                        }
+                      }
+                    },
+                    "paymentPeriod": {
+                      "type": "array",
+                      "description": "결제기간",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "PAYMENT_PERIOD": {
+                            "type": "array",
+                            "description": "결제기간",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "VALUE": {
+                                  "type": "string",
+                                  "description": "값"
+                                },
+                                "YEAR": {
+                                  "type": "string",
+                                  "description": "년도"
+                                },
+                                "CNT": {
+                                  "type": "string",
+                                  "description": "건수"
+                                }
+                              }
+                            }
+                          },
+                          "CODE": {
+                            "type": "string",
+                            "description": "코드"
+                          },
+                          "CODE_NM": {
+                            "type": "string",
+                            "description": "코드명"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "http://223.130.174.109/api/export-payment-info/search",
+      "oprtinNm": "수출 결제정보 조회",
+      "oprtinDc": "조회조건 별 수출 결제정보 조회",
+      "gwSvcNm": "getPaymentInfo",
+      "operationId": "getPaymentInfo",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "serviceKey",
+          "paramtrDc": "공공데이터포털에서 받은 인증키",
+          "paramtrBassValue": "-",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "ctryCd",
+          "paramtrDc": "국가코드",
+          "paramtrBassValue": "450",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "industryLagCd",
+          "paramtrDc": "업종 대분류 코드",
+          "paramtrBassValue": "22",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "industryMidCd",
+          "paramtrDc": "업종 중분류 코드 (업종 대분류 입력 시)",
+          "paramtrBassValue": "22259",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/oper-1-header",
+          "subDefNm": "oper-1-header",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "resultCode",
+              "paramtrDc": "결과코드",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "resultMsg",
+              "paramtrDc": "결과메세지",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/oper-1-body",
+          "subDefNm": "oper-1-body",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "items",
+              "paramtrDc": "items",
+              "arrayYn": "N",
+              "paramtrDefNm": "#/definitions/oper-1-items",
+              "subDefNm": "oper-1-items",
+              "paramtrTy": "object",
+              "paramtrDivision": "필수",
+              "ck": true,
+              "subParam": [
+                {
+                  "paramtrNm": "item",
+                  "paramtrDc": "item",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "#/definitions/oper-1-item",
+                  "subDefNm": "oper-1-item",
+                  "paramtrTy": "object",
+                  "paramtrDivision": "필수",
+                  "ck": true,
+                  "subParam": [
+                    {
+                      "paramtrNm": "lastUpdateDate",
+                      "paramtrDc": "최종 업데이트 일자",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "yearList",
+                      "paramtrDc": "조회 년도 목록",
+                      "arrayYn": "Y",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "paymentTerms",
+                      "paramtrDc": "결제조건",
+                      "arrayYn": "Y",
+                      "paramtrDefNm": "#/definitions/payment-terms-1-item",
+                      "subDefNm": "payment-terms-1-item",
+                      "paramtrTy": "object",
+                      "paramtrDivision": "필수",
+                      "ck": true,
+                      "subParam": [
+                        {
+                          "paramtrNm": "CODE",
+                          "paramtrDc": "코드",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        },
+                        {
+                          "paramtrNm": "CODE_NM",
+                          "paramtrDc": "코드명",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        },
+                        {
+                          "paramtrNm": "PAYMENT_TERMS",
+                          "paramtrDc": "결제목록",
+                          "arrayYn": "Y",
+                          "paramtrDefNm": "#/definitions/payment-terms-2-item",
+                          "subDefNm": "payment-terms-2-item",
+                          "paramtrTy": "object",
+                          "paramtrDivision": "필수",
+                          "ck": true,
+                          "subParam": [
+                            {
+                              "paramtrNm": "YEAR",
+                              "paramtrDc": "년도",
+                              "arrayYn": "N",
+                              "paramtrDefNm": "",
+                              "paramtrTy": "string",
+                              "paramtrDivision": "필수",
+                              "ck": true
+                            },
+                            {
+                              "paramtrNm": "CNT",
+                              "paramtrDc": "건수",
+                              "arrayYn": "N",
+                              "paramtrDefNm": "",
+                              "paramtrTy": "string",
+                              "paramtrDivision": "필수",
+                              "ck": true
+                            },
+                            {
+                              "paramtrNm": "VALUE",
+                              "paramtrDc": "값",
+                              "arrayYn": "N",
+                              "paramtrDefNm": "",
+                              "paramtrTy": "string",
+                              "paramtrDivision": "필수",
+                              "ck": true
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "paramtrNm": "averagePaymentPeriod",
+                      "paramtrDc": "평균결제기간",
+                      "arrayYn": "Y",
+                      "paramtrDefNm": "#/definitions/aver-payment-1-item",
+                      "subDefNm": "aver-payment-1-item",
+                      "paramtrTy": "object",
+                      "paramtrDivision": "필수",
+                      "ck": true,
+                      "subParam": [
+                        {
+                          "paramtrNm": "YEAR",
+                          "paramtrDc": "년도",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        },
+                        {
+                          "paramtrNm": "VALUE",
+                          "paramtrDc": "값",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        }
+                      ]
+                    },
+                    {
+                      "paramtrNm": "latePaymentRate",
+                      "paramtrDc": "연체율",
+                      "arrayYn": "Y",
+                      "paramtrDefNm": "#/definitions/late-payment-1-item",
+                      "subDefNm": "late-payment-1-item",
+                      "paramtrTy": "object",
+                      "paramtrDivision": "필수",
+                      "ck": true,
+                      "subParam": [
+                        {
+                          "paramtrNm": "YEAR",
+                          "paramtrDc": "년도",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        },
+                        {
+                          "paramtrNm": "VALUE",
+                          "paramtrDc": "값",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        }
+                      ]
+                    },
+                    {
+                      "paramtrNm": "averagelatePaymentPeriod",
+                      "paramtrDc": "평균연체기간",
+                      "arrayYn": "Y",
+                      "paramtrDefNm": "#/definitions/aver-late-payment-1-item",
+                      "subDefNm": "aver-late-payment-1-item",
+                      "paramtrTy": "object",
+                      "paramtrDivision": "필수",
+                      "ck": true,
+                      "subParam": [
+                        {
+                          "paramtrNm": "YEAR",
+                          "paramtrDc": "년도",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        },
+                        {
+                          "paramtrNm": "VALUE",
+                          "paramtrDc": "값",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        }
+                      ]
+                    },
+                    {
+                      "paramtrNm": "paymentPeriod",
+                      "paramtrDc": "결제기간",
+                      "arrayYn": "Y",
+                      "paramtrDefNm": "#/definitions/payment-period-1-item",
+                      "subDefNm": "payment-period-1-item",
+                      "paramtrTy": "object",
+                      "paramtrDivision": "필수",
+                      "ck": true,
+                      "subParam": [
+                        {
+                          "paramtrNm": "PAYMENT_PERIOD",
+                          "paramtrDc": "결제기간",
+                          "arrayYn": "Y",
+                          "paramtrDefNm": "#/definitions/payment-period-2-item",
+                          "subDefNm": "payment-period-2-item",
+                          "paramtrTy": "object",
+                          "paramtrDivision": "필수",
+                          "ck": true,
+                          "subParam": [
+                            {
+                              "paramtrNm": "VALUE",
+                              "paramtrDc": "값",
+                              "arrayYn": "N",
+                              "paramtrDefNm": "",
+                              "paramtrTy": "string",
+                              "paramtrDivision": "필수",
+                              "ck": true
+                            },
+                            {
+                              "paramtrNm": "YEAR",
+                              "paramtrDc": "년도",
+                              "arrayYn": "N",
+                              "paramtrDefNm": "",
+                              "paramtrTy": "string",
+                              "paramtrDivision": "필수",
+                              "ck": true
+                            },
+                            {
+                              "paramtrNm": "CNT",
+                              "paramtrDc": "건수",
+                              "arrayYn": "N",
+                              "paramtrDefNm": "",
+                              "paramtrTy": "string",
+                              "paramtrDivision": "필수",
+                              "ck": true
+                            }
+                          ]
+                        },
+                        {
+                          "paramtrNm": "CODE",
+                          "paramtrDc": "코드",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        },
+                        {
+                          "paramtrNm": "CODE_NM",
+                          "paramtrDc": "코드명",
+                          "arrayYn": "N",
+                          "paramtrDefNm": "",
+                          "paramtrTy": "string",
+                          "paramtrDivision": "필수",
+                          "ck": true
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "paramtrNm": "totalCount",
+              "paramtrDc": "전체 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

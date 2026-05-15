@@ -1,0 +1,82 @@
+공공데이터 오픈API 활용가이드
+`
+1. 서비스 명세    3
+1.1 공공데이터 오픈API 조회 서비스    3
+가. API 서비스 개요    3
+나. 상세기능 목록    4
+다. 상세기능내역    4
+1) [지정된 대규모기업집단 조회] 상세기능명세    4
+2. OpenAPI 에러 코드정리    8
+1. 서비스 명세
+1.1 공공데이터 오픈API 조회 서비스
+가. API 서비스 개요
+나. 상세기능 목록
+다. 상세기능내역
+1) [지정된 대규모기업집단 조회] 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+* 요청년월(공개년월 또는 지정년월) : “사용가능 공개년월 정보 조회 서비스(publicYmList)” API를 활용하여 이 서비스(API)를 이용하기 전에 사용가능한 년월을 확인 후 이용할 것
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+d) 요청/응답 메시지 예제
+2. OpenAPI 에러 코드정리
+API 서비스 정보    API명(영문)    appnGroupSttusList    appnGroupSttusList    appnGroupSttusList
+API 서비스 정보    API명(국문)    지정된 대규모기업집단 조회 서비스    지정된 대규모기업집단 조회 서비스    지정된 대규모기업집단 조회 서비스
+API 서비스 정보    API 설명    대규모기업집단 지정년월을 기준으로 지정된 기업집단에 대한 기업집단명, 기업집단코드, 계열회사 수, 동일인, 대표회사 등 지정 대규모기업집단의 일반현황 정보를 조회하는 서비스    대규모기업집단 지정년월을 기준으로 지정된 기업집단에 대한 기업집단명, 기업집단코드, 계열회사 수, 동일인, 대표회사 등 지정 대규모기업집단의 일반현황 정보를 조회하는 서비스    대규모기업집단 지정년월을 기준으로 지정된 기업집단에 대한 기업집단명, 기업집단코드, 계열회사 수, 동일인, 대표회사 등 지정 대규모기업집단의 일반현황 정보를 조회하는 서비스
+API 서비스 / 보안적용 / 기술 수준    서비스 인증/권한    [O] ServiceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] ServiceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] ServiceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음
+API 서비스 / 보안적용 / 기술 수준    메시지 레벨 / 암호화    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    전송 레벨 암호화    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    인터페이스 표준    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타
+API 서비스 / 보안적용 / 기술 수준    교환 데이터 표준 / (중복선택가능)    [O] XML   [ ] JSON   [ ] MIME   [ ] MTOM    [O] XML   [ ] JSON   [ ] MIME   [ ] MTOM    [O] XML   [ ] JSON   [ ] MIME   [ ] MTOM
+API 서비스 / 배포정보    서비스 URL    http://apis.data.go.kr/1130000/appnGroupSttusList    http://apis.data.go.kr/1130000/appnGroupSttusList    http://apis.data.go.kr/1130000/appnGroupSttusList
+API 서비스 / 배포정보    서비스 명세 URL / (WSDL 또는 WADL)    없음    없음    없음
+API 서비스 / 배포정보    서비스 버전    1.0    1.0    1.0
+API 서비스 / 배포정보    서비스 시작일    2021-10-01    서비스 배포일    2021-10-01
+API 서비스 / 배포정보    서비스 이력    2021-10-01: 서비스 시작    2021-10-01: 서비스 시작    2021-10-01: 서비스 시작
+API 서비스 / 배포정보    메시지 교환유형    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification
+API 서비스 / 배포정보    서비스 제공자    장광환 / 정보화담당관 / 044-200-4271 / libe@korea.kr    장광환 / 정보화담당관 / 044-200-4271 / libe@korea.kr    장광환 / 정보화담당관 / 044-200-4271 / libe@korea.kr
+API 서비스 / 배포정보    데이터 갱신주기    월 1회    월 1회    월 1회
+번호    API명(국문)    상세기능명(영문)    상세기능명(국문)
+1    지정된 대규모기업집단 조회 서비스    appnGroupSttusListApi    지정된 대규모기업집단 조회
+상세기능 번호    1    상세기능 유형    조회 (목록)
+상세기능명(국문)    지정된 대규모기업집단 조회    지정된 대규모기업집단 조회    지정된 대규모기업집단 조회
+상세기능 설명    지정된 기업집단에 대한 기업집단명, 기업집단코드, 계열회사 수, 동일인, 대표회사 등 지정 대규모기업집단의 일반현황 정보를 조회하는 기능    지정된 기업집단에 대한 기업집단명, 기업집단코드, 계열회사 수, 동일인, 대표회사 등 지정 대규모기업집단의 일반현황 정보를 조회하는 기능    지정된 기업집단에 대한 기업집단명, 기업집단코드, 계열회사 수, 동일인, 대표회사 등 지정 대규모기업집단의 일반현황 정보를 조회하는 기능
+Call Back URL    http://apis.data.go.kr/1130000/appnGroupSttusList/appnGroupSttusListApi    http://apis.data.go.kr/1130000/appnGroupSttusList/appnGroupSttusListApi    http://apis.data.go.kr/1130000/appnGroupSttusList/appnGroupSttusListApi
+최대 메시지 사이즈    [100] Kbyte    [100] Kbyte    [100] Kbyte
+평균 응답 시간    [30] tps    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+serviceKey    인증키    100    1    인증키 / (URL Encode)    공공데이터포털에서 발급받은 인증키
+numOfRows    페이지당 표출 항목 수    4    1    10    페이지당 표출 항목 수
+pageNo    페이지 수    4    1    1    페이지 수
+presentnYear    요청년월*    6    1    202105    기업집단 지정년월
+항목명(영문)    항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+numOfRows    numOfRows    페이지당 표출 항목 수    4    1    10    페이지당 표출 항목 수
+pageNo    pageNo    페이지 수    4    1    1    페이지 수
+resultCode    resultCode    결과코드    2    1    00    결과코드
+resultMsg    resultMsg    결과메세지    50    1    SUCCESS    결과메세지
+totalCount    totalCount    항목 총 개수    4    1    71    항목 총 개수
+appnGroupSttus    appnGroupSttus    appnGroupSttus        1,,n
+    unityGrupNm    기업집단명    200    1    삼성    기업집단명
+    unityGrupCode    기업집단코드    8    1    K1000032    기업집단코드
+    smerNm    동일인    200    1    이재용    동일인
+    repreCmpny    대표회사    200    1    삼성전자(주)    대표회사
+    sumCmpnyCo    계열회사 수    4    1    59    계열회사 수
+    invstmntLmtt    자산별구분코드    4    1    상호출자제한집단    자산별구분코드 / - 상호출자제한집단 / - 공시대상기업집단 / - 출자총액제한집단
+    entrprsCl    공기업구분코드    4    1    일반    공기업구분코드 / - 일반 / - 공기업
+요청메시지
+http://apis.data.go.kr/1130000/appnGroupSttusList/appnGroupSttusListApi?serviceKey=인증키(URL Encode)&presentnYear=202105&numOfRows=10&pageNo=1
+응답메시지
+<appnGroupSttusList> / <numOfRows>10</numOfRows> / <pageNo>1</pageNo> / <resultCode>00</resultCode> / <resultMsg>SUCCESS</resultMsg> / <totalCount>71</totalCount> / <appnGroupSttus> / <unityGrupNm>삼성</unityGrupNm> / <unityGrupCode>K1000032</unityGrupCode> / <smerNm>이재용</smerNm> / <repreCmpny>삼성전자(주)</repreCmpny> / <sumCmpnyCo>59</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>현대자동차</unityGrupNm> / <unityGrupCode>K3000027</unityGrupCode> / <smerNm>정의선</smerNm> / <repreCmpny>현대자동차(주)</repreCmpny> / <sumCmpnyCo>53</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>에스케이</unityGrupNm> / <unityGrupCode>K1000050</unityGrupCode> / <smerNm>최태원</smerNm> / <repreCmpny>에스케이(주)</repreCmpny> / <sumCmpnyCo>148</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>엘지</unityGrupNm> / <unityGrupCode>K1000051</unityGrupCode> / <smerNm>구광모</smerNm> / <repreCmpny>(주)엘지</repreCmpny> / <sumCmpnyCo>70</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>롯데</unityGrupNm> / <unityGrupCode>K1000027</unityGrupCode> / <smerNm>신동빈</smerNm> / <repreCmpny>롯데지주(주)</repreCmpny> / <sumCmpnyCo>86</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>포스코</unityGrupNm> / <unityGrupCode>K1000064</unityGrupCode> / <smerNm>(주)포스코</smerNm> / <repreCmpny>(주)포스코</repreCmpny> / <sumCmpnyCo>33</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>한화</unityGrupNm> / <unityGrupCode>K1000082</unityGrupCode> / <smerNm>김승연</smerNm> / <repreCmpny>(주)한화</repreCmpny> / <sumCmpnyCo>83</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>지에스</unityGrupNm> / <unityGrupCode>K3000076</unityGrupCode> / <smerNm>허창수</smerNm> / <repreCmpny>(주)지에스</repreCmpny> / <sumCmpnyCo>80</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>현대중공업</unityGrupNm> / <unityGrupCode>K3000052</unityGrupCode> / <smerNm>정몽준</smerNm> / <repreCmpny>한국조선해양(주)</repreCmpny> / <sumCmpnyCo>33</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / <appnGroupSttus> / <unityGrupNm>농협</unityGrupNm> / <unityGrupCode>K3000091</unityGrupCode> / <smerNm>농업협동조합중앙회</smerNm> / <repreCmpny>농업협동조합중앙회</repreCmpny> / <sumCmpnyCo>58</sumCmpnyCo> / <invstmntLmtt>상호출자제한집단</invstmntLmtt> / <entrprsCl>일반</entrprsCl> / </appnGroupSttus> / </appnGroupSttusList>
+에러코드    에러메시지    설명
+00    SUCCESS    조회성공 메시지
+1    APPLICATION_ERROR    어플리케이션 에러
+10    INVALID_REQUEST_PARAMETER_ERROR    잘못된 요청 파라메터 에러
+12    NO_OPENAPI_SERVICE_ERROR    해당 오픈API서비스가 없거나 폐기됨
+20    SERVICE_ACCESS_DENIED_ERROR    서비스 접근거부
+22    LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR    서비스 요청제한횟수 초과에러
+30    SERVICE_KEY_IS_NOT_REGISTERED_ERROR    등록되지 않은 서비스키
+31    DEADLINE_HAS_EXPIRED_ERROR    활용기간 만료
+32    UNREGISTERED_IP_ERROR    등록되지 않은 IP
+97    Nullpointer Exception    파라미터 에러
+99    UNKNOWN_ERROR    기타에러

@@ -1,0 +1,178 @@
+공공데이터 오픈API 활용가이드
+기업 재무정보
+1. 서비스 명세    3
+1.1 재무정보조회서비스    3
+가. API 서비스 개요    3
+나. 상세기능 목록    3
+다. 상세기능내역    4
+1) 요약재무제표조회 상세기능명세    4
+2) 재무상태표조회 상세기능명세    5
+3) 손익계산서조회 상세기능명세    6
+2. OpenAPI 에러 코드정리    7
+1. 서비스 명세
+1.1 재무정보조회서비스
+가. API 서비스 개요
+나. 상세기능 목록
+다. 상세기능내역
+1) 요약재무제표조회 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+d) 요청/응답 메시지 예제
+2) 재무상태표조회 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+d) 요청/응답 메시지 예제
+3)손익계산서조회 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+d) 요청/응답 메시지 예제
+2. OpenAPI 에러 코드정리
+API 서비스 정보    API명(영문)    GetFinaStatInfoService_V2    GetFinaStatInfoService_V2    GetFinaStatInfoService_V2
+API 서비스 정보    API명(국문)    금융위원회_기업 재무정보    금융위원회_기업 재무정보    금융위원회_기업 재무정보
+API 서비스 정보    API 설명    법인등록번호, 사업연도를 조회하여 요약재무제표, 재무상태표, 손익계산서를 제공하는 재무정보조회서비스    법인등록번호, 사업연도를 조회하여 요약재무제표, 재무상태표, 손익계산서를 제공하는 재무정보조회서비스    법인등록번호, 사업연도를 조회하여 요약재무제표, 재무상태표, 손익계산서를 제공하는 재무정보조회서비스
+API 서비스 / 보안적용 / 기술 수준    서비스 인증/권한    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음
+API 서비스 / 보안적용 / 기술 수준    메시지 레벨 / 암호화    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    전송 레벨 암호화    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    인터페이스 표준    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타
+API 서비스 / 보안적용 / 기술 수준    교환 데이터 표준 / (중복선택가능)    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM
+API 서비스 / 배포정보    서비스 URL    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2
+API 서비스 / 배포정보    서비스 명세 URL / (WSDL 또는 WADL)    N/A    N/A    N/A
+API 서비스 / 배포정보    서비스 버전    1.0    1.0    1.0
+API 서비스 / 배포정보    서비스 시작일    2022-12-28    서비스 배포일    2022-12-28
+API 서비스 / 배포정보    서비스 이력    2017-04-01 : 서비스 시작 / 2022-12-28 : 서비스 변경    2017-04-01 : 서비스 시작 / 2022-12-28 : 서비스 변경    2017-04-01 : 서비스 시작 / 2022-12-28 : 서비스 변경
+API 서비스 / 배포정보    메시지 교환유형    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification
+API 서비스 / 배포정보    서비스 제공자
+API 서비스 / 배포정보    데이터 갱신주기    일 1회    일 1회    일 1회
+번호    API명(국문)    상세기능명(영문)    상세기능명(국문)
+1    금융위원회_기업 재무정보    getSummFinaStat_V2    요약재무제표조회
+2    금융위원회_기업 재무정보    getBs_V2    재무상태표조회
+3    금융위원회_기업 재무정보    getIncoStat_V2    손익계산서조회
+상세기능 번호    1    상세기능 유형    조회 (목록)
+상세기능명(국문)    요약재무제표조회    요약재무제표조회    요약재무제표조회
+상세기능 설명    법인등록번호, 사업연도를 통하여 재무제표구분코드, 기업매출금액, 기업영업이익, 기업총자산금액등을 조회하는 요약재무제표조회 기능    법인등록번호, 사업연도를 통하여 재무제표구분코드, 기업매출금액, 기업영업이익, 기업총자산금액등을 조회하는 요약재무제표조회 기능    법인등록번호, 사업연도를 통하여 재무제표구분코드, 기업매출금액, 기업영업이익, 기업총자산금액등을 조회하는 요약재무제표조회 기능
+Call Back URL    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getSummFinaStat_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getSummFinaStat_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getSummFinaStat_V2
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+numOfRows    한 페이지 결과 수    4    1    1    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+resultType    결과형식    4    1    xml    결과형식(xml/json)
+serviceKey    서비스키    400    1    공공데이터포털에서 받은 인증키    공공데이터포털에서 받은 인증키
+crno    법인등록번호    13    0    1746110000741    법인등록번호
+bizYear    사업연도    4    0    2019    법인에 대해 법령이 규정한 1회계기간으로서 법인세의 과세기간
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메시지    50    1    NORMAL SERVICE.    결과메시지
+numOfRows    한 페이지 결과 수    4    1    1    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+totalCount    전체 결과 수    10    1    2    전체 결과 수
+basDt    기준일자    8    0    20191231    작업 또는 거래의 기준이 되는 일자(년월일)
+crno    법인등록번호    13    1    1746110000741    법인등록번호
+curCd    통화 코드    3    0    KRW    통화 코드
+bizYear    사업연도    4    1    2019    법인에 대해 법령이 규정한 1회계기간으로서 법인세의 과세기간
+fnclDcd    재무제표구분코드    35    0    ifrs_ConsolidatedMember    기업이 회계 연도가 끝나는 때에 결산 보고를 하기 위하여 작성하는 회계 보고서를 구분하는 코드
+fnclDcdNm    재무제표구분코드명    100    0    연결요약재무제표    기업이 회계 연도가 끝나는 때에 결산 보고를 하기 위하여 작성하는 회계 보고서를 구분하는 코드의 명칭
+enpSaleAmt    기업매출금액    22,3    0    64366847807959    기업의 매출액
+enpBzopPft    기업영업이익    22,3    0    3868854558550    기업의 영업 이익
+iclsPalClcAmt    포괄손익계산금액    22,3    0    3053278000619    금융회사세 비용 차감전 순이익 금액
+enpCrtmNpf    기업당기순이익    22,3    0    1982637208513    기업 당기의 순이익
+enpTastAmt    기업총자산금액    18,3    0    79058661130791    기업의 총 자산 합계금액
+enpTdbtAmt    기업총부채금액    18,3    0    31263954310516    기업의 총 부채 합계금액
+enpTcptAmt    기업총자본금액    18,3    0    47794706820275    기업의 총 자본 합계금액
+enpCptlAmt    기업자본금액    18,3    0    482403125000    기업의 영리를 목적으로 사업에 투자한 돈
+fnclDebtRto    재무제표부채비율    26,10    0    65.413005729    기업이 회계 연도가 끝나는 때에 결산 보고를 하기 위하여 작성하는 회계 보고서상의 부채 비율
+요청메시지
+http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getSummFinaStat_V2?pageNo=1&numOfRows=1&resultType=xml&serviceKey=인증키
+응답메시지
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?> / <response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>NORMAL SERVICE.</resultMsg> /     </header> /     <body> /         <numOfRows>1</numOfRows> /         <pageNo>1</pageNo> /         <totalCount>2</totalCount> /         <items> /             <item> /                 <basDt>20191231</basDt> /                 <bizYear>2019</bizYear> /                 <crno>1746110000741</crno> /                 <curCd>KRW</curCd> /                 <enpBzopPft>3868854558550</enpBzopPft> /                 <enpCptlAmt>482403125000</enpCptlAmt> /                 <enpCrtmNpf>1982637208513</enpCrtmNpf> /                 <enpSaleAmt>64366847807959</enpSaleAmt> /                 <enpTastAmt>79058661130791</enpTastAmt> /                 <enpTcptAmt>47794706820275</enpTcptAmt> /                 <enpTdbtAmt>31263954310516</enpTdbtAmt> /                 <fnclDcd>ifrs_ConsolidatedMember</fnclDcd> /                 <fnclDcdNm>연결요약재무제표</fnclDcdNm> /                 <fnclDebtRto>65.413005729</fnclDebtRto> /                 <iclsPalClcAmt>3053278000619</iclsPalClcAmt> /             </item> /         </items> /     </body> / </response>
+상세기능 번호    2    상세기능 유형    조회 (목록)
+상세기능명(국문)    재무상태표조회    재무상태표조회    재무상태표조회
+상세기능 설명    법인등록번호, 사업연도를 통하여 전분기계정과목금액, 전기계정과목금액, 계정과목명등을 조회하는 재무상태표조회 기능    법인등록번호, 사업연도를 통하여 전분기계정과목금액, 전기계정과목금액, 계정과목명등을 조회하는 재무상태표조회 기능    법인등록번호, 사업연도를 통하여 전분기계정과목금액, 전기계정과목금액, 계정과목명등을 조회하는 재무상태표조회 기능
+Call Back URL    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getBs_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getBs_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getBs_V2
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+numOfRows    한 페이지 결과 수    4    1    1    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+resultType    결과형식    4    1    xml    결과형식(xml/json)
+serviceKey    서비스키    400    1    공공데이터포털에서 받은 인증키    공공데이터포털에서 받은 인증키
+crno    법인등록번호    13    0    1101111848914    법인등록번호
+bizYear    사업연도    4    0    2018    법인에 대해 법령이 규정한 1회계기간으로서 법인세의 과세기간
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메시지    50    1    NORMAL SERVICE.    결과메시지
+numOfRows    한 페이지 결과 수    4    1    1    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+totalCount    전체 결과 수    10    1    18    전체 결과 수
+basDt    기준일자    8    0    20181231    작업 또는 거래의 기준이 되는 일자(년월일)
+crno    법인등록번호    13    1    1101111848914    법인등록번호
+curCd    통화 코드    3    0    KRW    통화 코드
+bizYear    사업연도    4    1    2018    법인에 대해 법령이 규정한 1회계기간으로서 법인세의 과세기간
+fnclDcd    재무제표구분코드    35    0    FS_ifrs_ConsolidatedMember    기업이 회계 연도가 끝나는 때에 결산 보고를 하기 위하여 작성하는 회계 보고서를 구분하는 코드
+fnclDcdNm    재무제표구분코드명    100    0    연결재무제표 [member]    기업이 회계 연도가 끝나는 때에 결산 보고를 하기 위하여 작성하는 회계 보고서를 구분하는 코드의 명칭
+acitId    계정과목ID    200    0    ifrs_Assets    계정 과목의 ID
+acitNm    계정과목명    1000    0    자산총계    계정 과목의 이름
+thqrAcitAmt    당분기계정과목금액    22,3    0    0    현재 분기 기준 계정과목별 금액
+crtmAcitAmt    당기계정과목금액    22,3    0    354106373903    현재 경과중에 있는 기간 기준, 계정과목별 금액
+lsqtAcitAmt    전분기계정과목금액    22,3    0    0    앞 분기 기준, 계정과목별 금액
+pvtrAcitAmt    전기계정과목금액    22,3    0    338029216364    앞 결산기 기준, 계정과목별 금액
+bpvtrAcitAmt    전전기계정과목금액    22,3    0    327582214023    전전기(앞의 결산기의 이전 결산기) 기준, 계정과목별 금액
+요청메시지
+http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getBs_V2?pageNo=1&numOfRows=1&resultType=xml&serviceKey=인증키
+응답메시지
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?> / <response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>NORMAL SERVICE.</resultMsg> /     </header> /     <body> /         <numOfRows>1</numOfRows> /         <pageNo>1</pageNo> /         <totalCount>18</totalCount> /         <items> /             <item> /                 <acitId>ifrs_Assets</acitId> /                 <acitNm>자산총계</acitNm> /                 <basDt>20181231</basDt> /                 <bizYear>2018</bizYear> /                 <bpvtrAcitAmt>327582214023</bpvtrAcitAmt> /                 <crno>1101111848914</crno> /                 <crtmAcitAmt>354106373903</crtmAcitAmt> /                 <curCd>KRW</curCd> /                 <fnclDcd>FS_ifrs_ConsolidatedMember</fnclDcd> /                 <fnclDcdNm>연결재무제표 [member]</fnclDcdNm> /                 <lsqtAcitAmt>0</lsqtAcitAmt> /                 <pvtrAcitAmt>338029216364</pvtrAcitAmt> /                 <thqrAcitAmt>0</thqrAcitAmt> /             </item> /         </items> /     </body> / </response>
+상세기능 번호    3    상세기능 유형    조회 (목록)
+상세기능명(국문)    손익계산서조회    손익계산서조회    손익계산서조회
+상세기능 설명    법인등록번호, 사업연도를 통하여 계정과목명, 당분기계정과목금액, 당기계정과목금액등을 조회하는 손익계산서조회 기능    법인등록번호, 사업연도를 통하여 계정과목명, 당분기계정과목금액, 당기계정과목금액등을 조회하는 손익계산서조회 기능    법인등록번호, 사업연도를 통하여 계정과목명, 당분기계정과목금액, 당기계정과목금액등을 조회하는 손익계산서조회 기능
+Call Back URL    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getIncoStat_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getIncoStat_V2    http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getIncoStat_V2
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+numOfRows    한 페이지 결과 수    4    1    1    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+resultType    결과형식    4    1    xml    결과형식(xml/json)
+serviceKey    서비스키    400    1    공공데이터포털에서 받은 인증키    공공데이터포털에서 받은 인증키
+crno    법인등록번호    13    0    1101111848914    법인등록번호
+bizYear    사업연도    4    0    2018    법인에 대해 법령이 규정한 1회계기간으로서 법인세의 과세기간
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메시지    50    1    NORMAL SERVICE.    결과메시지
+numOfRows    한 페이지 결과 수    4    1    1    한 페이지 결과 수
+pageNo    페이지 번호    4    1    1    페이지 번호
+totalCount    전체 결과 수    10    1    8    전체 결과 수
+basDt    기준일자    8    0    20181231    작업 또는 거래의 기준이 되는 일자(년월일)
+crno    법인등록번호    13    1    1101111848914    법인등록번호
+curCd    통화 코드    3    0    KRW    통화 코드
+bizYear    사업연도    4    1    2018    법인에 대해 법령이 규정한 1회계기간으로서 법인세의 과세기간
+fnclDcd    재무제표구분코드    35    0    PL_ifrs_ConsolidatedMember    기업이 회계 연도가 끝나는 때에 결산 보고를 하기 위하여 작성하는 회계 보고서를 구분하는 코드
+fnclDcdNm    재무제표구분코드명    100    0    연결재무제표 [member]    기업이 회계 연도가 끝나는 때에 결산 보고를 하기 위하여 작성하는 회계 보고서를 구분하는 코드의 명칭
+acitId    계정과목ID    200    0    dart_OperatingIncomeLoss    계정 과목의 ID
+acitNm    계정과목명    1000    0    영업이익(손실)    계정 과목의 이름
+thqrAcitAmt    당분기계정과목금액    22,3    0    0    현재 분기 기준 계정과목별 금액
+crtmAcitAmt    당기계정과목금액    22,3    0    -17567012222    현재 경과중에 있는 기간 기준, 계정과목별 금액
+lsqtAcitAmt    전분기계정과목금액    22,3    0    0    앞 분기 기준, 계정과목별 금액
+pvtrAcitAmt    전기계정과목금액    22,3    0    -20133844970    앞 결산기 기준, 계정과목별 금액
+bpvtrAcitAmt    전전기계정과목금액    22,3    0    4278661177    전전기(앞의 결산기의 이전 결산기) 기준, 계정과목별 금액
+요청메시지
+http://apis.data.go.kr/1160100/service/GetFinaStatInfoService_V2/getIncoStat_V2?pageNo=1&numOfRows=1&resultType=xml&serviceKey=인증키
+응답메시지
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?> / <response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>NORMAL SERVICE.</resultMsg> /     </header> /     <body> /         <numOfRows>1</numOfRows> /         <pageNo>1</pageNo> /         <totalCount>8</totalCount> /         <items> /             <item> /                 <acitId>dart_OperatingIncomeLoss</acitId> /                 <acitNm>영업이익(손실)</acitNm> /                 <basDt>20181231</basDt> /                 <bizYear>2018</bizYear> /                 <bpvtrAcitAmt>4278661177</bpvtrAcitAmt> /                 <crno>1101111848914</crno> /                 <crtmAcitAmt>-17567012222</crtmAcitAmt> /                 <curCd>KRW</curCd> /                 <fnclDcd>PL_ifrs_ConsolidatedMember</fnclDcd> /                 <fnclDcdNm>연결재무제표 [member]</fnclDcdNm> /                 <lsqtAcitAmt>0</lsqtAcitAmt> /                 <pvtrAcitAmt>-20133844970</pvtrAcitAmt> /                 <thqrAcitAmt>0</thqrAcitAmt> /             </item> /         </items> /     </body> / </response>
+에러코드    에러메시지    설명
+1    APPLICATION_ERROR    어플리케이션 에러
+10    INVALID_REQUEST_PARAMETER_ERROR    잘못된 요청 파라메터 에러
+12    NO_OPENAPI_SERVICE_ERROR    해당 오픈API서비스가 없거나 폐기됨
+20    SERVICE_ACCESS_DENIED_ERROR    서비스 접근거부
+22    LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR    서비스 요청제한횟수 초과에러
+30    SERVICE_KEY_IS_NOT_REGISTERED_ERROR    등록되지 않은 서비스키
+31    DEADLINE_HAS_EXPIRED_ERROR    기한만료된 서비스키
+32    UNREGISTERED_IP_ERROR    등록되지 않은 IP
+99    UNKNOWN_ERROR    기타에러

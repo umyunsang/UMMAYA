@@ -1,0 +1,168 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions name="LifeLawInfoControllerImplService" targetNamespace="http://impl.soap.lifelawinfo.openapi.lifelaw/" xmlns:ns1="http://openapi.affis.go.kr" xmlns:ns3="http://cxf.apache.org/bindings/xformat" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://impl.soap.lifelawinfo.openapi.lifelaw/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <wsdl:import location="https://www.easylaw.go.kr/OPENAPI/soap/LifeLawInfoService?wsdl=LifeLawInfoController.wsdl" namespace="http://openapi.affis.go.kr">
+    </wsdl:import>
+  <wsdl:binding name="LifeLawInfoControllerImplServiceSoapBinding" type="ns1:LifeLawInfoController">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="getLifeClassList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeClassList">
+        <soap:header message="ns1:getLifeClassList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeClassListResponse">
+        <soap:header message="ns1:getLifeClassListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeEbookInfoList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeEbookInfoList">
+        <soap:header message="ns1:getLifeEbookInfoList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeEbookInfoListResponse">
+        <soap:header message="ns1:getLifeEbookInfoListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeSuperMePrecedentList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeSuperMePrecedentList">
+        <soap:header message="ns1:getLifeSuperMePrecedentList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeSuperMePrecedentListResponse">
+        <soap:header message="ns1:getLifeSuperMePrecedentListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeLawsSystemList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeLawsSystemList">
+        <soap:header message="ns1:getLifeLawsSystemList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeLawsSystemListResponse">
+        <soap:header message="ns1:getLifeLawsSystemListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeConstitutionalCourtList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeConstitutionalCourtList">
+        <soap:header message="ns1:getLifeConstitutionalCourtList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeConstitutionalCourtListResponse">
+        <soap:header message="ns1:getLifeConstitutionalCourtListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeMovieInfoList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeMovieInfoList">
+        <soap:header message="ns1:getLifeMovieInfoList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeMovieInfoListResponse">
+        <soap:header message="ns1:getLifeMovieInfoListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeAskNoticeList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeAskNoticeList">
+        <soap:header message="ns1:getLifeAskNoticeList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeAskNoticeListResponse">
+        <soap:header message="ns1:getLifeAskNoticeListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeLawsInterpretList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeLawsInterpretList">
+        <soap:header message="ns1:getLifeLawsInterpretList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeLawsInterpretListResponse">
+        <soap:header message="ns1:getLifeLawsInterpretListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeInterrestRuleAreaClassList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeInterrestRuleAreaClassList">
+        <soap:header message="ns1:getLifeInterrestRuleAreaClassList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeInterrestRuleAreaClassListResponse">
+        <soap:header message="ns1:getLifeInterrestRuleAreaClassListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeAdminRefereeList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeAdminRefereeList">
+        <soap:header message="ns1:getLifeAdminRefereeList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeAdminRefereeListResponse">
+        <soap:header message="ns1:getLifeAdminRefereeListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeAreaList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeAreaList">
+        <soap:header message="ns1:getLifeAreaList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeAreaListResponse">
+        <soap:header message="ns1:getLifeAreaListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getLifeInterrestRuleSummaryItem">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getLifeInterrestRuleSummaryItem">
+        <soap:header message="ns1:getLifeInterrestRuleSummaryItem" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getLifeInterrestRuleSummaryItemResponse">
+        <soap:header message="ns1:getLifeInterrestRuleSummaryItemResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="LifeLawInfoControllerImplService">
+    <wsdl:port binding="tns:LifeLawInfoControllerImplServiceSoapBinding" name="LifeLawInfoControllerImplPort">
+      <soap:address location="https://www.easylaw.go.kr/OPENAPI/soap/LifeLawInfoService" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

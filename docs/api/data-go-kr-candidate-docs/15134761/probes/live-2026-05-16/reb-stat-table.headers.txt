@@ -1,0 +1,14 @@
+HTTP/1.1 200
+Date: Fri, 15 May 2026 15:44:09 GMT
+Content-Type: text/html;charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-XSS-Protection: 1; mode=block
+Cache-Control: no-store
+Content-Language: ko-KR
+Server:
+Strict-Transport-Security: max-age=63072000
+X-Frame-Options: SAMEORIGIN

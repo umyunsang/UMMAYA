@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "한국무역보험공사_수출결제정보",
+  "description": "한국무역보험공사가 국내에서 유일하게 보유한 해외기업 결제 데이터를 기반으로 우리나라 수출기업이 거래하는 해외 수출시장의 수출대금 결제동향을 분석한 데이터입니다. 공사는 무역보험 업무 운영과정에서 발생한 실제 수출대금 결제정보 빅데이터 약 100만 건을 활용, 종합적인 통계분석 작업을 수행하여 수출기업, 수출지원기관 등 해외수출 관련 이해관계자들이 수출실무에 활용할 수 있는 스마트 수출결제정보 데이터를 제공하고 있습니다. 해당 데이터를 통해 국가, 업종별 결제조건, 결제기간, 연체율, 연체기간 등의 정보를 확인할 수 있습니다.",
+  "url": "https://data.go.kr/data/15144259/openapi.do",
+  "keywords": [
+    "수출대금,결제동향,결제조건,평균 결제기간,연체율,평균 연체기간,부도율,지급연체"
+  ],
+  "license": "https://data.go.kr/ugs/selectPortalPolicyView.do",
+  "creator": {
+    "@type": "Organization",
+    "name": "한국무역보험공사",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "AI디지털총괄실",
+      "telephone": "+82-023997192"
+    }
+  },
+  "dateCreated": "2025-07-04",
+  "dateModified": "2026-04-28",
+  "datePublished": "2025-07-04",
+  "includedInDataCatalog": {
+    "@type": "DataCatalog",
+    "name": "data.go.kr"
+  },
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "JSON",
+      "contentUrl": "https://data.go.kr/data/15144259/openapi.do"
+    }
+  ],
+  "datasetTimeInterval": "실시간"
+}

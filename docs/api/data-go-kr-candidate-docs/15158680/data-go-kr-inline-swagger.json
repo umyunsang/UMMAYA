@@ -1,0 +1,2675 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "본 데이터는 한국대학교육협의회에서 운영하는 대학알리미를 기반으로 수집된 것으로, 국내 대학의 등록금 및 학생 재정 지원 현황을 종합적으로 제공.\\n\\n주요 항목으로는 등록금 수준과 학생 재정 지원 및 교육 투자 규모를 파악할 수 있는 지표들이 포함되어 있으며, 구체적으로 등록금 현황, 장학금 수혜 현황, 학자금 대출 학생 수, 학생 1인당 교육(투자)비 등이 제공.\\n\\n등록금 현황은 대학별 등록금 수준과 변동 추이를 통해 학비 부담 정도를 파악할 수 있도록 하며, 장학금 수혜 현황은 학생들이 실제로 받는 재정 지원 규모와 수혜 비율을 보여준다. 학자금 대출 학생 수는 등록금 부담을 보완하기 위한 금융 지원 이용 실태를 나타내는 지표로 활용. 또한 학생 1인당 교육(투자)비는 대학이 학생 교육을 위해 투입하는 비용 수준을 나타내며, 교육의 질적 수준과 투자 정도를 간접적으로 판단할 수 있는 지표.\\n\\n본 데이터는 대학의 재정 구조 및 학생 지원 수준을 비교·분석하고, 고등교육 정책 수립 및 대국민 정보 제공을 위한 기초 자료로 활용.",
+    "version": "1.0.0",
+    "title": "한국대학교육협의회_대학알리미 재정 현황_GW"
+  },
+  "host": "apis.data.go.kr/B340014/FinancesService",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getComparisonTuitionCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "indctVal1": {
+                              "type": "string",
+                              "description": "지표값",
+                              "properties": {}
+                            },
+                            "schlDivNm": {
+                              "type": "string",
+                              "description": "학교종류",
+                              "properties": {}
+                            },
+                            "schlEstbNm": {
+                              "type": "string",
+                              "description": "설립구분",
+                              "properties": {}
+                            },
+                            "schlId": {
+                              "type": "string",
+                              "description": "학교아이디",
+                              "properties": {}
+                            },
+                            "schlKrnNm": {
+                              "type": "string",
+                              "description": "학교한글명",
+                              "properties": {}
+                            },
+                            "svyYr": {
+                              "type": "string",
+                              "description": "공시년도",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "등록금 현황 조회_대학비교통계",
+        "description": "등록금 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getComparisonTuitionCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlId",
+          "description": "학교아이디",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "공시년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getComparisonScholarshipBenefitCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "indctVal1": {
+                              "type": "string",
+                              "description": "지표값",
+                              "properties": {}
+                            },
+                            "schlDivNm": {
+                              "type": "string",
+                              "description": "학교종류",
+                              "properties": {}
+                            },
+                            "schlEstbNm": {
+                              "type": "string",
+                              "description": "설립구분",
+                              "properties": {}
+                            },
+                            "schlId": {
+                              "type": "string",
+                              "description": "학교아이디",
+                              "properties": {}
+                            },
+                            "schlKrnNm": {
+                              "type": "string",
+                              "description": "학교한글명",
+                              "properties": {}
+                            },
+                            "svyYr": {
+                              "type": "string",
+                              "description": "공시년도",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "장학금 수혜 현황 조회_대학비교통계",
+        "description": "장학금 수혜 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getComparisonScholarshipBenefitCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlId",
+          "description": "학교아이디",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "공시년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getComparisonEducationalExpensesReductionCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "indctVal1": {
+                              "type": "string",
+                              "description": "지표값",
+                              "properties": {}
+                            },
+                            "indctYr": {
+                              "type": "string",
+                              "description": "지표아이디 (해당년도)",
+                              "properties": {}
+                            },
+                            "schlDivNm": {
+                              "type": "string",
+                              "description": "학교종류",
+                              "properties": {}
+                            },
+                            "schlEstbNm": {
+                              "type": "string",
+                              "description": "설립구분",
+                              "properties": {}
+                            },
+                            "schlId": {
+                              "type": "string",
+                              "description": "학교아이디",
+                              "properties": {}
+                            },
+                            "schlKrnNm": {
+                              "type": "string",
+                              "description": "학교한글명",
+                              "properties": {}
+                            },
+                            "svyYr": {
+                              "type": "string",
+                              "description": "공시년도",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학생 1인당 교육비 환원 현황 조회_대학비교통계",
+        "description": "학생 1인당 교육비 환원 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getComparisonEducationalExpensesReductionCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "indctId",
+          "description": "지표아이디",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlId",
+          "description": "학교아이디",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "공시년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getRegionalEducationalExpensesReductionCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "fieldType1": {
+                              "type": "string",
+                              "description": "fieldVal1의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType2": {
+                              "type": "string",
+                              "description": "fieldVal2의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType3": {
+                              "type": "string",
+                              "description": "fieldVal3의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType4": {
+                              "type": "string",
+                              "description": "fieldVal4의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType5": {
+                              "type": "string",
+                              "description": "fieldVal5의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType6": {
+                              "type": "string",
+                              "description": "fieldVal6의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType7": {
+                              "type": "string",
+                              "description": "fieldVal7의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldVal1": {
+                              "type": "string",
+                              "description": "fieldVal1의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal2": {
+                              "type": "string",
+                              "description": "fieldVal2의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal3": {
+                              "type": "string",
+                              "description": "fieldVal3의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal4": {
+                              "type": "string",
+                              "description": "fieldVal4의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal5": {
+                              "type": "string",
+                              "description": "fieldVal5의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal6": {
+                              "type": "string",
+                              "description": "fieldVal6의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal7": {
+                              "type": "string",
+                              "description": "fieldVal7의 지표값",
+                              "properties": {}
+                            },
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "schlDivCd": {
+                              "type": "string",
+                              "description": "학교구분",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학생 1인당 교육비 환원 현황 조회_지역별통계",
+        "description": "학생 1인당 교육비 환원 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getRegionalEducationalExpensesReductionCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "indctId",
+          "description": "지표아이디",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlDivCd",
+          "description": "학교구분",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getComparisonEducationExpensesLoanCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "indctVal1": {
+                              "type": "string",
+                              "description": "지표값",
+                              "properties": {}
+                            },
+                            "schlDivNm": {
+                              "type": "string",
+                              "description": "학교종류",
+                              "properties": {}
+                            },
+                            "schlEstbNm": {
+                              "type": "string",
+                              "description": "설립구분",
+                              "properties": {}
+                            },
+                            "schlId": {
+                              "type": "string",
+                              "description": "학교아이디",
+                              "properties": {}
+                            },
+                            "schlKrnNm": {
+                              "type": "string",
+                              "description": "학교한글명",
+                              "properties": {}
+                            },
+                            "svyYr": {
+                              "type": "string",
+                              "description": "공시년도",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학자금 대출 현황 조회_대학비교통계",
+        "description": "학자금 대출 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getComparisonEducationExpensesLoanCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlId",
+          "description": "학교아이디",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "공시년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getComparisonEducationExpensesLoanUseStudentRatioTuition": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "indctVal1": {
+                              "type": "string",
+                              "description": "지표값",
+                              "properties": {}
+                            },
+                            "indctYr": {
+                              "type": "string",
+                              "description": "지표아이디(해당년도)",
+                              "properties": {}
+                            },
+                            "schlDivNm": {
+                              "type": "string",
+                              "description": "학교종류",
+                              "properties": {}
+                            },
+                            "schlEstbNm": {
+                              "type": "string",
+                              "description": "설립구분",
+                              "properties": {}
+                            },
+                            "schlId": {
+                              "type": "string",
+                              "description": "학교아이디",
+                              "properties": {}
+                            },
+                            "schlKrnNm": {
+                              "type": "string",
+                              "description": "학교한글명",
+                              "properties": {}
+                            },
+                            "svyYr": {
+                              "type": "string",
+                              "description": "공시년도",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학자금대출 이용학생비율(등록금(학비))_대학비교통계",
+        "description": "공시년도,학교아이디를 기준으로 학교종류, 설립구분, 학자금대출 이용학생비율(등록금(학비)) 등을 제공하는 학자금대출 이용학생비율(등록금(학비)) 조회 서비스",
+        "operationId": "getComparisonEducationExpensesLoanUseStudentRatioTuition",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlId",
+          "description": "학교아이디",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "공시년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getRegionalTuitionCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "fieldType1": {
+                              "type": "string",
+                              "description": "fieldVal4의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType2": {
+                              "type": "string",
+                              "description": "fieldVal2의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldVal1": {
+                              "type": "string",
+                              "description": "fieldVal1의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal2": {
+                              "type": "string",
+                              "description": "fieldVal2의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal3": {
+                              "type": "string",
+                              "description": "fieldVal3의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal4": {
+                              "type": "string",
+                              "description": "fieldVal4의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal5": {
+                              "type": "string",
+                              "description": "fieldVal5의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal6": {
+                              "type": "string",
+                              "description": "fieldVal6의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal7": {
+                              "type": "string",
+                              "description": "fieldVal7의 지표값",
+                              "properties": {}
+                            },
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "schlDivCd": {
+                              "type": "string",
+                              "description": "학교구분",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "등록금 현황 조회_지역별통계",
+        "description": "등록금 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getRegionalTuitionCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlDivCd",
+          "description": "학교구분",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getRegionalScholarshipBenefitCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "fieldType1": {
+                              "type": "string",
+                              "description": "fieldVal1의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType2": {
+                              "type": "string",
+                              "description": "fieldVal2의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType3": {
+                              "type": "string",
+                              "description": "fieldVal3의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType4": {
+                              "type": "string",
+                              "description": "fieldVal4의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType5": {
+                              "type": "string",
+                              "description": "fieldVal5의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType6": {
+                              "type": "string",
+                              "description": "fieldVal6의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType7": {
+                              "type": "string",
+                              "description": "fieldVal7의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldVal1": {
+                              "type": "string",
+                              "description": "fieldVal1의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal2": {
+                              "type": "string",
+                              "description": "fieldVal2의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal3": {
+                              "type": "string",
+                              "description": "fieldVal3의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal4": {
+                              "type": "string",
+                              "description": "fieldVal4의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal5": {
+                              "type": "string",
+                              "description": "fieldVal5의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal6": {
+                              "type": "string",
+                              "description": "fieldVal6의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal7": {
+                              "type": "string",
+                              "description": "fieldVal7의 지표값",
+                              "properties": {}
+                            },
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "schlDivCd": {
+                              "type": "string",
+                              "description": "학교구분",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "장학금 수혜 현황 조회_지역별통계",
+        "description": "장학금 수혜 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getRegionalScholarshipBenefitCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlDivCd",
+          "description": "학교구분",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getRegionalEducationExpensesLoanCrntSt": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "fieldType1": {
+                              "type": "string",
+                              "description": "fieldVal1의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType2": {
+                              "type": "string",
+                              "description": "fieldVal2의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType3": {
+                              "type": "string",
+                              "description": "fieldVal3의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType4": {
+                              "type": "string",
+                              "description": "fieldVal4의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType5": {
+                              "type": "string",
+                              "description": "fieldVal5의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType6": {
+                              "type": "string",
+                              "description": "fieldVal6의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldType7": {
+                              "type": "string",
+                              "description": "fieldVal7의 항목의미",
+                              "properties": {}
+                            },
+                            "fieldVal1": {
+                              "type": "string",
+                              "description": "fieldVal1의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal2": {
+                              "type": "string",
+                              "description": "fieldVal2의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal3": {
+                              "type": "string",
+                              "description": "fieldVal3의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal4": {
+                              "type": "string",
+                              "description": "fieldVal4의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal5": {
+                              "type": "string",
+                              "description": "fieldVal5의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal6": {
+                              "type": "string",
+                              "description": "fieldVal6의 지표값",
+                              "properties": {}
+                            },
+                            "fieldVal7": {
+                              "type": "string",
+                              "description": "fieldVal7의 지표값",
+                              "properties": {}
+                            },
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "schlDivCd": {
+                              "type": "string",
+                              "description": "학교구분",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학자금 대출 현황 조회_지역별통계",
+        "description": "학자금 대출 현황 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getRegionalEducationExpensesLoanCrntSt",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlDivCd",
+          "description": "학교구분",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getRegionalEducationExpensesLoanUseStudentRatioTuition": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "indctFirstSchlCntRmk": {
+                              "type": "string",
+                              "description": "indctFirstSchlCnt 한글 설명",
+                              "properties": {}
+                            },
+                            "indctSecondSchlCntRmk": {
+                              "type": "string",
+                              "description": "indctSecondSchlCnt 한글 설명",
+                              "properties": {}
+                            },
+                            "indctThirdSchlCntRmk": {
+                              "type": "string",
+                              "description": "indctThirdSchlCnt 한글 설명",
+                              "properties": {}
+                            },
+                            "indctFirstSvyYr": {
+                              "type": "string",
+                              "description": "첫번째 공시년도",
+                              "properties": {}
+                            },
+                            "indctSecondSvyYr": {
+                              "type": "string",
+                              "description": "두번째 공시년도",
+                              "properties": {}
+                            },
+                            "indctThirdSvyYr": {
+                              "type": "string",
+                              "description": "세번째 공시년도",
+                              "properties": {}
+                            },
+                            "znNmRmk": {
+                              "type": "string",
+                              "description": "znNm 한글 설명",
+                              "properties": {}
+                            },
+                            "indctFirstSchlCnt": {
+                              "type": "string",
+                              "description": "첫번째 공시년도 학교 수",
+                              "properties": {}
+                            },
+                            "indctSecondSchlCnt": {
+                              "type": "string",
+                              "description": "두번째 공시년도 학교 수",
+                              "properties": {}
+                            },
+                            "indctThirdSchlCnt": {
+                              "type": "string",
+                              "description": "세번째 공시년도 학교 수",
+                              "properties": {}
+                            },
+                            "indctFirstVal": {
+                              "type": "string",
+                              "description": "첫번째 공시년도 지표값 (단위 : % )",
+                              "properties": {}
+                            },
+                            "indctSecondVal": {
+                              "type": "string",
+                              "description": "두번째 공시년도 지표값 (단위 : % )",
+                              "properties": {}
+                            },
+                            "indctThirdVal": {
+                              "type": "string",
+                              "description": "세번째 공시년도 지표값 (단위 : % )",
+                              "properties": {}
+                            },
+                            "znNm": {
+                              "type": "string",
+                              "description": "지역 이름",
+                              "properties": {}
+                            },
+                            "indctId": {
+                              "type": "string",
+                              "description": "지표아이디",
+                              "properties": {}
+                            },
+                            "schlDivCd": {
+                              "type": "string",
+                              "description": "학생구분",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학자금대출 이용학생비율(등록금(학비))_지역별통계",
+        "description": "학교구분을 기준으로 학교구분, 지역 이름, 학자금대출 이용학생비율(등록금(학비)) 등을 제공하는 학자금대출 이용학생비율(등록금(학비)) 조회 서비스",
+        "operationId": "getRegionalEducationExpensesLoanUseStudentRatioTuition",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "schlDivCd",
+          "description": "학교구분",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getComparisonTuitionCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "indctVal1": {
+                      "type": "string",
+                      "description": "지표값"
+                    },
+                    "schlDivNm": {
+                      "type": "string",
+                      "description": "학교종류"
+                    },
+                    "schlEstbNm": {
+                      "type": "string",
+                      "description": "설립구분"
+                    },
+                    "schlId": {
+                      "type": "string",
+                      "description": "학교아이디"
+                    },
+                    "schlKrnNm": {
+                      "type": "string",
+                      "description": "학교한글명"
+                    },
+                    "svyYr": {
+                      "type": "string",
+                      "description": "공시년도"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getComparisonScholarshipBenefitCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "indctVal1": {
+                      "type": "string",
+                      "description": "지표값"
+                    },
+                    "schlDivNm": {
+                      "type": "string",
+                      "description": "학교종류"
+                    },
+                    "schlEstbNm": {
+                      "type": "string",
+                      "description": "설립구분"
+                    },
+                    "schlId": {
+                      "type": "string",
+                      "description": "학교아이디"
+                    },
+                    "schlKrnNm": {
+                      "type": "string",
+                      "description": "학교한글명"
+                    },
+                    "svyYr": {
+                      "type": "string",
+                      "description": "공시년도"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getComparisonEducationalExpensesReductionCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "indctVal1": {
+                      "type": "string",
+                      "description": "지표값"
+                    },
+                    "indctYr": {
+                      "type": "string",
+                      "description": "지표아이디 (해당년도)"
+                    },
+                    "schlDivNm": {
+                      "type": "string",
+                      "description": "학교종류"
+                    },
+                    "schlEstbNm": {
+                      "type": "string",
+                      "description": "설립구분"
+                    },
+                    "schlId": {
+                      "type": "string",
+                      "description": "학교아이디"
+                    },
+                    "schlKrnNm": {
+                      "type": "string",
+                      "description": "학교한글명"
+                    },
+                    "svyYr": {
+                      "type": "string",
+                      "description": "공시년도"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getRegionalEducationalExpensesReductionCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "fieldType1": {
+                      "type": "string",
+                      "description": "fieldVal1의 항목의미"
+                    },
+                    "fieldType2": {
+                      "type": "string",
+                      "description": "fieldVal2의 항목의미"
+                    },
+                    "fieldType3": {
+                      "type": "string",
+                      "description": "fieldVal3의 항목의미"
+                    },
+                    "fieldType4": {
+                      "type": "string",
+                      "description": "fieldVal4의 항목의미"
+                    },
+                    "fieldType5": {
+                      "type": "string",
+                      "description": "fieldVal5의 항목의미"
+                    },
+                    "fieldType6": {
+                      "type": "string",
+                      "description": "fieldVal6의 항목의미"
+                    },
+                    "fieldType7": {
+                      "type": "string",
+                      "description": "fieldVal7의 항목의미"
+                    },
+                    "fieldVal1": {
+                      "type": "string",
+                      "description": "fieldVal1의 지표값"
+                    },
+                    "fieldVal2": {
+                      "type": "string",
+                      "description": "fieldVal2의 지표값"
+                    },
+                    "fieldVal3": {
+                      "type": "string",
+                      "description": "fieldVal3의 지표값"
+                    },
+                    "fieldVal4": {
+                      "type": "string",
+                      "description": "fieldVal4의 지표값"
+                    },
+                    "fieldVal5": {
+                      "type": "string",
+                      "description": "fieldVal5의 지표값"
+                    },
+                    "fieldVal6": {
+                      "type": "string",
+                      "description": "fieldVal6의 지표값"
+                    },
+                    "fieldVal7": {
+                      "type": "string",
+                      "description": "fieldVal7의 지표값"
+                    },
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "schlDivCd": {
+                      "type": "string",
+                      "description": "학교구분"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getComparisonEducationExpensesLoanCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "indctVal1": {
+                      "type": "string",
+                      "description": "지표값"
+                    },
+                    "schlDivNm": {
+                      "type": "string",
+                      "description": "학교종류"
+                    },
+                    "schlEstbNm": {
+                      "type": "string",
+                      "description": "설립구분"
+                    },
+                    "schlId": {
+                      "type": "string",
+                      "description": "학교아이디"
+                    },
+                    "schlKrnNm": {
+                      "type": "string",
+                      "description": "학교한글명"
+                    },
+                    "svyYr": {
+                      "type": "string",
+                      "description": "공시년도"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getComparisonEducationExpensesLoanUseStudentRatioTuition_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "indctVal1": {
+                      "type": "string",
+                      "description": "지표값"
+                    },
+                    "indctYr": {
+                      "type": "string",
+                      "description": "지표아이디(해당년도)"
+                    },
+                    "schlDivNm": {
+                      "type": "string",
+                      "description": "학교종류"
+                    },
+                    "schlEstbNm": {
+                      "type": "string",
+                      "description": "설립구분"
+                    },
+                    "schlId": {
+                      "type": "string",
+                      "description": "학교아이디"
+                    },
+                    "schlKrnNm": {
+                      "type": "string",
+                      "description": "학교한글명"
+                    },
+                    "svyYr": {
+                      "type": "string",
+                      "description": "공시년도"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getRegionalTuitionCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "fieldType1": {
+                      "type": "string",
+                      "description": "fieldVal4의 항목의미"
+                    },
+                    "fieldType2": {
+                      "type": "string",
+                      "description": "fieldVal2의 항목의미"
+                    },
+                    "fieldVal1": {
+                      "type": "string",
+                      "description": "fieldVal1의 지표값"
+                    },
+                    "fieldVal2": {
+                      "type": "string",
+                      "description": "fieldVal2의 지표값"
+                    },
+                    "fieldVal3": {
+                      "type": "string",
+                      "description": "fieldVal3의 지표값"
+                    },
+                    "fieldVal4": {
+                      "type": "string",
+                      "description": "fieldVal4의 지표값"
+                    },
+                    "fieldVal5": {
+                      "type": "string",
+                      "description": "fieldVal5의 지표값"
+                    },
+                    "fieldVal6": {
+                      "type": "string",
+                      "description": "fieldVal6의 지표값"
+                    },
+                    "fieldVal7": {
+                      "type": "string",
+                      "description": "fieldVal7의 지표값"
+                    },
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "schlDivCd": {
+                      "type": "string",
+                      "description": "학교구분"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getRegionalScholarshipBenefitCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "fieldType1": {
+                      "type": "string",
+                      "description": "fieldVal1의 항목의미"
+                    },
+                    "fieldType2": {
+                      "type": "string",
+                      "description": "fieldVal2의 항목의미"
+                    },
+                    "fieldType3": {
+                      "type": "string",
+                      "description": "fieldVal3의 항목의미"
+                    },
+                    "fieldType4": {
+                      "type": "string",
+                      "description": "fieldVal4의 항목의미"
+                    },
+                    "fieldType5": {
+                      "type": "string",
+                      "description": "fieldVal5의 항목의미"
+                    },
+                    "fieldType6": {
+                      "type": "string",
+                      "description": "fieldVal6의 항목의미"
+                    },
+                    "fieldType7": {
+                      "type": "string",
+                      "description": "fieldVal7의 항목의미"
+                    },
+                    "fieldVal1": {
+                      "type": "string",
+                      "description": "fieldVal1의 지표값"
+                    },
+                    "fieldVal2": {
+                      "type": "string",
+                      "description": "fieldVal2의 지표값"
+                    },
+                    "fieldVal3": {
+                      "type": "string",
+                      "description": "fieldVal3의 지표값"
+                    },
+                    "fieldVal4": {
+                      "type": "string",
+                      "description": "fieldVal4의 지표값"
+                    },
+                    "fieldVal5": {
+                      "type": "string",
+                      "description": "fieldVal5의 지표값"
+                    },
+                    "fieldVal6": {
+                      "type": "string",
+                      "description": "fieldVal6의 지표값"
+                    },
+                    "fieldVal7": {
+                      "type": "string",
+                      "description": "fieldVal7의 지표값"
+                    },
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "schlDivCd": {
+                      "type": "string",
+                      "description": "학교구분"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getRegionalEducationExpensesLoanCrntSt_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "fieldType1": {
+                      "type": "string",
+                      "description": "fieldVal1의 항목의미"
+                    },
+                    "fieldType2": {
+                      "type": "string",
+                      "description": "fieldVal2의 항목의미"
+                    },
+                    "fieldType3": {
+                      "type": "string",
+                      "description": "fieldVal3의 항목의미"
+                    },
+                    "fieldType4": {
+                      "type": "string",
+                      "description": "fieldVal4의 항목의미"
+                    },
+                    "fieldType5": {
+                      "type": "string",
+                      "description": "fieldVal5의 항목의미"
+                    },
+                    "fieldType6": {
+                      "type": "string",
+                      "description": "fieldVal6의 항목의미"
+                    },
+                    "fieldType7": {
+                      "type": "string",
+                      "description": "fieldVal7의 항목의미"
+                    },
+                    "fieldVal1": {
+                      "type": "string",
+                      "description": "fieldVal1의 지표값"
+                    },
+                    "fieldVal2": {
+                      "type": "string",
+                      "description": "fieldVal2의 지표값"
+                    },
+                    "fieldVal3": {
+                      "type": "string",
+                      "description": "fieldVal3의 지표값"
+                    },
+                    "fieldVal4": {
+                      "type": "string",
+                      "description": "fieldVal4의 지표값"
+                    },
+                    "fieldVal5": {
+                      "type": "string",
+                      "description": "fieldVal5의 지표값"
+                    },
+                    "fieldVal6": {
+                      "type": "string",
+                      "description": "fieldVal6의 지표값"
+                    },
+                    "fieldVal7": {
+                      "type": "string",
+                      "description": "fieldVal7의 지표값"
+                    },
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "schlDivCd": {
+                      "type": "string",
+                      "description": "학교구분"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getRegionalEducationExpensesLoanUseStudentRatioTuition_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "indctFirstSchlCntRmk": {
+                      "type": "string",
+                      "description": "indctFirstSchlCnt 한글 설명"
+                    },
+                    "indctSecondSchlCntRmk": {
+                      "type": "string",
+                      "description": "indctSecondSchlCnt 한글 설명"
+                    },
+                    "indctThirdSchlCntRmk": {
+                      "type": "string",
+                      "description": "indctThirdSchlCnt 한글 설명"
+                    },
+                    "indctFirstSvyYr": {
+                      "type": "string",
+                      "description": "첫번째 공시년도"
+                    },
+                    "indctSecondSvyYr": {
+                      "type": "string",
+                      "description": "두번째 공시년도"
+                    },
+                    "indctThirdSvyYr": {
+                      "type": "string",
+                      "description": "세번째 공시년도"
+                    },
+                    "znNmRmk": {
+                      "type": "string",
+                      "description": "znNm 한글 설명"
+                    },
+                    "indctFirstSchlCnt": {
+                      "type": "string",
+                      "description": "첫번째 공시년도 학교 수"
+                    },
+                    "indctSecondSchlCnt": {
+                      "type": "string",
+                      "description": "두번째 공시년도 학교 수"
+                    },
+                    "indctThirdSchlCnt": {
+                      "type": "string",
+                      "description": "세번째 공시년도 학교 수"
+                    },
+                    "indctFirstVal": {
+                      "type": "string",
+                      "description": "첫번째 공시년도 지표값 (단위 : % )"
+                    },
+                    "indctSecondVal": {
+                      "type": "string",
+                      "description": "두번째 공시년도 지표값 (단위 : % )"
+                    },
+                    "indctThirdVal": {
+                      "type": "string",
+                      "description": "세번째 공시년도 지표값 (단위 : % )"
+                    },
+                    "znNm": {
+                      "type": "string",
+                      "description": "지역 이름"
+                    },
+                    "indctId": {
+                      "type": "string",
+                      "description": "지표아이디"
+                    },
+                    "schlDivCd": {
+                      "type": "string",
+                      "description": "학생구분"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

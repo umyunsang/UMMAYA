@@ -1,0 +1,1735 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<title>Open API 상세 | Open API 목록 | 열린국회정보</title>
+
+
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="copyright" content="대한민국국회. ALL RIGHTS RESERVED." />
+
+<meta name="description" content="국회 및 지원기관이 보유한 정보를 체계화하고 통합·공개하여 국민과 공유하고 민간의 활용 촉진과 다양한 맞춤형 서비스를 제공하기 위해 구축된 정보공개 포털 서비스 입니다." />
+<meta name="keywords" content="국회사무처,대한민국국회,정보공개,포털" />
+
+<!-- For old IEs -->
+<link rel="shortcut icon" href="/favicon.ico" />
+<!-- For new browsers - multisize ico  -->
+<link rel="icon" href="/favicon.ico">
+<!-- For iPad with high-resolution Retina display running iOS ≥ 7: -->
+<link rel="apple-touch-icon" sizes="152x152" href="/favicon-152.png">
+<!-- For iPad with high-resolution Retina display running iOS ≤ 6: -->
+<link rel="apple-touch-icon" sizes="144x144" href="/favicon-144.png">
+<!-- For iPhone with high-resolution Retina display running iOS ≥ 7: -->
+<link rel="apple-touch-icon" sizes="120x120" href="/favicon-120.png">
+<!-- For iPhone with high-resolution Retina display running iOS ≤ 6: -->
+<link rel="apple-touch-icon" sizes="114x114" href="/favicon-114.png">
+<!-- For iPhone 6+ -->
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+<!-- For first- and second-generation iPad: -->
+<link rel="apple-touch-icon" sizes="72x72" href="/favicon-72.png">
+<!-- For non-Retina iPhone, iPod Touch, and Android 2.1+ devices: -->
+<link rel="apple-touch-icon" href="/favicon-57.png">
+<!-- For Old Chrome -->
+<link rel="icon" href="/favicon-32.png" sizes="32x32">
+<!-- For IE10 Metro -->
+<meta name="msapplication-TileColor" content="#FFFFFF">
+<meta name="msapplication-TileImage" content="/favicon-144.png">
+<!-- kakao talk -->
+<meta property="og:title" content="열린국회정보">
+<meta property="og:image" content="/kakao.png">
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="400">
+<meta property="og:url" content="https://open.assembly.go.kr">
+<meta property="og:site_name" content="열린국회정보 정보공개포털">
+<meta property="og:type" content="website">
+<meta property="og:description" content="국회를 열다, 정보를 나누다.">
+
+<!-- Chrome for Android -->
+<link rel="icon" sizes="192x192" href="/favicon-192.png">
+
+<link rel="stylesheet" type="text/css" href="/css/jquery-ui-1.9.2.custom.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/css/portal/default.css?20250724" />
+<link rel="stylesheet" type="text/css" href="/css/portal/notokr.css" />
+<link rel="stylesheet" type="text/css" href="/css/portal/layout.css?202507241" />
+<link rel="stylesheet" type="text/css" href="/css/portal/layout_mobile.css?202507241" />
+<link rel="stylesheet" type="text/css" href="/css/portal/search.css?20250724" />
+<link rel="stylesheet" type="text/css" href="/css/portal/search_mobile.css?20250724" />
+
+<script type="text/javascript" src="/js/jquery/jquery-2.2.4.min.js"></script>
+<script type="text/javascript" src="/js/jquery/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/js/jquery/json.min.js"></script>
+<script type="text/javascript" src="/js/jquery/jquery.form.js"></script>
+<script type="text/javascript" src="/js/ggportal/data/service/jquery.fileDownload.js"></script>
+<script type="text/javascript" src="/js/jquery/jquery.cookie.js"></script>
+<script type="text/javascript" src="/js/jquery/jquery.meio.mask.js" charset="utf-8"></script>
+
+
+
+
+    <script type="text/javascript" src="/js/sheet/ibsheet.js"></script>
+    <script type="text/javascript" src="/js/sheet/ibsheetinfo.js"></script>
+
+
+
+<script type="text/javascript" src="/js/common/base/commonness.js"></script>
+<script type="text/javascript" src="/js/common/base/delegation.js"></script>
+<script type="text/javascript" src="/js/common.js?v=20250722"></script>
+<script type="text/javascript" src="/js/lodash.min.js"></script>
+<script type="text/javascript" src="/js/ggportal/jquery.bx.js"></script>
+<!-- Nethru Tag Manager -->
+<script>(function(f,d,k,h){var b;var a=m()+"ver="+c(d);g();function e(){var o=document.getElementsByTagName(f)[0];var n=document.createElement(f);n.async=true;n.charset="utf-8";n.src=a;o.parentNode.insertBefore(n,o)}function m(){return window.location.protocol=="https:"?"https://tag.assembly.go.kr:9443/static/00002/install.js?":"https://tag.assembly.go.kr:9443/static/00002/install.js?"}function c(n){var o=new Date().getTime();var p=n*1000*60;return n>0?Math.floor(o/p)*p:o}function g(){var n=l();if(!n){return false}n.open("GET",a,true);n.withCredentials=h;n.send(null);n.onload=function(){j();e()};n.onerror=n.onabort=function(){j()};i(function(){n.abort()},k)}function l(){var q;var o=[function(){return new XDomainRequest()},function(){return new XMLHttpRequest()},function(){return new ActiveXObject("Msxml2.XMLHTTP")},function(){return new ActiveXObject("Msxml3.XMLHTTP")},function(){return new ActiveXObject("Microsoft.XMLHTTP")}];for(var n=0;n<o.length;n++){try{q=o[n]()}catch(p){continue}break}return q}function i(o,n){b=setTimeout(o,n)}function j(){if(b){clearTimeout(b);b=null}}})("script",60,/*{{timeout}}*/2000,/*{{withCredentials}}*/false);</script>
+<!-- End Nethru Tag Manager -->
+
+
+
+
+
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-158610642-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-158610642-1');
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="/js/ggportal/kakao.min.js"></script>
+<script type="text/javascript">
+    Kakao.init("6d0de373ee382b138fbfe6f47726a4b6");
+</script>
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+    var getContextPath = "";
+</script>
+
+
+
+<script type="text/javascript" src="/js/portal/menu.js"></script>
+<script type="text/javascript" src="/js/portal/common.js?v=2025072"></script>
+<!--  Mind Map -->
+<link rel="stylesheet" type="text/css" href="/css/component/Jit/Spacetree.css" />
+<link rel="stylesheet" type="text/css" href="/css/component/Jit/style.css" />
+<script type="text/javascript" src="/js/common/component/jquery.fittext.js"></script>
+<script type="text/javascript" src="/js/common/Jit/jit.custom.js"></script>
+<script type="text/javascript" src="/js/common/Jit/mindMap_data.js"></script>
+<script type="text/javascript" src="/js/common/Jit/script.js"></script>
+
+
+<script type="text/javascript" src="/js/ggportal/base-by-developer.js"></script>
+<script type="text/javascript" src="/js/ggportal/bxslider-by-developer.js"></script>
+
+
+<script type="text/javascript" src="/js/ggportal/data/service/selectNaOpenApi.js"></script>
+
+<script type="text/javascript">
+//     history.pushState(null, null, location.href);
+//     window.onpopstate = function(event) {
+//         //history.go(1);
+//         searchDataset();
+//     }
+</script>
+</head>
+<body>
+<!-- layout_A -->
+<div class="layout_A">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- header -->
+    <header id="header">
+        <div class="headers">
+            <!-- skip navigation -->
+            <p class="skip-navigation">
+                <a href="#contents">본문으로 바로가기</a>
+            </p>
+            <!-- //skip navigation -->
+
+            <!-- gnb -->
+            <div class="gnb-area">
+                <div class="gnb-box clear">
+                    <ul class="left">
+                        <li class="ga00">
+                            <a href="https://www.assembly.go.kr/portal/na/agenda/agendaSchl.do?menuNo=600015" target="_blank" id='gnb_alink' title="국회 회기정보 바로가기 새창열림"></a>
+                        </li>
+                        <li class="ga01">
+                            <a href="https://www.assembly.go.kr/portal/pop/popInfoService.do" target="_blank" title="국회정보길라잡이 새창열림">국회정보길라잡이</a>
+                        </li>
+                        <li class="ga02">
+                            <a href="https://www.assembly.go.kr/portal/cnts/cntsCont/dataA.do?cntsDivCd=NAAS&menuNo=600137&tabIdx=1"  target="_blank" title="국회의원 검색 바로가기 새창열림">국회의원 검색</a>
+                        </li>
+                    </ul>
+                    <ul class="right">
+                        <li class="m_none"><a target="_blank" href="https://www.assembly.go.kr" title="새창열림 대한민국국회">대한민국국회</a></li>
+
+
+
+                        <li class="line-none"><a href="/portal/user/loginPage.do">로그인</a></li>
+
+
+                        <li class="m_none">
+                            <div>
+                                <strong>화면크기</strong>
+                                <a href="javascript:;" class="gnb_plus" onclick="zoomOut();">화면확대</a>
+                                <a href="javascript:;" class="gnb_minus" onclick="zoomIn();">화면축소</a>
+                            </div>
+                        </li>
+                        <li class="m_none">
+                            <ol class="glnb_nsns_icon">
+                                <li><a href="" target="_blank" class="icon_glnb_facebook" id="link_glnb_facebook" title="새창열림_페이스북">페이스북</a></li>
+                                <li><a href="" target="_blank" class="icon_glnb_insta" id="link_glnb_insta" title="새창열림_인스타그램">인스타그램</a></li>
+                                <li><a href="" target="_blank" class="icon_glnb_youtube" id="link_glnb_youtube" title="새창열림_유튜브">유튜브</a></li>
+                                <li><a href="" target="_blank" class="icon_glnb_twitter" id="link_glnb_twitter" title="새창열림_X">X</a></li>
+                            </ol>
+                        </li>
+                        <!--
+                        <li><a href="/portal/bbs/faqapi/searchBulletinPage.do">FAQ</a></li>
+                        -->
+                        <li><a href="/portal/view/openSitemapPage.do">Open API 사이트맵</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- //gnb -->
+
+            <!-- menu -->
+            <div class="header-area">
+                <div class="header-box">
+                    <h1>
+                        <a href="/portal/openapi/main.do">
+                            <img src="/images/logo_openapi.png" alt="열린국회정보 정보공개포털 Open API">
+                        </a>
+                    </h1>
+                    <div class="menu">
+                        <ul class="top-menu">
+                            <li><a href="/portal/openapi/openApiIntroPage.do" class="top-menu-depth1 menu1">Open API 소개</a></li>
+                            <li><a href="/portal/openapi/openApiNaListPage.do" class="top-menu-depth1 menu2">Open API 목록</a></li>
+                            <li><a href="/portal/openapi/openApiDevPage.do" class="top-menu-depth1 menu3">개발가이드</a></li>
+                            <li><a href="/portal/gallery/galleryMainPage.do" class="top-menu-depth1 menu4">참여형 플랫폼</a></li>
+                            <li><a href="/portal/bbs/noticeapi/searchBulletinPage.do" class="top-menu-depth1 menu5">알림마당</a></li>
+                            <li><a href="/portal/mainPage.do" class="menu_toOpen">정보공개포털 바로가기</a></li>
+                            <!-- <li><a href="/portal/openapi/openApiActKeyPage.do"             class="top-menu-depth1 menu4">마이페이지</a></li> -->
+                        </ul>
+                    </div>
+                    <ul class="lnb_util">
+                        <li><div class="lnb_slogan">국민을 지키는 국회,미래로 나아가는 국회</li>
+                           <li><a href="javascript:;" class="mh_allmenu m_block">전체메뉴 열기</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- //menu -->
+        </div>
+    </header>
+    <!-- //header -->
+
+    <div class="totalmenu-mobile">
+        <div class="totalmenu-wrapper-mobile">
+            <p class="mobile-title">
+                전체메뉴
+                <a href="javascript:;" class="mh_allmenu">전체메뉴 닫기</a>
+            </p>
+            <div class="m_logo">
+                <h1>열린국회정보</h1>
+            </div>
+            <div class="layer_sns_m on">
+                <ul>
+                    <li><a href="https://www.facebook.com/NationalAssemblyROK" target="_blank" class="icon_glnb_facebook on" title="새창열림_페이스북">페이스북</a></li>
+                    <li><a href="https://www.youtube.com/channel/UCsWa6xl7KxOolVhROUJ4Ghw" target="_blank" class="icon_glnb_youtube on" title="새창열림_유투브">유투브</a></li>
+                    <li><a href="https://twitter.com/news_NA" target="_blank" class="icon_glnb_twitter on" title="새창열림_X">X</a></li>
+                    <li><a href="https://www.instagram.com/theassembly_kr/" target="_blank" class="icon_glnb_insta on" title="새창열림_인스타그램">인스타그램</a></li>
+                    <!-- <li><a href="/portal/rss/rss/searchRss.do?menuNo=600251" target="_blank" class="icon_glnb_rss on" title="새창열림_RSS">RSS</a></li> -->
+                </ul>
+            </div>
+            <div class="totalmenu-area-mobile">
+                <h2>
+                    <a class="menu1">Open API 소개<span class="arrow"></span></a>
+                </h2>
+                <ul class="menu1">
+                    <li><a href="/portal/openapi/openApiIntroPage.do">Open API 소개</a></li>
+                    <li><a href="/portal/openapi/openApiFeaturePage.do">Open API 특징</a></li>
+                    <li><a href="/portal/policy/openUserAgreementPage.do">Open API 이용약관</a></li>
+                </ul>
+                <h2>
+                    <a class="menu2">Open API 목록<span class="arrow"></span></a>
+                </h2>
+                <ul class="menu2">
+                    <li><a href="/portal/openapi/openApiNaListPage.do">Open API 목록</a></li>
+                </ul>
+                <h2>
+                    <a class="menu3">개발가이드<span class="arrow"></span></a>
+                </h2>
+                <ul class="menu3">
+                    <li><a href="/portal/openapi/openApiDevPage.do">Open API 사용방법</a></li>
+                    <li><a href="/portal/openapi/openApiDevLangPage.do">개발소스예제</a></li>
+                    <li><a href="/portal/openapi/openApiDevSrcPage.do">언어별 개발가이드</a></li>
+
+                </ul>
+                <h2>
+                    <a class="menu6">참여형 플랫폼<span class="arrow"></span></a>
+                </h2>
+                <ul class="menu6">
+                    <li><a href="/portal/bbs/guide/searchBulletinPage.do">활용 가이드</a></li>
+                    <li><a href="javacript:;">개발자 공간</a></li>
+                    <li class="menu_sub_3depth"><a href="/portal/bbs/develop/searchBulletinPage.do">개발자 커뮤니티</a></li>
+                    <li class="menu_sub_3depth"><a href="/portal/bbs/qnaapi/searchBulletinPage.do">관리자문의</a></li>
+                    <li class="menu_sub_3depth"><a href="/portal/bbs/faqapi/searchBulletinPage.do">FAQ</a></li>
+                </ul>
+                <!-- <h2>
+                    <a class="menu4">마이페이지<span class="arrow"></span></a>
+                </h2> -->
+                <ul class="menu4">
+                    <li><a href="/portal/openapi/openApiActKeyPage.do">인증키 발급내역</a></li>
+                    <li><a href="/portal/openapi/openApiActKeyUsePage.do">인증키 이용내역</a></li>
+                    <li><a href="/portal/openapi/openApiActKeyIssPage.do">인증키 발급</a></li>
+                    <li><a href="/portal/openapi/openApiActKeyTestPage.do">Open API 테스트</a></li>
+                </ul>
+                <h2>
+                    <a class="menu5">알림마당<span class="arrow"></span></a>
+                </h2>
+                <ul class="menu5">
+                    <li><a href="/portal/bbs/noticeapi/searchBulletinPage.do">공지사항</a></li>
+                </ul>
+            </div>
+            <div class="mobile-another-site">
+                <a target="_blank" href="/portal/mainPage.do" class="fl">정보공개포털</a>
+                <a target="_blank" href="http://www.assembly.go.kr" class="fr">대한민국국회</a>
+            </div>
+            <div class="login-mobile-area">
+                <a href="/portal/openapi/openApiActKeyPage.do">마이페이지</a>
+            </div>
+
+
+
+            <div class="login-mobile-area">
+                <a href="/portal/user/loginPage.do">로그인</a>
+            </div>
+
+
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Open API 소개 예외처리 -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 알림마당일 경우 알림마당(API)로 표출 -->
+
+
+
+
+<!-- 서브페이지 상단 타이틀 및 배경이미지 -->
+<div class="nassub_top nsub_top nsub_bg05" id="nassub_top_show">
+    <div class="openDiv">
+        <div class="nsub_h2">
+            <h2>
+
+
+
+                        Open API 목록
+
+
+            </h2>
+        </div>
+        <div class="nsub_other">
+
+            <!-- location -->
+            <div class="location">
+                <ul>
+                    <li><span>홈</span></li>
+
+                    <li><span>Open API 목록</span></li>
+
+
+                    <li><span>Open API 상세</span></li>
+
+
+                </ul>
+             </div>
+             <!-- //location -->
+
+             <ul class="api_box">
+                 <li><a href="javascript:;" class="btn_print" title="인쇄하기 새창열림">인쇄하기</a></li>
+                 <li><a href="javascript:;" class="btn_share" title="SNS 공유하기">공유</a></li>
+                 <!-- SNS layer -->
+                 <div class="layer_sns">
+                     <ul>
+                        <li><a href="javascript:;" id="shareFB" class="sns_facebook" title="새창열림_페이스북">페이스북</a></li>
+                        <li><a href="javascript:;" id="shareTW" class="sns_twitter" title="새창열림_X">X</a></li>
+                        <li><a href="javascript:;" id="shareBG" class="sns_blog" title="새창열림_네이버블로그">네이버블로그</a></li>
+                        <li><a href="javascript:;" id="shareKS" class="sns_kakaostory" title="새창열림_카카오스토리">카카오스토리</a></li>
+                        <li><a href="javascript:;" id="shareKT" class="sns_kakaotalk" title="새창열림_카카오톡">카카오톡</a></li>
+                         <li><a href="javascript:;" id="shareURL" class="sns_url" href="#">URL</a></li>
+                     </ul>
+                     <a href="javascript:;" class="btn_sns_x">창닫기</a>
+                 </div>
+                 <!-- //SNS layer -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+//공유 버튼 클릭 시 SNS 레이어 토글
+$(".btn_share").on("click", function () {
+    $(".layer_sns").slideToggle(300);
+});
+
+// 닫기 버튼 클릭 시 SNS 레이어 닫기
+$(".btn_sns_x").on("click", function () {
+    $(".layer_sns").slideToggle(300);
+    $(".btn_share").focus();
+});
+
+
+
+// 프린트 버튼 클릭 시 프린트 출력 팝업 실행
+$('.btn_print').click(function(event) {
+    var popupWidth = '960';
+    var popupHeight = '600';
+
+    var popupX = (window.screen.width / 2) - (popupWidth / 2);
+    // 만들 팝업창 width 크기의 1/2 만큼 보정값으로 빼주었음
+
+    var popupY= (window.screen.height / 2) - (popupHeight / 2);
+    // 만들 팝업창 height 크기의 1/2 만큼 보정값으로 빼주었음
+
+    var printPop;
+    printPop = window.open("/portal/print/forPrint.do",
+        "printPop", "width=" + popupWidth +", height=" + popupHeight +",left=" + popupX + ",top=" + popupY + ",resizable=no,scrollbars=no");
+});
+
+$(".glnb_nsns_icon a[id^=link_glnb_], .ft_menu_etc a[id^=link_glnb_footer_]").on("click", function(event) {
+    event.preventDefault();
+
+    var id = $(this).attr("id");
+    id = id.replace("link_glnb_footer_", "");
+    id = id.replace("link_glnb_", "");
+    var url = "";
+    if ( id == "facebook" ) {
+        url = "https://www.facebook.com/NationalAssemblyROK";
+    }
+    else if ( id == "youtube" ) {
+        url = "https://www.youtube.com/channel/UCsWa6xl7KxOolVhROUJ4Ghw";
+    }
+    else if ( id == "twitter" ) {
+        url = "https://twitter.com/news_NA";
+    }
+    else if ( id == "insta" ) {
+        url = "https://www.instagram.com/theassembly_kr/";
+    }
+    else if ( id == "rss" ) {
+        url = "/portal/rss/rss/searchRss.do?menuNo=600251";
+        var winid = window.open(url, id);
+        winid.focus();
+        return;
+    } else {}
+
+
+    if ( glnbInnerIpCheck() ) {
+        alert("인터넷망에서 접속가능합니다.");
+        return false;
+    }
+
+    if ( url != "" )  {
+        var winid = window.open(url, id);
+        winid.focus();
+    }
+});
+
+// 내부 IP 대역 목록
+var HOME_PAGE_MY_ADDR  = "";     // PC IP
+var INNER_IP_BAND_LIST = [];
+var INNER_IP_BAND_LIST_MAIN = [];
+/**
+ * 내부IP 목록 조회
+ */
+function glnbInnerIpCheck() {
+
+    var innerIpYn = false;
+    if ( INNER_IP_BAND_LIST == null || INNER_IP_BAND_LIST == undefined || INNER_IP_BAND_LIST.length == 0 ) {
+        var params = {
+              menuNo   : $("#menuNo").val()
+            // Spring Security CSRF Param 처리
+            , _csrf    : $("meta[name='_csrf']").attr("content")
+        };
+        $.ajax({
+            type    : 'post',
+            url     : "https://www.assembly.go.kr/portal/main/innerIpBandList.json",
+            data    : params,
+            async   : false,
+            success : function(data) {
+                var resultCode = data.resultCode;
+                var resultMsg  = data.msg;
+                if(resultCode == "success") {
+                    var resultList = data.ipList;
+                    INNER_IP_BAND_LIST = [];
+                    if ( resultList != null && resultList.length > 0 ) {
+                        for ( var i = 0 ; i < resultList.length ; i++ ) {
+                            if ( resultList[ i ].com1Val != "" && resultList[ i ].com1Val != null ) {
+                                INNER_IP_BAND_LIST.push( decodeNaValue(resultList[ i ].com1Val ));
+                            }
+                        }
+
+                        innerIpYn = glnbInnerIpSubCheck();
+                    } else {
+                        innerIpYn = false;
+                    }
+                }
+            }
+        });
+    } else {
+        innerIpYn = glnbInnerIpSubCheck();
+    }
+
+    return innerIpYn;
+}
+
+/**
+ * 접속 IP 가 내부IP 인지 확인..
+ */
+function glnbInnerIpSubCheck() {
+
+    var innerIpYn = false;
+    var innerIpList = INNER_IP_BAND_LIST;
+
+//     console.log("------------------------------");
+//     console.log("INNER_IP_BAND_LIST::" + JSON.stringify(INNER_IP_BAND_LIST));
+//     console.log("------------------------------");
+
+    if ( innerIpList != null && innerIpList.length > 0 ) {
+        for ( var i = 0 ; i < innerIpList.length ; i++ ) {
+            var idx = innerIpList[i].indexOf(".*");
+            if ( idx >= 0 ) {
+                // 내부 IP 대역 확인
+                var innIpBand = innerIpList[i].substring(0, idx);
+                if ( HOME_PAGE_MY_ADDR.indexOf(innIpBand) == 0 ) {
+                    innerIpYn = true;
+                    break;
+                }
+            } else {
+                // 내부 IP 확인
+                if ( HOME_PAGE_MY_ADDR == innerIpList[i] ) {
+                    innerIpYn = true;
+                    break;
+                }
+            }
+        }
+    } else {
+        innerIpYn = false;
+    }
+
+    // console.log("inner ip YN::"+innerIpYn);
+    return innerIpYn;
+}
+
+/**
+ * 입력된 암호된 값을 복호화 처리
+ *
+ * @param encodeStr
+ * @returns
+ */
+function decodeNaValue(encodeStr)  {
+
+    var decodeBase64Var = '';
+    try {
+        decodeBase64Var = atob(encodeStr);
+    } catch(e) {
+        decodeBase64Var = encodeStr;
+    }
+
+    var len = decodeBase64Var.length;
+    var decodeStr = '';
+    for ( var i = 0 ; i < len ; i ++ ) {
+        var numChr = decodeBase64Var.charCodeAt(i);
+        var decodeNumChr = numChr - 3;
+        decodeStr = decodeStr + String.fromCharCode(decodeNumChr);
+    }
+
+    return decodeStr;
+}
+</script>
+<div class="container hide-pc-lnb" id="container">
+<!-- contents -->
+    <div class="contents" id="contents">
+        <div class="contents-title-wrapper">
+            <h3>Open API 상세<span class="arrow"></span></h3>
+            <h3 style="padding-left:40px;">
+
+
+
+
+            </h3>
+        </div>
+
+<!-- wrap_layout_flex -->
+<div class="wrap_layout_flex"><div class="layout_flex_100">
+
+<!-- layout_flex -->
+<div class="layout_flex">
+    <!-- content -->
+    <div id="content" class="content_B">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="/js/common/bootstrap/dist/bootstrap.js"></script>
+<script type="text/javascript" src="/js/ggportal/kakao.min.js"></script>
+<style>
+    .btn-primary {
+        background-color: #1961B6; /* 기본 배경 색상 */
+        color: white; /* 텍스트 색상 */
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #2788D5;
+        color: white;
+    }
+</style>
+
+
+
+
+
+
+
+
+        <!-- 상세 요약 -->
+        <div class="detail_summary">
+            <figure class="thumbnail">
+
+
+
+                <img src="/portal/data/dataset/selectThumbnail.do?seq=OS46YD0012559515463&metaImagFileNm=&cateSaveFileNm=NA40000.png"  alt="" />
+
+
+
+                <figcaption>의정활동별 공개</figcaption>
+            </figure>
+            <div class="summary">
+                <strong class="tit" style="font-weight: normal;">법률안 제안이유 및 주요내용</strong>
+                <span class="opentyTagNm ot01">데이터</span>
+            <div style="display:flex; justify-content:space-between;">
+                <div>법률안 주요내용</div>
+                <div>
+
+
+
+
+
+                                    <button class="btn btn-primary active" style="font-size:13px; height:21px; padding: 0 10px 0 10px; border-radius: 0 !important;">
+                                        버전 1 (24-04-12)
+                                    </button>
+
+
+
+
+
+
+
+                </div>
+            </div>
+            <div class="sortArea">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+             </div>
+                <div class="area_grade clfix">
+                    <!--
+                    <div class="flL">
+                        <strong class="tit_totalGrade">총평점</strong>
+
+
+                        <img src="/img/ggportal/desktop/common/grade_0.png" class="icon_grade service-grade-image" alt="총점 5점 중 평점 0점 아주 나쁨" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        <div class="make_grade">
+                            <a href="#none" class="toggle_grade service-grade-combo">
+                                <img src="/img/ggportal/desktop/common/grade_s_1.png" alt="총점 5점 중 평점 1점 아주 나쁨" />
+                                <img src="/img/ggportal/desktop/common/toggle_open_grade.png" id="toggle_grade" alt="" />
+                            </a>
+                            <ul id="view_grade" class="view_grade" style="display:none;">
+                            <li><a href="#" class="service-grade-option"><img src="/img/ggportal/desktop/common/grade_s_1.png" alt="총점 5점 중 평점 1점 아주 나쁨" /></a></li>
+                            <li><a href="#" class="service-grade-option"><img src="/img/ggportal/desktop/common/grade_s_2.png" alt="총점 5점 중 평점 2점 나쁨" /></a></li>
+                            <li><a href="#" class="service-grade-option"><img src="/img/ggportal/desktop/common/grade_s_3.png" alt="총점 5점 중 평점 3점 보통" /></a></li>
+                            <li><a href="#" class="service-grade-option"><img src="/img/ggportal/desktop/common/grade_s_4.png" alt="총점 5점 중 평점 4점 좋음" /></a></li>
+                            <li><a href="#" class="service-grade-option"><img src="/img/ggportal/desktop/common/grade_s_5.png" alt="총점 5점 중 평점 5점 아주 좋음" /></a></li>
+                            </ul>
+                        </div>
+                        <a href="#" class="btn_make_grade service-grade-button">OK</a>
+                    </div>
+                    -->
+                    <a href="#none" class="toggle_metaInfo">
+                        <strong>메타 정보 열기</strong><img src="/img/ggportal/desktop/common/toggle_open_metaInfo.png" alt="" />
+                    </a>
+                    <!--
+                    <div class="btn_sns">
+                        <a id="shareFB" href="#" title="새창열림_페이스북" class="btn_facebook">페이스북 공유</a>
+                        <a id="shareTW" href="#" title="새창열림_트위터" class="btn_twitter">트위터 공유</a>
+                        <a id="shareBG" href="#" title="새창열림_네이버블로그" class="sns_blog">네이버블로그</a>
+                        <a id="shareKS" href="#" title="새창열림_카카오스토리" class="sns_kakaostory">카카오스토리</a>
+                        <a id="shareKT" href="#" title="새창열림_카카오톡" class="sns_kakaotalk">카카오톡</a>
+                    </div>
+                     -->
+                </div>
+            </div>
+        </div>
+        <!-- // 상세 요약 -->
+        <!-- 메타 정보 -->
+        <section id="metaInfo" class="metaInfo">
+        <h4 class="hide">메타 정보</h4>
+        <table class="table_datail_A width_A">
+        <caption>메타 정보 상세</caption>
+        <tbody>
+        <tr>
+            <th scope="row">분류 체계</th>
+            <td>의정활동별 공개>법률안 심사</td>
+            <th scope="row">공개일자</th>
+            <td>2024-04-12</td>
+        </tr>
+        <tr>
+            <th scope="row">제공기관</th>
+            <td>국회사무처</td>
+            <th scope="row">최종 수정일자</th>
+            <td>2024-10-11</td>
+        </tr>
+        <tr>
+            <th scope="row">원본시스템</th>
+            <td>
+
+
+                    의안정보시스템
+
+            </td>
+            <th scope="row" rowspan="3">이용허락조건</th>
+            <td rowspan="3"><img src="/images/copyright01.gif" alt="공공누리 - 공공저작물 자유이용허락 : 출처표시"></td>
+        </tr>
+        <tr>
+            <th scope="row">공개주기</th>
+            <td>매일</td>
+        </tr>
+        <tr>
+            <th scope="row">공개시기</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th scope="row">검색태그</th>
+            <td colspan="3">법률안,제안이유,주요내용</td>
+        </tr>
+        <tr>
+            <th scope="row">설명</th>
+            <td colspan="3">법률안 주요내용</td>
+        </tr>
+        </tbody>
+        </table>
+        </section>
+        <!-- // 메타 정보 -->
+        <script type="text/javascript">
+            $(function() {
+                // 페이지당 한번 호출 위해 넣어줌
+
+
+
+                $(".service-grade-option").each(function(index, element) {
+
+
+                    var image = $(this).find("img");
+
+                    // 공공데이터 서비스 평가점수 옵션에 클릭 이벤트를 바인딩한다.
+                    $(this).bind("click", {
+                        src:image.attr("src"),
+                        alt:image.attr("alt")
+                    }, function(event) {
+                        // 공공데이터 서비스 평가점수를 변경한다.
+                        changeAppraisal(event.data);
+                        return false;
+                    });
+
+                    // 공공데이터 서비스 평가점수 옵션에 키다운 이벤트를 바인딩한다.
+                    $(this).bind("keydown", {
+                        src:image.attr("src"),
+                        alt:image.attr("alt")
+                    }, function(event) {
+                        if (event.which == 13) {
+                            // 공공데이터 서비스 평가점수를 변경한다.
+                            changeAppraisal(event.data);
+                            return false;
+                        }
+                    });
+                });
+
+                // 공공데이터 서비스 평가점수 등록 버튼에 클릭 이벤트를 바인딩한다.
+                $(".service-grade-button").bind("click", function(event) {
+                    // 공공데이터 서비스 평가점수를 등록한다.
+                    insertAppraisal();
+                    return false;
+                });
+
+                // 공공데이터 서비스 평가점수 등록 버튼에 키다운 이벤트를 바인딩한다.
+                $(".service-grade-button").bind("keydown", function(event) {
+                    if (event.which == 13) {
+                        // 공공데이터 서비스 평가점수를 등록한다.
+                        insertAppraisal();
+                        return false;
+                    }
+                });
+
+                //페이스북 공유
+                $("#shareFB").bind("click", function(event) {
+                    var fullUrl = location.href;
+                    var url = fullUrl;
+                    shareFace(url);
+                });
+
+                //트위터 공유
+                $("#shareTW").bind("click", function(event) {
+                    var fullUrl = location.href;
+                    var url = fullUrl;
+                    shareTwitter(url, $(".detail_summary .tit").text());
+                });
+
+                //네이버 블로그 공유
+                $("#shareBG").bind("click", function(event) {
+                    var fullUrl = location.href;
+                    var url = fullUrl;
+                    shareNaver(url, $(".detail_summary .tit").text());
+                });
+                // 카카오스토리 공유
+                $("#shareKS").bind("click", function(event) {
+                    var fullUrl = location.href;
+                    var url = fullUrl;
+                    shareStory(url, $(".detail_summary .tit").text());
+                });
+                 //카카오톡 공유
+                $("#shareKT").bind("click", function(event) {
+                    var fullUrl = location.href;
+                    var url = fullUrl;
+                    shareKT(url, $(".detail_summary .tit").text());
+                });
+
+            });
+
+            /**
+             * 공공데이터 서비스 평가점수를 변경한다.
+             *
+             * @param data {Object} 데이터
+             */
+            function changeAppraisal(data) {
+                var image = $(".service-grade-combo img:eq(0)");
+
+                image.attr("src", data.src);
+                image.attr("alt", data.alt);
+
+                $(".service-grade-combo").click();
+            }
+
+            /**
+             * 공공데이터 서비스 평가점수를 등록한다.
+             */
+            function insertAppraisal() {
+                // 데이터를 처리한다.
+                doPost({
+                    url:"/portal/data/service/insertAppraisal.do",
+                    before:beforeInsertAppraisal,
+                    after:afterInsertAppraisal
+                });
+            }
+
+            /**
+             * 공공데이터 서비스 평가점수 등록 전처리를 실행한다.
+             *
+             * @param options {Object} 옵션
+             */
+            function beforeInsertAppraisal(options) {
+
+                var data = {
+                    infId:$("#dataset-search-form [name=infId]").val(),
+                    apprVal:$(".service-grade-combo img:eq(0)").attr("alt").match(/\d/)[0]
+                };
+
+                if (com.wise.util.isBlank(data.infId)) {
+                    return null;
+                }
+
+                return data;
+            }
+
+            /**
+             * 공공데이터 서비스 평가점수 등록 후처리를 실행한다.
+             *
+             * @param data {Object} 데이터
+             */
+            function afterInsertAppraisal(data) {
+                alert("평가해 주셔서 감사합니다.");
+
+                var image = $(".service-grade-image");
+
+                if (data.apprVal == 0.0) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_0.png")).attr("alt", "총점 5점 중 평점 0점 아주 나쁨");
+                }
+                else if (data.apprVal > 0.0 && data.apprVal <= 0.5) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_1.png")).attr("alt", "총점 5점 중 평점 0.5점 아주 나쁨");
+                }
+                else if (data.apprVal > 0.5 && data.apprVal <= 1.0) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_2.png")).attr("alt", "총점 5점 중 평점 1점 아주 나쁨");
+                }
+                else if (data.apprVal > 1.0 && data.apprVal <= 1.5) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_3.png")).attr("alt", "총점 5점 중 평점 1.5점 아주 나쁨");
+                }
+                else if (data.apprVal > 1.5 && data.apprVal <= 2.0) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_4.png")).attr("alt", "총점 5점 중 평점 2점 나쁨");
+                }
+                else if (data.apprVal > 2.0 && data.apprVal <= 2.5) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_5.png")).attr("alt", "총점 5점 중 평점 2.5점 나쁨");
+                }
+                else if (data.apprVal > 2.5 && data.apprVal <= 3.0) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_6.png")).attr("alt", "총점 5점 중 평점 3점 보통");
+                }
+                else if (data.apprVal > 3.0 && data.apprVal <= 3.5) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_7.png")).attr("alt", "총점 5점 중 평점 3.5점 보통");
+                }
+                else if (data.apprVal > 3.5 && data.apprVal <= 4.0) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_8.png")).attr("alt", "총점 5점 중 평점 4점 좋음");
+                }
+                else if (data.apprVal > 4.0 && data.apprVal <= 4.5) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_9.png")).attr("alt", "총점 5점 중 평점 4.5점 좋음");
+                }
+                else if (data.apprVal > 4.5) {
+                    image.attr("src", com.wise.help.url("/img/ggportal/desktop/common/grade_10.png")).attr("alt", "총점 5점 중 평점 5점 아주 좋음");
+                }
+            }
+        </script>
+        <!-- tab_A -->
+        <div class="tab_A">
+            <a href="#1" class="service-select-tab on">API</a>
+        </div>
+        <form id="openapi-search-form" name="openapi-search-form" method="post">
+            <input type="hidden" name="infId" value="OS46YD0012559515463" />
+            <input type="hidden" name="infSeq" value="1" />
+        </form>
+        <!-- Open API -->
+        <section class="section_OpenAPI">
+            <h4 class="hide">Open API</h4>
+            <!-- area_btn_D -->
+            <div class="area_btn_D">
+                <a href="/portal/openapi/openApiIntroPage.do" class="btn_D" target="_blank" title="새창열림">Open API란</a>
+                <a href="/portal/openapi/openApiActKeyPage.do?tabIdx=1" class="btn_D" target="_blank" title="새창열림">인증키 신청</a>
+                <a id="openapi-download-button" href="#" class="btn_D">명세서 다운로드</a>
+            </div>
+            <!-- // area_btn_D -->
+            <div class="box_A OpenAPI_address">
+                <ul class="list_B">
+                <li>요청주소 : <span class="apiEp apiRes"></span></li>
+                <li>요청제한횟수 : <span class="apiTrf"></span></li>
+                </ul>
+            </div>
+            <h5 class="ty_A">기본인자</h5>
+            <table class="table_boardList_B">
+            <caption>기본인자 목록</caption>
+            <colgroup>
+                <col style="width:18%;" />
+                <col style="width:18%;" />
+
+                <col style="width:32%;" />
+                <col style="width:32%;" />
+            </colgroup>
+            <thead>
+            <tr>
+                <th scope="col">변수명</th>
+                <th scope="col">타입</th>
+                <th scope="col">변수 설명</th>
+                <th scope="col" class="mq_tablet">설명</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>KEY</td>
+                <td>STRING(필수)</td>
+                <td>인증키</td>
+                <td class="talL mq_tablet">기본값 : sample key</td>
+            </tr>
+            <tr>
+                <td>Type</td>
+                <td>STRING(필수)</td>
+                <td>호출 문서(xml, json)</td>
+                <td class="talL mq_tablet">기본값 : xml</td>
+            </tr>
+            <tr>
+                <td>pIndex</td>
+                <td>INTEGER(필수)</td>
+                <td>페이지 위치</td>
+                <td class="talL mq_tablet">기본값 : 1(sample key는 1 고정)</td>
+            </tr>
+            <tr>
+                <td>pSize</td>
+                <td>INTEGER(필수)</td>
+                <td>페이지 당 요청 숫자</td>
+                <td class="talL mq_tablet">기본값 : 100(sample key는 5 고정)</td>
+            </tr>
+            </tbody>
+            </table>
+            <h5 class="ty_A">요청인자</h5>
+            <table id="openapi-variables-table" class="table_boardList_B">
+            <caption>요청인자 목록</caption>
+            <colgroup>
+                <col style="width:18%;" />
+                <col style="width:18%;" />
+
+                <col style="width:32%;" />
+                <col style="width:32%;" />
+            </colgroup>
+            <thead>
+            <tr>
+                <th scope="col">변수명</th>
+                <th scope="col">타입</th>
+                <th scope="col">변수 설명</th>
+                <th scope="col">변수 예시</th>
+
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+
+                <td colspan="4" class="noData">해당 자료가 없습니다.</td>
+            </tr>
+            </tbody>
+            </table>
+            <!-- tab -->
+            <div id="tab_B" class="tab_B">
+                <a href="#none" id="tab_B_1"  class="on"><strong>출력값</strong></a>
+                <a href="#none" id="tab_B_2"><strong>샘플 URL</strong></a>
+                <a href="#none" id="tab_B_3"><strong>샘플 test</strong></a>
+                <a href="#none" id="tab_B_4"><strong>메시지 설명</strong></a>
+            </div>
+            <!-- // tab -->
+            <!-- 출력값 -->
+            <section id="tab_B_cont_1" class="tab_B_cont">
+                <h5 class="hide">출력값</h5>
+                <table id="openapi-columns-table" class="table_boardList_B">
+                <caption>출력값</caption>
+                <colgroup>
+                    <col style="width:8%;" class="mq_tablet" />
+                    <col style="width:28%;" />
+
+                    <col style="width:64%;" />
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col" class="mq_tablet">No</th>
+                    <th scope="col">출력명</th>
+                    <th scope="col">출력 설명</th>
+
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+
+                    <td colspan="3" class="noData">해당 자료가 없습니다.</td>
+                </tr>
+                </tbody>
+                </table>
+            </section>
+            <!-- // 출력값 -->
+            <!-- 샘플 URL -->
+            <section id="tab_B_cont_2" class="tab_B_cont" style="display:none">
+                <h5 class="hide">샘플 URL</h5>
+                <table id="openapi-urls-table" class="table_boardList_B">
+                <caption>샘플 URL</caption>
+                <colgroup>
+                    <col style="width:8%;" />
+                    <col style="width:28%;" />
+                    <col style="width:64%;" />
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">출력명</th>
+                    <th scope="col">URL</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td colspan="3" class="noData">해당 자료가 없습니다.</td>
+                </tr>
+                </tbody>
+                </table>
+                <!-- <iframe id="openapi-response-iframe-0" name="openapi-response-iframe-0" class="iframe_sampleurl openapi-response-iframe" title="샘플 url" style="width:100%; marginwidth:0px; marginheight:0px; frameborder:0; scrolling:no;"></iframe> -->
+            </section>
+            <!-- // 샘플 URL -->
+            <!-- 샘플 test -->
+            <section id="tab_B_cont_3" class="tab_B_cont" style="display:none">
+                <h5 class="hide">샘플 test</h5>
+                <!-- search -->
+                <form id="openapi-request-form" name="openapi-request-form" action="#" method="post">
+                <fieldset>
+                <legend>샘플 test 검색</legend>
+                <div id="search_C" class="view_search_C">
+                    <table id="openapi-filters-table" class="table_search_C width_D">
+                    <caption>검색</caption>
+                    </table>
+                    <span class="area_btn_search_C"><a id="openapi-request-button" href="#" class="btn_A">검색</a></span>
+                </div>
+                </fieldset>
+                </form>
+                <!-- // search -->
+                <!-- <div class="box_A OpenAPI_address">
+                    <ul class="list_B">
+                    <li>요청주소 : <span class="apiEp apiRes apiFilt"></span></li>
+                    </ul>
+                </div> -->
+                <!-- <iframe id="openapi-response-iframe-1" name="openapi-response-iframe-1" class="iframe_sampleTest openapi-response-iframe" title="샘플 테스트" style="width:100%; marginwidth:0px; marginheight:0px; frameborder:0; scrolling:no;"></iframe> -->
+                <div>
+                    <table class="table_boardList_B" style="margin-top: 10px;">
+                        <caption>OpenAPI 샘플 테스트</caption>
+                        <colgroup>
+                            <col style="width:30%;"><col style="width:70%;">
+                        </colgroup>
+                        <thead>
+                            <tr><th scope="col">구분</th><th scope="col">Open API 샘플 테스트</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>요청주소</td><td><span class="apiEp apiRes apiFilt" id="sampleTestUrl"></span></td>
+                            </tr>
+                            <tr>
+                                <td>API 결과</td>
+                                <td class="talL">
+                                    <pre class="pre-box" id="apiSampleTest">
+                                    </pre>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- // 샘플 test -->
+            <!-- 메시지 설명 -->
+            <section id="tab_B_cont_4" class="tab_B_cont" style="display:none">
+                <h5 class="hide">메시지 설명</h5>
+                <table id="openapi-messages-table" class="table_boardList_B">
+                <caption>메시지 설명</caption>
+                <colgroup>
+                    <col style="width:18%;" />
+                    <col style="width:18%;" />
+                    <col style="width:64%;" />
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">구분</th>
+                    <th scope="col">코드</th>
+                    <th scope="col">설명</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td colspan="3" class="noData">해당 자료가 없습니다.</td>
+                </tr>
+                </tbody>
+                </table>
+            </section>
+            <!-- // 메시지 설명 -->
+        </section>
+        <!-- // Open API -->
+
+        <!-- btn_A -->
+        <div class="area_btn_A">
+            <a id="dataset-search-button" href="#" class="btn_A">목록</a>
+        </div>
+
+                     <!-- 추천 데이터 셋 -->
+                    <!-- <div class="recommendDataset">
+                        <dl>
+                            <dt>연관 데이터셋</dt>
+                            <dd>
+                                <div class="dataSet">
+                                    <div class="btn_slide">
+                                        <a href="#none" class="prev" id="dataset_prev" title="이전 갤러리 이동">이전</a>
+                                        <a href="#none" class="next" id="dataset_next" title="다음 갤러리 이동">다음</a>
+                                    </div>
+
+                                    <ul class="dataSetSlider bxslider">
+
+                                    </ul>
+
+                                </div>
+                            </dd>
+                        </dl>
+                    </div> -->
+                    <!-- // 추천 데이터 셋 -->
+
+        <!-- // btn_A -->
+        <form id="dataset-search-form" name="dataset-search-form" method="post">
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="rows" value="10" />
+            <input type="hidden" name="infId" value="" />
+            <input type="hidden" name="infSeq" value="" />
+            <input type="hidden" name="order" value="" />
+
+        </form>
+
+        <form id="searchForm">
+
+                <input type="hidden" name="infId" value="OS46YD0012559515463">
+
+
+            <input type="hidden" name="infSeq" value="">
+
+
+        </form>
+    </div>
+    <!-- // content -->
+</div>
+<!-- // layout_flex -->
+</div></div>
+<!-- // wrap_layout_flex -->
+
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- footer -->
+    <footer id="footer">
+        <div class="footer">
+            <div class="logo_footer">
+                <img src="/images/logo.png" alt="열린국회정보 정보공개포털">
+            </div>
+            <div class="footer_menu">
+
+                <ul id="ft_menu">
+                    <li><a href="/portal/policy/privatePolicyPage.do" class="point-privacy" title="개인정보처리방침 바로가기">개인정보처리방침</a></li>
+                    <li><a href="/portal/policy/userAgreementPage.do" title="열린국회정보 이용약관 바로가기" class="line">열린국회정보 이용약관</a></li>
+                    <li><a href="/portal/policy/openUserAgreementPage.do" title="Open API 이용약관 바로가기" class="line">Open API 이용약관</a></li>
+                    <li class="line-none"><a href="/portal/policy/copyRightPage.do" title="저작권 정책 바로가기" class="line">저작권 정책</a></li>
+
+                </ul>
+
+                <address>
+                    <span>서울특별시 영등포구 의사당대로 1 (여의도동) 07233</span>
+                    <span class="f_bullet">문의전화 : 02-6788-3853</span>
+                    <span class="f_bullet">홈페이지 문의 : <a href="mailto:webmaster@assembly.go.kr" class="mailto">webmaster@assembly.go.kr</a></span>
+                </address>
+                <div class="copyright">Copyrightⓒ National Assembly. All rights reserved. <br>열린국회정보 홈페이지의 모든 정보에 대한 권한은 국회에 있습니다.</div>
+
+                <ul class="foot_homepage">
+                    <li>
+                        <select id="footer_jrsd_hmpg_cd" title="소관기관 홈페이지 선택" name="footer_jrsd_hmpg_cd">
+                            <option value="">소관기관 홈페이지</option>
+                            <option value="https://nas.na.go.kr">국회사무처</option>
+                            <option value="https://www.nanet.go.kr">국회도서관</option>
+                            <option value="https://www.nabo.go.kr">국회예산정책처</option>
+                            <option value="https://www.nars.go.kr">국회입법조사처</option>
+                            <option value="https://archives.nanet.go.kr/main.do">국회기록원</option>
+                            <option value="https://www.nafi.re.kr/new/index.do">국회미래연구원</option>
+                        </select>
+                        <button class="btn_bl" id="btn_jrsd_hmpg_cd" title="새창열림">GO</button>
+                    </li>
+                    <li>
+                        <select id="footer_cmmit_hmpg_cd" title="위원회 홈페이지 선택" name="footer_cmmit_hmpg_cd">
+                            <option value="">위원회 홈페이지</option>
+                            <option value="https://committee.na.go.kr">국회상임위원회 및 특별위원회</option>
+                            <option value="https://steering.na.go.kr">국회운영위원회</option>
+                            <option value="https://legislation.na.go.kr">법제사법위원회</option>
+                            <option value="https://policy.na.go.kr">정무위원회</option>
+                            <option value="https://finance.na.go.kr">재정경제기획위원회</option>
+                            <option value="https://edu.na.go.kr">교육위원회</option>
+                            <option value="https://science.na.go.kr">과학기술정보방송통신위원회</option>
+                            <option value="https://uft.na.go.kr">외교통일위원회</option>
+                            <option value="https://defense.na.go.kr">국방위원회</option>
+                            <option value="https://adminhom.na.go.kr">행정안전위원회</option>
+                            <option value="https://cst.na.go.kr">문화체육관광위원회</option>
+                            <option value="https://agri.na.go.kr">농림축산식품해양수산위원회</option>
+                            <option value="https://industry.na.go.kr">산업통상자원중소벤처기업위원회</option>
+                            <option value="https://health.na.go.kr">보건복지위원회</option>
+                            <option value="https://environment.na.go.kr">기후에너지환경노동위원회</option>
+                            <option value="https://ltc.na.go.kr">국토교통위원회</option>
+                            <option value="https://intelligence.na.go.kr">정보위원회</option>
+                            <option value="https://women.na.go.kr">성평등가족위원회</option>
+                            <option value="https://budget.na.go.kr">예산결산특별위원회</option>
+                            <option value="https://spc.na.go.kr">특별위원회</option>
+                        </select>
+                        <button class="btn_bl" id="btn_cmmit_hmpg_cd" title="새창열림">GO</button>
+                    </li>
+                    <li>
+                        <select id="footer_hmpg_cd" title="홈페이지 선택" name="footer_hmpg_cd">
+                            <option value="">홈페이지</option>
+                            <option value="https://www.naon.go.kr">국회뉴스ON</option>
+                            <option value="https://www.natv.go.kr">국회방송</option>
+                            <option value="http://assembly.webcast.go.kr">인터넷의사중계</option>
+                            <option value="https://museum.assembly.go.kr/">국회박물관</option>
+                            <option value="https://training.assembly.go.kr">국회의정연수원</option>
+                            <option value="https://vplatform.assembly.go.kr/">정책영상플랫폼</option>
+                        </select>
+                        <button class="btn_bl" id="btn_hmpg_cd" title="새창열림">GO</button>
+                    </li>
+                    <li>
+                        <select id="footer_na_info_sys_cd" title="국회정보시스템 선택" name="footer_na_info_sys_cd">
+                            <option value="">국회정보시스템</option>
+                            <option value="https://open.assembly.go.kr">열린국회정보</option>
+                            <option value="https://petitions.assembly.go.kr/paHome">국민동의청원</option>
+                            <option value="https://likms.assembly.go.kr/bill/main.do">의안정보시스템</option>
+                            <option value="http://w3.assembly.go.kr/vod">영상회의록</option>
+                            <option value="https://record.assembly.go.kr/">회의록시스템</option>
+                            <option value="https://pal.assembly.go.kr">국회입법예고</option>
+                            <option value="https://likms.assembly.go.kr/law">국회법률정보시스템</option>
+                            <option value="https://likms.assembly.go.kr/bill/nafs/nafsList.do">예결산정보시스템</option>
+                            <option value="https://likms.assembly.go.kr/inspections/main.do">국정감사정보시스템</option>
+                            <option value="https://open.assembly.go.kr:442/admjud/guideAdmjud.do">행정심판시스템</option>
+                            <option value="https://gosi.assembly.go.kr">국회채용시스템</option>
+                        </select>
+                        <button class="btn_bl" id="btn_na_info_sys_cd" title="새창열림">GO</button>
+                    </li>
+                </ul>
+
+                <div class="ft_menu_etc">
+                    <ul>
+                        <li><a href="http://www.wa.or.kr/board/list.asp?search=total&SearchString=%BF%AD%B8%B0%B1%B9%C8%B8&BoardID=0006" target="_blank" id="footer_web_acces" class="wa" title="새창열림_한국웹접근성인증평가원">웹접근성인증마크</a></li>
+                        <!--
+                        <li><a href="javascript:void(0);" id="footer_kogl" class="site_open" title="새창열림_공공누리">OPEN</a></li>
+                        <li><a class="fsns_rss" id="link_glnb_footer_rss" href="javascript:void(0);" title="새창열림_RSS">RSS</a></li>
+                        -->
+                    </ul>
+                </div>
+            </div>
+            <a href="javascript:;" class="btn-top-go">TOP</a>
+        </div>
+    </footer>
+    <!-- //footer -->
+    <form id="global-request-form" name="global-request-form" method="post" action="">
+
+    </form>
+    <iframe id="global-process-iframe" name="global-process-iframe"  title="프로그램 처리 영역" height="0" style="width:100%; display:none;"></iframe>
+    <div id="loadingCircle" style="position:fixed; top:0px; left:0px; width:100%; height: 100%; z-index:9999999999; display:none;">
+        <div style="position:relative; top:50%; left:50%; margin: -77px 0 0 -77px;z-index:10;"><img src="/images/soportal/desktop/ajax-loader.gif" alt="loading"></div>
+        <div class="bgshadow"></div>
+    </div>
+    <form id="adminLoginForm" method="post" action="/admin/user/loginProc.do" target="global-process-iframe"></form>
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="//wcs.naver.net/wcslog.js"></script>
+<script type="text/javascript">
+    // STEP 2. na_account_id(네이버공통키) 세팅
+    if(!wcs_add) var wcs_add = {};
+    wcs_add["wa"] = "724dd300f4ac8";
+    // STEP 3. 로그 서버로 전송
+    wcs_do();
+</script>
+
+
+
+
+<script>
+
+//GO 버튼 이벤트 -홈페이지 footer 이동버튼 추가 요청으로 수정 - 240704
+$("#btn_jrsd_hmpg_cd, #btn_cmmit_hmpg_cd, #btn_hmpg_cd, #btn_na_info_sys_cd").on("click", function(event) {
+    var name = $(event.currentTarget).attr("id").replace("btn", "footer");
+    var url  = $("select[name="+name+"] option:selected").val();
+    if ( ! ( url == "" || url == null ) ) {
+        footer_openPopup(url);
+    }
+});
+
+/**
+* site open
+*/
+function footer_openPopup(url) {
+    if ( url == "https://www.nafi.re.kr" ) {
+        if ( glnbInnerIpCheck() ) {
+            alert("인터넷망에서 접속가능합니다.");
+            return;
+        }
+    }
+    var options = {
+        url    : url
+        , width  : window.innerWidth
+        , height : window.innerHeight
+        , name   : "sitePopup"
+        , popupYn : "N"
+    };
+    gfn_openPopup(options);
+}
+
+/**
+* 기본 팝업을 오픈한다.
+* @param options
+* @returns
+*/
+function gfn_openPopup(options) {
+    if (!options.url || options.url.trim() === "") return false;
+
+    options.name = options.name     || "";
+    options.width = options.width     || 1024;
+    options.height = options.height || 768;
+    options.popupYn = options.popupYn || "Y";
+
+    var win = null;
+
+    if(options.popupYn == "Y") {
+        win = window.open(options.url, options.name, "width="+String(options.width)+",height="+String(options.height)+",location=no,status=no,menubar=no,toolbar=no,scrollbars=1");
+    } else {
+        win = window.open(options.url, options.name);
+    }
+
+    win.focus();
+}
+
+</script>
+
+</div>
+<!-- // layout_A -->
+</body>
+</html>

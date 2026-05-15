@@ -1,0 +1,55 @@
+EMS 행방조회 서비스
+EMS 행방조회 서비스 개요
+2. 오퍼레이션 목록
+1) 건별 EMS 행방조회 오퍼레이션 상세
+요청 메시지 명세
+응답 메시지 명세
+서비스 정보    서비스 ID    SVC-0060-0309    SVC-0060-0309    SVC-0060-0309    SVC-0060-0309    SVC-0060-0309    SVC-0060-0309
+서비스 정보    서비스명(국문)    EMS 행방조회 서비스    EMS 행방조회 서비스    EMS 행방조회 서비스    EMS 행방조회 서비스    EMS 행방조회 서비스    EMS 행방조회 서비스
+서비스 정보    서비스명(영문)    retrieveLongitudinalEMSService    retrieveLongitudinalEMSService    retrieveLongitudinalEMSService    retrieveLongitudinalEMSService    retrieveLongitudinalEMSService    retrieveLongitudinalEMSService
+서비스 정보    서비스 설명    EMS 행방 정보를 조회한다.    EMS 행방 정보를 조회한다.    EMS 행방 정보를 조회한다.    EMS 행방 정보를 조회한다.    EMS 행방 정보를 조회한다.    EMS 행방 정보를 조회한다.
+서비스 보안    서비스 인증/권한    [O] 서비스 Key   [  ] 인증서 (GPKI) / [  ] Basic (ID/PW) [  ] 없음    [O] 서비스 Key   [  ] 인증서 (GPKI) / [  ] Basic (ID/PW) [  ] 없음    [O] 서비스 Key   [  ] 인증서 (GPKI) / [  ] Basic (ID/PW) [  ] 없음    [O] 서비스 Key   [  ] 인증서 (GPKI) / [  ] Basic (ID/PW) [  ] 없음    [O] 서비스 Key   [  ] 인증서 (GPKI) / [  ] Basic (ID/PW) [  ] 없음    [ ] WS-Security
+서비스 보안    메시지 레벨 암호화    [  ] 전자서명     [  ] 암호화 / [  ] 없음    [  ] 전자서명     [  ] 암호화 / [  ] 없음    [  ] 전자서명     [  ] 암호화 / [  ] 없음    [  ] 전자서명     [  ] 암호화 / [  ] 없음    [  ] 전자서명     [  ] 암호화 / [  ] 없음    [ ] WS-Security
+서비스 보안    전송 레벨 암호화    [  ] SSL          [  ] 없음    [  ] SSL          [  ] 없음    [  ] SSL          [  ] 없음    [  ] SSL          [  ] 없음    [  ] SSL          [  ] 없음    [  ] SSL          [  ] 없음
+적용 기술 수준    인터페이스 표준    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타
+적용 기술 수준    교환 데이터 표준    [ O ] XML  [ ] JSON   [ ] MIME    [ ] MTOM    [ O ] XML  [ ] JSON   [ ] MIME    [ ] MTOM    [ O ] XML  [ ] JSON   [ ] MIME    [ ] MTOM    [ O ] XML  [ ] JSON   [ ] MIME    [ ] MTOM    [ O ] XML  [ ] JSON   [ ] MIME    [ ] MTOM    [ O ] XML  [ ] JSON   [ ] MIME    [ ] MTOM
+서비스 URL    개발환경
+서비스 URL    운영환경
+서비스 WSDL    개발환경
+서비스 WSDL    운영환경
+서비스 배포 정보    서비스 버전
+서비스 배포 정보    유효일자            배포 일자    배포 일자    배포 일자
+서비스 배포 정보    서비스 이력
+메시지 교환 유형    메시지 교환 유형    [ O ] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot    [ ] Notification    [ O ] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot    [ ] Notification    [ O ] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot    [ ] Notification    [ O ] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot    [ ] Notification    [ O ] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot    [ ] Notification    [ O ] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot    [ ] Notification
+메시지 로깅 수준    메시지 로깅 수준    성공    [O] Header [ ] Body    [O] Header [ ] Body    실패    [O] Header [O] Body    [O] Header [O] Body
+사용 제약 사항 (비고)    사용 제약 사항 (비고)
+일련번호    서비스명(국문)    오퍼레이션명(영문)    오퍼레이션명(국문)    메시지명(영문)
+1    EMS행방조회 / 서비스    getLongitudinal / EMSList    건별 EMS 행방조회    Longitudinal / EMSListRequest
+오퍼레이션 정보    오퍼레이션 번호    1    오퍼레이션명(국문)    건별 EMS 행방조회
+오퍼레이션 정보    오퍼레이션 유형    조회(목록)    오퍼레이션명(영문)    getLongitudinalEMSList
+오퍼레이션 정보    오퍼레이션 설명    검색조건에 의해 건별 EMS 행방을 조회한다.    검색조건에 의해 건별 EMS 행방을 조회한다.    검색조건에 의해 건별 EMS 행방을 조회한다.
+오퍼레이션 정보    Call Back URL
+오퍼레이션 정보    최대 메시지 사이즈    [         bytes]    [         bytes]    [         bytes]
+오퍼레이션 정보    평균 응답 시간    [     ms]    초당 최대트랜잭션    [         tps]
+호출 / 메시지정보    메시지명(영문)    LongitudinalEMSListRequest    LongitudinalEMSListRequest    LongitudinalEMSListRequest
+호출 / 메시지정보    메시지타입    변수형    변수형    변수형
+호출 / 메시지정보    메시지설명    등기번호(13 자리)에 해당하는 EMS 행방을 조회한다.    등기번호(13 자리)에 해당하는 EMS 행방을 조회한다.    등기번호(13 자리)에 해당하는 EMS 행방을 조회한다.
+호출 / 메시지정보    선행 오퍼레이션
+응답메시지 / 정보    메시지명(영문)    LongitudinalEMSListResponse    LongitudinalEMSListResponse    LongitudinalEMSListResponse
+응답메시지 / 정보    메시지 타입    리스트형    리스트형    리스트형
+응답메시지 / 정보    메시지 설명    호출메시지의 검색조건에 따라 건별 EMS 행방을 제공한다.    호출메시지의 검색조건에 따라 건별 EMS 행방을 제공한다.    호출메시지의 검색조건에 따라 건별 EMS 행방을 제공한다.
+메시지명(영문)    LongitudinalEMSListRequest    LongitudinalEMSListRequest    LongitudinalEMSListRequest    LongitudinalEMSListRequest    LongitudinalEMSListRequest
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+rgist    등기번호    15    1    EM008463429KR    등기번호
+메시지명(영문)    메시지명(영문)    LongitudinalEMSListResponse    LongitudinalEMSListResponse    LongitudinalEMSListResponse    LongitudinalEMSListResponse    LongitudinalEMSListResponse
+항목명(영문)    항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+rgist    rgist    등기번호    15    1    EM008463429KR    등기번호
+longitudinalEMSList    longitudinalEMSList    행방 목록        0..n        행방목록
+    processDe    처리일시    14    1    2010.09.02 17:34    날짜(yyyy.mm.dd / hh24:mi)
+    processSttus    처리현황    20    1    배달준비    처리현황
+    nowLc    현재위치    30    1    동서울우편집중국    현재위치
+    detailDc    상세설명    100    0    수취인 부재 / 배달중    상세설명
+호출 URL
+http://openapi.epost.go.kr/trace/retrieveLongitudinalEMSService/retrieveLongitudinalEMSService/getLongitudinalEMSList?rgist=ES161558949KR&serviceKey=인증키
+응답값
+<LongitudinalEMSListResponse> /     <cmmMsgHeader> /         <requestMsgId/> /         <responseMsgId/> /         <responseTime>20180302:164033724</responseTime> /         <successYN>Y</successYN> /         <returnCode>00</returnCode> /         <errMsg/> /     </cmmMsgHeader> /     <longitudinalEMSList> /         <processDe>20171205 17:32</processDe> /         <processSttus>접수</processSttus> /         <nowLc>서울중앙우체국</nowLc> /         <detailDc/> /     </longitudinalEMSList> /     <longitudinalEMSList> /         <processDe>20171205 18:16</processDe> /         <processSttus>발송</processSttus> /         <nowLc>서울중앙우체국</nowLc> /         <detailDc/> /     </longitudinalEMSList> /         <longitudinalEMSList> /         <processDe>20171205 20:19</processDe> /         <processSttus>발송교환국에 도착</processSttus> /         <nowLc>국제우편물류센터</nowLc> /         <detailDc/> /     </longitudinalEMSList> /     <longitudinalEMSList> /         <processDe>20171205 20:31</processDe> /         <processSttus>발송준비</processSttus> /         <nowLc>국제우편물류센터</nowLc> /         <detailDc/> /     </longitudinalEMSList> /     <longitudinalEMSList> /         <processDe>20171205 22:35</processDe> /         <processSttus>운송사 인계</processSttus> /         <nowLc>INCHEON</nowLc> /         <detailDc/> /     </longitudinalEMSList> /     <longitudinalEMSList> /         <processDe>20171205 23:00</processDe> /         <processSttus>항공사 인수</processSttus> /         <nowLc>INCHEON</nowLc> /         <detailDc/> /     </longitudinalEMSList> /     <longitudinalEMSList> /         <processDe>20171206 10:01</processDe>     /         <processSttus>항공기 출발(예정,한국시간)</processSttus>     /         <nowLc>INCHEON</nowLc>     /         <detailDc/>     /     </longitudinalEMSList>     /     <longitudinalEMSList>     /         <processDe>20171206 13:19</processDe>     /         <processSttus>상대국 도착</processSttus>     /         <nowLc>BANGKOK</nowLc>     /         <detailDc/>     /     </longitudinalEMSList>     /     <longitudinalEMSList>     /         <processDe>20171206 14:57</processDe>     /         <processSttus>상대국 인계</processSttus>     /         <nowLc>BANGKOK</nowLc>     /         <detailDc/>     /     </longitudinalEMSList>     /   <longitudinalEMSList>     /         <processDe>20171207 05:01</processDe>     /         <processSttus>교환국 도착</processSttus>     /         <nowLc>THBKKB</nowLc>     /         <detailDc/>     /     </longitudinalEMSList>     /     <longitudinalEMSList>     /         <processDe>20171207 05:16</processDe>     /         <processSttus>통관검사대기</processSttus>     /         <nowLc>THBKKB</nowLc>     /         <detailDc>미통관사유 : :세관통관검사 </detailDc>     /     </longitudinalEMSList>     /     <longitudinalEMSList>     /         <processDe>20171207 12:01</processDe>     /         <processSttus>통관 및 분류</processSttus>     /         <nowLc>THBKKB</nowLc>     /         <detailDc/>     /     </longitudinalEMSList>     /     <rgist>ES161558949KR</rgist> /     </LongitudinalEMSListResponse>

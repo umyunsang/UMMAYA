@@ -1,0 +1,2852 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "교육관련기관의 정보공개에 관한 특례법 및 동법 시행령을 근거로, 한국대학교육협의회에서 대학 학과 정보를 체계적으로 수집·정리. 대학 학과 정보에는 학과 명칭, 전공 분야, 모집 단위, 입학 정원, 교육과정 특성 등의 세부 내용이 포함. 학교별 학과정보는 각 대학이 보유한 학과의 구성, 운영 현황, 특성을 파악하고 상호 비교할 수 있도록 제공. 지역별 학과정보는 특정 지역 내 대학들의 학과 분포, 전공 분야의 다양성, 지역 산업과의 연계성을 확인할 수 있도록 구성.\\n\\n해당 정보는 수험생의 진로 탐색 및 대학 선택에 활용. 학부모 및 교육 관계자의 의사결정 지원 자료로 활용. 국가 및 지자체의 교육 정책 수립과 인재 양성 계획 수립에도 기초 자료로 활용. 정보는 공공성을 기반으로 제공. 신뢰성과 객관성을 유지하도록 관리. 정기적으로 갱신 및 보완. 이용자가 쉽게 접근하고 활용할 수 있도록 체계적으로 제공.",
+    "version": "1.0.0",
+    "title": "한국대학교육협의회_대학 학과 정보_GW"
+  },
+  "host": "apis.data.go.kr/B340014/BasicInformationService_1",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getCodeByLargeSeries": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "표준분류 대계열 코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "표준분류 대계열 코드명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "표준분류 대계열 코드조회",
+        "description": "표준분류 대계열 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByLargeSeries",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "조사년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "표준분류 대계열 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "표준분류 대계열 코드명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getUniversityMajorCode": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "svyYr": {
+                              "type": "string",
+                              "description": "조사년도",
+                              "properties": {}
+                            },
+                            "srsSclftCd": {
+                              "type": "string",
+                              "description": "계열소분류코드",
+                              "properties": {}
+                            },
+                            "srsMclftCd": {
+                              "type": "string",
+                              "description": "계열중분류코드",
+                              "properties": {}
+                            },
+                            "srsLclftCd": {
+                              "type": "string",
+                              "description": "계열대분류코드",
+                              "properties": {}
+                            },
+                            "schlMjrStatNm": {
+                              "type": "string",
+                              "description": "학교학과상태명",
+                              "properties": {}
+                            },
+                            "schlMjrStatCd": {
+                              "type": "string",
+                              "description": "학교학과상태코드",
+                              "properties": {}
+                            },
+                            "schlMjrId": {
+                              "type": "string",
+                              "description": "학교학과ID",
+                              "properties": {}
+                            },
+                            "schlMjrCharNm": {
+                              "type": "string",
+                              "description": "학교학과특성명",
+                              "properties": {}
+                            },
+                            "schlMjrCharCd": {
+                              "type": "string",
+                              "description": "학교학과특성코드",
+                              "properties": {}
+                            },
+                            "schlKndNm": {
+                              "type": "string",
+                              "description": "학교종류명",
+                              "properties": {}
+                            },
+                            "schlKndCd": {
+                              "type": "string",
+                              "description": "학교종류코드",
+                              "properties": {}
+                            },
+                            "schlId": {
+                              "type": "string",
+                              "description": "학교ID",
+                              "properties": {}
+                            },
+                            "schlEstbDivNm": {
+                              "type": "string",
+                              "description": "학교설립구분명",
+                              "properties": {}
+                            },
+                            "schlEstbDivCd": {
+                              "type": "string",
+                              "description": "학교설립구분코드",
+                              "properties": {}
+                            },
+                            "psbsDivNm": {
+                              "type": "string",
+                              "description": "본분교구분명",
+                              "properties": {}
+                            },
+                            "psbsDivCd": {
+                              "type": "string",
+                              "description": "본분교구분코드",
+                              "properties": {}
+                            },
+                            "pbnfDgriCrseDivNm": {
+                              "type": "string",
+                              "description": "공시학위과정구분명",
+                              "properties": {}
+                            },
+                            "pbnfDgriCrseDivCd": {
+                              "type": "string",
+                              "description": "공시학위과정구분코드",
+                              "properties": {}
+                            },
+                            "onsfSrsClftNm": {
+                              "type": "string",
+                              "description": "자체계열분류명",
+                              "properties": {}
+                            },
+                            "onsfSrsClftCd": {
+                              "type": "string",
+                              "description": "자체계열분류코드",
+                              "properties": {}
+                            },
+                            "mjrUpdtDtm": {
+                              "type": "string",
+                              "description": "학과수정일시",
+                              "properties": {}
+                            },
+                            "mjrId": {
+                              "type": "string",
+                              "description": "학과ID",
+                              "properties": {}
+                            },
+                            "mjrAreaSignguNm": {
+                              "type": "string",
+                              "description": "학과지역시군구명",
+                              "properties": {}
+                            },
+                            "mjrAreaNm": {
+                              "type": "string",
+                              "description": "학과지역명",
+                              "properties": {}
+                            },
+                            "mjrAreaCd": {
+                              "type": "string",
+                              "description": "학과지역코드",
+                              "properties": {}
+                            },
+                            "lsnTrmNm": {
+                              "type": "string",
+                              "description": "수업연한명",
+                              "properties": {}
+                            },
+                            "lsnTrmCd": {
+                              "type": "string",
+                              "description": "수업연한코드",
+                              "properties": {}
+                            },
+                            "korSrsSclftNm": {
+                              "type": "string",
+                              "description": "한글계열소분류명",
+                              "properties": {}
+                            },
+                            "korSrsMclftNm": {
+                              "type": "string",
+                              "description": "한글계열중분류명",
+                              "properties": {}
+                            },
+                            "korSrsLclftNm": {
+                              "type": "string",
+                              "description": "한글계열대분류명",
+                              "properties": {}
+                            },
+                            "korSchlNm": {
+                              "type": "string",
+                              "description": "한글학교명",
+                              "properties": {}
+                            },
+                            "korMjrNm": {
+                              "type": "string",
+                              "description": "한글학과명",
+                              "properties": {}
+                            },
+                            "kediMjrId": {
+                              "type": "string",
+                              "description": "KEDI학과ID",
+                              "properties": {}
+                            },
+                            "grdtNum": {
+                              "type": "string",
+                              "description": "졸업자수",
+                              "properties": {}
+                            },
+                            "eschlPscpNum": {
+                              "type": "string",
+                              "description": "입학정원수",
+                              "properties": {}
+                            },
+                            "edcGoalKwrdLtrCtnt": {
+                              "type": "string",
+                              "description": "교육목표키워드문자내용",
+                              "properties": {}
+                            },
+                            "edcGoalCtnt": {
+                              "type": "string",
+                              "description": "교육목표내용",
+                              "properties": {}
+                            },
+                            "edcCrseLtrCtnt": {
+                              "type": "string",
+                              "description": "교육과정문자내용",
+                              "properties": {}
+                            },
+                            "dghtDivNm": {
+                              "type": "string",
+                              "description": "주야간구분명",
+                              "properties": {}
+                            },
+                            "dghtDivCd": {
+                              "type": "string",
+                              "description": "주야간구분코드",
+                              "properties": {}
+                            },
+                            "clgNm": {
+                              "type": "string",
+                              "description": "단과대학명",
+                              "properties": {}
+                            },
+                            "clgCd": {
+                              "type": "string",
+                              "description": "단과대학코드",
+                              "properties": {}
+                            },
+                            "pwayEmplLtrCtnt": {
+                              "type": "string",
+                              "description": "진로취업명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학교별학과 코드조회",
+        "description": "학교별학과 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getUniversityMajorCode",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "조사년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "schlId",
+          "description": "학교ID",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "schlMjrId",
+          "description": "학교학과ID",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByMiddleSeries": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "표준분류 중계열 코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "표준분류 중계열 코드명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "표준분류 중계열 코드조회",
+        "description": "표준분류 중계열 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByMiddleSeries",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "조사년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "표준분류 중계열 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "표준분류 중계열 코드명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeBySeriesSystem": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "svyYr": {
+                              "type": "string",
+                              "description": "조사년도",
+                              "properties": {}
+                            },
+                            "srsLclftCd": {
+                              "type": "string",
+                              "description": "표준분류 대계열 코드",
+                              "properties": {}
+                            },
+                            "srsMclftCd": {
+                              "type": "string",
+                              "description": "표준분류 중계열 코드",
+                              "properties": {}
+                            },
+                            "srsSclftCd": {
+                              "type": "string",
+                              "description": "표준분류 소계열 코드",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "표준분류 계열체계 조회",
+        "description": "표준분류 계열체계 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeBySeriesSystem",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "조사년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "srsLclftCd",
+          "description": "표준분류 대계열 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "srsMclftCd",
+          "description": "표준분류 중계열 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "srsSclftCd",
+          "description": "표준분류 소계열 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByPrincipalSchoolBranchSchool": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "본분교구분코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "본분교구분명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "본분교 코드조회",
+        "description": "본분교 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByPrincipalSchoolBranchSchool",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "본분교구분코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "본분교구분명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByLessonTerm": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "수업연한코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "수업연한명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "수업연한 코드조회",
+        "description": "수업연한 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByLessonTerm",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "수업연한코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "수업연한명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByDegreeCourse": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "공시학위과정구분코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "공시학위과정구분명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학위과정 코드조회",
+        "description": "학위과정 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByDegreeCourse",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "공시학위과정구분코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "공시학위과정구분명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByDayAndNight": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "주야간구분코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "주야간구분명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "주야간 코드조회",
+        "description": "주야간 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByDayAndNight",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "주야간구분코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "주야간구분명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByCollege": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "단과대학코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "단과대학명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "단과대학 코드조회",
+        "description": "단과대학 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByCollege",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "단과대학코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "단과대학명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByMajorStatus": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "학교학과상태코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "학교학과상태명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학과상태 코드조회",
+        "description": "학과상태 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByMajorStatus",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "학교학과상태코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "학교학과상태명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByMajorCharacter": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "학교학과특성코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "학교학과특성명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "학과특성 코드조회",
+        "description": "학과특성 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByMajorCharacter",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "학교학과특성코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "학교학과특성명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeByOneselfSeries": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "자체계열분류코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "자체계열분류명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "대학자체계열 코드조회",
+        "description": "대학자체계열 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeByOneselfSeries",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "자체계열분류코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "자체계열분류명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getCodeBySmallSeries": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cdid": {
+                              "type": "string",
+                              "description": "표준분류 소계열 코드",
+                              "properties": {}
+                            },
+                            "cdnm": {
+                              "type": "string",
+                              "description": "표준분류 소계열 코드명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "표준분류 소계열 코드조회",
+        "description": "표준분류 소계열 코드 정보 제공 (저작권에 위배되지 않는 정보)",
+        "operationId": "getCodeBySmallSeries",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "svyYr",
+          "description": "조사년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "cdid",
+          "description": "표준분류 소계열 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cdnm",
+          "description": "표준분류 소계열 코드명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getCodeByLargeSeries_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "표준분류 대계열 코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "표준분류 대계열 코드명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getUniversityMajorCode_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "svyYr": {
+                      "type": "string",
+                      "description": "조사년도"
+                    },
+                    "srsSclftCd": {
+                      "type": "string",
+                      "description": "계열소분류코드"
+                    },
+                    "srsMclftCd": {
+                      "type": "string",
+                      "description": "계열중분류코드"
+                    },
+                    "srsLclftCd": {
+                      "type": "string",
+                      "description": "계열대분류코드"
+                    },
+                    "schlMjrStatNm": {
+                      "type": "string",
+                      "description": "학교학과상태명"
+                    },
+                    "schlMjrStatCd": {
+                      "type": "string",
+                      "description": "학교학과상태코드"
+                    },
+                    "schlMjrId": {
+                      "type": "string",
+                      "description": "학교학과ID"
+                    },
+                    "schlMjrCharNm": {
+                      "type": "string",
+                      "description": "학교학과특성명"
+                    },
+                    "schlMjrCharCd": {
+                      "type": "string",
+                      "description": "학교학과특성코드"
+                    },
+                    "schlKndNm": {
+                      "type": "string",
+                      "description": "학교종류명"
+                    },
+                    "schlKndCd": {
+                      "type": "string",
+                      "description": "학교종류코드"
+                    },
+                    "schlId": {
+                      "type": "string",
+                      "description": "학교ID"
+                    },
+                    "schlEstbDivNm": {
+                      "type": "string",
+                      "description": "학교설립구분명"
+                    },
+                    "schlEstbDivCd": {
+                      "type": "string",
+                      "description": "학교설립구분코드"
+                    },
+                    "psbsDivNm": {
+                      "type": "string",
+                      "description": "본분교구분명"
+                    },
+                    "psbsDivCd": {
+                      "type": "string",
+                      "description": "본분교구분코드"
+                    },
+                    "pbnfDgriCrseDivNm": {
+                      "type": "string",
+                      "description": "공시학위과정구분명"
+                    },
+                    "pbnfDgriCrseDivCd": {
+                      "type": "string",
+                      "description": "공시학위과정구분코드"
+                    },
+                    "onsfSrsClftNm": {
+                      "type": "string",
+                      "description": "자체계열분류명"
+                    },
+                    "onsfSrsClftCd": {
+                      "type": "string",
+                      "description": "자체계열분류코드"
+                    },
+                    "mjrUpdtDtm": {
+                      "type": "string",
+                      "description": "학과수정일시"
+                    },
+                    "mjrId": {
+                      "type": "string",
+                      "description": "학과ID"
+                    },
+                    "mjrAreaSignguNm": {
+                      "type": "string",
+                      "description": "학과지역시군구명"
+                    },
+                    "mjrAreaNm": {
+                      "type": "string",
+                      "description": "학과지역명"
+                    },
+                    "mjrAreaCd": {
+                      "type": "string",
+                      "description": "학과지역코드"
+                    },
+                    "lsnTrmNm": {
+                      "type": "string",
+                      "description": "수업연한명"
+                    },
+                    "lsnTrmCd": {
+                      "type": "string",
+                      "description": "수업연한코드"
+                    },
+                    "korSrsSclftNm": {
+                      "type": "string",
+                      "description": "한글계열소분류명"
+                    },
+                    "korSrsMclftNm": {
+                      "type": "string",
+                      "description": "한글계열중분류명"
+                    },
+                    "korSrsLclftNm": {
+                      "type": "string",
+                      "description": "한글계열대분류명"
+                    },
+                    "korSchlNm": {
+                      "type": "string",
+                      "description": "한글학교명"
+                    },
+                    "korMjrNm": {
+                      "type": "string",
+                      "description": "한글학과명"
+                    },
+                    "kediMjrId": {
+                      "type": "string",
+                      "description": "KEDI학과ID"
+                    },
+                    "grdtNum": {
+                      "type": "string",
+                      "description": "졸업자수"
+                    },
+                    "eschlPscpNum": {
+                      "type": "string",
+                      "description": "입학정원수"
+                    },
+                    "edcGoalKwrdLtrCtnt": {
+                      "type": "string",
+                      "description": "교육목표키워드문자내용"
+                    },
+                    "edcGoalCtnt": {
+                      "type": "string",
+                      "description": "교육목표내용"
+                    },
+                    "edcCrseLtrCtnt": {
+                      "type": "string",
+                      "description": "교육과정문자내용"
+                    },
+                    "dghtDivNm": {
+                      "type": "string",
+                      "description": "주야간구분명"
+                    },
+                    "dghtDivCd": {
+                      "type": "string",
+                      "description": "주야간구분코드"
+                    },
+                    "clgNm": {
+                      "type": "string",
+                      "description": "단과대학명"
+                    },
+                    "clgCd": {
+                      "type": "string",
+                      "description": "단과대학코드"
+                    },
+                    "pwayEmplLtrCtnt": {
+                      "type": "string",
+                      "description": "진로취업명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByMiddleSeries_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "표준분류 중계열 코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "표준분류 중계열 코드명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeBySeriesSystem_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "svyYr": {
+                      "type": "string",
+                      "description": "조사년도"
+                    },
+                    "srsLclftCd": {
+                      "type": "string",
+                      "description": "표준분류 대계열 코드"
+                    },
+                    "srsMclftCd": {
+                      "type": "string",
+                      "description": "표준분류 중계열 코드"
+                    },
+                    "srsSclftCd": {
+                      "type": "string",
+                      "description": "표준분류 소계열 코드"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByPrincipalSchoolBranchSchool_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "본분교구분코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "본분교구분명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByLessonTerm_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "수업연한코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "수업연한명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByDegreeCourse_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "공시학위과정구분코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "공시학위과정구분명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByDayAndNight_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "주야간구분코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "주야간구분명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByCollege_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "단과대학코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "단과대학명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByMajorStatus_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "학교학과상태코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "학교학과상태명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByMajorCharacter_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "학교학과특성코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "학교학과특성명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeByOneselfSeries_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "자체계열분류코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "자체계열분류명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "getCodeBySmallSeries_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cdid": {
+                      "type": "string",
+                      "description": "표준분류 소계열 코드"
+                    },
+                    "cdnm": {
+                      "type": "string",
+                      "description": "표준분류 소계열 코드명"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

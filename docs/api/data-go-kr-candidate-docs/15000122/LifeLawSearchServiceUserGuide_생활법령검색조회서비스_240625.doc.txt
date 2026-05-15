@@ -1,0 +1,2945 @@
+
+
+
+
+
+
+
+ 공공데이터 개방 • 공유 • 활용 체계 개발
+OpenAPI 활용가이드
+
+
+
+
+
+
+
+
+
+
+
+
+제개정 이력
+버 전
+변경일
+변경 내용
+작성자
+승인
+1.0
+2013-01-03
+최초작성
+
+
+2.0
+2016-12-19
+도메인 변경 및 문서 포맷 / 문구 수정
+홍서현
+
+3.0
+2022-09-23
+샘플데이터 및 요청/응답 메시지 현행화
+서유선
+
+4.0
+2024-06-25
+도메인 및 서비스 제공자 변경
+김준영
+
+
+
+
+
+
+
+
+
+ TOC \O "1-4" \H \Z \U  HYPERLINK \L "_TOC117092433" I.    서비스 명세     PAGEREF _TOC117092433 \H - 4 -
+ HYPERLINK \l "_Toc117092434" 1.1    생활법령검색서비스 조회 서비스     PAGEREF _Toc117092434 \h - 4 -
+ HYPERLINK \l "_Toc117092435" 가.    서비스 개요     PAGEREF _Toc117092435 \h - 4 -
+ HYPERLINK \l "_Toc117092436" 나.    각 오퍼레이션 조회 가이드     PAGEREF _Toc117092436 \h - 5 -
+ HYPERLINK \l "_Toc117092437" 다.    오퍼레이션 목록     PAGEREF _Toc117092437 \h - 7 -
+ HYPERLINK \l "_Toc117092438" (1) 검색분류목록조회 오퍼레이션 명세     PAGEREF _Toc117092438 \h - 7 -
+ HYPERLINK \l "_Toc117092439" (2) 키워드통합검색목록조회 오퍼레이션 명세     PAGEREF _Toc117092439 \h - 11 -
+ HYPERLINK \l "_Toc117092440" (3) 법령해석례목록조회 오퍼레이션 명세     PAGEREF _Toc117092440 \h - 41 -
+ HYPERLINK \l "_Toc117092441" (4) 행정심판재결례목록조회 오퍼레이션 명세     PAGEREF _Toc117092441 \h - 47 -
+ HYPERLINK \l "_Toc117092442" (5) 대법원판례목록조회 오퍼레이션 명세     PAGEREF _Toc117092442 \h - 53 -
+ HYPERLINK \l "_Toc117092443" (6) 헌법재판소결정례목록조회 오퍼레이션 명세     PAGEREF _Toc117092443 \h - 62 -
+ HYPERLINK \l "_Toc117092444" (7) 분류검색 목록조회 오퍼레이션 명세     PAGEREF _Toc117092444 \h - 71 -
+ HYPERLINK \l "_Toc117092445" (8) 관심규정해설검색목록조회 오퍼레이션 명세     PAGEREF _Toc117092445 \h - 76 -
+ HYPERLINK \l "_Toc117092446" (9) 생활분야검색목록조회 오퍼레이션 명세     PAGEREF _Toc117092446 \h - 82 -
+ HYPERLINK \l "_Toc117092447" (10) 백문백답본문검색목록조회오퍼레이션 명세     PAGEREF _Toc117092447 \h - 85 -
+ HYPERLINK \l "_Toc117092448" (11) 백문백답법령명검색조회 오퍼레이션 명세     PAGEREF _Toc117092448 \h - 91 -
+ HYPERLINK \l "_Toc117092449" (12) 주요궁금사항목록조회 오퍼레이션 명세     PAGEREF _Toc117092449 \h - 95 -
+
+서비스 명세
+생활법령검색서비스 조회 서비스
+서비스 개요
+서비스 정보
+서비스 ID
+3
+서비스명(국문)
+생활법령검색 조회 서비스
+서비스명(영문)
+LifeLawSearchService
+서비스 설명
+생활법령 검색시스템에 키워드통합검색목록조회,검색분류목록조회,
+법령해석례목록조회,행정심판재결례목록조회,
+대법원판례목록조회,헌법재판소결정례목록조회
+등을 서비스 한다.
+서비스 보안
+서비스 인증/권한
+[ O ] 서비스 Key    [ ] 인증서 (GPKI)
+[   ] Basic (ID/PW)  [ ] 없음
+[  ] WS-Security
+메시지 레벨 암호화
+[ O ] 전자서명    [ ] 암호화    [ ] 없음
+전송 레벨 암호화
+[ ] SSL            [ O ] 없음
+적용 기술 수준
+인터페이스 표준
+[ O ] SOAP 1.2
+(RPC-Encoded, Document Literal, Document Literal Wrapped)
+[ ] REST (GET, POST, PUT, DELETE)
+[ ] RSS 1.0 [ ]    RSS 2.0 [ ]    Atom 1.0    [ ] 기타
+교환 데이터 표준
+[ O ] XML    [  ] JSON    [  ] MIME    [  ] MTOM
+기타 표준
+[ O ] WSRP [  ] 기타 (                              )
+서비스 URL/URI
+개발환경
+http://www.easylaw.go.kr/OPENAPI/soap/LifeLawSearchService
+운영환경
+http://www.easylaw.go.kr/OPENAPI/soap/LifeLawSearchService
+서비스 WSDL/WADL
+개발환경
+http://www.easylaw.go.kr/OPENAPI/soap/LifeLawSearchService?wsdl
+운영환경
+http://www.easylaw.go.kr/OPENAPI/soap/LifeLawSearchService?wsdl
+서비스 배포 정보
+서비스 버전
+1.1
+서비스 시작일
+2013-01-13
+배포 일자
+2013-01-13
+서비스 이력
+2017년 2월 중 도메인 변경으로 인한 서비스 변경
+메시지 교환 유형
+[ O ] Request-Response    [   ] Publish-Subscribe
+[   ] Fire-and-Forgot        [   ] Notification
+메시지 로깅 수준
+성공
+[O] Header [ ] Body
+실패
+[O] Header [O] Body
+사용 제약 사항 (비고)
+N/A
+서비스 제공자
+이의종 / 법제처 법제정보담당관 / 044-200-6783 / ejlee9420@korea.co.kr
+데이터 갱신주기
+12시간
+각 오퍼레이션 조회 가이드
+※ 검색분류목록조회(getSearchGroupList) 에서 조회한 검색그룹번호와, 검색하려는 키워드를 입력하여 각각의 오퍼레이션에서 조회를 합니다.
+검색하려는 키키워드통합검색목록조회(getSearchAllKeywordList)에서는 조회하고자 하는 검색그룹번호를 여러 개 설정하여 키워드 검색이 가능하며, 그 외 오퍼레이션은 section에 해당 검색그룹번호를 지정하고, 키워드를 입력하여 조회합니다.
+Ex) 법령해석례목록조회 : section 에 검색그룹번호를, 법령해석례에 해당하는 ‘4’를 입력합니다.(상세 오퍼레이션 참조)
+
+※ 생활법령 코드와 URL
+용어
+생활분야
+관심분야
+관심항목
+관심규정
+관심규정개요
+설명
+생활법령
+콘텐츠
+생활분야목차에서 1depth 제목
+생활분야목차에서 2depth 제목
+생활분야목차에서 3depth 제목
+생활분야목차에서 3depth본문해설(개요)
+코드
+csmSeq
+ccfNo
+cciNo
+cnpClsNo
+
+코드설명
+생활분야
+일련번호
+관심분야
+일련번호
+관심항목
+일련번호
+관심규정
+일련번호
+
+생활법령 본문과 관련된 백문백답, 법령해석례, 행정심판재결례, 대법원판례, 헌법재판소결정례 등이 이 코드로 연결되어 있습니다.
+
+Ex) 찾기 쉬운 생활법령정보 홈페이지에서 “행정심판” 검색 시
+본문
+http://www.easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&csmSeq=763&ccfNo=1&cciNo=1&cnpClsNo=3
+
+법령해석례
+http://www.easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&expcNo=1&csmSeq=560&ccfNo=3&cciNo=3&cnpClsNo=1&menuType=expc
+
+행정심판례
+http://www.easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&deccNo=1&csmSeq=668&ccfNo=2&cciNo=1&cnpClsNo=1&menuType=decc
+
+판례
+http://www.easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&precNo=1&csmSeq=829&ccfNo=2&cciNo=1&cnpClsNo=4&menuType=prec
+
+헌재결정례
+http://www.easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&detcNo=2&csmSeq=668&ccfNo=4&cciNo=2&cnpClsNo=1&menuType=detc
+
+<백문백답 구조>
+용어
+백문백답분류
+백문분류
+백문
+설명
+백분백답의 주제별 분류
+(대분류)
+백문백답의 질문(백문) 분류
+(중분류)
+백문백답의 질문(백문)
+코드
+onhunqnaAstNm
+onhunqueAstSeq
+onhunqueSeq
+코드설명
+백문백답분류일련번호
+백문분류일련번호
+백문일련번호
+
+Ex) “행정심판” 검색 시 100문100답 URL http://www.easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=85&onhunqueSeq=4228
+오퍼레이션 목록
+일련번호서비스명
+(국문)오퍼레이션명(영문)오퍼레이션명(국문)메시지명(영문)1
+생활법령
+검색조회서비스
+getSearchGroupList
+검색분류목록조회
+N/A
+2
+getSearchAllKeywordList
+키워드통합검색목록조회
+N/A
+3
+getSearchLawInterList
+법령해석례목록조회
+N/A
+4
+getSearchAadminRefereeList
+행정심판재결례목록조회
+N/A
+5
+getSearchSuperMePrecedentList
+대법원판례목록조회
+N/A
+6
+getSearchConstCourtPrecedentList
+헌법재판소결정례목록조회
+N/A
+7
+getSearchGroupAreaList
+분류검색 목록조회
+N/A
+8
+getSearchInterrestRuleList
+관심규정해설검색목록조회
+N/A
+9
+getSearchLifeAreaList
+생활분야검색목록조회
+N/A
+10
+getMaskMAnswerSearchContentList
+백문백답본문검색목록조회오퍼레이션
+N/A
+11
+getMaskMAnswerLawNameList
+백문백답법령명검색목록조회
+N/A
+12
+getSearchAstNoticeList
+주요궁금사항목록조회
+N/A
+검색분류목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+1
+오퍼레이션명(국문)
+검색분류목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchGroupList
+오퍼레이션 설명
+생활법령 검색시스템에서 조회데이터 총건수와 검색조회목록을 조회하는 검색분류목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[         2.0 s]
+초당 최대 트랜잭션
+[         10 tps]
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+SearchGroupListItems
+검색조회목록 항목
+
+1
+
+검색조회목록 입니다.
+SearchGroupListItem검색조회목록0..N검색조회목록 정보 입니다.chkClsno검색그룹번호01검색그룹번호입니다.. (유일키)searchNm검색명0생활분야검색검색명 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchGroupList/>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchGroupListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchGroupListResponse>
+            <SearchGroupListItems>
+               <SearchGroupListItem>
+                  <chkClsno>1</chkClsno>
+                  <searchNm>생활분야검색</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>2</chkClsno>
+                  <searchNm>본문</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>3</chkClsno>
+                  <searchNm>백문백답본문검색</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>4</chkClsno>
+                  <searchNm>법령해석례</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>5</chkClsno>
+                  <searchNm>행정심판재결례</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>6</chkClsno>
+                  <searchNm>대법원판례</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>7</chkClsno>
+                  <searchNm>헌법재판소결정례</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>8</chkClsno>
+                  <searchNm>주요궁금사항</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>9</chkClsno>
+                  <searchNm>분류검색</searchNm>
+               </SearchGroupListItem>
+               <SearchGroupListItem>
+                  <chkClsno>10</chkClsno>
+                  <searchNm>백문백답법령명검색</searchNm>
+               </SearchGroupListItem>
+            </SearchGroupListItems>
+         </SearchGroupListResponse>
+      </ns2:getSearchGroupListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+키워드통합검색목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+2
+오퍼레이션명(국문)
+키워드통합검색목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchAllKeywordList
+오퍼레이션 설명
+항목명, 검색내용, 현재페이지, 페이지크기를 기준으로 해석례목록개수, 해석례목록,행정심판재결례목록개수, 행정심판재결례목록, 대법원판례목록개수, 대법원판례목록, 헌법재판소결정례목록개수, 헌법재판소결정례목록, 관심규정해설목록개수, 관심규정해설목록, 생활분야목록개수, 생활분야목록, 생활분야링크, 생활분야일련번호 등을 조회하는 키워드통합검색목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[     3.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+txtQuery
+검색내용
+30
+0
+행정심판
+내용 검색 입니다.
+chkClsno1
+검색그룹번호
+2
+1
+1
+검색그룹번호를 입력합니다.
+chkClsno2
+검색그룹번호
+2
+0
+2
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno3
+검색그룹번호
+2
+0
+3
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno4
+검색그룹번호
+2
+0
+4
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno5
+검색그룹번호
+2
+0
+5
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno6
+검색그룹번호
+2
+0
+6
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno7
+검색그룹번호
+2
+0
+7
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno8
+검색그룹번호
+2
+0
+8
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno9
+검색그룹번호
+2
+0
+9
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+chkClsno10
+검색그룹번호
+2
+0
+10
+검색그룹을 추가할 때 추가적으로 번호를 입력합니다.
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+maskMAnswerLawNameListCount
+백문백답 법령명 검색조회건수
+8
+0
+8
+백문백답 법령명 검색조회건수입니다.
+MaskMAnswerLawNameListItems
+백문백답 법령명 조회 목록 항목
+
+1
+
+백문백답 법령명 조회 목록입니다.
+MaskMAnswerLawNameListItem백문백답 법령명 조회 목록0..N백문백답 법령명 조회 목록 정보입니다.onhunqnaAstKwrd백문백답 분류 키워드40000나홀로소송백문백답분류의 키워드입니다.onhunqnaAstNm백문백답 분류명5000민형사/소송백문백답의 분류명입니다.onhunqnaAstSeq백문백답 분류 일련번호5085백문백답의 분류일련번호입니다.(유일키)onhunqueConLsiNm백문백답 관련 법령정보40000「행정심판법」 제27조,「행정심판법」 제43조백문백답과 관련된 법령과 조문 등 정보입니다.onhunqueCts백문 내용50행정청으로부터 50일 전에 영업정지처분을 한다는 내용의 문서를 받았습니다. 지금도 행정심판을 청구할 수 있나요?백문백답 질문내용입니다.onhunqueSeq백문 일련번호504230백문 일련번호입니다.(유일키)webTitleLink웹페이지링크주소2000http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=85&amp;onhunqueSeq=4230웹페이지에서 백문백답의 링크 주소입니다.maskMAnswerSearchContentListCount
+백문백답 본문 검색 건수
+8
+1
+17
+백문백답에서 검색어 조회 건수 입니다.
+MaskMAnswerSearchContentListItems
+백문백답 본문 검색 정보 목록
+
+1
+
+백문백답 본문 검색 정보 목록입니다.
+MaskMAnswerSearchContentListItem백문백답 본문 검색 정보0..N백문백답 본문 검색 정보입니다.moblieTitleLink모바일링크주소2000http://m.law.go.kr/MOB/OnhunqnaInfoRetrieve.laf?onhunqueSeq=4231모바일페이지에서의 백문백답 링크 주소입니다.onhunansCts백답 내용40000<![CDATA[<b>행정심판</b> 청구 절차는 ① <b>행정심판</b>청구서 작성·제출 → ② 처분청의 답변서 제출 → ③ <b>행정심판</b>위원회에 회부 → ④ 청구인과 피청구인의 주장 검토·심리 → ⑤ 재결의 과정을 거쳐 진행됩니다.◇ <b>행정심판</b>절차의 단계별 과정☞ 심판청구서의 제출· <b>행정심판</b>을 청구하려는 자는 심판청구서를 작성해 피청구인이나 소관 <b>행정심판</b>위원회에 제출해야 합니다. 이 경우 피청구인의 수만큼 심판청구서 부본을 함께 제출해야 합니다(「<b>행정심판</b>법」 제23조제1항).☞ 답변서의 제출· 청구인의 <b>행정심판</b>청구가 있으면 <b>행정심판</b>의 상대방인 처분청은 청구인의 청구에 대한 반박 자료인 답변서를 심판청구서를 받은 날부터 10일 이내에 작성해 심판청구서와 함께 <b>행정심판</b>위원회에 제출합니다(「<b>행정심판</b>법」 제24조제1항).· 온라인으로 <b>행정심판</b>을 청구하는 경우에는 중앙<b>행정심판</b>위원회 웹사이트에서 온라인상으로 답변서를 열람하실 수 있습니다.☞ 사건회부· 처분청은 제출된 청구인의 청구서와 답변서를 지체 없이 <b>행정심판</b>위원회에 회부해 <b>행정심판</b>위원회가 심판청구사건을 신속히 심리할 수 있도록 합니다.☞ 심리· <b>행정심판</b>위원회는 처분청으로부터 회부된 사건에 대해 청구인과 피청구인의 주장을 충분히 검토한 후, 심리기일을 정해 행정처분의 위법·부당여부를 판단하는 심리를 합니다.· 심리가 이루어지면 <b>행정심판</b>위원회는 심리결과를 처분청 및 청구인에게 송부합니다.☞ 재결· <b>행정심판</b>위원회의 재결은 <b>행정심판</b>청구사건에 대한 판단을 대외적으로 청구인과 피청구인에게 알리는 것으로 재결서를 청구인과 피청구인에게 송달합니다.· <b>행정심판</b>의 효력은 재결서가 송달되어야 발생합니다.<br />]]>
+백문백답의 답변내용입니다.onhunansServiceDt백문백답서비스기준일자2002015-10-30백문백답의 서비스 기준일자입니다.onhunqnaAstNm백문백답 분류명5000민형사/소송백문백답의 분류명입니다.onhunqnaAstSeq백문백답 분류 일련번호5085백문백답 분류의 일련번호입니다.onhunqueCts백문 내용40000&lt;b>행정심판&lt;/b>을 청구하려고 합니다. &lt;b>행정심판&lt;/b> 청구 절차는 어떻게 진행되나요?백문의 질문내용입니다.onhunqueRecomCnt백문백답 추천수503320백문백답 추천수입니다.onhunqueRetriCnt백문백답 조회수5017181백문백답 조회수입니다.onhunqueSeq백문일련번호504231백문의 일련번호입니다.onhunqueSubjNm백문주제명2000행정심판청구 절차백문의 주제명입니다.webTitleLink웹페이지링크주소2000http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=85&amp;onhunqueSeq=4231웹페이지에서의 백문백답 링크 주소입니다.SearchLawInterListCount
+해석례 목록 개수
+8
+1
+0
+해석례 목록정보 개수 입니다.
+SearchLawInterListItems
+해석례 목록 항목
+
+1
+
+해석례 목록 입니다.
+SearchLawInterListItem해석례 목록0..N해석례 목록정보 입니다.csmSeq생활분야일련번호130생활분야의 일련번호 입니다.ccfNo관심분야일련번호130관심분야의 일련번호 입니다.cciNo관심항목 일련번호130관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호130관심규정의 일련번호(실졔값이 있음)입니다.title제목10000법령해석례의 안건명입니다.csmTree관심규정목록
+트리구조1000관심분야, 관심항목 등 목차 구조입니다.cnpClsNm관심규정제목10000관심규정의 제목입니다.inq질의10000질의 내용 입니다.rpl회답10000회답내용 입니다.expcNo해석례번호130해석례번호 유일키 입니다.titleLink해석례 안건명 링크5000해석례 안건명 링크 주소 입니다.cnpClsNmLink해석례 관심규정 제목 링크5000해석례 관심규정 제목 링크 주소 입니다.searchAadminRefereeListCount
+행정심판 재결례목록 개수
+8
+1
+17
+행정심판 재결례목록 개수 입니다.
+SearchAadminRefereeListItems
+행정심판 재결례목록 항목
+
+1
+
+행정심판 재결례목록입니다.
+SearchAadminRefereeListItem행정심판 재결례목록0..N행정심판 재결례목록 정보 입니다.csmSeq생활분야일련번호130548생활분야 일련번호 입니다.ccfNo관심분야일련번호1302관심분야의 일련번호 입니다.cciNo관심항목 일련번호1302관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1307관심규정의 일련번호(실졔값이 있음) 입니다.title제목10000사건 05-09670, 수원출입국관리사무소 - 사증발급인정서발급거부처분취소청구행정심판재결례 사건명입니다.Tree관심규정목록
+트리구조1000비자>대한민국 비자(외국인이 우리나라에 입국하는 경우)>관심분야>관심항목>
+트리구조 입니다.cnpClsNm관심규정제목10000비자발급인정서에 의한 비자 발급행정심판재결례와 연결된 관심규정제목입니다.evl판단10000<![CDATA[○ (청구취지) 피청구인이 2005. 3. 16. 청구인에 대하여 한 사증발급인정서발급거부처분은 이를 취소한다. ○ (재결요지) 대한민국 영토 밖에서 거주하는 외국인에 대하여는 「헌법」에 의해 체결ㆍ공포된 조약 또는 일반적으로 승인된 국제법규 등에 의하여 내국인과 동등하게 <b>행정심판</b>청구권이 보장되는 경우에 한하여 <b>행정심판</b>의 청구인이 될 수 있다고 할 것임에도 이 건 <b>행정심판</b>청구와 관련하여 <b>행정심판</b>청구를 허용하는 대한민국과 중화인민공화국간에 체결ㆍ공포된 조약이 없을 뿐만 아니라 내국인과 동등하게 <b>행정심판</b>청구권을 인정하는 내용의 일반적으로 승인된 국제법규도 없는 점, 국제관행상 출입국에 관한 문제는 국내문제 불간섭원칙이 적용되는 사항이고, 입국허가의 이전단계에서 외국인에 대한 사증발급행위나 사증발급인정서의 발급불허여부를 다투는 것인 점에 비추어 볼 때, 이 건 거부처분은 <b>행정심판</b>의 대상이 되지 아니한다고 봄이 상당하다고 할 것이고, 특히 제출된 자료에 의할 때, 청구인들 중 金英愛는 「외국인투자촉진법」 등에 의하여 투자 등의 행위를 한 사실이 없는 등 국내에 별다른 경제적 연고도 없고 중국에 거주하고 있어 대한민국의 통치권에 의하여 보호받거나 복종할 의무가 없다고 할 것인바, 이 건 심판청구는 <b>행정심판</b>법상 청구인이 될 수 없는 자가 제기한 부적법한 심판청구이다.]]>판단내용 입니다.deccNo행정심판재결례 번호1301행정심판재결례 번호 유일키 입니다.titleLink행정심판 재결례 타이틀 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7&amp;menuType=decc행정심판 재결례 타이틀 링크 주소 입니다.cnpClsNmLink행정심판 재결례 관심규정제목 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7행정심판 재결례 관심규정제목 링크 주소 입니다..SearchSuperMePrecedentListCount
+대법원판례목록 개수
+8
+1
+12
+대법원판례목록 개수 입니다.
+SearchSuperMePrecedentListItems
+대법원판례목록 항목
+
+1
+
+대법원판례목록입니다.
+SearchSuperMePrecedentListItem대법원판례목록0..N대법원판례목록 정보 입니다.csmSeq생활분야일련번호130829생활분야의 일련번호 입니다.ccfNo관심분야일련번호1302관심분야의 일련번호 입니다.cciNo관심항목 일련번호1301관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1304관심규정의 일련번호(실졔값이 있음)입니다.title제목10000대법원 1991. 6. 28. 선고 90누6521 판결 개별용달운송사업면허취소대법원판례의 사건명입니다.tree관심규정목록
+트리구조1000행정소송의 제기 요건>행정소송의 제기 요건>관심분야>관심항목
+의 목차트리입니다.cnpClsNm관심규정제목10000제소기간대법원판례와 연결되어 있는 관심규정의 제목입니다.judItm판시사항10000가. &lt;b>행정심판&lt;/b>전치주의에 대한 예외사유에 해당하는 때에 행정처분의 상대방이 아닌 제3자가 제기하는 취소소송에 대한 「행정소송법」 제20조제2항의 적용 여부(적극) 나. 「행정소송법」 제20조 제2항 소정의 제소기간 기산점인 “처분이 있음을 안 날”의 의미 다. 행정소송법 제20조제2항 소정의 “정당한 사유”의 의미와 그 판단기준 라. 원고 회사가 위장직영을 하였음을 이유로 지입차주들에 대한 개별운송사업 면허처분과 동시에 한 원고 회사의 지입차량에 대한 감차처분이 서로 내용상 관련되는 처분 또는 같은 목적을 위하여 단계적으로 진행되는 처분이므로 원고가 위 감차처분에 대하여 재결을 거쳤다면 제3자로서 면허처분취소소송을 제기함에 있어 다시 &lt;b>행정심판&lt;/b>을 제기할 필요가 없는데, 그 소가 위 지입차주들에 대한 면허처분이 있었음을 알았다고 보여지는 감차처분일부터 「행정소송법」 제20조제2항의 제소기간 도과 후에 제기된 것이어서 부적법하다고 본 사례 마. 위 “라”항의 경우 원고가 위장직영을 하였음을 이유로 한 자동차운수사업법 위반죄 략식명령에 대하여 정식재판을 청구하고 그 판결을 기다리고 있었다는 사정은 「행정소송법」 제20조제2항 소정의 정당한 사유에 해당한다고 볼 수 없다고 한 사례대법원판례의
+판시사항입니다.precGst판결요지10000... 것이므로 그러한 때에는 행정처분의 상대방이 아닌 제3자가 제기하는 경우라도 그에 대한 취소소송은 「행정소송법」 제20조제2항에 의해 정당한 사유가 있음을 증명하지 못하는 한 그 대상인 처분이 있는 것을 안 날로부터 180일, 처분이 있는 날로부터 1년 이내에 제기하지 않으면 안된다. 나. 「행정소송법」 제20조제2항 “소정의 제소기간 기산점인 처분이 있음을 안 날”이란 통지, 공고 기타의 방법에 의하여 당해 처분이 있었다는 사실을 현실적으로 안 날을 의미하고 구체적으로 그 행정처분의 위법 여부를 판단한 날을 가리키는 것은 아니다. 다. 「행정소송법」 제20조제2항 소정의 “정당한 사유”란 불확정 개념으로서 그 존부는 사안에 따라 개별적, 구체적으로 판단하여야 하나 「민사소송법」 제160조의 “당사자가 그 책임을 질 수 없는 사유”나 「&lt;b>행정심판&lt;/b>법」 제18조제2항 소정의 “천재, 지변, 전재, 사변 그 밖에 불가항력적인 사유”보다는 넓은 개념이라고 풀이되므로, 제소기간도과의 원인 등 여러 사정을 종합하여 지연된 제소를 허용하는 것이 사회통념상 상당하다고 할 수 있는가에 의하여 판단하여야 한다. 라. 원고 회사가 자동차운송사업면허조건을 위반하여 위장직영을 하였음을 이유로 피고 시장이 지입차주들에 대하여 각 지입차량에 대한 개별운송사업면허처분을 함과 동시에 원고 회사에 대하여 위 지입차량에 대한 감차처분을 하자 원고가 위 감차처분에 대한 &lt;b>행정심판&lt;/b>을 청구하여 청구기각의 재결이 있은 후, 다시 원고가 위 지입차주들에 대한 면허처분일부터 180일이 지난 뒤에 위 면허처분취소소송을 제기한 경우, 위 면허처분과 감차처분은 「행정소송법」 제18조제3항제2호 소정의 서로 내용상...대법원판례의 판결요지입니다.precNo대법원판례번호1301대법원 판례번호 입니다.(유일키)titleLink대법원판례 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4&amp;menuType=prec대법원 판례 타이틀 링크 주소 입니다.cnpClsNmLink대법원판례
+관심규정제목 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4대법원판례 관심규정제목 링크 주소 입니다.SearchConstCourtPrecedentListCount
+헌번재판소결정례 목록 개수
+8
+1
+5
+헌번재판소결정례 목록 개수 입니다.
+SearchConstCourtPrecedentListItems
+헌번재판소결정례 목록 항목
+
+1
+
+헌번재판소결정례 목록입니다.
+SearchConstCourtPrecedentListItem헌번재판소결정례 목록0..N헌번재판소결정례목록정보 입니다.csmSeq생활분야일련번호130668생활분야의 일련번호 입니다.ccfNo관심분야일련번호1304관심분야의 일련번호 입니다.cciNo관심항목 일련번호1302관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1301관심규정의 일련번호(실졔값이 있음) 입니다.title제목10000헌법재판소 2002. 10. 31. 선고 2001헌바40 도로교통법제101조의3위헌소원헌재결정례의 안건명입니다.tree관심규정목록
+트리구조1000교통법규 위반에 따른 면허 취소·정지>취소·정지처분에 대한 구제>관심분야>관심규정의 목차트리입니다.cnpClsNm관심규정제목10000운전면허 취소·정지처분 등에 대한 이의 신청헌재결정례와 연결된 관심규정제목입니다.dtmItm결정사항100003. 일반적으로 &lt;b>행정심판&lt;/b>전치주의를 정당화하는 합리적인 이유결정사항 입니다.detcGst결정요지10000<![CDATA[... 날로 증대됨에 따라 행정기관의 전문지식을 활용할 수 있도록 함으로써 법원의 전문성 부족을 보완하는 기능, 셋째, 분쟁을 <b>행정심판</b>단계에서 해결하도록 함으로써 분쟁해결의 시간과 비용을 절약하고 법원의 부담을 경감할 수 있다는 기능 등을 들 수 있다. <b>행정심판</b> 전치주의를 정당화하는 이유는 일반적으로 다음과 같다. 첫째, <b>행정심판</b>절차는 통상의 소송절차에 비하여 간편한 절차를 통하여 시간과 비용을 절약하면서 신속하고 효율적인 권리구제를 꾀할 수 있다는 장점이 있다. 행정청이 스스로 처분이 잘못되었다고 인정하는 경우에는 법원의 판결을 기다릴 필요가 없이 이를 취소함으로써 법적 분쟁이 법원의 소송에 이르기 전에 원만하게 해결될 수 있으므로, 당사자는 신속하고 간편한 절차에 의하여 그가 원하는 바를 얻을 수 있게 되는 것이다. 또한 <b>행정심판</b>을 통하여 심판청구의 대상인 처분이나 부작위의 적법성 여부뿐이 아니라 법원이 판단할 수 없는 당·부당의 문제에 관해서도 심사를 받을 수 있는 길이 열리므로, 국민에게 보다 유리하다. 궁극적으로 <b>행정심판</b>은 국민의 이익을 위한 것이고, 사전절차를 통하여 원칙적으로 권리구제가 약화되는 것이 아니라 강화되는 것이다. 둘째, 법원의 입장에서 보더라도, <b>행정심판</b>전치주의를 취하는 경우에는 <b>행정심판</b>절차에서 심판청구인의 목적이 달성됨으로써 행정소송의 단계에 이르지 아니하는 경우가 많을 뿐 아니라, 그렇지 아니하는 경우에도 <b>행정심판</b>을 거침으로써 사실상·법률상의 쟁점이 많이 정리되기 때문에 행정소송의 심리를 위한 부담이 경감되는 효과가 있다. 즉 <b>행정심판</b>제도는 불필요한 소송을 방지하는 동시에 쟁점, 증거 등을 정리하게 하여 법원의...]]>결정요지 입니다.titleLink헌재결정례의
+타이틀 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=668&amp;ccfNo=4&amp;cciNo=2&amp;cnpClsNo=1&amp;menuType=detc헌재결정례 타이틀 링크 주소 입니다.cnpClsNmLink헌재결정례 관심규정제목 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=668&amp;ccfNo=4&amp;cciNo=2&amp;cnpClsNo=1헌재결정례
+관심규정제목 링크 주소 입니다.detcNo결정례번호1302결정례 번호 입니다.(유일키)SearchAskNoticeListCount
+궁금사항 목록 개수
+8
+1
+2
+궁금사항 목록 개수 입니다.
+SearchAskNoticeListItems
+궁금사항 목록 항목
+
+1
+
+궁금사항 목록입니다.
+SearchAskNoticeListItem궁금사항 목록0..N궁금사항 목록정보 입니다.csmSeq생활분야 일련번호130668순번 입니다.csmTtl생활분야명10000자동차 운전면허생활분야명 입니다.qtCts주요궁금사항 질문제목10000면허 취소로 이의신청을 했는데 받아들여지지 않았습니다. 행정심판을 제기하려면 어떻게 해야 하나요?주요궁금사항 질문제목 입니다.qtSumm주요궁금사항 질문답변 내용10000<![CDATA[운전면허 취소처분이나 정지처분을 받은 사람은 <b>행정심판</b>청구서를 작성하여, 피청구인인 행정청 또는 국무총리<b>행정심판</b>위원회에 <b>행정심판</b>서를 제출함으로써 <b>행정심판</b>을 제기할 수 있습니다. ※ 운전면허 행정처분 구제에 대한 자세한 내용은 &lt;운전면허 취소 정지처분 등에 대한 이의신청&gt;에서 확인할 수 있습니다.]]>주요궁금사항 질문답변 내용 입니다.titleLink생활분야URL5000http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=668생활분야URL 입니다.SearchGroupAreaListCount
+분류검색목록 개수
+8
+1
+23
+분류검색목록 개수 입니다.
+SearchGroupAreaListItems
+분류검색목록 항목
+
+1
+
+분류검색목록입니다.
+SearchGroupAreaListItem분류검색목록0..N분류검색목록 목록정보 입니다.csmSeq생활분야일련번호130763생활분야의 일련번호 입니다.ccfNo관심분야일련번호1301관심분야의 일련번호 입니다.cciNo관심항목 일련번호1301관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1301관심규정의 일련번호(실졔값이 있음) 입니다.title제목10000행정심판의 개요현재 목차의 제목입니다.tree분류검색 관심분야 트리1000행정심판상위 목차 트리입니다.allTree분류검색 관심규정 트리1000행정심판>행정심판의 개요현재 위치까지의 목차트리입니다.titleLink분류검색 생활분야 타이틀 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=763&amp;ccfNo=1&amp;cciNo=1&amp;cnpClsNo=1분류검색 생활분야 타이틀 링크 입니다.SearchInterrestRuleListCount
+관심규정해설 목록 개수
+8
+1
+118
+관심규정해설 목록 개수 입니다.
+SearchInterrestRuleListItems
+관심규정해설 목록 항목
+
+1
+
+관심규정해설 목록입니다.
+SearchInterrestRuleListItem관심규정해설 목록0..N관심규정해설 목록정보 입니다.csmSeq생활분야일련번호130763생활분야의 일련번호 입니다.ccfNo관심분야일련번호1301관심분야의 일련번호 입니다.cciNo
+관심항목 일련번호1301관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1303관심규정의 일련번호(실졔값이 있음) 입니다.title제목10000&lt;b>행정심판&lt;/b>기관http://www.easylaw.go.kr/CSP/OvCnpRetrieveP.laf?csmSeq=12&ccfNo=3&cciNo=44&cnpClsNo=44로 링크를 건다tree관심규정목록
+트리구조1000행정심판의 개요>행정심판의 개요>상위 목차 트리입니다.ov개요해설200000<![CDATA[... 위원장은 그 <b>행정심판</b>위원회가 소속된 행정청이 되며, 위원장이 없거나 부득이한 사유로 직무를 수행할 수 없거나 위원장이 필요하다고 인정하는 경우에는 다음의 순서에 따라 위원이 위원장의 직무를 대행합니다(「<b>행정심판</b>법」 제7조제2항). √ 위원장이 사전에 지명한 위원 √ 「<b>행정심판</b>법」 제7조제4항에 따라 지명된 공무원인 위원(2명 이상인 경우에는 직급 또는 고위공무원단에 속하는 공무원의 직무등급이 높은 위원 순서로, 직급 또는 직무등급도 같은 경우에는 위원 재직기간이 긴 위원 순서로, 재직기간도 같은 경우에는 연장자 순서로 함) 시 도지사 소속으로 두는 <b>행정심판</b>위원회의 경우에는 해당 지방자치단체의 조례로 공무원이 아닌 위원을 위원장으로 정할 수 있고, 이 경우 위원장은 비상임으로 합니다(「<b>행정심판</b>법」 제7조제3항). 위원의 자격 <b>행정심판</b>위원회의 위원은 해당 <b>행정심판</b>위원회가 소속된 행정청이 다음의 어느 하나에 해당하는 사람 중에서 성별을 고려하여 위촉하거나 그 소속 공무원 중에서 지명합니다(「<b>행정심판</b>법」 제7조제4항). √ 변호사의 자격을 취득한 후 5년 이상의 실무 경험이 있는 사람 √ 「고등교육법」 제2조제1호부터 제6호까지의 규정에 따른 학교에서 에서 조교수 이상으로 재직하거나 재직하였던 사람 √ 행정기관의 4급 이상의 공무원이었거나 고위공무원단에 속하는 공무원이었던 사람 √ 박사학위를 취득한 후 해당 분야에서 5년 이상 근무한 경험이 있는 사람 √ 그 밖에 <b>행정심판</b>과 관련된 분야의 지식과 경험이 풍부한 사람 <b>행정심판</b>위원회의 회의 <b>행정심판</b>위원회의 회의는 위원장과 위원장이 회의마다 지정하는 8명의 위원(그중 위에 따른 위촉위원은 6명 이상으로 하되,...]]>관심규정개요 해설 입니다.cnpClsNmLink관심규정해설 관심규정제목 링크5000관심규정해설 관심규정제목 링크 입니다.SearchLifeAreaListCount
+생활분야 목록 개수
+8
+1
+10
+생활분야 목록 개수 입니다.
+SearchLifeAreaListItems
+생활분야 목록 항목
+
+1
+
+생활분야 목록입니다.
+SearchLifeAreaListItem생활분야 목록0..N생활분야 목록정보 입니다.tree분류0민형사/소송>생활분야가 속한 주제별 분류입니다.csmTtl생활분야 제목500&lt;b>행정심판&lt;/b>생활분야 제목입니다.titleLink생활분야 링크5000http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=763생활분야 링크 주소 입니다.csmSeq생활분야일련번호130763생활분야의 일련번호 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchAllKeywordList>
+         <!--Optional:-->
+         <SearchAllKeywordListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <chkClsno1>1</chkClsno1>
+            <!--Optional:-->
+            <chkClsno10>10</chkClsno10>
+            <!--Optional:-->
+            <chkClsno2>2</chkClsno2>
+            <!--Optional:-->
+            <chkClsno3>3</chkClsno3>
+            <!--Optional:-->
+            <chkClsno4>4</chkClsno4>
+            <!--Optional:-->
+            <chkClsno5>5</chkClsno5>
+            <!--Optional:-->
+            <chkClsno6>6</chkClsno6>
+            <!--Optional:-->
+            <chkClsno7>7</chkClsno7>
+            <!--Optional:-->
+            <chkClsno8>8</chkClsno8>
+            <!--Optional:-->
+            <chkClsno9>9</chkClsno9>
+            <!--Optional:-->
+            <txtQuery>행정심판</txtQuery>
+         </SearchAllKeywordListRequest>
+      </open:getSearchAllKeywordList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchAllKeywordListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchAllKeywordListResponse>
+            <maskMAnswerLawNameListCount>8</maskMAnswerLawNameListCount>
+            <MaskMAnswerLawNameListItems>
+               <MaskMAnswerLawNameListItem>
+                  <onhunqnaAstKwrd>나홀로소송</onhunqnaAstKwrd>
+                  <onhunqnaAstNm>민형사/소송</onhunqnaAstNm>
+                  <onhunqnaAstSeq>85</onhunqnaAstSeq>
+                  <onhunqueConLsiNm>「행정심판법」 제27조,「행정심판법」 제43조</onhunqueConLsiNm>
+                  <onhunqueCts>행정청으로부터 50일 전에 영업정지처분을 한다는 내용의 문서를 받았습니다. 지금도 행정심판을 청구할 수 있나요?</onhunqueCts>
+                  <onhunqueSeq>4230</onhunqueSeq>
+                  <webTitleLink>http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=85&amp;onhunqueSeq=4230</webTitleLink>
+               </MaskMAnswerLawNameListItem>
+            </MaskMAnswerLawNameListItems>
+            <maskMAnswerSearchContentListCount>17</maskMAnswerSearchContentListCount>
+            <MaskMAnswerSearchContentListItems>
+               <MaskMAnswerSearchContentListItem>
+                  <moblieTitleLink>http://m.law.go.kr/MOB/OnhunqnaInfoRetrieve.laf?onhunqueSeq=4231</moblieTitleLink>
+                  <onhunansCts><![CDATA[<b>행정심판</b> 청구 절차는 ① <b>행정심판</b>청구서 작성·제출 → ② 처분청의 답변서 제출 → ③ <b>행정심판</b>위원회에 회부 → ④ 청구인과 피청구인의 주장 검토·심리 → ⑤ 재결의 과정을 거쳐 진행됩니다.◇ <b>행정심판</b>절차의 단계별 과정☞ 심판청구서의 제출· <b>행정심판</b>을 청구하려는 자는 심판청구서를 작성해 피청구인이나 소관 <b>행정심판</b>위원회에 제출해야 합니다. 이 경우 피청구인의 수만큼 심판청구서 부본을 함께 제출해야 합니다(「<b>행정심판</b>법」 제23조제1항).☞ 답변서의 제출· 청구인의 <b>행정심판</b>청구가 있으면 <b>행정심판</b>의 상대방인 처분청은 청구인의 청구에 대한 반박 자료인 답변서를 심판청구서를 받은 날부터 10일 이내에 작성해 심판청구서와 함께 <b>행정심판</b>위원회에 제출합니다(「<b>행정심판</b>법」 제24조제1항).· 온라인으로 <b>행정심판</b>을 청구하는 경우에는 중앙<b>행정심판</b>위원회 웹사이트에서 온라인상으로 답변서를 열람하실 수 있습니다.☞ 사건회부· 처분청은 제출된 청구인의 청구서와 답변서를 지체 없이 <b>행정심판</b>위원회에 회부해 <b>행정심판</b>위원회가 심판청구사건을 신속히 심리할 수 있도록 합니다.☞ 심리· <b>행정심판</b>위원회는 처분청으로부터 회부된 사건에 대해 청구인과 피청구인의 주장을 충분히 검토한 후, 심리기일을 정해 행정처분의 위법·부당여부를 판단하는 심리를 합니다.· 심리가 이루어지면 <b>행정심판</b>위원회는 심리결과를 처분청 및 청구인에게 송부합니다.☞ 재결· <b>행정심판</b>위원회의 재결은 <b>행정심판</b>청구사건에 대한 판단을 대외적으로 청구인과 피청구인에게 알리는 것으로 재결서를 청구인과 피청구인에게 송달합니다.· <b>행정심판</b>의 효력은 재결서가 송달되어야 발생합니다.<br />]]></onhunansCts>
+                  <onhunansServiceDt>2015-10-30</onhunansServiceDt>
+                  <onhunqnaAstNm>민형사/소송</onhunqnaAstNm>
+                  <onhunqnaAstSeq>85</onhunqnaAstSeq>
+                  <onhunqueCts>&lt;b>행정심판&lt;/b>을 청구하려고 합니다. &lt;b>행정심판&lt;/b> 청구 절차는 어떻게 진행되나요?</onhunqueCts>
+                  <onhunqueRecomCnt>3320</onhunqueRecomCnt>
+                  <onhunqueRetriCnt>17181</onhunqueRetriCnt>
+                  <onhunqueSeq>4231</onhunqueSeq>
+                  <onhunqueSubjNm>행정심판청구 절차</onhunqueSubjNm>
+                  <webTitleLink>http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=85&amp;onhunqueSeq=4231</webTitleLink>
+               </MaskMAnswerSearchContentListItem>
+            </MaskMAnswerSearchContentListItems>
+            <searchAadminRefereeListCount>17</searchAadminRefereeListCount>
+            <SearchAadminRefereeListItems>
+               <SearchAadminRefereeListItem>
+                  <ccfNo>2</ccfNo>
+                  <cciNo>2</cciNo>
+                  <cnpClsNm>비자발급인정서에 의한 비자 발급</cnpClsNm>
+                  <cnpClsNmLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7</cnpClsNmLink>
+                  <cnpClsNo>7</cnpClsNo>
+                  <csmSeq>548</csmSeq>
+                  <deccNo>1</deccNo>
+                  <evl><![CDATA[○ (청구취지) 피청구인이 2005. 3. 16. 청구인에 대하여 한 사증발급인정서발급거부처분은 이를 취소한다. ○ (재결요지) 대한민국 영토 밖에서 거주하는 외국인에 대하여는 「헌법」에 의해 체결ㆍ공포된 조약 또는 일반적으로 승인된 국제법규 등에 의하여 내국인과 동등하게 <b>행정심판</b>청구권이 보장되는 경우에 한하여 <b>행정심판</b>의 청구인이 될 수 있다고 할 것임에도 이 건 <b>행정심판</b>청구와 관련하여 <b>행정심판</b>청구를 허용하는 대한민국과 중화인민공화국간에 체결ㆍ공포된 조약이 없을 뿐만 아니라 내국인과 동등하게 <b>행정심판</b>청구권을 인정하는 내용의 일반적으로 승인된 국제법규도 없는 점, 국제관행상 출입국에 관한 문제는 국내문제 불간섭원칙이 적용되는 사항이고, 입국허가의 이전단계에서 외국인에 대한 사증발급행위나 사증발급인정서의 발급불허여부를 다투는 것인 점에 비추어 볼 때, 이 건 거부처분은 <b>행정심판</b>의 대상이 되지 아니한다고 봄이 상당하다고 할 것이고, 특히 제출된 자료에 의할 때, 청구인들 중 金英愛는 「외국인투자촉진법」 등에 의하여 투자 등의 행위를 한 사실이 없는 등 국내에 별다른 경제적 연고도 없고 중국에 거주하고 있어 대한민국의 통치권에 의하여 보호받거나 복종할 의무가 없다고 할 것인바, 이 건 심판청구는 <b>행정심판</b>법상 청구인이 될 수 없는 자가 제기한 부적법한 심판청구이다.]]></evl>
+                  <title>사건 05-09670, 수원출입국관리사무소 - 사증발급인정서발급거부처분취소청구</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7&amp;menuType=decc</titleLink>
+                  <tree>비자>대한민국 비자(외국인이 우리나라에 입국하는 경우)></tree>
+               </SearchAadminRefereeListItem>
+            </SearchAadminRefereeListItems>
+            <searchAskNoticeListCount>2</searchAskNoticeListCount>
+            <SearchAskNoticeListItems>
+               <SearchAskNoticeListItem>
+                  <csmSeq>668</csmSeq>
+                  <csmTtl>자동차 운전면허</csmTtl>
+                  <qtCts>면허 취소로 이의신청을 했는데 받아들여지지 않았습니다. 행정심판을 제기하려면 어떻게 해야 하나요?</qtCts>
+                  <qtSumm><![CDATA[운전면허 취소처분이나 정지처분을 받은 사람은 <b>행정심판</b>청구서를 작성하여, 피청구인인 행정청 또는 국무총리<b>행정심판</b>위원회에 <b>행정심판</b>서를 제출함으로써 <b>행정심판</b>을 제기할 수 있습니다. ※ 운전면허 행정처분 구제에 대한 자세한 내용은 &lt;운전면허 취소 정지처분 등에 대한 이의신청&gt;에서 확인할 수 있습니다.]]></qtSumm>
+                  <titleLink>http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=668</titleLink>
+               </SearchAskNoticeListItem>
+            </SearchAskNoticeListItems>
+            <searchConstCourtPrecedentListCount>5</searchConstCourtPrecedentListCount>
+            <SearchConstCourtPrecedentListItems>
+               <SearchConstCourtPrecedentListItem>
+                  <ccfNo>4</ccfNo>
+                  <cciNo>2</cciNo>
+                  <cnpClsNm>운전면허 취소·정지처분 등에 대한 이의 신청</cnpClsNm>
+                  <cnpClsNmLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=668&amp;ccfNo=4&amp;cciNo=2&amp;cnpClsNo=1</cnpClsNmLink>
+                  <cnpClsNo>1</cnpClsNo>
+                  <csmSeq>668</csmSeq>
+                  <detcGst><![CDATA[... 날로 증대됨에 따라 행정기관의 전문지식을 활용할 수 있도록 함으로써 법원의 전문성 부족을 보완하는 기능, 셋째, 분쟁을 <b>행정심판</b>단계에서 해결하도록 함으로써 분쟁해결의 시간과 비용을 절약하고 법원의 부담을 경감할 수 있다는 기능 등을 들 수 있다. <b>행정심판</b> 전치주의를 정당화하는 이유는 일반적으로 다음과 같다. 첫째, <b>행정심판</b>절차는 통상의 소송절차에 비하여 간편한 절차를 통하여 시간과 비용을 절약하면서 신속하고 효율적인 권리구제를 꾀할 수 있다는 장점이 있다. 행정청이 스스로 처분이 잘못되었다고 인정하는 경우에는 법원의 판결을 기다릴 필요가 없이 이를 취소함으로써 법적 분쟁이 법원의 소송에 이르기 전에 원만하게 해결될 수 있으므로, 당사자는 신속하고 간편한 절차에 의하여 그가 원하는 바를 얻을 수 있게 되는 것이다. 또한 <b>행정심판</b>을 통하여 심판청구의 대상인 처분이나 부작위의 적법성 여부뿐이 아니라 법원이 판단할 수 없는 당·부당의 문제에 관해서도 심사를 받을 수 있는 길이 열리므로, 국민에게 보다 유리하다. 궁극적으로 <b>행정심판</b>은 국민의 이익을 위한 것이고, 사전절차를 통하여 원칙적으로 권리구제가 약화되는 것이 아니라 강화되는 것이다. 둘째, 법원의 입장에서 보더라도, <b>행정심판</b>전치주의를 취하는 경우에는 <b>행정심판</b>절차에서 심판청구인의 목적이 달성됨으로써 행정소송의 단계에 이르지 아니하는 경우가 많을 뿐 아니라, 그렇지 아니하는 경우에도 <b>행정심판</b>을 거침으로써 사실상·법률상의 쟁점이 많이 정리되기 때문에 행정소송의 심리를 위한 부담이 경감되는 효과가 있다. 즉 <b>행정심판</b>제도는 불필요한 소송을 방지하는 동시에 쟁점, 증거 등을 정리하게 하여 법원의...]]></detcGst>
+                  <detcNo>2</detcNo>
+                  <dtmItm>3. 일반적으로 &lt;b>행정심판&lt;/b>전치주의를 정당화하는 합리적인 이유</dtmItm>
+                  <title>헌법재판소 2002. 10. 31. 선고 2001헌바40 도로교통법제101조의3위헌소원</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=668&amp;ccfNo=4&amp;cciNo=2&amp;cnpClsNo=1&amp;menuType=detc</titleLink>
+                  <tree>교통법규 위반에 따른 면허 취소·정지>취소·정지처분에 대한 구제></tree>
+               </SearchConstCourtPrecedentListItem>
+            </SearchConstCourtPrecedentListItems>
+            <searchGroupAreaListCount>23</searchGroupAreaListCount>
+            <SearchGroupAreaListItems>
+               <SearchGroupAreaListItem>
+                  <allTree>행정심판>행정심판의 개요</allTree>
+                  <ccfNo>1</ccfNo>
+                  <cciNo>1</cciNo>
+                  <cnpClsNo>1</cnpClsNo>
+                  <csmSeq>763</csmSeq>
+                  <title>행정심판의 개요</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=763&amp;ccfNo=1&amp;cciNo=1&amp;cnpClsNo=1</titleLink>
+                  <tree>행정심판</tree>
+               </SearchGroupAreaListItem>
+            </SearchGroupAreaListItems>
+            <searchInterrestRuleListCount>118</searchInterrestRuleListCount>
+            <SearchInterrestRuleListItems>
+               <SearchInterrestRuleListItem>
+                  <ccfNo>1</ccfNo>
+                  <cciNo>1</cciNo>
+                  <cnpClsNmLink/>
+                  <cnpClsNo>3</cnpClsNo>
+                  <csmSeq>763</csmSeq>
+                  <ov><![CDATA[... 위원장은 그 <b>행정심판</b>위원회가 소속된 행정청이 되며, 위원장이 없거나 부득이한 사유로 직무를 수행할 수 없거나 위원장이 필요하다고 인정하는 경우에는 다음의 순서에 따라 위원이 위원장의 직무를 대행합니다(「<b>행정심판</b>법」 제7조제2항). √ 위원장이 사전에 지명한 위원 √ 「<b>행정심판</b>법」 제7조제4항에 따라 지명된 공무원인 위원(2명 이상인 경우에는 직급 또는 고위공무원단에 속하는 공무원의 직무등급이 높은 위원 순서로, 직급 또는 직무등급도 같은 경우에는 위원 재직기간이 긴 위원 순서로, 재직기간도 같은 경우에는 연장자 순서로 함) 시 도지사 소속으로 두는 <b>행정심판</b>위원회의 경우에는 해당 지방자치단체의 조례로 공무원이 아닌 위원을 위원장으로 정할 수 있고, 이 경우 위원장은 비상임으로 합니다(「<b>행정심판</b>법」 제7조제3항). 위원의 자격 <b>행정심판</b>위원회의 위원은 해당 <b>행정심판</b>위원회가 소속된 행정청이 다음의 어느 하나에 해당하는 사람 중에서 성별을 고려하여 위촉하거나 그 소속 공무원 중에서 지명합니다(「<b>행정심판</b>법」 제7조제4항). √ 변호사의 자격을 취득한 후 5년 이상의 실무 경험이 있는 사람 √ 「고등교육법」 제2조제1호부터 제6호까지의 규정에 따른 학교에서 에서 조교수 이상으로 재직하거나 재직하였던 사람 √ 행정기관의 4급 이상의 공무원이었거나 고위공무원단에 속하는 공무원이었던 사람 √ 박사학위를 취득한 후 해당 분야에서 5년 이상 근무한 경험이 있는 사람 √ 그 밖에 <b>행정심판</b>과 관련된 분야의 지식과 경험이 풍부한 사람 <b>행정심판</b>위원회의 회의 <b>행정심판</b>위원회의 회의는 위원장과 위원장이 회의마다 지정하는 8명의 위원(그중 위에 따른 위촉위원은 6명 이상으로 하되,...]]></ov>
+                  <title>&lt;b>행정심판&lt;/b>기관</title>
+                  <tree>행정심판의 개요>행정심판의 개요></tree>
+               </SearchInterrestRuleListItem>
+            </SearchInterrestRuleListItems>
+            <searchLawInterListCount>0</searchLawInterListCount>
+            <SearchLawInterListItems/>
+            <searchLifeAreaListCount>10</searchLifeAreaListCount>
+            <SearchLifeAreaListItems>
+               <SearchLifeAreaListItem>
+                  <csmSeq>763</csmSeq>
+                  <csmTtl>&lt;b>행정심판&lt;/b></csmTtl>
+                  <titleLink>http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=763</titleLink>
+                  <tree>민형사/소송></tree>
+               </SearchLifeAreaListItem>
+            </SearchLifeAreaListItems>
+            <searchSuperMePrecedentListCount>12</searchSuperMePrecedentListCount>
+            <SearchSuperMePrecedentListItems>
+               <SearchSuperMePrecedentListItem>
+                  <ccfNo>2</ccfNo>
+                  <cciNo>1</cciNo>
+                  <cnpClsNm>제소기간</cnpClsNm>
+                  <cnpClsNmLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4</cnpClsNmLink>
+                  <cnpClsNo>4</cnpClsNo>
+                  <csmSeq>829</csmSeq>
+                  <judItm>가. &lt;b>행정심판&lt;/b>전치주의에 대한 예외사유에 해당하는 때에 행정처분의 상대방이 아닌 제3자가 제기하는 취소소송에 대한 「행정소송법」 제20조제2항의 적용 여부(적극) 나. 「행정소송법」 제20조 제2항 소정의 제소기간 기산점인 “처분이 있음을 안 날”의 의미 다. 행정소송법 제20조제2항 소정의 “정당한 사유”의 의미와 그 판단기준 라. 원고 회사가 위장직영을 하였음을 이유로 지입차주들에 대한 개별운송사업 면허처분과 동시에 한 원고 회사의 지입차량에 대한 감차처분이 서로 내용상 관련되는 처분 또는 같은 목적을 위하여 단계적으로 진행되는 처분이므로 원고가 위 감차처분에 대하여 재결을 거쳤다면 제3자로서 면허처분취소소송을 제기함에 있어 다시 &lt;b>행정심판&lt;/b>을 제기할 필요가 없는데, 그 소가 위 지입차주들에 대한 면허처분이 있었음을 알았다고 보여지는 감차처분일부터 「행정소송법」 제20조제2항의 제소기간 도과 후에 제기된 것이어서 부적법하다고 본 사례 마. 위 “라”항의 경우 원고가 위장직영을 하였음을 이유로 한 자동차운수사업법 위반죄 략식명령에 대하여 정식재판을 청구하고 그 판결을 기다리고 있었다는 사정은 「행정소송법」 제20조제2항 소정의 정당한 사유에 해당한다고 볼 수 없다고 한 사례</judItm>
+                  <precGst>... 것이므로 그러한 때에는 행정처분의 상대방이 아닌 제3자가 제기하는 경우라도 그에 대한 취소소송은 「행정소송법」 제20조제2항에 의해 정당한 사유가 있음을 증명하지 못하는 한 그 대상인 처분이 있는 것을 안 날로부터 180일, 처분이 있는 날로부터 1년 이내에 제기하지 않으면 안된다. 나. 「행정소송법」 제20조제2항 “소정의 제소기간 기산점인 처분이 있음을 안 날”이란 통지, 공고 기타의 방법에 의하여 당해 처분이 있었다는 사실을 현실적으로 안 날을 의미하고 구체적으로 그 행정처분의 위법 여부를 판단한 날을 가리키는 것은 아니다. 다. 「행정소송법」 제20조제2항 소정의 “정당한 사유”란 불확정 개념으로서 그 존부는 사안에 따라 개별적, 구체적으로 판단하여야 하나 「민사소송법」 제160조의 “당사자가 그 책임을 질 수 없는 사유”나 「&lt;b>행정심판&lt;/b>법」 제18조제2항 소정의 “천재, 지변, 전재, 사변 그 밖에 불가항력적인 사유”보다는 넓은 개념이라고 풀이되므로, 제소기간도과의 원인 등 여러 사정을 종합하여 지연된 제소를 허용하는 것이 사회통념상 상당하다고 할 수 있는가에 의하여 판단하여야 한다. 라. 원고 회사가 자동차운송사업면허조건을 위반하여 위장직영을 하였음을 이유로 피고 시장이 지입차주들에 대하여 각 지입차량에 대한 개별운송사업면허처분을 함과 동시에 원고 회사에 대하여 위 지입차량에 대한 감차처분을 하자 원고가 위 감차처분에 대한 &lt;b>행정심판&lt;/b>을 청구하여 청구기각의 재결이 있은 후, 다시 원고가 위 지입차주들에 대한 면허처분일부터 180일이 지난 뒤에 위 면허처분취소소송을 제기한 경우, 위 면허처분과 감차처분은 「행정소송법」 제18조제3항제2호 소정의 서로 내용상...</precGst>
+                  <precNo>1</precNo>
+                  <title>대법원 1991. 6. 28. 선고 90누6521 판결 개별용달운송사업면허취소</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4&amp;menuType=prec</titleLink>
+                  <tree>행정소송의 제기 요건>행정소송의 제기 요건></tree>
+               </SearchSuperMePrecedentListItem>
+            </SearchSuperMePrecedentListItems>
+         </SearchAllKeywordListResponse>
+      </ns2:getSearchAllKeywordListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+법령해석례목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+3
+오퍼레이션명(국문)
+법령해석례목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchLawInterList
+오퍼레이션 설명
+항목명, 검색내용, 현재페이지, 페이지크기를 기준으로 조회 총건수, 해석례목록개수, 해석례목록, 해석례 관심규정제목링크를 조회하는 법령해석례목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[     2.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+section
+검색그룹
+10
+1
+4
+검색그룹입니다.
+검색그룹번호는  ‘4’를 입력합니다.
+txtQuery
+검색내용
+30
+1
+부동산
+내용 검색 조건 입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+Totcnt
+총건수
+8
+1
+14
+조회 데이터의 총건수 입니다.
+SearchLawInterListItems
+해석례 목록 항목
+
+1
+
+해석례 목록입니다.
+SearchLawInterListItem해석례 목록0..N해석례 목록정보 입니다.csmSeq생활분야일련번호13093생활분야의 일련번호 입니다.ccfNo관심분야일련번호1305관심분야의 일련번호 입니다.cciNo관심항목 일련번호1305관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1301관심규정의 일련번호(실졔값이 있음)입니다.title제목1000006-0211, 「공인중개사의 업무 및 &lt;b>부동산&lt;/b> 거래신고에 관한 법률」 제33조제3호(&lt;b>부동산&lt;/b> 중개수수료의 범위)법령해석례 안건명csmTree관심규정목록
+트리구조1000세금ㆍ중개보수>중개보수>관심분야 > 관심항목까지의 제목 트리cnpClsNm관심규정제목10000부동산 중개보수법령해석례와 연계된 관심규정의 제목입니다.inq질의10000<![CDATA[「공인중개사의 업무 및 <b>부동산</b> 거래신고에 관한 법률」 제33조제3호에서 <b>부동산</b> 중개업자는 사례ㆍ증여 그 밖의 어떠한 명목으로도 동법 제32조제3항에서 규정하는 수수료를 초과하여 수령하는 것을 금지하고 있는바, 공인중개사가 이러한 법정수수료를 초과하여 부가가치세를 수령하는 것이 「공인중개사의 업무 및 <b>부동산</b> 거래신고에 관한 법률」 제33조제3호의 규정에 위반되는지 여부]]>질의 내용 입니다.rpl회답10000「공인중개사의 업무 및 &lt;b>부동산&lt;/b> 거래신고에 관한 법률」 제32조제3항에서 규정하고 있는 법정수수료에는 부가가치세가 포함되지 아니하므로 공인중개사가 법정수수료를 초과하여 부가가치세를 수령하는 것은 동법 제33조제3호의 규정에 위반되지 않습니다.회답내용 입니다.expcNo해석례번호130261해석례번호 유일키 입니다.titleLink해석례 안건명 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=93&amp;ccfNo=5&amp;cciNo=5&amp;cnpClsNo=1&amp;menuType=expc해석례 안건명 링크 주소 입니다.cnpClsNmLink해석례 관심규정 제목 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=93&amp;ccfNo=5&amp;cciNo=5&amp;cnpClsNo=1해석례 관심규정 제목 링크 주소 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchLawInterList>
+         <!--Optional:-->
+         <SearchLawInterListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>4</section>
+            <!--Optional:-->
+            <txtQuery>부동산</txtQuery>
+         </SearchLawInterListRequest>
+      </open:getSearchLawInterList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchLawInterListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchLawInterListResponse>
+            <totcnt>14</totcnt>
+            <SearchLawInterListItems>
+               <SearchLawInterListItem>
+                  <ccfNo>5</ccfNo>
+                  <cciNo>5</cciNo>
+                  <cnpClsNm>부동산 중개보수</cnpClsNm>
+                  <cnpClsNmLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=93&amp;ccfNo=5&amp;cciNo=5&amp;cnpClsNo=1</cnpClsNmLink>
+                  <cnpClsNo>1</cnpClsNo>
+                  <csmSeq>93</csmSeq>
+                  <csmTree>세금ㆍ중개보수>중개보수></csmTree>
+                  <expcNo>261</expcNo>
+                  <inq><![CDATA[「공인중개사의 업무 및 <b>부동산</b> 거래신고에 관한 법률」 제33조제3호에서 <b>부동산</b> 중개업자는 사례ㆍ증여 그 밖의 어떠한 명목으로도 동법 제32조제3항에서 규정하는 수수료를 초과하여 수령하는 것을 금지하고 있는바, 공인중개사가 이러한 법정수수료를 초과하여 부가가치세를 수령하는 것이 「공인중개사의 업무 및 <b>부동산</b> 거래신고에 관한 법률」 제33조제3호의 규정에 위반되는지 여부]]></inq>
+                  <rpl>「공인중개사의 업무 및 &lt;b>부동산&lt;/b> 거래신고에 관한 법률」 제32조제3항에서 규정하고 있는 법정수수료에는 부가가치세가 포함되지 아니하므로 공인중개사가 법정수수료를 초과하여 부가가치세를 수령하는 것은 동법 제33조제3호의 규정에 위반되지 않습니다.</rpl>
+                  <title>06-0211, 「공인중개사의 업무 및 &lt;b>부동산&lt;/b> 거래신고에 관한 법률」 제33조제3호(&lt;b>부동산&lt;/b> 중개수수료의 범위)</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=93&amp;ccfNo=5&amp;cciNo=5&amp;cnpClsNo=1&amp;menuType=expc</titleLink>
+               </SearchLawInterListItem>
+            </SearchLawInterListItems>
+         </SearchLawInterListResponse>
+      </ns2:getSearchLawInterListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+행정심판재결례목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+4
+오퍼레이션명(국문)
+행정심판재결례목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchAadminRefereeList
+오퍼레이션 설명
+항목명, 내용, 현재페이지, 페이지크기를 기준으로 조회 데이터의 총건수, 행정심판재결례목록개수, 행정심판재결례목록을 조회하는 행정심판재결례목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[         2.0 s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+section
+검색그룹
+10
+1
+5
+검색그룹번호는 ‘5’를 입력합니다.
+txtQuery
+내용
+30
+1
+행정심판
+내용 검색 입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공,
+1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우
+ 원인을 기술한다.
+Totcnt
+총건수
+8
+1
+17
+조회 데이터의
+ 총건수 입니다.
+SearchAadminRefereeListItems
+행정심판 재결례목록 항목
+
+1
+
+행정심판 재결례목록입니다.
+SearchAadminRefereeListItem행정심판 재결례목록0..N행정심판 재결례목록정보 입니다.csmSeq생활분야일련번호130548생활분야 일련번호 입니다.ccfNo관심분야일련번호1302관심분야의 일련번호 입니다.cciNo관심항목 일련번호1302관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1307관심규정의 일련번호(실졔값이 있음) 입니다.title제목10000사건 05-09670, 수원출입국관리사무소 - 사증발급인정서발급거부처분취소청구행정심판례 사건명입니다.tree관심규정목록
+트리구조1000비자>대한민국 비자(외국인이 우리나라에 입국하는 경우)>관심분야 > 관심항목까지의 제목 트리입니다.cnpClsNm관심규정제목10000비자발급인정서에 의한 비자 발급해당 행정심판례가 연결되어 있는 관심규정의 제목입니다.evl판단10000<![CDATA[○ (청구취지) 피청구인이 2005. 3. 16. 청구인에 대하여 한 사증발급인정서발급거부처분은 이를 취소한다. ○ (재결요지) 대한민국 영토 밖에서 거주하는 외국인에 대하여는 「헌법」에 의해 체결ㆍ공포된 조약 또는 일반적으로 승인된 국제법규 등에 의하여 내국인과 동등하게 <b>행정심판</b>청구권이 보장되는 경우에 한하여 <b>행정심판</b>의 청구인이 될 수 있다고 할 것임에도 이 건 <b>행정심판</b>청구와 관련하여 <b>행정심판</b>청구를 허용하는 대한민국과 중화인민공화국간에 체결ㆍ공포된 조약이 없을 뿐만 아니라 내국인과 동등하게 <b>행정심판</b>청구권을 인정하는 내용의 일반적으로 승인된 국제법규도 없는 점, 국제관행상 출입국에 관한 문제는 국내문제 불간섭원칙이 적용되는 사항이고, 입국허가의 이전단계에서 외국인에 대한 사증발급행위나 사증발급인정서의 발급불허여부를 다투는 것인 점에 비추어 볼 때, 이 건 거부처분은 <b>행정심판</b>의 대상이 되지 아니한다고 봄이 상당하다고 할 것이고, 특히 제출된 자료에 의할 때, 청구인들 중 金英愛는 「외국인투자촉진법」 등에 의하여 투자 등의 행위를 한 사실이 없는 등 국내에 별다른 경제적 연고도 없고 중국에 거주하고 있어 대한민국의 통치권에 의하여 보호받거나 복종할 의무가 없다고 할 것인바, 이 건 심판청구는 <b>행정심판</b>법상 청구인이 될 수 없는 자가 제기한 부적법한 심판청구이다.]]>행정심판례사건의 판단내용 입니다.deccNo행정심판재결례 번호1301행정심판재결례 번호 유일키 입니다.titleLink행정심판 재결례 타이틀 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7&amp;menuType=decc행정심판 재결례 타이틀 링크 주소 입니다.cnpClsNmLink행정심판 재결례 관심규정제목 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7행정심판 재결례 관심규정제목 링크 주소 입니다..※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchAadminRefereeList>
+         <!--Optional:-->
+         <SearchAadminRefereeListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>5</section>
+            <!--Optional:-->
+            <txtQuery>행정심판</txtQuery>
+         </SearchAadminRefereeListRequest>
+      </open:getSearchAadminRefereeList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchAadminRefereeListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchAadminRefereeListResponse>
+            <totcnt>17</totcnt>
+            <SearchAadminRefereeListItems>
+               <SearchAadminRefereeListItem>
+                  <ccfNo>2</ccfNo>
+                  <cciNo>2</cciNo>
+                  <cnpClsNm>비자발급인정서에 의한 비자 발급</cnpClsNm>
+                  <cnpClsNmLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7</cnpClsNmLink>
+                  <cnpClsNo>7</cnpClsNo>
+                  <csmSeq>548</csmSeq>
+                  <deccNo>1</deccNo>
+                  <evl><![CDATA[○ (청구취지) 피청구인이 2005. 3. 16. 청구인에 대하여 한 사증발급인정서발급거부처분은 이를 취소한다. ○ (재결요지) 대한민국 영토 밖에서 거주하는 외국인에 대하여는 「헌법」에 의해 체결ㆍ공포된 조약 또는 일반적으로 승인된 국제법규 등에 의하여 내국인과 동등하게 <b>행정심판</b>청구권이 보장되는 경우에 한하여 <b>행정심판</b>의 청구인이 될 수 있다고 할 것임에도 이 건 <b>행정심판</b>청구와 관련하여 <b>행정심판</b>청구를 허용하는 대한민국과 중화인민공화국간에 체결ㆍ공포된 조약이 없을 뿐만 아니라 내국인과 동등하게 <b>행정심판</b>청구권을 인정하는 내용의 일반적으로 승인된 국제법규도 없는 점, 국제관행상 출입국에 관한 문제는 국내문제 불간섭원칙이 적용되는 사항이고, 입국허가의 이전단계에서 외국인에 대한 사증발급행위나 사증발급인정서의 발급불허여부를 다투는 것인 점에 비추어 볼 때, 이 건 거부처분은 <b>행정심판</b>의 대상이 되지 아니한다고 봄이 상당하다고 할 것이고, 특히 제출된 자료에 의할 때, 청구인들 중 金英愛는 「외국인투자촉진법」 등에 의하여 투자 등의 행위를 한 사실이 없는 등 국내에 별다른 경제적 연고도 없고 중국에 거주하고 있어 대한민국의 통치권에 의하여 보호받거나 복종할 의무가 없다고 할 것인바, 이 건 심판청구는 <b>행정심판</b>법상 청구인이 될 수 없는 자가 제기한 부적법한 심판청구이다.]]></evl>
+                  <title>사건 05-09670, 수원출입국관리사무소 - 사증발급인정서발급거부처분취소청구</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=548&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=7&amp;menuType=decc</titleLink>
+                  <tree>비자>대한민국 비자(외국인이 우리나라에 입국하는 경우)></tree>
+               </SearchAadminRefereeListItem>
+            </SearchAadminRefereeListItems>
+         </SearchAadminRefereeListResponse>
+      </ns2:getSearchAadminRefereeListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+대법원판례목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+5
+오퍼레이션명(국문)
+대법원판례목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchSuperMePrecedentList
+오퍼레이션 설명
+항목명, 내용, 현재페이지, 페이지크기를 기준으로 조회데이터 총건수, 대법원판례목록 개수, 대법원판례목록을 조회하는 대법원판례목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[     2.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+section
+검색그룹
+10
+1
+6
+검색그룹번호는 ‘6’을 입력합니다.
+txtQuery
+내용
+30
+1
+행정심판
+내용 검색 입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+Totcnt
+총건수
+8
+1
+12
+조회 데이터의 총건수 입니다.
+SearchSuperMePrecedentListItems
+대법원판례목록 항목
+
+1
+
+대법원판례목록입니다.
+SearchSuperMePrecedentListItem대법원판례목록0..N대법원판례목록정보 입니다.csmSeq생활분야일련번호130829생활분야의 일련번호 입니다.ccfNo관심분야일련번호1302관심분야의 일련번호 입니다.cciNo관심항목 일련번호1301관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1304관심규정의 일련번호(실졔값이 있음)입니다.title제목10000대법원 1991. 6. 28. 선고 90누6521 판결 개별용달운송사업면허취소판례의 사건명tree관심규정목록
+트리구조1000행정소송의 제기 요건>행정소송의 제기 요건>관심분야>관심항목>
+까지의 제목 트리cnpClsNm관심규정제목10000제소기간해당 행정심판례가 연결되어 있는 관심규정의 제목입니다.judItm판시사항10000가. &lt;b>행정심판&lt;/b>전치주의에 대한 예외사유에 해당하는 때에 행정처분의 상대방이 아닌 제3자가 제기하는 취소소송에 대한 「행정소송법」 제20조제2항의 적용 여부(적극) 나. 「행정소송법」 제20조 제2항 소정의 제소기간 기산점인 “처분이 있음을 안 날”의 의미 다. 행정소송법 제20조제2항 소정의 “정당한 사유”의 의미와 그 판단기준 라. 원고 회사가 위장직영을 하였음을 이유로 지입차주들에 대한 개별운송사업 면허처분과 동시에 한 원고 회사의 지입차량에 대한 감차처분이 서로 내용상 관련되는 처분 또는 같은 목적을 위하여 단계적으로 진행되는 처분이므로 원고가 위 감차처분에 대하여 재결을 거쳤다면 제3자로서 면허처분취소소송을 제기함에 있어 다시 &lt;b>행정심판&lt;/b>을 제기할 필요가 없는데, 그 소가 위 지입차주들에 대한 면허처분이 있었음을 알았다고 보여지는 감차처분일부터 「행정소송법」 제20조제2항의 제소기간 도과 후에 제기된 것이어서 부적법하다고 본 사례 마. 위 “라”항의 경우 원고가 위장직영을 하였음을 이유로 한 자동차운수사업법 위반죄 략식명령에 대하여 정식재판을 청구하고 그 판결을 기다리고 있었다는 사정은 「행정소송법」 제20조제2항 소정의 정당한 사유에 해당한다고 볼 수 없다고 한 사례판례의 판시사항 입니다.precGst판결요지10000... 것이므로 그러한 때에는 행정처분의 상대방이 아닌 제3자가 제기하는 경우라도 그에 대한 취소소송은 「행정소송법」 제20조제2항에 의해 정당한 사유가 있음을 증명하지 못하는 한 그 대상인 처분이 있는 것을 안 날로부터 180일, 처분이 있는 날로부터 1년 이내에 제기하지 않으면 안된다. 나. 「행정소송법」 제20조제2항 “소정의 제소기간 기산점인 처분이 있음을 안 날”이란 통지, 공고 기타의 방법에 의하여 당해 처분이 있었다는 사실을 현실적으로 안 날을 의미하고 구체적으로 그 행정처분의 위법 여부를 판단한 날을 가리키는 것은 아니다. 다. 「행정소송법」 제20조제2항 소정의 “정당한 사유”란 불확정 개념으로서 그 존부는 사안에 따라 개별적, 구체적으로 판단하여야 하나 「민사소송법」 제160조의 “당사자가 그 책임을 질 수 없는 사유”나 「&lt;b>행정심판&lt;/b>법」 제18조제2항 소정의 “천재, 지변, 전재, 사변 그 밖에 불가항력적인 사유”보다는 넓은 개념이라고 풀이되므로, 제소기간도과의 원인 등 여러 사정을 종합하여 지연된 제소를 허용하는 것이 사회통념상 상당하다고 할 수 있는가에 의하여 판단하여야 한다. 라. 원고 회사가 자동차운송사업면허조건을 위반하여 위장직영을 하였음을 이유로 피고 시장이 지입차주들에 대하여 각 지입차량에 대한 개별운송사업면허처분을 함과 동시에 원고 회사에 대하여 위 지입차량에 대한 감차처분을 하자 원고가 위 감차처분에 대한 &lt;b>행정심판&lt;/b>을 청구하여 청구기각의 재결이 있은 후, 다시 원고가 위 지입차주들에 대한 면허처분일부터 180일이 지난 뒤에 위 면허처분취소소송을 제기한 경우, 위 면허처분과 감차처분은 「행정소송법」 제18조제3항제2호 소정의 서로 내용상...판례의 판결요지 입니다.precNo대법원판례번호1301대법원 판례번호 입니다.(유일키)titleLink대법원판례 타이틀 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4&amp;menuType=prec행정심판 재결례 링크 주소 입니다.cnpClsNmLink대법원판례
+관심규정제목 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4행정심판 재결례 관심규정제목 링크 주소 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchSuperMePrecedentList>
+         <!--Optional:-->
+         <SearchSuperMePrecedentListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>6</section>
+            <!--Optional:-->
+            <txtQuery>행정심판</txtQuery>
+         </SearchSuperMePrecedentListRequest>
+      </open:getSearchSuperMePrecedentList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchSuperMePrecedentListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchSuperMePrecedentListResponse>
+            <totcnt>12</totcnt>
+            <SearchSuperMePrecedentListItems>
+               <SearchSuperMePrecedentListItem>
+                  <ccfNo>2</ccfNo>
+                  <cciNo>1</cciNo>
+                  <cnpClsNm>제소기간</cnpClsNm>
+                  <cnpClsNmLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4</cnpClsNmLink>
+                  <cnpClsNo>4</cnpClsNo>
+                  <csmSeq>829</csmSeq>
+                  <judItm>가. &lt;b>행정심판&lt;/b>전치주의에 대한 예외사유에 해당하는 때에 행정처분의 상대방이 아닌 제3자가 제기하는 취소소송에 대한 「행정소송법」 제20조제2항의 적용 여부(적극) 나. 「행정소송법」 제20조 제2항 소정의 제소기간 기산점인 “처분이 있음을 안 날”의 의미 다. 행정소송법 제20조제2항 소정의 “정당한 사유”의 의미와 그 판단기준 라. 원고 회사가 위장직영을 하였음을 이유로 지입차주들에 대한 개별운송사업 면허처분과 동시에 한 원고 회사의 지입차량에 대한 감차처분이 서로 내용상 관련되는 처분 또는 같은 목적을 위하여 단계적으로 진행되는 처분이므로 원고가 위 감차처분에 대하여 재결을 거쳤다면 제3자로서 면허처분취소소송을 제기함에 있어 다시 &lt;b>행정심판&lt;/b>을 제기할 필요가 없는데, 그 소가 위 지입차주들에 대한 면허처분이 있었음을 알았다고 보여지는 감차처분일부터 「행정소송법」 제20조제2항의 제소기간 도과 후에 제기된 것이어서 부적법하다고 본 사례 마. 위 “라”항의 경우 원고가 위장직영을 하였음을 이유로 한 자동차운수사업법 위반죄 략식명령에 대하여 정식재판을 청구하고 그 판결을 기다리고 있었다는 사정은 「행정소송법」 제20조제2항 소정의 정당한 사유에 해당한다고 볼 수 없다고 한 사례</judItm>
+                  <precGst>... 것이므로 그러한 때에는 행정처분의 상대방이 아닌 제3자가 제기하는 경우라도 그에 대한 취소소송은 「행정소송법」 제20조제2항에 의해 정당한 사유가 있음을 증명하지 못하는 한 그 대상인 처분이 있는 것을 안 날로부터 180일, 처분이 있는 날로부터 1년 이내에 제기하지 않으면 안된다. 나. 「행정소송법」 제20조제2항 “소정의 제소기간 기산점인 처분이 있음을 안 날”이란 통지, 공고 기타의 방법에 의하여 당해 처분이 있었다는 사실을 현실적으로 안 날을 의미하고 구체적으로 그 행정처분의 위법 여부를 판단한 날을 가리키는 것은 아니다. 다. 「행정소송법」 제20조제2항 소정의 “정당한 사유”란 불확정 개념으로서 그 존부는 사안에 따라 개별적, 구체적으로 판단하여야 하나 「민사소송법」 제160조의 “당사자가 그 책임을 질 수 없는 사유”나 「&lt;b>행정심판&lt;/b>법」 제18조제2항 소정의 “천재, 지변, 전재, 사변 그 밖에 불가항력적인 사유”보다는 넓은 개념이라고 풀이되므로, 제소기간도과의 원인 등 여러 사정을 종합하여 지연된 제소를 허용하는 것이 사회통념상 상당하다고 할 수 있는가에 의하여 판단하여야 한다. 라. 원고 회사가 자동차운송사업면허조건을 위반하여 위장직영을 하였음을 이유로 피고 시장이 지입차주들에 대하여 각 지입차량에 대한 개별운송사업면허처분을 함과 동시에 원고 회사에 대하여 위 지입차량에 대한 감차처분을 하자 원고가 위 감차처분에 대한 &lt;b>행정심판&lt;/b>을 청구하여 청구기각의 재결이 있은 후, 다시 원고가 위 지입차주들에 대한 면허처분일부터 180일이 지난 뒤에 위 면허처분취소소송을 제기한 경우, 위 면허처분과 감차처분은 「행정소송법」 제18조제3항제2호 소정의 서로 내용상...</precGst>
+                  <precNo>1</precNo>
+                  <title>대법원 1991. 6. 28. 선고 90누6521 판결 개별용달운송사업면허취소</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=829&amp;ccfNo=2&amp;cciNo=1&amp;cnpClsNo=4&amp;menuType=prec</titleLink>
+                  <tree>행정소송의 제기 요건>행정소송의 제기 요건></tree>
+               </SearchSuperMePrecedentListItem>
+            </SearchSuperMePrecedentListItems>
+         </SearchSuperMePrecedentListResponse>
+      </ns2:getSearchSuperMePrecedentListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+헌법재판소결정례목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+6
+오퍼레이션명(국문)
+헌법재판소결정례목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchConstCourtPrecedentList
+오퍼레이션 설명
+항목명, 내용, 현재페이지, 페이지크기를 기준으로 조회데이터의 총건수, 헌법재판소결정례 목록 개수, 헌법재판소결정례목록을 조회하는 헌법재판소결정례목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[     2.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+section
+검색그룹
+10
+1
+7
+검색그룹번호는 ‘7’을 입력합니다.
+txtQuery
+내용
+30
+1
+부동산
+내용 검색 입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+Totcnt
+총건수
+8
+1
+1
+조회 데이터의 총건수 입니다.
+SearchConstCourtPrecedentListItems
+헌번재판소결정례목록 항목
+
+1
+
+헌번재판소결정례 목록입니다.
+SearchConstCourtPrecedentListItem헌번재판소결정례 목록0..N헌번재판소결정례 목록정보 입니다.csmSeq생활분야일련번호130170생활분야의 일련번호 입니다.ccfNo관심분야일련번호1302관심분야의 일련번호 입니다.cciNo관심항목 일련번호1302관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1304관심규정의 일련번호(실졔값이 있음) 입니다.title제목100002008. 11. 13. 2006헌바112, 2007헌바71ㆍ88ㆍ94, 2008헌바3ㆍ62, 2008헌가12(병합) 전원재판부 「구 종합&lt;b>부동산&lt;/b>세법 제5조 등 위헌소원 등 」헌재결정례의 안건명입니다.tree관심규정목록
+트리구조1000결혼준비>결혼자금 및 신혼집 마련>관심분야>관심항목>까지의 제목 트리cnpClsNm관심규정제목10000부부공동명의등기헌재결정례와 연계된 관심규정의 제목입니다.dtmItm결정사항10000<![CDATA[1. 종합<b>부동산</b>세법(2005. 12. 31. 법률 제7836호로 개정된 것) 제7조 제1항 중 전문의 괄호 부분 및 후문, 제2항ㆍ제3항, 제12조 제1항 제1호 중 본문의 괄호 부분 및 단서 부분, 제2항은 헌법에 위반된다. 2. 구 종합<b>부동산</b>세법(2005. 1. 5. 법률 제7328호로 제정되고, 2005. 12. 31. 법률 제7836호로 개정되기 전의 것) 제7조 제1항, 제8조, 제9조 전단, 종합<b>부동산</b>세법(2005. 12. 31. 법률 제7836호로 개정된 것) 제7조 제1항 전문 중 괄호 부분을 제외한 부분, 제8조 제1항, 제9조 제1항ㆍ제2항은 헌법에 합치되지 아니한다. 위 각 법률조항은 2009. 12. 31.을 시한으로 입법자가 개정할 때까지 계속 적용된다. 3. 구 종합<b>부동산</b>세법(2005. 1. 5. 법률 제7328호로 제정되고, 2005. 12. 31. 법률 제7836호로 개정되기 전의 것) 제12조 제1호, 제13조 제1항ㆍ제3항 중 ‘또는 제2항’ 부분을 제외한 부분, 제14조 제1항 전단, 종합<b>부동산</b>세법(2005. 12. 31. 법률 제7836호로 개정된 것) 제12조 제1항 제1호 본문 중 괄호 부분을 제외한 부분, 제13조 제1항ㆍ제3항 중 ‘또는 제2항’ 부분을 제외한 부분, 제14조 제1항ㆍ제2항, 구 종합<b>부동산</b>세법(2005. 1. 5. 법률 제7328호로 제정되고, 2007. 1. 11. 법률 제8235호로 개정되기 전의 것) 제16조 제1항 및 제17조 중 ‘납세지 관할 세무서장’, ‘납세지 관할 지방국세청장’ 부분은 헌법에 위반되지 아니한다.]]>헌재결정례의결정사항 (판시사항)입니다.detcGst결정요지10000<![CDATA[....(3) 종합<b>부동산</b>세는 본질적으로 <b>부동산</b>의 보유사실 그 자체에 담세력을 인정하고 그 가액을 과세표준으로 삼아 과세하는 것으로서, 일부 수익세적 성격이 있다 하더라도 미실현 이득에 대한 과세의 문제가 전면적으로 드러난다고 보기 어렵고, 그 부과로 인하여 원본인 <b>부동산</b>가액의 일부가 잠식되는 경우가 있다 하더라도 그러한 사유만으로 곧바로 위헌이라 할 수는 없을 것이다. (4) 국가에 대하여 경제에 관한 규제와 조정을 할 수 있도록 규정한 헌법 제119조 제2항이 보유세 부과 그 자체를 금지하는 취지로 보이지 아니하므로 주택 등에 보유세인 종합<b>부동산</b>세를 부과하는 그 자체를 헌법 제119조에 위반된다고 보기 어렵다. (5) 종합<b>부동산</b>세는 지방세인 재산세와는 별개의 독립된 국세로서 구 조세특례제한법상의 중과세 특례라고 할 수 없을 뿐만 아니라, 종합<b>부동산</b>세가 재산세나 다른 조세와의 관계에서도 규범의 구조나 내용 또는 규범의 근거가 되는 원칙 면에서 상호 배치되거나 모순된다고 보기도 어려우므로, 입법 체계의 정당성에 위반된다고 할 수 없다. (6) 조세 관련 법률이라 하여 정부가 제출하는 방식으로 입법하여야 한다는 헌법적인 관행이 확립되어 있다고 보기 어렵고, 헌법 제40조에 의하면 입법권은 본래 국회에 속하는 것이므로, 종합<b>부동산</b>세법이 비록 국회의원이 제출하는 형식으로 입법되었다 하여 이를 들어 입법권의 남용이라 하기도 어렵다. 마. (1)(가) 일정 가액 이상의 <b>부동산</b>에 대하여 각각 부채를 고려함이 없이 누진세율에 의하여 과세하도록 한 것은, 입법재량의 범위 내에서 <b>부동산</b>의 가격안정과 담세능력에 상응한 과세를 도모하기 위한 것으로 합리적인 이유 없이 차별대우하는 것이 아니고, (나)...]]>헌재결정례의결정요지 입니다.titleLink헌법재판소결정례
+타이틀 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=170&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=4&amp;menuType=detc행정심판   타이틀 링크 주소 입니다.cnpClsNmLink헌법재판소결정례
+관심규정제목 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=170&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=4행정심판 재결례  관심규정제목 링크 주소 입니다.detcNo결정례번호130107결정례 번호 입니다.(유일키)※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchConstCourtPrecedentList>
+         <!--Optional:-->
+         <SearchSuperMePrecedentListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>7</section>
+            <!--Optional:-->
+            <txtQuery>부동산</txtQuery>
+         </SearchSuperMePrecedentListRequest>
+      </open:getSearchConstCourtPrecedentList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchConstCourtPrecedentListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchSuperMePrecedentListResponse>
+            <totcnt>1</totcnt>
+            <SearchConstCourtPrecedentListItems>
+               <SearchConstCourtPrecedentListItem>
+                  <ccfNo>2</ccfNo>
+                  <cciNo>2</cciNo>
+                  <cnpClsNm>부부공동명의등기</cnpClsNm>
+                  <cnpClsNmLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=170&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=4</cnpClsNmLink>
+                  <cnpClsNo>4</cnpClsNo>
+                  <csmSeq>170</csmSeq>
+                  <detcGst><![CDATA[....(3) 종합<b>부동산</b>세는 본질적으로 <b>부동산</b>의 보유사실 그 자체에 담세력을 인정하고 그 가액을 과세표준으로 삼아 과세하는 것으로서, 일부 수익세적 성격이 있다 하더라도 미실현 이득에 대한 과세의 문제가 전면적으로 드러난다고 보기 어렵고, 그 부과로 인하여 원본인 <b>부동산</b>가액의 일부가 잠식되는 경우가 있다 하더라도 그러한 사유만으로 곧바로 위헌이라 할 수는 없을 것이다. (4) 국가에 대하여 경제에 관한 규제와 조정을 할 수 있도록 규정한 헌법 제119조 제2항이 보유세 부과 그 자체를 금지하는 취지로 보이지 아니하므로 주택 등에 보유세인 종합<b>부동산</b>세를 부과하는 그 자체를 헌법 제119조에 위반된다고 보기 어렵다. (5) 종합<b>부동산</b>세는 지방세인 재산세와는 별개의 독립된 국세로서 구 조세특례제한법상의 중과세 특례라고 할 수 없을 뿐만 아니라, 종합<b>부동산</b>세가 재산세나 다른 조세와의 관계에서도 규범의 구조나 내용 또는 규범의 근거가 되는 원칙 면에서 상호 배치되거나 모순된다고 보기도 어려우므로, 입법 체계의 정당성에 위반된다고 할 수 없다. (6) 조세 관련 법률이라 하여 정부가 제출하는 방식으로 입법하여야 한다는 헌법적인 관행이 확립되어 있다고 보기 어렵고, 헌법 제40조에 의하면 입법권은 본래 국회에 속하는 것이므로, 종합<b>부동산</b>세법이 비록 국회의원이 제출하는 형식으로 입법되었다 하여 이를 들어 입법권의 남용이라 하기도 어렵다. 마. (1)(가) 일정 가액 이상의 <b>부동산</b>에 대하여 각각 부채를 고려함이 없이 누진세율에 의하여 과세하도록 한 것은, 입법재량의 범위 내에서 <b>부동산</b>의 가격안정과 담세능력에 상응한 과세를 도모하기 위한 것으로 합리적인 이유 없이 차별대우하는 것이 아니고, (나)...]]></detcGst>
+                  <detcNo>107</detcNo>
+                  <dtmItm><![CDATA[1. 종합<b>부동산</b>세법(2005. 12. 31. 법률 제7836호로 개정된 것) 제7조 제1항 중 전문의 괄호 부분 및 후문, 제2항ㆍ제3항, 제12조 제1항 제1호 중 본문의 괄호 부분 및 단서 부분, 제2항은 헌법에 위반된다. 2. 구 종합<b>부동산</b>세법(2005. 1. 5. 법률 제7328호로 제정되고, 2005. 12. 31. 법률 제7836호로 개정되기 전의 것) 제7조 제1항, 제8조, 제9조 전단, 종합<b>부동산</b>세법(2005. 12. 31. 법률 제7836호로 개정된 것) 제7조 제1항 전문 중 괄호 부분을 제외한 부분, 제8조 제1항, 제9조 제1항ㆍ제2항은 헌법에 합치되지 아니한다. 위 각 법률조항은 2009. 12. 31.을 시한으로 입법자가 개정할 때까지 계속 적용된다. 3. 구 종합<b>부동산</b>세법(2005. 1. 5. 법률 제7328호로 제정되고, 2005. 12. 31. 법률 제7836호로 개정되기 전의 것) 제12조 제1호, 제13조 제1항ㆍ제3항 중 ‘또는 제2항’ 부분을 제외한 부분, 제14조 제1항 전단, 종합<b>부동산</b>세법(2005. 12. 31. 법률 제7836호로 개정된 것) 제12조 제1항 제1호 본문 중 괄호 부분을 제외한 부분, 제13조 제1항ㆍ제3항 중 ‘또는 제2항’ 부분을 제외한 부분, 제14조 제1항ㆍ제2항, 구 종합<b>부동산</b>세법(2005. 1. 5. 법률 제7328호로 제정되고, 2007. 1. 11. 법률 제8235호로 개정되기 전의 것) 제16조 제1항 및 제17조 중 ‘납세지 관할 세무서장’, ‘납세지 관할 지방국세청장’ 부분은 헌법에 위반되지 아니한다.]]></dtmItm>
+                  <title>2008. 11. 13. 2006헌바112, 2007헌바71ㆍ88ㆍ94, 2008헌바3ㆍ62, 2008헌가12(병합) 전원재판부 「구 종합&lt;b>부동산&lt;/b>세법 제5조 등 위헌소원 등 」</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=170&amp;ccfNo=2&amp;cciNo=2&amp;cnpClsNo=4&amp;menuType=detc</titleLink>
+                  <tree>결혼준비>결혼자금 및 신혼집 마련></tree>
+               </SearchConstCourtPrecedentListItem>
+            </SearchConstCourtPrecedentListItems>
+         </SearchSuperMePrecedentListResponse>
+      </ns2:getSearchConstCourtPrecedentListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+분류검색 목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+7
+오퍼레이션명(국문)
+분류검색목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchGroupAreaList
+오퍼레이션 설명
+항목명, 내용, 현재페이지, 페이지크기를 기준으로 조회데이터의 총건수, 분류검색목록개수, 분류검색목록을 조회하는 분류검색목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[         800k bytes]
+평균 응답 시간
+[     1.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+section
+검색그룹
+10
+1
+9
+검색그룹번호 ‘9’를 입력합니다.
+txtQuery
+내용
+30
+1
+캠핑
+내용 검색 입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+Totcnt
+총건수
+8
+1
+12
+조회 데이터의 총건수 입니다.
+SearchGroupAreaListItems
+분류검색목록 항목
+
+1
+
+분류검색목록입니다.
+SearchGroupAreaListItem분류검색목록0..N분류검색목록정보 입니다.csmSeq생활분야일련번호130697생활분야의 일련번호 입니다.ccfNo관심분야일련번호1301관심분야의 일련번호 입니다.cciNo관심항목 일련번호1301관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1301관심규정의 일련번호(실졔값이 있음) 입니다.title제목10000캠핑 계획세우기현재 분류 제목입니다.tree분류검색 관심분야 트리1000캠핑(야영)상위 분류 제목 트리입니다.allTree분류검색 관심규정 트리1000캠핑(야영)>캠핑 계획세우기상위에서 현재까지의 분류 트리입니다..titleLink분류검색 생활분야 타이틀 링크5000http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=697&amp;ccfNo=1&amp;cciNo=1&amp;cnpClsNo=1분류검색 생활분야 타이틀 링크 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchGroupAreaList>
+         <!--Optional:-->
+         <SearchGroupAreaListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>9</section>
+            <!--Optional:-->
+            <txtQuery>캠핑</txtQuery>
+         </SearchGroupAreaListRequest>
+      </open:getSearchGroupAreaList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchGroupAreaListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchGroupAreaListResponse>
+            <totcnt>12</totcnt>
+            <SearchGroupAreaListItems>
+               <SearchGroupAreaListItem>
+                  <allTree>캠핑(야영)>캠핑 계획세우기</allTree>
+                  <ccfNo>1</ccfNo>
+                  <cciNo>1</cciNo>
+                  <cnpClsNo>1</cnpClsNo>
+                  <csmSeq>697</csmSeq>
+                  <title>캠핑 계획세우기</title>
+                  <titleLink>http://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&amp;csmSeq=697&amp;ccfNo=1&amp;cciNo=1&amp;cnpClsNo=1</titleLink>
+                  <tree>캠핑(야영)</tree>
+               </SearchGroupAreaListItem>
+            </SearchGroupAreaListItems>
+         </SearchGroupAreaListResponse>
+      </ns2:getSearchGroupAreaListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+
+관심규정해설검색목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+8
+오퍼레이션명(국문)
+관심규정해설검색목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchInterrestRuleList
+오퍼레이션 설명
+항목명, 내용, 현재페이지, 페이지크기를 기준으로 조회데이터의 총건수, 관심규정해설목록개수, 관심규정해설목록을 조회하는 관심규정해설검색목록조회 기능
+Call Back URL
+
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[     2.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+section
+검색그룹
+10
+1
+2
+검색그룹번호 ‘2’를 입력합니다.
+txtQuery
+내용
+30
+1
+캠핑
+내용 검색 입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+Totcnt
+총건수
+8
+1
+15
+조회 데이터의 총건수 입니다.
+SearchInterrestRuleListItems
+관심규정해설 목록 항목
+
+1
+
+관심규정해설 목록입니다.
+SearchInterrestRuleListItem관심규정해설 목록0..N관심규정해설 목록정보 입니다.csmSeq생활분야일련번호130697생활분야의 일련번호 입니다.ccfNo관심분야일련번호1302관심분야의 일련번호 입니다.cciNo관심항목 일련번호1301관심항목의 일련번호 입니다.cnpClsNo관심규정일련번호1301관심규정의 일련번호(실졔값이 있음) 입니다.title제목10000장비 준비하기관심규정의 제목입니다.tree관심규정목록
+트리구조1000필요물품 준비하기>물품 준비하기>관심규정 상위 목차 트리입니다.ov개요해설200000<![CDATA[... 선택 및 구입 기본적인 <b>캠핑</b> 도구의 구입 <b>캠핑</b> 도구에는 텐트와 침낭, 매트, 스토브, 코펠 등과 같은 조리도구, 릴선 등과 같은 기본적인 장비 외에도 난로, 침상, 의자, 키친테이블, 그릴 등 많은 장비가 있습니다. 일단은 기본 용품만 갖춰 <b>캠핑</b>을 시작하고 <b>캠핑</b>을 하면서 필요하다고 생각되는 장비를 점차 구입해 가는 것이 현명할 것입니다. ※ 텐트 고르기 <b>캠핑</b>의 성격에 따라 텐트의 종류가 달라지는데 일반적으로 <b>캠핑</b> 인원과 목적에 따라 텐트크기를 결정하면 됩니다. 중형 텐트(터널 및 돔형 텐트) 중 1~2인용이나 3~4인용은 차량 없이도 휴대가 가능하지만 6~7인용 이상의 제품은 다른 장비들과 함께 휴대해야 하는 <b>캠핑</b> 여행의 특성상 차량이 없으면 운반하기가 힘듭니다. 누르거나 공중에 던지면 자동으로 펼쳐지는 자동식 텐트는 설치와 해체가 편리하지만 일반 텐트에 비해 바람에 약한 단점이 있습니다. 대형 텐트(캐빈형)는 공간이 넓어 5인 이상의 오토<b>캠핑</b> 또는 단체 여행에 적당한데 무게가 무거워 차량이 있어야 운반이 가능하고, 중형 텐트에 비해 설치가 불편하고 가격이 비싼 단점이 있습니다. 최근 오토<b>캠핑</b>을 즐기는 캠퍼들은 리빙셀이라고 부르는 대형 텐트를 설치한 후 그 안에 크기가 작은 이너텐트를 설치하는 경우가 많은데 바닥 천이 없는 리빙셀은 거실이나 주방으로, 이너텐트는 침실로 활용할 수 있어 가족단위 오토<b>캠핑</b>에 적당합니다. 그러나 리빙셀, 이너텐트, 그늘막(타프)이 하나의 세트로 구성된 제품은 사용이 편리하지만 가격이 고가라는 단점이 있습니다. 그늘막(타프)은 뜨거운 태양이나 비를 막을 수 있는 방수포를 말하는데, 텐트 앞에 쳐서 식사를 하고 휴식을 취할 수 있는 공간을...]]>관심규정개요 해설 입니다.cnpClsNmLink관심규정해설 관심규정제목 링크5000관심규정해설 관심규정제목 링크 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchInterrestRuleList>
+         <!--Optional:-->
+         <SearchInterrestRuleListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>2</section>
+            <!--Optional:-->
+            <txtQuery>캠핑</txtQuery>
+         </SearchInterrestRuleListRequest>
+      </open:getSearchInterrestRuleList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchInterrestRuleListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchInterrestRuleListResponse>
+            <totcnt>15</totcnt>
+            <SearchInterrestRuleListItems>
+               <SearchInterrestRuleListItem>
+                  <ccfNo>2</ccfNo>
+                  <cciNo>1</cciNo>
+                  <cnpClsNmLink/>
+                  <cnpClsNo>1</cnpClsNo>
+                  <csmSeq>697</csmSeq>
+                  <ov><![CDATA[... 선택 및 구입 기본적인 <b>캠핑</b> 도구의 구입 <b>캠핑</b> 도구에는 텐트와 침낭, 매트, 스토브, 코펠 등과 같은 조리도구, 릴선 등과 같은 기본적인 장비 외에도 난로, 침상, 의자, 키친테이블, 그릴 등 많은 장비가 있습니다. 일단은 기본 용품만 갖춰 <b>캠핑</b>을 시작하고 <b>캠핑</b>을 하면서 필요하다고 생각되는 장비를 점차 구입해 가는 것이 현명할 것입니다. ※ 텐트 고르기 <b>캠핑</b>의 성격에 따라 텐트의 종류가 달라지는데 일반적으로 <b>캠핑</b> 인원과 목적에 따라 텐트크기를 결정하면 됩니다. 중형 텐트(터널 및 돔형 텐트) 중 1~2인용이나 3~4인용은 차량 없이도 휴대가 가능하지만 6~7인용 이상의 제품은 다른 장비들과 함께 휴대해야 하는 <b>캠핑</b> 여행의 특성상 차량이 없으면 운반하기가 힘듭니다. 누르거나 공중에 던지면 자동으로 펼쳐지는 자동식 텐트는 설치와 해체가 편리하지만 일반 텐트에 비해 바람에 약한 단점이 있습니다. 대형 텐트(캐빈형)는 공간이 넓어 5인 이상의 오토<b>캠핑</b> 또는 단체 여행에 적당한데 무게가 무거워 차량이 있어야 운반이 가능하고, 중형 텐트에 비해 설치가 불편하고 가격이 비싼 단점이 있습니다. 최근 오토<b>캠핑</b>을 즐기는 캠퍼들은 리빙셀이라고 부르는 대형 텐트를 설치한 후 그 안에 크기가 작은 이너텐트를 설치하는 경우가 많은데 바닥 천이 없는 리빙셀은 거실이나 주방으로, 이너텐트는 침실로 활용할 수 있어 가족단위 오토<b>캠핑</b>에 적당합니다. 그러나 리빙셀, 이너텐트, 그늘막(타프)이 하나의 세트로 구성된 제품은 사용이 편리하지만 가격이 고가라는 단점이 있습니다. 그늘막(타프)은 뜨거운 태양이나 비를 막을 수 있는 방수포를 말하는데, 텐트 앞에 쳐서 식사를 하고 휴식을 취할 수 있는 공간을...]]></ov>
+                  <title>장비 준비하기</title>
+                  <tree>필요물품 준비하기>물품 준비하기></tree>
+               </SearchInterrestRuleListItem>
+            </SearchInterrestRuleListItems>
+         </SearchInterrestRuleListResponse>
+      </ns2:getSearchInterrestRuleListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+
+생활분야검색목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+9
+오퍼레이션명(국문)
+생활분야검색목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchLifeAreaList
+오퍼레이션 설명
+항목명, 내용, 현재페이지, 페이지크기를 기준으로 조회데이터의 총건수, 생활분야 목록 개수, 생활분야 목록을 조회하는 생활분야검색목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     800k    bytes]
+평균 응답 시간
+[         1.0 s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+section
+검색그룹
+10
+1
+1
+검색그룹번호 ‘1’를 입력합니다.
+txtQuery
+내용
+30
+1
+행정심판
+내용 검색 입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술합니다.
+Totcnt
+총건수
+8
+1
+10
+조회 데이터의 총건수 입니다.
+SearchLifeAreaListItems
+생활분야 목록 항목
+
+1
+
+생활분야 목록입니다.
+SearchLifeAreaListItem생활분야 목록0..N생활분야 목록정보 입니다.tree생활분야 분류0민형사/소송>생활분야의 상위 분류입니다.csmTtl생활분야 제목500&lt;b>행정심판&lt;/b>생활분야 제목입니다.titleLink생활분야 링크5000http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=763생활분야 링크 주소 입니다.csmSeq생활분야일련번호130763생활분야의 일련번호 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키 ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchLifeAreaList>
+         <!--Optional:-->
+         <SearchLifeAreaListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>1</section>
+            <!--Optional:-->
+            <txtQuery>행정심판</txtQuery>
+         </SearchLifeAreaListRequest>
+      </open:getSearchLifeAreaList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchLifeAreaListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchLifeAreaListResponse>
+            <totcnt>10</totcnt>
+            <SearchLifeAreaListItems>
+               <SearchLifeAreaListItem>
+                  <csmSeq>763</csmSeq>
+                  <csmTtl>&lt;b>행정심판&lt;/b></csmTtl>
+                  <titleLink>http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=763</titleLink>
+                  <tree>민형사/소송></tree>
+               </SearchLifeAreaListItem>
+            </SearchLifeAreaListItems>
+         </SearchLifeAreaListResponse>
+      </ns2:getSearchLifeAreaListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+백문백답본문검색목록조회오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+10
+오퍼레이션명(국문)
+백문백답본문검색목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getMaskMAnswerSearchContentList
+오퍼레이션 설명
+백문내용 검색어, 항목명, 현재페이지, 페이지크기를 기준으로 조회데이터의 총건수, 본문검색 목록을 조회하는 백문백답검색목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     3000k    bytes]
+평균 응답 시간
+[ 2.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+nowPageNo
+현재페이지
+4
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+section
+검색그룹
+10
+0
+3
+검색그룹입니다.
+백문백답검색목록에서는 항상 ‘3’을 입력합니다.
+txtQuery
+내용
+30
+0
+캠핑
+검색어를 입력합니다.
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우
+원인을 기술한다.
+Totcnt
+총건수
+8
+1
+10
+조회 데이터의 총건수 입니다.
+MaskMAnswerSearchContentListItems
+본문검색 목록 항목
+
+1
+
+본문검색 목록입니다.
+MaskMAnswerSearchContentListItem본문검색 목록0..N본문검색 목록정보 입니다.OnhunqnaAstSeq백문백답분류일련번호5087백문백답분류
+일련번호 입니다.OnhunqueSeq백문일련번호503542백문일련번호 입니다.OnhunqueCts백문내용40000텐트를 구입해서 간 첫 &lt;b>캠핑&lt;/b>에서 텐트에 물이 새는 황당한 경험을 했습니다. 구입처에서는 사용을 했으니 환불을 해 줄 수 없다고 합니다. 텐트를 구입한지 1개월이 안 되었기 때문에 교환도 싫고 환불을 받았으면 하는데 방법이 없나요?백문내용 입니다.moblieTitleLink모바일링크주소5000http://m.law.go.kr/MOB/OnhunqnaInfoRetrieve.laf?onhunqueSeq=3542모바일페이지의 해당백문백답으로의 링크입니다.onhunansCts백답 내용40000아닙니다. 가능합니다. &lt;b>캠핑&lt;/b>용품에 대한 「소비자분쟁해결기준」(공정거래위원회고시)에 따르면 구입 후 정상적인 사용 상태에서 발생한 성능·기능상의 하자로 중요한 수리가 필요한 경우에는 구입가로 환불을 받으실 수 있습니다.◇ 스포츠·레저용품에 대한 소비자분쟁해결기준☞ &lt;b>캠핑&lt;/b>용품의 판매자와 대화로 원만하게 해결을 하면 좋으나 이것이 쉽지 않을 경우에는 한국소비자원에 피해구제를 신청해 「소비자분쟁해결기준」에 따라 조정을 받을 수 있습니다.테이블 단락&lt;br />백문백답의 답변내용입니다.onhunansServiceDt서비스기준일자2002019-12-13백문백답의 서비스 기준일자입니다.onhunqnaAstNm백문백답 대분류명5000문화/여가생활백문백답의 대분류명입니다.onhunqueRecomCnt추천수503483백문백답 추천수입니다.onhunqueRetriCnt조회수5011462백문백답조회수입니다.onhunqueSubjNm백문백답 주제명2000캠핑용품의 환불백문백답의 주제입니다.webTitleLink웹 링크주소5000http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=87&amp;onhunqueSeq=3542웹에서 해당 백무백답 링크 주소입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getMaskMAnswerSearchContentList>
+         <!--Optional:-->
+         <MaskMAnswerSearchContentListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>3</section>
+            <!--Optional:-->
+            <txtQuery>캠핑</txtQuery>
+         </MaskMAnswerSearchContentListRequest>
+      </open:getMaskMAnswerSearchContentList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getMaskMAnswerSearchContentListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <MaskMAnswerSearchContentListResponse>
+            <totcnt>10</totcnt>
+            <MaskMAnswerSearchContentListItems>
+               <MaskMAnswerSearchContentListItem>
+                  <moblieTitleLink>http://m.law.go.kr/MOB/OnhunqnaInfoRetrieve.laf?onhunqueSeq=3542</moblieTitleLink>
+                  <onhunansCts>아닙니다. 가능합니다. &lt;b>캠핑&lt;/b>용품에 대한 「소비자분쟁해결기준」(공정거래위원회고시)에 따르면 구입 후 정상적인 사용 상태에서 발생한 성능·기능상의 하자로 중요한 수리가 필요한 경우에는 구입가로 환불을 받으실 수 있습니다.◇ 스포츠·레저용품에 대한 소비자분쟁해결기준☞ &lt;b>캠핑&lt;/b>용품의 판매자와 대화로 원만하게 해결을 하면 좋으나 이것이 쉽지 않을 경우에는 한국소비자원에 피해구제를 신청해 「소비자분쟁해결기준」에 따라 조정을 받을 수 있습니다.테이블 단락&lt;br /></onhunansCts>
+                  <onhunansServiceDt>2019-12-13</onhunansServiceDt>
+                  <onhunqnaAstNm>문화/여가생활</onhunqnaAstNm>
+                  <onhunqnaAstSeq>87</onhunqnaAstSeq>
+                  <onhunqueCts>텐트를 구입해서 간 첫 &lt;b>캠핑&lt;/b>에서 텐트에 물이 새는 황당한 경험을 했습니다. 구입처에서는 사용을 했으니 환불을 해 줄 수 없다고 합니다. 텐트를 구입한지 1개월이 안 되었기 때문에 교환도 싫고 환불을 받았으면 하는데 방법이 없나요?</onhunqueCts>
+                  <onhunqueRecomCnt>3483</onhunqueRecomCnt>
+                  <onhunqueRetriCnt>11462</onhunqueRetriCnt>
+                  <onhunqueSeq>3542</onhunqueSeq>
+                  <onhunqueSubjNm>캠핑용품의 환불</onhunqueSubjNm>
+                  <webTitleLink>http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=87&amp;onhunqueSeq=3542</webTitleLink>
+               </MaskMAnswerSearchContentListItem>
+            </MaskMAnswerSearchContentListItems>
+         </MaskMAnswerSearchContentListResponse>
+      </ns2:getMaskMAnswerSearchContentListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+백문백답법령명검색조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+12
+오퍼레이션명(국문)
+법령명검색  조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getMaskMAnswerLawNameList
+오퍼레이션 설명
+현재페이지, 페이지크기, 항목명, 검색어를 통해 데이터조회 총건수, 법령명목록을 조회하는 법령명검색 조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     800k    bytes]
+평균 응답 시간
+[     2.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+nowPageNo
+현재페이지
+10
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+section
+검색그룹
+10
+1
+10
+검색그룹입니다.
+여기에서는 항상 ‘10’을 입력합니다.
+txtQuery
+내용
+30
+0
+병역법
+내용 검색 입니다.
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+Totcnt
+총건수
+8
+1
+41
+조회 데이터의 총건수 입니다.
+MaskMAnswerLawNameListItem
+법령명검색 목록 항목
+
+1
+
+법령명검색 목록입니다.
+MaskMAnswerLawNameListItem법령명검색 목록0..N법령명검색 목록정보 입니다.onhunqnaAstKwrd백문백답 분류 키워드40000군생활·보훈백문백답분류
+일련번호 입니다.onhunqnaAstNm백문백답 분류명5000국방/보훈백문일련번호 입니다.onhunqnaAstSeq백문백답 분류 일련번호5081백문내용 입니다.onhunqueConLsiNm백문백답 관련법령40000「대체역의소집및복무등에관한규정」 제23조,「병역법」 제65조의2,「병역법」 제75조,「병역법」 제75조의2,「병역법시행령」 제135조,「병역법시행령」 제153조등록자 이름 입니다.onhunqueCts백문 내용40000대체역으로 복무 중 허리를 크게 다쳐 수술을 받게 됐습니다. 이 경우 소집해제 처분을 받을 수 있는지, 그리고 국가에서 치료 지원을 받을 수 있는지 궁금합니다.백문백답의 질문내용입니다.onhunqueSeq백문일련번호505667백문 일련번호입니다(유일키)webTitleLink웹페이지 링크주소2000http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=81&amp;onhunqueSeq=5667웹페이지의 백문백답 링크 주소입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getMaskMAnswerLawNameList>
+         <!--Optional:-->
+         <MaskMAnswerLawNameListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>10</section>
+            <!--Optional:-->
+            <txtQuery>병역법</txtQuery>
+         </MaskMAnswerLawNameListRequest>
+      </open:getMaskMAnswerLawNameList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getMaskMAnswerLawNameListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <MaskMAnswerLawNameListResponse>
+            <totcnt>41</totcnt>
+            <MaskMAnswerLawNameListItems>
+               <MaskMAnswerLawNameListItem>
+                  <onhunqnaAstKwrd>군생활·보훈</onhunqnaAstKwrd>
+                  <onhunqnaAstNm>국방/보훈</onhunqnaAstNm>
+                  <onhunqnaAstSeq>81</onhunqnaAstSeq>
+                  <onhunqueConLsiNm>「대체역의소집및복무등에관한규정」 제23조,「병역법」 제65조의2,「병역법」 제75조,「병역법」 제75조의2,「병역법시행령」 제135조,「병역법시행령」 제153조</onhunqueConLsiNm>
+                  <onhunqueCts>대체역으로 복무 중 허리를 크게 다쳐 수술을 받게 됐습니다. 이 경우 소집해제 처분을 받을 수 있는지, 그리고 국가에서 치료 지원을 받을 수 있는지 궁금합니다.</onhunqueCts>
+                  <onhunqueSeq>5667</onhunqueSeq>
+                  <webTitleLink>http://easylaw.go.kr/CSP/OnhunqueansInfoRetrieve.laf?onhunqnaAstSeq=81&amp;onhunqueSeq=5667</webTitleLink>
+               </MaskMAnswerLawNameListItem>
+            </MaskMAnswerLawNameListItems>
+         </MaskMAnswerLawNameListResponse>
+      </ns2:getMaskMAnswerLawNameListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+주요궁금사항목록조회 오퍼레이션 명세
+오퍼레이션 정보
+오퍼레이션 번호
+12
+오퍼레이션명(국문)
+주요궁금사항목록조회
+오퍼레이션 유형
+조회(목록)
+오퍼레이션명(영문)
+getSearchAskNoticeList
+오퍼레이션 설명
+현재페이지, 페이지크기, 항목명, 검색어를 통해 생활분야 일련번호, 생활분야명, 생활분야 질문제목, 질문답변 내용 등 궁금사항 목록을 조회하는 주요궁금사항목록조회 기능
+Call Back URL
+N/A
+최대 메시지 사이즈
+[     800k    bytes]
+평균 응답 시간
+[     2.0    s]
+초당 최대 트랜잭션
+[         10 tps]
+
+요청 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키를 입력합니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URI
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+nowPageNo
+현재페이지
+10
+1
+1
+현재페이지번호
+기본 1
+pageMg
+페이지크기
+3
+1
+1
+한페이지에 보여줄 목록의 개수
+기본 10
+section
+검색그룹
+10
+0
+8
+검색그룹입니다.
+여기에서는 항상 ‘10’을 입력합니다.
+txtQuery
+내용
+30
+0
+행정심판
+내용 검색 입니다.
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+※ 검색그룹번호 : 생활분야(1), 본문(2), 백문백답(3), 법령해석례(4), 행정심판재결례(5), 대법원판례(6), 헌법재판소결정례(7), 주요궁금사항(8), 분류검색(9), 백문백답법령명(10)
+응답 메시지 명세
+항목명(영문)항목명(국문)항목크기항목구분샘플데이터항목설명RequestMsgID
+요청메세지ID
+100
+0
+-
+요청메세지ID-조회 시 필요 없는 파라미터입니다.
+ServiceKey
+인증키
+100
+1
+인증키
+공공데이터포털에서 서비스 신청 시 받은 인증키입니다.
+RequestTime
+요청시간
+20
+0
+-
+요청시간-조회 시 필요 없는 파라미터입니다.
+CallBackURI
+콜백URL
+1000
+0
+-
+콜백URI-조회 시 필요 없는 파라미터입니다.
+ReturnCode
+처리경과
+1
+0
+
+0이면 성공, 1이상이면 실패
+ErrMsg
+실패원인
+100
+0
+유효하지않은 데이터 입니다.
+실패의 경우 원인을 기술한다.
+totcnt
+총건수
+8
+1
+2
+조회 데이터의 총건수 입니다.
+SearchAskNoticeListItems
+궁금사항 목록 항목
+
+1
+
+궁금사항 목록입니다.
+SearchAskNoticeListItem궁금사항 목록0..N궁금사항 목록정보 입니다.csmSeq생활분야 일련번호130668생활분야 일련번호입니다.csmTtl생활분야명10000자동차 운전면허생활분야명 입니다.qtCts생활분야 질문제목10000면허 취소로 이의신청을 했는데 받아들여지지 않았습니다. 행정심판을 제기하려면 어떻게 해야 하나요?생활분야 질문제목 입니다.qtSumm생활분야 질문답변 내용10000<![CDATA[운전면허 취소처분이나 정지처분을 받은 사람은 <b>행정심판</b>청구서를 작성하여, 피청구인인 행정청 또는 국무총리<b>행정심판</b>위원회에 <b>행정심판</b>서를 제출함으로써 <b>행정심판</b>을 제기할 수 있습니다. ※ 운전면허 행정처분 구제에 대한 자세한 내용은 &lt;운전면허 취소 정지처분 등에 대한 이의신청&gt;에서 확인할 수 있습니다.]]>생활분야 질문답변 내용 입니다.csmOvUrl생활분야 질문답변 링크URL5000생활분야 질문답변 링크URL 주소 입니다.titleLink생활분야URL5000http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=668생활분야URL 입니다.※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+SOAP(요청)
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:head="http://apache.org/headers" xmlns:open="http://openapi.affis.go.kr">
+   <soapenv:Header>
+      <head:ComMsgHeader>
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <!--Optional:-->
+         <RequestTime>?</RequestTime>
+         <!--Optional:-->
+         <CallBackURI>?</CallBackURI>
+      </head:ComMsgHeader>
+   </soapenv:Header>
+   <soapenv:Body>
+      <open:getSearchAskNoticeList>
+         <!--Optional:-->
+         <SearchAskNoticeListRequest>
+            <!--Optional:-->
+            <nowPageNo>1</nowPageNo>
+            <!--Optional:-->
+            <pageMg>1</pageMg>
+            <!--Optional:-->
+            <section>8</section>
+            <!--Optional:-->
+            <txtQuery>행정심판</txtQuery>
+         </SearchAskNoticeListRequest>
+      </open:getSearchAskNoticeList>
+   </soapenv:Body>
+</soapenv:Envelope>
+응답 메시지
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Header>
+      <ns3:ComMsgHeader xmlns:ns3="http://apache.org/headers" xmlns:ns2="http://openapi.affis.go.kr">
+         <RequestMsgID>?</RequestMsgID>
+         <ServiceKey>인증키</ServiceKey>
+         <RequestTime>?</RequestTime>
+         <CallBackURI>?</CallBackURI>
+      </ns3:ComMsgHeader>
+   </soap:Header>
+   <soap:Body>
+      <ns2:getSearchAskNoticeListResponse xmlns:ns2="http://openapi.affis.go.kr">
+         <SearchAskNoticeListResponse>
+            <totcnt>2</totcnt>
+            <SearchAskNoticeListItems>
+               <SearchAskNoticeListItem>
+                  <csmSeq>668</csmSeq>
+                  <csmTtl>자동차 운전면허</csmTtl>
+                  <qtCts>면허 취소로 이의신청을 했는데 받아들여지지 않았습니다. 행정심판을 제기하려면 어떻게 해야 하나요?</qtCts>
+                  <qtSumm><![CDATA[운전면허 취소처분이나 정지처분을 받은 사람은 <b>행정심판</b>청구서를 작성하여, 피청구인인 행정청 또는 국무총리<b>행정심판</b>위원회에 <b>행정심판</b>서를 제출함으로써 <b>행정심판</b>을 제기할 수 있습니다. ※ 운전면허 행정처분 구제에 대한 자세한 내용은 &lt;운전면허 취소 정지처분 등에 대한 이의신청&gt;에서 확인할 수 있습니다.]]></qtSumm>
+                  <titleLink>http://easylaw.go.kr/CSP/CsmMain.laf?csmSeq=668</titleLink>
+               </SearchAskNoticeListItem>
+            </SearchAskNoticeListItems>
+         </SearchAskNoticeListResponse>
+      </ns2:getSearchAskNoticeListResponse>
+   </soap:Body>
+</soap:Envelope>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Open API 에러코드별 조치 방안
+Code
+코드값
+설명
+조치방안
+01
+Application Error
+제공기관 서비스 제공 상태가 원활하지 않습니다.
+서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+02
+DB Error
+제공기관 서비스 제공 상태가 원활하지 않습니다.
+서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+03
+No Data
+데이터 없음 에러
+
+04
+HTTP Error
+제공기관 서비스 제공 상태가 원활하지 않습니다.
+서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+05
+Service time out
+제공기관 서비스 제공 상태가 원활하지 않습니다.
+서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+10
+잘못된 요청 파라미터 에러
+OpenAPI 요청 시 Service Key 파라미터가 없음
+· OpenAPI요청 값에서 Service Key파라미터가 누락되었습니다.
+· OpenAPI요청 URL을 확인하시기 바랍니다.
+11
+필수 요청 파라미터가 없음
+요청하신 OpenAPI 의 필수 파라미터가 누락되었습니다.
+기술문서를 다시 한번 확인하시어 주시기 바랍니다.
+12
+해당 오픈 API서비스가 없거나 폐기됨
+OpenAPI 호출 시 URL이 잘못 됨
+· 제공기관 관리자에게 폐기된 서비스인지 확인합니다. 폐기된 서비스가 아니면 개발 가이드에서 OpenAPI요청 URL을 다시 확인하시기 바랍니다.
+20
+서비스 접근 거부
+활용승인되지 않은 OpenAPI호출
+· OpenAPI활용신청정보의 승인상태를 확인하시기 바랍니다.
+· 활용신청에 대해 제공기관 담당자가 확인 후 ‘승인’ 이후부터 사용할 수 있습니다.
+· 신청 후 2~3일이 소요되고 결과는 회원가입 시 등록한 e-mail 로 발송합니다.
+22
+서비스 요청 제한 횟수 초과 에러
+일일 활용건수가 초과함(활용건수 증가 필요)
+·OpenAPI 활용신청정보의 서비스 상세기능별 일일트래픽량을 확인하시기 바랍니다.
+·개발계정의 경우 제공기관에서 정의한 트래픽을 초과하여 활용할 수 없습니다.
+·운영계정의 경우 변경신청을 통해서 일일트래픽량을 변경할 수 있습니다.
+30
+등록되지 않은 서비스 키
+잘못된 서비스키를 사용하였거나 서비스키를 URL인코딩하지 않음
+·OpenAPI활용신청정보의 발급받은 서비스키를 다시 확인하시기 바랍니다.
+·서비스키 값이 같다면 서비스키가 URL인코딩되었는지 다시 확인하시기 바랍니다.
+31
+기한 만료된 서비스 키
+OpenAPI 사용기간이 만료됨
+(활용연장신청 후 사용 가능)
+·OpenAPI 활용신청정보의 활용기간을 확인합니다.
+·활용기간이 지난 서비스는 이용할 수 없으며 연장신청을 통해 승인받은 후 다시 이용이 가능합니다.
+32
+등록되지 않은 도메인명 또는 IP 주소
+활용신청한 서버의 IP와 실제 OpenAPI 호출한 서버가 다를 경우
+·OpenAPI 활용신청정보의 등록된 도메인명이나 IP주소를 다시 확인합니다.
+·IP나 도메인의 정보를 변경하기 위해 변경신청을 할 수 있습니다.
+98
+조회 결과가 없음
+조회한 결과가 없음.
+서비스 제공기관의 관리자에게 문의하시기 바랍니다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+이9
+
+
+
+PAGE   \* MERGEFORMAT- 102 -
+
+
+
+
+
+
+목 차
+
+
+생활법령검색조회서비스  STYLEREF  "Documment Name"  \* MERGEFORMAT OpenAPI 활용가이드
+
+
+
+생활법령검색조회서비스 OpenAPI 활용가이드_v2.0

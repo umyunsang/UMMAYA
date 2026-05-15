@@ -1,0 +1,1227 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "생활_목욕장업 데이터는 대중목욕탕, 찜질방, 사우나 등 물로 목욕 할 수 있거나 맥반석ㆍ황토 등에게 발생되는 열기 또는 원적외선 등을 이용하여 땀을 낼 수 있는 시설 및 설비 등의 서비스를 제공하는 업소정보 데이터로 인허가일자, 영업상태, 사업장명, 소재지주소 등의 데이터를 제공합니다.\\r\\n- 공공데이터 제공 표준 기준, 전국 자치단체에서 관리하는 목욕장업 인허가 정보를 일괄 취합하여 전국 데이터로 제공\\r\\n- 자료는 동일한 서식과 용어로 정리하여 인허가 현황을 일관되게 안내\\r\\n- 해당 데이터에 대한 추가적인 자료 요청시 지자체 및 소관기관 담당자에게 문의\\r\\n- 해당 데이터 법령 소관기관 및 문의처 : 보건복지부 생활보건팀 / 044-202-2856\\r\\n * 좌표계 : 보정계수 안들어간 Bessel 중부원점TM(EPSG:5174)",
+    "version": "1.0.0",
+    "title": "행정안전부_생활_목욕장업 조회서비스"
+  },
+  "host": "apis.data.go.kr/1741000/public_baths",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/info": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "response": {
+                  "type": "object",
+                  "description": "response",
+                  "properties": {
+                    "header": {
+                      "type": "object",
+                      "description": "응답 데이터의 헤더",
+                      "properties": {
+                        "resultCode": {
+                          "type": "string",
+                          "description": "응답의 결과 코드",
+                          "properties": {}
+                        },
+                        "resultMsg": {
+                          "type": "string",
+                          "description": "응답의 결과 메세지",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "body": {
+                      "type": "object",
+                      "description": "응답 데이터의 바디",
+                      "properties": {
+                        "dataType": {
+                          "type": "string",
+                          "description": "응답의 데이터 타입",
+                          "properties": {}
+                        },
+                        "numOfRows": {
+                          "type": "integer",
+                          "description": "한 페이지 결과 수",
+                          "properties": {}
+                        },
+                        "pageNo": {
+                          "type": "integer",
+                          "description": "페이지번호",
+                          "properties": {}
+                        },
+                        "totalCount": {
+                          "type": "integer",
+                          "description": "응답 데이터의 수",
+                          "properties": {}
+                        },
+                        "items": {
+                          "type": "object",
+                          "description": "items",
+                          "properties": {
+                            "item": {
+                              "type": "array",
+                              "description": "item",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "OPN_ATMY_GRP_CD": {
+                                    "type": "string",
+                                    "description": "개방자치단체코드",
+                                    "properties": {}
+                                  },
+                                  "MNG_NO": {
+                                    "type": "string",
+                                    "description": "관리번호",
+                                    "properties": {}
+                                  },
+                                  "BLDG_PSN_SE_NM": {
+                                    "type": "string",
+                                    "description": "건물소유구분명",
+                                    "properties": {}
+                                  },
+                                  "BLDG_GRND_FLR_CNT": {
+                                    "type": "string",
+                                    "description": "건물지상층수",
+                                    "properties": {}
+                                  },
+                                  "BLDG_UDGD_FLR_CNT": {
+                                    "type": "string",
+                                    "description": "건물지하층수",
+                                    "properties": {}
+                                  },
+                                  "ML_PRCTR_CNT": {
+                                    "type": "string",
+                                    "description": "남성종사자수",
+                                    "properties": {}
+                                  },
+                                  "MLT_UTZTN_BSNSSP_YN": {
+                                    "type": "string",
+                                    "description": "다중이용업소여부",
+                                    "properties": {}
+                                  },
+                                  "DAT_UPDT_SE": {
+                                    "type": "string",
+                                    "description": "데이터갱신구분",
+                                    "properties": {}
+                                  },
+                                  "DAT_UPDT_PNT": {
+                                    "type": "string",
+                                    "description": "데이터갱신시점(YYYYMMDDHHMMSS)",
+                                    "properties": {}
+                                  },
+                                  "ROAD_NM_ZIP": {
+                                    "type": "string",
+                                    "description": "도로명우편번호",
+                                    "properties": {}
+                                  },
+                                  "ROAD_NM_ADDR": {
+                                    "type": "string",
+                                    "description": "도로명주소",
+                                    "properties": {}
+                                  },
+                                  "SWEATRM_YN": {
+                                    "type": "string",
+                                    "description": "발한실여부",
+                                    "properties": {}
+                                  },
+                                  "BPLC_NM": {
+                                    "type": "string",
+                                    "description": "사업장명",
+                                    "properties": {}
+                                  },
+                                  "USE_ED_GRND_FLR": {
+                                    "type": "string",
+                                    "description": "사용끝지상층",
+                                    "properties": {}
+                                  },
+                                  "USE_ED_UDGD_FLR": {
+                                    "type": "string",
+                                    "description": "사용끝지하층",
+                                    "properties": {}
+                                  },
+                                  "USE_BGNG_GRND_FLR": {
+                                    "type": "string",
+                                    "description": "사용시작지상층",
+                                    "properties": {}
+                                  },
+                                  "USE_BGNG_UDGD_FLR": {
+                                    "type": "string",
+                                    "description": "사용시작지하층",
+                                    "properties": {}
+                                  },
+                                  "DTL_SALS_STTS_NM": {
+                                    "type": "string",
+                                    "description": "상세영업상태명",
+                                    "properties": {}
+                                  },
+                                  "DTL_SALS_STTS_CD": {
+                                    "type": "string",
+                                    "description": "상세영업상태코드",
+                                    "properties": {}
+                                  },
+                                  "LCTN_AREA": {
+                                    "type": "string",
+                                    "description": "소재지면적",
+                                    "properties": {}
+                                  },
+                                  "BZSTAT_SE_NM": {
+                                    "type": "string",
+                                    "description": "업태구분명",
+                                    "properties": {}
+                                  },
+                                  "FML_PRCTR_CNT": {
+                                    "type": "string",
+                                    "description": "여성종사자수",
+                                    "properties": {}
+                                  },
+                                  "SALS_STTS_NM": {
+                                    "type": "string",
+                                    "description": "영업상태명",
+                                    "properties": {}
+                                  },
+                                  "SALS_STTS_CD": {
+                                    "type": "string",
+                                    "description": "영업상태코드",
+                                    "properties": {}
+                                  },
+                                  "BTHRM_CNT": {
+                                    "type": "string",
+                                    "description": "욕실수",
+                                    "properties": {}
+                                  },
+                                  "SNTTN_BZSTAT_NM": {
+                                    "type": "string",
+                                    "description": "위생업태명",
+                                    "properties": {}
+                                  },
+                                  "LCPMT_YMD": {
+                                    "type": "string",
+                                    "description": "인허가일자(YYYYMMDD)",
+                                    "properties": {}
+                                  },
+                                  "TELNO": {
+                                    "type": "string",
+                                    "description": "전화번호",
+                                    "properties": {}
+                                  },
+                                  "CNDNAL_PRMSN_BGNG_YMD": {
+                                    "type": "string",
+                                    "description": "조건부허가시작일자",
+                                    "properties": {}
+                                  },
+                                  "CNDNAL_PRMSN_DCLR_RSN": {
+                                    "type": "string",
+                                    "description": "조건부허가신고사유",
+                                    "properties": {}
+                                  },
+                                  "CNDNAL_PRMSN_END_YMD": {
+                                    "type": "string",
+                                    "description": "조건부허가종료일자",
+                                    "properties": {}
+                                  },
+                                  "CRD_INFO_X": {
+                                    "type": "string",
+                                    "description": "좌표정보(X)",
+                                    "properties": {}
+                                  },
+                                  "CRD_INFO_Y": {
+                                    "type": "string",
+                                    "description": "좌표정보(Y)",
+                                    "properties": {}
+                                  },
+                                  "LOTNO_ADDR": {
+                                    "type": "string",
+                                    "description": "지번주소",
+                                    "properties": {}
+                                  },
+                                  "CLSBIZ_YMD": {
+                                    "type": "string",
+                                    "description": "폐업일자(YYYYMMDD)",
+                                    "properties": {}
+                                  },
+                                  "LCTN_ZIP": {
+                                    "type": "string",
+                                    "description": "소재지우편번호",
+                                    "properties": {}
+                                  },
+                                  "LAST_MDFCN_PNT": {
+                                    "type": "string",
+                                    "description": "최종수정시점(YYYYMMDDHHMMSS)",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "-1": {
+            "description": "시스템 내부 오류가 발생하였습니다."
+          },
+          "-2": {
+            "description": "요청하신 파라미터가 적합하지 않습니다."
+          },
+          "-3": {
+            "description": "등록되지 않은 서비스 입니다."
+          },
+          "-4": {
+            "description": "등록되지 않은 인증키 입니다."
+          },
+          "-5": {
+            "description": "API 서버 오류가 발생하였습니다."
+          },
+          "-9": {
+            "description": "종료된 서비스 입니다."
+          },
+          "-10": {
+            "description": "트래픽 허용 횟수를 초과하였습니다."
+          },
+          "-11": {
+            "description": "필수 파라미터가 입력되지 않았습니다."
+          },
+          "-999": {
+            "description": "UNKNOWN"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "생활_목욕장업 데이터 조회",
+        "description": "생활_목욕장업 데이터를 조회 하기 위한 오퍼레이션 입니다.<br/>해당 데이터는 매일 갱신되는 데이터로 2일전 기준으로 현행화 됩니다.",
+        "operationId": "info",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수(max: 100)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "returnType",
+          "description": "응답의 데이터 타입",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[LCPMT_YMD::GTE]",
+          "description": "인허가일자 이상의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[LCPMT_YMD::LT]",
+          "description": "인허가일자 미만의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[SALS_STTS_CD::EQ]",
+          "description": "영업상태코드 와 일치하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[SWEATRM_YN::EQ]",
+          "description": "발한실여부 와 일치하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[ROAD_NM_ADDR::LIKE]",
+          "description": "도로명주소 을(를) 포함하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_UPDT_PNT::GTE]",
+          "description": "데이터갱신시점 이상의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_UPDT_PNT::LT]",
+          "description": "데이터갱신시점 미만의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[OPN_ATMY_GRP_CD::EQ]",
+          "description": "개방자치단체코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[BPLC_NM::LIKE]",
+          "description": "사업자명 을(를) 포함하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/history": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "response": {
+                  "type": "object",
+                  "description": "response",
+                  "properties": {
+                    "header": {
+                      "type": "object",
+                      "description": "응답 데이터의 헤더",
+                      "properties": {
+                        "resultCode": {
+                          "type": "string",
+                          "description": "응답의 결과 코드",
+                          "properties": {}
+                        },
+                        "resultMsg": {
+                          "type": "string",
+                          "description": "응답의 결과 메세지",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "body": {
+                      "type": "object",
+                      "description": "응답 데이터의 바디",
+                      "properties": {
+                        "dataType": {
+                          "type": "string",
+                          "description": "응답의 데이터 타입",
+                          "properties": {}
+                        },
+                        "numOfRows": {
+                          "type": "integer",
+                          "description": "한 페이지 결과 수",
+                          "properties": {}
+                        },
+                        "pageNo": {
+                          "type": "integer",
+                          "description": "페이지번호",
+                          "properties": {}
+                        },
+                        "totalCount": {
+                          "type": "integer",
+                          "description": "응답 데이터의 수",
+                          "properties": {}
+                        },
+                        "items": {
+                          "type": "object",
+                          "description": "items",
+                          "properties": {
+                            "item": {
+                              "type": "array",
+                              "description": "item",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "OPN_ATMY_GRP_CD": {
+                                    "type": "string",
+                                    "description": "개방자치단체코드",
+                                    "properties": {}
+                                  },
+                                  "MNG_NO": {
+                                    "type": "string",
+                                    "description": "관리번호",
+                                    "properties": {}
+                                  },
+                                  "BLDG_PSN_SE_NM": {
+                                    "type": "string",
+                                    "description": "건물소유구분명",
+                                    "properties": {}
+                                  },
+                                  "BLDG_GRND_FLR_CNT": {
+                                    "type": "string",
+                                    "description": "건물지상층수",
+                                    "properties": {}
+                                  },
+                                  "BLDG_UDGD_FLR_CNT": {
+                                    "type": "string",
+                                    "description": "건물지하층수",
+                                    "properties": {}
+                                  },
+                                  "ML_PRCTR_CNT": {
+                                    "type": "string",
+                                    "description": "남성종사자수",
+                                    "properties": {}
+                                  },
+                                  "MLT_UTZTN_BSNSSP_YN": {
+                                    "type": "string",
+                                    "description": "다중이용업소여부",
+                                    "properties": {}
+                                  },
+                                  "DAT_UPDT_SE": {
+                                    "type": "string",
+                                    "description": "데이터갱신구분",
+                                    "properties": {}
+                                  },
+                                  "DAT_UPDT_PNT": {
+                                    "type": "string",
+                                    "description": "데이터갱신시점(YYYYMMDDHHMMSS)",
+                                    "properties": {}
+                                  },
+                                  "ROAD_NM_ZIP": {
+                                    "type": "string",
+                                    "description": "도로명우편번호",
+                                    "properties": {}
+                                  },
+                                  "ROAD_NM_ADDR": {
+                                    "type": "string",
+                                    "description": "도로명주소",
+                                    "properties": {}
+                                  },
+                                  "SWEATRM_YN": {
+                                    "type": "string",
+                                    "description": "발한실여부",
+                                    "properties": {}
+                                  },
+                                  "BPLC_NM": {
+                                    "type": "string",
+                                    "description": "사업장명",
+                                    "properties": {}
+                                  },
+                                  "USE_ED_GRND_FLR": {
+                                    "type": "string",
+                                    "description": "사용끝지상층",
+                                    "properties": {}
+                                  },
+                                  "USE_ED_UDGD_FLR": {
+                                    "type": "string",
+                                    "description": "사용끝지하층",
+                                    "properties": {}
+                                  },
+                                  "USE_BGNG_GRND_FLR": {
+                                    "type": "string",
+                                    "description": "사용시작지상층",
+                                    "properties": {}
+                                  },
+                                  "USE_BGNG_UDGD_FLR": {
+                                    "type": "string",
+                                    "description": "사용시작지하층",
+                                    "properties": {}
+                                  },
+                                  "DTL_SALS_STTS_NM": {
+                                    "type": "string",
+                                    "description": "상세영업상태명",
+                                    "properties": {}
+                                  },
+                                  "DTL_SALS_STTS_CD": {
+                                    "type": "string",
+                                    "description": "상세영업상태코드",
+                                    "properties": {}
+                                  },
+                                  "LCTN_AREA": {
+                                    "type": "string",
+                                    "description": "소재지면적",
+                                    "properties": {}
+                                  },
+                                  "BZSTAT_SE_NM": {
+                                    "type": "string",
+                                    "description": "업태구분명",
+                                    "properties": {}
+                                  },
+                                  "FML_PRCTR_CNT": {
+                                    "type": "string",
+                                    "description": "여성종사자수",
+                                    "properties": {}
+                                  },
+                                  "SALS_STTS_NM": {
+                                    "type": "string",
+                                    "description": "영업상태명",
+                                    "properties": {}
+                                  },
+                                  "SALS_STTS_CD": {
+                                    "type": "string",
+                                    "description": "영업상태코드",
+                                    "properties": {}
+                                  },
+                                  "BTHRM_CNT": {
+                                    "type": "string",
+                                    "description": "욕실수",
+                                    "properties": {}
+                                  },
+                                  "SNTTN_BZSTAT_NM": {
+                                    "type": "string",
+                                    "description": "위생업태명",
+                                    "properties": {}
+                                  },
+                                  "LCPMT_YMD": {
+                                    "type": "string",
+                                    "description": "인허가일자(YYYYMMDD)",
+                                    "properties": {}
+                                  },
+                                  "TELNO": {
+                                    "type": "string",
+                                    "description": "전화번호",
+                                    "properties": {}
+                                  },
+                                  "CNDNAL_PRMSN_BGNG_YMD": {
+                                    "type": "string",
+                                    "description": "조건부허가시작일자",
+                                    "properties": {}
+                                  },
+                                  "CNDNAL_PRMSN_DCLR_RSN": {
+                                    "type": "string",
+                                    "description": "조건부허가신고사유",
+                                    "properties": {}
+                                  },
+                                  "CNDNAL_PRMSN_END_YMD": {
+                                    "type": "string",
+                                    "description": "조건부허가종료일자",
+                                    "properties": {}
+                                  },
+                                  "CRD_INFO_X": {
+                                    "type": "string",
+                                    "description": "좌표정보(X)",
+                                    "properties": {}
+                                  },
+                                  "CRD_INFO_Y": {
+                                    "type": "string",
+                                    "description": "좌표정보(Y)",
+                                    "properties": {}
+                                  },
+                                  "LOTNO_ADDR": {
+                                    "type": "string",
+                                    "description": "지번주소",
+                                    "properties": {}
+                                  },
+                                  "CLSBIZ_YMD": {
+                                    "type": "string",
+                                    "description": "폐업일자(YYYYMMDD)",
+                                    "properties": {}
+                                  },
+                                  "LCTN_ZIP": {
+                                    "type": "string",
+                                    "description": "소재지우편번호",
+                                    "properties": {}
+                                  },
+                                  "LAST_MDFCN_PNT": {
+                                    "type": "string",
+                                    "description": "최종수정시점(YYYYMMDDHHMMSS)",
+                                    "properties": {}
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "-1": {
+            "description": "시스템 내부 오류가 발생하였습니다."
+          },
+          "-2": {
+            "description": "요청하신 파라미터가 적합하지 않습니다."
+          },
+          "-3": {
+            "description": "등록되지 않은 서비스 입니다."
+          },
+          "-4": {
+            "description": "등록되지 않은 인증키 입니다."
+          },
+          "-5": {
+            "description": "API 서버 오류가 발생하였습니다."
+          },
+          "-9": {
+            "description": "종료된 서비스 입니다."
+          },
+          "-10": {
+            "description": "트래픽 허용 횟수를 초과하였습니다."
+          },
+          "-11": {
+            "description": "필수 파라미터가 입력되지 않았습니다."
+          },
+          "-999": {
+            "description": "UNKNOWN"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "생활_목욕장업 데이터 이력조회",
+        "description": "생활_목욕장업 데이터의 이력을 조회하기 위한 오퍼레이션 입니다.<br/>입력한 데이터기준일자를 기준으로 과거시점에 개방되었던 데이터를 조회할 수 있습니다.<br/>데이터기준일자는 2026.01.01부터 조회일 전일까지 입력 가능합니다.",
+        "operationId": "history",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수(max: 100)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "returnType",
+          "description": "응답의 데이터 타입",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[BASE_DATE::EQ]",
+          "description": "데이터기준일자(YYYYMMDD) 미만의 값(해당 일자기준의 상태값을 확인할 수 있습니다.)",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "cond[LCPMT_YMD::GTE]",
+          "description": "인허가일자 이상의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[LCPMT_YMD::LT]",
+          "description": "인허가일자 미만의 값(YYYYMMDD)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[SALS_STTS_CD::EQ]",
+          "description": "영업상태코드 와 일치하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_UPDT_PNT::GTE]",
+          "description": "데이터갱신시점 이상의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[DAT_UPDT_PNT::LT]",
+          "description": "데이터갱신시점 미만의 값(YYYYMMDDHHMMSS)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cond[OPN_ATMY_GRP_CD::EQ]",
+          "description": "개방자치단체코드",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "cond[BPLC_NM::LIKE]",
+          "description": "사업장명 을(를) 포함하는 값",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "info_response": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "type": "object",
+          "description": "response",
+          "properties": {
+            "header": {
+              "type": "object",
+              "description": "응답 데이터의 헤더",
+              "properties": {
+                "resultCode": {
+                  "type": "string",
+                  "description": "응답의 결과 코드"
+                },
+                "resultMsg": {
+                  "type": "string",
+                  "description": "응답의 결과 메세지"
+                }
+              }
+            },
+            "body": {
+              "type": "object",
+              "description": "응답 데이터의 바디",
+              "properties": {
+                "dataType": {
+                  "type": "string",
+                  "description": "응답의 데이터 타입"
+                },
+                "numOfRows": {
+                  "type": "integer",
+                  "description": "한 페이지 결과 수"
+                },
+                "pageNo": {
+                  "type": "integer",
+                  "description": "페이지번호"
+                },
+                "totalCount": {
+                  "type": "integer",
+                  "description": "응답 데이터의 수"
+                },
+                "items": {
+                  "type": "object",
+                  "description": "items",
+                  "properties": {
+                    "item": {
+                      "type": "array",
+                      "description": "item",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "OPN_ATMY_GRP_CD": {
+                            "type": "string",
+                            "description": "개방자치단체코드"
+                          },
+                          "MNG_NO": {
+                            "type": "string",
+                            "description": "관리번호"
+                          },
+                          "BLDG_PSN_SE_NM": {
+                            "type": "string",
+                            "description": "건물소유구분명"
+                          },
+                          "BLDG_GRND_FLR_CNT": {
+                            "type": "string",
+                            "description": "건물지상층수"
+                          },
+                          "BLDG_UDGD_FLR_CNT": {
+                            "type": "string",
+                            "description": "건물지하층수"
+                          },
+                          "ML_PRCTR_CNT": {
+                            "type": "string",
+                            "description": "남성종사자수"
+                          },
+                          "MLT_UTZTN_BSNSSP_YN": {
+                            "type": "string",
+                            "description": "다중이용업소여부"
+                          },
+                          "DAT_UPDT_SE": {
+                            "type": "string",
+                            "description": "데이터갱신구분"
+                          },
+                          "DAT_UPDT_PNT": {
+                            "type": "string",
+                            "description": "데이터갱신시점(YYYYMMDDHHMMSS)"
+                          },
+                          "ROAD_NM_ZIP": {
+                            "type": "string",
+                            "description": "도로명우편번호"
+                          },
+                          "ROAD_NM_ADDR": {
+                            "type": "string",
+                            "description": "도로명주소"
+                          },
+                          "SWEATRM_YN": {
+                            "type": "string",
+                            "description": "발한실여부"
+                          },
+                          "BPLC_NM": {
+                            "type": "string",
+                            "description": "사업장명"
+                          },
+                          "USE_ED_GRND_FLR": {
+                            "type": "string",
+                            "description": "사용끝지상층"
+                          },
+                          "USE_ED_UDGD_FLR": {
+                            "type": "string",
+                            "description": "사용끝지하층"
+                          },
+                          "USE_BGNG_GRND_FLR": {
+                            "type": "string",
+                            "description": "사용시작지상층"
+                          },
+                          "USE_BGNG_UDGD_FLR": {
+                            "type": "string",
+                            "description": "사용시작지하층"
+                          },
+                          "DTL_SALS_STTS_NM": {
+                            "type": "string",
+                            "description": "상세영업상태명"
+                          },
+                          "DTL_SALS_STTS_CD": {
+                            "type": "string",
+                            "description": "상세영업상태코드"
+                          },
+                          "LCTN_AREA": {
+                            "type": "string",
+                            "description": "소재지면적"
+                          },
+                          "BZSTAT_SE_NM": {
+                            "type": "string",
+                            "description": "업태구분명"
+                          },
+                          "FML_PRCTR_CNT": {
+                            "type": "string",
+                            "description": "여성종사자수"
+                          },
+                          "SALS_STTS_NM": {
+                            "type": "string",
+                            "description": "영업상태명"
+                          },
+                          "SALS_STTS_CD": {
+                            "type": "string",
+                            "description": "영업상태코드"
+                          },
+                          "BTHRM_CNT": {
+                            "type": "string",
+                            "description": "욕실수"
+                          },
+                          "SNTTN_BZSTAT_NM": {
+                            "type": "string",
+                            "description": "위생업태명"
+                          },
+                          "LCPMT_YMD": {
+                            "type": "string",
+                            "description": "인허가일자(YYYYMMDD)"
+                          },
+                          "TELNO": {
+                            "type": "string",
+                            "description": "전화번호"
+                          },
+                          "CNDNAL_PRMSN_BGNG_YMD": {
+                            "type": "string",
+                            "description": "조건부허가시작일자"
+                          },
+                          "CNDNAL_PRMSN_DCLR_RSN": {
+                            "type": "string",
+                            "description": "조건부허가신고사유"
+                          },
+                          "CNDNAL_PRMSN_END_YMD": {
+                            "type": "string",
+                            "description": "조건부허가종료일자"
+                          },
+                          "CRD_INFO_X": {
+                            "type": "string",
+                            "description": "좌표정보(X)"
+                          },
+                          "CRD_INFO_Y": {
+                            "type": "string",
+                            "description": "좌표정보(Y)"
+                          },
+                          "LOTNO_ADDR": {
+                            "type": "string",
+                            "description": "지번주소"
+                          },
+                          "CLSBIZ_YMD": {
+                            "type": "string",
+                            "description": "폐업일자(YYYYMMDD)"
+                          },
+                          "LCTN_ZIP": {
+                            "type": "string",
+                            "description": "소재지우편번호"
+                          },
+                          "LAST_MDFCN_PNT": {
+                            "type": "string",
+                            "description": "최종수정시점(YYYYMMDDHHMMSS)"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "history_response": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "type": "object",
+          "description": "response",
+          "properties": {
+            "header": {
+              "type": "object",
+              "description": "응답 데이터의 헤더",
+              "properties": {
+                "resultCode": {
+                  "type": "string",
+                  "description": "응답의 결과 코드"
+                },
+                "resultMsg": {
+                  "type": "string",
+                  "description": "응답의 결과 메세지"
+                }
+              }
+            },
+            "body": {
+              "type": "object",
+              "description": "응답 데이터의 바디",
+              "properties": {
+                "dataType": {
+                  "type": "string",
+                  "description": "응답의 데이터 타입"
+                },
+                "numOfRows": {
+                  "type": "integer",
+                  "description": "한 페이지 결과 수"
+                },
+                "pageNo": {
+                  "type": "integer",
+                  "description": "페이지번호"
+                },
+                "totalCount": {
+                  "type": "integer",
+                  "description": "응답 데이터의 수"
+                },
+                "items": {
+                  "type": "object",
+                  "description": "items",
+                  "properties": {
+                    "item": {
+                      "type": "array",
+                      "description": "item",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "OPN_ATMY_GRP_CD": {
+                            "type": "string",
+                            "description": "개방자치단체코드"
+                          },
+                          "MNG_NO": {
+                            "type": "string",
+                            "description": "관리번호"
+                          },
+                          "BLDG_PSN_SE_NM": {
+                            "type": "string",
+                            "description": "건물소유구분명"
+                          },
+                          "BLDG_GRND_FLR_CNT": {
+                            "type": "string",
+                            "description": "건물지상층수"
+                          },
+                          "BLDG_UDGD_FLR_CNT": {
+                            "type": "string",
+                            "description": "건물지하층수"
+                          },
+                          "ML_PRCTR_CNT": {
+                            "type": "string",
+                            "description": "남성종사자수"
+                          },
+                          "MLT_UTZTN_BSNSSP_YN": {
+                            "type": "string",
+                            "description": "다중이용업소여부"
+                          },
+                          "DAT_UPDT_SE": {
+                            "type": "string",
+                            "description": "데이터갱신구분"
+                          },
+                          "DAT_UPDT_PNT": {
+                            "type": "string",
+                            "description": "데이터갱신시점(YYYYMMDDHHMMSS)"
+                          },
+                          "ROAD_NM_ZIP": {
+                            "type": "string",
+                            "description": "도로명우편번호"
+                          },
+                          "ROAD_NM_ADDR": {
+                            "type": "string",
+                            "description": "도로명주소"
+                          },
+                          "SWEATRM_YN": {
+                            "type": "string",
+                            "description": "발한실여부"
+                          },
+                          "BPLC_NM": {
+                            "type": "string",
+                            "description": "사업장명"
+                          },
+                          "USE_ED_GRND_FLR": {
+                            "type": "string",
+                            "description": "사용끝지상층"
+                          },
+                          "USE_ED_UDGD_FLR": {
+                            "type": "string",
+                            "description": "사용끝지하층"
+                          },
+                          "USE_BGNG_GRND_FLR": {
+                            "type": "string",
+                            "description": "사용시작지상층"
+                          },
+                          "USE_BGNG_UDGD_FLR": {
+                            "type": "string",
+                            "description": "사용시작지하층"
+                          },
+                          "DTL_SALS_STTS_NM": {
+                            "type": "string",
+                            "description": "상세영업상태명"
+                          },
+                          "DTL_SALS_STTS_CD": {
+                            "type": "string",
+                            "description": "상세영업상태코드"
+                          },
+                          "LCTN_AREA": {
+                            "type": "string",
+                            "description": "소재지면적"
+                          },
+                          "BZSTAT_SE_NM": {
+                            "type": "string",
+                            "description": "업태구분명"
+                          },
+                          "FML_PRCTR_CNT": {
+                            "type": "string",
+                            "description": "여성종사자수"
+                          },
+                          "SALS_STTS_NM": {
+                            "type": "string",
+                            "description": "영업상태명"
+                          },
+                          "SALS_STTS_CD": {
+                            "type": "string",
+                            "description": "영업상태코드"
+                          },
+                          "BTHRM_CNT": {
+                            "type": "string",
+                            "description": "욕실수"
+                          },
+                          "SNTTN_BZSTAT_NM": {
+                            "type": "string",
+                            "description": "위생업태명"
+                          },
+                          "LCPMT_YMD": {
+                            "type": "string",
+                            "description": "인허가일자(YYYYMMDD)"
+                          },
+                          "TELNO": {
+                            "type": "string",
+                            "description": "전화번호"
+                          },
+                          "CNDNAL_PRMSN_BGNG_YMD": {
+                            "type": "string",
+                            "description": "조건부허가시작일자"
+                          },
+                          "CNDNAL_PRMSN_DCLR_RSN": {
+                            "type": "string",
+                            "description": "조건부허가신고사유"
+                          },
+                          "CNDNAL_PRMSN_END_YMD": {
+                            "type": "string",
+                            "description": "조건부허가종료일자"
+                          },
+                          "CRD_INFO_X": {
+                            "type": "string",
+                            "description": "좌표정보(X)"
+                          },
+                          "CRD_INFO_Y": {
+                            "type": "string",
+                            "description": "좌표정보(Y)"
+                          },
+                          "LOTNO_ADDR": {
+                            "type": "string",
+                            "description": "지번주소"
+                          },
+                          "CLSBIZ_YMD": {
+                            "type": "string",
+                            "description": "폐업일자(YYYYMMDD)"
+                          },
+                          "LCTN_ZIP": {
+                            "type": "string",
+                            "description": "소재지우편번호"
+                          },
+                          "LAST_MDFCN_PNT": {
+                            "type": "string",
+                            "description": "최종수정시점(YYYYMMDDHHMMSS)"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

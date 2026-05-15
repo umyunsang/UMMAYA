@@ -1,0 +1,17 @@
+{
+  "id": "15142227",
+  "url": "https://www.data.go.kr/data/15142227/openapi.do",
+  "source_kind": "category",
+  "source_value": "농축수산",
+  "category": "농축수산",
+  "provider_type": "국가행정기관",
+  "org": "해양수산부 국립해양조사원",
+  "title_hint": "해양수산부 국립해양조사원_ROMS 수치예측모델 조회",
+  "og_title": "해양수산부 국립해양조사원_ROMS 수치예측모델 조회",
+  "og_description": "이 데이터는 해양수산부 국립해양조사원에서 해양수치예측모델(ROMS; Regional Oceanic Modeling System) 기반 해양환경 변화 예측값 정보를 제공하기 위해 제작되었습니다.\r 검색 대상 영역의 최대/최저 위·경도 등 값을 파라미터로 데이터를 조회할 수 있으며, 본 데이터의 주요 내용은 예측일, 예측시간, 예측지점의 위도, 경도 및 예측된 표층 유향과 유속, 수온 정보로 구성되어 있습니다.\r 본 데이터는 관계 기관에서 시계열 분석 기반 해양 환경 모니터링, 해양 재난 대비, 해양 연구 및 교육활동 수행 등을 위한 기초 자료로 활용될 수 있습니다.",
+  "swagger_url": "",
+  "has_inline_swagger": true,
+  "downloaded_docs": [
+    "오픈API 활용가이드_ROMS 수치예측모델.hwp"
+  ]
+}

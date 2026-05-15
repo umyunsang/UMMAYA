@@ -1,0 +1,112 @@
+
+
+<표>
+
+
+
+<표>
+
+
+<표>
+
+
+
+
+시도별 노인 취업알선 실적
+
+<표>
+
+
+
+
+
+
+
+
+
+
+2022.02.04
+
+문서 이력 정보
+
+
+<표>
+
+
+
+목     차
+
+
+
+<표>
+
+1. 서비스 명세
+1.1 공공데이터 OpenAPI 조회 서비스4
+가. API 서비스 개요4
+나. 상세기능 정보5
+다. 요청 메시지 명세5
+라. 응답 메시지 명세5
+마. 요청/응답 메시지 예제7
+2. OpenAPI 에러 코드정리8
+1. 서비스 명세
+1.1 공공데이터 오픈 API 조회 서비스
+가. API 서비스 개요
+
+<표>
+
+
+나. 상세기능 정보
+
+<표>
+
+다. 요청 메시지 명세
+
+<표>
+
+라. 응답 메시지 명세
+
+<표>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+마. 요청/응답 메시지 예제
+
+<표>
+
+
+
+
+
+
+2. OpenAPI 에러 코드정리
+2.1 공공데이터포털 에러코드
+
+<표>
+
+※공공데이터포털에서 출력되는 오류메세지는 XML로만 출력되며, 형태는 아래와 같습니다.
+<OpenAPI_ServiceResponse>
+<cmmMsgHeader>
+<errMsg>SERVICE ERROR</errMsg>
+<returnAuthMsg>SERVICE_KEY_IS_NOT_REGISTERED_ERROR</returnAuthMsg>
+<returnReasonCode>30</returnReasonCode>
+</cmmMsgHeader>
+</OpenAPI_ServiceResponse>
+
+2.2 제공기관 에러코드
+
+<표>

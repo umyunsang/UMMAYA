@@ -1,0 +1,1030 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "자외선지수, 대기정체지수 등의 정보를 조회할 수 있는 기상청 생활기상지수 조회 오픈API 서비스입니다. 계절별로 달라지는 기상 조건에 따른 체감 환경을 제공하여 시민 건강관리, 온열질환 예방, 야외활동 계획, 산업·행정 분야 정책 지원 등 다양한 활용이 가능합니다. 또한 학교, 지자체, 의료기관, 기업 등 다양한 기관에서 교육, 정책 수립, 연구, 생활 안전 서비스 개발에 참고할 수 있어 활용 가치가 높습니다. 특히 기상재해 대비, 국민 생활 안전 증진, 기후변화 대응 정책 마련에도 중요한 자료로 활용됩니다.",
+    "version": "1.0.0",
+    "title": "기상청_생활기상지수 조회서비스(3.0)"
+  },
+  "host": "apis.data.go.kr/1360000/LivingWthrIdxServiceV5",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getUVIdxV5": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "응답메시지 코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "응답메시지 내용",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "dataType": {
+                      "type": "string",
+                      "description": "데이터 타입",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "description": "지수코드",
+                              "properties": {}
+                            },
+                            "areaNo": {
+                              "type": "string",
+                              "description": "지점코드",
+                              "properties": {}
+                            },
+                            "date": {
+                              "type": "string",
+                              "description": "발표시간",
+                              "properties": {}
+                            },
+                            "h0": {
+                              "type": "string",
+                              "description": "0시 예측값",
+                              "properties": {}
+                            },
+                            "h3": {
+                              "type": "string",
+                              "description": "3시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h6": {
+                              "type": "string",
+                              "description": "6시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h9": {
+                              "type": "string",
+                              "description": "9시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h12": {
+                              "type": "string",
+                              "description": "12시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h15": {
+                              "type": "string",
+                              "description": "15시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h18": {
+                              "type": "string",
+                              "description": "18시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h21": {
+                              "type": "string",
+                              "description": "21시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h24": {
+                              "type": "string",
+                              "description": "24시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h27": {
+                              "type": "string",
+                              "description": "27시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h30": {
+                              "type": "string",
+                              "description": "30시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h33": {
+                              "type": "string",
+                              "description": "33시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h36": {
+                              "type": "string",
+                              "description": "36시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h39": {
+                              "type": "string",
+                              "description": "39시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h42": {
+                              "type": "string",
+                              "description": "42시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h45": {
+                              "type": "string",
+                              "description": "45시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h48": {
+                              "type": "string",
+                              "description": "48시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h51": {
+                              "type": "string",
+                              "description": "51시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h54": {
+                              "type": "string",
+                              "description": "54시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h57": {
+                              "type": "string",
+                              "description": "57시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h60": {
+                              "type": "string",
+                              "description": "60시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h63": {
+                              "type": "string",
+                              "description": "63시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h66": {
+                              "type": "string",
+                              "description": "66시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h69": {
+                              "type": "string",
+                              "description": "69시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h72": {
+                              "type": "string",
+                              "description": "72시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h75": {
+                              "type": "string",
+                              "description": "75시간 후 예측값",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 번호",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "NORMAL_SERVICE": {
+            "description": "정상"
+          },
+          "APPLICATION_ERROR": {
+            "description": "어플리케이션 에러"
+          },
+          "DB_ERROR": {
+            "description": "데이터베이스 에러"
+          },
+          "NODATA_ERROR": {
+            "description": "데이터 없음 에러"
+          },
+          "SERVICETIME_OUT": {
+            "description": "서비스 연결실패 에러"
+          },
+          "INVALID_REQUEST_PARAMETER_ERROR": {
+            "description": "잘못된 요청 파라메터 에러"
+          },
+          "NO_MANDATORY_REQUEST_PARAMETER_ERROR": {
+            "description": "필수요청 파라메타가 없음"
+          },
+          "UNKNOWN_ERROR": {
+            "description": "기타에러"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "자외선지수조회",
+        "description": "지점코드, 발표시간에 부터 3시간 단위로 최대 75시간 후 까지의 예측값을 조회하는 기능",
+        "operationId": "getUVIdxV5",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "ServiceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수 Default: 10",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "dataType",
+          "description": "요청자료형식(XML/JSON) Default: XML",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "areaNo",
+          "description": "서울지점 공백일때: 전체지점조회",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "time",
+          "description": "21년7월6일 18시 발표",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/getAirDiffusionIdxV5": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "응답메시지 코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "응답메시지 내용",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "dataType": {
+                      "type": "string",
+                      "description": "데이터 타입",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "h48": {
+                              "type": "string",
+                              "description": "48시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h51": {
+                              "type": "string",
+                              "description": "51시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h54": {
+                              "type": "string",
+                              "description": "54시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h57": {
+                              "type": "string",
+                              "description": "57시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h60": {
+                              "type": "string",
+                              "description": "60시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h63": {
+                              "type": "string",
+                              "description": "63시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h66": {
+                              "type": "string",
+                              "description": "66시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h69": {
+                              "type": "string",
+                              "description": "69시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h72": {
+                              "type": "string",
+                              "description": "72시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h75": {
+                              "type": "string",
+                              "description": "75시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h78": {
+                              "type": "string",
+                              "description": "78시간 후 예측값",
+                              "properties": {}
+                            },
+                            "code": {
+                              "type": "string",
+                              "description": "지수코드",
+                              "properties": {}
+                            },
+                            "areaNo": {
+                              "type": "string",
+                              "description": "지점코드",
+                              "properties": {}
+                            },
+                            "date": {
+                              "type": "string",
+                              "description": "발표시간",
+                              "properties": {}
+                            },
+                            "h3": {
+                              "type": "string",
+                              "description": "3시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h6": {
+                              "type": "string",
+                              "description": "6시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h9": {
+                              "type": "string",
+                              "description": "9시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h12": {
+                              "type": "string",
+                              "description": "12시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h15": {
+                              "type": "string",
+                              "description": "15시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h18": {
+                              "type": "string",
+                              "description": "18시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h21": {
+                              "type": "string",
+                              "description": "21시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h24": {
+                              "type": "string",
+                              "description": "24시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h27": {
+                              "type": "string",
+                              "description": "27시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h30": {
+                              "type": "string",
+                              "description": "30시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h33": {
+                              "type": "string",
+                              "description": "33시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h36": {
+                              "type": "string",
+                              "description": "36시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h39": {
+                              "type": "string",
+                              "description": "39시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h42": {
+                              "type": "string",
+                              "description": "42시간 후 예측값",
+                              "properties": {}
+                            },
+                            "h45": {
+                              "type": "string",
+                              "description": "45시간 후 예측값",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 번호",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "APPLICATION_ERROR": {
+            "description": "어플리케이션 에러"
+          },
+          "DB_ERROR": {
+            "description": "데이터베이스 에러"
+          },
+          "NODATA_ERROR": {
+            "description": "데이터 없음 에러"
+          },
+          "SERVICETIME_OUT": {
+            "description": "서비스 연결실패 에러"
+          },
+          "INVALID_REQUEST_PARAMETER_ERROR": {
+            "description": "잘못된 요청 파라메터 에러"
+          },
+          "NO_MANDATORY_REQUEST_PARAMETER_ERROR": {
+            "description": "필수요청 파라메타가 없음"
+          },
+          "UNKNOWN_ERROR": {
+            "description": "기타에러"
+          },
+          "NORMAL_SERVICE": {
+            "description": "정상"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "대기정체지수조회",
+        "description": "지점코드, 발표시간부터 3시간 단위로 78시간 후 까지의 예측값을 조회하는 기능",
+        "operationId": "getAirDiffusionIdxV5",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "ServiceKey",
+          "description": "공공데이터포털에서 발급받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "한 페이지 결과 수 Default: 10",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "dataType",
+          "description": "요청자료형식(XML/JSON) Default: XML",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "areaNo",
+          "description": "서울지점 공백일때: 전체지점조회",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "time",
+          "description": "‘21년7월6일 18시 발표",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getUVIdxV5_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "응답메시지 코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "응답메시지 내용"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "dataType": {
+              "type": "string",
+              "description": "데이터 타입"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "지수코드"
+                    },
+                    "areaNo": {
+                      "type": "string",
+                      "description": "지점코드"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "발표시간"
+                    },
+                    "h0": {
+                      "type": "string",
+                      "description": "0시 예측값"
+                    },
+                    "h3": {
+                      "type": "string",
+                      "description": "3시간 후 예측값"
+                    },
+                    "h6": {
+                      "type": "string",
+                      "description": "6시간 후 예측값"
+                    },
+                    "h9": {
+                      "type": "string",
+                      "description": "9시간 후 예측값"
+                    },
+                    "h12": {
+                      "type": "string",
+                      "description": "12시간 후 예측값"
+                    },
+                    "h15": {
+                      "type": "string",
+                      "description": "15시간 후 예측값"
+                    },
+                    "h18": {
+                      "type": "string",
+                      "description": "18시간 후 예측값"
+                    },
+                    "h21": {
+                      "type": "string",
+                      "description": "21시간 후 예측값"
+                    },
+                    "h24": {
+                      "type": "string",
+                      "description": "24시간 후 예측값"
+                    },
+                    "h27": {
+                      "type": "string",
+                      "description": "27시간 후 예측값"
+                    },
+                    "h30": {
+                      "type": "string",
+                      "description": "30시간 후 예측값"
+                    },
+                    "h33": {
+                      "type": "string",
+                      "description": "33시간 후 예측값"
+                    },
+                    "h36": {
+                      "type": "string",
+                      "description": "36시간 후 예측값"
+                    },
+                    "h39": {
+                      "type": "string",
+                      "description": "39시간 후 예측값"
+                    },
+                    "h42": {
+                      "type": "string",
+                      "description": "42시간 후 예측값"
+                    },
+                    "h45": {
+                      "type": "string",
+                      "description": "45시간 후 예측값"
+                    },
+                    "h48": {
+                      "type": "string",
+                      "description": "48시간 후 예측값"
+                    },
+                    "h51": {
+                      "type": "string",
+                      "description": "51시간 후 예측값"
+                    },
+                    "h54": {
+                      "type": "string",
+                      "description": "54시간 후 예측값"
+                    },
+                    "h57": {
+                      "type": "string",
+                      "description": "57시간 후 예측값"
+                    },
+                    "h60": {
+                      "type": "string",
+                      "description": "60시간 후 예측값"
+                    },
+                    "h63": {
+                      "type": "string",
+                      "description": "63시간 후 예측값"
+                    },
+                    "h66": {
+                      "type": "string",
+                      "description": "66시간 후 예측값"
+                    },
+                    "h69": {
+                      "type": "string",
+                      "description": "69시간 후 예측값"
+                    },
+                    "h72": {
+                      "type": "string",
+                      "description": "72시간 후 예측값"
+                    },
+                    "h75": {
+                      "type": "string",
+                      "description": "75시간 후 예측값"
+                    }
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 번호"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            }
+          }
+        }
+      }
+    },
+    "getAirDiffusionIdxV5_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "응답메시지 코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "응답메시지 내용"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "dataType": {
+              "type": "string",
+              "description": "데이터 타입"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "h48": {
+                      "type": "string",
+                      "description": "48시간 후 예측값"
+                    },
+                    "h51": {
+                      "type": "string",
+                      "description": "51시간 후 예측값"
+                    },
+                    "h54": {
+                      "type": "string",
+                      "description": "54시간 후 예측값"
+                    },
+                    "h57": {
+                      "type": "string",
+                      "description": "57시간 후 예측값"
+                    },
+                    "h60": {
+                      "type": "string",
+                      "description": "60시간 후 예측값"
+                    },
+                    "h63": {
+                      "type": "string",
+                      "description": "63시간 후 예측값"
+                    },
+                    "h66": {
+                      "type": "string",
+                      "description": "66시간 후 예측값"
+                    },
+                    "h69": {
+                      "type": "string",
+                      "description": "69시간 후 예측값"
+                    },
+                    "h72": {
+                      "type": "string",
+                      "description": "72시간 후 예측값"
+                    },
+                    "h75": {
+                      "type": "string",
+                      "description": "75시간 후 예측값"
+                    },
+                    "h78": {
+                      "type": "string",
+                      "description": "78시간 후 예측값"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "지수코드"
+                    },
+                    "areaNo": {
+                      "type": "string",
+                      "description": "지점코드"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "발표시간"
+                    },
+                    "h3": {
+                      "type": "string",
+                      "description": "3시간 후 예측값"
+                    },
+                    "h6": {
+                      "type": "string",
+                      "description": "6시간 후 예측값"
+                    },
+                    "h9": {
+                      "type": "string",
+                      "description": "9시간 후 예측값"
+                    },
+                    "h12": {
+                      "type": "string",
+                      "description": "12시간 후 예측값"
+                    },
+                    "h15": {
+                      "type": "string",
+                      "description": "15시간 후 예측값"
+                    },
+                    "h18": {
+                      "type": "string",
+                      "description": "18시간 후 예측값"
+                    },
+                    "h21": {
+                      "type": "string",
+                      "description": "21시간 후 예측값"
+                    },
+                    "h24": {
+                      "type": "string",
+                      "description": "24시간 후 예측값"
+                    },
+                    "h27": {
+                      "type": "string",
+                      "description": "27시간 후 예측값"
+                    },
+                    "h30": {
+                      "type": "string",
+                      "description": "30시간 후 예측값"
+                    },
+                    "h33": {
+                      "type": "string",
+                      "description": "33시간 후 예측값"
+                    },
+                    "h36": {
+                      "type": "string",
+                      "description": "36시간 후 예측값"
+                    },
+                    "h39": {
+                      "type": "string",
+                      "description": "39시간 후 예측값"
+                    },
+                    "h42": {
+                      "type": "string",
+                      "description": "42시간 후 예측값"
+                    },
+                    "h45": {
+                      "type": "string",
+                      "description": "45시간 후 예측값"
+                    }
+                  }
+                }
+              }
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 번호"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "http://newsky3.kma.go.kr/openAPI/LivingWthrIdxServiceV3/getAirDiffusionIdxV3",
+      "oprtinNm": "대기정체지수조회",
+      "oprtinDc": "지점코드, 발표시간부터 3시간 단위로 78시간 후 까지의 예측값을 조회하는 기능",
+      "gwSvcNm": "getAirDiffusionIdxV4",
+      "operationId": "getAirDiffusionIdxV4",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "ServiceKey",
+          "paramtrDc": "공공데이터포털에서 발급받은 인증키",
+          "paramtrBassValue": "인증키",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "pageNo",
+          "paramtrDc": "한 페이지 결과 수 Default: 10",
+          "paramtrBassValue": "10",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "numOfRows",
+          "paramtrDc": "한 페이지 결과 수",
+          "paramtrBassValue": "10",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "dataType",
+          "paramtrDc": "요청자료형식(XML/JSON) Default: XML",
+          "paramtrBassValue": "XML",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "areaNo",
+          "paramtrDc": "서울지점 공백일때: 전체지점조회",
+          "paramtrBassValue": "1100000000",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "time",
+          "paramtrDc": "‘21년7월6일 18시 발표",
+          "paramtrBassValue": "2021070618",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "paramtrDefNm": "#/definitions/header_getAirDiffusionIdxV3",
+          "subDefNm": "header_getAirDiffusionIdxV3",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "paramtrDefNm": "#/definitions/body_getAirDiffusionIdxV3",
+          "subDefNm": "body_getAirDiffusionIdxV3",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true
+        }
+      ]
+    }
+  ]
+}

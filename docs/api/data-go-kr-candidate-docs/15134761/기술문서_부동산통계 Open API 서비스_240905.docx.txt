@@ -1,0 +1,244 @@
+부동산통계 Open API 활용가이드
+1. 서비스 명세    - 1 -
+1.1 부동산통계 API 서비스    - 1 -
+가. API 서비스 개요    - 1 -
+나. 코드명세    - 2 -
+다. 상세기능 목록    - 4 -
+라. 상세기능내역    - 5 -
+1) 서비스 통계목록    - 5 -
+2) 통계 세부항목 목록    - 8 -
+3) 통계 조회 조건 설정    - 11 -
+2. 활용방법    - 15 -
+1) 인증키 발급    - 15 -
+2) 통계표코드 확인    - 16 -
+3) 서비스 통계목록 조회    - 17 -
+4) 통계 세부항목 목록 조회    - 18 -
+5) 통계 조회 조건 설정 조회    - 20 -
+3. OpenAPI 에러 및 정보    - 22 -
+1. 서비스 명세
+1.1 부동산통계 API 서비스
+ API 서비스 개요
+코드명세
+통계코드
+아래URL에서 각 통계표 별 사용되는 코드를 조회할 수 있으니 참고하시기 바랍니다.
+(https://www.reb.or.kr/r-one/portal/openapi/openApiGuideCdPage.do)
+통계 세부항목 목록 – 항목정보
+통계표마다 사용되는 항목정보는 상이하므로 통계코드 미리 확인 필요
+서비스 통계목록, 통계 조회 조건 설정 - 주기코드
+통계 조회 조건 설정 - 자료작성시점
+상세기능 목록
+상세기능내역
+서비스 통계목록
+상세기능 정보
+기본인자
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+
+요청인자
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+출력값(Out Result)
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+통계 세부항목 목록
+상세기능 정보
+기본인자
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청인자
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+출력값(Out Result)
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+통계 조회 조건 설정
+상세기능 정보
+기본인자
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청인자
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+출력값(Out Result)
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+활용방법
+인증키 발급 (※ 로그인 필수)
+R-ONE → Open API → 인증키 발급내역 → 인증키발급 → ‘인증키 발급요청’
+(https://www.reb.or.kr/r-one/portal/openapi/openApiActKeyPage.do)
+통계표코드 확인
+R-ONE → Open API → 통계코드 검색
+(https://www.reb.or.kr/r-one/portal/openapi/openApiGuideCdPage.do)
+조회를 원하는 ‘통계표코드’ 확인
+서비스 통계목록 조회
+(필수) 위에서 찾은 통계표ID를 요청인자(STATBL_ID) 값에 입력하여 ‘서비스 통계목록’ 조회
+통계 세부항목 목록 조회
+(STATBL_ID) 값에 입력하여 ‘통계 세부항목 목록’ 조회
+(선택) 필요에 따라 요청인자(ITM_TAG)로 입력
+그룹/분류/항목(‘통계코드 검색’에서도 확인 가능)
+각 요청인자(ITM_TAG)에 해당하는 항목ID(ITM_ID) 및 항목명(ITM_NM)은 아래 URL에서 조회 가능
+https://www.reb.or.kr/r-one/portal/openapi/openApiGuideCdPage.do
+통계 조회 조건 설정 조회
+(필수) 통계표ID를 요청인자(STATBL_ID) 값에 입력
+(필수) ‘서비스 통계목록’에서 조회한 주기코드를 요청인자(DTACYCLE_CD) 값에 입력
+(선택) 필요에 따라 요청인자(WRTTIME_IDTFR_ID) 값 입력
+주기코드(DTACYCLE_CD) 값에 따라, 자료작성 시점(WRTTIME_IDTFR_ID) 입력 값 상이
+(선택) 필요에 따라 요청인자(GRP_ID/CLS_ID/ITM_ID) 값 입력
+각 요청인자에 해당하는 ID는 아래 URL에서 조회 가능
+https://www.reb.or.kr/r-one/portal/openapi/openApiGuideCdPage.do
+(선택) 필요에 따라 요청인자(START_WRTTIME/END_WRTTIME) 값 입력
+주기코드(DTACYCLE_CD) 값에 따라, 자료작성 시점 시작일/종료일 입력 값 상이
+OpenAPI 에러 및 정보
+API 서비스 정보    API명(영문)    https://www.reb.or.kr/r-one/openapi    https://www.reb.or.kr/r-one/openapi    https://www.reb.or.kr/r-one/openapi
+API 서비스 정보    API명(국문)    부동산통계 API 서비스    부동산통계 API 서비스    부동산통계 API 서비스
+API 서비스 정보    API 설명    부동산통계 정보에 대한 Open API 서비스를 제공합니다. / 부동산통계 Open API는 부동산통계 정보를 보다 편리하게 활용할 수 있도록 외부에 공개하는 인터페이스 입니다. / Open API를 실시간 연계하여 웹 또는 모바일 앱 등으로 다양하게 활용하실 수 있습니다.    부동산통계 정보에 대한 Open API 서비스를 제공합니다. / 부동산통계 Open API는 부동산통계 정보를 보다 편리하게 활용할 수 있도록 외부에 공개하는 인터페이스 입니다. / Open API를 실시간 연계하여 웹 또는 모바일 앱 등으로 다양하게 활용하실 수 있습니다.    부동산통계 정보에 대한 Open API 서비스를 제공합니다. / 부동산통계 Open API는 부동산통계 정보를 보다 편리하게 활용할 수 있도록 외부에 공개하는 인터페이스 입니다. / Open API를 실시간 연계하여 웹 또는 모바일 앱 등으로 다양하게 활용하실 수 있습니다.
+API 서비스 / 보안적용 / 기술 수준    서비스 인증/권한    [O] ServiceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] ServiceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] ServiceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음
+API 서비스 / 보안적용 / 기술 수준    메시지 레벨 / 암호화    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    전송 레벨 암호화    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    인터페이스 표준    [ ] SOAP 1.2(RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2(RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2(RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타
+API 서비스 / 보안적용 / 기술 수준    교환 데이터 표준 / (중복선택가능)    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM
+API 서비스 / 배포정보    서비스 URL    https://www.reb.or.kr/r-one/openapi/서비스명?KEY=인증키    https://www.reb.or.kr/r-one/openapi/서비스명?KEY=인증키    https://www.reb.or.kr/r-one/openapi/서비스명?KEY=인증키
+API 서비스 / 배포정보    서비스 명세 URL / (WSDL 또는WADL)    https://www.reb.or.kr/r-one/portal/openapi/ openApiDevPage.do    https://www.reb.or.kr/r-one/portal/openapi/ openApiDevPage.do    https://www.reb.or.kr/r-one/portal/openapi/ openApiDevPage.do
+API 서비스 / 배포정보    서비스 버전    1.0    1.0    1.0
+API 서비스 / 배포정보    서비스 시작일    2024-08-27    서비스 배포일    2024-08-27
+API 서비스 / 배포정보    서비스 이력    2024-08-27서비스 오픈    2024-08-27서비스 오픈    2024-08-27서비스 오픈
+API 서비스 / 배포정보    메시지 교환유형    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification
+API 서비스 / 배포정보    서비스 제공자    한국부동산원    한국부동산원    한국부동산원
+API 서비스 / 배포정보    데이터 갱신주기    실시간(통계 별 갱신주기 상이)    실시간(통계 별 갱신주기 상이)    실시간(통계 별 갱신주기 상이)
+API 서비스 / 배포정보    문의처    (기술지원) tkeh0868@gmail.com / freelabmjk@gmail.com    (기술지원) tkeh0868@gmail.com / freelabmjk@gmail.com    (기술지원) tkeh0868@gmail.com / freelabmjk@gmail.com
+순번    항목정보
+1    그룹
+2    분류
+3    항목
+순번    주기구분    코드
+1    년    YY
+2    반기    HY
+3    분기    QY
+4    월    MM
+5    주    WK
+순번    주기구분    코드 예시
+1    년(YY)    2022
+2    반기(HY)    202301~202302 (23년 상반기, 하반기)
+3    분기(QY)    202301 ~ 202304 (23년 1분기~4분기)
+4    월(MM)    202301 ~ 202312 (23년 1월~12월)
+5    주(WK)    202301~202353 (23년 1주~53주)
+번호    API명(국문)    상세기능명(영문)    상세기능명(국문)
+1    부동산통계 API 서비스    https://www.reb.or.kr/r-one/openapi/SttsApiTbl.do    서비스 통계목록
+2    부동산통계 API 서비스    https://www.reb.or.kr/r-one/openapi/SttsApiTblItm.do    통계 세부항목 목록
+3    부동산통계 API 서비스    https://www.reb.or.kr/r-one/openapi/SttsApiTblData.do    통계 조회 조건 설정
+상세기능 번호    1    상세기능 유형    조회
+상세기능명(국문)    서비스 통계목록    서비스 통계목록    서비스 통계목록
+상세기능 설명    OpenAPI 대상 통계목록을 제공합니다.    OpenAPI 대상 통계목록을 제공합니다.    OpenAPI 대상 통계목록을 제공합니다.
+항목명(영문)    항목명(국문)    항목구분    샘플데이터    항목설명
+KEY    인증키    1    본인 인증키    인증키 / (기본값 : sample key)
+Type    호출문서    1    xml    호출문서(xml, json) / (기본값 : xml)
+pIndex    페이지 위치    1    1    페이지 위치 / (기본값 : 1, / sample key는 1 고정)
+pSize    페이지 당   요청 숫자    1    100    페이지 당 요청 숫자 / (기본값 : 100, / sample key는 5 고정)
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+STATBL_ID    통계표ID    50    0    A_2024_00900    통계표ID
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+STATBL_ID    통계표ID    50    0    A_2024_00900    통계표ID
+STATBL_NM    통계표명    300    0    (연) 지역별 지가지수    통계표명
+DTACYCLE_CD    주기코드    11    0    YY    주기코드
+DTACYCLE_NM    주기명    15    0    매년    주기명
+STAT_ID    통계메타ID    50    0    S227720243    통계메타ID
+TOP_ORG_NM    제공기관    500    0    한국부동산원    제공기관
+OPEN_STATE    공개여부    1    0    Y    공개여부
+DATA_START_YY    통계자료 시작년도    4    0    1987    통계자료 시작년도
+DATA_END_YY    통계자료 종료년도    4    0    2023    통계자료 종료년도
+STATBL_IDTFR    통계표주석 식별자    10    0    -    통계표주석 식별자
+STATBL_CMMT    통계표 주석    4000    0    ※조사ㆍ통계문의 : 부동산통계처 토지통계부(053-663-8547,545)    통계표 주석
+V_ORDER    출력순서    10    0    304001    출력순서
+요청메시지
+https://www.reb.or.kr/r-one/openapi/SttsApiTbl.do?KEY=인증키&STATBL_ID=A_2024_00900
+응답 메시지
+<SttsApiTbl> / <head> / <list_total_count>1</list_total_count> / <RESULT> / <CODE>INFO-000</CODE> / <MESSAGE>정상 처리되었습니다.</MESSAGE> / </RESULT> / </head> / <row> / <STATBL_ID>A_2024_00900</STATBL_ID> / <STATBL_NM>(연) 지역별 지가지수</STATBL_NM> / <DTACYCLE_CD>YY</DTACYCLE_CD> / <DTACYCLE_NM>매년</DTACYCLE_NM> / <STAT_ID>S227720243</STAT_ID> / <TOP_ORG_NM>한국부동산원</TOP_ORG_NM> / <OPEN_STATE>Y</OPEN_STATE> / <DATA_START_YY>1987</DATA_START_YY> / <DATA_END_YY>2023</DATA_END_YY> / <STATBL_IDTFR/> / <STATBL_CMMT>※조사ㆍ통계문의 : 부동산통계처 토지통계부(053-663-8547,545)</STATBL_CMMT> / <V_ORDER>304001</V_ORDER> / </row> / </SttsApiTbl>
+상세기능 번호    2    상세기능 유형    조회
+상세기능명(국문)    통계 세부항목 목록    통계 세부항목 목록    통계 세부항목 목록
+상세기능 설명    서비스 대상 통계의 세부 통계 항목(그룹/분류/항목)을 제공합니다.    서비스 대상 통계의 세부 통계 항목(그룹/분류/항목)을 제공합니다.    서비스 대상 통계의 세부 통계 항목(그룹/분류/항목)을 제공합니다.
+항목명(영문)    항목명(국문)    항목구분    샘플데이터    항목설명
+KEY    인증키    1    본인 인증키    인증키 / (기본값 : sample key)
+Type    호출문서    1    xml    호출문서(xml, json) / (기본값 : xml)
+pIndex    페이지 위치    1    1    페이지 위치 / (기본값 : 1, / sample key는 1 고정)
+pSize    페이지 당   요청 숫자    1    100    페이지 당 요청 숫자 / (기본값 : 100, / sample key는 5 고정)
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+STATBL_ID    통계표ID    50    1    A_2024_00900    통계표ID
+ITM_TAG    항목정보    5    0    분류    항목정보 / (그룹 : 통계표그룹, / 분류 : 통계표분류, / 항목 : 통계표항목)
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+STATBL_ID    통계표ID    50    1    A_2024_00900    통계표ID
+ITM_TAG    항목정보    5    0    분류    항목정보
+ITM_ID    항목ID    8    0    500001    항목ID
+PAR_ITM_ID    상위항목ID    8    0    0    상위항목ID
+ITM_NM    항목명    100    0    전국    항목명
+ITM_FULLNM    항목전체명    500    0    전국    항목전체명
+UI_NM    단위명    100    0    -    단위명
+ITM_CMMT_IDTFR    항목 주석 식별자    10    0    -    항목 주석 식별자
+ITM_CMMT_CONT    항목 주석    2000    0    -    항목 주석
+V_ORDER    출력순서    8    0    1    출력순서
+요청메시지
+https://www.reb.or.kr/r-one/openapi/SttsApiTblItm.do?KEY=인증키&STATBL_ID=A_2024_00900&ITM_TAG=분류
+응답 메시지
+<SttsApiTblItm> / <head> / <list_total_count>5476</list_total_count> / <RESULT> / <CODE>INFO-000</CODE> / <MESSAGE>정상 처리되었습니다.</MESSAGE> / </RESULT> / </head> / <row> / <STATBL_ID>A_2024_00900</STATBL_ID> / <ITM_TAG>분류</ITM_TAG> / <ITM_ID>500001</ITM_ID> / <PAR_ITM_ID>0</PAR_ITM_ID> / <ITM_NM>전국</ITM_NM> / <ITM_FULLNM>전국</ITM_FULLNM> / <UI_NM/> / <ITM_CMMT_IDTFR/> / <ITM_CMMT_CONT/> / <V_ORDER>1</V_ORDER> / </row> / <row> / <STATBL_ID>A_2024_00900</STATBL_ID> / <ITM_TAG>분류</ITM_TAG> / <ITM_ID>500002</ITM_ID> / <PAR_ITM_ID>0</PAR_ITM_ID> / <ITM_NM>수도권</ITM_NM> / <ITM_FULLNM>수도권</ITM_FULLNM> / <UI_NM/> / <ITM_CMMT_IDTFR/> / <ITM_CMMT_CONT/> / <V_ORDER>2</V_ORDER> / </row> / </SttsApiTblItm>
+상세기능 번호    3    상세기능 유형    조회
+상세기능명(국문)    통계 조회 조건 설정    통계 조회 조건 설정    통계 조회 조건 설정
+상세기능 설명    데이터 이용을 위한 조회조건 설정방법(통계코드, 통계명, 세부 항목명, 기간 등)을 제공합니다.    데이터 이용을 위한 조회조건 설정방법(통계코드, 통계명, 세부 항목명, 기간 등)을 제공합니다.    데이터 이용을 위한 조회조건 설정방법(통계코드, 통계명, 세부 항목명, 기간 등)을 제공합니다.
+항목명(영문)    항목명(국문)    항목구분    샘플데이터    항목설명
+KEY    인증키    1    본인 인증키    인증키 / (기본값 : sample key)
+Type    호출문서    1    xml    호출문서(xml, json) / (기본값 : xml)
+pIndex    페이지 위치    1    1    페이지 위치 / (기본값 : 1, / sample key는 1 고정)
+pSize    페이지 당   요청 숫자    1    100    페이지 당 요청 숫자 / (기본값 : 100, / sample key는 5 고정)
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+STATBL_ID    통계표ID    50    1    A_2024_00900    통계표ID
+DTACYCLE_CD    주기코드    50    1    YY    주기코드 / (‘서비스 통계목록’에서 각 통계표에 대한 주기코드 확인 가능)
+WRTTIME_IDTFR_ID    자료작성 시점    8    0    -    자료작성 시점
+GRP_ID    그룹ID    8    0    -    그룹ID
+CLS_ID    분류ID    8    0    510008    분류ID
+ITM_ID    항목ID    8    0    -    항목ID
+START_WRTTIME    자료작성 시점 시작일    8    0    2022    자료작성 시점 시작일
+END_WRTTIME    자료작성 시점 / 종료일    8    0    2023    자료작성 시점 / 종료일
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+STATBL_ID    통계표ID    50    1    A_2024_00900    통계표ID
+DTACYCLE_CD    주기코드    50    1    YY    주기코드
+WRTTIME_IDTFR_ID    자료작성 시점    8    0    2022    자료작성 시점
+GRP_ID    그룹ID    8    0    -    그룹ID
+GRP_NM    그룹명    300    0    -    그룹명
+CLS_ID    분류ID    8    0    510008    분류ID
+CLS_NM    분류명    300    0    종로구    분류명
+ITM_ID    항목ID    8    0    100001    항목ID
+ITM_NM    항목명    300    0    지수    항목명
+DTA_VAL    통계 자료값    22    0    99.176    통계 자료값
+UI_NM    단위명    100    0    지수    단위명
+GRP_FULLNM    그룹전체명    1000    0    -    그룹전체명
+CLS_FULLNM    분류전체명    1000    0    서울>종로구    분류전체명
+ITM_FULLNM    항목전체명    1000    0    지수    항목전체명
+요청메시지
+https://www.reb.or.kr/r-one/openapi/SttsApiTblData.do?KEY=인증키&STATBL_ID=A_2024_00900&DTACYCLE_CD=YY&CLS_ID=510008&START_WRTTIME=2022&END_WRTTIME=2023
+응답 메시지
+<SttsApiTblData> / <head> / <list_total_count>2</list_total_count> / <RESULT> / <CODE>INFO-000</CODE> / <MESSAGE>정상 처리되었습니다.</MESSAGE> / </RESULT> / </head> / <row> / <STATBL_ID>A_2024_00900</STATBL_ID> / <DTACYCLE_CD>YY</DTACYCLE_CD> / <WRTTIME_IDTFR_ID>2022</WRTTIME_IDTFR_ID> / <GRP_ID/> / <GRP_NM/> / <CLS_ID>510008</CLS_ID> / <CLS_NM>종로구</CLS_NM> / <ITM_ID>100001</ITM_ID> / <ITM_NM>지수</ITM_NM> / <DTA_VAL>99.176</DTA_VAL> / <UI_NM>지수</UI_NM> / <GRP_FULLNM/> / <CLS_FULLNM>서울>종로구</CLS_FULLNM> / <ITM_FULLNM>지수</ITM_FULLNM> / </row> / <row> / <STATBL_ID>A_2024_00900</STATBL_ID> / <DTACYCLE_CD>YY</DTACYCLE_CD> / <WRTTIME_IDTFR_ID>2023</WRTTIME_IDTFR_ID> / <GRP_ID/> / <GRP_NM/> / <CLS_ID>510008</CLS_ID> / <CLS_NM>종로구</CLS_NM> / <ITM_ID>100001</ITM_ID> / <ITM_NM>지수</ITM_NM> / <DTA_VAL>100</DTA_VAL> / <UI_NM>지수</UI_NM> / <GRP_FULLNM/> / <CLS_FULLNM>서울>종로구</CLS_FULLNM> / <ITM_FULLNM>지수</ITM_FULLNM> / </row> / </SttsApiTblData>
+요청메시지
+https://www.reb.or.kr/r-one/openapi/SttsApiTbl.do?KEY=인증키&STATBL_ID=A_2024_00900
+응답 메시지
+요청메시지
+https://www.reb.or.kr/r-one/openapi/SttsApiTblItm.do?KEY=인증키&STATBL_ID=A_2024_00900&ITM_TAG=분류
+응답 메시지
+DTACYCLE_CD / (주기코드)    WRTTIME_IDTFR_ID / (자료작성 시점) / =    START_WRTTIME / (자료작성 시점 시작일) / <=    END_WRTTIME / (자료작성 시점 종료일) / >=
+YY / (년도)    (ex. 2022, 2023)    2022    2024
+YY / (년도)    (ex. 2022, 2023)    2022년 ~ 2024년 데이터 조회    2022년 ~ 2024년 데이터 조회
+HY / (반기)    (ex. 202301, 202302 / (23년 상반기, 23년 하반기))    202301    202401
+HY / (반기)    (ex. 202301, 202302 / (23년 상반기, 23년 하반기))    23년 상반기 ~ 24년 상반기 데이터 조회    23년 상반기 ~ 24년 상반기 데이터 조회
+QY / (분기)    (ex. 202301, 202304 / (23년 1분기, 23년 4분기))    202301    202303
+QY / (분기)    (ex. 202301, 202304 / (23년 1분기, 23년 4분기))    23년 1분기 ~ 23년 3분기 데이터 조회    23년 1분기 ~ 23년 3분기 데이터 조회
+MM / (월)    (ex. 202301, 202312 / (23년 1월, 23년 12월))    202301    202306
+MM / (월)    (ex. 202301, 202312 / (23년 1월, 23년 12월))    23년 1월 ~ 23년 6월 데이터 조회    23년 1월 ~ 23년 6월 데이터 조회
+WK / ㈜    (ex. 202301, 202353 / (23년 1주, 23년 53주))    202301    202320
+WK / ㈜    (ex. 202301, 202353 / (23년 1주, 23년 53주))    23년 1주 ~ 23년 20주 데이터 조회    23년 1주 ~ 23년 20주 데이터 조회
+요청메시지
+https://www.reb.or.kr/r-one/openapi/SttsApiTblData.do?KEY=인증키&STATBL_ID=A_2024_00900&DTACYCLE_CD=YY&CLS_ID=510008&START_WRTTIME=2022&END_WRTTIME=2023
+응답 메시지
+구분    코드    설명
+ERROR    300    필수 값이 누락되어 있습니다. 요청인자를 참고 하십시오.
+ERROR    290    인증키가 유효하지 않습니다. 인증키가 없는 경우, 홈페이지에서 인증키를 신청하십시오.
+ERROR    336    데이터요청은 한번에 최대 1,000건을 넘을 수 없습니다.
+ERROR    337    일별 트래픽 제한을 넘은 호출입니다. 오늘은 더이상 호출할 수 없습니다.
+ERROR    333    요청위치 값의 타입이 유효하지 않습니다.요청위치 값은 정수를 입력하세요.
+ERROR    310    해당하는 서비스를 찾을 수 없습니다. 요청인자 중 SERVICE를 확인하십시오.
+ERROR    500    서버 오류입니다. 지속적으로 발생시 홈페이지로 문의(Q&A) 바랍니다.
+ERROR    600    데이터베이스 연결 오류입니다. 지속적으로 발생시 홈페이지로 문의(Q&A) 바랍니다.
+ERROR    601    SQL 문장 오류 입니다. 지속적으로 발생시 홈페이지로 문의(Q&A) 바랍니다.
+INFO    000    정상 처리되었습니다.
+INFO    300    관리자에 의해 인증키 사용이 제한되었습니다.
+INFO    200    해당하는 데이터가 없습니다.

@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "국토교통부_마이홈포털 공공주택 모집공고 조회 서비스",
+  "description": "국토교통부에서 제공하는 마이홈포털 공공임대주택 모집공고 조회 서비스입니다. 오퍼레이션 파라미터를 기준으로 공공임대주택 모집공고 조회하는 서비스 (유의)조회하는 시점에 따라 ‘응답 메시지’가 달라질 수 있습니다. API는 활용신청을 통해 받은 인증키를 사용하여 접속할 수 있습니다. 데이터는 시도 등의 지역 정보를 포함하고 있으며, 공공임대주택 정보를 제공하고 있습니다. 공공임대주택으로는 국민임대, 영구임대, 행복주택 등의 유형을 구분하여 제공중입니다. 자세한 파라미터는 참고문서 파일을 참고해주십시오.",
+  "url": "https://data.go.kr/data/15108420/openapi.do",
+  "keywords": [
+    "주거복지,공공임대주택,모집공고,임대주택공급정보,국민임대공고안내,행복주택공고안내,영구임대공고안내,통합공공임대공고안내"
+  ],
+  "license": "https://data.go.kr/ugs/selectPortalPolicyView.do",
+  "creator": {
+    "@type": "Organization",
+    "name": "국토교통부",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "청년주거정책과",
+      "telephone": "+82-0442013630"
+    }
+  },
+  "dateCreated": "2022-11-25",
+  "dateModified": "2026-04-08",
+  "datePublished": "2022-11-25",
+  "includedInDataCatalog": {
+    "@type": "DataCatalog",
+    "name": "data.go.kr"
+  },
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "JSON",
+      "contentUrl": "https://data.go.kr/data/15108420/openapi.do"
+    }
+  ],
+  "datasetTimeInterval": "실시간"
+}

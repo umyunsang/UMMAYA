@@ -1,0 +1,257 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "대구광역시상수도사업본부 수질정보(수질통계)를 조회하기 위한 서비스로 수질정보(수질통계)를 조회할 수 있습니다. 수질정보조회 서비스 API는 대구광역시 상수도사업본부에서 제공하는 공공데이터 API로, 사용자가 연도를 입력하면 해당 연도의 1월부터 12월까지 월별 수질 측정 정보를 조회할 수 있습니다. 제공되는 수질 항목은 탁도, pH, 잔류염소이며, 매곡, 문산, 공산, 고산, 가창 등 대구 지역 주요 정수장의 데이터를 포함합니다. 이 API는 수돗물의 수질 변화 추이 분석, 정수장별 수질 관리 현황 파악, 시민 대상 수질 정보 제공 서비스 구축 등에 활용될 수 있으며, 상수도 품질 관리 및 환경 모니터링에 중요한 자료를 제공합니다.",
+    "version": "1.0.0",
+    "title": "대구광역시_수질정보 조회 서비스_GW"
+  },
+  "host": "apis.data.go.kr/6270000/openData",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/WtrQuality": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rsMsg": {
+                  "type": "object",
+                  "description": "결과정보",
+                  "properties": {
+                    "statusCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "header": {
+                  "type": "string",
+                  "description": "항목구분",
+                  "properties": {}
+                },
+                "list": {
+                  "type": "object",
+                  "description": "목록",
+                  "properties": {
+                    "m12": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 12월 데이터",
+                      "properties": {}
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "정수장명",
+                      "properties": {}
+                    },
+                    "codenm": {
+                      "type": "string",
+                      "description": "구분",
+                      "properties": {}
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "항목",
+                      "properties": {}
+                    },
+                    "m1": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 1월 데이터",
+                      "properties": {}
+                    },
+                    "m2": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 2월 데이터",
+                      "properties": {}
+                    },
+                    "m3": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 3월 데이터",
+                      "properties": {}
+                    },
+                    "m4": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 4월 데이터",
+                      "properties": {}
+                    },
+                    "m5": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 5월 데이터",
+                      "properties": {}
+                    },
+                    "m6": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 6월 데이터",
+                      "properties": {}
+                    },
+                    "m7": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 7월 데이터",
+                      "properties": {}
+                    },
+                    "m8": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 8월 데이터",
+                      "properties": {}
+                    },
+                    "m9": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 9월 데이터",
+                      "properties": {}
+                    },
+                    "m10": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 10월 데이터",
+                      "properties": {}
+                    },
+                    "m11": {
+                      "type": "string",
+                      "description": "정수장 및 항목에 따른 11월 데이터",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "수질통계정보 조회",
+        "description": "수질통계정보 조회를 제공하는 서비스",
+        "operationId": "WtrQuality",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "searchDate",
+          "description": "년도",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "WtrQuality_response": {
+      "type": "object",
+      "properties": {
+        "rsMsg": {
+          "type": "object",
+          "description": "결과정보",
+          "properties": {
+            "statusCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "message": {
+              "type": "string",
+              "description": "결과메시지"
+            }
+          }
+        },
+        "header": {
+          "type": "string",
+          "description": "항목구분"
+        },
+        "list": {
+          "type": "object",
+          "description": "목록",
+          "properties": {
+            "m12": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 12월 데이터"
+            },
+            "name": {
+              "type": "string",
+              "description": "정수장명"
+            },
+            "codenm": {
+              "type": "string",
+              "description": "구분"
+            },
+            "type": {
+              "type": "string",
+              "description": "항목"
+            },
+            "m1": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 1월 데이터"
+            },
+            "m2": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 2월 데이터"
+            },
+            "m3": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 3월 데이터"
+            },
+            "m4": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 4월 데이터"
+            },
+            "m5": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 5월 데이터"
+            },
+            "m6": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 6월 데이터"
+            },
+            "m7": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 7월 데이터"
+            },
+            "m8": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 8월 데이터"
+            },
+            "m9": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 9월 데이터"
+            },
+            "m10": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 10월 데이터"
+            },
+            "m11": {
+              "type": "string",
+              "description": "정수장 및 항목에 따른 11월 데이터"
+            }
+          }
+        }
+      }
+    }
+  }
+}

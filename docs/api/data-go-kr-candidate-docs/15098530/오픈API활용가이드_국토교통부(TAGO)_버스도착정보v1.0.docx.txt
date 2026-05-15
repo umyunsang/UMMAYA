@@ -1,0 +1,162 @@
+공공데이터 오픈API 활용가이드
+1. 서비스 명세    3
+1.1 버스도착정보조회 서비스    3
+가. API 서비스 개요    3
+나. 상세기능 목록    4
+다. 상세기능내역    4
+1) [정류소별도착예정정보 목록 조회] 상세기능명세    4
+2) [정류소별특정노선버스 도착예정정보 목록조회] 상세기능명세    6
+3) [도시코드 목록 조회] 상세기능명세    8
+2. OpenAPI 에러 코드정리    10
+2-1 공공데이터 포털 에러코드    10
+2-2 제공기관 에러코드    10
+1. 서비스 명세
+1.1 버스도착정보조회 서비스
+가. API 서비스 개요
+나. 상세기능 목록
+다. 상세기능내역
+1) [정류소별도착예정정보 목록 조회] 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+d) 요청/응답 메시지 예제
+2) [정류소별특정노선버스 도착예정정보 목록조회] 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+d) 요청/응답 메시지 예제
+3) [도시코드 목록 조회] 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+d) 요청/응답 메시지 예제
+2. OpenAPI 에러 코드정리
+2-1 공공데이터 포털 에러코드
+공공데이터포털에서 출력되는 오류메세지는 XML로만 출력되며, 형태는 아래와 같습니다.
+<OpenAPI_ServiceResponse>
+<cmmMsgHeader>
+<errMsg>SERVICE ERROR</errMsg>
+<returnAuthMsg>SERVICE_KEY_IS_NOT_REGISTERED_ERROR</returnAuthMsg>
+<returnReasonCode>30</returnReasonCode>
+</cmmMsgHeader>
+</OpenAPI_ServiceResponse>
+2-2 제공기관 에러코드
+API 서비스 정보    API명(영문)    ArvlInfoInqireService    ArvlInfoInqireService    ArvlInfoInqireService
+API 서비스 정보    API명(국문)    버스도착정보조회 서비스    버스도착정보조회 서비스    버스도착정보조회 서비스
+API 서비스 정보    API 설명    정류소를 기준으로 현재 운행중인 버스의 도착예정정보를 조회하는 도착정보조회 서비스    정류소를 기준으로 현재 운행중인 버스의 도착예정정보를 조회하는 도착정보조회 서비스    정류소를 기준으로 현재 운행중인 버스의 도착예정정보를 조회하는 도착정보조회 서비스
+API 서비스 / 보안적용 / 기술 수준    서비스 인증/권한    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음
+API 서비스 / 보안적용 / 기술 수준    메시지 레벨 / 암호화    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    전송 레벨 암호화    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    인터페이스 표준    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타
+API 서비스 / 보안적용 / 기술 수준    교환 데이터 표준 / (중복선택가능)    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM
+API 서비스 / 배포정보    서비스 URL    http://apis.data.go.kr/1613000/ArvlInfoInqireService    http://apis.data.go.kr/1613000/ArvlInfoInqireService    http://apis.data.go.kr/1613000/ArvlInfoInqireService
+API 서비스 / 배포정보    서비스 명세 URL / (WSDL 또는 WADL)    http://apis.data.go.kr/1613000/ArvlInfoInqireService?_wadl&_type=xml    http://apis.data.go.kr/1613000/ArvlInfoInqireService?_wadl&_type=xml    http://apis.data.go.kr/1613000/ArvlInfoInqireService?_wadl&_type=xml
+API 서비스 / 배포정보    서비스 버전    1.0    1.0    1.0
+API 서비스 / 배포정보    서비스 시작일    2013-12-09    서비스 배포일    2013-12-09
+API 서비스 / 배포정보    서비스 이력    2013-12-09 : 서비스 시작 / 2022-02-01 : GW 서비스 전환    2013-12-09 : 서비스 시작 / 2022-02-01 : GW 서비스 전환    2013-12-09 : 서비스 시작 / 2022-02-01 : GW 서비스 전환
+API 서비스 / 배포정보    메시지 교환유형    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification
+API 서비스 / 배포정보    서비스 제공자    우재영 / 모빌리티플랫폼처 / 054-459-7906 / crich0522@kotsa.or.kr    우재영 / 모빌리티플랫폼처 / 054-459-7906 / crich0522@kotsa.or.kr    우재영 / 모빌리티플랫폼처 / 054-459-7906 / crich0522@kotsa.or.kr
+API 서비스 / 배포정보    데이터 갱신주기    실시간(10~20초)    실시간(10~20초)    실시간(10~20초)
+번호    API명(국문)    상세기능명(영문)    상세기능명(국문)
+1    도착정보조회 서비스    getSttnAcctoArvlPrearngeInfoList    정류소별 도착예정정보 목록 조회
+2    도착정보조회 서비스    getSttnAcctoSpcifyRouteBusArvlPrearngeInfoList    정류소별 특정노선버스도착예정정보 목록 조회
+3    도착정보조회 서비스    getCtyCodeList    도시코드 목록 조회
+상세기능 번호    1    상세기능 유형    조회 (목록)
+상세기능명(국문)    정류소별도착예정정보 목록 조회    정류소별도착예정정보 목록 조회    정류소별도착예정정보 목록 조회
+상세기능 설명    정류소별로 실시간 도착예정정보 및 운행정보 목록을 조회한다.    정류소별로 실시간 도착예정정보 및 운행정보 목록을 조회한다.    정류소별로 실시간 도착예정정보 및 운행정보 목록을 조회한다.
+Call Back URL    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+serviceKey    인증키    100    1    인증키 / (URL Encode)    공공데이터포털에서 발급받은 인증키
+numOfRows    한 페이지 결과 수    4    0    10    한 페이지 결과 수
+pageNo    페이지 번호    4    0    1    페이지 번호
+_type    데이터 타입    10    0    xml    데이터 타입(xml, json)
+cityCode    도시코드    9    1    25    도시코드 / [상세기능3 도시코드 목록 조회]에서 조회 가능
+nodeId    정류소ID    30    1    DJB8001793    정류소ID / [국토교통부(TAGO)_버스정류소정보]에서 조회가능
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메세지    50    1    NORMAL SERVICE    결과메시지
+numOfRows    한 페이지 결과 수    4    1    10    한 페이지당 표출 데이터 수
+pageNo    페이지 수    4    1    1    페이지 수
+totalCount    데이터 총 개수    4    1    5    데이터 총 개수
+nodeid    정류소ID    30    1    DJB8001793    정류소ID
+nodenm    정류소명    30    1    북대전농협    정류소명
+routeid    노선ID    30    1    DJB30300002    노선ID
+routeno    노선번호    30    1    5    노선번호
+routetp    노선유형    10    1    마을버스    노선유형
+arrprevstationcnt    도착예정버스 남은 정류장 수    3    1    15    도착예정버스 남은 정류장 수
+vehicletp    도착예정버스 차량유형    10    1    저상버스    도착예정버스 차량유형
+arrtime    도착예정버스 도착예상시간    5    1    816    도착예정버스 도착예상시간[초]
+요청메시지
+http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList?serviceKey=인증키(URL Encode)&cityCode=25&nodeId=DJB8001793&numOfRows=10&pageNo=1&_type=xml
+응답메시지
+<response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>NORMAL SERVICE.</resultMsg> /     </header> /     <body> /         <items> /             <item>  / <nodeid>DJB8001793</nodeid> / <nodenm>북대전농협</nodenm> / <routeid>DJB30300002</routeid> / <routeno>5</routeno> / <routetp>마을버스</routetp> / <arrprevstationcnt>15</arrprevstationcnt> / <vehicletp>저상버스</vehicletp> / <arrtime>816</arrtime> / </item> / </items> / <numOfRows>10</numOfRows> / <pageNo>1</pageNo> / <totalCount>5</totalCount> /     </body> / </response>
+상세기능 번호    2    상세기능 유형    조회 (목록)
+상세기능명(국문)    정류소별특정노선버스 도착예정정보 목록조회    정류소별특정노선버스 도착예정정보 목록조회    정류소별특정노선버스 도착예정정보 목록조회
+상세기능 설명    정류소 별로 특정노선의 실시간 도착예정정보 및 운행정보 목록을 조회한다.    정류소 별로 특정노선의 실시간 도착예정정보 및 운행정보 목록을 조회한다.    정류소 별로 특정노선의 실시간 도착예정정보 및 운행정보 목록을 조회한다.
+Call Back URL    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoSpcifyRouteBusArvlPrearngeInfoList    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoSpcifyRouteBusArvlPrearngeInfoList    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoSpcifyRouteBusArvlPrearngeInfoList
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+serviceKey    인증키    100    1    인증키 / (URL Encode)    공공데이터포털에서 발급받은 인증키
+numOfRows    한 페이지 결과 수    4    0    10    한 페이지 결과 수
+pageNo    페이지 번호    4    0    1    페이지 번호
+_type    데이터 타입    10    0    xml    데이터 타입(xml, json)
+cityCode    도시코드    9    1    25    도시코드 / [상세기능3 도시코드 목록 조회]에서 조회 가능
+nodeId    정류소ID    30    1    DJB8001793    정류소ID / [국토교통부(TAGO)_버스정류소정보]에서 조회가능
+routeId    노선ID    30    1    DJB30300002    노선ID
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메세지    50    1    NORMAL SERVICE    결과메시지
+numOfRows    한 페이지 결과 수    4    1    10    한 페이지당 표출 데이터 수
+pageNo    페이지 수    4    1    1    페이지 수
+totalCount    데이터 총 개수    4    1    5    데이터 총 개수
+nodeid    정류소ID    30    1    DJB8001793    정류소ID
+nodenm    정류소명    30    1    북대전농협    정류소명
+routeid    노선ID    30    1    DJB30300002    노선ID
+routeno    노선번호    30    1    5    노선번호
+routetp    노선유형    10    1    마을버스    노선유형
+arrprevstationcnt    도착예정버스 남은 정류장 수    3    1    15    도착예정버스 남은 정류장 수
+vehicletp    도착예정버스 차량유형    10    1    저상버스    도착예정버스 차량유형
+arrtime    도착예정버스 도착예상시간    5    1    816    도착예정버스 도착예상시간[초]
+요청메시지
+http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoSpcifyRouteBusArvlPrearngeInfoList?serviceKey=인증키(URL Encode)&cityCode=25&nodeId=DJB8001793&routeId=DJB30300002&numOfRows=10&pageNo=1&_type=xml
+응답메시지
+<response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>NORMAL SERVICE.</resultMsg> /     </header> /     <body> /         <items> /             <item> / <nodeid>DJB8001793</nodeid> / <nodenm>북대전농협</nodenm> / <routeid>DJB30300002</routeid> / <routeno>5</routeno> / <routetp>마을버스</routetp> / <arrprevstationcnt>15</arrprevstationcnt> / <vehicletp>저상버스</vehicletp> / <arrtime>816</arrtime> / </item> / </items> / <numOfRows>10</numOfRows> / <pageNo>1</pageNo> / <totalCount>5</totalCount> /     </body> / </response>
+상세기능 번호    3    상세기능 유형    조회 (목록)
+상세기능명(국문)    도시코드 목록 조회    도시코드 목록 조회    도시코드 목록 조회
+상세기능 설명    서비스 가능 지역들의 도시코드 목록을 조회한다.    서비스 가능 지역들의 도시코드 목록을 조회한다.    서비스 가능 지역들의 도시코드 목록을 조회한다.
+Call Back URL    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getCtyCodeList    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getCtyCodeList    http://apis.data.go.kr/1613000/ArvlInfoInqireService/getCtyCodeList
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+serviceKey    인증키    100    1    인증키 / (URL Encode)    공공데이터포털에서 발급받은 인증키
+_type    데이터 타입    10    0    xml    데이터 타입(xml, json)
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메세지    50    1    NORMAL SERVICE    결과메시지
+citycode    도시코드    5    1    22    도시코드
+cityname    도시명    100    1    대구광역시    도시명
+요청메시지
+http://apis.data.go.kr/1613000/ArvlInfoInqireService/getCtyCodeList?serviceKey=인증키(URL Encode)&_type=xml
+응답메시지
+<response> /     <header> /         <resultCode>00</resultCode> /         <resultMsg>NORMAL SERVICE.</resultMsg> /     </header> /     <body> /         <items> /             <item> / <citycode>22</citycode> / <cityname>대구광역시</cityname> / </item> / </items> / </body> / </response>
+에러코드    에러메시지    설명
+1    APPLICATION_ERROR    어플리케이션 에러
+4    HTTP_ERROR    HTTP에러
+12    NO_OPENAPI_SERVICE_ERROR    해당 오픈API서비스가 없거나 폐기됨
+20    SERVICE_ACCESS_DENIED_ERROR    서비스 접근거부
+22    LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR    서비스 요청제한횟수 초과에러
+30    SERVICE_KEY_IS_NOT_REGISTERED_ERROR    등록되지 않은 서비스키
+31    DEADLINE_HAS_EXPIRED_ERROR    활용기간 만료
+32    UNREGISTERED_IP_ERROR    등록되지 않은 IP
+99    UNKNOWN_ERROR    기타에러
+에러코드    에러메시지    설명
+99    INVALID_REQUEST_PARAMETER_ERROR    잘못된 요청 파라메터 에러

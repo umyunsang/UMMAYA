@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "한국저작권위원회_저작권등록정보서비스(신규)",
+  "description": "한국저작권위원회에 등록된 약 780,000건의 저작물에 대한 정보를 기반으로 저작권 등록 정보에 대한 통합 검색 및 개별 저작물의 상세 등록내용 조회 기능을 제공합니다. 저작권 등록번호, 저작자명, 저작물 제목 등 다양한 항목으로 조회가 가능하며, JSON 또는 XML 방식으로 응답합니다. 결과값으로는 등록번호, 등록사유, 저작자, 저작물 분류, 등록일자, 등록권리자 등이 제공됩니다. 이를 통해 저작권의 등록 현황 확인, 권리 분쟁 예방, 저작물의 합법적 이용 여부 판단 등에 활용할 수 있습니다.",
+  "url": "https://data.go.kr/data/15106731/openapi.do",
+  "keywords": [
+    "저작권 등록,등록서비스,저작자관리,저작권정보,저작물검색"
+  ],
+  "license": "http://www.kogl.or.kr/info/license.do",
+  "creator": {
+    "@type": "Organization",
+    "name": "한국저작권위원회",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "정보기술팀",
+      "telephone": "+82-0557920145"
+    }
+  },
+  "dateCreated": "2022-09-20",
+  "dateModified": "2025-06-05",
+  "datePublished": "2022-09-20",
+  "includedInDataCatalog": {
+    "@type": "DataCatalog",
+    "name": "data.go.kr"
+  },
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "JSON+XML",
+      "contentUrl": "https://data.go.kr/data/15106731/openapi.do"
+    }
+  ],
+  "datasetTimeInterval": "실시간"
+}

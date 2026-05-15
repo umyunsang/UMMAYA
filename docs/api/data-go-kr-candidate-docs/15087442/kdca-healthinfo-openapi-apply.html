@@ -1,0 +1,2581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta property="og:url" content="https://health.kdca.go.kr/healthinfo/biz/health/main/mainPage/main.do">
+    <meta property="og:title" content="질병관리청 국가건강정보포털 ">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://health.kdca.go.kr/healthinfo/static/images/common/kakao-url-img.jpg">
+    <meta property="og:description" content="OpenAPI 신청">
+    <meta name="google-site-verification" content="Ee5mWiCvrS7kW__7ycIdm0gykny6q_HRr3xzBPSV4WI" />
+
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="format-detection" content="telephone=no, address=no, email=no" />
+    <meta name="keywords" content="국가건강정보포털, 국민건강정보, 건강정보, 국가건강정보" />
+    <meta name="description" content="국가건강정보포털" />
+    <title>OpenAPI 신청 | 국가건강정보포털 | 질병관리청</title>    <!-- SEO -->
+    <title>OpenAPI 신청 | 국가건강정보포털 | 질병관리청</title>    <!-- SEO -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, minimum-scale=1.0, user-scalable=yes">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/swiper-bundle.min.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/font_v2_0.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/common_v2_0.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/biz/health/slick.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/biz/health/slick-theme.css">
+
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/default_v2_0.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/form_v2_0.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/layout_v2_0.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/xeicon.css">
+    <link rel="stylesheet" type="text/css" media="(max-width:1750px)" href="/healthinfo/static/css/tab_v2_0.css">
+    <link rel="stylesheet" type="text/css" media="(max-width:1000px)" href="/healthinfo/static/css/mobile_v2_0.css">
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/abs/common/css/popup-0.0.1.css"><!-- 팝업영향 -->
+    <link rel="stylesheet" type="text/css" href="/healthinfo/static/css/jquery.fullPage_v2_0.css">
+
+    <!-- 공통 -->
+    <script type="text/javascript" src="/healthinfo/static/js/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/default/jquery/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/common.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/leftAccordion.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/slick.min.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/swiper-bundle.min.js"></script>
+
+    <script type="text/javascript" src="/healthinfo/static/abs/common/js/abs-jqgrid-common.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/common/js/abs-file.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/common/js/abs-common.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/common/js/abs-form-validate.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/common/js/abs-select.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/common/js/abs-calendar.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/common/js/abs-popup-0.0.1.js"></script><!-- 팝업 -->
+    <script type="text/javascript" src="/healthinfo/static/abs/default/jquery/jquery.blockUI.js"></script><!-- 신체정보 영향 -->
+    <script type="text/javascript" src="/healthinfo/static/abs/default/jqueryui/jquery-ui.js"></script><!-- 팝업 영향 -->
+    <script type="text/javascript" src="/healthinfo/static/abs/default/jquery/jquery.form.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/cdc/js/cdc-common.js"></script>
+    <script src="//developers.kakao.com/sdk/js/kakao.min.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/default/jqgrid/js/grid.locale-kr.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/abs/default/jqgrid/js/jquery.jqGrid.src.js"></script>
+
+    <script type="text/javascript" src="/healthinfo/static/js/common/cropper/cropper.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/aes.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/sns.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/jspdf.min.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/bluebird.min.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/html2canvas.min.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/jquery.mb.browser.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/jquery.printElement.js"></script>
+    <script type="text/javascript" src="/healthinfo/static/js/biz/health/common/common.js"></script><!-- 전반적영향 -->
+
+    <script>
+    var anyidAdaptor = anyidAdaptor || {};
+
+
+
+
+
+
+    /*이용기관 수정 영역 Start*/
+    anyidAdaptor.orgLogin = function(data){
+        const params = new URLSearchParams(location.search);
+        var obj ={
+            ssob : data.ssob
+            , tag : params.get("tx")
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/healthinfo/biz/health/anyid/orgLogin.do", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                if (response.status === "success") {
+                    location.href = "/healthinfo/";
+                }else if (response.status === "fail") {
+                    alert(response.message);
+                }
+            }
+        };
+        xhr.send(JSON.stringify(obj));
+        //정부 통합인증SDK_연계가이드 4.4.1.3 이용기관 로그인(토글 off) 참조
+        //제공되는 라이브러리 메소드로 인증데이터 decrypt 이후 자체 로그인 로직 개발
+    }
+    /*이용기관 수정 영역 End*/
+
+
+    /*이용기관 문구수정 영역 Start*/
+    anyidAdaptor.JoinConfirm = function(portalJoinUri, memberData){
+        if(!confirm('Any-ID 사용자등록 하시겠습니까?')) {
+            anyidAdaptor.orgLogin(anyidAdaptor.certData);
+            return;
+        }else{
+            anyidAdaptor.receiveAnyIdJoin(portalJoinUri, memberData);
+        }
+    }
+    /*이용기관 문구수정 영역 End*/
+
+
+
+
+    anyidAdaptor.portalJoinUri = "null";
+    anyidAdaptor.certData = null;
+    anyidAdaptor.ssoByPass = "0";
+    anyidAdaptor.niRegYn = "null";
+    anyidAdaptor.agencyContextPath = "/healthinfo";
+
+
+    anyidAdaptor.success = function(data){
+        if(anyidAdaptor.ssoByPass != 0 || !data.useSso) {
+            anyidAdaptor.orgLogin(data);
+        } else {
+            anyidAdaptor.certData = data;
+            anyidAdaptor.userCheck();
+        }
+    }
+
+    anyidAdaptor.userCheck = function(){
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", anyidAdaptor.agencyContextPath + "/oidc/userCheck", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    anyidAdaptor.ssoLogin();
+                } else {
+                    setTimeout(function() {
+                        anyidAdaptor.receiveAnyIdJoin(response.uri, response.data);
+                    }, 100);
+                }
+            }
+        };
+
+        let jsonObject = new Object();
+        jsonObject.txId = anyidAdaptor.certData.txId;
+        jsonObject.ssob = anyidAdaptor.certData.ssob;
+        jsonObject.userSeCd = anyidAdaptor.certData.userSeCd;
+
+        let jsonStr = JSON.stringify(jsonObject);
+        let encodedString = btoa(jsonStr);
+
+        var data = "data=" + encodedString + "&txId=" + anyidAdaptor.certData.txId;
+        xhr.send(data);
+
+    }
+
+    //anyid가입
+    anyidAdaptor.receiveAnyIdJoin = function(portalJoinUri, memberData){
+
+        var url = portalJoinUri+encodeURIComponent(memberData);
+        anyidAdaptor.popup(url,"openAnyIdRegistUserIdv",700,740);
+
+        window.addEventListener("message", function(event) {
+            var result;
+            try {
+                result = JSON.parse(event.data);
+            } catch (error) {
+                console.error("Received message is not valid JSON:", error);
+                return;
+            }
+
+            if(!result.funcName || (result.funcName !== "trmsAgreComplete" && result.funcName !== "registUserComplete")) {
+                return;
+            }
+            if(result.status === "success") {
+                if(result.trmsAgreYn == "Y"){
+                    anyidAdaptor.ssoLogin();
+                }else{
+                    anyidAdaptor.orgLogin(anyidAdaptor.certData);
+                }
+            }else{
+
+                anyidAdaptor.orgLogin(anyidAdaptor.certData);
+            }
+
+        }, false);
+    }
+
+    // 팝업 호출
+    anyidAdaptor.popup = function(url, name, width, height){
+        let left = (screen.width) ? (screen.width-width)/2 : 0;
+        let top = (screen.height) ? (screen.height-height)/2 : 0;
+        let popup=window.open(url, name ,"resizable=yes,toolbar=no,scrollbars=yes,location=no,top="+top+"px,left="+left+"px,width="+width+"px,height="+height+"px");
+        if(popup){
+            popup.focus();
+        }
+    }
+
+    anyidAdaptor.ssoLogin = function(){
+        let jsonObject = new Object();
+        jsonObject.txId = anyidAdaptor.certData.txId;
+        jsonObject.ssob = anyidAdaptor.certData.ssob;
+        jsonObject.userSeCd = anyidAdaptor.certData.userSeCd;
+        jsonObject.afData = anyidAdaptor.certData.afData;
+        let jsonStr = JSON.stringify(jsonObject);
+
+        let encodedString = btoa(jsonStr);
+        var baseUrl = window.location.origin + anyidAdaptor.agencyContextPath + "/oidc/ssoLogin";
+        var urlWithParams = baseUrl + "?data=" + encodedString;
+        window.location.href = urlWithParams;
+
+    }
+
+    anyidAdaptor.ssoLoginPageSub = function(baseUrl, endPoint, acrValues){
+        var subUrl = "";
+
+        if (endPoint && endPoint.trim() !== "") {
+            subUrl = "?endPoint=" + encodeURIComponent(endPoint);
+        }
+
+        if (!acrValues && acrValues.trim() == "") {
+            acrValues = "3";
+        }
+
+        if (acrValues && acrValues.trim() !== "") {
+            if(subUrl == ""){
+                subUrl = "?";
+            }else{
+                subUrl = subUrl + "&";
+            }
+            subUrl = subUrl + "acrValues=" + acrValues;
+        }
+
+        window.location.replace(baseUrl+subUrl);
+    }
+
+    /**/
+    anyidAdaptor.ssoLogout = function(endPoint) {
+        endPoint = typeof endPoint !== 'undefined' ? endPoint : "/";
+
+        if(endPoint !== "/" && endPoint.slice(-1) !== "/") {
+            endPoint += "/";
+        }
+
+        endPoint = anyidAdaptor.agencyContextPath + endPoint;
+        var baseUrl = window.location.origin + anyidAdaptor.agencyContextPath + "/oidc/ssoLogout";
+        baseUrl = baseUrl + "?endPoint=" + encodeURIComponent(endPoint);
+        window.location.replace(baseUrl);
+    }
+    /**/
+    anyidAdaptor.reAuthLevel = function(endPoint, acrValues){
+        endPoint = typeof endPoint !== 'undefined' ? endPoint : "/";
+
+        if(endPoint !== "/" && endPoint.slice(-1) !== "/") {
+            endPoint += "/";
+        }
+
+        endPoint = anyidAdaptor.agencyContextPath + endPoint;
+        var baseUrl = window.location.origin + anyidAdaptor.agencyContextPath + "/oidc/reAuthLevel";
+        anyidAdaptor.ssoLoginPageSub(baseUrl, endPoint, acrValues);
+
+    }
+    /*endPoint는 로그인 후 이동되는 화면*/
+    anyidAdaptor.ssoLoginPage = function(endPoint, acrValues){
+        endPoint = typeof endPoint !== 'undefined' ? endPoint : "/";
+
+        if(endPoint !== "/" && endPoint.slice(-1) !== "/") {
+            endPoint += "/";
+        }
+
+        endPoint = anyidAdaptor.agencyContextPath + endPoint;
+        var baseUrl = window.location.origin + anyidAdaptor.agencyContextPath + "/oidc/auth";
+        anyidAdaptor.ssoLoginPageSub(baseUrl, endPoint, acrValues);
+    }
+
+    /**/
+    anyidAdaptor.ssoSvcToSvc = function(url, endPoint){
+
+        if(endPoint && endPoint !== "/" && endPoint.slice(-1) !== "/") {
+            endPoint += "/";
+        }
+
+
+        var baseUrl = url + "/oidc/svcToSvc?endPoint=" + encodeURIComponent(endPoint);
+        window.open(baseUrl, "_blank");
+    }
+
+
+</script>
+<script>
+    function reAuth(trgtLv) {
+
+        if(trgtLv == "" || trgtLv == null){
+            location.href = "/healthinfo/sample/login.jsp";
+        }else{
+            authByLevel(trgtLv);
+        }
+    }
+
+    function authByLevel(trgtLv) {
+
+        var acrVal = "";
+
+
+
+        if(acrVal != null && acrVal != ""){
+
+            if(trgtLv < acrVal){
+                anyidAdaptor.reAuthLevel("/test/anyidTest.jsp", trgtLv.toString());
+            }
+        }
+
+        /*
+        switch(cls) {
+        case 1:
+
+                        reAuthLevel("/building/print.jsp#/", "");
+
+                break;
+            case 2:
+                alertTest(this);
+                break;
+            case 3:
+                ssoLoginPageTest("/login/index.jsp");
+                break;
+            }
+            */
+    }
+
+    function ssoLoginPageTest(endPoint){
+        var baseUrl = window.location.origin + "/oidc/auth";
+
+        if (endPoint && endPoint.trim() !== "") {
+            let encodedString = btoa(endPoint);
+            window.location.replace(baseUrl + "?endPoint=" + encodedString);
+        }else{
+            window.location.replace(baseUrl)
+        }
+    }
+
+</script><script>
+        absFile.constants.fileContext='https://is.kdca.go.kr/cscdnhfile';
+        var _globalContextPath = "/healthinfo";
+        var _globalStaticsPath = "/healthinfo/static";
+        var _globalFileUser = "health";
+        <!-- Google Tag Manager -->
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-' + 'NKQRXG6');
+    </script>
+
+    <script type="text/javascript">
+
+        var epPlatformChannel = "";
+        var id = "popup_layer";
+        var bgId = "grayBg";
+        var subATagFlag = true;
+        var filter = "win16|win32|win64|mac|macintel";
+
+        if ( 0 > filter.indexOf(navigator.platform.toLowerCase()) ) {
+            epPlatformChannel = "Mobile";
+        } else {
+            epPlatformChannel = "PC";
+        }
+
+        // 공통 이벤트 함수
+        function GA_Event(object){
+            try{
+                const GAData = object;
+                GAData.event = 'ga_event';
+                dataLayer.push(GAData);
+                dataLayerUndefined();
+            }catch(e){
+                console.log("GA_Event 함수 ERROR")
+            }
+        }
+
+        // 초기화 함수
+        function dataLayerUndefined(){
+            const GTMSet = {};
+            for(const value of dataLayer){
+                for(const key in value){
+                    if(key.includes("ep_")){
+                        GTMSet[key] = undefined;
+                    }
+                }
+            }
+            return dataLayer.push(GTMSet)
+        }
+
+
+        $(document).ready(function() {
+            //웹접근성 sns 다음 focus설정
+            $("[title='URL 복사']").blur(function() {
+                $("[title='인쇄']").focus();
+            })
+
+            //웹접근성  print 다음 focus설정
+            $("[title='PDF 다운로드']").blur(function() {
+                var printNextAll = $(".print-over");
+
+                for(var z = 0; z < 3; z++) {
+                    printNextAll = printNextAll.next();
+                    var underAtag = printNextAll.find("a");
+                    var underButtonTag = printNextAll.find("button");
+                    var underSelectTag = printNextAll.find("select");
+                    var underInputTag = printNextAll.find("input");
+
+                    if (underAtag.length > 0) {
+                        underAtag[0].focus();
+                        break;
+                    }else if (underButtonTag.length > 0) {
+                        underButtonTag[0].focus();
+                        break;
+                    }else if (underSelectTag.length > 0) {
+                        underSelectTag[0].focus();
+                        break;
+                    }else if (underInputTag.length) {
+                        underInputTag[0].focus();
+                        break;
+                    }
+                }
+            })
+
+            /**
+             * 웹접근성 서브메뉴
+             */
+
+            // 서브 메뉴 탭 이동시 창 열림 / 마지막일때 닫힘
+            $(".sub-visual ul li").keydown(function() {
+                const obj = $(this);
+                obj.parent().find(".sub-depth2").each(function(e){
+                    if (obj.children("a").prop("id") !== $(this).prev().prop("id")) {
+                        $(this).slideUp();
+                    }
+                });
+
+                if ( $(this).children("div").length > 0 ) {
+                    const subMenuLast = $(':focus').prop('class');
+                    if ( !$(this).children("div").is(":visible") && subMenuLast !== "subMenuLast") {
+                        $(this).children("div").slideDown(300);
+                    }
+                    if ( subMenuLast === "subMenuLast") {
+                        $(this).children("div").slideUp();
+                    }
+                }
+            });
+            $(".sub-visual ul li a").click(function(e) {
+                e.stopPropagation();
+                const obj = $(this);
+                if ( obj.next("div").length > 0 ) {
+                    obj.parent().parent().find(".sub-depth2").each(function(e){
+                        if (obj.prop("id") !== $(this).prev().prop("id")) {
+                            $(this).slideUp();
+                        }
+                    });
+                    if ( !obj.next("div").is(":visible")) {
+                        obj.next("div").slideDown(300);
+                    } else {
+                        obj.next("div").slideUp();
+
+                    }
+                }
+            })
+
+
+
+
+            /* 웹접근성 서브메뉴 포커스 */
+
+            /* 웹접근성 공통 통합검색 포커스 */
+            $("a[name=searchFocus]").focus(function(){
+                $(".search-text2").hide();
+                $(".search-sub").hide();
+            });
+
+            /* 웹접근성 공통 통합검색 포커스 */
+            /* 웹접근성 이미지 포커스 이동시 투명도 처리 */
+            $(".hvrbox li a").first().focus(function(){
+                $(".hvrbox-layer_top").css("opacity",1);
+                $(".hvrbox-layer_bottom").css("opacity",0);
+
+                var agent = navigator.userAgent.toLowerCase();
+                if((navigator.appName == 'Netscape' && navigator.userAgent.search('Trident') != -1) || (agent.indexOf("msie") != -1)){
+                    $(".hvrbox-layer_top").css('outline',"1px dotted gray");
+                }
+            });
+
+            $(".hvrbox li a").first().focusout(function(){
+                $(".hvrbox-layer_top").css("opacity",0);
+                $(".hvrbox-layer_bottom").css("opacity",1);
+            });
+            /* 웹접근성 이미지 포커스 이동시 투명도 처리 */
+
+            /* 웹접근성 sns, print 버튼 하위메뉴 숨김 처리 */
+            $('.sns-over').children().last().keydown(function(e) {
+                if(e.which == 9) {
+                    if(!e.shiftKey) {
+                        $(this).parent().css('display', 'none');
+                    }
+                }
+            });
+
+            $('.sns-over').children().first().keydown(function(e) {
+                if(e.which == 9) {
+                    if(e.shiftKey) {
+                        $(this).parent().css('display', 'none');
+                    }
+                }
+            });
+
+            $('.print-over').children().last().keydown(function(e) {
+                if (e.which == 9) {
+                    if(!e.shiftKey) {
+                        $(this).parent().css('display', 'none');
+                    }
+                }
+            });
+
+            $('.print-over').children().first().keydown(function(e) {
+                if(e.which == 9) {
+                    if(e.shiftKey) {
+                        $(this).parent().css('display', 'none');
+                    }
+                }
+            });
+            /* 웹접근성 sns, print 버튼 하위메뉴 숨김 처리 */
+
+            //모바일메뉴
+            $('dt').on('click', function() {
+                function slideDown(target) {
+                    slideUp();
+                    $(target).addClass('on').next().slideDown();
+                }
+                function slideUp() {
+                    $('dt').removeClass('on').next().slideUp();
+                }
+                $(this).hasClass('on') ? slideUp() : slideDown(this);
+            });
+
+
+            /** 주메뉴 */
+            const dropDown = $('.dropdown');
+            dropDown.on('keydown', function(e) {
+                if(e.which === 9) { // Tab
+                    const dropDownContent = $(this).children('.dropdown-content');
+                    dropDownContent.css('display', 'block');
+                }
+            });
+            // 마지막 column에서 포커스 밖으로 나갈 때만 닫기
+            $('.mainMenuLastColumn').on('focusout', function(e) {
+                const parentDropdown = $(this).closest('.dropdown');
+                if (!parentDropdown.has(e.relatedTarget).length) {
+                    parentDropdown.children('.dropdown-content').css('display', 'none');
+                }
+            });
+
+            dropDown.hover(function() {
+                $('.dropdown-content').css('display', '');
+            })
+
+            dropDown.mouseover(function() {
+                if ( $("#main_bg").length < 1 ) {
+                    $("#wrap").append("<div id=\"main_bg\" style=\"width: 100%; height: 100%; position: absolute; top: 0; opacity: 0.5; background-color: #000; z-index: 3;\"></div>")
+                }
+            })
+            dropDown.mouseout(function() {
+                if ( $("#main_bg").length > 0) {
+                    $("#main_bg").remove();
+                }
+            })
+
+            //건강담기 카운트
+            const sessionYn =  "false";
+            if(sessionYn === 'true') {
+                $.ajax({
+                    url: "/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstCntAjax.do",
+                    type:"GET",
+                    async:false,
+                    success: function(data) {
+                        $("#hlthinsReqstCnt").text(data.hlthinsReqstCnt);
+                        $("#hlthinsReqstCntM, .hlthinsReqstCntM").text(data.hlthinsReqstCnt);
+                    },
+                    error : function(xhr, status, error) {
+                        alert("등록하는 중 에러가 발생했습니다.\n관리자에게 문의해주세요."+error);
+                    }
+                });
+            }
+
+            $(document).mousedown(function(e) {
+                //print 버튼 외 클릭시 닫힘
+                if(!$(e.target).hasClass("print-over") && !$(e.target).parents("ul").hasClass("print-over")) {
+                    $(".print-over").hide("slide", { direction: "right" }, 200);
+                }
+
+                //공유 버튼 외 클릭시 닫힘
+                if(!$(e.target).hasClass("sns-over") && !$(e.target).parents("ul").hasClass("sns-over")) {
+                    if(!$(e.target).hasClass("cancelCloseSlide")) {
+                        $(".sns-over").hide("slide", { direction: "right" }, 200);
+                    }
+                }
+
+                //통합검색 인기검색,내검색 외 클릭시 닫힘
+                // if(!$(e.target).parents("div").hasClass("search-text2") && !$(e.target).hasClass("search-text2")
+                //     && !$(e.target).parents("div").hasClass("search-box") && !$(e.target).hasClass("search-box")
+                //     && !$(e.target).parents("div").hasClass("search-sub") && !$(e.target).hasClass("search-sub")
+                //     && !$(e.target).hasClass("m-search") && !$(e.target).hasClass("btn-top-search")
+                //     && !$(e.target).parent("a").hasClass("btn-top-search") && !$(e.target).parent("a").hasClass("m-search")) {
+                //     $(".search-text2").hide();
+                //     $(".search-sub").hide();
+                // }
+
+                //통합검색 조건 주제분류선택 외 클릭시 닫힘
+                // if($(e.target).attr("id") !== "healthChoice" && $(e.target).parents("ul").attr("id") !== "healthChoice"
+                //     && $(e.target).attr("id") !== "healthChoiceAtag" && $(e.target).parents("a").attr("id") !== "healthChoiceAtag") {
+                //     $("#healthChoice").slideUp(300);
+                // }
+                //
+                // //통합검색 조건 성별선택 외 클릭시 닫힘
+                // if($(e.target).attr("id") !== "sexChoice" && $(e.target).parents("ul").attr("id") !== "sexChoice"
+                //     && $(e.target).attr("id") !== "sexChoiceAtag" && $(e.target).parents("a").attr("id") !== "sexChoiceAtag") {
+                //     $("#sexChoice").slideUp(300);
+                // }
+                //
+                // //통합검색 조건 연령별선택 외 클릭시 닫힘
+                // if($(e.target).attr("id") !== "ageChoice" && $(e.target).parents("ul").attr("id") !== "ageChoice"
+                //     && $(e.target).attr("id") !== "ageChoiceAtag" && $(e.target).parents("a").attr("id") !== "ageChoiceAtag") {
+                //     $("#ageChoice").slideUp(300);
+                // }
+                //
+                // //통합검색 조건 정렬선택 외 클릭시 닫힘
+                // if($(e.target).attr("id") !== "sortChoice" && $(e.target).parents("ul").attr("id") !== "sortChoice"
+                //     && $(e.target).attr("id") !== "sortChoiceAtag" && $(e.target).parents("a").attr("id") !== "sortChoiceAtag") {
+                //     $("#sortChoice").slideUp(300);
+                // }
+
+                //sub1메뉴 외 클릭시 닫힘
+                // if($(e.target).attr("id") !== "sub1" && $(e.target).prev().attr("id") !== "sub1"
+                //     && $(e.target).parent().prev().attr("id") !== "sub1" && $(e.target).parent("a").attr("id") !== "sub1") {
+                //     $("#sub1").next("div").slideUp(300);
+                // }
+                //
+                // //sub2메뉴 외 클릭시 닫힘
+                // if($(e.target).attr("id") !== "sub2" && $(e.target).prev().attr("id") !== "sub2"
+                //     && $(e.target).parent().prev().attr("id") !== "sub2" && $(e.target).parent("a").attr("id") !== "sub2") {
+                //     $("#sub2").next("div").slideUp(300);
+                // }
+            });
+
+
+            if(sessionYn === 'true') {
+                //내검색어 조회
+                $.ajax({
+                    url: "/healthinfo/biz/health/unifiedSearch/myKeyWrdAjax.do",
+                    type:"GET",
+                    async: false,
+                    success: function(data) {
+                        let autoHtml = "";
+                        for (let i = 0; i < data.length; i++) {
+                            autoHtml += "<li class=\"item _item\">"
+                            autoHtml += "<a class=\"kwd\" href=\"javascript:fn_unifiedCmmnSearch('" + data[i].srchwrd_nm +"')\">";
+                            autoHtml += "<span class=\"fix\"><span class=\"common_ico_kwd\"><i class=\"imgsvg ico_search\"></i></span><span class=\"kwd_txt\"><strong class=\"mark\">" + data[i].srchwrd_nm + "</strong></span></span>";
+                            autoHtml += "</a>"
+                            autoHtml += "<span class=\"etc\"><em class=\"date\">" + data[i].sys_regist_dt + "</em><span>";
+                            autoHtml += "</li>"
+                        }
+                        $("#mainKwdList").append(autoHtml)
+                        $("#leftKwdList").append(autoHtml)
+                    },
+                    error : function(xhr, status, error) {
+                        alert("조회 중 에러가 발생했습니다.\n관리자에게 문의해주세요."+error);
+                    }
+                });
+            }
+        });
+
+        /**
+         * 검색엔진 2024-10-02
+         */
+        $(document).on("click", ".cmmnSearchWrd", function (e) {
+            const id = $(this).prop("id").substring(0, 4);
+            fn_showSearchText(id, e);
+        })
+
+        $(document).on("keypress", ".cmmnSearchWrd", function (e) {
+            const id = $(this).prop("id").substring(0, 4);
+            if( e.which === 13) {
+                if($("#"+id+"SearchText").val().trim() === "") {
+                    alert("검색어를 입력하세요");
+                    $("#"+id).focus();
+                    $("#"+id+"_search_sub1").removeClass("type_write")
+                    $("#"+id+"AutoFrame").hide()
+                    return false;
+                } else {
+                    fn_unifiedCmmnSearch($(this).val());
+                }
+            }
+        });
+
+        $(document).on("keydown", ".cmmnSearchWrd", function(e){
+            const obj = $(this);
+            const id = $(this).prop("id").substring(0, 4);
+            if (e.keyCode !== 9) {
+                setTimeout(function() {
+                    const paramMap = {
+                        query: $(obj).val()
+                    };
+                    autoSearch(paramMap, id, e);
+                }, 0);
+            } else {
+                if ( $("#"+id+"AutoFrame").is(":visible")) {
+                    if ( $("#"+id+"KwdList").children("li").length > 0 ) {
+                        e.preventDefault();
+                        $("#"+id+"KwdList").children("li:eq(0)").children("a").focus()
+                    } else {
+                        fn_hideSearchText();
+                    }
+                }
+            }
+        })
+
+        $(document).on("focusout",  ".kwd", function(e){
+            let id = $(this).parent().parent().prop("id");
+            const trNum = $(this).closest('li').prevAll().length;
+            if (trNum === $("#"+id+">li").length-1) {
+                id = id.substring(0, 4);
+                $("#"+id+"SearchBtn").focus()
+                fn_hideSearchText();
+            }
+        })
+
+        // 검색창 바닥 찍으면 검색 제거
+        $(document).on("click", "body", function(event) {
+            fn_hideSearchText();
+            if ( $(".sub-depth2").is(":visible")) {
+                $(".sub-depth2").slideUp();
+            }
+        });
+
+        $(window).resize(function(){
+            $("#mainAutoFrame").css("width", $("#main_search_sub1").css("width"))
+            $("#leftAutoFrame").css("width", $("#left_search_sub1").css("width"))
+        })
+
+        // 검색창 바닥 찍으면 검색 제거
+        $(document).on("click", ".searchBtn", function(e) {
+            fn_unifiedCmmnSearch( $(this).parent().find(".cmmnSearchWrd").val())
+        });
+
+
+        //통합검색 자동완성 값 return
+        function autoSearch(paramMap, id, e) {
+            //자동검색 앞단어부터 검색 조건 추가
+            paramMap.convert = 'fw';
+            $.ajax({
+                type: "POST",
+                url: "/healthinfo/biz/health/unifiedSearch/wisenutAutoSearch.do",
+                dataType: 'json',
+                async: false,
+                data: paramMap,
+                success: function(data) {
+                    $("#" + id + "KwdList").empty();
+                    let autoHtml = "";
+                    if (data.result != null) {
+                        let auto = data.result[0].items;
+                        if (auto != null) {
+                            for (let i = 0; i < auto.length; i++) {
+                                autoHtml += "<li class=\"item _item\">"
+                                autoHtml += "<a class=\"kwd\" href=\"javascript:fn_unifiedCmmnSearch('" + auto[i].keyword + "');\">";
+                                autoHtml += "<span class=\"fix\"><span class=\"common_ico_kwd\"><i class=\"imgsvg ico_search\"></i></span><span class=\"kwd_txt\"><strong class=\"mark\">"+auto[i].keyword+"</strong></span></span>";
+                                autoHtml += "</a>"
+                                autoHtml += "</li>"
+
+                            }
+                        }
+                        $("#" + id +"KwdList").append(autoHtml)
+                        fn_showSearchText(id, e)
+                    } else {
+                        fn_showSearchText(id, e)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log("wisenut 자동완성 Error" + status + " -> " + error);
+                    $("#" + id + "KwdList").empty();
+                    fn_showSearchText(id, e)
+                }
+            });
+        }
+
+        $(document).on("click", ".tag-badge", function(e){
+            fn_unifiedCmmnSearch($(this).text().split("# ")[1]);
+        });
+
+        /**
+         * 검색창 조회
+         * @param searchWrd
+         * @param MWFlag
+         */
+
+        function fn_unifiedCmmnSearch(searchWrd) {
+            const eventObj = {};
+            eventObj.event_name = "common_search_click";
+            eventObj.ep_button_Text = searchWrd;
+            eventObj.ep_search_Location="통합 검색";
+            eventObj.ep_search_Keyword = searchWrd;
+            eventObj.ep_search_PopularYN = "Y";
+            GA_Event(eventObj);
+
+            $(".cmmnSearchWrd").val(searchWrd)
+
+            if ( $("input[name=cmmnSearchWrd]").length > 0 ) {
+                $("input[name=cmmnSearchWrd]").val(searchWrd)
+            } else {
+                const hiddenField = document.createElement("input");
+                hiddenField.setAttribute("type", "hidden");
+                hiddenField.setAttribute("name",  "cmmnSearchWrd");
+                hiddenField.setAttribute("value", searchWrd);
+                document.healthLayoutForm.appendChild(hiddenField);
+            }
+
+            if ( $("input[name=MWFlag]").length > 0 ) {
+                $("input[name=MWFlag]").val("W")
+            } else {
+                //WEB, Mobile 구분 플래그
+                var MWFlagP = document.createElement("input");
+                MWFlagP.setAttribute("type", "hidden");
+                MWFlagP.setAttribute("name", "MWFlag");
+                MWFlagP.setAttribute("value", "W");
+
+                document.healthLayoutForm.appendChild(MWFlagP);
+            }
+
+            document.healthLayoutForm.action = "/healthinfo/biz/health/unifiedSearch/unifiedSearchMain.do";
+            document.healthLayoutForm.submit();
+        }
+
+        /**
+         * 검색결과 보이기
+         */
+        function fn_showSearchText(id, e) {
+            e.preventDefault();
+            $("#" + id + "AutoFrame").css("width", $("#" + id + "_search_sub1").css("width"))
+            $("#"+id+"_search_sub1").addClass("type_write")
+            $("#"+id+"AutoFrame").show()
+        }
+
+        /**
+         * 검색결과 숨기기
+         */
+        function fn_hideSearchText() {
+            if ($(".search-sub1").hasClass("type_write")) {
+                $(".search-sub1").removeClass("type_write")
+                $(".layer_atcmp").hide()
+            }
+            if ($(".searchBar-modal").hasClass("type_write")) {
+                $(".searchBar-modal").removeClass("type_write")
+                $(".layer_atcmp").hide()
+            }
+        }
+
+        //wisenut 인기검색어 (range가 D->하루, W->일주일, M->한달)
+        function fn_commonGetTrendKeyWrd() {
+            let tredKeyResult = null;
+            $.ajax({
+                type: "POST",
+                url: "/healthinfo/biz/health/unifiedSearch/wisenutTrendKey.do",
+                dataType: 'json',
+                async: false,
+                data: {target : 'popword', range : 'M', collection : '_ALL_'},
+                success: function(data) {
+                    if(data != null) {
+                        tredKeyResult = data;
+                    }
+                },
+                error : function(xhr, status, error){
+                    console.log("wisenut 인기검색어 Error" + status + " -> " + error);
+                }
+            });
+            return tredKeyResult;
+        }
+
+
+
+        /**
+         * 모바일
+         * @param el
+         */
+        // 메뉴
+        function layer_open(el) {
+            //레이어의 id를 temp변수에 저장
+            var temp = $('#' + el);
+
+            event.stopPropagation();
+            temp.fadeToggle("fast");
+            document.getElementById("mwrapper").style.backgroundColor = "rgba(0,0,0,0.6)";
+            document.getElementById("mwrapper").style.display = "block";
+
+            temp.on("click", function (event) {
+                event.stopPropagation();
+            });
+
+            $(document).on("click", function () {
+                temp.fadeOut();
+                document.getElementById("mwrapper").style.background = "none";
+                document.getElementById("mwrapper").style.display = "none";
+            });
+
+            $('.cbtn').on("click", function () {
+                temp.fadeOut();
+                document.getElementById("mwrapper").style.background = "none";
+                document.getElementById("mwrapper").style.display = "none";
+            });
+        }
+
+
+
+        /**
+         * TOP 메뉴
+         * @param Dta
+         */
+        //디지털원패스 회원가입 팝업
+        function onePassPop(Dta) {<!--TODO[URL] : URL변경지점-->
+            const popUrl = "https://www.onepass.go.kr/regist/agree?redirectSiteUrl=https://health.kdca.go.kr/healthinfo/biz/health/main/digitalOnepass/joinAction.do";
+            const popOption = "width=700, height=800, resizable=no, scrollbars=yes, status=no, title=디지털원패스 회원가입, top=100, left=100, location=no";
+            window.name="health";
+            const popupWindow = window.open(popUrl, "디지털원패스 회원가입", popOption);
+            popupWindow.focus();
+
+            const eventObj = {};
+            eventObj.event_name = "common_header_click";
+            eventObj.ep_button_Text = Dta;
+            GA_Event(eventObj);
+        }
+
+        //건강정보 구독신청 팝업
+        function stiBeePop() {
+            const popUrl = "https://page.stibee.com/subscriptions/250216";
+            const popOption = "width=700, height=700, resizable=no, scrollbars=yes, status=no, title= 건강정보 구독신청, top=100, left=100, location=no";
+            window.name="health";
+            const popupWindow = window.open(popUrl, "건강정보 구독신청", popOption);
+            popupWindow.focus();
+
+
+        }
+
+        //뉴스레터 팝업
+        function newsletter() {
+            const popUrl = "/healthinfo/newLetter/2023/05/NewsLetter.html";
+            const popOption = "width=700, height=700, resizable=no, scrollbars=yes, status=no, title=뉴스레터, top=100, left=100, location=no";
+            window.name="health";
+            const popupWindow = window.open(popUrl, "뉴스레터", popOption);
+            popupWindow.focus();
+
+        }
+
+        //디지털원패스 로그인 팝업
+        function onePassLoginPop(Dta) {
+            const popUrl = "/healthinfo/biz/health/main/digitalOnepass/loginout.do?serviceType=LOGIN";
+            const popOption = "width=700, height=700, resizable=no, scrollbars=yes, status=no, title=디지털원패스 로그인, top=100, left=100, location=no";
+            window.name="health";
+            const popupWindow = window.open(popUrl, "디지털원패스 로그인", popOption);
+            popupWindow.focus();
+
+            const eventObj = {};
+            eventObj.event_name = "common_header_click";
+            eventObj.ep_button_Text = Dta;
+            GA_Event(eventObj);
+        }
+
+        function fn_redirect() {
+            location.href = "/healthinfo/biz/health/main/mainPage/main.do";
+        }
+
+        function fn_location(menu) {
+            if(sessionChk()) {
+                let url;
+                if ( menu === "helthEdcRecsroom" ) {
+                    url = "/healthinfo/biz/health/ntcnInfo/helthEdcRecsroom/helthEdcRecsroomRegist.do";
+                } else if ( menu === "hlthinsReqst" ) {
+                    url = "/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMain.do";
+                } else if ( menu === "cstmrInqry" ) {
+                    url = "/healthinfo/biz/health/portalUseGuidance/cstmrInqry/cstmrInqryMain.do";
+                } else if ( menu === "myHlthinsReqst" ) {
+                    url = "/healthinfo/biz/health/myPage/myHlthinsReqst/myHlthinsReqstMain.do";
+                } else if ( menu === "myPhleduRecsroom" ) {
+                    url = "/healthinfo/biz/health/myPage/myPhleduRecsroom/myPhleduRecsroomMain.do";
+                } else if ( menu === "myInqry" )  {
+                    url = "/healthinfo/biz/health/myPage/myInqry/myInqryMain.do";
+                } else if ( menu === "openApiReqst" ) {
+                    url = "/healthinfo/biz/health/portalUseGuidance/openApiReqst/openApiReqstRegist.do";
+                } else if ( menu === "openApiReqstMain" ) {
+                    url = "/healthinfo/biz/health/portalUseGuidance/openApiReqst/openApiReqstMain.do";
+                }
+                location.href = url;
+            } else {
+                alert("로그인이 필요합니다.");
+                anyidAdaptor.ssoLoginPage('','');
+            }
+        }
+
+        function sessionChk() {
+            const session = "";
+            return session !== "";
+        }
+
+        function fn_gnrlzHealthInfo(menuNum) {
+            location.href = "/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoMain.do?lclasSn="+ menuNum;
+        }
+
+        //탑배너 창닫기
+        function closeBanner() {
+            if($("#topBannerChk").is(":checked")) {
+                setCookie("bannerYN","N", "1");
+            }
+            $(".top-banner").hide();
+        }
+
+        //프린트 인쇄
+        function cmmnPrint(classNm) {
+            $("."+ classNm).printElement({
+                leaveOpen: true
+                ,printMode: 'popup'
+                ,overrideElementCSS: ['/healthinfo/static/css/common_v2_0.css','/healthinfo/static/css/layout_v2_0.css','/healthinfo/static/css/webfonts.css','/healthinfo/static/css/print_v1_0.css']
+            });
+        }
+
+        let printDiv;
+        let initBody;
+        function fn_print(area) {
+            printDiv = document.getElementById(area);
+            window.print();
+        }
+
+        if (window.matchMedia) {
+            let mQuery = window.matchMedia('print');
+            mQuery.addListener(function(mql) {
+                if ( mql.matches ) {
+                    beforePrint();
+                }else {
+                    afterPrint();
+                }
+            });
+        }
+
+        function beforePrint() {
+            initBody = document.body.innerHTML;
+            document.body.innerHTML = printDiv.innerHTML;
+        }
+
+        function afterPrint() {
+            document.body.innerHTML = initBody;
+            window.location.reload();
+        }
+
+        //최상단메뉴 링크
+        function fn_Link_b(url, target) {
+            //location.href = url;
+            const win = window.open(url, target);
+            win.focus();
+        }
+
+        //최상단메뉴 링크
+        function fn_Link(url) {
+            fn_Link_b(url, '_self');
+        }
+
+        //footer 사이트링크
+        function fn_locationSiteMap(id) {
+            let url = $("#"+ id + " > option:selected").val();
+            if ( url === "" ) {
+                alert($("#"+ id + " > option:selected").text() + "을 선택하세요.");
+                return;
+            }
+            fn_Link(url);
+        }
+
+        /**
+         * 헤더 이벤트
+         * @param Dta
+         */
+        function fn_headerGa(Dta){
+            const eventObj = {};
+            eventObj.event_name = "common_header_click";
+            eventObj.ep_button_Text = Dta;
+            GA_Event(eventObj);
+        }
+
+        /**
+         * 메인페이지이동
+         */
+        function fn_mainCharGa(){
+            const eventObj = {};
+            eventObj.event_name = "common_gnb_click";
+            eventObj.ep_button_Description = "국가건강정보포털 로고";
+            GA_Event(eventObj);
+        }
+
+        /**
+         * 건강정보 페이지이동
+         * @param Dta
+         * @param menuNum
+         */
+        function fn_gnrlzHealthInfoGa(Dta){
+            const eventObj = {};
+            eventObj.event_name = "common_gnb_click";
+            eventObj.ep_button_Text = Dta;
+            GA_Event(eventObj);
+        }
+
+        //테스트 로그인 팝업(로컬 & 개발만 적용)
+        </script>
+    <script>
+        $( document ).ready( function() {
+            const jbOffset = $( '.jbMenu' ).offset();
+            $( window ).scroll( function() {
+                if ( $( document ).scrollTop() > jbOffset.top ) {
+                    $( '.jbMenu' ).addClass( 'jbFixed' );
+                }
+                else {
+                    $( '.jbMenu' ).removeClass( 'jbFixed' );
+                }
+            });
+        } );
+
+    </script>
+
+    <style>
+        .jbFixed {
+            position: fixed !important;
+            top: 0;
+            z-index:9999;
+            width: calc(100% - 50px) !important;
+        }
+        .jbFixed .dropdown-content{top:91px}
+    </style>
+
+    <meta name="decorator" content="health.layout">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
+    <meta name="decorator" content="health.layout">
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("input[name='userSeCode']").change(function () {
+                var thisValue = $(this).val();
+                if (thisValue == 1) {
+                    $("#userInsttDiv").hide();
+                    $("#userInstt").val("");
+                } else {
+                    $("#userInsttDiv").css("display", "inline");
+                }
+            });
+
+            fn_usePurpsChnge('', '1');
+
+            $("#phoneRange").hide();
+
+            $("#prcusePrposCn").on("input", function () {
+                let length = $(this).val().length;
+
+                if (length > 400) {
+                    $(this).val($(this).val().substring(0, 400));
+                    length = 400;
+                }
+
+                $("#prcusePrposCn_count").text(length);
+            });
+        });
+
+        function fn_usePurpsChnge(id, val, text) {
+            $("#usePurpsEtcCn").val('');
+            if (val === "3") {// 연구논물
+                // $("#usePurpsEtcCn").removeProp("disabled");
+                $("#usePurpsEtcCn").prop("disabled", false);
+                $("#usePurpsEtcCn").attr('placeholder', '연구논문명 혹은 내용을 입력해주세요.');
+                $('#urlArea').css('display', 'none');
+            } else if (val === "4") { // 기타 참고자료
+                // $("#usePurpsEtcCn").removeProp("disabled");
+                $("#usePurpsEtcCn").prop("disabled", false);
+                $("#usePurpsEtcCn").attr('placeholder', '참고자료의 설명을 입력해주세요.');
+                $('#urlArea').css('display', 'none');
+            } else if (val === "1") { // 웹사이트 개발
+                $("#usePurpsEtcCn").prop("disabled", true);
+                $("#usePurpsEtcCn").removeAttr('placeholder');
+
+                $('#urlArea').removeAttr('style');
+            } else {
+                $("#usePurpsEtcCn").prop("disabled", true);
+                $("#usePurpsEtcCn").removeAttr('placeholder');
+
+                $('#urlArea').css('display', 'none');
+            }
+        }
+
+        function fileUploadType(obj, id) {
+            var filePathName = $(obj).val();
+            if (filePathName != "") {
+
+                var imgMaxSize = 10 * (1024 * 1024); //10mb
+                var fileMaxSize = 100 * (1024 * 1024); //30mb
+
+                var filetype = filePathName.substring(filePathName.lastIndexOf('.') + 1);
+                filetype = filetype.toUpperCase();
+
+                var fileSize = $(obj)[0].files[0].size;
+
+                if (filetype == '') {
+                    return;
+                }
+
+                if (filetype == 'JPG' || filetype == 'GIF'
+                    || filetype == 'PNG' || filetype == 'BMP'
+                    || filetype == 'JPEG') {
+
+                    if (fileSize > imgMaxSize) {
+                        alert("이미지 첨부파일 사이즈는 10MB 이내로 등록 가능합니다.");
+                        $(obj).val('');
+                        return;
+                    }
+                } else {
+                    if (fileSize > fileMaxSize) {
+                        alert("첨부파일 사이즈는 100MB 이내로 등록 가능합니다.");
+                        $(obj).val('');
+                        return;
+                    }
+                }
+                $("#" + id).val(filePathName);
+            }
+        }
+
+        var cntntsSn = new Array();
+
+        /*Object.defineProperty(cntntsSn, "number", {
+            get: function() {
+                return this._num || 0;
+            },
+            set: function (num) {
+                this._num = num;
+                document.querySelector("#totalCnt").textContent = "총 "+this._num+"건";
+            }
+        });*/
+
+        function fn_selectHealthInfo() {
+            if (sessionChk()) {
+                var url = "/healthinfo/biz/health/common/HealthCommon/healthinfoPop.do";
+                $("#popup_layer").removeAttr("style");
+
+                const paramMap = {
+                    changeValId: "totalCnt",
+                    changeValAttr: "textContent",
+                    cntntsSn : cntntsSn
+                };
+
+                const id = "cntnts_popup_layer";
+                const bgId = "cntnts_graybg";
+
+                fn_layerPopup_open(id, url, bgId, paramMap);
+            } else {
+                alert("로그인이 필요합니다.");
+                anyidAdaptor.ssoLoginPage();
+            }
+        }
+
+        function fn_request() {
+            if (sessionChk()) {
+                if($("#agree1:checked").val() != "1") {
+                    alert("개인정보 수집·이용 동의는 필수입니다");
+                    $("#agree1").focus();
+                    return;
+                }
+
+                if ($("#agree2").is(":checked") == false) {
+                    alert("콘텐츠 사용 동의서에 체크하세요.");
+                    $("#agree2").focus();
+                    return;
+                }
+
+                if ($("#agree3").is(":checked") == true) {
+                    if ($("#phone1").val() == "") {
+                        alert("전화번호를 입력하세요.");
+                        $("#phone1").focus();
+                        return;
+                    } else if ($("#phone2").val().trim() == "") {
+                        alert("전화번호를 입력하세요.");
+                        $("#phone2").focus();
+                        return;
+                    } else if ($("#phone3").val().trim() == "") {
+                        alert("전화번호를 입력하세요.");
+                        $("#phone3").focus();
+                        return;
+                    }
+                }
+
+                if ($('#usePurpsCode').val() === "1" && $("#useUrl").val().trim() == "") {
+                    alert("사용 URL을 입력하세요.");
+                    $("#useUrl").focus();
+                    return;
+                }
+
+                if ($("#prcusePrposCn").val().trim() == "") {
+                    alert("활용 용도를 입력하세요.")
+                    $("#prcusePrposCn").focus();
+                    return;
+                }
+
+                if ($('input[name="userSeCode"][value="2"]').is(':checked')) {
+                    if (!$('#userInstt').val()) {
+                        alert('기관명을 입력해주세요.');
+                        return;
+                    }
+                }
+
+                if (cntntsSn.length == 0) {
+                    alert("건강정보를 선택해주세요.");
+                    return;
+                }
+
+                var frm = $('#openApiReqstRegist');
+
+                var isExist = false;
+                if ($("#files").val() != null && $("#files").val().length > 0) {
+                    isExist = true;
+                }
+
+                if (isExist) {
+                    attachIt(frm);
+                } else {
+                    action(frm);
+                }
+            } else {
+                alert("로그인이 필요합니다.");
+                anyidAdaptor.ssoLoginPage();
+            }
+        }
+
+        function attachIt(frm) {
+            var paramMap = {flag: "I", fileGroup: "health/openApiReqst", fileUser: _globalFileUser};
+
+            frm.ajaxSubmit({
+                beforeSubmit: function () {
+                    if (confirm('파일을 저장합니다!')) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+                url: absFile.constants.fileContext + "/health/healthNewUpload/helthfileUpload.do",
+                data: paramMap,
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $("#fileId").val(data.fileMap.fileId);
+                    action(frm);
+                },
+                error: function () {
+                    alert('error');
+                },
+                iframe: false
+            });
+        }
+
+        function action(frm) {
+            const url = "/healthinfo/biz/health/portalUseGuidance/openApiReqst/openApiReqstRegistAjax.do";
+            const phone = $("#phone1").val() + $("#phone2").val() + $("#phone3").val();
+            const paramMap = {
+                userSeCode: $("input[name='userSeCode']:checked").val(), // 사용자 정보
+                healthInfoReqstCntntsNm : $("#totalCnt").text(),
+                userInstt: $("#userInstt").val(),
+                fileId: $("#fileId").val(),
+                usePurpsCode: $("#usePurpsCode").val(),
+                usePurpsEtcCn: $("#usePurpsEtcCn").val(),
+                useUrl: $("#useUrl").val(),
+                prcusePrposCn: $("#prcusePrposCn").val(),
+                phone: phone, //연락처
+                cntntsSn: JSON.stringify(cntntsSn)
+            };
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: paramMap,
+                success: function (data) {
+                    alert(data.message);
+                    frm.attr("action", "/healthinfo/biz/health/portalUseGuidance/openApiReqst/openApiReqstRegist.do").submit();
+                },
+                error: function (xhr, status, error) {
+                    alert("등록하는 중 에러가 발생했습니다.\n관리자에게 문의해주세요." + error);
+                }
+            });
+        }
+
+        function fn_pnShowHide() {
+            var agree3 = $("#agree3").is(":checked");
+            if (agree3) {
+                if ($("#phone1 option:selected").val() == "") {
+                    $("#phone1 option:selected").remove();
+                }
+                $("#phone1 option:eq(0)").prop("selected", "selected");
+                $("#phoneRange").show();
+            } else {
+                $("#phone1").prepend("<option value=''></>");
+                $("#phone1 option:eq(0)").prop("selected", "selected");
+                $("#phone2").val("");
+                $("#phone3").val("");
+                $("#phoneRange").hide();
+            }
+        }
+
+        function fn_goBack() {
+            location.href = "/healthinfo/biz/health/portalUseGuidance/openApiReqst/openApiReqstRegist.do";
+        }
+
+        function fn_step(){
+            if(!fn_stepBefore()){    //항목체크
+                return;
+            };
+
+            var apiSvcCode = $("#apiSvcCode").val();    //API서비스 코드
+            $("div[id^='step']").hide();
+
+            if(apiSvcCode == ""){
+                $("#step2").show();
+            }else{
+                const phone = $("#phone1").val() + $("#phone2").val() + $("#phone3").val();
+                $("#phone").val(phone);
+
+                var frm = $('#openApiReqstRegist');
+                frm.attr("action", "/healthinfo/biz/health/portalUseGuidance/openApiReqst/openApiReqstRegistNew.do").submit();
+            }
+        }
+
+        function fn_stepBefore(){
+            if (sessionChk()) {
+                if($("#agree1:checked").val() != "1") {
+                    alert("개인정보 수집·이용 동의는 필수입니다");
+                    $("#agree1").focus();
+                    return false;
+                }
+
+                if ($("#agree2").is(":checked") == false) {
+                    alert("콘텐츠 사용 동의서에 체크하세요.");
+                    $("#agree2").focus();
+                    return false;
+                }
+
+                if ($("#agree3").is(":checked") == true) {
+                    if ($("#phone1").val() == "") {
+                        alert("전화번호를 입력하세요.");
+                        $("#phone1").focus();
+                        return false;
+                    } else if ($("#phone2").val().trim() == "") {
+                        alert("전화번호를 입력하세요.");
+                        $("#phone2").focus();
+                        return false;
+                    } else if ($("#phone3").val().trim() == "") {
+                        alert("전화번호를 입력하세요.");
+                        $("#phone3").focus();
+                        return false;
+                    }
+                }
+
+                return true;
+            } else {
+                alert("로그인이 필요합니다.");
+                anyidAdaptor.ssoLoginPage();
+                return false;
+            }
+        }
+
+        //서브메뉴
+        document.addEventListener("DOMContentLoaded", function () {
+            const btn = document.getElementById("sub1");
+            const panel = document.getElementById("sub1-panel");
+
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const isHidden = panel.style.display === "none" || panel.style.display === "";
+
+                if (isHidden) {
+                    // panel 열기
+                    panel.style.display = "block";
+                        panel.setAttribute("aria-hidden", "false");
+                        btn.setAttribute("aria-expanded", "true");
+                } else {
+                    // panel 닫기
+                    panel.style.display = "none";
+                        panel.setAttribute("aria-hidden", "true");
+                        btn.setAttribute("aria-expanded", "false");
+                }
+            });
+        });
+    </script></head>
+
+<!-- 본문 시작 -->
+<body screen_capture_injected="true">
+
+<div id="skipnavigation">
+    <a href="#sub-content" >본문으로 바로가기</a>
+        <a href="#mainDropdown">주메뉴 바로가기</a>
+</div>
+
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P58G9SH" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+
+<input type="text" tabindex="-1" id="shareUrl" style="position: absolute; top: -9999em; width: 0; height: 0; margin: 0; padding: 0; border: none; display: none; visibility: hidden; " title="">
+<div id="mwrapper" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 900; "></div>
+
+
+
+<!-- 사이드 검색 모달 -->
+<section class="sideSearch">
+    <div class="side-search-bar">
+        <button class="btn-open-popup tab_open">
+            <span class="src-bull"></span>
+            <span>건강정보 검색</span>
+        </button>
+    </div>
+    <div class="srcmodal">
+        <div class="srcmodal_body">
+            <div class="src-conLeft side-search-bar">
+                <button class="btn-open-popup tab_open" tabindex="-1">
+                    <span class="src-bull"></span>
+                    <span>건강정보 검색</span>
+                </button>
+            </div>
+            <div class="src-conBody" id="src-conBody">
+                <div class="src-conTop">
+                    <button class="btnClose"><img src="/healthinfo/static/images/common/modal_close.svg" alt="건강정보검색 닫기"></button>
+                </div>
+                <div class="src-conRight">
+                    <h1><a class="logo" href="/healthinfo/biz/health/main/mainPage/main.do" title="질병관리청 KDCA 국가건강정보포털" onclick="fn_mainCharGa();">
+                        <img src="/healthinfo/static/images/common/high-logo.png" alt="질병관리청 KDCA 국가건강정보포털" style="width: 100%">
+                    </a></h1>
+                    <h4 ><strong >필요한 건강정보</strong>를 검색해보세요!</h4>
+                    <div id= "side_search_area" class="search_area">
+                        <div class="search_group">
+                            <div class="search_group_inner">
+                                <div id="left_search_sub1" class="searchBar-modal">
+                                    <input type="text" id="leftSearchText" name="leftSearchWrd" class="fl-l cmmnSearchWrd" placeholder="검색어를 입력하세요." autocomplete="off" title="통합검색입력">
+                                    <button type="button" id="leftSearchBtn" class="fl-l searchBtn" ><img src="/healthinfo/static/images/common/icon-search.png" alt="검색">검색</button>
+                                </div>
+                                <div class="layer_atcmp" id="leftAutoFrame" style="display: none; top: 53px !important;">
+                                    <div class="ly_atcmp" data-atcmp-element="">
+                                        <div class="ly_atcmp_wrap">
+                                            <div style="display: block;">
+                                                <div class="atcmp_container _words">
+                                                    <ul class="kwd_lst _kwd_list" id="leftKwdList" style="display: block;"></ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <article class="src-subject-wrap">
+                        <div class="src-subject">
+                            <h6>주제별</h6>
+                            <ul class="src-txtBox txtLong" >
+                                <li><a href="#" onclick="searchFilter('lclasSn', '0')">전체</a></li>
+                                <li><a href="#" onclick="searchFilter('lclasSn', '1')">건강문제</a></li>
+                                <li><a href="#" onclick="searchFilter('lclasSn', '2')">치료방법</a></li>
+                                <li><a href="#" onclick="searchFilter('lclasSn', '3')">검사방법</a></li>
+                                <li><a href="#" onclick="searchFilter('lclasSn', '4')">생활습관 관리</a></li>
+
+                                </ul>
+                        </div>
+                        <div class="src-subject">
+                            <h6>신체계통별</h6>
+                            <div class="src-selectBox">
+                                <a href="javascript:searchFilter('bdySystem', 'NE')" class="ne" onclick="fn_bdySystem('NE', this)"><span>뇌신경</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'JU')" class="ju" onclick="fn_bdySystem('JU', this)"><span>정신건강</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'NU')" class="nu" onclick="fn_bdySystem('NU', this)"><span>눈</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'KO')" class="ko" onclick="fn_bdySystem('KO', this)"><span>귀코목</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'KU')" class="ku" onclick="fn_bdySystem('KU', this)"><span>구강</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'BB')" class="bb" onclick="fn_bdySystem('BB', this)"><span>뼈근육</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'PB')" class="pb" onclick="fn_bdySystem('PB', this)"><span>피부</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'NB')" class="nb" onclick="fn_bdySystem('NB', this)"><span>내분비</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'HH')" class="hh" onclick="fn_bdySystem('HH', this)"><span>호흡기</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'SO')" class="sh" onclick="fn_bdySystem('SO', this)"><span>순환기</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'SW')" class="sw" onclick="fn_bdySystem('SW', this)"><span>소화기</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'MH')" class="mh" onclick="fn_bdySystem('MH', this)"><span>면역</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'SA')" class="sa" onclick="fn_bdySystem('SA', this)"><span>비뇨기</span></a>
+                                <a href="javascript:searchFilter('bdySystem', 'SS')" class="ss" onclick="fn_bdySystem('SS', this)"><span>생식기</span></a>
+                            </div>
+                        </div>
+                        <div class="bigsubject-wrap">
+                            <div class="src-subject bigsub-01">
+                                <h6>성별</h6>
+                                <div class="src-selectBox peopleBox">
+                                    <a href="javascript:searchFilter('gender', 'M')" onclick="fn_ageGenderGa(this)" title="남자" class="age-icon01">남</a>
+                                    <a href="javascript:searchFilter('gender', 'F')" onclick="fn_ageGenderGa(this)" title="여자" class="age-icon02">여</a>
+                                </div>
+                            </div>
+                            <div class="src-subject bigsub-02">
+                                <h6>연령별</h6>
+                                <div class="src-selectBox peopleBox" >
+                                    <a href="javascript:searchFilter('age', '1')" onclick="fn_ageGenderGa(this)" title="영유아" class="age-icon03">영유아</a>
+                                    <a href="/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoYouth.do" title="청소년" class="age-icon04">청소년</a>
+<a href="/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoOld.do" title="노인" class="age-icon06">노인</a>
+</div>
+                            </div>
+                        </div>
+                        <div class="src-txtBox txtShort src-subject">
+                            <a href="javascript:searchFilter('initial', 'ㄱ')">ㄱ</a>
+                            <a href="javascript:searchFilter('initial', 'ㄴ')">ㄴ</a>
+                            <a href="javascript:searchFilter('initial', 'ㄷ')">ㄷ</a>
+                            <a href="javascript:searchFilter('initial', 'ㄹ')">ㄹ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅁ')">ㅁ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅂ')">ㅂ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅅ')">ㅅ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅇ')">ㅇ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅈ')">ㅈ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅊ')">ㅊ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅋ')">ㅋ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅌ')">ㅌ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅍ')">ㅍ</a>
+                            <a href="javascript:searchFilter('initial', 'ㅎ')">ㅎ</a>
+                            <a href="javascript:searchFilter('initial', 'ETC')" class="re-font lastSearchFilter">기타</a>
+                        </div>
+                        <div class="filterBox src-subject">
+                            <button type="button" class="btn-filter-search">필터 검색</button>
+                        </div>
+                    </article>
+                    </div>    <!--//src-conRight-->
+            </div> <!-- //src-conBody -->
+
+        </div> <!--//srcmodal_body-->
+    </div><!--//srcmodal show-->
+    <script type="text/javascript">
+        function searchFilter(name, value){
+            const form = document.createElement("form");
+            form.setAttribute("charset", "UTF-8");
+            form.setAttribute("method", "Post");  //Post 방식
+            form.setAttribute("action", "/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoMain.do"); //요청 보낼 주소
+
+            const hiddenField = document.createElement("input");
+            hiddenField.setAttribute("type", "hidden");
+            hiddenField.setAttribute("name",  name);
+            hiddenField.setAttribute("value", value);
+            form.appendChild(hiddenField);
+
+            if ( name !== "lclasSn") {
+                const hiddenField2 = document.createElement("input");
+                hiddenField2.setAttribute("type", "hidden");
+                hiddenField2.setAttribute("name",  "lclasSn");
+
+                hiddenField2.setAttribute("value", "0");
+
+                form.appendChild(hiddenField2);
+            }
+
+            const hiddenField3 = document.createElement("input");
+            hiddenField3.setAttribute("type", "hidden");
+            hiddenField3.setAttribute("name",  "lastClick");
+            hiddenField3.setAttribute("value", name);
+            form.appendChild(hiddenField3);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function fn_ntcnGa(Dta){
+            var eventObj = new Object();
+            eventObj.event_name = "common_leftMenu_click";
+            eventObj.ep_button_Text = Dta;
+            GA_Event(eventObj);
+        }
+    </script>
+</section>
+
+
+
+<div class="footerPopLayer" id="footerLink1" tabindex="0">
+    <div class="popup-in">
+        <div class="popup">
+            <div class="popup-head">
+                <h1 class="pop-tit">해외기관</h1>
+            </div>
+            <div class="popup-body">
+                <ul class="pop-foot-links">
+                    <li><a href="https://medlineplus.gov/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="medlineplus 새창열림">medlineplus</a></li>
+                    <li><a href="https://www.cdc.gov/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="미국 질병예방통제센터 새창열림">미국 질병예방통제센터</a></li>
+                    <li><a href="https://www.webmd.com/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="webmd 새창열림">webmd</a></li>
+                    <li><a href="https://www.nhs.uk/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="영국 NHS 새창열림">영국 NHS</a></li>
+                    <li><a href="https://www.healthdirect.gov.au/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="호주 healthdirect 새창열림">호주 healthdirect</a></li>
+                </ul>
+            </div>
+            <button type="button" class="popup-close" onclick="fn_closeFooterLayer('1')">
+                <img src="/healthinfo/static/images/common/modal_close.svg" alt="해외기관 닫기">
+                <span class="sr-only">닫기</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<div class="footerPopLayer" id="footerLink2" tabindex="0">
+    <div class="popup-in">
+        <div class="popup">
+            <div class="popup-head">
+                <h1 class="pop-tit">유관기관</h1>
+            </div>
+            <div class="popup-body">
+                <ul class="pop-foot-links">
+                    <li><a href="https://www.cancer.go.kr/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="국가암정보센터 새창열림">국가암정보센터</a></li>
+                    <li><a href="https://nedrug.mfds.go.kr/index" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="의약품 안전나라 새창열림">의약품 안전나라</a></li>
+                    <li><a href="https://www.foodsafetykorea.go.kr/main.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="식품안전나라 새창열림">식품안전나라</a></li>
+                    <li><a href="https://www.nrc.go.kr/portal/main.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="장애인 건강 및 재활정보 새창열림">장애인 건강 및 재활정보</a></li>
+                    <li><a href="https://www.khealth.or.kr/kps" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="한국건강증진개발원 새창열림">한국건강증진개발원</a></li>
+                    <li><a href="https://hi.nhis.or.kr/main.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="국민건강보험공단 건강in 새창열림">국민건강보험공단 건강in</a></li>
+                    <li><a href="https://www.e-gen.or.kr/nemc/main.do" style="letter-spacing: -1px; " target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="국립중앙의료원 중앙응급의료센터 새창열림">국립중앙의료원 중앙응급의료센터</a></li>
+                    <li><a href="https://www.hira.or.kr/main.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="건강보험심사평가원 새창열림">건강보험심사평가원</a></li>
+                    <li><a href="https://www.guideline.or.kr/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="임상진료지침 정보센터 새창열림">임상진료지침 정보센터</a></li>
+                    <li><a href="https://data.kihasa.re.kr/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="보건복지데이터포털 새창열림">보건복지데이터포털</a></li>
+                    <li><a href="https://kostat.go.kr/ansk/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="통계청 새창열림">통계청</a></li>
+                    <li><a href="https://kosis.kr/index/index.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="국가통계포털 새창열림">국가통계포털</a></li>
+
+                </ul>
+            </div>
+            <button type="button" class="popup-close" onclick="fn_closeFooterLayer('2')">
+                <img src="/healthinfo/static/images/common/modal_close.svg" alt="유관기관 닫기">
+                <span class="sr-only">닫기</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="footerPopLayer" id="footerLink3" tabindex="0">
+    <div class="popup-in">
+        <div class="popup">
+            <div class="popup-head">
+                <h1 class="pop-tit">정부기관</h1>
+            </div>
+            <div class="popup-body">
+                <ul class="pop-foot-links">
+                    <li><a href="https://www.kdca.go.kr/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="질병관리청 새창열림">질병관리청</a></li>
+                    <li><a href="https://dportal.kdca.go.kr/pot/index.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="감염병포털 새창열림">감염병포털</a></li>
+                    <li><a href="https://nip.kdca.go.kr/irgd/index.html" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="예방접종도우미 새창열림">예방접종도우미</a></li>
+                    <li><a href="http://xn--now-po7lf48dlsm0ya109f.kr/nqs/oidnow/main.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="해외감염병NOW 새창열림">해외감염병NOW</a></li>
+                    <li><a href="https://tbzero.kdca.go.kr/tbzero/main.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="결핵제로 새창열림">결핵제로</a></li>
+                    <li><a href="https://helpline.kdca.go.kr/cdchelp/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="희귀질환 헬프라인 새창열림">희귀질환 헬프라인</a></li>
+                    <li><a href="https://knhanes.kdca.go.kr/knhanes/main.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="국민건강영양조사 새창열림">국민건강영양조사</a></li>
+                    <li><a href="https://chs.kdca.go.kr/chs/index.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="지역사회건강조사 새창열림">지역사회건강조사</a></li>
+                    <li><a href="https://www.kdca.go.kr/yhs/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="청소년행태온라인조사 새창열림">청소년행태온라인조사</a></li>
+                    <li><a href="https://www.konos.go.kr/" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="국립장기조직혈액관리원 새창열림">국립장기조직혈액관리원</a></li>
+                    <li><a href="https://library.nih.go.kr/ncmiklib/index/index.do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="국립의과학지식센터 새창열림">국립의과학지식센터</a></li>
+                </ul>
+            </div>
+            <button type="button" class="popup-close" onclick="fn_closeFooterLayer('3')">
+                <img src="/healthinfo/static/images/common/modal_close.svg" alt="정부기관 닫기">
+                <span class="sr-only">닫기</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<div id="wrap">
+    <form id="healthLayoutForm" name="healthLayoutForm" method="post">
+        <div class="header-stop">
+            <!--// top-eg -->
+            <div class="top-eg">
+                <p>이 누리집은 대한민국 공식 전자정부 누리집입니다.</p>
+            </div>
+            <!-- top-eg //-->
+
+            <!-- header -->
+            <div id="header" class="jbMenu">
+                <h1>
+                    <a class="logo" href="/healthinfo/" title="질병관리청 KDCA 국가건강정보포털">
+                        <img src="/healthinfo/static/images/common/high-logo.png" alt="질병관리청 KDCA 국가건강정보포털" style="width: 100%;">
+                    </a>
+        </h1>
+        <nav style="margin-right:140px;">
+            <div class="navbar">
+                        <div class="dropdown" id="mainDropdown">
+                            <button type="button" onclick="fn_gnrlzHealthInfoGa('건강정보'); fn_gnrlzHealthInfo('0');" class="dropbtn">건강정보</button>
+                            <div class="dropdown-content">
+                                <div class="sub-box">
+                                    <div class="header"><h2>건강정보</h2></div>
+                                    <div class="row">
+                                        <div class="column">
+                                            <h3><a href="javascript:fn_gnrlzHealthInfoGa('건강정보');fn_gnrlzHealthInfo('0');">건강정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoYouth.do" onclick="fn_gnrlzHealthInfoGa('생애주기별 건강정보');" title="생애주기별 건강정보">생애주기별 건강정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/ccvdInfo/ccvcdInfo/cbvcacdInfoMain.do" onclick="fn_gnrlzHealthInfoGa('심뇌혈관질환정보');">심뇌혈관질환정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/medcinFoodInfoMain.do" onclick="fn_gnrlzHealthInfoGa('약품/식품정보');">약품/식품정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/troblRehabtInfoMain.do" onclick="fn_gnrlzHealthInfoGa('장애/재활정보');">장애/재활정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/centrfgtnDissInfoMain.do" onclick="fn_gnrlzHealthInfoGa('희귀질환정보');">희귀질환정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/cancerInfoMain.do" onclick="fn_gnrlzHealthInfoGa('암정보');">암정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/emgncySittnInfoMain.do" onclick="fn_gnrlzHealthInfoGa('응급상황정보');">응급상황정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/ovseaIcdInfoMain.do" onclick="fn_gnrlzHealthInfoGa('해외감염정보');">해외감염병정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a class="mainMenuLastColumn" href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/mindHealthInfoMain.do" onclick="fn_gnrlzHealthInfoGa('정신건강정보');">정신건강정보</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a class="mainMenuLastColumn" href="https://health.kdca.go.kr/healthhazard/" target="_blank" rel="noopener noreferrer" onclick="fn_gnrlzHealthInfoGa('건강위해정보');" title="새창열림" aria-label="건강위해정보 새창열림"><i class="xi-external-link"></i><span style="font-size:0.87em; vertical-align: baseline;">&nbsp;건강위해정보</span></a></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dropdown">
+                            <button type="button" onclick="fn_Link_b('https://chs.kdca.go.kr/cdhs/biz/pblcVis/main.do', '_blank');fn_gnrlzHealthInfoGa('건강통계');" title="새창열림" aria-label="건강통계 새창열림" class="dropbtn">건강통계</button>
+                            <div class="dropdown-content">
+                                <div class="sub-box">
+                                    <div class="header"><h2>만성질환건강통계</h2></div>
+                                    <div class="row">
+                                        <div class="column b0" style="width:300px">
+                                            <h3><a class="mainMenuLastColumn" href="https://chs.kdca.go.kr/cdhs/biz/pblcVis/main.do" target="_blank" rel="noopener noreferrer" onclick="fn_gnrlzHealthInfoGa('만성질환건강통계');" title="새창열림" aria-label="만성질환건강통계 새창열림"><i class="xi-external-link"></i> 만성질환건강통계</a></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button type="button" onclick="fn_Link('/healthinfo/biz/health/mdlcnstSearch/mdexmnInsttMain.do');fn_gnrlzHealthInfoGa('의료기관정보')" class="dropbtn">의료기관정보</button>
+                            <div class="dropdown-content">
+                                <div class="sub-box">
+                                    <div class="header"><h2>의료기관정보</h2></div>
+                                    <div class="row">
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/mdlcnstSearch/mdexmnInsttMain.do" onclick="fn_gnrlzHealthInfoGa('검진기관');">검진기관</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/mdlcnstSearch/hsptlParmacyMain.do" onclick="fn_gnrlzHealthInfoGa('병원ㆍ약국');">병원약국</a></h3>
+                                        </div>
+                                        <div class="column nav230">
+                                            <h3><a href="/healthinfo/biz/health/mdlcnstSearch/dstrctCcvdMain.do" onclick="fn_gnrlzHealthInfoGa('권역심뇌혈관질환센터');">권역심뇌혈관질환센터</a></h3>
+                                        </div>
+                                        <div class="column nav230 b0">
+                                            <h3><a class="mainMenuLastColumn" href="/healthinfo/biz/health/mdlcnstSearch/dstrctEgytMain.do" onclick="fn_gnrlzHealthInfoGa('권역응급의료센터');">권역응급의료센터</a></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dropdown">
+                            <button type="button" onclick="fn_Link('/healthinfo/biz/health/ntcnInfo/healthSourc/thtimtCntnts/thtimtCntntsMain.do');fn_gnrlzHealthInfoGa('알림정보');" class="dropbtn">알림정보</button>
+                            <div class="dropdown-content">
+                                <div class="sub-box">
+                                    <div class="header"><h2>알림정보</h2></div>
+                                    <div class="row">
+                                        <div class="column" style="height: 230px; ">
+                                            <h3><a href="/healthinfo/biz/health/ntcnInfo/healthSourc/thtimtCntnts/thtimtCntntsMain.do" onclick="fn_gnrlzHealthInfoGa('건강소식');">건강소식</a></h3>
+                                            <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/thtimtCntnts/thtimtCntntsMain.do" onclick="fn_gnrlzHealthInfoGa('이달의 건강정보');">• 이달의 건강정보</a>
+                                            <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/cardNews/cardNewsMain.do" onclick="fn_gnrlzHealthInfoGa('카드뉴스');">• 카드뉴스</a>
+                                            <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/healthColmn/healthColmnMain.do" onclick="fn_gnrlzHealthInfoGa('건강정보 Q&amp;A');">• 건강정보 Q&amp;A</a>
+                                            <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/newsLetter/newsLetterMain.do" onclick="fn_gnrlzHealthInfoGa('뉴스레터');">• 뉴스레터</a>
+                                        </div>
+                                        <div class="column"><h3><a href="/healthinfo/biz/health/ntcnInfo/mediaRecsroom/wordDicary/wordDicaryMain.do" onclick="fn_gnrlzHealthInfoGa('알기쉬운 건강용어');">알기쉬운 건강용어</a></h3></div>
+                                        <div class="column" style="height: 230px; ">
+                                            <h3><a href="/healthinfo/biz/health/ntcnInfo/helthEdcRecsroom/helthEdcRecsroomMain.do" onclick="fn_gnrlzHealthInfoGa('건강교육 자료실');">건강교육 자료실</a></h3>
+                                            <a href="/healthinfo/biz/health/ntcnInfo/helthEdcRecsroom/helthEdcRecsroomMain.do" onclick="fn_gnrlzHealthInfoGa('자료실 검색');">• 자료실 검색</a>
+                                            <a href="javascript:fn_location('helthEdcRecsroom');" onclick="fn_gnrlzHealthInfoGa('자료 등록');">• 자료 등록</a>
+                                            <a href="/healthinfo/biz/health/ntcnInfo/helthEdcRecsroom/useGuidanceMain.do" onclick="fn_gnrlzHealthInfoGa('이용안내');">• 이용안내</a>
+                                        </div>
+
+                                        <div class="column" style="height: 230px; ">
+                                            <h3><a href="/healthinfo/biz/health/ntcnInfo/mediaRecsroom/imageRecsroom/imageRecsroomMain.do" onclick="fn_gnrlzHealthInfoGa('미디어 자료실');">미디어 자료실</a></h3>
+                                            <a href="/healthinfo/biz/health/ntcnInfo/mediaRecsroom/imageRecsroom/imageRecsroomMain.do" onclick="fn_gnrlzHealthInfoGa('이미지 자료실');">• 이미지 자료실</a>
+                                            <a class="mainMenuLastColumn" href="/healthinfo/biz/health/ntcnInfo/mediaRecsroom/mvpRecsroom/mvpRecsroomMain.do" onclick="fn_gnrlzHealthInfoGa('동영상 자료실');">• 동영상 자료실</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dropdown">
+                            <button type="button" onclick="fn_Link('/healthinfo/biz/health/intrcnYard/grtMain.do'); fn_gnrlzHealthInfoGa('소개마당');" class="dropbtn" id="dropLastBtnTag">소개마당</button>
+                            <div class="dropdown-content">
+                                <div class="sub-box">
+                                    <div class="header"><h2>소개마당</h2></div>
+                                    <div class="row" >
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/intrcnYard/grtMain.do" onclick="fn_gnrlzHealthInfoGa('소개');">소개</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do" onclick="fn_gnrlzHealthInfoGa('이용안내');">이용안내</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="javascript:fn_location('hlthinsReqst');" onclick="fn_gnrlzHealthInfoGa('건강정보 신청');">건강담기</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="javascript:fn_location('openApiReqst');" onclick="fn_gnrlzHealthInfoGa('OpenAPI 신청');">OpenAPI 신청</a></h3>
+                                        </div>
+                                        <div class="column"><h3><a href="/healthinfo/biz/health/ntcnInfo/notice/noticeMain.do" onclick="fn_gnrlzHealthInfoGa('공지사항');">공지사항</a></h3></div>
+                                        <div class="column"><h3><a href="/healthinfo/biz/health/ntcnInfo/relateLink/relateLinkMain.do" onclick="fn_gnrlzHealthInfoGa('관련링크');">관련링크</a></h3></div>
+                                        <div class="column b0">
+                                            <h3><a href="javascript:fn_location('cstmrInqry');" class="mainMenuLastColumn" onclick="fn_gnrlzHealthInfoGa('고객문의');">고객문의</a></h3>
+                                        </div>
+                                        <div class="column">
+                                            <h3><a href="/healthinfo/biz/health/useGuidance/siteMap.do" onclick="fn_gnrlzHealthInfoGa('사이트맵')">사이트맵</a></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- navbar -->
+                </nav>
+
+                <div class="top-button">
+                    <a href="javascript:anyidAdaptor.ssoLoginPage('','')" class="btn-login" title="새창열림"><i class="xi-log-in"></i>로그인</a>
+                            </div>
+
+                <div class="m-top">
+                    <h1><a href="/healthinfo/" title="질병관리청-국가건강정보포털">질병관리청-국가건강정보포털</a></h1>
+                    <a href="#" onclick="layer_open('layer2'); return false;" title="모바일메뉴보기버튼" class="m-allmenu"><i class="xi-bars"></i></a>
+                    <!--통합검색은 서브 페이지에만-->
+                    <a class="m-search btnMobile"><i class="xi-search"></i></a>
+                </div> <!-- m-top -->
+            </div>
+        </div>
+        <!-- header -->
+        <!-- Mobile Menu -->
+        <div class="pop-layer2" id="layer2" style="z-index: 9999; ">
+            <div class="pop-container">
+                <div class="m-nav">
+                    <img src="/healthinfo/static/images/common/m-nav-logo.png" alt="질병관리청 국가건강정보포털" class="m-logo2">
+                    <a class="cbtn" id="clbtn" href="#" title="닫기"><i class="xi-close"></i></a>
+                </div>
+                <div class="m-tbtn">
+                    <ul>
+                        <li><a href="javascript:anyidAdaptor.ssoLoginPage('','')" class="btn-login" title="새창열림"><i class="xi-log-in"></i>로그인</a></li>
+                            </ul>
+                </div>
+                <div class="pop-conts">
+                    <dl>
+                        <dt class="b0"><a href="#" class="nb">건강정보</a><i class="xi-angle-down"></i></dt>
+                        <dd>
+                            <a href="#" onclick="fn_gnrlzHealthInfo('0')"><em></em>건강정보</a>
+                            <p>
+                                <a href="#" onclick="fn_gnrlzHealthInfo('1')">- 건강문제</a>
+                                <a href="#" onclick="fn_gnrlzHealthInfo('2')">- 치료방법</a>
+                                <a href="#" onclick="fn_gnrlzHealthInfo('3')">- 검사방법</a>
+                                <a href="#" onclick="fn_gnrlzHealthInfo('4')">- 생활습관 관리</a>
+                                </p>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoYouth.do"><em></em>생애주기별 건강정보</a>
+                            <p>
+                                <a href="/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoYouth.do">- 청소년 건강정보</a>
+                                <a href="/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoYouth.do">- 노인 건강정보</a>
+                            </p>
+                            <a href="#" class="mobile_menu_depth3">&nbsp;&nbsp;심뇌혈관질환정보</a>
+                            <a href="#"  style="padding-left: 5px;"><em></em>뇌혈관질환</a>
+                            <p>
+                                <a href="/healthinfo/biz/health/ccvdInfo/ccvcdInfo/cbvcacdInfoMain.do">- 뇌졸중에 대해서</a>
+                                <a href="/healthinfo/biz/health/ccvdInfo/ccvcdInfo/cbvcacdAfterMain.do">- 뇌졸중 이후의 삶</a>
+                            </p>
+                            <a href="#"  style="padding-left: 5px;"><em></em>심혈관질환</a>
+                            <p>
+                                <a href="/healthinfo/biz/health/ccvdInfo/cvcdInfo/miInfoMain.do">- 심근경색에 대해서</a>
+                                <a href="/healthinfo/biz/health/ccvdInfo/cvcdInfo/cprInfoMain.do">- 심폐소생술(CPR)</a>
+                            </p>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/medcinFoodInfoMain.do"><em></em>약품/식품정보</a>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/troblRehabtInfoMain.do"><em></em>장애/재활정보</a>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/centrfgtnDissInfoMain.do"><em></em>희귀질환정보</a>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/cancerInfoMain.do"><em></em>암정보</a>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/emgncySittnInfoMain.do"><em></em>응급상황정보</a>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/ovseaIcdInfoMain.do"><em></em>해외감염병정보</a>
+                            <a href="/healthinfo/biz/health/gnrlzHealthInfo/healthInfo/mindHealthInfoMain.do"><em></em>정신건강정보</a>
+                            <a href="https://health.kdca.go.kr/healthhazard/" title="새창열림" target="_blank"><em></em>건강위해정보</a>
+                        </dd>
+                        <dt class="nbd"><a href="#" class="nb">건강통계</a><i class="xi-angle-down"></i></dt>
+                        <dd>
+                            <a href="https://chs.kdca.go.kr/cdhs/biz/pblcVis/main.do" title="새창열림"><em></em>만성질환건강통계</a>
+                        </dd>
+
+                        <dt class="nbd"><a href="#" class="nb">의료기관정보</a><i class="xi-angle-down"></i></dt>
+                        <dd>
+                            <a href="/healthinfo/biz/health/mdlcnstSearch/mdexmnInsttMain.do"><em></em>검진기관</a>
+                            <a href="/healthinfo/biz/health/mdlcnstSearch/hsptlParmacyMain.do"><em></em>병원약국</a>
+                            <a href="/healthinfo/biz/health/mdlcnstSearch/dstrctCcvdMain.do"><em></em>권역심뇌혈관질환센터</a>
+                            <a href="/healthinfo/biz/health/mdlcnstSearch/dstrctEgytMain.do"><em></em>권역응급의료센터</a>
+                        </dd>
+
+                        <dt><a href="#" class="nb">알림정보</a><i class="xi-angle-down"></i></dt>
+                        <dd>
+                            <a href="#"><em></em>건강소식</a>
+                            <p>
+                                <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/thtimtCntnts/thtimtCntntsMain.do">- 이달의 건강정보</a>
+                                <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/cardNews/cardNewsMain.do">- 카드뉴스</a>
+                                <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/healthColmn/healthColmnMain.do">- 건강정보 Q&amp;A</a>
+                                <a href="/healthinfo/biz/health/ntcnInfo/healthSourc/newsLetter/newsLetterMain.do">- 뉴스레터</a>
+                            </p>
+                            <a href="/healthinfo/biz/health/ntcnInfo/mediaRecsroom/wordDicary/wordDicaryMain.do"><em></em>알기쉬운 건강용어</a>
+                            <a href="#"><em></em>건강교육 자료실</a>
+                            <p>
+                                <a href="/healthinfo/biz/health/ntcnInfo/helthEdcRecsroom/helthEdcRecsroomMain.do">- 자료실 검색</a>
+                                <a href="#" onclick="fn_location('helthEdcRecsroom')">- 자료 등록</a>
+                                <a href="/healthinfo/biz/health/ntcnInfo/helthEdcRecsroom/useGuidanceMain.do">- 이용안내</a>
+                            </p>
+
+                            <a href="#"><em></em>미디어 자료실</a>
+                            <p>
+                                <a href="/healthinfo/biz/health/ntcnInfo/mediaRecsroom/imageRecsroom/imageRecsroomMain.do">- 이미지자료실</a>
+                                <a href="/healthinfo/biz/health/ntcnInfo/mediaRecsroom/mvpRecsroom/mvpRecsroomMain.do">- 동영상 자료실</a>
+                            </p>
+                        </dd>
+                        <dt class="nbd"><a href="#" class="nb">소개마당</a><i class="xi-angle-down"></i></dt>
+                        <dd>
+                            <a href="/healthinfo/biz/health/intrcnYard/grtMain.do"><em></em>소개</a>
+                            <a href="#"><em></em>이용안내</a>
+                            <p >
+                                <a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=1">- 건강정보 저작권</a>
+                                <a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=2" >- 건강담기 이용</a>
+                                <a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=3" >- OpenAPI 신청</a>
+                                <a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=4" >- 건강정보 FAQ</a>
+                            </p>
+                            <a href="/healthinfo/biz/health/portalUseGuidance/hlthinsFaq/hlthinsFaqMain.do"><em></em>건강정보 FAQ</a>
+                            <a href="#" onclick="fn_location('hlthinsReqst')"><em></em>건강정보 담기</a>
+                            <a href="javascript:fn_location('openApiReqst');" onclick="fn_gnrlzHealthInfoGa('OpenAPI 신청');"><em></em>OpenAPI 신청</a>
+                            <a href="/healthinfo/biz/health/ntcnInfo/notice/noticeMain.do"><em></em>공지사항</a>
+                            <a href="/healthinfo/biz/health/ntcnInfo/relateLink/relateLinkMain.do"><em></em>관련 링크</a>
+                            <a href="#" onclick="fn_location('cstmrInqry')"><em></em>고객문의</a>
+                            <a href="/healthinfo/biz/health/useGuidance/siteMap.do"><em></em>사이트맵</a>
+                        </dd>
+
+                    </dl>
+                </div><!-- pop-conts -->
+            </div><!-- pop-container -->
+        </div>
+        <!-- Mobile Menu -->
+        <div id="popup_layer"></div>
+        <div id="Graybg" class="dis_none"></div>
+
+    </form>
+
+    <!-- 컨텐츠 -->
+    <div id="cntnts_popup_layer"></div>
+<div id="cntnts_graybg" class="dis_none"></div>
+<div id="container">
+    <div class="contents-wrap">
+        <!-- 포털이용안내 LEFT 메뉴 -->
+<div id="accordian">
+    <h2 class="accordian-title">소개마당</h2>
+    <ul>
+        <li id="menu5-1">
+            <h3><a  class="blockA" href="/healthinfo/biz/health/intrcnYard/grtMain.do">소개</a></h3>
+        </li>
+
+        <li id="menu5-2">
+            <h3><a class="blockA" href="javascript:">이용안내</a><i class="xi-caret-down-min"></i></h3>
+            <ul>
+                <li id="menu5-2-1" class="active"><a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=1">건강정보 저작권</a></li>
+                <li id="menu5-2-2"><a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=2" >건강담기 이용</a></li>
+                <li id="menu5-2-3"><a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=3" >OpenAPI 신청</a></li>
+                <li id="menu5-2-4"><a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do?index=4" >건강정보 FAQ</a></li>
+            </ul>
+        </li>
+        <li id="menu5-3">
+            <h3><a class="blockA" href="javascript:fn_location('hlthinsReqst');" onclick="fn_gnrlzHealthInfoGa('건강정보 신청');">건강담기</a></h3>
+        </li>
+        <li id="menu5-4">
+            <h3><a class="blockA" href="javascript:fn_location('openApiReqst');" onclick="fn_gnrlzHealthInfoGa('OpenAPI 신청');">OpenAPI 신청</a></h3>
+        </li>
+        <li id="menu5-5">
+            <h3><a class="blockA" href="/healthinfo/biz/health/ntcnInfo/notice/noticeMain.do">공지사항</a></h3>
+        </li>
+        <li id="menu5-6">
+            <h3><a class="blockA" href="/healthinfo/biz/health/ntcnInfo/relateLink/relateLinkMain.do">관련링크</a></h3>
+        </li>
+        <li id="menu5-7">
+            <h3><a class="blockA" href="javascript:" onclick="fn_location('cstmrInqry')">고객문의</a></h3>
+        </li>
+    </ul>
+</div>
+<!-- 포털이용안내 LEFT 메뉴 --><script type="text/javascript">
+            initSubmenu("5", "4");
+        </script>
+        <div class="sub-content main">
+            <form id="openApiReqstRegist" name="openApiReqstRegist" method="post">
+                <input type="hidden" id="fileId" name="fileId"/>
+                <input type="hidden" id="phone" name="phone"/>
+                <div class="main-title">
+                    <div class="sub-visual">
+                        <ul>
+                            <li class="home"><a href="/healthinfo/biz/health/main/mainPage/main.do" aria-label="메인으로이동"><i class="xi-home"></i></a></li>
+                            <li>
+                                <a href="javascript:" id="sub1" role="button" aria-expanded="false" aria-controls="sub1-panel">소개마당 <i class="xi-caret-down-min fl-r"></i></a>
+                                <div id="sub1-panel" class="sub-depth2" style="display: none;" role="region" aria-labelledby="sub1" aria-hidden="true">
+                                    <a href="/healthinfo/biz/health/intrcnYard/grtMain.do">소개</a>
+                                    <a href="/healthinfo/biz/health/portalUseGuidance/hlthinsReqst/hlthinsReqstMth.do">이용안내</a>
+                                    <a href="javascript:fn_location('hlthinsReqst');" onclick="fn_gnrlzHealthInfoGa('건강정보 신청');">건강담기</a>
+                                    <a href="javascript:fn_location('openApiReqst');" onclick="fn_gnrlzHealthInfoGa('OpenAPI 신청');">OpenAPI 신청</a>
+                                    <a href="/healthinfo/biz/health/ntcnInfo/notice/noticeMain.do">공지사항</a>
+                                    <a href="/healthinfo/biz/health/ntcnInfo/relateLink/relateLinkMain.do">관련링크</a>
+                                    <a class="subMenuLast" href="javascript:fn_location('cstmrInqry')">고객문의</a>
+                                </div>
+                            </li>
+                            <li><a href="javascript:fn_location('openApiReqst');" onclick="fn_gnrlzHealthInfoGa('OpenAPI 신청');">OpenAPI 신청</a></li>
+                        </ul>
+                    </div>
+                    <!-- 페이지 타이틀 + 공유/인쇄 -->
+                    <div class="title" id="sub-content">
+                        <h2 id="subContentSj">OpenAPI 신청</h2>
+                        <div class="top-share">
+                            <a href="javascript:fn_shareSlide('print');" aria-label="인쇄">
+                                <i class="xi-print"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 프린트/다운로드 플로팅 -->
+                <ul class="print-over" style="display: none;">
+                    <li>
+                        <a href="javascript:fn_print('sub-content');" aria-label="인쇄">
+                            <i class="xi-print"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:fn_pdfDownload();" aria-label="PDF 다운로드">
+                            <i class="xi-file-download"></i>
+                        </a>
+                    </li>
+                </ul>
+                <!-- 건강정보 신청 -->
+                <div id="step1">
+                <div class="hd-apply">
+                    <h5><i class="xi-shield-checked-o"></i>개인정보 수집·이용 동의(필수)</h5>
+                            <div class="policy-text">
+                            <p class="mB10">질병관리청의 국가건강정보포털은 사용자의 민원사무 처리를 위해 개인정보를 수집합니다.</p>
+                            [개인정보 수집·이용 목적] 민원사무 처리(보건교육자료실, 고객 문의, 건강정보(신규) 신청, 건강정보신청)
+                            <br>[개인정보 수집 항목] (필수) 성명, 연락처(휴대전화번호), 이메일주소
+                            <br>[개인정보 보유 및 이용기간] <span style="font-weight:600; font-size:1.125rem;">2년(2년 후 재동의 필요)</span><p class="mT10">개인정보 수집에 동의하지 않을 수 있으며, 동의하지 않는 경우 민원사무 처리가 불가능합니다.</p>
+                            </div>
+                    <span><input type="radio" name="agree1" id="agree1" value="1"><label for="agree1">동의함</label></span>
+                    <span><input type="radio" name="agree1" id="agree1" value="2"><label for="agree1">동의하지 않음</label></span>
+                    <h5><i class="xi-shield-checked-o"></i>콘텐츠 사용 동의서</h5>
+                    <span class="terms1">
+                            <textarea title="콘텐츠 사용 동의서">
+○ 제공하는 건강정보의 저작권은 질병관리청이 보유하고 있으며 콘텐츠 사용자는 사용권만을 제공받습니다.
+○ 콘텐츠 사용자는 무단으로 콘텐츠 내용의 전부 또는 일부를 변경할 수 없습니다.
+○ 콘텐츠 사용자는 무단으로 콘텐츠를 타인에게 판매하는 등 직접적인 영리 목적으로 사용할 수 없습니다.
+○ 건강정보 신청을 통해 사용 승인을 얻은 경우 출처가 국가건강정보포털임을 다음과 같이 반드시 명시해야 합니다.
+
+1) 소책자, 교육자료, 리플렛, 월간지 등 인쇄물
+- 본 저작물은 질병관리청 국가건강정보포털의 '콘텐츠명'에서 발췌하였으며, 해당 저작물은 국가건강정보포털 누리집(health.kdca.go.kr)에서 무료로 사용하실 수 있습니다.
+- 본 저작물은 질병관리청 국가건강정보포털(health.kdca.go.kr)의 '콘텐츠명'에서 발췌한 것입니다.
+- 출처: 질병관리청 국가건강정보포털(health.kdca.go.kr), '콘텐츠명 url'
+
+2) 홈페이지, 관련 사이트 링크 등록: 링크 사실을 국가건강정보포털에 반드시 통지
+
+○ 콘텐츠 사용자는 저작권자가 콘텐츠 내용을 변경하는 경우 즉시 반영할 수 있는 기술적 조치를 취해야 합니다.
+○ 콘텐츠 사용자는 저작권자의 요청이 있을 경우 지정된 양식에 맞춰 콘텐츠 이용 현황 및 사용자 모니터링에 대한 데이터를 보고하여야 합니다.
+○ 콘텐츠 사용자는 콘텐츠를 최초 제공 목적과 달리 이용하고자 할 경우 국가건강정보포털 담당자에게 사전 보고하여야 하며 승인절차를 거쳐 이용하여야 합니다.
+○ 콘텐츠 사용자가 위 내용을 지키지 않을 경우 즉시 사용을 제한하거나 관련법에 따른 조치를 받을 수 있습니다.
+○ 이외 구체적으로 명시되지 않은 모든 사항은 국가건강정보포털 담당자(nhis@korea.kr)와 협의가 필요합니다.
+                            </textarea>
+                    </span>
+                    <span><input type="checkbox" id="agree2"><label for="agree2">약관에 동의 합니다.</label></span><br/>
+                    <span><input type="checkbox" id="agree3" onchange="fn_pnShowHide()"><label for="agree3">국가건강정보포털은 민원처리 결과를 가입 연락처로 안내해드립니다. 연락처 변경이 있으시면, 안내받을 연락처를 작성해주세요.</label></span>
+                    <p class="pL20" id="phoneRange">
+                        <span>
+                            <select class="custom-select2 agency w10" id="phone1">
+                                <option></option>
+                                <option>010</option>
+                            </select>
+                        </span>
+                        <span>
+                            <input type="text" title="전화번호" class="w10" id="phone2"
+                                   maxlength="4"/>
+                        </span>
+                        <span> - </span>
+                        <span>
+                            <input type="text" title="전화번호"
+                                   class="w15" id="phone3"
+                                   maxlength="4"/>
+                        </span>
+                    </p>
+                    <div class="helth-apply">
+                        <table>
+                            <caption>OpenAPI 신청 서비스 선택항목</caption>
+                            <colgroup>
+                                <col width="20%"/>
+                                <col/>
+                            </colgroup>
+                            <tr>
+                                <th><i class="xi-check-thin" title="필수입력항목"></i>API 서비스</th>
+                                <td class="user-info">
+                                    <select id='apiSvcCode' name='apiSvcCode' class='custom-select w97' title='API 서비스'>
+
+    <option  value='' codeId='' refrn1Cn='' refrn2Cn='' refrn3Cn=''>건강정보</option>
+    <option  value='1' codeId='API_SVC_CODE' refrn1Cn='/healthinfo/openapi/svcNew/healthSearchListApi.do' refrn2Cn='' refrn3Cn=''>건강정보검색</option></select>
+<script>
+$(document).ready(function(){
+});
+</script>
+</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                    <div class="txtC w100">
+                        <button type="button" onclick="fn_step()" class="btn-blue">
+                            다음<i class="xi-long-arrow-right mL10 mB5"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="step2" style="display:none;">
+                    <div class="helth-apply">
+                        <table>
+                            <caption>OpenAPI 신청 입력항목(사용자 정보, 사용 목적, 사용 URL, 활용 용도, 콘텐츠 선택)</caption>
+                            <colgroup>
+                                <col width="20%"/>
+                                <col/>
+                            </colgroup>
+                            <tr>
+                                <th><i class="xi-check-thin" title="필수입력항목"></i>사용자 정보</th>
+                                <td class="user-info">
+                                    <span class="Radio">
+                                        <input type="radio" id="userSeCode_1" name="userSeCode"
+                                               value="1" checked="checked" title="개인"/>
+                                        <label for="userSeCode_1">개인</label>
+                                    </span>
+                                    <span class="Radio"><input type="radio" id="userSeCode_2" name="userSeCode" value="2" title="기관"/><label for="userSeCode_2">기관</label></span>
+                                    <div id="userInsttDiv" name="userInsttDiv" style="display:none;">
+                                       <input type="text" id="userInstt" name="userInstt" title="기관명"/>
+                                        <!-- 기관선택 시 사업자등록증 찾기 -->
+                                        <span>
+                                            <input type="text" placeholder="사업자등록증첨부" title="사업자등록증첨부" class="title2" id="fileName" readonly="readonly"/>
+                                        </span>
+                                        <input type="file" name="files" id="files" title="파일찾기" style="display:none" onchange="fileUploadType(this,'fileName')"/>
+                                        <span>
+                                            <button type="button" class="btn-gray" onclick="document.getElementById('files').click()">찾아보기</button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><i class="xi-check-thin" title="필수입력항목"></i>사용 목적</th>
+                                <td class="use-pu">
+                                    <span>
+                                        <label for="usePurpsCode" class="zero-text">사용목적선택</label>
+                                        <select id='usePurpsCode' name='usePurpsCode' class='custom-select2 agency'>
+
+    <option  value='1' codeId='USE_PURPS_CODE' refrn1Cn='' refrn2Cn='' refrn3Cn=''>웹사이트 개발</option>
+    <option  value='2' codeId='USE_PURPS_CODE' refrn1Cn='' refrn2Cn='' refrn3Cn=''>앱 개발</option>
+    <option  value='3' codeId='USE_PURPS_CODE' refrn1Cn='' refrn2Cn='' refrn3Cn=''>연구논문</option>
+    <option  value='4' codeId='USE_PURPS_CODE' refrn1Cn='' refrn2Cn='' refrn3Cn=''>기타 참고자료</option></select>
+<script>
+$(document).ready(function(){
+    absSelectTag.changeCallback('usePurpsCode','fn_usePurpsChnge');
+});
+</script>
+</span>
+                                    <span>
+                                        <input type="text" id="usePurpsEtcCn" name="usePurpsEtcCn" disabled="disabled"
+                                               title="사용목적입력"/>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr id="urlArea" name="urlArea" style="display: none;">
+                                <th><i class="xi-check-thin" title="필수입력항목"></i>사용 URL</th>
+                                <td>
+                                    <input type="text" id="useUrl" name="useUrl" placeholder="http://"
+                                           title="사용URL 입력"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><i class="xi-check-thin" title="필수입력항목"></i>활용 용도</th>
+                                <td>
+                                    <textarea id="prcusePrposCn" name="prcusePrposCn" title="활용용도 입력"></textarea>
+                                    <div class="text-count">
+                                        <span id="prcusePrposCn_count" style="vertical-align: unset">0</span> / 400
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><i class="xi-check-thin" title="필수입력항목"></i>콘텐츠 선택</th>
+                                <td>
+                                    <button type="button" class="btn-gray2" onclick="fn_selectHealthInfo();return false"
+                                            title="새창열림">건강정보 선택
+                                    </button>
+                                <span class="mL20" id="totalCnt">총 0건</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="txtC w100">
+                        <button type="button" class="btn-red" onclick="fn_request()">
+                            <i class="xi-check mB3 mR5"></i>신청
+                        </button>
+                        <button type="button" class="btn-gray2" onclick="fn_goBack()">
+                            <i class="xi-reply mB3 mR5"></i>이전
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div><!-- footer -->
+    <div id="footer">
+        <div class="text-box">
+            <ul class="f-link">
+                <li class="pL0"><a href="https://www.kdca.go.kr/kdca/3507/subview..do" target="_blank" rel="noopener noreferrer" title="새창열림" aria-label="개인정보처리방침 새창열림" onclick="fn_hadaGa('개인정보처리방침');">개인정보처리방침</a></li>
+                <li><a href="/healthinfo/biz/health/useGuidance/useStplat.do" onclick="fn_hadaGa('개인정보이용안내');" >개인정보이용안내</a></li>
+                <li class="bg0"><a href="/healthinfo/biz/health/useGuidance/cpyrhtPolicy.do" onclick="fn_hadaGa('저작권정책 및 웹접근성');">저작권정책 및 웹접근성</a></li>
+            </ul>
+        </div>
+        <div class="footer-box">
+            <div class="sitebox">
+                <div class="main-f-site">
+                    <ul>
+                        <li><a href="javascript:" id="footerLinkBtn1" onclick="openForm('footerLink1')">해외기관<i class="xi-angle-up-min"></i></a></li>
+                        <li><a href="javascript:" id="footerLinkBtn2" onclick="openForm('footerLink2')">유관기관<i class="xi-angle-up-min"></i></a></li>
+                        <li><a href="javascript:" id="footerLinkBtn3" onclick="openForm('footerLink3')">정부기관<i class="xi-angle-up-min"></i></a></li>
+                    </ul>
+                </div>
+
+
+                <div class="main-tab-site">
+                    <div class="family-site site01">
+                        <label for="selectSite6">해외기관(새창열림)</label>
+                        <select class="custom-select2" id="selectSite6">
+                            <option value="">해외기관</option>
+                            <option value="https://medlineplus.gov/"  rel="noopener noreferrer">medlineplus</option>
+                            <option value="https://www.cdc.gov/"  rel="noopener noreferrer">미국 질병예방통제센터</option>
+                            <option value="https://www.webmd.com/"  rel="noopener noreferrer">webmd</option>
+                            <option value="https://www.nhs.uk/"  rel="noopener noreferrer">영국 NHS</option>
+                            <option value="https://www.healthdirect.gov.au/"  rel="noopener noreferrer">호주 healthdirect</option>
+                        </select>
+
+                    </div>
+                    <div class="family-site site02">
+                        <label for="selectSite5">유관기관(새창열림)</label>
+                        <select class="custom-select2" id="selectSite5">
+                            <option value="">유관기관</option>
+                            <option value="https://www.cancer.go.kr/"  rel="noopener noreferrer">국가암정보센터</option>
+                            <option value="https://nedrug.mfds.go.kr/index"  rel="noopener noreferrer">의약품 안전나라</option>
+                            <option value="https://www.foodsafetykorea.go.kr/main.do"  rel="noopener noreferrer">식품안전나라</option>
+                            <option value="https://www.nrc.go.kr/portal/main.do"  rel="noopener noreferrer">장애인 건강 및 재활정보</option>
+                            <option value="https://www.khealth.or.kr/kps"  rel="noopener noreferrer">한국건강증진개발원</option>
+                            <option value="https://hi.nhis.or.kr/main.do"  rel="noopener noreferrer">국민건강보험공단 건강in</option>
+                            <option value="https://www.e-gen.or.kr/nemc/main.do"  rel="noopener noreferrer">국립중앙의료원 중앙응급의료센터</option>
+                            <option value="https://www.hira.or.kr/main.do"  rel="noopener noreferrer">건강보험심사평가원</option>
+                            <option value="https://www.guideline.or.kr/"  rel="noopener noreferrer">임상진료지침 정보센터</option>
+                            <option value="https://data.kihasa.re.kr/"  rel="noopener noreferrer">보건복지데이터포털</option>
+                            <option value="https://kostat.go.kr/ansk/"  rel="noopener noreferrer">통계청</option>
+                            <option value="https://kosis.kr/index/index.do"  rel="noopener noreferrer">국가통계포털</option>
+                        </select>
+                    </div>
+                    <div class="family-site site03">
+                        <label for="selectSite4">정부기관(새창열림)</label>
+                        <select class="custom-select2" id="selectSite4">
+                            <option value="">정부기관</option>
+                            <option value="https://www.kdca.go.kr/"  rel="noopener noreferrer">질병관리청</option>
+                            <option value="https://www.kdca.go.kr/"  rel="noopener noreferrer">감염병포털</option>
+                            <option value="https://nip.kdca.go.kr/irgd/index.html"  rel="noopener noreferrer">예방접종도우미</option>
+                            <option value="http://xn--now-po7lf48dlsm0ya109f.kr/"  rel="noopener noreferrer">해외감염병NOW</option>
+                            <option value="https://tbzero.kdca.go.kr/tbzero/main.do"  rel="noopener noreferrer">결핵제로</option>
+                            <option value="https://helpline.nih.go.kr/cdchelp/index.jsp"  rel="noopener noreferrer">희귀질환 헬프라인</option>
+                            <option value="https://knhanes.kdca.go.kr/knhanes/main.do"  rel="noopener noreferrer">국민건강영양조사</option>
+                            <option value="https://chs.kdca.go.kr/chs/index.do"  rel="noopener noreferrer">지역사회건강조사</option>
+                            <option value="https://www.kdca.go.kr/yhs/"  rel="noopener noreferrer">청소년행태온라인조사</option>
+                            <option value="https://www.konos.go.kr/konosis/index.jsp"  rel="noopener noreferrer">국립장기조직혈액관리원</option>
+                            <option value="https://library.nih.go.kr/ncmiklib/index/index.do"  rel="noopener noreferrer">국립의과학지식센터</option>
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+            <p>[ 28159 ] 충청북도 청주시 흥덕구 오송읍 오송생명2로 187 오송보건의료행정타운 내 질병관리청<br>
+                문의사항: 02-2030-6602 (평일 9:00-17:00, 12:00-13:00 제외) / 관리자 이메일 : nhis@korea.kr<br>
+            </p><small>COPYRIGHT @ 2024 질병관리청. ALL RIGHT RESERVED</small>
+
+            <div class="f-btm-ban">
+                <span class="ban-txt">※ 본 페이지에서 제공하는 내용은 참고사항일 뿐 게시물에 대한 법적책임은 없음을 밝혀드립니다. 자세한 내용은 전문가와 상담하시기 바랍니다.</span>
+            </div>
+            <a href="/healthinfo/biz/health/useGuidance/cpyrhtPolicy.do" class="wa-img">
+                <img src="/healthinfo/static/images/common/wa2024.png" alt="wa마크" style="width: 95px; height: 72px">
+            </a>
+        </div>
+    </div>
+    <!-- footer -->
+
+</div><!-- //wrap -->
+
+<!-- 맨 위로 이동 버튼 -->
+<button id="topButton" onclick="scrollToTop()">
+    ↑ TOP
+</button>
+
+<script>
+    // 스크롤 감지하여 버튼 표시/숨김
+    window.onscroll = function () {
+        var topButton = document.getElementById("topButton");
+        if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+            topButton.style.display = "block";
+        } else {
+            topButton.style.display = "none";
+        }
+    };
+
+    // 부드럽게 스크롤 위로 이동
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+<script>
+    (function () {
+        const subVisual = document.querySelector('.sub-visual');
+        if (!subVisual) return;
+
+        const threshold = 1; // 스크롤 조금만 내려도 compact 적용
+        const mobileMax = 768; // 모바일 기준 px
+
+        function update() {
+            if (window.innerWidth <= mobileMax) {
+                const compact = window.scrollY > threshold;
+                subVisual.classList.toggle('compact', compact);
+            } else {
+                // PC 화면에서는 항상 전체 보이도록 compact 제거
+                subVisual.classList.remove('compact');
+            }
+        }
+
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        window.addEventListener('load', update);
+    })();
+</script>
+
+
+<!--검색 모달-->
+<script>
+    var body = document.querySelector('body');
+    var srcmodal = document.querySelector('.srcmodal');
+    var btnOpenPopup = document.querySelector('.btn-open-popup');
+    var btnMobile = document.querySelector('.btnMobile');
+    var btnClose = document.querySelector('.btnClose');
+
+    btnClose.addEventListener('click', () => {
+        srcmodal.classList.toggle('show');
+        if (srcmodal.classList.contains('show')) {
+            body.style.overflow = 'hidden';
+        } else {
+            body.style.overflow = 'auto';
+        }
+
+        const wrap = document.getElementById('wrap');
+        const focusableElements1 = wrap.querySelectorAll('button, input, a, textarea, select');
+        const skipnavigation = document.getElementById('skipnavigation');
+        const focusableElements2 = skipnavigation.querySelectorAll('button, input, a, textarea, select');
+        // div 뒤쪽에 있는 요소들을 비활성화
+        focusableElements1.forEach(element => {
+            element.removeAttribute("tabindex")
+            element.classList.remove('disabled-focus');
+        });
+        focusableElements2.forEach(element => {
+            element.removeAttribute("tabindex")
+            element.classList.remove('disabled-focus');
+        });
+    });
+
+    btnOpenPopup.addEventListener('click', () => {
+        srcmodal.classList.toggle('show' );
+        if (srcmodal.classList.contains('show')) {
+            body.style.overflow = 'hidden';
+            const wrap = document.getElementById('wrap');
+            const focusableElements1 = wrap.querySelectorAll('button, input, a, textarea, select');
+            const skipnavigation = document.getElementById('skipnavigation');
+            const focusableElements2 = skipnavigation.querySelectorAll('button, input, a, textarea, select');
+            // div 뒤쪽에 있는 요소들을 비활성화
+            focusableElements1.forEach(element => {
+                element.setAttribute('tabindex', '-1');
+                element.classList.add('disabled-focus');
+            });
+            focusableElements2.forEach(element => {
+                element.setAttribute('tabindex', '-1');
+                element.classList.add('disabled-focus');
+            });
+        }
+
+        $(".lastSearchFilter").keydown(function(e){
+            if(e.which === 9) {
+                e.preventDefault();
+                $(".sideSearch").find(".btnClose").focus();
+            }
+        });
+    });
+
+    /* 모바일 버튼 */
+    btnMobile.addEventListener('click', () => {
+        srcmodal.classList.toggle('show');
+    });
+
+    function fn_hadaGa(Dta){
+        var eventObj = new Object();
+        eventObj.event_name = "common_footer_click";
+
+        if(Dta === '1'){
+            eventObj.ep_button_Description = "저작권정책 및 웹 접근성";
+        }
+        if(Dta === '2'){
+            eventObj.ep_button_Text = "GO";
+            eventObj.ep_dropdown_Value = "medlineplus/미국 질병예방통제센터/webmd/영국 NHS/호주 healthdirect";
+        }
+        if(Dta === '3'){
+            eventObj.ep_button_Text = "GO";
+            eventObj.ep_dropdown_Value = "국가암정보센터/의약품 안전나라/식품안전나라/장애인 건강 및 재활정보/한국건강증진개발원/국민건강보험공단 건강in/국립중앙의료원 중앙응급의료센터/건강보험심사평가원/임상진료지침 정보센터/보건복지데이터포털 /통계청 /국가통계포털";
+        }
+        if(Dta === '4'){
+            eventObj.ep_button_Text = "GO";
+            eventObj.ep_dropdown_Value = "질병관리청 /감염병포털/예방접종도우미/해외감염병NOW/결핵제로/희귀질환 헬프라인/국민건강영양조사/지역사회건강조사/청소년행태온라인조사 /국립장기조직혈액관리원/국립의과학지식센터";
+        }else{
+        }
+        GA_Event(eventObj);
+    }
+
+    // Thumbnail image controls
+    function currentSlide(n) {
+        showSlides_click(slideIndex = n);
+        const eventObj = {};
+        eventObj.event_name = "main_slideNumber_click";
+        eventObj.ep_button_Text = n;
+        GA_Event(eventObj);
+
+    }
+
+    function showSlides_click(n) {
+        let i;
+        let slides = document.getElementsByClassName("mySlides");
+        let dots = document.getElementsByClassName("dot");
+
+        if (n > slides.length) {slideIndex = 1}
+        if (n < 1) {slideIndex = slides.length}
+
+        for (i = 0; i < slides.length; i++) {
+            slides[i].style.display = "none";
+        }
+
+        for (i = 0; i < dots.length; i++) {
+            dots[i].className = dots[i].className.replace(" active", "");
+        }
+
+        slides[slideIndex-1].style.display = "block";
+        dots[slideIndex-1].className += " active";
+    }
+
+    function testDigOneLogin() {
+        var popUrl = "/healthinfo/biz/health/main/mainPage/testLogin.do";
+        var popOption = "width=700, height=300, resizable=no, scrollbars=yes, status=no, title=테스트 로그인, top=100, left=100, location=no";
+        window.name="health";
+        var popupWindow = window.open(popUrl,"테스트 로그인", popOption);
+        popupWindow.focus();
+    }
+</script>
+</body>
+</html>

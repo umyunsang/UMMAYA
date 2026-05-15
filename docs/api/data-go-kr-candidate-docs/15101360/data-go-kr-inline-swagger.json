@@ -1,0 +1,16 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "한국전력에서 공급한 계약종별 전력사용량과 고객호수, 전기요금, 평균판매단가 데이터를 제공합니다. 해당API는 전력데이터개방포털 API로 회원가입후 사용 가능합니다.",
+    "version": "1.0.0",
+    "title": "한국전력공사_계약종별 전력사용량"
+  },
+  "host": "apis.data.go.kr/B410002/",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {},
+  "definitions": {}
+}

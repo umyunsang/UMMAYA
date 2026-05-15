@@ -1,0 +1,1614 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 공통 jsp 파일-->
+
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width" />
+    <meta name="format-detection" content="telephone=no"/><!-- 전화번호 자동링크 없애기 -->
+    <meta name="keywords" content=""><!-- 키워드 제공 -->
+    <meta name="description" content=""><!-- 요약정보 -->
+    <meta name="robots" content="all"><!-- 검색로봇 -->
+    <title>전력데이터 개방 포털시스템</title>
+
+
+
+    <link type="text/css" rel="stylesheet" href="/style/S01/import.css">
+    <link type="text/css" rel="stylesheet" href="/style/S01/jquery-ui.css">
+    <link href="/style/cmsadmin/cmsdefault.css" rel="stylesheet" type="text/css">
+
+    <!--script src="../js/jquery-3.2.0.min.js"></script-->
+    <script type="text/javascript" src="/js/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.bxslider.js"></script>
+    <script type="text/javascript" src="/js/design.js"></script>
+    <script type="text/javascript" src="/js/wow.min.js"></script>
+    <!-- enter 메뉴 스크립트 소스 추가 200224-->
+    <script type="text/javascript" src="/js/enter_gnb_new.js"></script>
+    <!-- // enter 메뉴 스크립트 소스 추가 200224 END -->
+
+    <!-- 정전맵 s -->
+
+    <!-- 정전맵 e -->
+
+    <script type="text/javascript" src="/js/CmCommon.js"></script>
+    <script type="text/javascript" src="/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui.js"></script>
+    <script type="text/javascript" src="/js/jquery.ui.datepicker-ko.js"></script>
+
+<script language="javascript"  type="text/javascript">
+//com-jquery-fn.js
+var JI_CM_COMON_MSG_ALERT01 = "을(를) 입력하십시오.";
+var JI_CM_COMON_MSG_ALERT02 = "의 길이를";
+var JI_CM_COMON_MSG_ALERT03 = "이하로 입력하십시오.\n (한글 3byte  영문,숫자 1byte 사용가능) \n 현재";
+var JI_CM_COMON_MSG_ALERT04 = "은(는) 숫자로만 입력하십시오.";
+var JI_CM_COMON_MSG_ALERT05 = "을(를) 선택 하십시오.";
+
+//CmCommon.js
+var JI_CM_COMON_MSG_NO_DATA = "조회된 데이타가 없습니다.";
+
+
+</script>
+
+
+
+    <!-- com -->
+    <script src="/js/com.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/js/com-jquery-fn.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- jqplot -->
+    <script type="text/javascript" src="/js/jqplot/excanvas.js"></script>
+    <script type="text/javascript" src="/js/jqplot/excanvas.min.js"></script>
+    <script type="text/javascript" src="/js/jqplot/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.cursor.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.barRenderer.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.pieRenderer.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.donutRenderer.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.categoryAxisRenderer.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.pointLabels.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.enhancedLegendRenderer.min.js"></script>
+
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.canvasTextRenderer.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.canvasAxisTickRenderer.js"></script>
+    <script type="text/javascript" src="/js/jqplot/plugins/jqplot.highlighter.js"></script>
+    <!-- jqplot -->
+
+</head>
+<!-- disable -->
+<div id="pageDisable" style="position:absolute;width:100%;height:100%;top:0%;left:0%;z-index:8000;display:none;"> </div>
+<!-- disable -->
+<div class="loadingarea" id="loadingarea">
+    <div class="loading">로딩중입니다.</div>
+    <div class="loading_txt">Loading...</div>
+    <div class="loading_shadow">가림영역</div>
+</div>
+<!-- 공통 jsp 파일-->
+
+
+<body>
+
+
+
+
+
+<!--site_map-->
+<div class="site_map">
+    <div class="site_map_inner">
+        <div class="site_map_close">닫기<span class="stic_1"></span><span class="stic_2"></span></div>
+        <!--h1 class="main_title">사이트맵</h1-->
+        <ul id="sitemap_data">
+
+        </ul>
+    </div>
+</div>
+<div class="site_map_move"><span></span></div>
+<div class="site_map_move2"><span></span></div>
+<div class="site_map_move3"><span></span></div>
+<!--//site_map-->
+
+
+
+<script type='text/javascript'>
+//<![CDATA[
+
+$(function() {
+    /*사이트맵*/
+    sitemapInit();
+
+});
+
+
+function sitemapInit(){
+
+    var prev_i = 0;
+    var depth1_ord = 1;
+
+    // 트리의 값을 셋팅한다
+    /*[0];//' M_CODE    [1];//' M_NM    [2];//' M_UP_CODE    [3];//' DEPTH_NO    [4];//' ORDER_NO    [5];//' LINK_TY
+    [6];//' M_CODES
+    [7];//' LV
+    */
+
+    // 현재 선택된 메뉴의 1단계 메뉴코드를 확인한다
+    for(i=0;i<listtreeval.length;i++){
+        var tmp_innerhtml_str = "";
+
+        for(j=0;j<listtreeval[i].length;j++){
+
+            // 1단계 메뉴는 시스템 명임
+            if(i==0){
+
+            // 2단계 메뉴
+            }else if(i==1){
+
+                tmp_innerhtml_str = "<li class=\"depth1 pos_"+listtreeval[i][j][4]+"\">\r\n";
+                tmp_innerhtml_str = tmp_innerhtml_str + "<h3>"+listtreeval[i][j][1]+"</h3>\r\n";
+                tmp_innerhtml_str = tmp_innerhtml_str + "<ul id=\""+listtreeval[i][j][0]+"\" class=\"depth2\"></ul>\r\n";
+                tmp_innerhtml_str = tmp_innerhtml_str + "</li>\r\n"
+
+                $("#sitemap_data").append(tmp_innerhtml_str);
+
+            // 3단계이상 메뉴
+            }else if(i==2){
+
+                tmp_innerhtml_str = "<li><a href=\"#\" onclick=\"javascript:Go_SubmenuTop("+i+",'"+listtreeval[i][j][0]+"','"+listtreeval[i][j][2]+"','Y')\" >"+listtreeval[i][j][1]+"</a></li>\r\n";
+
+                $("#"+listtreeval[i][j][2]).append(tmp_innerhtml_str);
+            }
+
+
+
+
+
+
+        }// for문 종료
+
+
+
+
+
+    }// for문 종료
+
+
+
+}
+
+
+
+//]]>
+</script>
+
+
+<!--skip-->
+<dl id="skip">
+    <dt>바로가기 메뉴</dt>
+    <dd><a href="#container">본문 바로가기</a></dd>
+    <dd><a href="#gnb">메뉴 바로가기</a></dd>
+    <dd><a href="#footer">페이지 하단 바로가기</a></dd>
+</dl>
+<!--//skip-->
+
+
+
+<!--wrap-->
+<div id="wrap">
+
+
+
+
+
+<script type="text/javascript" src="/js/S01Tree.js?version=20260515235306" charset="utf-8"></script>
+
+    <!--header-->
+
+    <header id="header">
+        <!--hta : header title area 상단 로고, 유틸영역, 모바일 메뉴, 검색창 등을 포함합니다.-->
+        <!-- enter GNB 추가작업 200224 PC -->
+        <div class="enter_wrap">
+            <div class="enter_gnb_new">
+                <div id="enter_header">
+                    <div class="header_box">
+                        <h1 class="enter_logo"><a href="https://en-ter.co.kr/main.do"><img src="images/enter/logo.png" alt="한전 EN:TER 에너지마켓플레이스"></a></h1>
+                        <div class="enter_util_right">
+
+                            <a href="https://en-ter.co.kr/ft/login/login.do?siteCode=B">로그인</a>
+                            <a href="https://en-ter.co.kr/ft/login/join.do?siteCode=B">회원가입</a>
+
+                        </div>
+                    </div>
+                    <!--  gnb -->
+                        <!-- enter GNB 추가작업 210317 PC -->
+                        <div id="enter_gnb_area">
+                            <!-- nav -->
+                            <nav id="enter_gnb">
+                                <ul class="gnbmenu js-gnbmenu clear">
+
+                                    <li class="depth1 js-depth1" id="depth1_0">
+                                        <a href="#" class="depth1_tit js-depth1-tit " accesskey="3">기업라운지</a>
+                                        <div class="gnb_inbox js-gnb-inbox">
+                                            <div class="gnb_bg">
+                                                <div class="depth2_box clear">
+                                                    <ul class="depth2 js-depth2 clear">
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/cs/lg/list.do" target="">기업정보</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/cs/pi/list.do" target="">에너지분야 제품홍보</a>
+                                                        </li>
+
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                    <li class="depth1 js-depth1" id="depth1_1">
+                                        <a href="#" class="depth1_tit js-depth1-tit " accesskey="1">에너지효율화</a>
+                                        <div class="gnb_inbox js-gnb-inbox">
+                                            <div class="gnb_bg">
+                                                <div class="depth2_box clear">
+                                                    <ul class="depth2 js-depth2 clear">
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ec/main/main.do" target="">에너지캐시백</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/support/main/main.do" target="">복지할인가구 고효율가전지원사업</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ac/main/main.do" target="">소상공인고효율 기기지원사업</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/biz/eers/eersInfo/intro.do" target="">에너지효율향상 사업</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/biz/dr/drIntro/intro.do" target="">전력수요관리(DR)</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/biz/da/simulator/userInfo.do" target="">시뮬레이터</a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                    <li class="depth1 js-depth1" id="depth1_2">
+                                        <a href="#" class="depth1_tit js-depth1-tit " accesskey="2">재생에너지거래</a>
+                                        <div class="gnb_inbox js-gnb-inbox">
+                                            <div class="gnb_bg">
+                                                <div class="depth2_box clear">
+                                                    <ul class="depth2 js-depth2 clear">
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/gp/prm/prminfo/list.do" target="">녹색프리미엄</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/ppa/thpty/infb/info.do" target="">제 3자간 전력거래계약</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/ppa/contract/infa/info1.do" target="">한전과 전력거래계약</a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                    <li class="depth1 js-depth1" id="depth1_3">
+                                        <a href="#" class="depth1_tit js-depth1-tit " accesskey="4">전력데이터서비스</a>
+                                        <div class="gnb_inbox js-gnb-inbox">
+                                            <div class="gnb_bg">
+                                                <div class="depth2_box clear">
+                                                    <ul class="depth2 js-depth2 clear">
+                                                        <li>
+                                                            <a href="https://bigdata.kepco.co.kr/cmsmain.do?scode=S01" target="">전력데이터 개방포털</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/loginSsoEtc.do?ssoTarget=edsm" target="">전력데이터서비스(EDS)</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/loginSsoEtc.do?ssoTarget=opm" target="">전력데이터서비스 사업자용 포털</a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                    <li class="depth1 js-depth1" id="depth1_4">
+                                        <a href="#" class="depth1_tit js-depth1-tit " accesskey="4">고객지원</a>
+                                        <div class="gnb_inbox js-gnb-inbox">
+                                            <div class="gnb_bg">
+                                                <div class="depth2_box clear">
+                                                    <ul class="depth2 js-depth2 clear">
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/user/ai/info.do" target="">마이페이지</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/cs/nt/list.do" target="">공지사항</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/cs/fq/list.do" target="">자주하는 질문</a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="https://en-ter.co.kr/ft/cs/qa/list.do" target="">Q&A</a>
+                                                        </li>
+                                                          <li>
+                                                            <a href="https://en-ter.co.kr/ft/cs/sm/list.do" target="">담당자 조회</a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </nav>
+                            <!-- // nav -->
+                        </div>
+                        <!-- enter GNB 추가작업 210317 PC END -->
+                        <!-- // gnb -->
+                    </div>
+                </div>
+            </div>
+            <!-- enter GNB 추가작업 200224 PC END -->
+
+            <div id="hta">
+            <!--inner-->
+            <div class="inner">
+                <h1 class="logo"><a href="/cmsmain.do?scode=S01&amp;pcode=main">전력데이터 개방 포털시스템</a></h1>
+
+                <ul class="util">
+                    <li class="site_map_btn"><a href="#">사이트맵</a></li>
+                </ul>
+                <!-- <div class="search_top">
+                    <fieldset>
+                        <legend>통합검색</legend>
+                        <div>
+                            <label for="search_total">통합검색</label>
+                            <input type="text" class="input_search ime_mode" name="search_total" id="search_total" value="" title="검색어 입력" placeholder="검색" />
+                            <a class="btn_search" href="#">검색</a>
+                        </div>
+                    </fieldset>
+                </div> -->
+                <div class="mobile_hamburger">
+                    <a href="/cmsmain.do?scode=S01&pcode=000496" class="mobile_search">검색</a>
+                    <button class="gnb_open">열기<span class="stic_1"></span><span class="stic_2"></span><span class="stic_3"></span></button>
+                </div>
+            </div>
+            <!--//inner-->
+        </div>
+        <!--//hta-->
+
+        <!--gnb-->
+        <nav id="gnb">
+
+            <!--mobile_util-->
+                <div class="mobile_util">
+                    <button class="gnb_close">닫기<span class="stic_1"></span><span class="stic_2"></span></button>
+                    <!-- enter GNB 추가작업 200224 모바일 -->
+                    <div class="enter_link"><a href="#"><img src="images/enter/logo.png" alt="EN:TER"></a></div>
+                    <!-- enter GNB 추가작업 200224 모바일 END -->
+                </div>
+                <!--//mobile_util-->
+
+            <!--main_menu-->
+            <div class="main_menu">
+                <h2>주 메뉴 영역</h2>
+                <ul class="hit">
+                    <li class="pos_0"><a href="#">데이터 공개</a></li>
+                    <li class="pos_1"><a href="#">맞춤 데이터 제공</a></li>
+                    <li class="pos_2"><a href="#">데이터안심구역</a></li>
+                    <li class="pos_3"><a href="#">데이터 공유</a></li>
+                    <li class="pos_4"><a href="#">소통과 참여</a></li>
+                    <li class="pos_5"><a href="#">센터소개</a></li>
+
+                </ul>
+            </div>
+            <!--//main_menu-->
+            <!-- enter GNB 추가작업 200224 모바일 -->
+            <!-- enter GNB 추가작업 210317 모바일 -->
+            <nav class="enter_m_gnb">
+                <ul class="enter_m_gnbmenu">
+                    <li><a href="https://en-ter.co.kr/ft/cs/intro/intro01.do">EN:TER란?</a></li>
+                    <li><a href="https://en-ter.co.kr/ft/cs/nt/list.do">고객센터</a></li>
+                </ul>
+            </nav>
+            <!-- enter GNB 추가작업 210317 모바일 END -->
+            <!-- enter GNB 추가작업 200224 모바일 END -->
+            <!--sub_menu-->
+            <div id="mnb" class="sub_menu hit">
+                <h2>서브 메뉴 영역</h2>
+                <ul id="mnb_data">
+
+                </ul>
+            </div>
+            <!--//sub_menu-->
+        </nav>
+        <!--//gnb-->
+
+        <!--blank_layer-->
+        <div id="blank_layer"></div>
+        <!--//blank_layer-->
+    </header>
+    <!--//header-->
+
+<script type='text/javascript'>
+//<![CDATA[
+
+$(function() {
+    /*mnb*/
+    mnbInit();
+    /*mnb*/
+
+    //통합검색 엔터
+    $("#search_total").on("keydown", function(e) {
+        if (e.keyCode == 13) {
+            $(".btn_search").trigger("click");
+            return false;
+        }
+    });
+
+    //통합검색 클릭
+    $(".btn_search").click(function(){
+        $("#search_total").val($.trim($("#search_total").val()));
+
+        if ($("#search_total").val()=="") {
+            alert("검색어를 입력해주세요.");
+            return;
+        }
+
+        var searchText = encodeURIComponent($("#search_total").val());
+        //location.href="/cmsmain.do?scode=S01&pcode=000496&searchText="+searchText;
+        $("form[name=pagego]").find("input[name=pcode]").val("000496");
+        $("form[name=pagego]").find("input[name=pstate]").val("L");
+        $("form[name=pagego]").append("<input type='hidden' name='searchText' id='searchText' value='"+$("#search_total").val()+"' />");
+        $("form[name=pagego]").attr("action","/cmsmain.do");
+        $("form[name=pagego]").attr("method","post");
+        $("form[name=pagego]").submit();
+
+    });
+
+    $('.hit').mouseenter(function(){
+        if($windowWid > 900){
+            //alert('1234');
+            $('.sub_menu').stop().animate({'top':230},200);
+            $('#blank_layer').css('z-index','1');
+            $('#blank_layer').show();
+        }
+    });
+    $('.main_menu a').focus(function(){
+        if($windowWid > 900){
+            $('.sub_menu').stop().animate({'top':130},200);
+            $('#blank_layer').css('z-index','1');
+            $('#blank_layer').show();
+        }
+    });
+    $('.hit').mouseleave(function(){
+        if($windowWid > 900){
+            $('.sub_menu').stop().animate({'top':-200},200);
+            $('#blank_layer').hide();
+            $('#blank_layer').css('z-index','13');
+
+        }
+    });
+    $('#container a').focus(function(){
+        if($windowWid > 900){
+            $('.sub_menu').stop().animate({'top':-200},200);
+            $('#blank_layer').hide();
+            $('#blank_layer').css('z-index','13');
+        }
+    });
+
+
+    //모바일메뉴
+    $('#gnb .sub_menu .depth1').on('click',  function(){
+        if($windowWid < 900){
+            $('#gnb .sub_menu .depth1 ul').stop().slideUp(250);
+            $(this).find('ul').stop().slideDown(250);
+        }
+    });
+
+    //20.01.02 추가 엔터 접속시 제목 숨김 처리
+
+});
+
+var selmCodes = "";
+var depth1_code = "";
+var selmArr = new Array();
+
+function mnbInit(){
+
+    var prev_i = 0;
+    var depth1_ord = 1;
+
+    selmCodes_sp = null;
+
+    // 현재 선택된 메뉴의 1단계 메뉴코드를 확인한다
+    for(i=0;i<listtreeval.length;i++){
+        for(j=0;j<listtreeval[i].length;j++){
+            if(listtreeval[i][j][0]=="000493"){
+                selmCodes = listtreeval[i][j][6];
+                selmArr = listtreeval[i][j];
+                break;
+            }
+        }
+    }
+
+    if(selmCodes!=""){
+        selmCodes_sp = selmCodes.split("::");
+        depth1_code = selmCodes_sp[1];
+        for(i=0;i<listtreeval[0].length;i++){
+            if(listtreeval[0][i][0]==depth1_code){
+                depth1_ord=parseInt(listtreeval[0][i][4])+1;
+                break;
+            }
+        }
+    }
+
+    // 현재 선택된 메뉴의 1단계 메뉴코드를 확인한다
+    for(i=0;i<4;i++){
+        var tmp_innerhtml_str = "";
+        var tmp_left_str = "";
+        var tmp_menu_nm = "";
+
+        for(j=0;j<listtreeval[i].length;j++){
+
+            //console.log(i+":"+j+":\r\n"+listtreeval[i][j][0]+"\r\n"+listtreeval[i][j][1]+"\r\n"+listtreeval[i][j][2]+"\r\n"+listtreeval[i][j][3]+"\r\n"+listtreeval[i][j][4]+"\r\n"+listtreeval[i][j][5]+"\r\n"+listtreeval[i][j][6]+"\r\n"+listtreeval[i][j][7]+"\r\n");
+            // 1단계 메뉴는 시스템 명임
+            if(i==0){
+
+            // 2단계 메뉴
+            }else if(i==1){
+                // top_menu는 6개까지만
+                // 아이디어제안, 분석인프라 숨김, 공유센터 추가로 5개까지만
+                if(j<6){
+                    tmp_innerhtml_str = tmp_innerhtml_str + "<li id=\"mnb_0"+(j+1)+"\" class=\"depth"+(i)+" pos_"+j+"\">\r\n";
+                    tmp_innerhtml_str = tmp_innerhtml_str + "<h3 id=\"h2menu_"+listtreeval[i][j][0]+"\" class=\"\"><a href=\"javascript:Go_SubmenuTop("+i+",'"+listtreeval[i][j][0]+"','"+listtreeval[i][j][2]+"','Y')\" >"+listtreeval[i][j][1]+"</a></h2>\r\n";
+                }
+
+                    if(listtreeval[i][j][6].indexOf("000048") > -1){
+                        tmp_left_str = tmp_left_str+"<h2>"+listtreeval[i][j][1]+"</h2>";
+                        tmp_left_str = tmp_left_str+"<ul id=\"leftmenu_"+listtreeval[i][j][0]+"\"></ul>";
+                    }
+
+
+
+
+            // 3단계이상 메뉴
+            }else if(i>1){
+                tmp_innerhtml_str="";
+                tmp_left_str = "";
+                tmp_menu_nm = listtreeval[i][j][0];
+                tmp_innerhtml_str = tmp_innerhtml_str + "<li id=\"menu_"+listtreeval[i][j][0]+"\">\r\n";
+                if(tmp_menu_nm == "000100"){
+                    //2022.09.05 Q&A 게시판    En:ter Q&A -> 전력데이터 문의   Q&A게시판으로 링크 변경
+                    //작업요청번호 - 2273605
+                    //tmp_innerhtml_str = tmp_innerhtml_str + "<a href=\"https://www.en-ter.co.kr/ft/cs/qa/list.do\" >"+listtreeval[i][j][1]+"</a>\r\n";
+                    tmp_innerhtml_str = tmp_innerhtml_str + "<a href=\"javascript:Go_SubmenuTop("+i+",'"+listtreeval[i][j][0]+"','"+listtreeval[i][j][2]+"','Y')\" class=\"\">"+listtreeval[i][j][1]+"</a>\r\n";
+                } else if(tmp_menu_nm == "000115"){
+                    tmp_innerhtml_str = tmp_innerhtml_str + "<a href=\"https://www.en-ter.co.kr/ft/cs/nt/list.do\" >"+listtreeval[i][j][1]+"</a>\r\n";
+                }
+                else {
+                    tmp_innerhtml_str = tmp_innerhtml_str + "<a href=\"javascript:Go_SubmenuTop("+i+",'"+listtreeval[i][j][0]+"','"+listtreeval[i][j][2]+"','Y')\" class=\"\">"+listtreeval[i][j][1]+"</a>\r\n";
+                }
+                tmp_innerhtml_str = tmp_innerhtml_str + "</li>\r\n";
+
+                if(listtreeval[i][j][6].indexOf("000048") > -1){
+                    tmp_left_str = tmp_left_str+"<li>";
+                    if(selmCodes.indexOf(listtreeval[i][j][0]) > -1){
+                        tmp_left_str = tmp_left_str+"<a class=\"on\" href=\"javascript:Go_SubmenuTop("+i+",'"+listtreeval[i][j][0]+"','"+listtreeval[i][j][2]+"','Y')\" class=\"\">"+listtreeval[i][j][1]+"</a>";
+                    }else{
+                        tmp_left_str = tmp_left_str+"<a class=\"\" href=\"javascript:Go_SubmenuTop("+i+",'"+listtreeval[i][j][0]+"','"+listtreeval[i][j][2]+"','Y')\" class=\"\">"+listtreeval[i][j][1]+"</a>";
+                    }
+
+                    if(listtreeval[i][j][10] > 0){
+                        if(selmCodes.indexOf(listtreeval[i][j][0]) > -1){
+                            tmp_left_str = tmp_left_str+"<ul class=\"lnd_depth2 on\" id=\"leftmenu_"+listtreeval[i][j][0]+"\"></ul>";
+                        }else{
+                            tmp_left_str = tmp_left_str+"<ul class=\"lnd_depth2\" id=\"leftmenu_"+listtreeval[i][j][0]+"\"></ul>";
+                        }
+                    }
+                    tmp_left_str = tmp_left_str + "</li>\r\n";
+                }
+
+            }
+
+
+            // 1단계 메뉴
+            if(i==0){
+                tmp_innerhtml_str = "";
+            // 2단계 메뉴
+            }else if(i==1){
+                // 아이디어제안, 분석인프라 숨김, 공유센터 추가로 5개까지만
+                if(j<6){
+                    tmp_innerhtml_str = tmp_innerhtml_str + "<ul id=\"upmenu_"+listtreeval[i][j][0]+"\" class=\"depth"+(i+1)+"\"></ul>\r\n";
+                    tmp_innerhtml_str = tmp_innerhtml_str + "</li>";
+                }
+            // 3단계이상 메뉴
+            }else if(i>1){
+                //tmp_innerhtml_str = tmp_innerhtml_str + "<ul id=\"upmenu_"+listtreeval[i][j][0]+"\" class=\"depth"+(i+1)+"\"></ul></li>\r\n";
+
+            }
+
+            // 트리의 값을 셋팅한다
+            /*[0];//' M_CODE    [1];//' M_NM    [2];//' M_UP_CODE    [3];//' DEPTH_NO    [4];//' ORDER_NO    [5];//' LINK_TY
+            [6];//' M_CODES
+            [7];//' LV
+            */
+            // 3단계이상 메뉴는 상위메뉴를 찾아서 append한다
+            if(i>1){
+                if(i<3){
+                    $("#upmenu_"+listtreeval[i][j][2]).html($("#upmenu_"+listtreeval[i][j][2]).html()+tmp_innerhtml_str);
+                }
+
+
+                if(listtreeval[i][j][6].indexOf("000048") > -1){
+                    $("#leftmenu_"+listtreeval[i][j][2]).html($("#leftmenu_"+listtreeval[i][j][2]).html()+tmp_left_str);
+                }
+
+            }
+        }// for문 종료
+        // 2단계 메뉴는 먼저 셋팅한다
+        if(i==1){
+                $("#mnb_data").html($("#mnb_data").html()+tmp_innerhtml_str);
+
+                    //if(){
+                        //console.log(tmp_left_str);
+                        $("#left_nav").html($("#left_nav").html()+tmp_left_str);
+                    //}
+
+
+
+
+        }
+
+        if(prev_i==1 && i==2){
+            //$("#mnb_data").html($("#mnb_data").html()+"<li class=\"nav_bg\"><img src=\"/images/S01/common/nav_bg.png\" alt=\" \"/></li>");
+        }
+        prev_i = i;
+
+    }// for문 종료
+
+    //서브페이지 일경우 상단 visual영역의 class를 지정해준다
+
+        $("#h2menu_000048").addClass("on");
+
+
+
+
+}
+
+
+$('.pos_0').mouseover(function(){
+    $('.sub_menu .pos_0').addClass('over');
+    $('.main_menu .pos_0').addClass('over');
+});
+$('.pos_0').mouseleave(function(){
+    $('.sub_menu .pos_0').removeClass('over');
+    $('.main_menu .pos_0').removeClass('over');
+});
+$('.pos_1').mouseover(function(){
+    $('.sub_menu .pos_1').addClass('over');
+    $('.main_menu .pos_1').addClass('over');
+});
+$('.pos_1').mouseleave(function(){
+    $('.sub_menu .pos_1').removeClass('over');
+    $('.main_menu .pos_1').removeClass('over');
+});
+$('.pos_2').mouseover(function(){
+    $('.sub_menu .pos_2').addClass('over');
+    $('.main_menu .pos_2').addClass('over');
+});
+$('.pos_2').mouseleave(function(){
+    $('.sub_menu .pos_2').removeClass('over');
+    $('.main_menu .pos_2').removeClass('over');
+});
+$('.pos_3').mouseover(function(){
+    $('.sub_menu .pos_3').addClass('over');
+    $('.main_menu .pos_3').addClass('over');
+});
+$('.pos_3').mouseleave(function(){
+    $('.sub_menu .pos_3').removeClass('over');
+    $('.main_menu .pos_3').removeClass('over');
+});
+$('.pos_4').mouseover(function(){
+    $('.sub_menu .pos_4').addClass('over');
+    $('.main_menu .pos_4').addClass('over');
+});
+$('.pos_4').mouseleave(function(){
+    $('.sub_menu .pos_4').removeClass('over');
+    $('.main_menu .pos_4').removeClass('over');
+});
+$('.pos_5').mouseover(function(){
+    $('.sub_menu .pos_5').addClass('over');
+    $('.main_menu .pos_5').addClass('over');
+});
+$('.pos_5').mouseleave(function(){
+    $('.sub_menu .pos_5').removeClass('over');
+    $('.main_menu .pos_5').removeClass('over');
+});
+
+/*gnb click*/
+$('#gnb .depth1').click(function(){
+    if($windowWid < 900){
+        if($(this).hasClass('active')) {
+            $(this).removeClass('active');
+        } else {
+            $('#gnb .depth1').removeClass('active');
+            $(this).addClass('active');
+            $('#gnb .depth1 .depth2').parent().not(this).find('.depth2').stop().slideUp(250);
+            $(this).find('.depth2').stop().slideDown(250);
+        }
+    }
+});
+$('#gnb .depth1 > span').click(function(){
+    if($windowWid < 900){
+        $('#gnb .depth2').stop().slideUp(250);
+    }
+});
+
+
+
+var cur_deny_mcodes = new Array();
+var link_go_yn = false;
+/**
+ * 메뉴이동 공통함수
+ * lev    : 메뉴레벨
+ * m_code : 메뉴코드
+ * p_up   : 상위코드
+ * inityn : ?
+ */
+ function Go_SubmenuTop(lev, m_code, p_up, inityn){
+
+
+
+    if ("N" == "N"
+                && (m_code == "000482" || m_code == "000071")) {
+            if (confirm('로그인 후 사용가능합니다.\n로그인 하시겠습니까?')) {
+                document.location.href = "https://www.en-ter.co.kr/ft/login/login.do"; //로그인페이지로 이동
+                return;
+                // document.location.href="/cmsmain.do?scode=S01&pcode=000253";
+            }
+        } else {
+
+            /* if(m_code=='000048' && p_up == 'S01'){ */
+            if ($windowWid < 900) {
+                if (p_up == 'S01') {
+                    return;
+                }
+            }
+
+            var cur_link_arr = new Array();
+            var lv_link_chk = "0"; // 0 : 루프를 한단계 통과한다 1 : 하위메뉴체크 2: 선택된 메뉴
+            var deny_chk = false;
+
+            //console.log("lev:"+lev+":m_code:"+m_code+":p_up:"+p_up+":inityn:"+inityn);
+            if (inityn == "Y") {
+                //console.log("lev:"+lev+":m_code:"+m_code+":p_up:"+p_up+":inityn:"+inityn);
+                cur_deny_mcodes = new Array();
+            }
+            //console.log("lev:"+lev+":m_code:"+m_code+":p_up:"+p_up+":inityn:"+inityn);
+            //for(si=lev;si<listtreeval.length;si++){
+            for (sj = 0; sj < listtreeval[lev].length; sj++) {
+                //console.log(sj+"::lv_link_chk::"+lv_link_chk);
+                deny_chk = false;
+                // 선택된 메뉴이면
+                if (lv_link_chk == "2") {
+                    links_go(cur_link_arr);
+                    link_go_yn = true;
+                    break;
+                    // 선택된 메뉴가 아니면 하위 메뉴를 체크한다
+                } else if (lv_link_chk == "1") {
+                    //var chk_cnt = SubMenuCnt(lev+1, cur_link_arr[0]);
+                    var chk_cnt = cur_link_arr[10];
+                    // 하위메뉴가 있으면
+                    if (chk_cnt > 0) {
+                        Go_SubmenuTop(lev + 1, cur_link_arr[0],
+                                cur_link_arr[0], "N");
+                        break;
+                        // 하위메뉴가 없으면 동레벨을 다시 체크한다
+                    } else {
+                        cur_deny_mcodes.push(cur_link_arr[0]);
+                        Go_SubmenuTop(lev, cur_link_arr[0], cur_link_arr[2],
+                                "N");
+                        break;
+                    }
+                    // 루프를 한단계 통과
+                } else {
+
+                }
+                if (listtreeval[lev][sj][2] == "0000000531") {
+                    //console.log(inityn+"::upcode::"+listtreeval[lev][sj][2]+"p_up"+p_up);
+                }
+                // 현재 메뉴코드가 같거나 초기체크가아니고 상위메뉴코드가 동일할경우
+                if (listtreeval[lev][sj][0] == m_code
+                        || (inityn != "Y" && listtreeval[lev][sj][2] == p_up)) {
+                    cur_link_arr = listtreeval[lev][sj];
+                    cur_link_ty = listtreeval[lev][sj][5];
+                    //console.log("cur_menu:"+cur_link_arr[0]+"::"+cur_link_arr[1]);
+                    for (sk = 0; sk < cur_deny_mcodes.length; sk++) {
+                        if (cur_deny_mcodes[sk] == cur_link_arr[0]) {
+                            //console.log("deny_menu:"+cur_link_arr[0]+"::"+cur_link_arr[1]);
+                            deny_chk = true;
+                            break;
+                        }
+                    }
+
+                    if (deny_chk == false) {
+                        // 없음 이거나 링크이면
+                        if (cur_link_ty == "000005" || cur_link_ty == "000007") {
+                            // 초기 선택메뉴이면
+                            if (inityn == "Y") {
+                                // 링크이면
+                                if (cur_link_ty == "000007") {
+                                    lv_link_chk = "2";
+                                    // 없음이면
+                                } else if (cur_link_ty == "000005") {
+                                    lv_link_chk = "1";
+                                }
+                            } else {
+                                lv_link_chk = "1";
+                            }
+
+                        } else {
+                            lv_link_chk = "2";
+                        }
+                    } else {
+                        lv_link_chk = "0";
+                    }
+                    //console.log("::upcode::"+listtreeval[lev][sj][0]+":lv_link_chk:"+lv_link_chk);
+                }
+            }
+
+            if (lv_link_chk == "2") {
+
+                if (link_go_yn == false) {
+                    links_go(cur_link_arr);
+                    link_go_yn = true;
+                } else {
+                    return;
+                }
+
+                // 선택된 메뉴가 아니면 하위 메뉴를 체크한다
+            } else if (lv_link_chk == "1") {
+                //var chk_cnt = SubMenuCnt(lev+1, cur_link_arr[0]);
+                var chk_cnt = cur_link_arr[10];
+                // 하위메뉴가 있으면
+                if (chk_cnt > 0) {
+                    Go_SubmenuTop(lev + 1, cur_link_arr[0], cur_link_arr[0],
+                            "N");
+
+                    // 하위메뉴가 없으면 동레벨을 다시 체크한다
+                } else {
+                    cur_deny_mcodes.push(cur_link_arr[0]);
+                    Go_SubmenuTop(lev, cur_link_arr[0], cur_link_arr[2], "N");
+                }
+
+            }
+
+        }
+        //}
+    }
+
+    function links_go(link_arr) {
+        //console.log("link_arr"+link_arr[0]);
+
+        // 연결종류가 링크이면
+        if (link_arr[5] == "000007") {
+
+            // 현재창링크이면
+            if (link_arr[9] == "_self") {
+                // 외부주소이면
+                if (link_arr[8].indexOf("http") > -1) {
+                    location.href = link_arr[8].replace(/&amp;/gi, "&");
+                    // 내부연결이면
+                } else {
+                    location.href = "" + link_arr[8].replace(/&amp;/gi, "&");
+                }
+                // 새창링크이면
+            } else {
+                // 외부주소이면
+                if (link_arr[8].indexOf("http") > -1) {
+                    //링크도 조회수를 체크하기 위하여 hidden iframe으로 보내준다
+                    successIframe.location.href = "/cmsmain.do?scode=S01&pcode="+link_arr[0];
+                    window.open(link_arr[8].replace(/&amp;/gi,"&"),"_blank");
+
+
+                // 내부연결이면
+                }else{
+                    window.open(""+link_arr[8].replace(/&amp;/gi,"&"),"_blank");
+
+                }
+            }
+        }else{
+            location.href="/cmsmain.do?scode=S01&pcode="+link_arr[0];
+
+        }
+}
+
+function Go_SubmenuView(pcode, sidx){
+    $("form[name=pagego]").find("input[name=pcode]").val(pcode);
+    $("form[name=pagego]").find("input[name=sidx]").val(sidx);
+    $("form[name=pagego]").find("input[name=pstate]").val("R");
+    $("form[name=pagego]").attr("action","/cmsmain.do");
+    $("form[name=pagego]").submit();
+}
+
+//]]>
+</script>
+<!-- 공통 jsp 파일-->
+
+    <!--container-->
+    <div id="container">
+
+                <div id="lnb">
+
+
+
+            <!--inner-->
+            <div class="inner" id='nav_inner'>
+                <div class="home">
+                    <a href="/">home</a>
+                </div>
+            </div>
+            <!--//inner-->
+
+
+<script type="text/javascript">
+//<![CDATA[
+
+//TODO : $(function()
+$(function(){
+    //alert("selmCodes::"+selmArr[10]);
+    var tab_print_yn = false;
+    var tab_print_str = "";
+    var temp_menu = "";
+
+    // 현재 메뉴 레벨이 3레벨 이상인 경우 동일 메뉴목록으로 탭을 생성한다
+    //console.log('==================== '+selmArr[0]+' === '+selmArr[1]+' === '+selmArr[2]+' === '+selmArr[7]+' === '+selmArr[10]);
+    //console.log('listtreeval[1]== '+listtreeval[1]);
+    //console.log(selmCodes);
+    //console.log(listtreeval[1]);
+    //alert(selmCodes_sp[1]);
+
+    //1depth메뉴 출력
+    if(selmCodes_sp!=null && selmCodes_sp!=undefined){
+        if(selmCodes_sp[1] != undefined){
+            tab_print_str = "<div class=\"drop_nav depth1\">\r\n";
+            tab_print_str = tab_print_str+"<h4 class=\"current\">\r\n";
+            if(selmCodes_sp[1] == '000048'){
+                tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_prev\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000162\">이전</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_next\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000165\">다음</a></span>\r\n";
+            }else if(selmCodes_sp[1] == '000063'){
+                tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_prev\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000166\">이전</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_next\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000399\">다음</a></span>\r\n";
+            }else if(selmCodes_sp[1] == '000104'){
+                tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_prev\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000165\">이전</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_next\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000468\">다음</a></span>\r\n";
+            }else if(selmCodes_sp[1] == '000469'){
+                tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_prev\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000399\">이전</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_next\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000115\">다음</a></span>\r\n";
+            }else if(selmCodes_sp[1] == '000090'){
+                tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_prev\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000468\">이전</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_next\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000162\">다음</a></span>\r\n";
+            }else if(selmCodes_sp[1] == '000156'){
+                tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_prev\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000115\">이전</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_next\"><a href=\"https://bigdata.kepco.co.kr/cmsmain.do?scode=S01&pcode=000166\">다음</a></span>\r\n";
+            }else if(selmCodes_sp[1] == '000121'){
+                tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_prev\"><a href=\"#\">이전</a></span>\r\n";
+                tab_print_str = tab_print_str+"<span class=\"m_next\"><a href=\"#\">다음</a></span>\r\n";
+            }
+            tab_print_str = tab_print_str+"</h4>\r\n";
+            tab_print_str = tab_print_str+"<ul>\r\n";
+            for(i=0;i<listtreeval[1].length;i++){
+                // 상위 코드가 동일한 메뉴를 출력한다
+                if(listtreeval[1][i][2]==selmCodes_sp[0]){
+                    if(listtreeval[1][i][0]==selmCodes_sp[1]){
+                        tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"on\" onclick=\"javascript:Go_SubmenuTop("+1+",'"+listtreeval[1][i][0]+"','"+listtreeval[1][i][2]+"','Y');return false;\">"+listtreeval[1][i][1]+"</a></li>\r\n";
+                        temp_menu = listtreeval[1][i][1];
+                    }else{
+                        tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"\" onclick=\"javascript:Go_SubmenuTop("+1+",'"+listtreeval[1][i][0]+"','"+listtreeval[1][i][2]+"','Y');return false;\">"+listtreeval[1][i][1]+"</a></li>\r\n";
+                    }
+                }
+            }
+            tab_print_str = tab_print_str+"</ul>\r\n";
+            tab_print_str = tab_print_str+"</div>\r\n";
+            $('#nav_inner').append(tab_print_str);
+            $('.depth1 > h4 > span:first').before(temp_menu);
+
+        }
+
+        //2depth메뉴 출력
+        if(selmCodes_sp[2] != undefined){
+            tab_print_str = "<div class=\"drop_nav mo_sub depth2\">\r\n";
+            tab_print_str = tab_print_str+"<h4 class=\"current\">\r\n";
+            tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+            tab_print_str = tab_print_str+"</h4>\r\n";
+            tab_print_str = tab_print_str+"<ul>\r\n";
+            for(i=0;i<listtreeval[2].length;i++){
+                // 상위 코드가 동일한 메뉴를 출력한다
+                if(listtreeval[2][i][2]==selmCodes_sp[1]){
+                    if(listtreeval[2][i][0]==selmCodes_sp[2]){
+                        tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"on\" onclick=\"javascript:Go_SubmenuTop("+2+",'"+listtreeval[2][i][0]+"','"+listtreeval[2][i][2]+"','Y');return false;\">"+listtreeval[2][i][1]+"</a></li>\r\n";
+                        temp_menu = listtreeval[2][i][1];
+                    }else{
+                        if("N" != "N" && listtreeval[2][i][0] == "000122"){
+
+                        }else if("N" == "N" && listtreeval[2][i][0] == "000404"){
+
+                        }else{
+                            tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"\" onclick=\"javascript:Go_SubmenuTop("+2+",'"+listtreeval[2][i][0]+"','"+listtreeval[2][i][2]+"','Y');return false;\">"+listtreeval[2][i][1]+"</a></li>\r\n";
+                        }
+
+                    }
+                }
+            }
+            tab_print_str = tab_print_str+"</ul>\r\n";
+            tab_print_str = tab_print_str+"</div>\r\n";
+            $('#nav_inner').append(tab_print_str);
+            $('.depth2 > h4 > span').before(temp_menu);
+
+        }
+
+
+        //3depth메뉴 출력
+        if(selmCodes_sp[3] != undefined){
+            tab_print_str = "<div class=\"drop_nav mo_sub depth3\">\r\n";
+            tab_print_str = tab_print_str+"<h4 class=\"current\">\r\n";
+            tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+            tab_print_str = tab_print_str+"</h4>\r\n";
+            tab_print_str = tab_print_str+"<ul>\r\n";
+            for(i=0;i<listtreeval[3].length;i++){
+                // 상위 코드가 동일한 메뉴를 출력한다
+                if(listtreeval[3][i][2]==selmCodes_sp[2]){
+                    if(listtreeval[3][i][0]==selmCodes_sp[3]){
+                        tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"on\" onclick=\"javascript:Go_SubmenuTop("+3+",'"+listtreeval[3][i][0]+"','"+listtreeval[3][i][2]+"','Y');return false;\">"+listtreeval[3][i][1]+"</a></li>\r\n";
+                        temp_menu = listtreeval[3][i][1];
+                    }else{
+                        if(listtreeval[3][i][0] == '000397'){
+                            tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"\" onclick=\"alert('서비스 개선 작업중 입니다. 빠른시일 내에 서비스 하겠습니다.');return false;\">"+listtreeval[3][i][1]+"</a></li>\r\n";
+                        }else{
+                            tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"\" onclick=\"javascript:Go_SubmenuTop("+3+",'"+listtreeval[3][i][0]+"','"+listtreeval[3][i][2]+"','Y');return false;\">"+listtreeval[3][i][1]+"</a></li>\r\n";
+                        }
+                    }
+                }
+            }
+            tab_print_str = tab_print_str+"</ul>\r\n";
+            tab_print_str = tab_print_str+"</div>\r\n";
+            $('#nav_inner').append(tab_print_str);
+            $('.depth3 > h4 > span').before(temp_menu);
+
+        }
+
+        //4depth메뉴 출력
+        if(selmCodes_sp[4] != undefined){
+            tab_print_str = "<div class=\"drop_nav mo_sub depth4\">\r\n";
+            tab_print_str = tab_print_str+"<h4 class=\"current\">\r\n";
+            tab_print_str = tab_print_str+"<span class=\"plus\"><a href=\"#\">더보기</a></span>\r\n";
+            tab_print_str = tab_print_str+"</h4>\r\n";
+            tab_print_str = tab_print_str+"<ul>\r\n";
+            for(i=0;i<listtreeval[4].length;i++){
+                // 상위 코드가 동일한 메뉴를 출력한다
+                if(listtreeval[4][i][2]==selmCodes_sp[3]){
+                    if(listtreeval[4][i][0]==selmCodes_sp[4]){
+                        tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"on\" onclick=\"javascript:Go_SubmenuTop("+4+",'"+listtreeval[4][i][0]+"','"+listtreeval[4][i][2]+"','Y');return false;\">"+listtreeval[4][i][1]+"</a></li>\r\n";
+                        temp_menu = listtreeval[4][i][1];
+                    }else{
+                        tab_print_str = tab_print_str+"<li><a href=\"#\" class=\"\" onclick=\"javascript:Go_SubmenuTop("+4+",'"+listtreeval[4][i][0]+"','"+listtreeval[4][i][2]+"','Y');return false;\">"+listtreeval[4][i][1]+"</a></li>\r\n";
+                    }
+                }
+            }
+            tab_print_str = tab_print_str+"</ul>\r\n";
+            tab_print_str = tab_print_str+"</div>\r\n";
+            $('#nav_inner').append(tab_print_str);
+            $('.depth4 > h4 > span').before(temp_menu);
+
+        }
+
+
+        /*lnb 트리*/
+    /*     $("#lnb .current").click(function(e){
+            e.preventDefault();
+            if($(this).hasClass('active')) {
+                $(this).removeClass('active');
+                $(this).parent().find("ul").slideUp(100);
+                $("#lnb .current").find("span").removeClass('minus');
+            } else {
+                $("#lnb .current").removeClass('active');
+                $("#lnb .current").find("span").removeClass('minus');
+                $(this).find("span").addClass('minus');
+                $(this).addClass('active');
+                $("#lnb .current").parent().not(this).find("ul").slideUp(100);
+                $(this).parent().find("ul").slideToggle(100);
+            }
+
+        }); */
+        /*//lnb*/
+
+        $("#lnb .drop_nav").mouseover(function(){
+            $(this).find("span").addClass('minus');
+            $(this).find("ul").stop().slideDown(100);
+        });
+        $('#lnb .drop_nav').mouseleave(function(){
+            $(this).find("span").removeClass('minus');
+            $(this).parent().find("ul").stop().slideUp(100);
+        });
+    }
+
+
+
+});
+
+
+//]]>
+</script><!-- 공통 jsp 파일-->
+                </div>
+
+
+                <!--content-->
+                <div id="contents">
+
+
+                            <!--  LINK_PATH:/WEB-INF/jsp/ji/api/openapi_main.jsp<br />-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--내용시작  -->        <!-- 1. 계약종별 -->               <form action="/cmsmain.do" id="dataForm" name="dataForm"    method="post">    <input type="hidden" id="scode" name="scode" value="S01" /> <input        type="hidden" id="pcode" name="pcode" value="000493" /> <input        type="hidden" id="pstate" name="pstate" value="cntr" />    <!-- 공통 jsp 파일-->    <h5 class="main_title">        <strong>계약종별 전력사용량 API 가이드</strong>    </h5>    <!--board_A0_write-->    <div class="board_A0_W mat_30">        <div class="info_txt_1">            <h5 class="sub_title mab_10">요청 기본정보</h5>        </div>        <table summary="요청 기본정보">            <caption>요청 기본정보</caption>            <colgroup>                <col width="10%" />                <col width="70%" />                <col width="10%" />                <col width="10%" />            </colgroup>            <tbody>                <tr>                    <th scope="row">메서드</th>                    <th scope="row">요청URL</th>                    <th scope="row">인코딩</th>                    <th scope="row">응답포맷</th>                </tr>                <tr>                    <td>GET, POST</td>                    <td>                        https://bigdata.kepco.co.kr/openapi/v1/powerUsage/contractType.do                    </td>                    <td>UTF-8</td>                    <td>JSON, XML</td>                </tr>            </tbody>        </table>    </div>    <!--//board_A0_write-->    <!--board_A0_write-->    <div class="board_A0_W mat_30">        <div class="info_txt_1">            <h5 class="sub_title mab_10">요청 인자</h5>        </div>        <table summary="요청 인자">            <caption>요청 인자</caption>            <colgroup>                <col width="10%" />                <col width="20%" />                <col width="10%" />                <col width="5%" />                <col width="*" />            </colgroup>            <tbody>                <tr>                    <th scope="row">항목명</th>                    <th scope="row">항목설명</th>                    <th scope="row">타입</th>                    <th scope="row">필수여부</th>                    <th scope="row">세부내용</th>                </tr>                <tr>                    <td>year</td>                    <td>조회연도</td>                    <td>STRING</td>                    <td class="essential">필수</td>                    <td>조회연도(YYYY)</td>                </tr>                <tr>                    <td>month</td>                    <td>조회월</td>                    <td>STRING</td>                    <td class="essential">필수</td>                    <td>조회월(MM)</td>                </tr>                <tr>                    <td>metroCd</td>                    <td>시도코드</td>                    <td>STRING</td>                    <td>선택</td>                    <td>광역자치단체 코드(ex: 11-서울특별시, 26-부산광역시, 41-경기도)<br /> ※ 미선택 시 모든                        시도 응답<br /> ※ 공통코드(법정) API로 조회                    </td>                </tr>                <tr>                    <td>cityCd</td>                    <td>시군구코드</td>                    <td>STRING</td>                    <td>선택</td>                    <td>기초자치단체 코드(ex: 110-청주시, 830-양평군, 680-강남구)<br /> ※ 미선택 시 모든 시군구                        응답<br /> ※공통코드(법정) API로 조회                    </td>                </tr>                <tr>                    <td>cntrCd</td>                    <td>계약종별</td>                    <td>STRING</td>                    <td>선택</td>                    <td>한국전력 전기계약종별(ex:100-주택용, 200-일반용)<br /> ※ 미선택 시 모든 계약종별 응답<br />                        ※ 공통코드 API로 조회                    </td>                </tr>                <tr>                    <td>apiKey</td>                    <td>API 인증키</td>                    <td>STRING</td>                    <td class="essential">필수</td>                    <td>발급받은 API 인증키 40자리</td>                </tr>                <tr>                    <td>returnType</td>                    <td>응답포맷</td>                    <td>STRING</td>                    <td>선택</td>                    <td>json : JSON 포맷 응답<br /> xml : XML 포맷 응답<br /> ※ 미선택 시                        JSON으로 응답                    </td>                </tr>            </tbody>        </table>    </div>    <!--//board_A0_write-->    <!--board_A0_write-->    <div class="board_A0_W mat_30">        <div class="info_txt_1">            <h5 class="sub_title mab_10">응답 결과</h5>        </div>        <table summary="응답 결과">            <caption>응답 결과</caption>            <colgroup>                <col width="20%" />                <col width="20%" />                <col width="10%" />                <col width="*" />            </colgroup>            <tbody>                <tr>                    <th scope="row">항목명</th>                    <th scope="row">항목설명</th>                    <th scope="row">타입</th>                    <th scope="row">세부내용</th>                </tr>                <tr>                    <td>totData</td>                    <td>계약종별 전력사용량 합계 내역</td>                    <td>LIST</td>                    <td>metroCd 미선택 시 모든 지역의 계약종별 전력사용량 내역을 담은 리스트 자료형<br /> ※아래의                        응답결과 저장                    </td>                </tr>                <tr>                    <td>data</td>                    <td>계약종별 전력사용량 내역</td>                    <td>LIST</td>                    <td>metroCd 선택 시 특정 지역의 계약종별 전력사용량 내역을 담은 리스트 자료형<br /> ※아래의                        응답결과 저장                    </td>                </tr>                <tr>                    <td>year</td>                    <td>조회연도</td>                    <td>STRING</td>                    <td>조회연도(YYYY)</td>                </tr>                <tr>                    <td>month</td>                    <td>조회월</td>                    <td>STRING</td>                    <td>조회월(MM)</td>                </tr>                <tr>                    <td>metro</td>                    <td>시도명</td>                    <td>STRING</td>                    <td>광역자치단체 명(ex:서울특별시, 경기도, 부산광역시 등)<br />                    </td>                </tr>                <tr>                    <td>city</td>                    <td>시군구명</td>                    <td>STRING</td>                    <td>기초자치단체 명(ex:청주시, 양평군, 강남구 등)<br />                    </td>                </tr>                <tr>                    <td>cntr</td>                    <td>계약종별</td>                    <td>STRING</td>                    <td>한국전력 전기계약종별(ex:주택용, 일반용 등)<br />                    </td>                </tr>                <tr>                    <td>custCnt</td>                    <td>고객호수</td>                    <td>NUMBER</td>                    <td>전기사용 고객 호수(호)</td>                </tr>                <tr>                    <td>powerUsage</td>                    <td>전력사용량</td>                    <td>NUMBER</td>                    <td>전력사용량 합계(kWh)</td>                </tr>                <tr>                    <td>bill</td>                    <td>전기요금</td>                    <td>NUMBER</td>                    <td>전기요금 합계(원)</td>                </tr>                <tr>                    <td>unitCost</td>                    <td>평균판매단가</td>                    <td>NUMBER</td>                    <td>전기요금 평균판매 단가(원/kWh)</td>                </tr>                <tr>                    <td>cntrPwr</td>                    <td>계약전력</td>                    <td>NUMBER</td>                    <td>계약전력</td>                </tr>            </tbody>        </table>    </div>    <!--//board_A0_write-->    <!--board_A0_write-->    <div class="board_A0_W mat_30">        <div class="info_txt_1">            <h5 class="sub_title mab_10">요청 응답 샘플</h5>        </div>        <table summary="요청 응답 샘플">            <caption>요청 응답 샘플</caption>            <colgroup>                <col width="20%" />                <col width="80%" />            </colgroup>            <tbody>                <tr>                    <th scope="row">API 요청 예시</th>                    <td data-title="API 요청 예시">                        https://bigdata.kepco.co.kr/openapi/v1/powerUsage/contractType.do?year=2020&month=11&metroCd=11&cityCd=110&cntrCd=100&apiKey=xxx&returnType=json                    </td>                </tr>                <tr>                    <th scope="row">API 응답 예시(JSON)</th>                    <td data-title="API 응답 예시"><pre><span class="jsonKey">"data"</span> : [     {       <span class="jsonKey">"year"</span>: <span class="jsonValue">"2020"</span>,       <span class="jsonKey">"month"</span>: <span class="jsonValue">"11"</span>,       <span class="jsonKey">"metro"</span>: <span class="jsonValue">"서울특별시"</span>,       <span class="jsonKey">"city"</span>: <span class="jsonValue">"종로구"</span>,       <span class="jsonKey">"cntr"</span>: <span class="jsonValue">"주택용"</span>,       <span class="jsonKey">"custCnt"</span>: <span class="jsonValue">65209</span>,       <span class="jsonKey">"powerUsage"</span>: <span class="jsonValue">20468684</span>,       <span class="jsonKey">"bill"</span>: <span class="jsonValue">2366461741</span>,       <span class="jsonKey">"unitCost"</span>: <span class="jsonValue">115.6</span>       <span class="jsonKey">"cntrPwr"</span>: <span class="jsonValue">350410</span>     }         ]</pre></td>                </tr>            </tbody>        </table>        <div class="info_txt_1">            <h5 class="sub_title mab_10" style="margin-top: 30px">요청 응답 샘플(선택인자 미입력)</h5>        </div>        <table summary="요청 응답 샘플">            <caption>요청 응답 샘플</caption>            <colgroup>                <col width="20%" />                <col width="80%" />            </colgroup>            <tbody>                <tr>                    <th scope="row">API 요청 예시</th>                    <td data-title="API 요청 예시">                        https://bigdata.kepco.co.kr/openapi/v1/powerUsage/contractType.do?year=2020&month=11&metroCd=11&cityCd=110&apiKey=xxx&returnType=json</td>                </tr>                <tr>                    <th scope="row">API 응답 예시(JSON)</th>                    <td data-title="API 응답 예시"><pre><span class="jsonKey">"data"</span> : [     {       <span class="jsonKey">"year"</span>: <span class="jsonValue">"2020"</span>,       <span class="jsonKey">"month"</span>: <span class="jsonValue">"11"</span>,       <span class="jsonKey">"metro"</span>: <span class="jsonValue">"서울특별시"</span>,       <span class="jsonKey">"city"</span>: <span class="jsonValue">"종로구"</span>,       <span class="jsonKey">"cntr"</span>: <span class="jsonValue">"가로등"</span>,       <span class="jsonKey">"custCnt"</span>: <span class="jsonValue">10287</span>,       <span class="jsonKey">"powerUsage"</span>: <span class="jsonValue">793099</span>,       <span class="jsonKey">"bill"</span>: <span class="jsonValue">87834879</span>,       <span class="jsonKey">"unitCost"</span>: <span class="jsonValue">110.7</span>       <span class="jsonKey">"cntrPwr"</span>: <span class="jsonValue">13726</span>     }    ,{       <span class="jsonKey">"year"</span>: <span class="jsonValue">"2020"</span>,       <span class="jsonKey">"month"</span>: <span class="jsonValue">"11"</span>,       <span class="jsonKey">"metro"</span>: <span class="jsonValue">"서울특별시"</span>,       <span class="jsonKey">"city"</span>: <span class="jsonValue">"종로구"</span>,       <span class="jsonKey">"cntr"</span>: <span class="jsonValue">"교육용"</span>,       <span class="jsonKey">"custCnt"</span>: <span class="jsonValue">128</span>,       <span class="jsonKey">"powerUsage"</span>: <span class="jsonValue">7044572</span>,       <span class="jsonKey">"bill"</span>: <span class="jsonValue">719036541</span>,       <span class="jsonKey">"unitCost"</span>: <span class="jsonValue">102.1</span>       <span class="jsonKey">"cntrPwr"</span>: <span class="jsonValue">98545</span>     }    ,{       <span class="jsonKey">"year"</span>: <span class="jsonValue">"2020"</span>,       <span class="jsonKey">"month"</span>: <span class="jsonValue">"11"</span>,       <span class="jsonKey">"metro"</span>: <span class="jsonValue">"서울특별시"</span>,       <span class="jsonKey">"city"</span>: <span class="jsonValue">"종로구"</span>,       <span class="jsonKey">"cntr"</span>: <span class="jsonValue">"농사용"</span>,       <span class="jsonKey">"custCnt"</span>: <span class="jsonValue">11</span>,       <span class="jsonKey">"powerUsage"</span>: <span class="jsonValue">870</span>,       <span class="jsonKey">"bill"</span>: <span class="jsonValue">71023</span>,       <span class="jsonKey">"unitCost"</span>: <span class="jsonValue">81.6</span>       <span class="jsonKey">"cntrPwr"</span>: <span class="jsonValue">55</span>     }                       ......           ]</pre></td>                </tr>            </tbody>        </table>    </div>    <!--//board_A0_write-->    <!--button-->    <div class="button a_r mat_30">        <a href="#none" class="btn_1 size_n" id="btn_list">목록</a>    </div>    <!--//button--></form><style>th {    border-right: 1px solid #b4b4b4 !important;}td {    border-left: 0px solid !important;    color: black;}.essential {    color: red !important;    font-weight: bold !important;}</style><script type="text/javaScript">$(function(){    // 조회    $("#btn_list").click(function(e){        $("input[name=pstate]").val("L");        $("#dataForm").submit();        });});</script>
+
+                </div>
+                <!--//content-->
+
+    </div>
+    <!--//container-->
+
+    <!--footer-->
+
+
+
+
+<!--footer-->
+<footer id="footer">
+    <div class="inner">
+        <div class="address"></div>
+        <div class="foot_info">
+
+            <ul class="foot_nav">
+                <li><a href="https://en-ter.co.kr/ft/privacyPolicy.do" style="font-weight:700">개인정보처리방침</a></li>
+                <li><a href="https://home.kepco.co.kr/kepco/CU/G/htmlView/CUGGHP001.do?menuCd=FN120407" >영상정보처리기기운영관리방침</a></li>
+                <!-- <li><a href="http://home.kepco.co.kr/kepco/CU/G/C/CUGCPP00101.do?menuCd=FN120403" target="_new">개인정보침해신고</a></li> -->
+                <li><a href="https://en-ter.co.kr/ft/agreement1.do">이용약관</a></li>
+            </ul>
+            <!-- <div class="foot_logo">전력데이터 개방 포털시스템</div> -->
+            <div class="copyright">
+                <span>COPYRIGHTⓒ2018 한국전력공사 전력데이터 개방 포털시스템. ALL RIGHTS RESERVED</span>
+            </div>
+        </div>
+        <!-- 2022.09.05 jbk  하단 이용 문의 추가 작업요청번호 - 2273605  -->
+        <div class="foot_info_rigth">
+            <ul class="foot_nav">
+                <li style="font-weight:700">이용문의</li>
+            </ul>
+            <div class="copyright">
+                <span>Tel. 02-3456-5555</span>
+                <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span>E-mail : biz-kepcodata@kepco.co.kr</span>
+            </div>
+        </div>
+
+    </div>
+</footer>
+<!--//footer-->
+
+<div id="top_move_btn" style="display:scroll;position: fixed; right: 2%; bottom: 2%; text-align: center;opacity:0.5;border:2px solid rgba(204, 204, 204, 1);border-radius: 12px;padding: 5px;cursor:pointer;">
+    <img src="/images/cm/up_ar2.png" style="width:3em;"/>
+</div>
+<form name="pagego" id="pagego" method="post">
+    <input type="hidden" name="scode" value="S01">
+    <input type="hidden" name="pcode" value="000493">
+    <input type="hidden" name="pstate" value="cntr" title="페이지상태"  />
+    <input type="hidden" name="sidx" id="sidx" value="" title="선택된인덱스" />
+</form>
+
+<form name="cmPwForm" id="cmPwForm" method="post" onSubmit='javascript:return false;'>
+    <input type="hidden" name="scode" value="S01">
+    <input type="hidden" name="pcode" value="000493">
+    <input type="hidden" name="pstate" title="페이지상태"  />
+    <input type="hidden" name="email_id" title="조회용 아이디" />
+    <input type="hidden" id="pageStatus" name="pageStatus" title="화면명" />
+    <input type="hidden" id="ifrm_rcept_no" name="ifrm_rcept_no" title="요청접수번호" />
+    <input type="hidden" id="idea_propse_sn" name="idea_propse_sn" title="오픈포탈키값" />
+
+
+    <div class="password_layer">
+        <div class="password_box">
+            <div class="pass_tit">비밀번호 입력</div>
+            <dl>
+                <dt><label for="">비밀번호</label></dt>
+                <dd><input type="password" id="rqester_password" name="rqester_password" class="input_type01 w_100" maxlength="4" onkeydown="return onlyNum();" title="비밀번호를 입력하세요"></dd>
+            </dl>
+            <!--button-->
+            <div class="button mat_20">
+                <a href="#" class="btn_1 size_s" id="btn_confirm">확인</a>
+                <a href="#" class="btn_2 size_s password_close">취소</a>
+            </div>
+            <!--//button-->
+        </div>
+    </div>
+
+
+
+    <div class="password_layer2">
+        <div class="password_box">
+            <div class="pass_tit">비밀번호 변경</div>
+
+            <dl>
+                <dt><label for="">신규 비밀번호(숫자4자리)</label></dt>
+                <dd><input type="password" id="after_password" name="after_password" class="input_type01 w_100" maxlength="4" onkeyup="inputNum(this);"  title="비밀번호를 입력하세요"></dd>
+            </dl>
+            <dl>
+                <dt><label for="">신규 비밀번호 확인</label></dt>
+                <dd><input type="password" id="after_password_confirm" name="after_password_confirm" class="input_type01 w_100" maxlength="4" onkeyup="inputNum(this);"  title="비밀번호 확인를 입력하세요"></dd>
+            </dl>
+            <div class="button mat_20">
+                <a href="#;" class="btn_1 size_s" id="btn_confirm2">확인</a>
+                <a href="#;" class="btn_2 size_s password_close" id="btn_cancel">취소</a>
+            </div>
+        </div>
+    </div>
+
+
+</form>
+
+<iframe name ="successIframe" id="successIframe" width="100%" height="0" title="결과처리프레임" style="display:none;"></iframe>
+
+<!--//footer-->
+
+<!-- help_m_code:000493<br />
+help_cnt:0<br /> -->
+<script type="text/javascript">
+
+    $(document).ready(function(){
+
+        $("#btn_confirm").click(function(e){
+            fnPwConfirm();
+        });
+        $("#btn_confirm2").click(function(e){
+            fnPwConfirm();
+        });
+        $("#rqester_password").bind("keydown", function(e) {
+            if (e.keyCode == 13) {
+                fnPwConfirm();
+                return false;
+            }
+        });
+
+        var topmoveEle = $('#top_move_btn');
+        var delay = 300;
+        topmoveEle.on('click', function() {
+          $('html').stop().animate({scrollTop: 0}, delay);
+        });
+        topmoveEle.hide();
+        $(window).scroll(function(){
+            var wh = $(window).height();
+            var st = $(window).scrollTop();
+            //console.log("height::::"+wh+"::st::::"+st);
+            //console.log("top::"+(wh+st-50));
+            if(wh+st < wh+20){
+                topmoveEle.hide();
+            }else{
+                topmoveEle.show();
+            }
+
+        });
+
+
+    });
+
+    var iconnum = "2";
+    var  fnHelpIconupdateTm = function(){
+        if(iconnum=="2"){
+            $("#help_icon_id").css("background-image","url(/images/cm/cir_2.png)");
+            iconnum="3";
+        }else{
+            $("#help_icon_id").css("background-image","url(/images/cm/cir_3.png)");
+            iconnum="2";
+        }
+        //console.log("iconnum:"+iconnum);
+
+    };
+
+    var fnOpenPwLayer = function(pageSeq, pageStatus){
+
+        $("#cmPwForm").find("#pageStatus").val(pageStatus);
+
+        if(pageStatus == "OUT"){
+            $("#cmPwForm").find("#ifrm_rcept_no").val(pageSeq);
+        }else if(pageStatus == "OPEN"){
+            $("#cmPwForm").find("#idea_propse_sn").val(pageSeq);
+        }else if(pageStatus == "SC"){
+            $("#cmPwForm").find("#ifrm_rcept_no").val(pageSeq);
+        }else if(pageStatus == "BOARD"){
+            $("#cmPwForm").find("#ifrm_rcept_no").val(pageSeq);
+        }
+
+        $('.password_layer').addClass('on');
+        $('body').addClass('no_scroll');
+        $('#blank_layer').show();
+        $("#rqester_password").focus();
+    };
+
+    var fnPwConfirm = function(){
+
+        var dpLayer = $('.password_layer').hasClass("on");
+
+        if(dpLayer){
+            if ($("#rqester_password").val()=="") {
+                alert("비밀번호를 입력해 주시기 바랍니다.");
+                $("#rqester_password").focus();
+                return;
+            }
+            /*if ($("#rqester_password").val().length < 4) {
+                alert("비밀번호는 숫자4자리로 입력해 주시기 바랍니다.");
+                $("#rqester_password").focus();
+                return;
+            }*/
+        }else{
+            if($("#before_password").val() == ""){
+                alert("이전 비밀번호를 입력해 주시기 바랍니다.");
+                $("#before_password").focus();
+                return false;
+            }
+
+            if($("#after_password").val() == ""){
+                alert("신규 비밀번호를 입력해 주시기 바랍니다.");
+                $("#after_password").focus();
+                return false;
+            }else{
+
+                if($("#after_password").val().length < 4 ){
+                    alert('비밀번호는 숫자4자리로 입력해 주시기 바랍니다.');
+                    $('#after_password').focus();
+                    return;
+                }
+
+                if($("#after_password").val() ==  $("#before_password").val()){
+                    alert('이전 비밀번호와 신규 비밀번호가 동일합니다. \n비밀번호를 다시 입력하여 주시기 바랍니다!');
+                    $('#after_password').focus();
+                    return;
+                }
+
+
+            }
+
+            if($("#after_password_confirm").val() == ""){
+                alert("신규 비밀번호 확인을 입력해 주시기 바랍니다.");
+                $("#after_password_confirm").focus();
+                return false;
+            }
+
+            if($("#after_password").val() != $("#after_password_confirm").val()){
+                alert("입력하신 비밀번호가 일치하지 않습니다.");
+                $("#after_password_confirm").focus();
+                return false;
+            }
+        }
+
+        // 맞춤데이터제공
+        if ($("input[name=pageStatus]").val() == 'OUT'){
+            $("input[name=pcode]").val("000071");
+            $("input[name=pstate]").val("PW");
+        }
+        // 맞춤데이터제공 비밀번호 변경
+        else if($("input[name=pageStatus]").val() == 'CH_OUT'){
+            $("input[name=pcode]").val("000071");
+            $("input[name=pstate]").val("PWC");
+        // 공유센터
+        }else if ($("input[name=pageStatus]").val() == 'SC'){
+            $("input[name=pcode]").val("000482");
+            $("input[name=pstate]").val("PASSCHK");
+        // 오픈포탈
+        }else if ($("input[name=pageStatus]").val() == 'OPEN'){
+            $("input[name=pcode]").val("000401");
+            $("input[name=pstate]").val("PASSCHK");
+        // 게시판
+        }else if ($("input[name=pageStatus]").val() == 'BOARD'){
+            $("input[name=pstate]").val("IPNSCHK");
+            //$("input[name=idea_propse_sn]").val($("input[name=paramSn]").val());
+        }
+
+        var params = jQuery("#cmPwForm").serialize();
+
+        $.ajax({ type     : "post"
+               , url      : "/cmsajax.do"
+               , data     : params
+               , async    : false
+               , dataType :"json"
+               , timeout  : 3000
+               , error    : function (jqXHR, textStatus, errorThrown) {
+                   // 통신에 에러가 있을경우 처리할 내용(생략가능)
+                   alert("네트웍장애가 발생했습니다. 다시시도해주세요");
+                   $('.password_layer').removeClass('on');
+                   $('body').removeClass('no_scroll');
+                   $('#blank_layer').hide();
+               }
+               , success  : function(data){
+                   if (data.result){
+                       fnCallBack(data);
+                       $('.password_layer').removeClass('on');
+                       $('.password_layer2').removeClass('on');
+                       $('body').removeClass('no_scroll');
+                       $('#blank_layer').hide();
+                       if(data.newPw.length == 4){
+                           $('#rqester_password').val(data.newPw);
+                       }
+                   }else{
+                       if($("input[name=pageStatus]").val() == 'OPEN'){
+                           //아이디어제안 목록인경우
+                           if(data.init == 'Y'){
+                               if(confirm(data.TRS_MSG+'\n비밀번호를 초기화하시겠습니까?\n초기화된 비밀번호는 문자로 전송됩니다')){
+                                   var form = document.cmPwForm;
+                                   form.pstate.value='PASSINIT';
+                                   form.email_id.value = data.email_id;
+                                    form.target = 'successIframe';
+                                   form.action = '/cmsmain.do';
+                                   form.submit();
+                                   $('.password_close').trigger('click');
+                               }
+                           }else{
+                               alert(data.TRS_MSG);
+
+                           }
+                       }else{
+                           alert(data.TRS_MSG);
+                       }
+
+
+                   }
+               }
+        });
+    }
+
+    //도움말관리
+    function Go_HelpMngView(){
+        CmopenpageDisable();
+        var i = 0;
+
+        var sc_pos = 0;
+        $("#sel_help_title").html("<span >&#8226; </span> OPEN API 소개 도움말");
+
+        // ajax로 도움말이 등록되어있는지 확인한다.
+        $("form[name=create_formfm_help]").find("#pstate").val("XP1");
+            var params =  $("form[name=create_formfm_help]").serialize();
+
+            $.ajax({
+                type: "post",
+                url: "/cmsajax.do",
+                data: params,
+                async: false,
+                dataType:"json",
+                timeout: 3000,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // 통신에 에러가 있을경우 처리할 내용(생략가능)
+                    alert("네트웍장애가 발생했습니다. 다시시도해주세요");
+                },
+                success: function(data){
+
+                   if(data.result==true){
+                        if(data.rows!=""){
+                            //데이터 셋팅
+                            $("#editor_top_helptd").html(data.rows[0].m_contents.replace(/&amp;quot;/gi,"\"").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&amp;/gi,"&"));
+                        }else{
+
+                            $("#editor_top_helptd").html("");
+
+                        }
+
+                   }else{
+                        alert(data.TRS_MSG);
+
+                   }
+
+                }
+            });
+
+        var pop_w = 750;
+        var pop_h = 550;
+
+        // 수정, 등록창의 위치를 잡는다
+        $("#create_form_helppopup").css("left",( (($(document).width() - pop_w) / 2) + $(document).scrollLeft() )+"px");
+        $("#create_form_helppopup").css("top", ((($(document).height() - pop_h) / 10) + $(document).scrollTop() )+"px");
+
+        //alert($("#org_text_div").scrollTop()+"==>"+sc_pos);
+
+
+
+        $("#create_form_helppopup").show(500);
+    }
+
+    //TODO : create_form_helpclose
+    //등록 ,수정창 닫기
+    function create_form_helpclose(){
+        $("#create_form_helppopup").hide();
+        $("#editor_top_helptd").html("");
+        CmclospageDisable();
+    }
+</script><!-- 공통 jsp 파일-->
+    <!--//footer-->
+
+
+</div>
+<!--//wrap-->
+
+
+</body>
+</html>

@@ -1,0 +1,2379 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "※ '데이터셋 개방표준에 따른 계약정보' 오퍼레이션의 경우 현재 응답속도 지연 및 부하 해소를 위한 개선 작업을 진행 중이며 진행기간 동안 부하 문제 해소를 위하여 조회기간을 축소운영(1개월 -> 1주일)함을 알려드립니다.\\n\\n나라장터 입찰, 낙찰, 계약정보 데이터를 입찰공고일시, 개찰일시,계약체결일자로 [행안부 고시  공공데이터 개방표준]에 따라 제공하는 공공데이터개방표준서비스\\n행안부 고시 공공데이터 개방표준란? 공공데이터 제공 및 이용을 활성화하기 위해 공공데이터 개방시 적용하기 위한 공통 개방 기준을 데이터셋 분야별 개방기준(제공항목,속성정보,제공형식 등) 및 기타 데이터 개방표준을 정의)\\n해당 서비스는 행정안전부 고시 공공데이터 개방표준에 따라 제공되는 서비스로 나라장터의 입찰, 낙찰, 계약정보 등 개별 데이터에 대한 서비스도 별도로 제공하고 있으니 참고하여 주시기 바랍니다.",
+    "version": "1.0.0",
+    "title": "조달청_나라장터 공공데이터개방표준서비스"
+  },
+  "host": "apis.data.go.kr/1230000/ao/PubDataOpnStdService",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getDataSetOpnStdBidPblancInfo": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "OpenAPI 요청시 ServiceKey 파라미터가 없음"
+          },
+          "11": {
+            "description": "요청하신 OpenAPI의 필수 파라미터가 누락되었습니다."
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "ntceInsttOfclTel": {
+                              "type": "string",
+                              "description": "공고기관의 공고를 담당하는 담당자의 전화번호",
+                              "properties": {}
+                            },
+                            "ntceInsttOfclDeptNm": {
+                              "type": "string",
+                              "description": "공고기관의 공고를 담당하는 담당부서의 명",
+                              "properties": {}
+                            },
+                            "dmndInsttNm": {
+                              "type": "string",
+                              "description": "중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음",
+                              "properties": {}
+                            },
+                            "ntceInsttNm": {
+                              "type": "string",
+                              "description": "수요기관의 의뢰를 받아 공고하는 기관의 명",
+                              "properties": {}
+                            },
+                            "bidNtceNo": {
+                              "type": "string",
+                              "description": "입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은    년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용",
+                              "properties": {}
+                            },
+                            "bidNtceOrd": {
+                              "type": "string",
+                              "description": "입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수",
+                              "properties": {}
+                            },
+                            "refNtceNo": {
+                              "type": "string",
+                              "description": "조달청 입찰공고의 경우 참조공고번호는 기타 전자조달시스템에서 관리하는 공고번호를 의미하며 기타 전자조달시스템의 경우 참조공고번호는 나라장터(G2B) 입찰공고번호를 의미함",
+                              "properties": {}
+                            },
+                            "refNtceOrd": {
+                              "type": "string",
+                              "description": "참조공고번호에 대한 공고 차수",
+                              "properties": {}
+                            },
+                            "ppsNtceYn": {
+                              "type": "string",
+                              "description": "조달청에서 관리하는 나라장터 (http://www.g2b.go.kr)를 통해서도 입찰공고를 하는지의 여부",
+                              "properties": {}
+                            },
+                            "bidNtceNm": {
+                              "type": "string",
+                              "description": "공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름",
+                              "properties": {}
+                            },
+                            "bidNtceSttusNm": {
+                              "type": "string",
+                              "description": "해당 공고의 상태가 일반 또는 긴급공고, 정정(또는 연기)공고, 재공고입찰, 취소공고를 구분하기 위한 명",
+                              "properties": {}
+                            },
+                            "bidNtceDate": {
+                              "type": "string",
+                              "description": "입찰공고서를 공고한 일자",
+                              "properties": {}
+                            },
+                            "bidNtceBgn": {
+                              "type": "string",
+                              "description": "입찰공고서를 공고한 시각",
+                              "properties": {}
+                            },
+                            "bsnsDivNm": {
+                              "type": "string",
+                              "description": "입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자로 구분함",
+                              "properties": {}
+                            },
+                            "intrntnlBidYn": {
+                              "type": "string",
+                              "description": "국제입찰대상인지의 여부를 나타내며 국제입찰 대상은 내외국인 또는 외국인을 대상으로 하여 물품, 공사 및 용역을 조달하기 위하여 행하는 입찰을   말하며 수의계약을 포함한다. 국가계약법 제4조(지방계약법 제5조)에 의해   추정가격이 고시금액(국제입찰 적용 대상 기준금액으로 기획재정부장관 및  행정안전부장관이 매 2년마다 고시한 금액을 말하며 WTO 또는 양자간(FTA) 정부조달협정에 따르면 국제입찰 대상 기준 금액이 SDR(Special Drawing ",
+                              "properties": {}
+                            },
+                            "cmmnCntrctYn": {
+                              "type": "string",
+                              "description": "공동계약의 경우 공사/제조 기타의 계약에 있어서 필요하다고 인정할 때 계약 상대자를 2인 이상과 체결하는 계약이며 단독계약은 계약상대자를 1인으로 하는 통상적인 계약을 의미함",
+                              "properties": {}
+                            },
+                            "cmmnReciptMethdNm": {
+                              "type": "string",
+                              "description": "공동수급이라 함은 구성원을 2인 이상으로 하여 수급인이 해당계약을 공동으로 수행하기 위하여 잠정적으로 결성한 실체를 의미하며 공동수급체가도급을 받아 이행하는 방식을 구분하는 명임",
+                              "properties": {}
+                            },
+                            "elctrnBidYn": {
+                              "type": "string",
+                              "description": "입찰의 방식이 전자입찰방식인지 일반입찰(직접입찰 및 우편)방식인지의 여부",
+                              "properties": {}
+                            },
+                            "cntrctCnclsSttusNm": {
+                              "type": "string",
+                              "description": "계약체결형태를 구분하는 명",
+                              "properties": {}
+                            },
+                            "cntrctCnclsMthdNm": {
+                              "type": "string",
+                              "description": "계약체결의 방법을 구분하는 명",
+                              "properties": {}
+                            },
+                            "bidwinrDcsnMthdNm": {
+                              "type": "string",
+                              "description": "해당 공고건에 대해 낙찰자를 결정하는 방법",
+                              "properties": {}
+                            },
+                            "ntceInsttCd": {
+                              "type": "string",
+                              "description": "공고를 하는 기관의 코드로 행정안전부에서 부여한 기관코드임",
+                              "properties": {}
+                            },
+                            "ntceInsttOfclNm": {
+                              "type": "string",
+                              "description": "공고기관의 공고를 담당하는 담당자의 명",
+                              "properties": {}
+                            },
+                            "ntceInsttOfclEmailAdrs": {
+                              "type": "string",
+                              "description": "공고기관의 공고를 담당하는 담당자의 이메일주소",
+                              "properties": {}
+                            },
+                            "dmndInsttCd": {
+                              "type": "string",
+                              "description": "실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclDeptNm": {
+                              "type": "string",
+                              "description": "수요기관의 공고를 담당하는 담당부서의 명",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclNm": {
+                              "type": "string",
+                              "description": "수요기관의 공고를 담당하는 담당자의 명",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclTel": {
+                              "type": "string",
+                              "description": "수요기관의 공고를 담당하는 담당자의 전화번호",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclEmailAdrs": {
+                              "type": "string",
+                              "description": "수요기관의 공고를 담당하는 담당자의 이메일주소",
+                              "properties": {}
+                            },
+                            "presnatnOprtnYn": {
+                              "type": "string",
+                              "description": "해당 공고에 대한 현장/입찰/과업 설명회를 실시하는지의 여부",
+                              "properties": {}
+                            },
+                            "presnatnOprtnDate": {
+                              "type": "string",
+                              "description": "해당 공고에 대한 현장/입찰/과업 설명회를 실시하는 일자",
+                              "properties": {}
+                            },
+                            "presnatnOprtnTm": {
+                              "type": "string",
+                              "description": "해당 공고에 대한 현장/입찰/과업 설명회를 실시하는 시각",
+                              "properties": {}
+                            },
+                            "presnatnOprtnPlce": {
+                              "type": "string",
+                              "description": "해당 공고에 대한 설명회를 실시하는 경우 현장/입찰/과업 설명회를 실시하는 장소",
+                              "properties": {}
+                            },
+                            "bidPrtcptQlfctRgstClseDate": {
+                              "type": "string",
+                              "description": "입찰참가등록이란 입찰사무를 효과적으로 집행하기 위하여 사전에 입찰참가자격등록을 해두었다가 필요 시 입찰에 참여하는 제도로 해당 공고에 대한 입찰참가자격의 등록이 완료되어야 하는 시점(일자)을 의미함",
+                              "properties": {}
+                            },
+                            "bidPrtcptQlfctRgstClseTm": {
+                              "type": "string",
+                              "description": "입찰참가등록이란 입찰사무를 효과적으로 집행하기 위하여 사전에 입찰참가자격등록을 해두었다가 필요 시 입찰에 참여하는 제도로 해당 공고에 대한 입찰참가자격의 등록이 완료되어야 하는 시점(시각)을 의미함",
+                              "properties": {}
+                            },
+                            "cmmnReciptAgrmntClseDate": {
+                              "type": "string",
+                              "description": "공동계약이 허용된 공고에 대해 공동수급체를 구성하여 입찰에 참여하고자 할 경우 구성원이 일정 분담내용에 따라 나누어 공동으로 이행하는 약속을 한 공동수급협정서를 작성하여야 하며 이때 공동수급협정서의 등록(작성) 마감 시점(일자)을 의미함",
+                              "properties": {}
+                            },
+                            "cmmnReciptAgrmntClseTm": {
+                              "type": "string",
+                              "description": "공동계약이 허용된 공고에 대해 공동수급체를 구성하여 입찰에 참여하고자 할 경우 구성원이 일정 분담내용에 따라 나누어 공동으로 이행하는 약속을 한 공동수급협정서를 작성하여야 하며 이때 공동수급협정서의 등록(작성) 마감 시점(시각)을 의미함",
+                              "properties": {}
+                            },
+                            "bidBeginDate": {
+                              "type": "string",
+                              "description": "입찰서의 제출을 개시하는 일자",
+                              "properties": {}
+                            },
+                            "bidBeginTm": {
+                              "type": "string",
+                              "description": "입찰서의 제출을 개시하는 시각",
+                              "properties": {}
+                            },
+                            "bidClseDate": {
+                              "type": "string",
+                              "description": "입찰서의 제출을 마감하는 일자",
+                              "properties": {}
+                            },
+                            "bidClseTm": {
+                              "type": "string",
+                              "description": "입찰서의 제출을 마감하는 시각",
+                              "properties": {}
+                            },
+                            "opengDate": {
+                              "type": "string",
+                              "description": "조달업체가 제출한 입찰서를 개찰하는 일자",
+                              "properties": {}
+                            },
+                            "opengTm": {
+                              "type": "string",
+                              "description": "조달업체가 제출한 입찰서를 개찰하는 시각",
+                              "properties": {}
+                            },
+                            "opengPlce": {
+                              "type": "string",
+                              "description": "조달업체가 제출한 입찰서를 개찰하는 장소",
+                              "properties": {}
+                            },
+                            "asignBdgtAmt": {
+                              "type": "string",
+                              "description": "사업목적물을 달성하기 위하여 배정된 예산액 또는 설계금액(원화,원)",
+                              "properties": {}
+                            },
+                            "presmptPrce": {
+                              "type": "string",
+                              "description": "물품/공사/용역 등의 조달 계약을 체결함에 있어 국제입찰 대상여부를  판단하는 기준 등으로 삼기 위하여 예정가격이 결정되기 전에 국가계약법 시행령   등에서 정한 ‘추정가격의 산정’ 규정에 의하여 산정된 가격으로 부가가치세  및 관급자재비를 제외한 금액(원화,원)",
+                              "properties": {}
+                            },
+                            "rsrvtnPrceDcsnMthdNm": {
+                              "type": "string",
+                              "description": "예정가격의 결정을 위해 복수예정가격방식으로 산정하는지 단일 예정가격으로 산정하는지를 구분하는 명",
+                              "properties": {}
+                            },
+                            "rgnLmtYn": {
+                              "type": "string",
+                              "description": "해당 공고 입찰 시 지역제한을 두는지의 여부",
+                              "properties": {}
+                            },
+                            "prtcptPsblRgnNm": {
+                              "type": "string",
+                              "description": "지역제한이 Y일 경우 참여가능한 지역의 명칭을 콤마(,)로 나열함",
+                              "properties": {}
+                            },
+                            "indstrytyLmtYn": {
+                              "type": "string",
+                              "description": "해당 공고 입찰 시 업종(면허)제한을 두는지의 여부",
+                              "properties": {}
+                            },
+                            "bidprcPsblIndstrytyNm": {
+                              "type": "string",
+                              "description": "업종제한이 Y일 경우 제한되는 업종의 명칭을 콤마(,)로 나열함",
+                              "properties": {}
+                            },
+                            "bidNtceUrl": {
+                              "type": "string",
+                              "description": "해당 입찰공고를 인터넷상에서 확인할 수 있는 URL주소",
+                              "properties": {}
+                            },
+                            "dataBssDate": {
+                              "type": "string",
+                              "description": "데이터 작성 기준일자",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "06": {
+            "description": "날짜 Default, Format Error"
+          },
+          "07": {
+            "description": "요청하신 OpenAPI의 파라미터 입력값 범위가 초과 되었습니다."
+          },
+          "08": {
+            "description": "요청하신 OpenAPI의 필수 파라미터가 누락되었습니다."
+          },
+          "02": {
+            "description": "제공기관 서비스 제공 상태가 원할하지 않습니다."
+          },
+          "03": {
+            "description": "데이터 없음 에러"
+          },
+          "05": {
+            "description": "제공기관 서비스 제공 상태가 원할하지 않습니다."
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "데이터셋 개방표준에 따른 입찰공고정보",
+        "description": "검색조건을 입찰공고일시로 하여 입찰공고번호, 입찰공고차수, 나라장터공고여부, 입찰공고명, 입찰공고상태명, 입찰공고일자, 입찰공고시각, 업무구분명, 국제입찰여부 등 나라장터에 등록된 입찰공고정보 조회",
+        "operationId": "getDataSetOpnStdBidPblancInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "type",
+          "description": "오픈API 리턴 타입을 JSON으로 받고 싶을 경우 'json' 으로 지정함",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "bidNtceBgnDt",
+          "description": "검색하고자하는 입찰공고일시범위 시작 'YYYYMMDDHHMM' (입찰공고일시 범위는 1개월 로 제한)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "bidNtceEndDt",
+          "description": "검색하고자하는 입찰공고일시범위 종료 'YYYYMMDDHHMM'  (입찰공고일시 범위는 1개월 로 제한)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getDataSetOpnStdScsbidInfo": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "OpenAPI 요청시 ServiceKey 파라미터가 없음"
+          },
+          "11": {
+            "description": "요청하신 OpenAPI의 필수 파라미터가 누락되었습니다."
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "fnlSucsfCorpBizrno": {
+                              "type": "string",
+                              "description": "최종낙찰된 업체의 사업자등록번호임",
+                              "properties": {}
+                            },
+                            "fnlSucsfCorpContactTel": {
+                              "type": "string",
+                              "description": "최종낙찰된 업체의 연락 전화번호임",
+                              "properties": {}
+                            },
+                            "fnlSucsfCorpCeoNm": {
+                              "type": "string",
+                              "description": "최종낙찰된 업체의 대표자명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임",
+                              "properties": {}
+                            },
+                            "bidNtceNo": {
+                              "type": "string",
+                              "description": "입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은 년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용",
+                              "properties": {}
+                            },
+                            "bidNtceOrd": {
+                              "type": "string",
+                              "description": "입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수",
+                              "properties": {}
+                            },
+                            "bidNtceNm": {
+                              "type": "string",
+                              "description": "공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름",
+                              "properties": {}
+                            },
+                            "bsnsDivNm": {
+                              "type": "string",
+                              "description": "입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자로 구분함",
+                              "properties": {}
+                            },
+                            "cntrctCnclsSttusNm": {
+                              "type": "string",
+                              "description": "계약체결형태를 구분하는 명",
+                              "properties": {}
+                            },
+                            "cntrctCnclsMthdNm": {
+                              "type": "string",
+                              "description": "계약체결의 방법을 구분하는 명",
+                              "properties": {}
+                            },
+                            "bidwinrDcsnMthdNm": {
+                              "type": "string",
+                              "description": "해당 공고건에 대해 낙찰자를 결정하는 방법",
+                              "properties": {}
+                            },
+                            "ntceInsttNm": {
+                              "type": "string",
+                              "description": "수요기관의 의뢰를 받아 공고하는 기관의 명",
+                              "properties": {}
+                            },
+                            "ntceInsttCd": {
+                              "type": "string",
+                              "description": "공고를 하는 기관의 코드로 행정안전부에서 부여한 기관코드임",
+                              "properties": {}
+                            },
+                            "dmndInsttNm": {
+                              "type": "string",
+                              "description": "중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음",
+                              "properties": {}
+                            },
+                            "dmndInsttCd": {
+                              "type": "string",
+                              "description": "실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임",
+                              "properties": {}
+                            },
+                            "sucsfLwstlmtRt": {
+                              "type": "string",
+                              "description": "적격심사제도나 중소기업간경쟁물품에 대한 계약이행능력심사시 입찰가격을 제외한 다른 항목은 모두 만점을 받을 경우를 가정하여 낙찰가능한 최소한의 예정가격 대비 가격 투찰율을 말하며 이 하한율 아래로 투찰하면 낙찰되지 못하는 비율을 말함",
+                              "properties": {}
+                            },
+                            "presmptPrce": {
+                              "type": "string",
+                              "description": "물품/공사/용역 등의 조달 계약을 체결함에 있어 국제입찰 대상여부를  판단하는 기준 등으로 삼기 위하여 예정가격이 결정되기 전에 국가계약법 시행령 등에서 정한 ‘추정가격의 산정’ 규정에 의하여 산정된 가격으로 부가가치세  및 관급자재비를 제외한 금액(원화,원)",
+                              "properties": {}
+                            },
+                            "rsrvtnPrce": {
+                              "type": "string",
+                              "description": "입찰 또는 계약 체결 전에 낙찰자 및 계약금액의 결정기준으로 삼기 위하여 미리 작성/비치하여 두는 가액(원화,원)",
+                              "properties": {}
+                            },
+                            "bssAmt": {
+                              "type": "string",
+                              "description": "예정가격 작성 과정에서 거래실례가격, 원가계산가격 등에 의하여 조사한 가격이나 설계가격에 대하여 계약담당공무원이 그 적정여부를 검토조정한 가격(복수 예비가격 산정을 위한 기준금액)(원화,원)",
+                              "properties": {}
+                            },
+                            "opengDate": {
+                              "type": "string",
+                              "description": "조달업체가 제출한 입찰서를 개찰하는 일자",
+                              "properties": {}
+                            },
+                            "opengTm": {
+                              "type": "string",
+                              "description": "조달업체가 제출한 입찰서를 개찰하는 시각",
+                              "properties": {}
+                            },
+                            "opengRsltDivNm": {
+                              "type": "string",
+                              "description": "해당 공고건에 대한 개찰결과를 구분하는 것으로 개찰이 완료되었는지, 유찰되었는지, 재입찰 할것인지 등을 구분하는 명",
+                              "properties": {}
+                            },
+                            "opengRank": {
+                              "type": "string",
+                              "description": "개찰순위는 낙찰자결정방법에 따라 개찰한 결과에 대한 업체별 순위이며, 협상에 의한 계약의 경우 협상기술능력 평가점수와 입찰가격 평가점수의 합산하여 고득점 순에 따라 결정되며 협상순위를 의미함",
+                              "properties": {}
+                            },
+                            "bidprcCorpBizrno": {
+                              "type": "string",
+                              "description": "투찰한 업체의 사업자등록번호",
+                              "properties": {}
+                            },
+                            "bidprcCorpNm": {
+                              "type": "string",
+                              "description": "투찰한 업체의 명",
+                              "properties": {}
+                            },
+                            "bidprcCorpCeoNm": {
+                              "type": "string",
+                              "description": "투찰한 업체의 대표자의 명",
+                              "properties": {}
+                            },
+                            "bidprcAmt": {
+                              "type": "string",
+                              "description": "투찰한 금액(원화,원)",
+                              "properties": {}
+                            },
+                            "bidprcRt": {
+                              "type": "string",
+                              "description": "예정가격에 대한 투찰금액의 비율로 투찰금액/예정가격 *100 임(%)",
+                              "properties": {}
+                            },
+                            "bidprcDate": {
+                              "type": "string",
+                              "description": "투찰업체가 투찰한 일자",
+                              "properties": {}
+                            },
+                            "bidprcTm": {
+                              "type": "string",
+                              "description": "투찰업체가 투찰한 시각",
+                              "properties": {}
+                            },
+                            "sucsfYn": {
+                              "type": "string",
+                              "description": "투찰업체의 해당 입찰공고건에 대한 낙찰여부",
+                              "properties": {}
+                            },
+                            "dqlfctnRsn": {
+                              "type": "string",
+                              "description": "투찰업체에 대한 개찰 결과가 부적격으로 판명될 경우 그 부적격으로 판명된 사유",
+                              "properties": {}
+                            },
+                            "fnlSucsfAmt": {
+                              "type": "string",
+                              "description": "최종낙찰은 개찰순위 순서대로 협상등을 통해 최종 낙찰된정보를 의미하며 최종낙찰금액은 최종낙찰된 금액으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임 (원화,원)",
+                              "properties": {}
+                            },
+                            "fnlSucsfRt": {
+                              "type": "string",
+                              "description": "예정가격대비 최종낙찰금액으로 최종낙찰금액/예정가격 * 100 으로 계산되며 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임 (%)",
+                              "properties": {}
+                            },
+                            "fnlSucsfDate": {
+                              "type": "string",
+                              "description": "최종낙찰된 일자로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임",
+                              "properties": {}
+                            },
+                            "fnlSucsfCorpNm": {
+                              "type": "string",
+                              "description": "최종낙찰된 업체의 명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임",
+                              "properties": {}
+                            },
+                            "fnlSucsfCorpOfclNm": {
+                              "type": "string",
+                              "description": "최종낙찰된 업체의 담당자명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임",
+                              "properties": {}
+                            },
+                            "fnlSucsfCorpAdrs": {
+                              "type": "string",
+                              "description": "최종낙찰된 업체의 주소임",
+                              "properties": {}
+                            },
+                            "dataBssDate": {
+                              "type": "string",
+                              "description": "데이터 작성 기준일자",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "06": {
+            "description": "날짜 Default, Format Error"
+          },
+          "07": {
+            "description": "요청하신 OpenAPI의 파라미터 입력값 범위가 초과 되었습니다."
+          },
+          "08": {
+            "description": "요청하신 OpenAPI의 필수 파라미터가 누락되었습니다."
+          },
+          "02": {
+            "description": "제공기관 서비스 제공 상태가 원할하지 않습니다."
+          },
+          "03": {
+            "description": "데이터 없음 에러"
+          },
+          "05": {
+            "description": "제공기관 서비스 제공 상태가 원할하지 않습니다."
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "데이터셋 개방표준에 따른 낙찰정보",
+        "description": "검색조건을 개찰일시, 업무구분명으로 입찰공고번호, 입찰공고차수, 입찰공고명, 업무구분명, 계약체결형태명, 계약체결방법명, 낙찰자결정방법명, 공고기관명, 공고기관코드 등 나라장터에 등록된 낙찰정보 조회",
+        "operationId": "getDataSetOpnStdScsbidInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "type",
+          "description": "오픈API 리턴 타입을 JSON으로 받고 싶을 경우 'json' 으로 지정",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "bsnsDivCd",
+          "description": "업무구분코드가 1이면 물품, 2면 외자, 3이면 공사, 5면 용역",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "opengBgnDt",
+          "description": "검색하고자하는 개찰일시범위 시작 'YYYYMMDDHHMM' (개찰일시 범위는 1주일로 제한)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "opengEndDt",
+          "description": "검색하고자하는 개찰일시범위 종료 'YYYYMMDDHHMM' (개찰일시 범위는 1주일로 제한)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getDataSetOpnStdCntrctInfo": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "OpenAPI 요청시 ServiceKey 파라미터가 없음"
+          },
+          "11": {
+            "description": "요청하신 OpenAPI의 필수 파라미터가 누락되었습니다."
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "cntrctInsttOfclTel": {
+                              "type": "string",
+                              "description": "계약기관의 담당자 전화번호",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclNm": {
+                              "type": "string",
+                              "description": "수요기관의 계약을 담당하는 담당부서의 명",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclDeptNm": {
+                              "type": "string",
+                              "description": "수요기관의 계약을 담당하는 담당자의 명",
+                              "properties": {}
+                            },
+                            "cntrctInsttOfclNm": {
+                              "type": "string",
+                              "description": "계약기관의 담당자 명",
+                              "properties": {}
+                            },
+                            "cntrctNo": {
+                              "type": "string",
+                              "description": "계약서를 식별하기 위한 관리번호",
+                              "properties": {}
+                            },
+                            "untyCntrctNo": {
+                              "type": "string",
+                              "description": "조달청 나라장터g2b.go.kr)에서 조달청에서 발주하는 중앙조달과 자체조달기관에서 발생되는 자체조달 계약의 통합 관리를 위해 채번되는 번호",
+                              "properties": {}
+                            },
+                            "cntrctOrd": {
+                              "type": "string",
+                              "description": "계약의 변경 시 변경된 차수",
+                              "properties": {}
+                            },
+                            "cntrctNm": {
+                              "type": "string",
+                              "description": "공사명 또는 사업명이라고도 하며 계약내용을 요약한 이름",
+                              "properties": {}
+                            },
+                            "bsnsDivNm": {
+                              "type": "string",
+                              "description": "입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자, 비축으로 구분함",
+                              "properties": {}
+                            },
+                            "cntrctCnclsSttusNm": {
+                              "type": "string",
+                              "description": "계약체결형태를 구분하는 명",
+                              "properties": {}
+                            },
+                            "cntrctCnclsMthdNm": {
+                              "type": "string",
+                              "description": "계약체결의 방법을 구분하는 명",
+                              "properties": {}
+                            },
+                            "lngtrmCtnuDivNm": {
+                              "type": "string",
+                              "description": "계약이행에 수년을 요하는 계약을 장기계속계약이라 하며 해당 계약이 단기계약인지 장기계속계약 또는 계속비계약인지를 구분하는 명",
+                              "properties": {}
+                            },
+                            "cmmnCntrctYn": {
+                              "type": "string",
+                              "description": "공동계약의 경우 공사/제조 기타의 계약에 있어서 필요하다고 인정할 때 계약 상대자를 2인 이상과 체결하는 계약이며 단독계약은 계약상대자를 1인으로 하는 통상적인 계약을 의미함.",
+                              "properties": {}
+                            },
+                            "cntrctCnclsDate": {
+                              "type": "string",
+                              "description": "계약이 성립된 체결일자",
+                              "properties": {}
+                            },
+                            "cntrctPrd": {
+                              "type": "string",
+                              "description": "계약의 효력이 있는 기간",
+                              "properties": {}
+                            },
+                            "cntrctAmt": {
+                              "type": "string",
+                              "description": "당해연도계약의 경우 계약금액을 의미하며 장기계속계약의 경우 금차계약금액을 의미함(원화,원)",
+                              "properties": {}
+                            },
+                            "ttalCntrctAmt": {
+                              "type": "string",
+                              "description": "장기계속계약의 경우에만 발생되며 장기계속계약 전체 계약금액(총부기금액) 을 의미함(원화,원)",
+                              "properties": {}
+                            },
+                            "cntrctInfoUrl": {
+                              "type": "string",
+                              "description": "계약정보를 인터넷상에서 확인할 수 있는 URL주소",
+                              "properties": {}
+                            },
+                            "bidNtceNo": {
+                              "type": "string",
+                              "description": "입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은 년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용",
+                              "properties": {}
+                            },
+                            "bidNtceOrd": {
+                              "type": "string",
+                              "description": "입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수",
+                              "properties": {}
+                            },
+                            "bidNtceNm": {
+                              "type": "string",
+                              "description": "공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름",
+                              "properties": {}
+                            },
+                            "opengDate": {
+                              "type": "string",
+                              "description": "조달업체가 제출한 입찰서를 개찰하는 일자",
+                              "properties": {}
+                            },
+                            "opengTm": {
+                              "type": "string",
+                              "description": "조달업체가 제출한 입찰서를 개찰하는 시각",
+                              "properties": {}
+                            },
+                            "rsrvtnPrce": {
+                              "type": "string",
+                              "description": "입찰 또는 계약 체결 전에 낙찰자 및 계약금액의 결정기준으로 삼기 위하여 미리 작성/비치하여 두는 가액",
+                              "properties": {}
+                            },
+                            "prvtcntrctRsn": {
+                              "type": "string",
+                              "description": "계약상대자를 결정함에 있어 경쟁입찰방법에 의하지 않고 특정인을 계약상대방으로 선정하여 계약을 체결 시 그 사유내용임[국가계약법 시행령 제26조, 지방계약법 시행령 제25조]",
+                              "properties": {}
+                            },
+                            "bidNtceUrl": {
+                              "type": "string",
+                              "description": "해당 입찰공고를 인터넷상에서 확인할 수 있는 URL주소",
+                              "properties": {}
+                            },
+                            "cntrctInsttDivNm": {
+                              "type": "string",
+                              "description": "계약기관이 국가기관인지 지자체인지 등을 구분하는 명",
+                              "properties": {}
+                            },
+                            "cntrctInsttNm": {
+                              "type": "string",
+                              "description": "계약의 주체가 되는 기관의 명",
+                              "properties": {}
+                            },
+                            "cntrctInsttCd": {
+                              "type": "string",
+                              "description": "계약의 주체가 되는 기관의 코드로 행정안전부에서 부여한 기관코드임",
+                              "properties": {}
+                            },
+                            "cntrctInsttChrgDeptNm": {
+                              "type": "string",
+                              "description": "계약기관의 담당 부서명",
+                              "properties": {}
+                            },
+                            "cntrctInsttOfcl": {
+                              "type": "string",
+                              "description": "계약기관의 담당자 이메일주소",
+                              "properties": {}
+                            },
+                            "dmndInsttDivNm": {
+                              "type": "string",
+                              "description": "수요기관이 국가기관인지 지자체인지 등을 구분하는 명",
+                              "properties": {}
+                            },
+                            "dmndInsttNm": {
+                              "type": "string",
+                              "description": "중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음",
+                              "properties": {}
+                            },
+                            "dmndInsttCd": {
+                              "type": "string",
+                              "description": "실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임",
+                              "properties": {}
+                            },
+                            "dmstcCorpYn": {
+                              "type": "string",
+                              "description": "계약 상대업체가 국내업체인지의 여부",
+                              "properties": {}
+                            },
+                            "rprsntCorpCeoNm": {
+                              "type": "string",
+                              "description": "대표업체의 대표자 성명",
+                              "properties": {}
+                            },
+                            "rprsntCorpOfclNm": {
+                              "type": "string",
+                              "description": "대표업체의 담당자 명",
+                              "properties": {}
+                            },
+                            "rprsntCorpBizrno": {
+                              "type": "string",
+                              "description": "대표업체의 사업자등록번호",
+                              "properties": {}
+                            },
+                            "rprsntCorpAdrs": {
+                              "type": "string",
+                              "description": "대표업체의 사업장 주소",
+                              "properties": {}
+                            },
+                            "rprsntCorpContactTel": {
+                              "type": "string",
+                              "description": "대표업체의 연락 전화번호",
+                              "properties": {}
+                            },
+                            "dataBssDate": {
+                              "type": "string",
+                              "description": "데이터 작성 기준일자",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclTel": {
+                              "type": "string",
+                              "description": "수요기관의 계약을 담당하는 담당자의 전화번호",
+                              "properties": {}
+                            },
+                            "dmndInsttOfclEmailAdrs": {
+                              "type": "string",
+                              "description": "수요기관의 계약을 담당하는 담당자의 이메일주소",
+                              "properties": {}
+                            },
+                            "rprsntCorpNm": {
+                              "type": "string",
+                              "description": "계약의 상대 중 대표가 되는 업체의 명",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "02": {
+            "description": "제공기관 서비스 제공 상태가 원할하지 않습니다."
+          },
+          "03": {
+            "description": "데이터 없음 에러"
+          },
+          "05": {
+            "description": "제공기관 서비스 제공 상태가 원할하지 않습니다."
+          },
+          "06": {
+            "description": "날짜 Default, Format Error"
+          },
+          "07": {
+            "description": "요청하신 OpenAPI의 파라미터 입력값 범위가 초과 되었습니다."
+          },
+          "08": {
+            "description": "요청하신 OpenAPI의 필수 파라미터가 누락되었습니다."
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "데이터셋 개방표준에 따른 계약정보",
+        "description": "검색조건을 계약체결일자로 계약번호, 통합계약번호, 계약차수, 계약명, 업무구분명, 계약체결형태명, 계약체결방법명, 장기계속구분명, 공동계약여부, 계약체결일자, 계약기간, 계약금액 등 나라장터에 등록된 계약정보 조회",
+        "operationId": "getDataSetOpnStdCntrctInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "type",
+          "description": "오픈API 리턴 타입을 JSON으로 받고 싶을 경우 'json' 으로 지정",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cntrctCnclsBgnDate",
+          "description": "검색하고자하는 계약체결일자 시작 'YYYYMMDD' (계약체결일자 범위는 1개월 로 제한)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "cntrctCnclsEndDate",
+          "description": "검색하고자하는 계약체결일자 종료 'YYYYMMDD' (계약체결일자 범위는 1개월 로 제한)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getDataSetOpnStdBidPblancInfo_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "ntceInsttOfclTel": {
+                      "type": "string",
+                      "description": "공고기관의 공고를 담당하는 담당자의 전화번호"
+                    },
+                    "ntceInsttOfclDeptNm": {
+                      "type": "string",
+                      "description": "공고기관의 공고를 담당하는 담당부서의 명"
+                    },
+                    "dmndInsttNm": {
+                      "type": "string",
+                      "description": "중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음"
+                    },
+                    "ntceInsttNm": {
+                      "type": "string",
+                      "description": "수요기관의 의뢰를 받아 공고하는 기관의 명"
+                    },
+                    "bidNtceNo": {
+                      "type": "string",
+                      "description": "입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은    년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용"
+                    },
+                    "bidNtceOrd": {
+                      "type": "string",
+                      "description": "입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수"
+                    },
+                    "refNtceNo": {
+                      "type": "string",
+                      "description": "조달청 입찰공고의 경우 참조공고번호는 기타 전자조달시스템에서 관리하는 공고번호를 의미하며 기타 전자조달시스템의 경우 참조공고번호는 나라장터(G2B) 입찰공고번호를 의미함"
+                    },
+                    "refNtceOrd": {
+                      "type": "string",
+                      "description": "참조공고번호에 대한 공고 차수"
+                    },
+                    "ppsNtceYn": {
+                      "type": "string",
+                      "description": "조달청에서 관리하는 나라장터 (http://www.g2b.go.kr)를 통해서도 입찰공고를 하는지의 여부"
+                    },
+                    "bidNtceNm": {
+                      "type": "string",
+                      "description": "공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름"
+                    },
+                    "bidNtceSttusNm": {
+                      "type": "string",
+                      "description": "해당 공고의 상태가 일반 또는 긴급공고, 정정(또는 연기)공고, 재공고입찰, 취소공고를 구분하기 위한 명"
+                    },
+                    "bidNtceDate": {
+                      "type": "string",
+                      "description": "입찰공고서를 공고한 일자"
+                    },
+                    "bidNtceBgn": {
+                      "type": "string",
+                      "description": "입찰공고서를 공고한 시각"
+                    },
+                    "bsnsDivNm": {
+                      "type": "string",
+                      "description": "입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자로 구분함"
+                    },
+                    "intrntnlBidYn": {
+                      "type": "string",
+                      "description": "국제입찰대상인지의 여부를 나타내며 국제입찰 대상은 내외국인 또는 외국인을 대상으로 하여 물품, 공사 및 용역을 조달하기 위하여 행하는 입찰을   말하며 수의계약을 포함한다. 국가계약법 제4조(지방계약법 제5조)에 의해   추정가격이 고시금액(국제입찰 적용 대상 기준금액으로 기획재정부장관 및  행정안전부장관이 매 2년마다 고시한 금액을 말하며 WTO 또는 양자간(FTA) 정부조달협정에 따르면 국제입찰 대상 기준 금액이 SDR(Special Drawing "
+                    },
+                    "cmmnCntrctYn": {
+                      "type": "string",
+                      "description": "공동계약의 경우 공사/제조 기타의 계약에 있어서 필요하다고 인정할 때 계약 상대자를 2인 이상과 체결하는 계약이며 단독계약은 계약상대자를 1인으로 하는 통상적인 계약을 의미함"
+                    },
+                    "cmmnReciptMethdNm": {
+                      "type": "string",
+                      "description": "공동수급이라 함은 구성원을 2인 이상으로 하여 수급인이 해당계약을 공동으로 수행하기 위하여 잠정적으로 결성한 실체를 의미하며 공동수급체가도급을 받아 이행하는 방식을 구분하는 명임"
+                    },
+                    "elctrnBidYn": {
+                      "type": "string",
+                      "description": "입찰의 방식이 전자입찰방식인지 일반입찰(직접입찰 및 우편)방식인지의 여부"
+                    },
+                    "cntrctCnclsSttusNm": {
+                      "type": "string",
+                      "description": "계약체결형태를 구분하는 명"
+                    },
+                    "cntrctCnclsMthdNm": {
+                      "type": "string",
+                      "description": "계약체결의 방법을 구분하는 명"
+                    },
+                    "bidwinrDcsnMthdNm": {
+                      "type": "string",
+                      "description": "해당 공고건에 대해 낙찰자를 결정하는 방법"
+                    },
+                    "ntceInsttCd": {
+                      "type": "string",
+                      "description": "공고를 하는 기관의 코드로 행정안전부에서 부여한 기관코드임"
+                    },
+                    "ntceInsttOfclNm": {
+                      "type": "string",
+                      "description": "공고기관의 공고를 담당하는 담당자의 명"
+                    },
+                    "ntceInsttOfclEmailAdrs": {
+                      "type": "string",
+                      "description": "공고기관의 공고를 담당하는 담당자의 이메일주소"
+                    },
+                    "dmndInsttCd": {
+                      "type": "string",
+                      "description": "실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임"
+                    },
+                    "dmndInsttOfclDeptNm": {
+                      "type": "string",
+                      "description": "수요기관의 공고를 담당하는 담당부서의 명"
+                    },
+                    "dmndInsttOfclNm": {
+                      "type": "string",
+                      "description": "수요기관의 공고를 담당하는 담당자의 명"
+                    },
+                    "dmndInsttOfclTel": {
+                      "type": "string",
+                      "description": "수요기관의 공고를 담당하는 담당자의 전화번호"
+                    },
+                    "dmndInsttOfclEmailAdrs": {
+                      "type": "string",
+                      "description": "수요기관의 공고를 담당하는 담당자의 이메일주소"
+                    },
+                    "presnatnOprtnYn": {
+                      "type": "string",
+                      "description": "해당 공고에 대한 현장/입찰/과업 설명회를 실시하는지의 여부"
+                    },
+                    "presnatnOprtnDate": {
+                      "type": "string",
+                      "description": "해당 공고에 대한 현장/입찰/과업 설명회를 실시하는 일자"
+                    },
+                    "presnatnOprtnTm": {
+                      "type": "string",
+                      "description": "해당 공고에 대한 현장/입찰/과업 설명회를 실시하는 시각"
+                    },
+                    "presnatnOprtnPlce": {
+                      "type": "string",
+                      "description": "해당 공고에 대한 설명회를 실시하는 경우 현장/입찰/과업 설명회를 실시하는 장소"
+                    },
+                    "bidPrtcptQlfctRgstClseDate": {
+                      "type": "string",
+                      "description": "입찰참가등록이란 입찰사무를 효과적으로 집행하기 위하여 사전에 입찰참가자격등록을 해두었다가 필요 시 입찰에 참여하는 제도로 해당 공고에 대한 입찰참가자격의 등록이 완료되어야 하는 시점(일자)을 의미함"
+                    },
+                    "bidPrtcptQlfctRgstClseTm": {
+                      "type": "string",
+                      "description": "입찰참가등록이란 입찰사무를 효과적으로 집행하기 위하여 사전에 입찰참가자격등록을 해두었다가 필요 시 입찰에 참여하는 제도로 해당 공고에 대한 입찰참가자격의 등록이 완료되어야 하는 시점(시각)을 의미함"
+                    },
+                    "cmmnReciptAgrmntClseDate": {
+                      "type": "string",
+                      "description": "공동계약이 허용된 공고에 대해 공동수급체를 구성하여 입찰에 참여하고자 할 경우 구성원이 일정 분담내용에 따라 나누어 공동으로 이행하는 약속을 한 공동수급협정서를 작성하여야 하며 이때 공동수급협정서의 등록(작성) 마감 시점(일자)을 의미함"
+                    },
+                    "cmmnReciptAgrmntClseTm": {
+                      "type": "string",
+                      "description": "공동계약이 허용된 공고에 대해 공동수급체를 구성하여 입찰에 참여하고자 할 경우 구성원이 일정 분담내용에 따라 나누어 공동으로 이행하는 약속을 한 공동수급협정서를 작성하여야 하며 이때 공동수급협정서의 등록(작성) 마감 시점(시각)을 의미함"
+                    },
+                    "bidBeginDate": {
+                      "type": "string",
+                      "description": "입찰서의 제출을 개시하는 일자"
+                    },
+                    "bidBeginTm": {
+                      "type": "string",
+                      "description": "입찰서의 제출을 개시하는 시각"
+                    },
+                    "bidClseDate": {
+                      "type": "string",
+                      "description": "입찰서의 제출을 마감하는 일자"
+                    },
+                    "bidClseTm": {
+                      "type": "string",
+                      "description": "입찰서의 제출을 마감하는 시각"
+                    },
+                    "opengDate": {
+                      "type": "string",
+                      "description": "조달업체가 제출한 입찰서를 개찰하는 일자"
+                    },
+                    "opengTm": {
+                      "type": "string",
+                      "description": "조달업체가 제출한 입찰서를 개찰하는 시각"
+                    },
+                    "opengPlce": {
+                      "type": "string",
+                      "description": "조달업체가 제출한 입찰서를 개찰하는 장소"
+                    },
+                    "asignBdgtAmt": {
+                      "type": "string",
+                      "description": "사업목적물을 달성하기 위하여 배정된 예산액 또는 설계금액(원화,원)"
+                    },
+                    "presmptPrce": {
+                      "type": "string",
+                      "description": "물품/공사/용역 등의 조달 계약을 체결함에 있어 국제입찰 대상여부를  판단하는 기준 등으로 삼기 위하여 예정가격이 결정되기 전에 국가계약법 시행령   등에서 정한 ‘추정가격의 산정’ 규정에 의하여 산정된 가격으로 부가가치세  및 관급자재비를 제외한 금액(원화,원)"
+                    },
+                    "rsrvtnPrceDcsnMthdNm": {
+                      "type": "string",
+                      "description": "예정가격의 결정을 위해 복수예정가격방식으로 산정하는지 단일 예정가격으로 산정하는지를 구분하는 명"
+                    },
+                    "rgnLmtYn": {
+                      "type": "string",
+                      "description": "해당 공고 입찰 시 지역제한을 두는지의 여부"
+                    },
+                    "prtcptPsblRgnNm": {
+                      "type": "string",
+                      "description": "지역제한이 Y일 경우 참여가능한 지역의 명칭을 콤마(,)로 나열함"
+                    },
+                    "indstrytyLmtYn": {
+                      "type": "string",
+                      "description": "해당 공고 입찰 시 업종(면허)제한을 두는지의 여부"
+                    },
+                    "bidprcPsblIndstrytyNm": {
+                      "type": "string",
+                      "description": "업종제한이 Y일 경우 제한되는 업종의 명칭을 콤마(,)로 나열함"
+                    },
+                    "bidNtceUrl": {
+                      "type": "string",
+                      "description": "해당 입찰공고를 인터넷상에서 확인할 수 있는 URL주소"
+                    },
+                    "dataBssDate": {
+                      "type": "string",
+                      "description": "데이터 작성 기준일자"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            }
+          }
+        }
+      }
+    },
+    "getDataSetOpnStdScsbidInfo_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "fnlSucsfCorpBizrno": {
+                      "type": "string",
+                      "description": "최종낙찰된 업체의 사업자등록번호임"
+                    },
+                    "fnlSucsfCorpContactTel": {
+                      "type": "string",
+                      "description": "최종낙찰된 업체의 연락 전화번호임"
+                    },
+                    "fnlSucsfCorpCeoNm": {
+                      "type": "string",
+                      "description": "최종낙찰된 업체의 대표자명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임"
+                    },
+                    "bidNtceNo": {
+                      "type": "string",
+                      "description": "입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은 년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용"
+                    },
+                    "bidNtceOrd": {
+                      "type": "string",
+                      "description": "입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수"
+                    },
+                    "bidNtceNm": {
+                      "type": "string",
+                      "description": "공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름"
+                    },
+                    "bsnsDivNm": {
+                      "type": "string",
+                      "description": "입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자로 구분함"
+                    },
+                    "cntrctCnclsSttusNm": {
+                      "type": "string",
+                      "description": "계약체결형태를 구분하는 명"
+                    },
+                    "cntrctCnclsMthdNm": {
+                      "type": "string",
+                      "description": "계약체결의 방법을 구분하는 명"
+                    },
+                    "bidwinrDcsnMthdNm": {
+                      "type": "string",
+                      "description": "해당 공고건에 대해 낙찰자를 결정하는 방법"
+                    },
+                    "ntceInsttNm": {
+                      "type": "string",
+                      "description": "수요기관의 의뢰를 받아 공고하는 기관의 명"
+                    },
+                    "ntceInsttCd": {
+                      "type": "string",
+                      "description": "공고를 하는 기관의 코드로 행정안전부에서 부여한 기관코드임"
+                    },
+                    "dmndInsttNm": {
+                      "type": "string",
+                      "description": "중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음"
+                    },
+                    "dmndInsttCd": {
+                      "type": "string",
+                      "description": "실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임"
+                    },
+                    "sucsfLwstlmtRt": {
+                      "type": "string",
+                      "description": "적격심사제도나 중소기업간경쟁물품에 대한 계약이행능력심사시 입찰가격을 제외한 다른 항목은 모두 만점을 받을 경우를 가정하여 낙찰가능한 최소한의 예정가격 대비 가격 투찰율을 말하며 이 하한율 아래로 투찰하면 낙찰되지 못하는 비율을 말함"
+                    },
+                    "presmptPrce": {
+                      "type": "string",
+                      "description": "물품/공사/용역 등의 조달 계약을 체결함에 있어 국제입찰 대상여부를  판단하는 기준 등으로 삼기 위하여 예정가격이 결정되기 전에 국가계약법 시행령 등에서 정한 ‘추정가격의 산정’ 규정에 의하여 산정된 가격으로 부가가치세  및 관급자재비를 제외한 금액(원화,원)"
+                    },
+                    "rsrvtnPrce": {
+                      "type": "string",
+                      "description": "입찰 또는 계약 체결 전에 낙찰자 및 계약금액의 결정기준으로 삼기 위하여 미리 작성/비치하여 두는 가액(원화,원)"
+                    },
+                    "bssAmt": {
+                      "type": "string",
+                      "description": "예정가격 작성 과정에서 거래실례가격, 원가계산가격 등에 의하여 조사한 가격이나 설계가격에 대하여 계약담당공무원이 그 적정여부를 검토조정한 가격(복수 예비가격 산정을 위한 기준금액)(원화,원)"
+                    },
+                    "opengDate": {
+                      "type": "string",
+                      "description": "조달업체가 제출한 입찰서를 개찰하는 일자"
+                    },
+                    "opengTm": {
+                      "type": "string",
+                      "description": "조달업체가 제출한 입찰서를 개찰하는 시각"
+                    },
+                    "opengRsltDivNm": {
+                      "type": "string",
+                      "description": "해당 공고건에 대한 개찰결과를 구분하는 것으로 개찰이 완료되었는지, 유찰되었는지, 재입찰 할것인지 등을 구분하는 명"
+                    },
+                    "opengRank": {
+                      "type": "string",
+                      "description": "개찰순위는 낙찰자결정방법에 따라 개찰한 결과에 대한 업체별 순위이며, 협상에 의한 계약의 경우 협상기술능력 평가점수와 입찰가격 평가점수의 합산하여 고득점 순에 따라 결정되며 협상순위를 의미함"
+                    },
+                    "bidprcCorpBizrno": {
+                      "type": "string",
+                      "description": "투찰한 업체의 사업자등록번호"
+                    },
+                    "bidprcCorpNm": {
+                      "type": "string",
+                      "description": "투찰한 업체의 명"
+                    },
+                    "bidprcCorpCeoNm": {
+                      "type": "string",
+                      "description": "투찰한 업체의 대표자의 명"
+                    },
+                    "bidprcAmt": {
+                      "type": "string",
+                      "description": "투찰한 금액(원화,원)"
+                    },
+                    "bidprcRt": {
+                      "type": "string",
+                      "description": "예정가격에 대한 투찰금액의 비율로 투찰금액/예정가격 *100 임(%)"
+                    },
+                    "bidprcDate": {
+                      "type": "string",
+                      "description": "투찰업체가 투찰한 일자"
+                    },
+                    "bidprcTm": {
+                      "type": "string",
+                      "description": "투찰업체가 투찰한 시각"
+                    },
+                    "sucsfYn": {
+                      "type": "string",
+                      "description": "투찰업체의 해당 입찰공고건에 대한 낙찰여부"
+                    },
+                    "dqlfctnRsn": {
+                      "type": "string",
+                      "description": "투찰업체에 대한 개찰 결과가 부적격으로 판명될 경우 그 부적격으로 판명된 사유"
+                    },
+                    "fnlSucsfAmt": {
+                      "type": "string",
+                      "description": "최종낙찰은 개찰순위 순서대로 협상등을 통해 최종 낙찰된정보를 의미하며 최종낙찰금액은 최종낙찰된 금액으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임 (원화,원)"
+                    },
+                    "fnlSucsfRt": {
+                      "type": "string",
+                      "description": "예정가격대비 최종낙찰금액으로 최종낙찰금액/예정가격 * 100 으로 계산되며 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임 (%)"
+                    },
+                    "fnlSucsfDate": {
+                      "type": "string",
+                      "description": "최종낙찰된 일자로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임"
+                    },
+                    "fnlSucsfCorpNm": {
+                      "type": "string",
+                      "description": "최종낙찰된 업체의 명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임"
+                    },
+                    "fnlSucsfCorpOfclNm": {
+                      "type": "string",
+                      "description": "최종낙찰된 업체의 담당자명으로 개찰결과구분명이 “개찰완료”일 경우 필수 입력 항목임"
+                    },
+                    "fnlSucsfCorpAdrs": {
+                      "type": "string",
+                      "description": "최종낙찰된 업체의 주소임"
+                    },
+                    "dataBssDate": {
+                      "type": "string",
+                      "description": "데이터 작성 기준일자"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            }
+          }
+        }
+      }
+    },
+    "getDataSetOpnStdCntrctInfo_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "cntrctInsttOfclTel": {
+                      "type": "string",
+                      "description": "계약기관의 담당자 전화번호"
+                    },
+                    "dmndInsttOfclNm": {
+                      "type": "string",
+                      "description": "수요기관의 계약을 담당하는 담당부서의 명"
+                    },
+                    "dmndInsttOfclDeptNm": {
+                      "type": "string",
+                      "description": "수요기관의 계약을 담당하는 담당자의 명"
+                    },
+                    "cntrctInsttOfclNm": {
+                      "type": "string",
+                      "description": "계약기관의 담당자 명"
+                    },
+                    "cntrctNo": {
+                      "type": "string",
+                      "description": "계약서를 식별하기 위한 관리번호"
+                    },
+                    "untyCntrctNo": {
+                      "type": "string",
+                      "description": "조달청 나라장터g2b.go.kr)에서 조달청에서 발주하는 중앙조달과 자체조달기관에서 발생되는 자체조달 계약의 통합 관리를 위해 채번되는 번호"
+                    },
+                    "cntrctOrd": {
+                      "type": "string",
+                      "description": "계약의 변경 시 변경된 차수"
+                    },
+                    "cntrctNm": {
+                      "type": "string",
+                      "description": "공사명 또는 사업명이라고도 하며 계약내용을 요약한 이름"
+                    },
+                    "bsnsDivNm": {
+                      "type": "string",
+                      "description": "입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자, 비축으로 구분함"
+                    },
+                    "cntrctCnclsSttusNm": {
+                      "type": "string",
+                      "description": "계약체결형태를 구분하는 명"
+                    },
+                    "cntrctCnclsMthdNm": {
+                      "type": "string",
+                      "description": "계약체결의 방법을 구분하는 명"
+                    },
+                    "lngtrmCtnuDivNm": {
+                      "type": "string",
+                      "description": "계약이행에 수년을 요하는 계약을 장기계속계약이라 하며 해당 계약이 단기계약인지 장기계속계약 또는 계속비계약인지를 구분하는 명"
+                    },
+                    "cmmnCntrctYn": {
+                      "type": "string",
+                      "description": "공동계약의 경우 공사/제조 기타의 계약에 있어서 필요하다고 인정할 때 계약 상대자를 2인 이상과 체결하는 계약이며 단독계약은 계약상대자를 1인으로 하는 통상적인 계약을 의미함."
+                    },
+                    "cntrctCnclsDate": {
+                      "type": "string",
+                      "description": "계약이 성립된 체결일자"
+                    },
+                    "cntrctPrd": {
+                      "type": "string",
+                      "description": "계약의 효력이 있는 기간"
+                    },
+                    "cntrctAmt": {
+                      "type": "string",
+                      "description": "당해연도계약의 경우 계약금액을 의미하며 장기계속계약의 경우 금차계약금액을 의미함(원화,원)"
+                    },
+                    "ttalCntrctAmt": {
+                      "type": "string",
+                      "description": "장기계속계약의 경우에만 발생되며 장기계속계약 전체 계약금액(총부기금액) 을 의미함(원화,원)"
+                    },
+                    "cntrctInfoUrl": {
+                      "type": "string",
+                      "description": "계약정보를 인터넷상에서 확인할 수 있는 URL주소"
+                    },
+                    "bidNtceNo": {
+                      "type": "string",
+                      "description": "입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은 년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용"
+                    },
+                    "bidNtceOrd": {
+                      "type": "string",
+                      "description": "입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수"
+                    },
+                    "bidNtceNm": {
+                      "type": "string",
+                      "description": "공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름"
+                    },
+                    "opengDate": {
+                      "type": "string",
+                      "description": "조달업체가 제출한 입찰서를 개찰하는 일자"
+                    },
+                    "opengTm": {
+                      "type": "string",
+                      "description": "조달업체가 제출한 입찰서를 개찰하는 시각"
+                    },
+                    "rsrvtnPrce": {
+                      "type": "string",
+                      "description": "입찰 또는 계약 체결 전에 낙찰자 및 계약금액의 결정기준으로 삼기 위하여 미리 작성/비치하여 두는 가액"
+                    },
+                    "prvtcntrctRsn": {
+                      "type": "string",
+                      "description": "계약상대자를 결정함에 있어 경쟁입찰방법에 의하지 않고 특정인을 계약상대방으로 선정하여 계약을 체결 시 그 사유내용임[국가계약법 시행령 제26조, 지방계약법 시행령 제25조]"
+                    },
+                    "bidNtceUrl": {
+                      "type": "string",
+                      "description": "해당 입찰공고를 인터넷상에서 확인할 수 있는 URL주소"
+                    },
+                    "cntrctInsttDivNm": {
+                      "type": "string",
+                      "description": "계약기관이 국가기관인지 지자체인지 등을 구분하는 명"
+                    },
+                    "cntrctInsttNm": {
+                      "type": "string",
+                      "description": "계약의 주체가 되는 기관의 명"
+                    },
+                    "cntrctInsttCd": {
+                      "type": "string",
+                      "description": "계약의 주체가 되는 기관의 코드로 행정안전부에서 부여한 기관코드임"
+                    },
+                    "cntrctInsttChrgDeptNm": {
+                      "type": "string",
+                      "description": "계약기관의 담당 부서명"
+                    },
+                    "cntrctInsttOfcl": {
+                      "type": "string",
+                      "description": "계약기관의 담당자 이메일주소"
+                    },
+                    "dmndInsttDivNm": {
+                      "type": "string",
+                      "description": "수요기관이 국가기관인지 지자체인지 등을 구분하는 명"
+                    },
+                    "dmndInsttNm": {
+                      "type": "string",
+                      "description": "중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음"
+                    },
+                    "dmndInsttCd": {
+                      "type": "string",
+                      "description": "실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임"
+                    },
+                    "dmstcCorpYn": {
+                      "type": "string",
+                      "description": "계약 상대업체가 국내업체인지의 여부"
+                    },
+                    "rprsntCorpCeoNm": {
+                      "type": "string",
+                      "description": "대표업체의 대표자 성명"
+                    },
+                    "rprsntCorpOfclNm": {
+                      "type": "string",
+                      "description": "대표업체의 담당자 명"
+                    },
+                    "rprsntCorpBizrno": {
+                      "type": "string",
+                      "description": "대표업체의 사업자등록번호"
+                    },
+                    "rprsntCorpAdrs": {
+                      "type": "string",
+                      "description": "대표업체의 사업장 주소"
+                    },
+                    "rprsntCorpContactTel": {
+                      "type": "string",
+                      "description": "대표업체의 연락 전화번호"
+                    },
+                    "dataBssDate": {
+                      "type": "string",
+                      "description": "데이터 작성 기준일자"
+                    },
+                    "dmndInsttOfclTel": {
+                      "type": "string",
+                      "description": "수요기관의 계약을 담당하는 담당자의 전화번호"
+                    },
+                    "dmndInsttOfclEmailAdrs": {
+                      "type": "string",
+                      "description": "수요기관의 계약을 담당하는 담당자의 이메일주소"
+                    },
+                    "rprsntCorpNm": {
+                      "type": "string",
+                      "description": "계약의 상대 중 대표가 되는 업체의 명"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "https://nopenapi.g2b.go.kr/ao/PubDataOpnStdService/getDataSetOpnStdCntrctInfo",
+      "oprtinNm": "데이터셋 개방표준에 따른 계약정보",
+      "oprtinDc": "검색조건을 계약체결일자로 계약번호, 통합계약번호, 계약차수, 계약명, 업무구분명, 계약체결형태명, 계약체결방법명, 장기계속구분명, 공동계약여부, 계약체결일자, 계약기간, 계약금액 등 나라장터에 등록된 계약정보 조회",
+      "gwSvcNm": "getDataSetOpnStdCntrctInfo",
+      "operationId": "getDataSetOpnStdCntrctInfo",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "serviceKey",
+          "paramtrDc": "공공데이터포털에서 받은 인증키",
+          "paramtrBassValue": "-",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "pageNo",
+          "paramtrDc": "페이지번호",
+          "paramtrBassValue": "1",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "numOfRows",
+          "paramtrDc": "한 페이지 결과 수",
+          "paramtrBassValue": "10",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "type",
+          "paramtrDc": "오픈API 리턴 타입을 JSON으로 받고 싶을 경우 'json' 으로 지정",
+          "paramtrBassValue": "json",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "cntrctCnclsBgnDate",
+          "paramtrDc": "검색하고자하는 계약체결일자 시작 'YYYYMMDD' (계약체결일자 범위는 1개월 로 제한)",
+          "paramtrBassValue": "20171201",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "cntrctCnclsEndDate",
+          "paramtrDc": "검색하고자하는 계약체결일자 종료 'YYYYMMDD' (계약체결일자 범위는 1개월 로 제한)",
+          "paramtrBassValue": "20171231",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/header",
+          "subDefNm": "header",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "resultCode",
+              "paramtrDc": "결과코드",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "resultMsg",
+              "paramtrDc": "결과메세지",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/body",
+          "subDefNm": "body",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "items",
+              "paramtrDc": "items",
+              "arrayYn": "N",
+              "paramtrDefNm": "#/definitions/items",
+              "subDefNm": "items",
+              "paramtrTy": "object",
+              "paramtrDivision": "필수",
+              "ck": true,
+              "subParam": [
+                {
+                  "paramtrNm": "item",
+                  "paramtrDc": "item",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "#/definitions/item",
+                  "subDefNm": "item",
+                  "paramtrTy": "object",
+                  "paramtrDivision": "옵션",
+                  "ck": true,
+                  "subParam": [
+                    {
+                      "paramtrNm": "cntrctInsttOfclTel",
+                      "paramtrDc": "계약기관의 담당자 전화번호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmndInsttOfclNm",
+                      "paramtrDc": "수요기관의 계약을 담당하는 담당부서의 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmndInsttOfclDeptNm",
+                      "paramtrDc": "수요기관의 계약을 담당하는 담당자의 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctInsttOfclNm",
+                      "paramtrDc": "계약기관의 담당자 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctNo",
+                      "paramtrDc": "계약서를 식별하기 위한 관리번호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "untyCntrctNo",
+                      "paramtrDc": "조달청 나라장터g2b.go.kr)에서 조달청에서 발주하는 중앙조달과 자체조달기관에서 발생되는 자체조달 계약의 통합 관리를 위해 채번되는 번호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctOrd",
+                      "paramtrDc": "계약의 변경 시 변경된 차수",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctNm",
+                      "paramtrDc": "공사명 또는 사업명이라고도 하며 계약내용을 요약한 이름",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "bsnsDivNm",
+                      "paramtrDc": "입찰업무를 구분하는 명으로 물품, 용역, 공사, 외자, 비축으로 구분함",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctCnclsSttusNm",
+                      "paramtrDc": "계약체결형태를 구분하는 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctCnclsMthdNm",
+                      "paramtrDc": "계약체결의 방법을 구분하는 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lngtrmCtnuDivNm",
+                      "paramtrDc": "계약이행에 수년을 요하는 계약을 장기계속계약이라 하며 해당 계약이 단기계약인지 장기계속계약 또는 계속비계약인지를 구분하는 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cmmnCntrctYn",
+                      "paramtrDc": "공동계약의 경우 공사/제조 기타의 계약에 있어서 필요하다고 인정할 때 계약 상대자를 2인 이상과 체결하는 계약이며 단독계약은 계약상대자를 1인으로 하는 통상적인 계약을 의미함.",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctCnclsDate",
+                      "paramtrDc": "계약이 성립된 체결일자",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctPrd",
+                      "paramtrDc": "계약의 효력이 있는 기간",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctAmt",
+                      "paramtrDc": "당해연도계약의 경우 계약금액을 의미하며 장기계속계약의 경우 금차계약금액을 의미함(원화,원)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "ttalCntrctAmt",
+                      "paramtrDc": "장기계속계약의 경우에만 발생되며 장기계속계약 전체 계약금액(총부기금액) 을 의미함(원화,원)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctInfoUrl",
+                      "paramtrDc": "계약정보를 인터넷상에서 확인할 수 있는 URL주소",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "bidNtceNo",
+                      "paramtrDc": "입찰공고를 관리하기 위한 번호이며 조달청나라장터 공고건의 형식은 년도(4)+월(2)+순번(5)이며 나라장터 외 (자체)전자조달시스템(이하 이 표에서 “기타 전자조달시스템”이라 함) 보유기관은 각 기관별 형식 별도 사용",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "bidNtceOrd",
+                      "paramtrDc": "입찰공고차수는 해당 입찰공고에 대한 정정(변경)공고 및 재공고 등이 발생되었을 경우 증가되는 수",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "bidNtceNm",
+                      "paramtrDc": "공사명 또는 사업명이라고도 하며 입찰공고 내용을 요약한 이름",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "opengDate",
+                      "paramtrDc": "조달업체가 제출한 입찰서를 개찰하는 일자",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "opengTm",
+                      "paramtrDc": "조달업체가 제출한 입찰서를 개찰하는 시각",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "rsrvtnPrce",
+                      "paramtrDc": "입찰 또는 계약 체결 전에 낙찰자 및 계약금액의 결정기준으로 삼기 위하여 미리 작성/비치하여 두는 가액",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "prvtcntrctRsn",
+                      "paramtrDc": "계약상대자를 결정함에 있어 경쟁입찰방법에 의하지 않고 특정인을 계약상대방으로 선정하여 계약을 체결 시 그 사유내용임[국가계약법 시행령 제26조, 지방계약법 시행령 제25조]",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "bidNtceUrl",
+                      "paramtrDc": "해당 입찰공고를 인터넷상에서 확인할 수 있는 URL주소",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctInsttDivNm",
+                      "paramtrDc": "계약기관이 국가기관인지 지자체인지 등을 구분하는 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctInsttNm",
+                      "paramtrDc": "계약의 주체가 되는 기관의 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctInsttCd",
+                      "paramtrDc": "계약의 주체가 되는 기관의 코드로 행정안전부에서 부여한 기관코드임",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctInsttChrgDeptNm",
+                      "paramtrDc": "계약기관의 담당 부서명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "cntrctInsttOfcl",
+                      "paramtrDc": "계약기관의 담당자 이메일주소",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmndInsttDivNm",
+                      "paramtrDc": "수요기관이 국가기관인지 지자체인지 등을 구분하는 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmndInsttNm",
+                      "paramtrDc": "중앙조달인 경우 조달사업에 관한 법률 제2조(정의)에 따라 수요물자의 구매 공급 또는 시설공사 계약의 체결을 조달청장에게 요청할 수 있도록 조달청장이 인정하여 등록한 기관 또는 기타 전자조달시스템을 이용하는 기관인 경우 계약을 의뢰한 기관의 명으로 공고기관과 수요기관이 동일할 수 있음",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmndInsttCd",
+                      "paramtrDc": "실제 수요기관의 코드로 행정안전부에서 부여한 기관코드임",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmstcCorpYn",
+                      "paramtrDc": "계약 상대업체가 국내업체인지의 여부",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "rprsntCorpCeoNm",
+                      "paramtrDc": "대표업체의 대표자 성명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "rprsntCorpOfclNm",
+                      "paramtrDc": "대표업체의 담당자 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "rprsntCorpBizrno",
+                      "paramtrDc": "대표업체의 사업자등록번호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "rprsntCorpAdrs",
+                      "paramtrDc": "대표업체의 사업장 주소",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "rprsntCorpContactTel",
+                      "paramtrDc": "대표업체의 연락 전화번호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dataBssDate",
+                      "paramtrDc": "데이터 작성 기준일자",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmndInsttOfclTel",
+                      "paramtrDc": "수요기관의 계약을 담당하는 담당자의 전화번호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dmndInsttOfclEmailAdrs",
+                      "paramtrDc": "수요기관의 계약을 담당하는 담당자의 이메일주소",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "rprsntCorpNm",
+                      "paramtrDc": "계약의 상대 중 대표가 되는 업체의 명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "paramtrNm": "totalCount",
+              "paramtrDc": "전체 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "numOfRows",
+              "paramtrDc": "한 페이지 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "pageNo",
+              "paramtrDc": "페이지번호",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

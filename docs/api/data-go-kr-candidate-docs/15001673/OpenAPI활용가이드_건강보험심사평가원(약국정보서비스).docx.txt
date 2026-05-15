@@ -1,0 +1,111 @@
+공공데이터 개방•공유•활용 체계 개발
+OpenAPI 활용가이드
+문서 정보
+개정 이력
+
+1. 서비스 개요    4
+1.1. OpenAPI 서비스 개요    4
+가. 배경 및 필요성    4
+나. OpenAPI 서비스 설명    4
+1.2. 기대효과    4
+2. 서비스 목록    5
+3. 서비스 명세    5
+3.1. 약국정보서비스    5
+가. 서비스 개요    5
+나. 오퍼레이션 목록    6
+서비스 개요
+OpenAPI 서비스 개요
+배경 및 필요성
+공공데이터는 공공영역을 넘어 사적 영역의 다양한 사회적•경제적 가치 창출 활동에 활용될 수 있는 잠재성 내재
+민간 영역의 자원과 융복합을 통한 신규 비즈니스 창출이 용이한 형태의 공공데이터 개방•공유•활용 대한 수요 증대
+OpenAPI 서비스 설명
+건강보험심사평가원에서 제공하고 있는 정보데이터를 공공 및 민간이 활용할 수 있도록 표준화 방식으로 개방한 공유서비스
+
+기대효과
+약국정보서비스의 약국기본목록을 일반 개발자에 공개하여 대국민의 접근성을 높이는 서비스
+서비스 목록
+※ 오퍼레이션 목록은 각각의 서비스 명세에 표기
+서비스 명세
+약국정보서비스
+서비스 개요
+오퍼레이션 목록
+[약국기본목록] 오퍼레이션 명세
+요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0), 1건 이상 복수건(1..n), 0건 또는 복수건(0..n)
+요청 / 응답 메시지 예제
+프로젝트    공공데이터 개방•공유•활용 체계 개발
+내용    Open API 서비스 사용법, 서비스 목록 및 명세
+파일명
+버 전    변경일    변경 사유    변경 내용    작성자
+1.0    2014-11-25    최초작성    최초작성
+1.1    2016-12-20    G/W 버전    기존 서비스 게이트웨이 방식으로 재등록함에 따라 기술문서 현행화
+순번    서비스 ID    서비스명(국문)    서비스명(영문)
+1    SC-OA-08-03    약국정보서비스    PharmacyInfoService
+서비스 정보    서비스 ID    SC-OA-08-03    SC-OA-08-03    SC-OA-08-03    SC-OA-08-03    SC-OA-08-03    SC-OA-08-03
+서비스 정보    서비스명(국문)    약국정보서비스    약국정보서비스    약국정보서비스    약국정보서비스    약국정보서비스    약국정보서비스
+서비스 정보    서비스명(영문)    PharmacyInfoService    PharmacyInfoService    PharmacyInfoService    PharmacyInfoService    PharmacyInfoService    PharmacyInfoService
+서비스 정보    서비스 설명    건강보험심사평가원에서 관리하는 약국 정보 조회(저작권에 위배되지 않는 정보)    건강보험심사평가원에서 관리하는 약국 정보 조회(저작권에 위배되지 않는 정보)    건강보험심사평가원에서 관리하는 약국 정보 조회(저작권에 위배되지 않는 정보)    건강보험심사평가원에서 관리하는 약국 정보 조회(저작권에 위배되지 않는 정보)    건강보험심사평가원에서 관리하는 약국 정보 조회(저작권에 위배되지 않는 정보)    건강보험심사평가원에서 관리하는 약국 정보 조회(저작권에 위배되지 않는 정보)
+서비스 보안    서비스 인증/권한    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [O] 서비스 Key[ ] 인증서 (GPKI) / [] Basic (ID/PW) [ ] 없음    [ ]WS-Security
+서비스 보안    메시지 레벨 암호화    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [  ] 전자서명    [ ] 암호화    [O] 없음    [ ]WS-Security
+서비스 보안    전송 레벨 암호화    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음    [  ] SSL            [ O] 없음
+적용 기술 수준    인터페이스 표준    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타    [  ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [ O ] REST (GET, POST, PUT, DELETE) / [ ] RSS 1.0 [ ] RSS 2.0 [ ] Atom 1.0 [ ] 기타
+적용 기술 수준    교환 데이터 표준    [ O ] XML    [ ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ ] JSON    [ ] MIME    [ ] MTOM    [ O ] XML    [ ] JSON    [ ] MIME    [ ] MTOM
+서비스 URL    개발환경    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/
+서비스 URL    운영환경    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/    http://apis.data.go.kr/B551182/pharmacyInfoService/
+서비스 WADL    개발환경    N/A    N/A    N/A    N/A    N/A    N/A
+서비스 WADL    운영환경    N/A    N/A    N/A    N/A    N/A    N/A
+서비스 배포 정보    서비스 버전    1.0    1.0    1.0    1.0    1.0    1.0
+서비스 배포 정보    유효일자    N/A    N/A    배포 일자    배포 일자    배포 일자    N/A
+서비스 배포 정보    서비스 이력    N/A    N/A    N/A    N/A    N/A    N/A
+메시지 교환 유형    메시지 교환 유형    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification    [O] Request-Response    [ ] Publish-Subscribe / [ ] Fire-and-Forgot        [ ] Notification
+메시지 로깅 수준    메시지 로깅 수준    성공    [O] Header [ ] Body    [O] Header [ ] Body    실패    [O] Header [O} Body    [O] Header [O} Body
+사용 제약 사항 (비고)    사용 제약 사항 (비고)    N/A    N/A    N/A    N/A    N/A    N/A
+일련번호    서비스명(국문)    오퍼레이션명(영문)    오퍼레이션명(국문)    메시지명(영문)
+1    약국정보서비스    getParmacyBasisList    약국기본목록    N/A
+오퍼레이션 정보    오퍼레이션 번호    1    오퍼레이션명(국문)    약국기본목록
+오퍼레이션 정보    오퍼레이션 유형    조회(목록)    오퍼레이션명(영문)    getParmacyBasisList
+오퍼레이션 정보    오퍼레이션 설명    약국 기본정보 제공 (저작권에 위배되지 않는 정보)    약국 기본정보 제공 (저작권에 위배되지 않는 정보)    약국 기본정보 제공 (저작권에 위배되지 않는 정보)
+오퍼레이션 정보    Call Back URL    N/A    N/A    N/A
+오퍼레이션 정보    최대 메시지 사이즈    [ 4000    bytes]    [ 4000    bytes]    [ 4000    bytes]
+오퍼레이션 정보    평균 응답 시간    [ 500    ms]    초당 최대 트랜잭션    [     30    tps]
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+ServiceKey    서비스 인증키    400    1    공공데이터포털에서 받은 인증키    공공데이터포털에서 받은 인증키
+pageNo    페이지 번호    5    0    1    페이지 번호
+numOfRows    한 페이지 결과 수    2    0    10    한 페이지 결과 수
+sidoCd    시도코드    6    0    110000    시도코드
+sgguCd    시군구코드    6    0    110019    시군구코드
+emdongNm    읍면동명    100    0    신내동    읍면동명
+yadmNm    병원명 (UTF-8 인코딩 필요)    100    0    온누리건강    병원명 (UTF-8 인코딩 필요)
+xPos    x좌표    18    0    127.0965441345503    x좌표(소수점 13)
+yPos    y좌표    18    0    37.60765568913871    y좌표(소수점 13)
+radius    반경    10    0    3000    단위 : 미터(m)
+항목명(영문)    항목명(영문)    항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    resultCode    resultCode    결과코드    5    1    00    결과코드
+resultMsg    resultMsg    resultMsg    결과메시지    50    1    NORMAL SERVICE.    결과메시지
+numOfRows    numOfRows    numOfRows    한 페이지 결과 수    2    0    10    한 페이지 결과 수
+pageNo    pageNo    pageNo    페이지 번호    5    0    1    페이지 번호
+totalCount    totalCount    totalCount    총건수    7    0    2    조회데이터의 총건수
+items    items    items    리스트 항목        1        리스트항목
+    item    item    세부 항목        0..n        세부 항목
+        ykiho    암호화된 요양기호    300    1    {생략}    암호화된 요양기호
+        yadmNm    병원명    100    0    온누리건강    병원명
+        clCd    종별코드    2    0    81    종별코드
+        clCdNm    종별 코드명    100    0    약국    종별 코드명
+        sidoCd    시도코드    6    0    110000    시도코드
+        sidoCdNm    시도명    100    0    서울    시도명
+        sgguCd    시군구코드    6    0    110019    시군구코드
+        sgguCdNm    시군구명    100    0    중랑구    시군구명
+        emdongNm    읍면동명    100    0    신내동    읍면동명
+        postNo    우편번호    6    0    131867    우편번호
+        addr    주소    300    0    서울특별시 중랑구 봉화산로 215 (신내동)    주소
+        telno    전화번호    50    0    02-3422-3097    전화번호
+        estbDd    개설일자    8    0    20001222    개설일자
+        xPos    x좌표    18    0    127.0965441345503    x좌표(소수점 13)
+        yPos    y좌표    18    0    37.60765568913871    y좌표(소수점 13)
+        distance    거리    10    0    0    단위 : 미터(m)
+REST(URI)
+http://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList?pageNo=1&numOfRows=10&sidoCd=110000&sgguCd=110019&emdongNm=신내동&yadmNm=온누리&xPos=127.0965441345503&yPos=37.60765568913871&radius=3000&ServiceKey=서비스키(URL Encode) / (단, 익스플로러에서 확인 시 파라미터 입력이 한글인 경우 utf-8로 인코딩 필요)
+응답 메시지
+<response> / <header> / <resultCode>00</resultCode> / <resultMsg>NORMAL SERVICE.</resultMsg> / </header> / <body> / <items> / <item> / <addr>서울특별시 중랑구 신내로 211 212호(신내동, 금강리빙스텔)</addr> / <clCd>81</clCd> / <clCdNm>약국</clCdNm> / <distance>1.02467262468409677098698701927513281315E03</distance> / <emdongNm>신내동</emdongNm> / <estbDd>20140630</estbDd> / <postNo>131872</postNo> / <sgguCd>110019</sgguCd> / <sgguCdNm>중랑구</sgguCdNm> / <sidoCd>110000</sidoCd> / <sidoCdNm>서울</sidoCdNm> / <telno>02-426-4262</telno> / <XPos>127.09266937331608</XPos> / <YPos>37.61634971879214</YPos> / <yadmNm>송이온누리약국</yadmNm> / <ykiho> / JDQ4MTg4MSM1MSMkMSMkNCMkMDMkMzgxOTYxIzIxIyQxIyQ5IyQ4OSQyNjE0ODEjNjEjJDEjJDQjJDgz / </ykiho> / </item> / <item> / <addr>서울특별시 중랑구 봉화산로 215 (신내동)</addr> / <clCd>81</clCd> / <clCdNm>약국</clCdNm> / <distance>0</distance> / <emdongNm>신내동</emdongNm> / <estbDd>20001222</estbDd> / <postNo>131867</postNo> / <sgguCd>110019</sgguCd> / <sgguCdNm>중랑구</sgguCdNm> / <sidoCd>110000</sidoCd> / <sidoCdNm>서울</sidoCdNm> / <telno>02-3422-3097</telno> / <XPos>127.0965441345503</XPos> / <YPos>37.60765568913871</YPos> / <yadmNm>온누리건강약국</yadmNm> / <ykiho> / JDQ4MTg4MSM1MSMkMSMkNCMkMDMkMzgxOTYxIzExIyQxIyQ3IyQ4MiQyNjEyMjIjODEjJDEjJDYjJDgz / </ykiho> / </item> / </items> / <numOfRows>10</numOfRows> / <pageNo>1</pageNo> / <totalCount>2</totalCount> / </body> / </response>

@@ -1,0 +1,800 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "건강보험심사평가원에서 제공하는 요양기관의 평가항목별 병원평가결과를 조회하는 서비스\\n- 평가항목: 급성기뇌졸중, 혈액투석, 의료급여정신과, 관상동맥우회술, 급성상기도감염 항생제 처방률, 주사제 처방률, 약품목수, 요양병원, 고혈압·당뇨병, 천식, 만성폐쇄성폐질환 등\\n- 요양기호는 1:1로 매칭한 암호화된 요양기호로 제공하고 있으며, 별도의 복호화 방법 또는 요양기호는 제공하고 있지 않습니다. \\n   · 암호화된 요양기호는 건강보험심사평가원 '병원정보서비스' Open API > 병원기본목록에서 확인 가능합니다.",
+    "version": "1.0.0",
+    "title": "건강보험심사평가원_병원평가정보서비스"
+  },
+  "host": "apis.data.go.kr/B551182/hospAsmInfoService1",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getHospAsmInfo1": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메시지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지번호",
+                      "properties": {}
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "ykiho": {
+                              "type": "string",
+                              "description": "암호화된 요양기호",
+                              "properties": {}
+                            },
+                            "yadmNm": {
+                              "type": "string",
+                              "description": "요양기관명",
+                              "properties": {}
+                            },
+                            "clCd": {
+                              "type": "string",
+                              "description": "종별코드",
+                              "properties": {}
+                            },
+                            "clCdNm": {
+                              "type": "string",
+                              "description": "종별코드명",
+                              "properties": {}
+                            },
+                            "addr": {
+                              "type": "string",
+                              "description": "주소",
+                              "properties": {}
+                            },
+                            "asmGrd01": {
+                              "type": "string",
+                              "description": "급성기뇌졸중 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd03": {
+                              "type": "string",
+                              "description": "혈액투석 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd04": {
+                              "type": "string",
+                              "description": "의료급여정신과 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd05": {
+                              "type": "string",
+                              "description": "수술부위 감염예방 항생제 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd06": {
+                              "type": "string",
+                              "description": "관상동맥우회술 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd07": {
+                              "type": "string",
+                              "description": "급성상기도감염 항생제 처방률 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd08": {
+                              "type": "string",
+                              "description": "주사제 처방률 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd09": {
+                              "type": "string",
+                              "description": "약품목수 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd10": {
+                              "type": "string",
+                              "description": "요양병원 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd12": {
+                              "type": "string",
+                              "description": "대장암 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd13": {
+                              "type": "string",
+                              "description": "위암 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd14": {
+                              "type": "string",
+                              "description": "유방암 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd15": {
+                              "type": "string",
+                              "description": "폐암 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd16": {
+                              "type": "string",
+                              "description": "천식 병원평가등급(양호한 기관 공개)",
+                              "properties": {}
+                            },
+                            "asmGrd17": {
+                              "type": "string",
+                              "description": "만성폐쇄성폐질환 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd18": {
+                              "type": "string",
+                              "description": "폐렴 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd19": {
+                              "type": "string",
+                              "description": "중환자실 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd20": {
+                              "type": "string",
+                              "description": "신생아중환자실 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd21": {
+                              "type": "string",
+                              "description": "마취 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd22": {
+                              "type": "string",
+                              "description": "정신건강 입원영역 병원평가등급 (1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd23": {
+                              "type": "string",
+                              "description": "급성하기도감염 항생제 처방률 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            },
+                            "asmGrd24": {
+                              "type": "string",
+                              "description": "고혈압·당뇨병 병원평가등급(1~5등급, 등급제외)",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "병원평가상세등급조회",
+        "description": "평가대상 요양기관의 다양한 평가항목에 대한 평가결과 등급을 조회하는 상세등급조회 기능",
+        "operationId": "getHospAsmInfo1",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "ykiho",
+          "description": "암호화된 요양기호(확인방법: 건강보험심사평가원 오픈API[병원정보서비스>병원기본목록(getHospBasisList1)](암호화된요양기호(ykiho)))",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getHospAsmInfo1_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메시지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지번호"
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "전체 결과 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "ykiho": {
+                      "type": "string",
+                      "description": "암호화된 요양기호"
+                    },
+                    "yadmNm": {
+                      "type": "string",
+                      "description": "요양기관명"
+                    },
+                    "clCd": {
+                      "type": "string",
+                      "description": "종별코드"
+                    },
+                    "clCdNm": {
+                      "type": "string",
+                      "description": "종별코드명"
+                    },
+                    "addr": {
+                      "type": "string",
+                      "description": "주소"
+                    },
+                    "asmGrd01": {
+                      "type": "string",
+                      "description": "급성기뇌졸중 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd03": {
+                      "type": "string",
+                      "description": "혈액투석 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd04": {
+                      "type": "string",
+                      "description": "의료급여정신과 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd05": {
+                      "type": "string",
+                      "description": "수술부위 감염예방 항생제 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd06": {
+                      "type": "string",
+                      "description": "관상동맥우회술 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd07": {
+                      "type": "string",
+                      "description": "급성상기도감염 항생제 처방률 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd08": {
+                      "type": "string",
+                      "description": "주사제 처방률 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd09": {
+                      "type": "string",
+                      "description": "약품목수 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd10": {
+                      "type": "string",
+                      "description": "요양병원 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd12": {
+                      "type": "string",
+                      "description": "대장암 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd13": {
+                      "type": "string",
+                      "description": "위암 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd14": {
+                      "type": "string",
+                      "description": "유방암 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd15": {
+                      "type": "string",
+                      "description": "폐암 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd16": {
+                      "type": "string",
+                      "description": "천식 병원평가등급(양호한 기관 공개)"
+                    },
+                    "asmGrd17": {
+                      "type": "string",
+                      "description": "만성폐쇄성폐질환 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd18": {
+                      "type": "string",
+                      "description": "폐렴 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd19": {
+                      "type": "string",
+                      "description": "중환자실 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd20": {
+                      "type": "string",
+                      "description": "신생아중환자실 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd21": {
+                      "type": "string",
+                      "description": "마취 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd22": {
+                      "type": "string",
+                      "description": "정신건강 입원영역 병원평가등급 (1~5등급, 등급제외)"
+                    },
+                    "asmGrd23": {
+                      "type": "string",
+                      "description": "급성하기도감염 항생제 처방률 병원평가등급(1~5등급, 등급제외)"
+                    },
+                    "asmGrd24": {
+                      "type": "string",
+                      "description": "고혈압·당뇨병 병원평가등급(1~5등급, 등급제외)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "http://hiraapi.hira.or.kr/openapi/service/hospAsmInfoService1/getHospAsmInfo1",
+      "oprtinNm": "병원평가상세등급조회",
+      "oprtinDc": "평가대상 요양기관의 다양한 평가항목에 대한 평가결과 등급을 조회하는 상세등급조회 기능",
+      "gwSvcNm": "getHospAsmInfo1",
+      "operationId": "getHospAsmInfo1",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "serviceKey",
+          "paramtrDc": "공공데이터포털에서 받은 인증키",
+          "paramtrBassValue": "-",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "pageNo",
+          "paramtrDc": "페이지번호",
+          "paramtrBassValue": "1",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "numOfRows",
+          "paramtrDc": "한 페이지 결과 수",
+          "paramtrBassValue": "10",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "ykiho",
+          "paramtrDc": "암호화된 요양기호(확인방법: 건강보험심사평가원 오픈API[병원정보서비스>병원기본목록(getHospBasisList1)](암호화된요양기호(ykiho)))",
+          "paramtrBassValue": "JDQ4MTg4MSM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ4OSQyNjE4MzIjNTEjJDEjJDYjJDgz",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/header",
+          "subDefNm": "header",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "resultMsg",
+              "paramtrDc": "결과메시지",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "resultCode",
+              "paramtrDc": "결과코드",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/body",
+          "subDefNm": "body",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "numOfRows",
+              "paramtrDc": "한 페이지 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "pageNo",
+              "paramtrDc": "페이지번호",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "totalCount",
+              "paramtrDc": "전체 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "items",
+              "paramtrDc": "items",
+              "arrayYn": "N",
+              "paramtrDefNm": "#/definitions/items",
+              "subDefNm": "items",
+              "paramtrTy": "object",
+              "paramtrDivision": "필수",
+              "ck": true,
+              "subParam": [
+                {
+                  "paramtrNm": "item",
+                  "paramtrDc": "item",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "#/definitions/item",
+                  "subDefNm": "item",
+                  "paramtrTy": "object",
+                  "paramtrDivision": "필수",
+                  "ck": true,
+                  "subParam": [
+                    {
+                      "paramtrNm": "ykiho",
+                      "paramtrDc": "암호화된 요양기호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "yadmNm",
+                      "paramtrDc": "요양기관명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "clCd",
+                      "paramtrDc": "종별코드",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "clCdNm",
+                      "paramtrDc": "종별코드명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "addr",
+                      "paramtrDc": "주소",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd01",
+                      "paramtrDc": "급성기뇌졸중 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd03",
+                      "paramtrDc": "혈액투석 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd04",
+                      "paramtrDc": "의료급여정신과 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd05",
+                      "paramtrDc": "수술부위 감염예방 항생제 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd06",
+                      "paramtrDc": "관상동맥우회술 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd07",
+                      "paramtrDc": "급성상기도감염 항생제 처방률 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd08",
+                      "paramtrDc": "주사제 처방률 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd09",
+                      "paramtrDc": "약품목수 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd10",
+                      "paramtrDc": "요양병원 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd12",
+                      "paramtrDc": "대장암 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd13",
+                      "paramtrDc": "위암 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd14",
+                      "paramtrDc": "유방암 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd15",
+                      "paramtrDc": "폐암 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd16",
+                      "paramtrDc": "천식 병원평가등급(양호한 기관 공개)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd17",
+                      "paramtrDc": "만성폐쇄성폐질환 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd18",
+                      "paramtrDc": "폐렴 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd19",
+                      "paramtrDc": "중환자실 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd20",
+                      "paramtrDc": "신생아중환자실 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd21",
+                      "paramtrDc": "마취 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd22",
+                      "paramtrDc": "정신건강 입원영역 병원평가등급 (1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd23",
+                      "paramtrDc": "급성하기도감염 항생제 처방률 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "asmGrd24",
+                      "paramtrDc": "고혈압·당뇨병 병원평가등급(1~5등급, 등급제외)",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

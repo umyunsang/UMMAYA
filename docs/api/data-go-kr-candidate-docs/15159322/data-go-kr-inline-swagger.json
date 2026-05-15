@@ -1,0 +1,281 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "- 전국 지하역사의 실내공기질 실시간 초미세먼지 정보 개방하고 있습니다.\\n- 2021년 4월 1일부터 지하역사의 초미세먼지 농도를 측정하고 공개하도록 법이 시행되면서 시민들이 평소에 이용하는 지하역사의 초미세먼지 농도를 실시간으로 확인할 수 있는 정보를 제공하고 있습니다.\\n- 지하역사 운영기관에도 실내공기질 관리에 실시간 측정결과 활용이 가능합니다.\\n- 해당 자료는 각 철도운영기관에서 생산하여 확정한 자료이며, 데이터 검증을 위한 확정 과정에서 약 1시간의 시간차가 있습니다.",
+    "version": "1.0.0",
+    "title": "한국환경공단_지하역사 실내공기질 자동측정망 실시간 측정데이터 초미세먼지 정보"
+  },
+  "host": "apis.data.go.kr/B552584/udgdScnAutoMntnwRltmUlfdInfoService",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getUlfdInfo": {
+      "get": {
+        "responses": {
+          "91": {
+            "description": "잘못된 파라미터 요청 - 파라미터 vaildation 체크 시 길이, 포멧 등"
+          },
+          "93": {
+            "description": "필수 파라미터값 비어있는 오류"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "응답코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "응답메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "array",
+                          "description": "oper-1-item 항목태그",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "msinSttsIndctSeNm": {
+                                "type": "string",
+                                "description": "측정기상태표시구분명",
+                                "properties": {}
+                              },
+                              "msrmtDt": {
+                                "type": "string",
+                                "description": "측정일시",
+                                "properties": {}
+                              },
+                              "slineNm": {
+                                "type": "string",
+                                "description": "호선명",
+                                "properties": {}
+                              },
+                              "pstnNm": {
+                                "type": "string",
+                                "description": "위치명",
+                                "properties": {}
+                              },
+                              "brnchNm": {
+                                "type": "string",
+                                "description": "지점명",
+                                "properties": {}
+                              },
+                              "operInstNm": {
+                                "type": "string",
+                                "description": "운영기관명",
+                                "properties": {}
+                              },
+                              "artclNm": {
+                                "type": "string",
+                                "description": "항목명",
+                                "properties": {}
+                              },
+                              "msrmtVlNumv": {
+                                "type": "number",
+                                "description": "측정값수치",
+                                "properties": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "number",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "number",
+                      "description": "페이지수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "number",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "지하역사 실내공기질 측정데이터 초미세먼지 정보",
+        "description": "지하역사 실내공기질 측정데이터 초미세먼지 정보",
+        "operationId": "getUlfdInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "slineNm",
+          "description": "호선명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "msrmtDt",
+          "description": "측정일시",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "pstnNm",
+          "description": "위치명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "returnType",
+          "description": "데이터 타입",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getUlfdInfo_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "응답코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "응답메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "array",
+                  "description": "oper-1-item 항목태그",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "msinSttsIndctSeNm": {
+                        "type": "string",
+                        "description": "측정기상태표시구분명"
+                      },
+                      "msrmtDt": {
+                        "type": "string",
+                        "description": "측정일시"
+                      },
+                      "slineNm": {
+                        "type": "string",
+                        "description": "호선명"
+                      },
+                      "pstnNm": {
+                        "type": "string",
+                        "description": "위치명"
+                      },
+                      "brnchNm": {
+                        "type": "string",
+                        "description": "지점명"
+                      },
+                      "operInstNm": {
+                        "type": "string",
+                        "description": "운영기관명"
+                      },
+                      "artclNm": {
+                        "type": "string",
+                        "description": "항목명"
+                      },
+                      "msrmtVlNumv": {
+                        "type": "number",
+                        "description": "측정값수치"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "number",
+              "description": "데이터 총 개수"
+            },
+            "pageNo": {
+              "type": "number",
+              "description": "페이지수"
+            },
+            "numOfRows": {
+              "type": "number",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    }
+  }
+}

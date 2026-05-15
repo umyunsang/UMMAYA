@@ -1,0 +1,90 @@
+과학기술정보통신부 공공데이터 사업공고
+오픈API 활용가이드
+개정 이력
+1. 서비스 명세    4
+1.1 과학기술정보통신부 사업공고    4
+가. API 서비스 개요    4
+나. 상세기능 목록    5
+다. 상세기능내역    5
+1) ) [과학기술정보통신부 사업공고 현황] 상세기능명세    5
+2. OpenAPI 에러 코드정리    13
+1. 서비스 명세
+1.1 과학기술정보통신부 사업공고
+가. API 서비스 개요
+나. 상세기능 목록
+다. 상세기능내역
+1) [과학기술정보통신부 사업공고 현황] 상세기능명세
+a) 상세기능정보
+b) 요청 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+c) 응답 메시지 명세
+※ 항목구분 : 필수(1), 옵션(0)
+d) 요청/응답 메시지 예제
+2. OpenAPI 에러 코드정리
+버전    변경일    변경 사유    변경 내용    작성자    승인
+1.0    2020-12-09    최초작성    최초작성    조성용
+API 서비스 정보    API명(영문)    msitannouncementinfo    msitannouncementinfo    msitannouncementinfo
+API 서비스 정보    API명(국문)    과학기술정보통신부 사업공고    과학기술정보통신부 사업공고    과학기술정보통신부 사업공고
+API 서비스 정보    API 설명    과학기술정보통신부 사업공고의 제목, 작성자, 첨부파일 등을 조회하는 과학기술정보통신부 사업공고 목록 조회 서비스    과학기술정보통신부 사업공고의 제목, 작성자, 첨부파일 등을 조회하는 과학기술정보통신부 사업공고 목록 조회 서비스    과학기술정보통신부 사업공고의 제목, 작성자, 첨부파일 등을 조회하는 과학기술정보통신부 사업공고 목록 조회 서비스
+API 서비스 / 보안적용 / 기술 수준    서비스 인증/권한    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음    [O] serviceKey    [ ] 인증서 (GPKI/NPKI) / [ ] Basic (ID/PW)  [ ] 없음
+API 서비스 / 보안적용 / 기술 수준    메시지 레벨 / 암호화    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음    [ ] 전자서명   [ ] 암호화   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    전송 레벨 암호화    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음    [ ] SSL   [O] 없음
+API 서비스 / 보안적용 / 기술 수준    인터페이스 표준    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타    [ ] SOAP 1.2 / (RPC-Encoded, Document Literal, Document Literal Wrapped) / [O] REST (GET) / [ ] RSS 1.0   [ ] RSS 2.0   [ ] Atom 1.0   [ ] 기타
+API 서비스 / 보안적용 / 기술 수준    교환 데이터 표준 / (중복선택가능)    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM    [O] XML   [O] JSON   [ ] MIME   [ ] MTOM
+API 서비스 / 배포정보    서비스 URL    http://apis.data.go.kr/1721000/msitannouncementinfo    http://apis.data.go.kr/1721000/msitannouncementinfo    http://apis.data.go.kr/1721000/msitannouncementinfo
+API 서비스 / 배포정보    서비스 명세 URL / (WSDL 또는 WADL)    http://apis.data.go.kr/1721000/msitannouncementinfo?_wadl&type=xml    http://apis.data.go.kr/1721000/msitannouncementinfo?_wadl&type=xml    http://apis.data.go.kr/1721000/msitannouncementinfo?_wadl&type=xml
+API 서비스 / 배포정보    서비스 버전    1.0    1.0    1.0
+API 서비스 / 배포정보    서비스 시작일    2020-12-21    서비스 배포일    2020-12-21
+API 서비스 / 배포정보    서비스 이력    2020-12-21 : 서비스 시작    2020-12-21 : 서비스 시작    2020-12-21 : 서비스 시작
+API 서비스 / 배포정보    메시지 교환유형    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification    [O] Request-Response   [ ] Publish-Subscribe / [ ] Fire-and-Forgot   [ ] Notification
+API 서비스 / 배포정보    서비스 제공자    정보화담당관 / 044-202-4476    정보화담당관 / 044-202-4476    정보화담당관 / 044-202-4476
+API 서비스 / 배포정보    데이터 갱신주기    일 1회    일 1회    일 1회
+번호    API명(국문)    상세기능명(영문)    상세기능명(국문)
+1    과학기술정보통신부 사업공고    businessAnnouncMentList    과학기술정보통신부 사업공고 현황
+상세기능 번호    1    상세기능 유형    조회
+상세기능명(국문)    과학기술정보통신부 사업공고 현황    과학기술정보통신부 사업공고 현황    과학기술정보통신부 사업공고 현황
+상세기능 설명    과학기술정보통신부 사업공고의 제목, 작성자, 첨부파일 등을 조회하는 과학기술정보통신부 사업공고 목록 조회 서비스    과학기술정보통신부 사업공고의 제목, 작성자, 첨부파일 등을 조회하는 과학기술정보통신부 사업공고 목록 조회 서비스    과학기술정보통신부 사업공고의 제목, 작성자, 첨부파일 등을 조회하는 과학기술정보통신부 사업공고 목록 조회 서비스
+Call Back URL    http://apis.data.go.kr/1721000/msitannouncementinfo/businessAnnouncMentList    http://apis.data.go.kr/1721000/msitannouncementinfo/businessAnnouncMentList    http://apis.data.go.kr/1721000/msitannouncementinfo/businessAnnouncMentList
+최대 메시지 사이즈    [4000] byte    [4000] byte    [4000] byte
+평균 응답 시간    [500] ms    초당 최대 트랙잭션    [30] tps
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+serviceKey    인증키    100    1    인증키 / (URL Encode)    공공데이터포털에서 발급받은 인증키
+numOfRows    한 페이지 결과 수    2    1    10    한 페이지 결과 수(고정)
+pageNo    페이지 번호    5    1    1    페이지 번호
+returnType    응답 데이터 포맷    4    0    xml    XML 방식으로 호출 시 파라미터 returnType=xml 입력 (미입력시 기본 xml) / JSON방식으로 호출 시 파라미터 returnType=json 입력
+항목명(영문)    항목명(국문)    항목크기    항목구분    샘플데이터    항목설명
+resultCode    결과코드    2    1    00    결과코드
+resultMsg    결과메세지    50    1    NORMAL_CODE    결과메시지
+numOfRows    한 페이지 결과 수    2    1    10    한 페이지당 표출 데이터 수(고정)
+pageNo    페이지 수    10    1    1    페이지 수
+totalCount    데이터 총 개수    10    1    9742    데이터 총 개수
+subject    게시물 제목    500    1    『2021년도 공공연구성과 활용 촉진 R&D (중개연구플랫폼 구축)』사업 시행 공고    게시물 제목
+viewUrl    상세url    500    1    https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176928    게시물 상세페이지 이동 url
+deptName    담당부서명    200    0    연구성과일자리정책과    게시물 담당 부서명
+managerName    담당자    200    0    최승호    게시물 담당자
+managerTel    담당자 연락처    200    0    044-202-4723    게시물 담당자 연락처
+pressDt    게시일    10    1    2020-12-10    게시물 게시일
+fileName    첨부파일명    500    0    2021년도 공공연구성과활용촉진 R&D(중개연구플랫폼) 사업 공고문.hwp    게시물 첨부파일 원본파일명
+fileUrl    첨부파일 다운로드 url    500    0    https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31617&fileOrd=1    게시물 첨부파일 다운로드 url
+요청메시지
+http://apis.data.go.kr/1721000/msitannouncementinfo/businessAnnouncMentList?serviceKey=인증키&numOfRows=10&pageNo=1&returnType=xml
+응답메시지
+<response> / <header> / <resultCode>00</resultCode> / <resultMsg>NORMAL_CODE</resultMsg> / </header> / <body> / <items> / <item> / <subject>『2021년도 공공연구성과 활용 촉진 R&D (중개연구플랫폼 구축)』사업 시행 공고</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176928 / </viewUrl> / <deptName>연구성과일자리정책과</deptName> / <managerName>최승호</managerName> / <managerTel>044-202-4723</managerTel> / <pressDt>2020-12-10</pressDt> / <files> / <file> / <fileName>2021년도 공공연구성과활용촉진 R&D(중개연구플랫폼) 사업 공고문.hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31617&fileOrd=1 / </fileUrl> / </file> / <file> / <fileName>2021년도 공공연구성과활용촉진 R&D(중개연구플랫폼) 사업 공고 서식.zip</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31617&fileOrd=2 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>2021년도 한-인도 국제공동기술개발사업 공고</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176927 / </viewUrl> / <deptName>미주아시아협력담당관</deptName> / <managerName>이혜인</managerName> / <managerTel>044-202-4345</managerTel> / <pressDt>2020-12-09</pressDt> / <files> / <file> / <fileName>(공고문) 2021년도 한-인도 국제공동기술개발사업 공고.hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31608&fileOrd=1 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>2021년도 전문연구정보활용사업 신규과제 공고</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176926 / </viewUrl> / <deptName>기초연구진흥과</deptName> / <managerName>남기욱</managerName> / <managerTel>044-202-4566</managerTel> / <pressDt>2020-12-07</pressDt> / <files> / <file> / <fileName>2021년도 전문연구정보활용사업 신규과제 공고문(게시).hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31596&fileOrd=1 / </fileUrl> / </file> / <file> / <fileName>2021년도 전문연구정보활용사업 신규과제 계획서(신청서).hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31596&fileOrd=2 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>2021년도 차세대지능형반도체기술개발사업(소자) 신개념소자기초 신규과제 공고</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176925 / </viewUrl> / <deptName>원천기술과</deptName> / <managerName>최준영</managerName> / <managerTel>044-202-4549</managerTel> / <pressDt>2020-12-04</pressDt> / <files> / <file> / <fileName>2021년도 차세대지능형반도체기술개발사업(소자) 신개념소자기초 신규과제 공고문.hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31573&fileOrd=1 / </fileUrl> / </file> / <file> / <fileName>별첨.zip</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31573&fileOrd=2 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>2021년도 지역공립과학관 역량강화(전시개선 지원) 사업 공고</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176924 / </viewUrl> / <deptName>과학기술문화과</deptName> / <managerName>박문식</managerName> / <managerTel>044-202-4846</managerTel> / <pressDt>2020-12-03</pressDt> / <files> / <file> / <fileName>2021년도 지역공립과학관 역량강화(전시개선지원)사업 공고문(201203).hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31565&fileOrd=1 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>2020년 하반기 한-EU 공동연구지원사업 신규과제 선정결과 공고</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176923 / </viewUrl> / <deptName>구주아프리카협력담당관</deptName> / <managerName>이세원</managerName> / <managerTel>044-202-4354</managerTel> / <pressDt>2020-12-03</pressDt> / <files> / <file> / <fileName>2020년 하반기 한-EU 공동연구지원사업 선정결과 공고문.hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31562&fileOrd=1 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>2021년도 네트워크산업육성기반조성 사업 수행기관 공모</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176922 / </viewUrl> / <deptName>네트워크정책과</deptName> / <managerName>권화연</managerName> / <managerTel>044-202-6427</managerTel> / <pressDt>2020-12-03</pressDt> / <files> / <file> / <fileName>2.네트워크산업육성기반조성_보조사업신청 제안요청서.hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31557&fileOrd=2 / </fileUrl> / </file> / <file> / <fileName>1.네트워크산업육성기반조성_사업공고문.hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31557&fileOrd=3 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>『스페이스 파이오니어사업』 사업단장 공모</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176921 / </viewUrl> / <deptName>거대공공연구정책과</deptName> / <managerName>석지윤</managerName> / <managerTel>044-202-4633</managerTel> / <pressDt>2020-12-01</pressDt> / <files> / <file> / <fileName>스페이스 파이오니어사업 사업단장 선정 공고문.hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31549&fileOrd=1 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>「사용후핵연료관리 핵심기술개발 사업단」 사업단장 공모</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176920 / </viewUrl> / <deptName>원자력연구개발과</deptName> / <managerName>전진수</managerName> / <managerTel>044-202-4654</managerTel> / <pressDt>2020-12-01</pressDt> / <files> / <file> / <fileName>사용후핵연료관리 핵심기술개발 사업단 사업단장 공고문(안).hwp</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31535&fileOrd=1 / </fileUrl> / </file> / </files> / </item> / <item> / <subject>2020 한-벨라루스 협력기반조성사업 신규과제 선정결과 공고</subject> / <viewUrl> / https://www.msit.go.kr/bbs/view.do?sCode=user&mId=129&mPid=128&bbsSeqNo=100&nttSeqNo=3176919 / </viewUrl> / <deptName>구주아프리카협력담당관</deptName> / <managerName>이윤소</managerName> / <managerTel>044-202-4355</managerTel> / <pressDt>2020-11-26</pressDt> / <files> / <file> / <fileName>2020년 한-벨라루스 협력기반조성사업 선정과제 공고문.pdf</fileName> / <fileUrl> / https://www.msit.go.kr/ssm/file/fileDown.do?atchFileNo=31497&fileOrd=1 / </fileUrl> / </file> / </files> / </item> / <numOfRows>10</numOfRows> / <pageNo>1</pageNo> / <totalCount>9742</totalCount> / </items> / </body> / </response>
+에러코드    에러메시지    설명
+00    NORMAL_CODE    정상
+01    APPLICATION_ERROR    어플리케이션 에러
+02    DB_ERROR    데이터베이스 에러
+03    NODATA_ERROR    데이터없음 에러
+04    HTTP_ERROR    HTTP 에러
+05    SERVICETIMEOUT_ERROR    서비스 연결실패 에러
+10    INVALID_REQUEST_PARAMETER_ERROR    잘못된 요청 파라메터 에러
+11    NO_MANDATORY_REQUEST_PARAMETERS_ERROR    필수요청 파라메터가 없음
+12    NO_OPENAPI_SERVICE_ERROR    해당 오픈 API 서비스가 없거나 폐기됨
+20    SERVICE_ACCESS_DENIED_ERROR    서비스 접근거부
+21    TEMPORARILY_DISABLE_THE_SERVICEKEY_ERROR    일시적으로 사용할 수 없는 서비스 키
+22    LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR    서비스 요청제한횟수 초과에러
+30    SERVICE_KEY_IS_NOT_REGISTERED_ERROR    등록되지 않은 서비스키
+31    DEADLINE_HAS_EXPIRED_ERROR    기한만료된 서비스키
+32    UNREGISTERED_IP_ERROR    등록되지 않은 IP
+33    UNSIGNED_CALL_ERROR    서명되지 않은 호출
+99    UNKNOWN_ERROR    기타에러

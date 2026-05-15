@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+RequestMsgID: null
+Content-Type: application/xml;charset=UTF-8
+ReturnCode: 10
+ResponseTime: 20260516:005142925
+ResponseMsgID:
+SuccessYN: N
+Date: Fri, 15 May 2026 15:51:42 GMT
+ErrMsg: INVALID REQUEST PARAMETER ERROR.
+Transfer-Encoding: chunked

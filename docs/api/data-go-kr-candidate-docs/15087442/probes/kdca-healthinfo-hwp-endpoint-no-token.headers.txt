@@ -1,0 +1,6 @@
+HTTP/1.1 201 201
+Date: Fri, 15 May 2026 15:11:12 GMT
+Content-Length: 3698
+Content-Type: application/xml
+Connection: Keep-alive
+Via: 1.1 ID-1716635721754044 uproxy-8

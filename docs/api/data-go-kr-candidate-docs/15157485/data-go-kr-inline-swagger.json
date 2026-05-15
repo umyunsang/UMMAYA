@@ -1,0 +1,1455 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "본 데이터는 부산시설공단이 운영하는 장사시설의 이용요금 및 장례비 산출 기준 정보를 Open API 형태로 제공합니다. 이를 통해 영락공원 장례시 발생하는 비용에 관한 데이터를 실시간으로 조회할 수 있습니다. 장례식장, 화장시설 등 공공 장사시설의 장례용풍명, 장례용품 상세, 장례용품 가격 등의 정보를 포함하고 있으며, 시민이 장례 절차에 필요한 예상 비용을 합리적으로 확인할 수 있도록 지원합니다. 이를 통해 장례비 정보의 투명성을 확보하고 시민의 경제적 부담을 완화하며, 공공기관 운영 정보의 개방 및 신뢰도 향상에 기여합니다.",
+    "version": "1.0.0",
+    "title": "부산시설공단_장례비산출 정보 조회 서비스"
+  },
+  "host": "apis.data.go.kr/B552587/FuneralCostsService_v2",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getFCAreaList_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "faPrice_3": {
+                              "type": "string",
+                              "description": "염습실 (1일기준)금액",
+                              "properties": {}
+                            },
+                            "idx": {
+                              "type": "string",
+                              "description": "시설 코드",
+                              "properties": {}
+                            },
+                            "faName": {
+                              "type": "string",
+                              "description": "시설명",
+                              "properties": {}
+                            },
+                            "faNameSub": {
+                              "type": "string",
+                              "description": "시설하위문구",
+                              "properties": {}
+                            },
+                            "faPriceDetail": {
+                              "type": "string",
+                              "description": "금액 상세",
+                              "properties": {}
+                            },
+                            "faPrice_1": {
+                              "type": "string",
+                              "description": "빈소-접객실 (1일기준)금액",
+                              "properties": {}
+                            },
+                            "faPrice_2": {
+                              "type": "string",
+                              "description": "안치실 (1일기준)금액",
+                              "properties": {}
+                            },
+                            "faPrice": {
+                              "type": "string",
+                              "description": "금액",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "장례식장 시설 사용료 목록 조회",
+        "description": "장법구분 값 기준으로 시설 사용료 가격 조회 기능",
+        "operationId": "getFCAreaList_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getFCGoods_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "fgUrl": {
+                              "type": "string",
+                              "description": "상세보기 팝업 url",
+                              "properties": {}
+                            },
+                            "idx": {
+                              "type": "string",
+                              "description": "장례용품 코드",
+                              "properties": {}
+                            },
+                            "fgDetail": {
+                              "type": "string",
+                              "description": "장례용품 상세",
+                              "properties": {}
+                            },
+                            "fgName": {
+                              "type": "string",
+                              "description": "장례용품명",
+                              "properties": {}
+                            },
+                            "fgPrice": {
+                              "type": "string",
+                              "description": "장례용품 가격",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "장례용품 조회",
+        "description": "장법구분 값 기준으로 장례용품의 가격, 상세정보, 팝업URL 정보를 조회하는 기능",
+        "operationId": "getFCGoods_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "fc_gubun",
+          "description": "장법구분 (1:영락공원위임 매장, 2:영락공원위임 화장, 3:외부업체이용 화장, 4:외부업체이용 매장)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getFCItem_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "biUrl": {
+                              "type": "string",
+                              "description": "상세보기 url",
+                              "properties": {}
+                            },
+                            "idx": {
+                              "type": "string",
+                              "description": "기본품목 코드",
+                              "properties": {}
+                            },
+                            "biCnt": {
+                              "type": "string",
+                              "description": "품목갯수",
+                              "properties": {}
+                            },
+                            "biName": {
+                              "type": "string",
+                              "description": "기본품목명",
+                              "properties": {}
+                            },
+                            "biPrice": {
+                              "type": "string",
+                              "description": "기본품목 가격",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "빈소, 입관 기본품목 가격 조회",
+        "description": "장법구분 값 기준으로 빈소, 입관 기본품목 가격 조회 기능",
+        "operationId": "getFCItem_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "fc_gubun",
+          "description": "장법구분 (1:영락공원위임 매장, 2:영락공원위임 화장, 3:외부업체이용 화장, 4:외부업체이용 매장)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getFCOffering_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "ogName": {
+                              "type": "string",
+                              "description": "제물명",
+                              "properties": {}
+                            },
+                            "ogPrice": {
+                              "type": "string",
+                              "description": "제물 가격",
+                              "properties": {}
+                            },
+                            "idx": {
+                              "type": "string",
+                              "description": "제물 코드",
+                              "properties": {}
+                            },
+                            "ogDetail": {
+                              "type": "string",
+                              "description": "제물 상세",
+                              "properties": {}
+                            },
+                            "ogImg": {
+                              "type": "string",
+                              "description": "사진 url",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "제물 목록 조회",
+        "description": "장법구분 값 기준으로 제물 목록 및 가격 조회 기능",
+        "operationId": "getFCOffering_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "fc_gubun",
+          "description": "장법구분 (1:영락공원위임 매장, 2:영락공원위임 화장, 3:외부업체이용 화장, 4:외부업체이용 매장)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getFCGPrice_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "gpPrice": {
+                              "type": "string",
+                              "description": "금액",
+                              "properties": {}
+                            },
+                            "idx": {
+                              "type": "string",
+                              "description": "접객비용 코드",
+                              "properties": {}
+                            },
+                            "gpName": {
+                              "type": "string",
+                              "description": "접객수",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "접객비용 목록 조회",
+        "description": "장법구분 값 기준으로 접객비용 조회 기능",
+        "operationId": "getFCGPrice_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "fc_gubun",
+          "description": "장법구분 (1:영락공원위임 매장, 2:영락공원위임 화장, 3:외부업체이용 화장, 4:외부업체이용 매장)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    },
+    "/getFCTotal_v2": {
+      "get": {
+        "responses": {
+          "10": {
+            "description": "INVALID_REQUEST_PARAMETER_ERROR(잘못된 요청 파라메터 에러)"
+          },
+          "11": {
+            "description": "NO_MANDATORY_REQUEST_PARAMETERS_ERROR(필수요청 파라메터가 없음)"
+          },
+          "33": {
+            "description": "UNSIGNED_CALL_ERROR(서명되지 않은 호출)"
+          },
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 수",
+                      "properties": {}
+                    },
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "gubun2": {
+                              "type": "string",
+                              "description": "구분2",
+                              "properties": {}
+                            },
+                            "remark": {
+                              "type": "string",
+                              "description": "비고",
+                              "properties": {}
+                            },
+                            "cost": {
+                              "type": "string",
+                              "description": "금액",
+                              "properties": {}
+                            },
+                            "detail": {
+                              "type": "string",
+                              "description": "세부사항",
+                              "properties": {}
+                            },
+                            "gubun1": {
+                              "type": "string",
+                              "description": "구분1",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "string",
+                      "description": "데이터 총 개수",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "00": {
+            "description": "NORMAL_CODE(정상)"
+          },
+          "02": {
+            "description": "DB_ERROR(데이터베이스 에러)"
+          },
+          "03": {
+            "description": "NODATA_ERROR(데이터없음 에러)"
+          },
+          "05": {
+            "description": "SERVICETIMEOUT_ERROR(서비스 연결실패 에러)"
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "장례비용 산출 결과 조회",
+        "description": "장법구분, 장례용품코드, 사인구분, 상복 수(남,여), 접객코드, 제물코드, 시설코드 기준으로 장례에 필요한 명세 및 비용 조회 기능",
+        "operationId": "getFCTotal_v2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "공공데이터포털에서 받은 인증키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "fc_gubun",
+          "description": "장법구분 (1:영락공원위임 매장, 2:영락공원위임 화장, 3:외부업체이용 화장, 4:외부업체이용 매장)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "goods",
+          "description": "장례용품 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "d_gubun",
+          "description": "사인 구분 (1:병사, 2:외인사)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "mourning_m",
+          "description": "상복 수(남자)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "mourning_w",
+          "description": "상복 수(여자)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "guest",
+          "description": "접객 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "offering",
+          "description": "제물 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "area",
+          "description": "시설 코드",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답 포맷: json 또는 xml (기본값: xml)",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getFCAreaList_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "faPrice_3": {
+                      "type": "string",
+                      "description": "염습실 (1일기준)금액"
+                    },
+                    "idx": {
+                      "type": "string",
+                      "description": "시설 코드"
+                    },
+                    "faName": {
+                      "type": "string",
+                      "description": "시설명"
+                    },
+                    "faNameSub": {
+                      "type": "string",
+                      "description": "시설하위문구"
+                    },
+                    "faPriceDetail": {
+                      "type": "string",
+                      "description": "금액 상세"
+                    },
+                    "faPrice_1": {
+                      "type": "string",
+                      "description": "빈소-접객실 (1일기준)금액"
+                    },
+                    "faPrice_2": {
+                      "type": "string",
+                      "description": "안치실 (1일기준)금액"
+                    },
+                    "faPrice": {
+                      "type": "string",
+                      "description": "금액"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    },
+    "getFCGoods_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "fgUrl": {
+                      "type": "string",
+                      "description": "상세보기 팝업 url"
+                    },
+                    "idx": {
+                      "type": "string",
+                      "description": "장례용품 코드"
+                    },
+                    "fgDetail": {
+                      "type": "string",
+                      "description": "장례용품 상세"
+                    },
+                    "fgName": {
+                      "type": "string",
+                      "description": "장례용품명"
+                    },
+                    "fgPrice": {
+                      "type": "string",
+                      "description": "장례용품 가격"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    },
+    "getFCItem_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "biUrl": {
+                      "type": "string",
+                      "description": "상세보기 url"
+                    },
+                    "idx": {
+                      "type": "string",
+                      "description": "기본품목 코드"
+                    },
+                    "biCnt": {
+                      "type": "string",
+                      "description": "품목갯수"
+                    },
+                    "biName": {
+                      "type": "string",
+                      "description": "기본품목명"
+                    },
+                    "biPrice": {
+                      "type": "string",
+                      "description": "기본품목 가격"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    },
+    "getFCOffering_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "ogName": {
+                      "type": "string",
+                      "description": "제물명"
+                    },
+                    "ogPrice": {
+                      "type": "string",
+                      "description": "제물 가격"
+                    },
+                    "idx": {
+                      "type": "string",
+                      "description": "제물 코드"
+                    },
+                    "ogDetail": {
+                      "type": "string",
+                      "description": "제물 상세"
+                    },
+                    "ogImg": {
+                      "type": "string",
+                      "description": "사진 url"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    },
+    "getFCGPrice_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "gpPrice": {
+                      "type": "string",
+                      "description": "금액"
+                    },
+                    "idx": {
+                      "type": "string",
+                      "description": "접객비용 코드"
+                    },
+                    "gpName": {
+                      "type": "string",
+                      "description": "접객수"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    },
+    "getFCTotal_v2_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 수"
+            },
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "gubun2": {
+                      "type": "string",
+                      "description": "구분2"
+                    },
+                    "remark": {
+                      "type": "string",
+                      "description": "비고"
+                    },
+                    "cost": {
+                      "type": "string",
+                      "description": "금액"
+                    },
+                    "detail": {
+                      "type": "string",
+                      "description": "세부사항"
+                    },
+                    "gubun1": {
+                      "type": "string",
+                      "description": "구분1"
+                    }
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "string",
+              "description": "데이터 총 개수"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            }
+          }
+        }
+      }
+    }
+  }
+}

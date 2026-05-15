@@ -1,0 +1,1055 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "①강좌명, 기관명, 대상구분, 모집기간, 강의기간 등을 기준으로 ② 조건에 맞는 평생학습 강좌 정보(강좌명, 기관명, 대상, 모집기간, 강의기간 등)를 조회하는 ③서울특별시교육청 평생학습포털 에버러닝 강좌 정보 조회 서비스",
+    "version": "1.0.0",
+    "title": "서울특별시교육청_평생학습포털 에버러닝 강좌정보 서비스"
+  },
+  "host": "apis.data.go.kr/7010000/everlearning",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getLectureList": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "header": {
+                  "type": "object",
+                  "description": "header",
+                  "properties": {
+                    "resultCode": {
+                      "type": "string",
+                      "description": "결과코드",
+                      "properties": {}
+                    },
+                    "resultMsg": {
+                      "type": "string",
+                      "description": "결과메세지",
+                      "properties": {}
+                    },
+                    "numOfRows": {
+                      "type": "string",
+                      "description": "한 페이지 결과 수",
+                      "properties": {}
+                    },
+                    "pageNo": {
+                      "type": "string",
+                      "description": "페이지 번호",
+                      "properties": {}
+                    },
+                    "totalCnt": {
+                      "type": "string",
+                      "description": "전체 결과 수",
+                      "properties": {}
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "description": "body",
+                  "properties": {
+                    "items": {
+                      "type": "object",
+                      "description": "items",
+                      "properties": {
+                        "item": {
+                          "type": "object",
+                          "description": "item",
+                          "properties": {
+                            "lectureId": {
+                              "type": "string",
+                              "description": "강좌아이디",
+                              "properties": {}
+                            },
+                            "reductionCd": {
+                              "type": "string",
+                              "description": "감면여부",
+                              "properties": {}
+                            },
+                            "untactYn": {
+                              "type": "string",
+                              "description": "비대면강좌여부",
+                              "properties": {}
+                            },
+                            "lectureNm": {
+                              "type": "string",
+                              "description": "강좌명",
+                              "properties": {}
+                            },
+                            "place": {
+                              "type": "string",
+                              "description": "장소",
+                              "properties": {}
+                            },
+                            "teacherNm": {
+                              "type": "string",
+                              "description": "강사명",
+                              "properties": {}
+                            },
+                            "materialNm": {
+                              "type": "string",
+                              "description": "교재명",
+                              "properties": {}
+                            },
+                            "materialCost": {
+                              "type": "string",
+                              "description": "재료비",
+                              "properties": {}
+                            },
+                            "lectureCost": {
+                              "type": "string",
+                              "description": "수강료",
+                              "properties": {}
+                            },
+                            "contactInfo": {
+                              "type": "string",
+                              "description": "문의처",
+                              "properties": {}
+                            },
+                            "onApplyNum": {
+                              "type": "string",
+                              "description": "온라인접수정원",
+                              "properties": {}
+                            },
+                            "offApplyNum": {
+                              "type": "string",
+                              "description": "방문접수정원",
+                              "properties": {}
+                            },
+                            "waitLimitNum": {
+                              "type": "string",
+                              "description": "대기자정원",
+                              "properties": {}
+                            },
+                            "lectureStartYmd": {
+                              "type": "string",
+                              "description": "강의시작일",
+                              "properties": {}
+                            },
+                            "lectureEndYmd": {
+                              "type": "string",
+                              "description": "강의종료일",
+                              "properties": {}
+                            },
+                            "closedClass": {
+                              "type": "string",
+                              "description": "휴강일",
+                              "properties": {}
+                            },
+                            "lectureDayCnt": {
+                              "type": "string",
+                              "description": "강의일수",
+                              "properties": {}
+                            },
+                            "applyStartYmd": {
+                              "type": "string",
+                              "description": "접수시작일",
+                              "properties": {}
+                            },
+                            "applyEndYmd": {
+                              "type": "string",
+                              "description": "접수종료일",
+                              "properties": {}
+                            },
+                            "applyStartTm": {
+                              "type": "string",
+                              "description": "접수시작시간",
+                              "properties": {}
+                            },
+                            "applyEndTm": {
+                              "type": "string",
+                              "description": "접수종료시간",
+                              "properties": {}
+                            },
+                            "dayOfWeek": {
+                              "type": "string",
+                              "description": "강좌요일",
+                              "properties": {}
+                            },
+                            "organNm": {
+                              "type": "string",
+                              "description": "기관명",
+                              "properties": {}
+                            },
+                            "organTelNo": {
+                              "type": "string",
+                              "description": "기관전화번호",
+                              "properties": {}
+                            },
+                            "categoryNm": {
+                              "type": "string",
+                              "description": "분류명",
+                              "properties": {}
+                            },
+                            "sigunguNm": {
+                              "type": "string",
+                              "description": "지역명",
+                              "properties": {}
+                            },
+                            "targetNm": {
+                              "type": "string",
+                              "description": "강좌대상명",
+                              "properties": {}
+                            },
+                            "onApplyUserCnt": {
+                              "type": "string",
+                              "description": "온라인접수인원",
+                              "properties": {}
+                            },
+                            "offApplyUserCnt": {
+                              "type": "string",
+                              "description": "방문접수인원",
+                              "properties": {}
+                            },
+                            "totalApplyUserCnt": {
+                              "type": "string",
+                              "description": "총접수인원",
+                              "properties": {}
+                            },
+                            "waitUserCnt": {
+                              "type": "string",
+                              "description": "대기접수인원",
+                              "properties": {}
+                            },
+                            "lectureStatusNm": {
+                              "type": "string",
+                              "description": "강좌접수상태",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "서울특별시교육청 평생학습강좌정보",
+        "description": "서울특별시교육청 평생학습포털 에버러닝 강좌 정보를 제공하는 서비스",
+        "operationId": "getLectureList",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "ServiceKey",
+          "description": "서비스키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "pageNo",
+          "description": "페이지 번호",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "numOfRows",
+          "description": "한 페이지 결과 수",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "searchKeyword",
+          "description": "강좌명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchOrganNm",
+          "description": "기관명",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchTarget",
+          "description": "강좌대상",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchCategory",
+          "description": "강좌분류",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchPay",
+          "description": "수강료",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchDayOfWeek",
+          "description": "강의요일",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchDayStartTm",
+          "description": "강의시작시간",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchSigungu",
+          "description": "운영지역",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchApplyStartYmd",
+          "description": "접수기간시작일",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchApplyEndYmd",
+          "description": "접수기간종료일",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchLectureStartYmd",
+          "description": "강의기간시작일",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        },
+        {
+          "name": "searchLectureEndYmd",
+          "description": "강의기간종료일",
+          "type": "string",
+          "required": false,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "getLectureList_response": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "description": "header",
+          "properties": {
+            "resultCode": {
+              "type": "string",
+              "description": "결과코드"
+            },
+            "resultMsg": {
+              "type": "string",
+              "description": "결과메세지"
+            },
+            "numOfRows": {
+              "type": "string",
+              "description": "한 페이지 결과 수"
+            },
+            "pageNo": {
+              "type": "string",
+              "description": "페이지 번호"
+            },
+            "totalCnt": {
+              "type": "string",
+              "description": "전체 결과 수"
+            }
+          }
+        },
+        "body": {
+          "type": "object",
+          "description": "body",
+          "properties": {
+            "items": {
+              "type": "object",
+              "description": "items",
+              "properties": {
+                "item": {
+                  "type": "object",
+                  "description": "item",
+                  "properties": {
+                    "lectureId": {
+                      "type": "string",
+                      "description": "강좌아이디"
+                    },
+                    "reductionCd": {
+                      "type": "string",
+                      "description": "감면여부"
+                    },
+                    "untactYn": {
+                      "type": "string",
+                      "description": "비대면강좌여부"
+                    },
+                    "lectureNm": {
+                      "type": "string",
+                      "description": "강좌명"
+                    },
+                    "place": {
+                      "type": "string",
+                      "description": "장소"
+                    },
+                    "teacherNm": {
+                      "type": "string",
+                      "description": "강사명"
+                    },
+                    "materialNm": {
+                      "type": "string",
+                      "description": "교재명"
+                    },
+                    "materialCost": {
+                      "type": "string",
+                      "description": "재료비"
+                    },
+                    "lectureCost": {
+                      "type": "string",
+                      "description": "수강료"
+                    },
+                    "contactInfo": {
+                      "type": "string",
+                      "description": "문의처"
+                    },
+                    "onApplyNum": {
+                      "type": "string",
+                      "description": "온라인접수정원"
+                    },
+                    "offApplyNum": {
+                      "type": "string",
+                      "description": "방문접수정원"
+                    },
+                    "waitLimitNum": {
+                      "type": "string",
+                      "description": "대기자정원"
+                    },
+                    "lectureStartYmd": {
+                      "type": "string",
+                      "description": "강의시작일"
+                    },
+                    "lectureEndYmd": {
+                      "type": "string",
+                      "description": "강의종료일"
+                    },
+                    "closedClass": {
+                      "type": "string",
+                      "description": "휴강일"
+                    },
+                    "lectureDayCnt": {
+                      "type": "string",
+                      "description": "강의일수"
+                    },
+                    "applyStartYmd": {
+                      "type": "string",
+                      "description": "접수시작일"
+                    },
+                    "applyEndYmd": {
+                      "type": "string",
+                      "description": "접수종료일"
+                    },
+                    "applyStartTm": {
+                      "type": "string",
+                      "description": "접수시작시간"
+                    },
+                    "applyEndTm": {
+                      "type": "string",
+                      "description": "접수종료시간"
+                    },
+                    "dayOfWeek": {
+                      "type": "string",
+                      "description": "강좌요일"
+                    },
+                    "organNm": {
+                      "type": "string",
+                      "description": "기관명"
+                    },
+                    "organTelNo": {
+                      "type": "string",
+                      "description": "기관전화번호"
+                    },
+                    "categoryNm": {
+                      "type": "string",
+                      "description": "분류명"
+                    },
+                    "sigunguNm": {
+                      "type": "string",
+                      "description": "지역명"
+                    },
+                    "targetNm": {
+                      "type": "string",
+                      "description": "강좌대상명"
+                    },
+                    "onApplyUserCnt": {
+                      "type": "string",
+                      "description": "온라인접수인원"
+                    },
+                    "offApplyUserCnt": {
+                      "type": "string",
+                      "description": "방문접수인원"
+                    },
+                    "totalApplyUserCnt": {
+                      "type": "string",
+                      "description": "총접수인원"
+                    },
+                    "waitUserCnt": {
+                      "type": "string",
+                      "description": "대기접수인원"
+                    },
+                    "lectureStatusNm": {
+                      "type": "string",
+                      "description": "강좌접수상태"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "swaggerOprtinVOs": [
+    {
+      "oprtinUrl": "https://everlearning.sen.go.kr/service/openapi/getLectureList.do",
+      "oprtinNm": "서울특별시교육청 평생학습강좌정보",
+      "oprtinDc": "서울특별시교육청 평생학습포털 에버러닝 강좌 정보를 제공하는 서비스",
+      "gwSvcNm": "getLectureList",
+      "operationId": "getLectureList",
+      "publicDataTyDetailCode": "PRDE02",
+      "reqList": [
+        {
+          "paramtrNm": "ServiceKey",
+          "paramtrBassValue": "-",
+          "paramtrDc": "서비스키",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "pageNo",
+          "paramtrBassValue": "1",
+          "paramtrDc": "페이지 번호",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "numOfRows",
+          "paramtrBassValue": "10",
+          "paramtrDc": "한 페이지 결과 수",
+          "paramtrTy": "string",
+          "paramtrDivision": "필수",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchKeyword",
+          "paramtrBassValue": "",
+          "paramtrDc": "강좌명",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchOrganNm",
+          "paramtrBassValue": "",
+          "paramtrDc": "기관명",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchTarget",
+          "paramtrBassValue": "",
+          "paramtrDc": "강좌대상",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchCategory",
+          "paramtrBassValue": "",
+          "paramtrDc": "강좌분류",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchPay",
+          "paramtrBassValue": "",
+          "paramtrDc": "수강료",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchDayOfWeek",
+          "paramtrBassValue": "",
+          "paramtrDc": "강의요일",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchDayStartTm",
+          "paramtrBassValue": "",
+          "paramtrDc": "강의시작시간",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchSigungu",
+          "paramtrBassValue": "",
+          "paramtrDc": "운영지역",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchApplyStartYmd",
+          "paramtrBassValue": "",
+          "paramtrDc": "접수기간시작일",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchApplyEndYmd",
+          "paramtrBassValue": "",
+          "paramtrDc": "접수기간종료일",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchLectureStartYmd",
+          "paramtrBassValue": "",
+          "paramtrDc": "강의기간시작일",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        },
+        {
+          "paramtrNm": "searchLectureEndYmd",
+          "paramtrBassValue": "",
+          "paramtrDc": "강의기간종료일",
+          "paramtrTy": "string",
+          "paramtrDivision": "옵션",
+          "ck": true
+        }
+      ],
+      "resList": [
+        {
+          "paramtrNm": "header",
+          "paramtrDc": "header",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/header",
+          "subDefNm": "header",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "resultCode",
+              "paramtrDc": "결과코드",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "resultMsg",
+              "paramtrDc": "결과메세지",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "numOfRows",
+              "paramtrDc": "한 페이지 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "pageNo",
+              "paramtrDc": "페이지 번호",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            },
+            {
+              "paramtrNm": "totalCnt",
+              "paramtrDc": "전체 결과 수",
+              "arrayYn": "N",
+              "paramtrDefNm": "",
+              "paramtrTy": "string",
+              "paramtrDivision": "필수",
+              "ck": true
+            }
+          ]
+        },
+        {
+          "paramtrNm": "body",
+          "paramtrDc": "body",
+          "arrayYn": "N",
+          "paramtrDefNm": "#/definitions/body",
+          "subDefNm": "body",
+          "paramtrTy": "object",
+          "paramtrDivision": "필수",
+          "ck": true,
+          "subParam": [
+            {
+              "paramtrNm": "items",
+              "paramtrDc": "items",
+              "arrayYn": "N",
+              "paramtrDefNm": "#/definitions/items",
+              "subDefNm": "items",
+              "paramtrTy": "object",
+              "paramtrDivision": "필수",
+              "ck": true,
+              "subParam": [
+                {
+                  "paramtrNm": "item",
+                  "paramtrDc": "item",
+                  "arrayYn": "N",
+                  "paramtrDefNm": "#/definitions/item",
+                  "subDefNm": "item",
+                  "paramtrTy": "object",
+                  "paramtrDivision": "필수",
+                  "ck": true,
+                  "subParam": [
+                    {
+                      "paramtrNm": "lectureId",
+                      "paramtrDc": "강좌아이디",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "reductionCd",
+                      "paramtrDc": "감면여부",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "untactYn",
+                      "paramtrDc": "비대면강좌여부",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lectureNm",
+                      "paramtrDc": "강좌명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "place",
+                      "paramtrDc": "장소",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "teacherNm",
+                      "paramtrDc": "강사명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "materialNm",
+                      "paramtrDc": "교재명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "materialCost",
+                      "paramtrDc": "재료비",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lectureCost",
+                      "paramtrDc": "수강료",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "contactInfo",
+                      "paramtrDc": "문의처",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "onApplyNum",
+                      "paramtrDc": "온라인접수정원",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "offApplyNum",
+                      "paramtrDc": "방문접수정원",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "waitLimitNum",
+                      "paramtrDc": "대기자정원",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lectureStartYmd",
+                      "paramtrDc": "강의시작일",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lectureEndYmd",
+                      "paramtrDc": "강의종료일",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "closedClass",
+                      "paramtrDc": "휴강일",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lectureDayCnt",
+                      "paramtrDc": "강의일수",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "applyStartYmd",
+                      "paramtrDc": "접수시작일",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "applyEndYmd",
+                      "paramtrDc": "접수종료일",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "applyStartTm",
+                      "paramtrDc": "접수시작시간",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "applyEndTm",
+                      "paramtrDc": "접수종료시간",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "dayOfWeek",
+                      "paramtrDc": "강좌요일",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "organNm",
+                      "paramtrDc": "기관명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "organTelNo",
+                      "paramtrDc": "기관전화번호",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "옵션",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "categoryNm",
+                      "paramtrDc": "분류명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "sigunguNm",
+                      "paramtrDc": "지역명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "targetNm",
+                      "paramtrDc": "강좌대상명",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "onApplyUserCnt",
+                      "paramtrDc": "온라인접수인원",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "offApplyUserCnt",
+                      "paramtrDc": "방문접수인원",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "totalApplyUserCnt",
+                      "paramtrDc": "총접수인원",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "waitUserCnt",
+                      "paramtrDc": "대기접수인원",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    },
+                    {
+                      "paramtrNm": "lectureStatusNm",
+                      "paramtrDc": "강좌접수상태",
+                      "arrayYn": "N",
+                      "paramtrDefNm": "",
+                      "paramtrTy": "string",
+                      "paramtrDivision": "필수",
+                      "ck": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

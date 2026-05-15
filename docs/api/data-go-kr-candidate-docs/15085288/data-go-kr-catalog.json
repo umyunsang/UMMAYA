@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "기상청_생활기상지수 조회서비스(3.0)",
+  "description": "자외선지수, 대기정체지수 등의 정보를 조회할 수 있는 기상청 생활기상지수 조회 오픈API 서비스입니다. 계절별로 달라지는 기상 조건에 따른 체감 환경을 제공하여 시민 건강관리, 온열질환 예방, 야외활동 계획, 산업·행정 분야 정책 지원 등 다양한 활용이 가능합니다. 또한 학교, 지자체, 의료기관, 기업 등 다양한 기관에서 교육, 정책 수립, 연구, 생활 안전 서비스 개발에 참고할 수 있어 활용 가치가 높습니다. 특히 기상재해 대비, 국민 생활 안전 증진, 기후변화 대응 정책 마련에도 중요한 자료로 활용됩니다.",
+  "url": "https://data.go.kr/data/15085288/openapi.do",
+  "keywords": [
+    "생활기상지수,자외선지수,대기정체지수,예측값,조회서비스"
+  ],
+  "license": "https://data.go.kr/ugs/selectPortalPolicyView.do",
+  "creator": {
+    "@type": "Organization",
+    "name": "기상청",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "국가기후데이터센터",
+      "telephone": "+82-0424817480"
+    }
+  },
+  "dateCreated": "2021-08-10",
+  "dateModified": "2026-05-12",
+  "datePublished": "2021-08-10",
+  "includedInDataCatalog": {
+    "@type": "DataCatalog",
+    "name": "data.go.kr"
+  },
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "JSON+XML",
+      "contentUrl": "https://data.go.kr/data/15085288/openapi.do"
+    }
+  ],
+  "datasetTimeInterval": "실시간"
+}

@@ -1,0 +1,15 @@
+HTTP/1.1 200
+Server: nginx
+Date: Fri, 15 May 2026 15:11:12 GMT
+Content-Type: application/json;charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+khan.tid: 19e2c310c58-10beb7b17bf1064f2713
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE
+Access-Control-Max-Age: 3600
+Access-Control-Allow-Headers: x-requested-with
+Pragma: no-cache
+Cache-Control: no-cache, no-store, max-age=0
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Content-Language: en-US

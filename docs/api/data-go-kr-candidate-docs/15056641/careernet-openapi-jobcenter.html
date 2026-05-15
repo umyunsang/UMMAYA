@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="-1" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>Open API 센터 | 진로정보망 커리어넷</title>
+
+<link rel="stylesheet" type="text/css" charset="utf-8"  href="/webres/html/daumeditor/css/editor.css"    />
+<script type="text/javascript" charset="utf-8" src="/webres/html/daumeditor/js/editor_loader.js"></script>
+
+<link rel="stylesheet" type="text/css" href="/webres/css/common.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/webres/css/admin/projectType.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/webres/css/colortip-1.0-jquery.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/webres/css/jquery.lightbox-0.5.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/webres/css/ui/redmond/jquery-ui-1.8.16.custom.css"/>
+<link rel="stylesheet" type="text/css" href="/webres/css/admin/admin_carrer_new.css?ver=3.0" />
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/jquery-1.7.2.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jqGrid/js/i18n/grid.locale-en.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jqGrid/js/jquery.jqGrid.src.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/jquery-ui-1.8.16.custom.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/colortip-1.0-jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/common/commonNew.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/common/common.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/common/nileCommJS.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/common/js.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/ui/jquery.ui.core.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/ui/jquery.ui.widget.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/ui/jquery.ui.datepicker.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/ui/i18n/jquery.ui.datepicker-ko.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/adminDesign.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/jquery.form.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/common.js"></script>
+<script type="text/javascript" charset="utf-8" src="/webres/js/jquery/jquery-sortable.js"></script>
+
+<link href="/webres/js/dynatree/skin-vista/ui.dynatree.css" rel="stylesheet" type="text/css">
+<script src="/webres/js/dynatree/jquery.dynatree.js" type="text/javascript"></script>
+<link rel="stylesheet" href="/webres/css/rew/jplayer.blue.monday.css?ver=1.0" type="text/css" />
+<script type="text/javascript" src="/webres/js/rew/jquery.jplayer.min.js?ver=1.0"></script><link rel="stylesheet" type="text/css" href="/cnet/css/front/openApiIframe.css;jsessionid=B64A5CDB456EA478917D54EA02B8ACCA" />
+</head>
+
+<body id="openApi">
+    <div id="quicklink">
+        <p class="sknavi">바로가기</p>
+          <a class="sknavi" href="#apiColumnRight">본문 바로가기</a>
+          <a class="sknavi" href="#gnb">주 메뉴 바로가기</a>
+          <a class="sknavi" href="#apiFooter">페이지 하단 바로가기</a>
+    </div>
+<script type="text/javascript">
+$(document).ready(function (){
+    $(".jQueryButton").button();
+
+    $('.login_user').click(function () {
+        $('.user_info').toggle();
+        $('.login_user').toggleClass('on');
+    });
+    //$('#snb ul li:has("div")').find('div').hide();
+    $('#snb li:has("div")').find('a:first').click (function (){
+        $(this).parent('li').find('a:first').toggleClass('opened');
+        $(this).parent('li').find('div:first').slideToggle();
+
+     });
+
+    /*************************************************************************
+    * 정해진 형식만 입력할 수 있게 한다.
+    * kr:한글,   int:숫자,   en:영어
+    * <input type="text" name="xx" id="xx" class="input_text" vcheck="kr int" />
+    **************************************************************************/
+    $("input[vcheck]").keyup(function(event){
+        fn_langChk(this);
+    });
+
+});
+</script>
+<div class="apiWrap">
+    <div class="apiHeader">
+        <h1 class="logo"><a href="/cloud"><img src="/webres/images/common/logo.png" alt="CareerNet 한국직업능력개발원 커리어넷" /></a><span>Open API 센터</span></h1>
+        <ul class="tnb">
+            <li><a href="/cloud">커리어넷 홈페이지</a></li>
+            <li><a href="/cnet/front/openapi/openApiApply04Center.do">인증키 신청 현황</a></li>
+            <li><a href="/cloud/sso/useragent3">로그인</a></li>
+                    <li><a href="https://api.career.go.kr/cloud/api/mber/type.do">회원가입</a></li>
+                </ul>
+        <ul class="gnb" id="gnb">
+            <li><a href="/cnet/front/openapi/openApiMainCenter.do" class="gnb_api1 "><span>커리어넷 오픈API</span></a></li>
+            <li><a href="/cnet/front/openapi/openApiApply01Center.do" class="gnb_api2 "><span>오픈API 신청</span></a></li>
+            <li><a href="/cnet/front/openapi/openApiUseGuideCenter.do" class="gnb_api3 "><span>오픈API 이용안내</span></a></li>
+            <li><a href="/cnet/front/openapi/openApiNoticeCenter.do" class="gnb_api4 "><span>공지사항</span></a></li>
+        </ul>
+</div>
+    <div class="apiColumn">
+        <div class="apiColumnLeft">
+            <ul class="lnb">
+                <li><a href="/cnet/front/openapi/openApiMainCenter.do" >오픈API Home</a></li>
+                <li><a href="/cnet/front/openapi/openApiApply01Center.do" >오픈API 신청</a></li>
+                <li><a href="/cnet/front/openapi/openApiApply04Center.do" >인증키 신청 현황</a></li>
+                <li><a href="/cnet/front/openapi/openApiTestCenter.do" >진로심리검사(v1)</a></li>
+                <li><a href="/cnet/front/openapi/openApiv2TestCenter.do" >진로심리검사(v2)</a></li>
+                <li><a href="/cnet/front/openapi/jobCenter.do" >직업백과</a></li>
+                <li><a href="/cnet/front/openapi/openApiJobCenter.do" class="first on">직업정보</a></li>
+            <!-- <li><a href="/cnet/front/openapi/openApiJunior2Center.do" >(구)주니어직업정보</a></li> -->
+                <li><a href="/cnet/front/openapi/openApiJunior3Center.do" >주니어직업정보</a></li>
+                <li><a href="/cnet/front/openapi/openApiSchoolCenter.do" >학교정보</a></li>
+                <li><a href="/cnet/front/openapi/openApiMajorCenter.do" >학과정보</a></li>
+                <li><a href="/cnet/front/openapi/openApiCounselCenter.do" >진로상담사례</a></li>
+                <li><a href="/cnet/front/openapi/openApiCoseCenter.do" >진로교육자료</a></li>
+            </ul>
+        </div>
+        <p class="apiColumnLeft_foot"><img src="/webres/images/front/contents/openapi/bg_lnb_foot.gif" alt="" /></p>
+        <style>
+    .tblbg tr:nth-child(even) {background: #fbfbfb;}
+</style>
+<script type="text/javascript" charset="utf-8">
+
+    $(document).ready(function () {
+
+        $('#inputthispage').keypress(function (e) {
+            e.which = e.which | e.keyCode;
+            if (e.which == 13) {
+                $('#inputperpage').focus();
+            }
+        });
+        $('#inputperpage').keypress(function (e) {
+            e.which = e.which | e.keyCode;
+            if (e.which == 13) {
+                $('#inputsearchTitle').focus();
+            }
+        });
+        $('#inputsearchTitle').keypress(function (e) {
+            e.which = e.which | e.keyCode;
+            if (e.which == 13) {
+                if ($('#svccode').val() != "JOB_VIEW") {
+                    fn_URLsel();
+                } else {
+                    $('#inputjobSeq').focus();
+                }
+            }
+        });
+        $('#inputjobSeq').keypress(function (e) {
+            e.which = e.which | e.keyCode;
+            if (e.which == 13) {
+                fn_URLsel();
+            }
+        });
+
+        $.ajax({
+            url: '/cnet/front/openapi/openApiCodeSelProc.json;jsessionid=B64A5CDB456EA478917D54EA02B8ACCA',
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+
+                var $rsEmpCode = $('#inputjobctg');
+
+                $.each(data.rsEmpCode, function (index, key) {
+                    if (index >= 0) {
+
+                        $rsEmpCode.append('<option value="' + data.rsEmpCode[index].SEQ + '">' + data.rsEmpCode[index].CODE_NM + '</option>');
+
+                    }
+                });
+            },
+            error: function (xhr, status, error) {
+                alert("에러발생");
+            }
+
+        });
+        fn_svccsel_chg();
+
+    })
+
+    function fn_tempURL() {
+        var APIURL = "www.career.go.kr/cnet/openapi/getOpenApi?apiKey=";
+        APIURL = APIURL
+            + "&svcType=api&svcCode=" + $('#svccode').val()
+            + "&contentType=" + $('#contentType').val()
+            + "&gubun=" + $('#jobdicsel').val();
+        if ($.trim($('#inputability').val()) != "" && $.trim($('#inputability').val()) != null) {
+            APIURL = APIURL + "&pgubn=" + $('#inputability').val()
+        }
+        if ($.trim($('#inputjobctg').val()) != "" && $.trim($('#inputjobctg').val()) != null) {
+            APIURL = APIURL + "&category=" + $('#inputjobctg').val()
+        }
+        if ($.trim($('#inputthispage').val()) != "" && $.trim($('#inputthispage').val()) != null) {
+            APIURL = APIURL + "&thisPage=" + $('#inputthispage').val()
+        }
+        if ($.trim($('#inputperpage').val()) != "" && $.trim($('#inputperpage').val()) != null) {
+            APIURL = APIURL + "&perPage=" + $('#inputperpage').val()
+        }
+        if ($.trim($('#inputsearchTitle').val()) != "" && $.trim($('#inputsearchTitle').val()) != null) {
+            APIURL = APIURL + "&searchJobNm=" + encodeURI($('#inputsearchTitle').val());
+        }
+        if ($.trim($('#inputjobSeq').val()) != "" && $.trim($('#inputjobSeq').val()) != null) {
+            APIURL = APIURL + "&jobdicSeq=" + $('#inputjobSeq').val()
+        }
+
+        $('#resultURL').val(APIURL);
+    }
+
+    function fn_URLsel() {
+
+        if ($('#svccode').val() == "JOB_VIEW" && ($.trim($('#inputjobSeq').val()) == "" || $.trim($('#inputjobSeq').val()) == null)) {
+
+            return alert("직업코드를 입력 해주세요.");
+        }
+
+        var APIURL = "www.career.go.kr/cnet/openapi/getOpenApi?apiKey="
+
+        $.ajax({
+            url: '/cnet/front/openapi/openApiKeySelectProc.json;jsessionid=B64A5CDB456EA478917D54EA02B8ACCA',
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+
+                if (!data.hasOwnProperty('rs') || data.rs == null) {
+                    return alert("API키 정보를 찾을 수 없습니다. 로그인 또는 API키를 발급 받으세요.");
+                }
+
+                APIURL = APIURL
+                    + data.rs.API_KEY + "&svcType=api&svcCode=" + $('#svccode').val()
+                    + "&contentType=" + $('#contentType').val()
+                    + "&gubun=" + $('#jobdicsel').val();
+                if ($.trim($('#inputability').val()) != "" && $.trim($('#inputability').val()) != null) {
+                    APIURL = APIURL + "&pgubn=" + $('#inputability').val()
+                }
+                if ($.trim($('#inputjobctg').val()) != "" && $.trim($('#inputjobctg').val()) != null) {
+                    APIURL = APIURL + "&category=" + $('#inputjobctg').val()
+                }
+                if ($.trim($('#inputthispage').val()) != "" && $.trim($('#inputthispage').val()) != null) {
+                    APIURL = APIURL + "&thisPage=" + $('#inputthispage').val()
+                }
+                if ($.trim($('#inputperpage').val()) != "" && $.trim($('#inputperpage').val()) != null) {
+                    APIURL = APIURL + "&perPage=" + $('#inputperpage').val()
+                }
+                if ($.trim($('#inputsearchTitle').val()) != "" && $.trim($('#inputsearchTitle').val()) != null) {
+                    APIURL = APIURL + "&searchJobNm=" + encodeURI($('#inputsearchTitle').val());
+                }
+                if ($.trim($('#inputjobSeq').val()) != "" && $.trim($('#inputjobSeq').val()) != null) {
+                    APIURL = APIURL + "&jobdicSeq=" + $('#inputjobSeq').val()
+                }
+
+                $('#resultURL').val(APIURL);
+
+                $('#resultURL').focus();
+
+            },
+            error: function (xhr, status, error) {
+                alert("에러발생");
+            }
+        });
+
+
+    }
+
+    function fn_svccsel_chg() {
+        if ($('#svccode').val() != "JOB_VIEW") {
+            $("#jobdicSeq").hide()
+            $('#inputjobSeq').val("");
+        } else {
+            $("#jobdicSeq").show()
+        }
+
+    }
+    $(function() {
+        document.title = "직업정보 | 진로정보망 커리어넷";
+    });
+
+
+</script>
+
+<div class="apiColumnRight" id="apiColumnRight">
+    <div class="title">
+        <h2>직업정보</h2>
+        <p class="location">
+            <img src="/webres/images/front/contents/openapi/ico_home.gif" alt="홈"/> &gt; 커리어넷
+            오픈 API &gt; <strong>직업정보</strong></p>
+        <!--버튼추가 수정영역-->
+        <p>
+            관심 있는 직업을 직업사전에서 제공하고 다양한 방법으로 직업을 찾아볼 수 있는 정보를 제공 합니다.<br>
+            ※ 직업정보 개편에 따라 직업정보 API는 2023년 8월까지만 제공됩니다.(공지사항 참고)
+        </p>
+        <a href="/cnet/front/openapi/openApiApply01Center.do" class="btnOpApi">오픈API 신청</a>
+        <!--버튼추가 끝-->
+    </div>
+
+    <div class="box-wrap">
+    <div class="apiTab">
+        <a href="#a01" class="on">오픈 API</a>
+        <!--<a href="/cnet/front/openapi/openApiJob2Center.do">iFrame</a>-->
+    </div>
+    <h3 class="openApiH3">기본정보</h3>
+    <h4 class="openApiH4">직업정보 목록 URL</h4>
+    <p class="txtBg">XML 형태 URL : //www.career.go.kr/cnet/openapi/getOpenApi.xml?apiKey=인증키</p>
+    <p class="txtBg">JSON 형태 URL : //www.career.go.kr/cnet/openapi/getOpenApi.json?apiKey=인증키</p>
+
+    <h3 class="openApiH3">요청변수 (request parameter)</h3>
+    <table summary="요청변수 (request parameter)에 대하여 요청변수, 타입/값, 설명을 제공합니다." class="apiTable tblbg">
+        <caption>직업정보 목록 요청변수 (request parameter) - 요청변수, 타입, 값, 설명</caption>
+        <colgroup>
+            <col style="width:135px"/>
+            <col style="width:135px"/>
+            <col/>
+            <col/>
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col" class="first">요청변수</th>
+            <th scope="col">타입</th>
+            <th scope="col">값</th>
+            <th scope="col">설명</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="first">apiKey</td>
+            <td>String[필수]</td>
+            <td></td>
+            <td>OPENAPI 등록 신청 후 관리자로부터 발급받은 KEY값</td>
+        </tr>
+        <tr>
+            <td class="first">svcType</td>
+            <td>String[필수]</td>
+            <td>api</td>
+            <td>api</td>
+        </tr>
+        <tr>
+            <td class="first">svcCode</td>
+            <td>String[필수]</td>
+            <td>
+                <select name="svccode" id="svccode" title="서비스코드 선택" onchange="fn_svccsel_chg();" style="padding: 5px;width: 100%;">
+                    <option value="JOB">리스트</option>
+                    <option value="JOB_VIEW">상세</option>
+                    <option value="JOB_TYPE">구분</option>
+                </select>
+            </td>
+            <td>리스트 : JOB <br/> 상세: JOB_VIEW <br/> 구분: JOB_TYPE</td>
+        </tr>
+        <tr>
+            <td class="first">contentType</td>
+            <td>String</td>
+            <td>
+                <select name="contentType" id="contentType" title="contentType" style="padding: 5px;width: 100%;">
+                    <option value="xml">Xml</option>
+                    <option value="json">Json</option>
+                </select>
+            </td>
+            <td>xml or json 형태 (URL 에서 .xml, .json 생략) 예:
+                //www.career.go.kr/cnet/openapi/getOpenApi?apiKey=인증키&contentType=xml
+            </td>
+        </tr>
+        <tr>
+            <td class="first">gubun</td>
+            <td>String [필수]</td>
+            <td>
+                <select name="jobdicsel" id="jobdicsel" title="직업사전 분류형태 코드" style="padding: 5px;width: 100%;">
+                    <option value="job_dic_list">커리어넷직업분류별</option>
+                    <option value="job_apti_list">적성유형별</option>
+                </select>
+            </td>
+            <td>직업사전 분류형태 코드<br/>
+                커리어넷직업분류별 : job_dic_list<br/>
+                적성유형별 : job_apti_list<br/>
+            </td>
+        </tr>
+        <tr>
+            <td class="first">pgubn</td>
+            <td>String</td>
+            <td>
+                <select title="선택" class="sebox" id="inputability" name="inputability" style="padding: 5px;width: 100%;">
+                    <option value="">전체</option>
+                    <option value="100829">신체·운동능력</option>
+                    <option value="100830">손재능</option>
+                    <option value="100831">공간지각력</option>
+                    <option value="100832">음악능력</option>
+                    <option value="100833">창의력</option>
+                    <option value="100834">언어능력</option>
+                    <option value="100835">수리·논리력</option>
+                    <option value="100836">자기성찰능력</option>
+                    <option value="100837">대인관계능력</option>
+                    <option value="100838">자연친화력</option>
+                    <option value="100839">예술시각능력</option>
+                </select>
+            </td>
+            <td>능력</td>
+        </tr>
+        <tr>
+            <td class="first">category</td>
+            <td>String</td>
+            <td>
+                <select title="선택" class="sebox" id="inputjobctg" name="inputjobctg" style="padding: 5px;width: 100%;">
+                    <option value="">전체</option>
+                </select>
+            </td>
+            <td>직업분류 or 직군</td>
+        </tr>
+        <tr>
+            <td class="first">thisPage</td>
+            <td>String</td>
+            <td>
+                <input type="text" style="width:100%;padding:4px;box-sizing: border-box;border:1px solid rgb(169, 169, 169);" title="thispage 입력" value="" id="inputthispage" name="inputthispage" maxlength="100" onkeypress="if (event.keyCode<48|| event.keyCode>57)  event.returnValue=false;" style='IME-MODE:disabled;'>
+            </td>
+            <td>현재페이지</td>
+        </tr>
+        <tr>
+            <td class="first">perPage</td>
+            <td>String</td>
+            <td>
+                <input type="text" style="width:100%;padding:4px;box-sizing: border-box;border:1px solid rgb(169, 169, 169);" title="perpage 입력" value="" id="inputperpage" name="inputperpage" maxlength="100" onkeypress="if (event.keyCode<48|| event.keyCode>57)  event.returnValue=false;" style='IME-MODE:disabled;'>
+            </td>
+            <td>한페이지당 건수</td>
+        </tr>
+        <tr>
+            <td class="first">searchJobNm</td>
+            <td>String</td>
+            <td>
+                <input type="text" style="width:100%;padding:4px;box-sizing: border-box;border:1px solid rgb(169, 169, 169);" title="searchTitle 입력" value="" id="inputsearchTitle" name="inputsearchTitle" maxlength="100">
+            </td>
+            <td>검색어</td>
+        </tr>
+        <tr>
+            <td class="first">jobdicSeq</td>
+            <td>String</td>
+            <td>
+                <div id="jobdicSeq">
+                    <input type="text" style="width:100%;padding:4px;box-sizing: border-box;border:1px solid rgb(169, 169, 169);" title="seq 입력" value="" id="inputjobSeq" name="inputjobSeq" maxlength="100" onkeypress="if (event.keyCode<48|| event.keyCode>57)  event.returnValue=false;" style='IME-MODE:disabled;'>
+                </div>
+            </td>
+            <td>직업코드 ID (상세일 경우만)</td>
+        </tr>
+        <tr>
+            <td class="first">
+                <a href="#" class="btn_itemSrch" style="width: 100%;padding: 6px 7px;background-color: #13178E;color: #FFF;border-radius: 5px;cursor: pointer;" title="makeurl" onclick="fn_URLsel();">URL
+                    생성 &gt;</a></td>
+            <td colspan="3">
+                <input type="text" style="width:100%;padding:4px;box-sizing: border-box;border:1px solid rgb(169, 169, 169);" title="URL 출력" value="" id="resultURL" name="resultURL" readonly onfocus="this.select();">
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h3 class="openApiH3">출력결과필드 (response field)</h3>
+    <h4 class="openApiH4">상위노드상세 : 노드위치 &lt;dataSearch&gt;</h4>
+    <table summary="상위노드상세 ; 노드위치 &lt;dataSearch&gt;에 대하여 노드, 타입, 설명을 제공합니다." class="apiTable">
+        <caption>직업정보 목록 출력결과필드 상위노드상세 : 노드위치 &lt;dataSearch&gt; - 노드, 타입, 설명</caption>
+        <colgroup>
+            <col style="width:135px" />
+            <col style="width:257px" />
+            <col />
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col" class="first">노드</th>
+            <th scope="col">타입</th>
+            <th scope="col">설명</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="bg">
+            <td class="first">&lt;content&gt;</td>
+            <td></td>
+            <td>전체 검색 결과 리스트</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;totalCount&gt;</td>
+            <td>String</td>
+            <td>전체 검색 결과수</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;job&gt;</td>
+            <td>String</td>
+            <td>직업명</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;jobdicSeq&gt;</td>
+            <td>String</td>
+            <td>직업 코드 ID</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;profession&gt;</td>
+            <td>String</td>
+            <td>직업분야</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;similarJob&gt;</td>
+            <td>String</td>
+            <td>유사직업</td>
+        </tr>
+
+        <tr class="bg">
+            <td class="first">&lt;summary&gt;</td>
+            <td>String</td>
+            <td>직업설명</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;equalemployment&gt;</td>
+            <td>String</td>
+            <td>고용평등</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;possibility&gt;</td>
+            <td>String</td>
+            <td>발전가능성</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;prospect&gt;</td>
+            <td>String</td>
+            <td>일자리전망</td>
+        </tr>
+
+        <tr class="bg">
+            <td class="first">&lt;salery&gt;</td>
+            <td>String</td>
+            <td>연봉</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;job_cod&gt;</td>
+            <td>String</td>
+            <td>직업코드</td>
+        </tr>
+
+        <tr class="bg">
+            <td class="first">&lt;job_ctg_code&gt;</td>
+            <td>String</td>
+            <td>직업분류코드</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;aptd_type_code&gt;</td>
+            <td>String</td>
+            <td>적성유형별코드</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table summary="상위노드상세 : 노드위치 &lt;dataSearch&gt;에 대하여 노드, 타입, 설명을 제공합니다." class="apiTable">
+        <caption>직업정보 목록 출력결과필드 - 노드(lv1), 노드(lv2), 노드(lv3), 타입, 설명</caption>
+        <colgroup>
+            <col style="width:135px" />
+            <col style="width:135px" />
+            <col style="width:135px" />
+            <col style="width:100px" />
+            <col />
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col" class="first">노드(lv1)</th>
+            <th scope="col">노드(lv2)</th>
+            <th scope="col">노드(lv3)</th>
+            <th scope="col">타입</th>
+            <th scope="col">설명</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="bg">
+            <td class="first">&lt;content&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>전체 검색 결과 상세</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;job&gt;</td>
+            <td></td>
+            <td></td>
+            <td>String</td>
+            <td>직업명</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;ability&gt;</td>
+            <td></td>
+            <td></td>
+            <td>String</td>
+            <td>핵심능력</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;similarjob&gt;</td>
+            <td></td>
+            <td></td>
+            <td>String</td>
+            <td>유사직업명</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;capacity_major&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>관련학과/관련자격</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;capacity&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>관련자격증</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;major&gt;</td>
+            <td></td>
+            <td></td>
+            <td>관련학과</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;TOTAL_CNT&gt;</td>
+            <td>String</td>
+            <td>관련학과수</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;RNUM&gt;</td>
+            <td>String</td>
+            <td>ROWNUM</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;MAJOR_SEQ&gt;</td>
+            <td>String</td>
+            <td>학과SEQ</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;MAJOR_NM&gt;</td>
+            <td>String</td>
+            <td>학과명</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;summary&gt;</td>
+            <td></td>
+            <td></td>
+            <td>String</td>
+            <td>하는일</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;aptitude&gt;</td>
+            <td></td>
+            <td></td>
+            <td>String</td>
+            <td>적성및흥미</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;division&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>분류</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;cnet_job_dvs&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>커리어넷직업분류</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;std_code_nm&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>표준직업분류</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;emplym_code_nm&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>고용직업분류</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;stateofemp&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>취업현황</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;empway&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>입적 및 취업방법</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;employment&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>고용현황</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;salery&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>임금수준</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;prepareway&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>준비방법</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;preparation&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>정규교육과정</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;training&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>직업훈련</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;certification&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>관련자격증</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;contact&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>문의기관</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;MAPNG_NM&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>문의기관명</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;MAPNG_SEQ&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>문의기관SEQ</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;MAPNG_URL&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>관련URL</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;job_possibility&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>직업전망</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;possibility&gt;</td>
+            <td></td>
+            <td>String</td>
+            <td>전망</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;chart_item_list&gt;</td>
+            <td></td>
+            <td></td>
+            <td>CHART</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CHART_KEY&gt;</td>
+            <td>String</td>
+            <td>항목명</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CHART_VALUE&gt;</td>
+            <td>String</td>
+            <td>값</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;GenCD&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>[특성(성별비율)]</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;popular&gt;</td>
+            <td></td>
+            <td></td>
+            <td>많이본</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT1&gt;</td>
+            <td>String</td>
+            <td>비율-정수값</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT2&gt;</td>
+            <td>String</td>
+            <td>비율-소수값</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT&gt;</td>
+            <td>String</td>
+            <td>비율-반올림값</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;GEN_NM&gt;</td>
+            <td>String</td>
+            <td>성별</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;bookmark&gt;</td>
+            <td></td>
+            <td></td>
+            <td>관심직업</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT1&gt;</td>
+            <td>String</td>
+            <td>비율-정수값</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT2&gt;</td>
+            <td>String</td>
+            <td>비율-소수값</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT&gt;</td>
+            <td>String</td>
+            <td>비율-반올림값</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;GEN_NM&gt;</td>
+            <td>String</td>
+            <td>성별</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;SchClass&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>[특성(학교급별비율)]</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;popular&gt;</td>
+            <td></td>
+            <td></td>
+            <td>많이본</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT1&gt;</td>
+            <td>String</td>
+            <td>비율-정수값</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT2&gt;</td>
+            <td>String</td>
+            <td>비율-소수값</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT&gt;</td>
+            <td>String</td>
+            <td>비율-반올림값</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;SCH_CLASS_NM&gt;</td>
+            <td>String</td>
+            <td>학교급</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;bookmark&gt;</td>
+            <td></td>
+            <td></td>
+            <td>관심직업</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT1&gt;</td>
+            <td>String</td>
+            <td>비율-정수값</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT2&gt;</td>
+            <td>String</td>
+            <td>비율-소수값</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;PCNT&gt;</td>
+            <td>String</td>
+            <td>비율-반올림값</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;SCH_CLASS_NM&gt;</td>
+            <td>String</td>
+            <td>학교급</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;lstMiddleAptd&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>[특성(중학생적성유형)]</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td>&lt;popular&gt;</td>
+            <td></td>
+            <td></td>
+            <td>많이본</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;RANK&gt;</td>
+            <td>String</td>
+            <td>우선순위</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_ORDR&gt;</td>
+            <td>String</td>
+            <td>정렬순서</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_NM&gt;</td>
+            <td>String</td>
+            <td>선호명</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;bookmark&gt;</td>
+            <td></td>
+            <td></td>
+            <td>관심직업</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;RANK&gt;</td>
+            <td>String</td>
+            <td>우선순위</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_ORDR&gt;</td>
+            <td>String</td>
+            <td>정렬순서</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_NM&gt;</td>
+            <td>String</td>
+            <td>선호명</td>
+        </tr>
+        <tr>
+            <td class="first">&lt;lstHighAptd&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>[특성(고등학생적성유형)]</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;popular&gt;</td>
+            <td></td>
+            <td></td>
+            <td>많이본</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;RANK&gt;</td>
+            <td>String</td>
+            <td>우선순위</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_ORDR&gt;</td>
+            <td>String</td>
+            <td>정렬순서</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_NM&gt;</td>
+            <td>String</td>
+            <td>선호명</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td>&lt;bookmark&gt;</td>
+            <td></td>
+            <td></td>
+            <td>관심직업</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;RANK&gt;</td>
+            <td>String</td>
+            <td>우선순위</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_ORDR&gt;</td>
+            <td>String</td>
+            <td>정렬순서</td>
+        </tr>
+        <tr>
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_NM&gt;</td>
+            <td>String</td>
+            <td>선호명</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;lstVals&gt;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>[특성(선호직업가치)]</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td>&lt;popular&gt;</td>
+            <td></td>
+            <td></td>
+            <td>많이본</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;RANK&gt;</td>
+            <td>String</td>
+            <td>우선순위</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_ORDR&gt;</td>
+            <td>String</td>
+            <td>정렬순서</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_NM&gt;</td>
+            <td>String</td>
+            <td>선호명</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td>&lt;bookmark&gt;</td>
+            <td></td>
+            <td></td>
+            <td>관심직업</td>
+        </tr>
+        <tr  class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;RANK&gt;</td>
+            <td>String</td>
+            <td>우선순위</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_ORDR&gt;</td>
+            <td>String</td>
+            <td>정렬순서</td>
+        </tr>
+        <tr class="bg">
+            <td class="first"></td>
+            <td></td>
+            <td>&lt;CD_NM&gt;</td>
+            <td>String</td>
+            <td>선호명</td>
+        </tr>
+
+        </tbody>
+    </table>
+
+    <h4 class="openApiH4">에러결과노드 상세 : 노드위치 &lt;result&gt; &lt;content&gt;</h4>
+    <table summary="에러결과노드 상세 : 노드위치 &lt;result&gt; &lt;content&gt;에 대하여 노드, 속성, 설명을 제공합니다." class="apiTable">
+        <caption>직업정보 목록 에러결과노드 상세 : 노드위치 &lt;result&gt; &lt;content&gt; - 노드, 속성, 설명</caption>
+        <colgroup>
+            <col style="width:135px" />
+            <col style="width:257px" />
+            <col />
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col" class="first">노드</th>
+            <th scope="col">속성</th>
+            <th scope="col">설명</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="first">&lt;code&gt;</td>
+            <td></td>
+            <td>결과코드(0 : 성공, 음수 : 실패)</td>
+        </tr>
+        <tr class="bg">
+            <td class="first">&lt;message&gt;</td>
+            <td></td>
+            <td>처리결과 메시지</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h3 class="openApiH3">결과 XML</h3>
+    <pre class="codeBox">&lt;?xml version = "1.0" encoding = "euc-kr" standalone="yes" ?&gt;
+
+&lt;dataSearch&gt;
+  &lt;content&gt;
+    &lt;summary&gt;- GIS(Geographic Information System)전문가는 국토공간상에 존재하는 각종 위치 및 속성정보 등을 정보화하여 활용하는 것으로 첨단정보시스템에 대한 전반적인 업무를 수행한다.  &#xd;
+- 사용자의견을 수렴하여 시스템의 구조를 설계하고, 데이터베이스, 사용자 인터페이스 및 네트워크의 기본적인 시스템구조를 설계한다. &#xd;
+- 지리정보에 사용되는 각종 데이터를 수집, 분석하여 이를 데이터베이스화 시킨다. &#xd;
+- 구성요소들에 대한 인터페이스과정을 통하여 종합적인 시스템을 구축하고, 입력된 각종 지리정보데이터를 토대로 사용자가 필요로 하는 목적에 따라 다양한 형태로 분석, 변환시키거나 조작한다.&lt;/summary&gt;
+    &lt;equalemployment&gt;보통미만&lt;/equalemployment&gt;
+    &lt;similarJob&gt;지적·측량기술자,토지측량사,사진측량·분석가,지도제작기술자&lt;/similarJob&gt;
+    &lt;job_code&gt;100001&lt;/job_code&gt;
+    &lt;totalCount&gt;454&lt;/totalCount&gt;
+    &lt;jobdicSeq&gt;1092&lt;/jobdicSeq&gt;
+    &lt;profession&gt;건설 관련직&lt;/profession&gt;
+    &lt;job_ctg_code&gt;100054&lt;/job_ctg_code&gt;
+    &lt;prospect&gt;보통이상&lt;/prospect&gt;
+    &lt;possibility&gt;보통이상&lt;/possibility&gt;
+    &lt;job&gt;GIS전문가&lt;/job&gt;
+    &lt;salery&gt;3000 만원 이상&lt;/salery&gt;
+    &lt;aptd_type_code&gt;104729&lt;/aptd_type_code&gt;
+  &lt;/content&gt;
+  &lt;content&gt;
+    &lt;summary&gt;- IT컨설턴트는 기업의 인적, 물적 자원 및 모든 조건에 관련된 자료를 수집·분석하고, 최근의 기술적 활용 자원과 현재 상태의 정보를 고려해 시스템을 구축하고 조언하거나 자문한다. &#xd;
+- 구축된 정보시스템을 통해 경영상의 개선효과, 시스템의 효율성 등에 대해 사후 모니터를 실시하며 시스템의 운용과 유지보수에 관한 조언을 한다. &#xd;
+- 프로젝트 전반을 관리하며 구축시스템의 적합성과 안정성 등을 감리하고 프로그래머와 고객요구사항을 조율한다.&#xd;
+- 기업이 업무 효율성과 생산성을 높이는 정보시스템을 갖추고 운영할 수 있도록 제반사항을 컨설팅 한다.&lt;/summary&gt;
+    &lt;equalemployment&gt;좋음&lt;/equalemployment&gt;
+    &lt;similarJob&gt;정보기술컨설턴트(IT),정보시스템컨설턴트&lt;/similarJob&gt;
+    &lt;job_code&gt;100015&lt;/job_code&gt;
+    &lt;totalCount&gt;454&lt;/totalCount&gt;
+    &lt;jobdicSeq&gt;450&lt;/jobdicSeq&gt;
+    &lt;profession&gt;정보통신 관련직&lt;/profession&gt;
+    &lt;job_ctg_code&gt;100060&lt;/job_ctg_code&gt;
+    &lt;prospect&gt;매우좋음&lt;/prospect&gt;
+    &lt;possibility&gt;매우좋음&lt;/possibility&gt;
+    &lt;job&gt;IT컨설턴트&lt;/job&gt;
+    &lt;salery&gt;4000 만원 이상&lt;/salery&gt;
+    &lt;aptd_type_code&gt;104740&lt;/aptd_type_code&gt;
+  &lt;/content&gt;
+  &lt;content&gt;
+            </pre>
+    <pre class="codeBox">&lt;?xml version = "1.0" encoding = "euc-kr" standalone="yes" ?&gt;
+
+
+&lt;dataSearch&gt;
+  &lt;content&gt;
+    &lt;summary&gt;- IT컨설턴트는 기업의 인적, 물적 자원 및 모든 조건에 관련된 자료를 수집·분석하고, 최근의 기술적 활용 자원과 현재 상태의 정보를 고려해 시스템을 구축하고 조언하거나 자문한다. &#xd;
+- 구축된 정보시스템을 통해 경영상의 개선효과, 시스템의 효율성 등에 대해 사후 모니터를 실시하며 시스템의 운용과 유지보수에 관한 조언을 한다. &#xd;
+- 프로젝트 전반을 관리하며 구축시스템의 적합성과 안정성 등을 감리하고 프로그래머와 고객요구사항을 조율한다.&#xd;
+- 기업이 업무 효율성과 생산성을 높이는 정보시스템을 갖추고 운영할 수 있도록 제반사항을 컨설팅 한다.&lt;/summary&gt;
+    &lt;lstHighAptd&gt;
+      &lt;popular&gt;
+        &lt;RANK&gt;1&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;07&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;수리·논리력&lt;/CD_NM&gt;
+        &lt;RANK&gt;2&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;12&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;자기관리능력&lt;/CD_NM&gt;
+        &lt;RANK&gt;3&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;03&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;공간지각력&lt;/CD_NM&gt;
+      &lt;/popular&gt;
+      &lt;bookmark&gt;
+        &lt;RANK&gt;1&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;07&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;수리·논리력&lt;/CD_NM&gt;
+        &lt;RANK&gt;2&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;03&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;공간지각력&lt;/CD_NM&gt;
+        &lt;RANK&gt;3&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;02&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;손재능&lt;/CD_NM&gt;
+      &lt;/bookmark&gt;
+    &lt;/lstHighAptd&gt;
+    &lt;stateofemp&gt;
+      &lt;empway&gt;- 주로 컨설팅업체나 시스템통합(SI)업체의 공개채용이나 특별채용을 통해 직업을 얻고 IT컨설턴트로 활동하게 되나 취업 즉시 IT컨설턴트가 되는 것은 아니다. 팀을 이루어 일을 진행하기 때문에 팀에 소속되어 근무를 하고, 일정한 경력과 업적이 쌓이게 되면 IT컨설턴트로서 활동하는 것이 보편적이다. 그 외에도 전문적으로 컴퓨터를 다루는 정보통신 관련 업체에서 근무를 하며 컨설턴트 활동을 하는 경우도 있다.&lt;/empway&gt;
+      &lt;employment&gt;- IT컨설턴트가 포함된 컴퓨터시스템 설계 및 분석가의 종사자수는 11,500명이며, 이 가운데 임금근로자는 10,800명(93.3%)이다.&#xd;
+- IT컨설턴트가 포함된 컴퓨터시스템 설계 및 분석가의 성비는 남자 80.6%, 여자 19.4%이며, 평균 연령은 37.3세이다. 전체적으로 평균 16.2년의 학력을 보유하고 있으며, 평균 계속 근로연수는 5.1년이다(자료: 2011-2012 Job Map).&lt;/employment&gt;
+      &lt;salery&gt;- IT컨설턴트가 포함된 컴퓨터시스템 설계 및 분석가의 월평균 수입은 386만원이다(자료: 2011-2012 Job Map).&lt;/salery&gt;
+    &lt;/stateofemp&gt;
+    &lt;job&gt;IT컨설턴트&lt;/job&gt;
+    &lt;job_possibility&gt;
+      &lt;chart_item_list&gt;
+        &lt;CHART_KEY&gt;보상&lt;/CHART_KEY&gt;
+        &lt;CHART_VALUE&gt;70&lt;/CHART_VALUE&gt;
+        &lt;CHART_KEY&gt;일자리전망&lt;/CHART_KEY&gt;
+        &lt;CHART_VALUE&gt;64&lt;/CHART_VALUE&gt;
+        &lt;CHART_KEY&gt;고용안정&lt;/CHART_KEY&gt;
+        &lt;CHART_VALUE&gt;65&lt;/CHART_VALUE&gt;
+        &lt;CHART_KEY&gt;발전가능성&lt;/CHART_KEY&gt;
+        &lt;CHART_VALUE&gt;77&lt;/CHART_VALUE&gt;
+        &lt;CHART_KEY&gt;근무여건&lt;/CHART_KEY&gt;
+        &lt;CHART_VALUE&gt;44&lt;/CHART_VALUE&gt;
+        &lt;CHART_KEY&gt;직업전문성&lt;/CHART_KEY&gt;
+        &lt;CHART_VALUE&gt;66&lt;/CHART_VALUE&gt;
+        &lt;CHART_KEY&gt;고용평등&lt;/CHART_KEY&gt;
+        &lt;CHART_VALUE&gt;58&lt;/CHART_VALUE&gt;
+      &lt;/chart_item_list&gt;
+      &lt;possibility&gt;- 기존 시스템의 재정비와 활용 극대화를 위한 컨설팅 수요가 증가함에 따라 컨설팅에 대한 수요도 꾸준히 증가하면서 IT컨설턴트에 대한 일자리전망 점수가 높게 유지될 것으로 나타났다. &#xd;
+&#xd;
+- IT컨설턴트는 높은 수준의 보상을 받고 있으며 능력에 따른 승진가능성 및 직장이동가능성 수준이 높기 때문에 발전가능성 점수가 매우 높게 나타났다. &#xd;
+&#xd;
+- 반면, 근무시간이 길고 불규칙하며 정신적 스트레스 수준이 높기 때문에 근무여건 점수는 평균보다 낮게 나타났다.&#xd;
+&lt;/possibility&gt;
+    &lt;/job_possibility&gt;
+    &lt;contact&gt;
+      &lt;MAPNG_NM&gt;한국정보통신진흥협회&lt;/MAPNG_NM&gt;
+      &lt;MAPNG_SEQ&gt;2557&lt;/MAPNG_SEQ&gt;
+      &lt;MAPNG_URL&gt;http://www.kait.or.kr&lt;/MAPNG_URL&gt;
+      &lt;MAPNG_NM&gt;한국정보화진흥원&lt;/MAPNG_NM&gt;
+      &lt;MAPNG_SEQ&gt;2441&lt;/MAPNG_SEQ&gt;
+      &lt;MAPNG_URL&gt;http://www.nia.or.kr&lt;/MAPNG_URL&gt;
+    &lt;/contact&gt;
+    &lt;GenCD&gt;
+      &lt;popular&gt;
+        &lt;PCNT1&gt;54&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;1&lt;/PCNT2&gt;
+        &lt;PCNT&gt;54.1&lt;/PCNT&gt;
+        &lt;GEN_NM&gt;남자&lt;/GEN_NM&gt;
+        &lt;PCNT1&gt;45&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;9&lt;/PCNT2&gt;
+        &lt;PCNT&gt;45.9&lt;/PCNT&gt;
+        &lt;GEN_NM&gt;여자&lt;/GEN_NM&gt;
+      &lt;/popular&gt;
+      &lt;bookmark&gt;
+        &lt;PCNT1&gt;35&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;7&lt;/PCNT2&gt;
+        &lt;PCNT&gt;35.7&lt;/PCNT&gt;
+        &lt;GEN_NM&gt;남자&lt;/GEN_NM&gt;
+        &lt;PCNT1&gt;64&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;3&lt;/PCNT2&gt;
+        &lt;PCNT&gt;64.3&lt;/PCNT&gt;
+        &lt;GEN_NM&gt;여자&lt;/GEN_NM&gt;
+      &lt;/bookmark&gt;
+    &lt;/GenCD&gt;
+    &lt;prepareway&gt;
+      &lt;preparation&gt;- IT컨설턴트가 되기 위해서는 대학교 졸업 이상의  학력이 필요하며 경영학과, 정보통신학과, 컴퓨터공학과, 전자공학과, 전산학과, 정보처리학과, 경영정보학과, 회계학과 등을 전공하면 유리하다.&lt;/preparation&gt;
+      &lt;training&gt;&lt;/training&gt;
+      &lt;certification&gt;- 관련자격증으로는 정보관리기술사, 전자계산기조직응용기사, 정보처리기사 등이 있다. &#xd;
+- 전자계산기조직응용기사는 크기와 성능이 각기 다른 컴퓨터를 업무의 양과 성격에 알맞게 설치하고 효과적으로 운영, 관리하는데 있어서 기술적인 업무를 담당하는 전문적인 기술인력 양성을 위한 자격이다.&lt;/certification&gt;
+    &lt;/prepareway&gt;
+    &lt;capacity_major&gt;
+      &lt;capacity&gt;정보처리기능사, 정보처리산업기사, 정보처리기사, 정보관리기술사, 정보통신산업기사, 정보통신기사, 정보통신기술사, 컴퓨터운용사&lt;/capacity&gt;
+      &lt;major&gt;
+        &lt;TOTAL_CNT&gt;6&lt;/TOTAL_CNT&gt;
+        &lt;RNUM&gt;1&lt;/RNUM&gt;
+        &lt;MAJOR_SEQ&gt;22&lt;/MAJOR_SEQ&gt;
+        &lt;MAJOR_NM&gt;경영정보과&lt;/MAJOR_NM&gt;
+        &lt;CNTNTS_URL&gt;https://www.career.go.kr/cnet/front/base/major/FunivMajorView.do?SEQ=&lt;/CNTNTS_URL&gt;
+        &lt;TOTAL_CNT&gt;6&lt;/TOTAL_CNT&gt;
+        &lt;RNUM&gt;2&lt;/RNUM&gt;
+        &lt;MAJOR_SEQ&gt;23&lt;/MAJOR_SEQ&gt;
+        &lt;MAJOR_NM&gt;경영학과&lt;/MAJOR_NM&gt;
+        &lt;CNTNTS_URL&gt;https://www.career.go.kr/cnet/front/base/major/FunivMajorView.do?SEQ=&lt;/CNTNTS_URL&gt;
+        &lt;TOTAL_CNT&gt;6&lt;/TOTAL_CNT&gt;
+        &lt;RNUM&gt;3&lt;/RNUM&gt;
+        &lt;MAJOR_SEQ&gt;489&lt;/MAJOR_SEQ&gt;
+        &lt;MAJOR_NM&gt;디지털정보과&lt;/MAJOR_NM&gt;
+        &lt;CNTNTS_URL&gt;https://www.career.go.kr/cnet/front/base/major/FunivMajorView.do?SEQ=&lt;/CNTNTS_URL&gt;
+        &lt;TOTAL_CNT&gt;6&lt;/TOTAL_CNT&gt;
+        &lt;RNUM&gt;4&lt;/RNUM&gt;
+        &lt;MAJOR_SEQ&gt;486&lt;/MAJOR_SEQ&gt;
+        &lt;MAJOR_NM&gt;인터넷정보학과&lt;/MAJOR_NM&gt;
+        &lt;CNTNTS_URL&gt;https://www.career.go.kr/cnet/front/base/major/FunivMajorView.do?SEQ=&lt;/CNTNTS_URL&gt;
+        &lt;TOTAL_CNT&gt;6&lt;/TOTAL_CNT&gt;
+        &lt;RNUM&gt;5&lt;/RNUM&gt;
+        &lt;MAJOR_SEQ&gt;490&lt;/MAJOR_SEQ&gt;
+        &lt;MAJOR_NM&gt;정보통신공학과&lt;/MAJOR_NM&gt;
+        &lt;CNTNTS_URL&gt;https://www.career.go.kr/cnet/front/base/major/FunivMajorView.do?SEQ=&lt;/CNTNTS_URL&gt;
+        &lt;TOTAL_CNT&gt;6&lt;/TOTAL_CNT&gt;
+        &lt;RNUM&gt;6&lt;/RNUM&gt;
+        &lt;MAJOR_SEQ&gt;491&lt;/MAJOR_SEQ&gt;
+        &lt;MAJOR_NM&gt;정보통신과&lt;/MAJOR_NM&gt;
+        &lt;CNTNTS_URL&gt;https://www.career.go.kr/cnet/front/base/major/FunivMajorView.do?SEQ=&lt;/CNTNTS_URL&gt;
+      &lt;/major&gt;
+    &lt;/capacity_major&gt;
+    &lt;similarJob&gt;정보기술컨설턴트(IT), 정보시스템컨설턴트&lt;/similarJob&gt;
+    &lt;division&gt;
+      &lt;cnet_job_dvs&gt;전산/정보통신분야&lt;/cnet_job_dvs&gt;
+      &lt;std_code_nm&gt;2221컴퓨터시스템 설계 및 분석가&lt;/std_code_nm&gt;
+      &lt;emplym_code_nm&gt;2021컴퓨터시스템 설계 및 분석가&lt;/emplym_code_nm&gt;
+    &lt;/division&gt;
+    &lt;lstVals&gt;
+      &lt;popular&gt;
+        &lt;RANK&gt;1&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;01&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;능력발휘&lt;/CD_NM&gt;
+        &lt;RANK&gt;2&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;03&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;보수&lt;/CD_NM&gt;
+        &lt;RANK&gt;3&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;07&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;자기계발&lt;/CD_NM&gt;
+      &lt;/popular&gt;
+      &lt;bookmark&gt;
+        &lt;RANK&gt;1&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;03&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;보수&lt;/CD_NM&gt;
+        &lt;RANK&gt;2&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;01&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;능력발휘&lt;/CD_NM&gt;
+        &lt;RANK&gt;3&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;07&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;자기계발&lt;/CD_NM&gt;
+      &lt;/bookmark&gt;
+    &lt;/lstVals&gt;
+    &lt;lstMiddleAptd&gt;
+      &lt;popular&gt;
+        &lt;RANK&gt;1&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;07&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;수리·논리력&lt;/CD_NM&gt;
+        &lt;RANK&gt;2&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;01&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;신체·운동능력&lt;/CD_NM&gt;
+        &lt;RANK&gt;3&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;08&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;자기성찰능력&lt;/CD_NM&gt;
+      &lt;/popular&gt;
+      &lt;bookmark&gt;
+        &lt;RANK&gt;1&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;07&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;수리·논리력&lt;/CD_NM&gt;
+        &lt;RANK&gt;2&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;03&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;공간지각력&lt;/CD_NM&gt;
+        &lt;RANK&gt;3&lt;/RANK&gt;
+        &lt;CD_ORDR&gt;05&lt;/CD_ORDR&gt;
+        &lt;CD_NM&gt;창의력&lt;/CD_NM&gt;
+      &lt;/bookmark&gt;
+    &lt;/lstMiddleAptd&gt;
+    &lt;SchClass&gt;
+      &lt;popular&gt;
+        &lt;PCNT1&gt;52&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;7&lt;/PCNT2&gt;
+        &lt;SCH_CLASS_NM&gt;중학생&lt;/SCH_CLASS_NM&gt;
+        &lt;PCNT&gt;52.7&lt;/PCNT&gt;
+        &lt;PCNT1&gt;47&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;3&lt;/PCNT2&gt;
+        &lt;SCH_CLASS_NM&gt;고등학생&lt;/SCH_CLASS_NM&gt;
+        &lt;PCNT&gt;47.3&lt;/PCNT&gt;
+      &lt;/popular&gt;
+      &lt;bookmark&gt;
+        &lt;PCNT1&gt;43&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;8&lt;/PCNT2&gt;
+        &lt;SCH_CLASS_NM&gt;중학생&lt;/SCH_CLASS_NM&gt;
+        &lt;PCNT&gt;43.8&lt;/PCNT&gt;
+        &lt;PCNT1&gt;56&lt;/PCNT1&gt;
+        &lt;PCNT2&gt;2&lt;/PCNT2&gt;
+        &lt;SCH_CLASS_NM&gt;고등학생&lt;/SCH_CLASS_NM&gt;
+        &lt;PCNT&gt;56.2&lt;/PCNT&gt;
+      &lt;/bookmark&gt;
+    &lt;/SchClass&gt;
+    &lt;aptitude&gt;- IT컨설턴트는 최적의 정보시스템을 고객에게 제시해 주기 위해 컴퓨터운용 능력이 필요하며 기업의 경영, 회계, 인사 등에 대한 전문지식이 필요하다. &#xd;
+- 고객과 의사소통을 통해 업무가 이루어지므로 신뢰감을 줄 수 있어야 하고 책임감, 리더쉽, 원만한 대인관계가 필요하다.&lt;/aptitude&gt;
+    &lt;ability&gt;창의력, 수리논리력&lt;/ability&gt;
+  &lt;/content&gt;
+&lt;/dataSearch&gt;
+
+
+            </pre>
+    <h3 class="openApiH3">직업정보 검색 코드값</h3>
+    <table summary="직업정보 검색 코드값에 대하여 program, parameter, value, name, bigo를 제공합니다." class="apiTable tblbg">
+        <caption>직업정보 검색 코드값 - 커리어넷 직업 분류별</caption>
+        <colgroup>
+            <col style="width:140px"/>
+            <col style="width:110px"/>
+            <col style="width:165px"/>
+            <col style="width:235px"/>
+            <col/>
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col" class="first">program</th>
+            <th scope="col">parameter</th>
+            <th scope="col">value</th>
+            <th scope="col">name</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="first" rowspan="35">커리어넷직업 분류별</td>
+            <td rowspan="35">category</td>
+            <td>100041</td>
+            <td>관리직(임원·부서장)</td>
+        </tr>
+        <tr>
+            <td>100042</td>
+            <td>경영·행정·사무직</td>
+        </tr>
+        <tr>
+            <td>100043</td>
+            <td>금융·보험직</td>
+        </tr>
+        <tr>
+            <td>105096</td>
+            <td>인문·사회과학 연구직</td>
+        </tr>
+        <tr>
+            <td>105097</td>
+            <td>자연·생명과학 연구직</td>
+        </tr>
+        <tr>
+            <td>105098</td>
+            <td>정보통신 연구개발직 및 공학기술직</td>
+        </tr>
+        <tr>
+            <td>105099</td>
+            <td>건설·채굴 연구개발직 및 공학기술직</td>
+        </tr>
+        <tr>
+            <td>105100</td>
+            <td>제조 연구개발직 및 공학기술직</td>
+        </tr>
+        <tr>
+            <td>105101</td>
+            <td>교육직</td>
+        </tr>
+        <tr>
+            <td>105102</td>
+            <td>법률직</td>
+        </tr>
+        <tr>
+            <td>100047</td>
+            <td>사회복지·종교직</td>
+        </tr>
+        <tr>
+            <td>105103</td>
+            <td>경찰·소방·교도직</td>
+        </tr>
+        <tr>
+            <td>100064</td>
+            <td>군인</td>
+        </tr>
+        <tr>
+            <td>100046</td>
+            <td>보건·의료직</td>
+        </tr>
+        <tr>
+            <td>100048</td>
+            <td>예술·디자인·방송직</td>
+        </tr>
+        <tr>
+            <td>105104</td>
+            <td>스포츠·레크리에이션직</td>
+        </tr>
+        <tr>
+            <td>105105</td>
+            <td>미용·예식 서비스직</td>
+        </tr>
+        <tr>
+            <td>105106</td>
+            <td>여행·숙박·오락 서비스직</td>
+        </tr>
+        <tr>
+            <td>100053</td>
+            <td>음식 서비스직</td>
+        </tr>
+        <tr>
+            <td>105107</td>
+            <td>경호·경비직</td>
+        </tr>
+        <tr>
+            <td>105108</td>
+            <td>돌봄 서비스직(간병·육아)</td>
+        </tr>
+        <tr>
+            <td>105109</td>
+            <td>청소 및 기타 개인서비스직</td>
+        </tr>
+        <tr>
+            <td>100050</td>
+            <td>영업·판매직</td>
+        </tr>
+        <tr>
+            <td>100049</td>
+            <td>운전·운송직</td>
+        </tr>
+        <tr>
+            <td>105110</td>
+            <td>건설·채굴직</td>
+        </tr>
+        <tr>
+            <td>105111</td>
+            <td>기계 설치·정비·생산직</td>
+        </tr>
+        <tr>
+            <td>105112</td>
+            <td>금속·재료 설치·정비·생산직</td>
+        </tr>
+        <tr>
+            <td>105113</td>
+            <td>전기·전자 설치·정비·생산직</td>
+        </tr>
+        <tr>
+            <td>105114</td>
+            <td>정보통신 설치·정비직</td>
+        </tr>
+        <tr>
+            <td>105115</td>
+            <td>화학·환경 설치·정비·생산직</td>
+        </tr>
+        <tr>
+            <td>105116</td>
+            <td>섬유·의복 생산직</td>
+        </tr>
+        <tr>
+            <td>100061</td>
+            <td>식품 가공·생산직</td>
+        </tr>
+        <tr>
+            <td>105117</td>
+            <td>인쇄·목재·공예 및 기타 설치·정비·생산직</td>
+        </tr>
+        <tr>
+            <td>105118</td>
+            <td>제조 단순직</td>
+        </tr>
+        <tr>
+            <td>100063</td>
+            <td>농림어업직</td>
+        </tr>
+
+        </tbody>
+    </table>
+
+    <h3 class="openApiH3">직업정보 검색 코드값</h3>
+    <table summary="직업정보 검색 코드값에 대하여 program, parameter, value, name, bigo를 제공합니다." class="apiTable tblbg">
+        <caption>직업정보 검색 코드값 - 능력별 표</caption>
+        <colgroup>
+            <col style="width:140px"/>
+            <col style="width:110px"/>
+            <col style="width:165px"/>
+            <col style="width:235px"/>
+            <col/>
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col" class="first">program</th>
+            <th scope="col">parameter</th>
+            <th scope="col">value</th>
+            <th scope="col">name</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="first" rowspan="13">능력 별</td>
+            <td rowspan="13">pgubun</td>
+            <td>100829</td>
+            <td>신체·운동능력</td>
+        </tr>
+        <tr>
+            <td>100830</td>
+            <td>손재능</td>
+        </tr>
+        <tr>
+            <td>100831</td>
+            <td>공간지각력</td>
+        </tr>
+        <tr>
+            <td>100832</td>
+            <td>음악능력</td>
+        </tr>
+        <tr>
+            <td>100833</td>
+            <td>창의력</td>
+        </tr>
+        <tr>
+            <td>100834</td>
+            <td>언어능력</td>
+        </tr>
+        <tr>
+            <td>100835</td>
+            <td>수리·논리력</td>
+        </tr>
+        <tr>
+            <td>100836</td>
+            <td>자기성찰능력</td>
+        </tr>
+        <tr>
+            <td>100837</td>
+            <td>대인관계능력</td>
+        </tr>
+        <tr>
+            <td>100838</td>
+            <td>자연친화력</td>
+        </tr>
+        <tr>
+            <td>100839</td>
+            <td>예술시각능력</td>
+        </tr>
+
+        </tbody>
+    </table>
+
+    <table summary="직업정보 검색 코드값에 대하여 program, parameter, value, name, bigo(능력)을 제공합니다." class="apiTable tblbg">
+        <caption>직업정보 검색 코드값 - 적성유형별 표</caption>
+        <colgroup>
+            <col style="width:120px"/>
+            <col style="width:110px"/>
+            <col style="width:165px"/>
+            <col/>
+            <col/>
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col" class="first">program</th>
+            <th scope="col">parameter</th>
+            <th scope="col">value</th>
+            <th scope="col">name</th>
+            <th scope="col">pgubun<br/>(능력)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="first" rowspan="43">적성유형별</td>
+            <td rowspan="43">aptd_type_code</td>
+            <td>104718</td>
+            <td>운동 관련직</td>
+            <td>신체·운동능력</td>
+        </tr>
+        <tr>
+            <td>104719</td>
+            <td>무용 관련직</td>
+            <td>신체·운동능력</td>
+        </tr>
+        <tr>
+            <td>104720</td>
+            <td>안전 관련직</td>
+            <td>신체·운동능력</td>
+        </tr>
+        <tr>
+            <td>104721</td>
+            <td>일반운전 관련직</td>
+            <td>신체·운동능력</td>
+        </tr>
+        <tr>
+            <td>104722</td>
+            <td>기능직</td>
+            <td>손재능</td>
+        </tr>
+        <tr>
+            <td>104723</td>
+            <td>의복제조 관련직</td>
+            <td>손재능</td>
+        </tr>
+        <tr>
+            <td>104724</td>
+            <td>조리 관련직</td>
+            <td>손재능</td>
+        </tr>
+        <tr>
+            <td>104725</td>
+            <td>이미용 관련직</td>
+            <td>손재능</td>
+        </tr>
+        <tr>
+            <td>104726</td>
+            <td>기타 게임·오락·스포츠 관련직</td>
+            <td>공간시각능력<br/>공간지각력<br/>손재능</td>
+        </tr>
+        <tr>
+            <td>104727</td>
+            <td>고급 운전 관련직</td>
+            <td>공간시각능력<br/>공간지각력</td>
+        </tr>
+        <tr>
+            <td>104728</td>
+            <td>공학 기술직</td>
+            <td>공간시각능력<br/>공간지각력<br/>수리·논리력</td>
+        </tr>
+        <tr>
+            <td>104729</td>
+            <td>공학 전문직</td>
+            <td>공간시각능력<br/>공간지각력<br/>수리·논리력</td>
+        </tr>
+        <tr>
+            <td>104730</td>
+            <td>음악 관련직</td>
+            <td>음악능력</td>
+        </tr>
+        <tr>
+            <td>104731</td>
+            <td>악기 관련직</td>
+            <td>음악능력</td>
+        </tr>
+        <tr>
+            <td>104732</td>
+            <td>연기 관련직</td>
+            <td>창의력</td>
+        </tr>
+        <tr>
+            <td>104733</td>
+            <td>웹·게임·애니메이션 관련직</td>
+            <td>공간시각능력<br/>예술시각능력<br/>창의력</td>
+        </tr>
+        <tr>
+            <td>104734</td>
+            <td>미술 및 공예 관련직</td>
+            <td>공간시각능력<br/>예술시각능력<br/>창의력</td>
+        </tr>
+        <tr>
+            <td>104735</td>
+            <td>기타 특수 예술직</td>
+            <td>공간시각능력<br/>예술시각능력<br/>창의력</td>
+        </tr>
+        <tr>
+            <td>104736</td>
+            <td>사회서비스직</td>
+            <td>자기성찰능력</td>
+        </tr>
+        <tr>
+            <td>104737</td>
+            <td>인문계 교육 관련직</td>
+            <td>수리·논리력<br/>언어능력<br/>자기성찰능력</td>
+        </tr>
+        <tr>
+            <td>104738</td>
+            <td>이공계 교육 관련직</td>
+            <td>수리·논리력<br/>자기성찰능력</td>
+        </tr>
+        <tr>
+            <td>104739</td>
+            <td>의료관련 전문직</td>
+            <td>수리·논리력<br/>자기성찰능력</td>
+        </tr>
+        <tr>
+            <td>104740</td>
+            <td>IT관련전문직</td>
+            <td>수리·논리력</td>
+        </tr>
+        <tr>
+            <td>104741</td>
+            <td>금융 및 경영 관련직</td>
+            <td>수리·논리력</td>
+        </tr>
+        <tr>
+            <td>104742</td>
+            <td>인문 및 사회과학 관련직</td>
+            <td>수리·논리력<br/>언어능력</td>
+        </tr>
+        <tr>
+            <td>104743</td>
+            <td>회계 관련직</td>
+            <td>수리·논리력</td>
+        </tr>
+        <tr>
+            <td>104744</td>
+            <td>언어 관련 전문직</td>
+            <td>언어능력</td>
+        </tr>
+        <tr>
+            <td>104745</td>
+            <td>작가 관련직</td>
+            <td>언어능력<br/>창의력</td>
+        </tr>
+        <tr>
+            <td>104746</td>
+            <td>교육관련 서비스직</td>
+            <td>대인관계능력<br/>자기성찰능력</td>
+        </tr>
+        <tr>
+            <td>104747</td>
+            <td>기획서비스직</td>
+            <td>대인관계능력</td>
+        </tr>
+        <tr>
+            <td>104748</td>
+            <td>매니지먼트 관련직</td>
+            <td>대인관계능력</td>
+        </tr>
+        <tr>
+            <td>104749</td>
+            <td>보건의료 관련 서비스직</td>
+            <td>대인관계능력</td>
+        </tr>
+        <tr>
+            <td>104750</td>
+            <td>사무 관련직</td>
+            <td>대인관계능력</td>
+        </tr>
+        <tr>
+            <td>104751</td>
+            <td>영업관련 서비스직</td>
+            <td>대인관계능력</td>
+        </tr>
+        <tr>
+            <td>104752</td>
+            <td>일반 서비스직</td>
+            <td>대인관계능력</td>
+        </tr>
+        <tr>
+            <td>104753</td>
+            <td>디자인 관련직</td>
+            <td>공간시각능력<br/>예술시각능력<br/>창의력</td>
+        </tr>
+        <tr>
+            <td>104754</td>
+            <td>영상 관련직</td>
+            <td>공간시각능력<br/>예술시각능력</td>
+        </tr>
+        <tr>
+            <td>104755</td>
+            <td>예술기획 관련직</td>
+            <td>공간시각능력<br/>예술시각능력<br/>창의력</td>
+        </tr>
+        <tr>
+            <td>104756</td>
+            <td>자연친화 관련직</td>
+            <td>자연친화력</td>
+        </tr>
+        <tr>
+            <td>104757</td>
+            <td>농생명산업 관련직</td>
+            <td>자연친화력</td>
+        </tr>
+        <tr>
+            <td>104758</td>
+            <td>환경관련 전문직</td>
+            <td>자연친화력</td>
+        </tr>
+        <tr>
+            <td>104759</td>
+            <td>법률 및 사회활동 관련직</td>
+            <td>수리·논리력<br/>언어능력<br/>자기성찰능력</td>
+        </tr>
+        <tr>
+            <td>104760</td>
+            <td>이학 전문직</td>
+            <td>수리·논리력</td>
+        </tr>
+
+
+        </tbody>
+    </table>
+
+</div>
+</div>
+
+
+</div>
+</div>
+
+<div class="apiFooter" id="apiFooter">
+    Copyright ⓒ 2012 커리어넷 All rights reserved.
+</div>
+
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-90429556-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-V5SV7Z7L4Q"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-V5SV7Z7L4Q');
+</script><!-- 히든처리페이지 -->
+<iframe id="_cm" name="_cm"  title="빈프레임" style="display:none"></iframe>
+</body>
+</html>

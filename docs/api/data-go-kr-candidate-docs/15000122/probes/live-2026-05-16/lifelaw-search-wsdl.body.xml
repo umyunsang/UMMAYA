@@ -1,0 +1,168 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions name="LifeLawSearchControllerImplService" targetNamespace="http://impl.soap.lifelawsearch.openapi.lifelaw/" xmlns:ns1="http://openapi.affis.go.kr" xmlns:ns3="http://cxf.apache.org/bindings/xformat" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://impl.soap.lifelawsearch.openapi.lifelaw/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <wsdl:import location="https://www.easylaw.go.kr/OPENAPI/soap/LifeLawSearchService?wsdl=LifeLawSearchController.wsdl" namespace="http://openapi.affis.go.kr">
+    </wsdl:import>
+  <wsdl:binding name="LifeLawSearchControllerImplServiceSoapBinding" type="ns1:LifeLawSearchController">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="getSearchInterrestRuleList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchInterrestRuleList">
+        <soap:header message="ns1:getSearchInterrestRuleList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchInterrestRuleListResponse">
+        <soap:header message="ns1:getSearchInterrestRuleListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchConstCourtPrecedentList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchConstCourtPrecedentList">
+        <soap:header message="ns1:getSearchConstCourtPrecedentList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchConstCourtPrecedentListResponse">
+        <soap:header message="ns1:getSearchConstCourtPrecedentListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchGroupList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchGroupList">
+        <soap:header message="ns1:getSearchGroupList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchGroupListResponse">
+        <soap:header message="ns1:getSearchGroupListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchAskNoticeList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchAskNoticeList">
+        <soap:header message="ns1:getSearchAskNoticeList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchAskNoticeListResponse">
+        <soap:header message="ns1:getSearchAskNoticeListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchAadminRefereeList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchAadminRefereeList">
+        <soap:header message="ns1:getSearchAadminRefereeList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchAadminRefereeListResponse">
+        <soap:header message="ns1:getSearchAadminRefereeListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchLawInterList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchLawInterList">
+        <soap:header message="ns1:getSearchLawInterList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchLawInterListResponse">
+        <soap:header message="ns1:getSearchLawInterListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchSuperMePrecedentList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchSuperMePrecedentList">
+        <soap:header message="ns1:getSearchSuperMePrecedentList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchSuperMePrecedentListResponse">
+        <soap:header message="ns1:getSearchSuperMePrecedentListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getMaskMAnswerLawNameList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getMaskMAnswerLawNameList">
+        <soap:header message="ns1:getMaskMAnswerLawNameList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getMaskMAnswerLawNameListResponse">
+        <soap:header message="ns1:getMaskMAnswerLawNameListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchGroupAreaList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchGroupAreaList">
+        <soap:header message="ns1:getSearchGroupAreaList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchGroupAreaListResponse">
+        <soap:header message="ns1:getSearchGroupAreaListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchLifeAreaList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchLifeAreaList">
+        <soap:header message="ns1:getSearchLifeAreaList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchLifeAreaListResponse">
+        <soap:header message="ns1:getSearchLifeAreaListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getMaskMAnswerSearchContentList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getMaskMAnswerSearchContentList">
+        <soap:header message="ns1:getMaskMAnswerSearchContentList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getMaskMAnswerSearchContentListResponse">
+        <soap:header message="ns1:getMaskMAnswerSearchContentListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSearchAllKeywordList">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getSearchAllKeywordList">
+        <soap:header message="ns1:getSearchAllKeywordList" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="parameters" use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getSearchAllKeywordListResponse">
+        <soap:header message="ns1:getSearchAllKeywordListResponse" part="ComMsgHeader" use="literal">
+        </soap:header>
+        <soap:body parts="result" use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="LifeLawSearchControllerImplService">
+    <wsdl:port binding="tns:LifeLawSearchControllerImplServiceSoapBinding" name="LifeLawSearchControllerImplPort">
+      <soap:address location="https://www.easylaw.go.kr/OPENAPI/soap/LifeLawSearchService" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

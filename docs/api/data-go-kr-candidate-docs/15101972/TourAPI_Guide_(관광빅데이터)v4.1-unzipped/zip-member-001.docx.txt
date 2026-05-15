@@ -1,0 +1,203 @@
+한국관광공사 빅데이터 정보 서비스
+한국관광공사 빅데이터 정보활용 매뉴얼
+문서버전 :Ver4.1
+개정 이력
+목 차
+I.    서비스 개요    4
+1)    TourAPI 소개    4
+2)    TourAPI제공서비스    4
+3)    활용 홈페이지    5
+II.    인증키 활용 및 API호출 방법    5
+1)    REST방식의 URL 요청 예시    5
+2)    서비스키(인증키) 인코딩 방법    5
+3)    요청 파라미터에 서비스명 기재    5
+III.    API 서비스 명세    6
+1)    서비스 명세 및 코드표    6
+2)    [광역 지자체 지역방문자수 집계 데이터 정보 조회] 오퍼레이션 명세    9
+3)    [기초 지자체 지역방문자수 집계 데이터 정보 조회] 오퍼레이션 명세    11
+서비스 개요
+TourAPI 소개
+한국관광공사는 국가정보자원의 개방 및 공유 정책에 부흥하여 아래와 같은 OpenAPI 서비스를
+제공합니다.
+- 국문 및 다국어(영문,일문,중문간체,중문번체,독문,불문,서문,노문) 서비스 (9종)
+- 국문 무장애 여행 정보 서비스
+- 생태관광정보 서비스
+- 관광사진갤러리 서비스
+- 고캠핑정보 서비스
+- 관광지 오디오 가이드정보 서비스
+- 관광 빅데이터 정보 서비스
+- 두루누비 정보 서비스
+- 외래객 관광 정보 서비스
+- 관광 채용 정보 서비스
+TourAPI제공서비스
+TourAPI에서제공하는서비스내용은아래와같습니다.
+활용 홈페이지
+전체적인 관광정보 서비스 기획 및 개발 흐름의 이해를 돕고자 Guide 사이트를 운영하고 있습니다.
+추가적인 정보를 원하시면 아래 사이트를 방문하시기 바랍니다.
+※ TourAPI4.0 활용 사이트 : https://data.go.kr/
+인증키 활용 및 API호출 방법
+- 개발계정은 일 1,000건의 트래픽을 제공합니다.
+- 개발계정은 자동승인으로 활용 신청 후, 약 30분 이후에 사용이 가능합니다.
+(공공데이터포털과 한국관광공사 동기화)
+REST방식의 URL 요청 예시
+응답 표준은 XML 이며, JSON을 요청할 경우“&_type=json”을 추가하여 요청합니다.
+- Json 요청 :
+http://apis.data.go.kr/B551011/DataLabService/metcoRegnVisitrDDList?serviceKey=ServiceKey&numOfRows=10&pageNo=1&MobileOS=ETC&MobileApp=TestApp&_type=json
+서비스키(인증키) 인코딩 방법
+- 2015년 1월 이전에 공공데이터포털에서 받은 인증키 경우,
+String myKey = “발급 받은 인증키”;
+String serviceKey    = URLEncoder.encode(myKey, "UTF-8");
+(TourAPI의 모든 Character Set은 UTF-8 설정)
+- 2015년 1월 이후에 공공데이터포털에서 받은 인증키 경우, 인코딩 불필요
+요청 파라미터에 서비스명 기재
+MobileApp 파라미터는 서비스(웹,앱 등)별로 활용 통계를 산출하기 위한 항목입니다.
+URL요청 시 반드시 기재 부탁드립니다.
+http://apis.data.go.kr/B551011/DataLabService/metcoRegnVisitrDDList?serviceKey=ServiceKey&numOfRows=10&pageNo=1&MobileOS=AND&MobileApp=appName
+API 서비스 명세
+서비스 명세 및 코드표
+서비스 개요
+서비스 명세
+공공데이터포털 에러코드
+공공데이터포털에서 출력되는 오류메세지는 XML로만 출력되며, 형태는 아래와 같습니다.
+<OpenAPI_ServiceResponse>
+<cmmMsgHeader>
+<errMsg>SERVICE ERROR</errMsg>
+<returnAuthMsg>SERVICE_KEY_IS_NOT_REGISTERED_ERROR</returnAuthMsg>
+<returnReasonCode>30</returnReasonCode>
+</cmmMsgHeader>
+</OpenAPI_ServiceResponse>
+ 제공기관 에러 코드
+[광역 지자체 지역방문자수 집계 데이터 정보 조회] 오퍼레이션 명세
+오퍼레이션 내용
+요청 메시지 (Request Parameter)
+항목구분 :필수(1), 옵션(0)
+응답 메시지 (Response Message)– XML,Json에서“item”노드부터는 알파벳 순서로 정렬됨
+항목구분 :필수(1), 옵션(0)
+요청/응답 예제
+[기초 지자체 지역방문자수 집계 데이터 정보 조회] 오퍼레이션 명세
+오퍼레이션 내용
+요청 메시지 (Request Parameter)
+항목구분 :필수(1), 옵션(0)
+응답 메시지 (Response Message) – XML,Json에서“item”노드부터는 알파벳 순서로 정렬됨
+항목구분 :필수(1), 옵션(0)
+요청/응답 예제
+버 전    변경일    변경 사유    변경 내용    작성자    승인
+1.0    2021-05-27    최초작성    최초작성    최성훈    홍사권
+1.1    2021-08-11    신규 추가    신규 오퍼레이션 추가    박성회    홍사권
+1.2    2021-10-06    내용 변경    샘플 URL에 누락된필수입력 파라미터 추가,샘플 데이터 현행화    “    “
+4.0    2022-08-02    내용 변경    TourAPI4.0에 따른 문서 개정    “    “
+4.1    2024-03-27    내용 변경    서비스 구성도 이미지 변경.    “    “
+서비스 정보    서비스ID    서비스ID    DataLabService    DataLabService    DataLabService    DataLabService
+서비스 정보    서비스명(국문)    서비스명(국문)    한국관광공사 관광빅데이터 정보 서비스    한국관광공사 관광빅데이터 정보 서비스    한국관광공사 관광빅데이터 정보 서비스    한국관광공사 관광빅데이터 정보 서비스
+서비스 정보    서비스명(영문)    서비스명(영문)    DataLabService    DataLabService    DataLabService    DataLabService
+서비스 정보    서비스 설명    서비스 설명    이동통신,신용카드,내비게이션,관광통계,조사연구 등 다양한 관광 빅데이터 및 융합분석 서비스인 ‘데이터랩(DataLab)’의  / 지자체별 방문자수, 관광지별 혼잡도 및 소요시간 정보등을 / 제공합니다.    이동통신,신용카드,내비게이션,관광통계,조사연구 등 다양한 관광 빅데이터 및 융합분석 서비스인 ‘데이터랩(DataLab)’의  / 지자체별 방문자수, 관광지별 혼잡도 및 소요시간 정보등을 / 제공합니다.    이동통신,신용카드,내비게이션,관광통계,조사연구 등 다양한 관광 빅데이터 및 융합분석 서비스인 ‘데이터랩(DataLab)’의  / 지자체별 방문자수, 관광지별 혼잡도 및 소요시간 정보등을 / 제공합니다.    이동통신,신용카드,내비게이션,관광통계,조사연구 등 다양한 관광 빅데이터 및 융합분석 서비스인 ‘데이터랩(DataLab)’의  / 지자체별 방문자수, 관광지별 혼잡도 및 소요시간 정보등을 / 제공합니다.
+서비스 보안    서비스 인증/권한    서비스 인증/권한    [O]서비스 Key    [ ]인증서(GPKI) / [ ]Basic(ID/PW)  [ ]없음    [O]서비스 Key    [ ]인증서(GPKI) / [ ]Basic(ID/PW)  [ ]없음    [O]서비스 Key    [ ]인증서(GPKI) / [ ]Basic(ID/PW)  [ ]없음    [ ]WS-Security
+서비스 보안    메시지 레벨 암호화    메시지 레벨 암호화    [ ]전자서명  [ ]암호화   [O]없음    [ ]전자서명  [ ]암호화   [O]없음    [ ]전자서명  [ ]암호화   [O]없음    [ ]WS-Security
+서비스 보안    전송 레벨 암호화    전송 레벨 암호화    [ O ]HTTPS  [O]HTTP    [ O ]HTTPS  [O]HTTP    [ O ]HTTPS  [O]HTTP    [ O ]HTTPS  [O]HTTP
+적용 기술 수준    인터페이스 표준    인터페이스 표준    [ ]SOAP 1.2 / (PRC-Encoded, Document Literal, Document Literal Wrapped) / [O]REST (GET) / [ ]RSS 1.0  [ ]RSS 2.0  [ ]Atom 1.0  [ ]기타    [ ]SOAP 1.2 / (PRC-Encoded, Document Literal, Document Literal Wrapped) / [O]REST (GET) / [ ]RSS 1.0  [ ]RSS 2.0  [ ]Atom 1.0  [ ]기타    [ ]SOAP 1.2 / (PRC-Encoded, Document Literal, Document Literal Wrapped) / [O]REST (GET) / [ ]RSS 1.0  [ ]RSS 2.0  [ ]Atom 1.0  [ ]기타    [ ]SOAP 1.2 / (PRC-Encoded, Document Literal, Document Literal Wrapped) / [O]REST (GET) / [ ]RSS 1.0  [ ]RSS 2.0  [ ]Atom 1.0  [ ]기타
+적용 기술 수준    교환 데이터 표준    교환 데이터 표준    [O]XML   [O]JSON   [ ]MIME   []MTOM    [O]XML   [O]JSON   [ ]MIME   []MTOM    [O]XML   [O]JSON   [ ]MIME   []MTOM    [O]XML   [O]JSON   [ ]MIME   []MTOM
+서비스 URL    개발환경    개발환경    http://apis.data.go.kr/B551011//DataLabService    http://apis.data.go.kr/B551011//DataLabService    http://apis.data.go.kr/B551011//DataLabService    http://apis.data.go.kr/B551011//DataLabService
+서비스 URL    운영환경    운영환경    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService
+서비스 WADL    개발환경    개발환경    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService
+서비스 WADL    운영환경    운영환경    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService    http://apis.data.go.kr/B551011/DataLabService
+서비스 배포정보    서비스 버전    서비스 버전    4.0    4.0    4.0    4.0
+서비스 배포정보    서비스 시작일    서비스 시작일    2022-08-02    배포 일자    N/A    N/A
+서비스 배포정보    서비스 이력    서비스 이력    N/A    N/A    N/A    N/A
+메시지 교환 유형    [O]Request-ResPonse   [ ]Publish-Subscribe / [ ]Fire-and-Forgot    [ ]Notification    [O]Request-ResPonse   [ ]Publish-Subscribe / [ ]Fire-and-Forgot    [ ]Notification    [O]Request-ResPonse   [ ]Publish-Subscribe / [ ]Fire-and-Forgot    [ ]Notification    [O]Request-ResPonse   [ ]Publish-Subscribe / [ ]Fire-and-Forgot    [ ]Notification    [O]Request-ResPonse   [ ]Publish-Subscribe / [ ]Fire-and-Forgot    [ ]Notification    [O]Request-ResPonse   [ ]Publish-Subscribe / [ ]Fire-and-Forgot    [ ]Notification
+메시지 로깅 수준    성공    [O]Header  [ ]Body    [O]Header  [ ]Body    실패    [O]Header [O]Body    [O]Header [O]Body
+사용 제약 사항 / (비고)    N/A    N/A    N/A    N/A    N/A    N/A
+서비스 제공자    개방데이터운영팀 / 디지털콘텐츠팀 / 070-4287-3219 / tourapi@knto.or.kr    개방데이터운영팀 / 디지털콘텐츠팀 / 070-4287-3219 / tourapi@knto.or.kr    개방데이터운영팀 / 디지털콘텐츠팀 / 070-4287-3219 / tourapi@knto.or.kr    개방데이터운영팀 / 디지털콘텐츠팀 / 070-4287-3219 / tourapi@knto.or.kr    개방데이터운영팀 / 디지털콘텐츠팀 / 070-4287-3219 / tourapi@knto.or.kr    개방데이터운영팀 / 디지털콘텐츠팀 / 070-4287-3219 / tourapi@knto.or.kr
+데이터 갱신주기    일 1회    일 1회    일 1회    일 1회    일 1회    일 1회
+번호    서비스명(국문)    오퍼레이션    오퍼레이션명
+1    한국관광공사 / 빅데이터 정보 서비스    metcoRegnVisitrDDList    광역 지자체 지역방문자수집계 / 데이터 정보 조회
+2    한국관광공사 / 빅데이터 정보 서비스    locgoRegnVisitrDDList    기초 지자체 지역방문자수집계 / 데이터 정보 조회
+에러코드    에러메세지    설명
+01    APPLICATION_ERROR    어플리케이션에러
+04    HTTP_ERROR    HTTP 에러
+12    NO_OPENAPI_SERVICE_ERROR    해당오픈API서비스가없거나폐기됨
+20    SERVICE_ACCESS_DENIED_ERROR    서비스접근거부
+22    LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR    서비스요청제한횟수초과에러
+30    SERVICE_KEY_IS_NOT_REGISTERED_ERROR    등록되지않은서비스키
+31    DEADLINE_HAS_EXPIRED_ERROR    활용기간만료
+32    UNREGISTERED_IP_ERROR    등록되지않은 IP
+99    UNKNOWN_ERROR    기타에러
+에러코드    에러메세지    설명
+00    NORMAL_CODE    정상
+01    APPLICATION_ERROR    어플리케이션 에러
+02    DB_ERROR    데이터베이스 에러
+03    NODATA_ERROR    데이터없음 에러
+04    HTTP_ERROR    HTTP 에러
+05    SERVICETIMEOUT_ERROR    서비스 연결실패 에러
+10    INVALID_REQUEST_PARAMETER_ERROR    잘못된 요청 파라메터 에러
+11    NO_MANDATORY_REQUEST_PARAMETERS_ERROR    필수요청 파라메터가 없음
+12    NO_OPENAPI_SERVICE_ERROR    해당 오픈API서비스가 없거나 폐기됨
+20    SERVICE_ACCESS_DENIED_ERROR    서비스 접근거부
+21    TEMPORARILY_DISABLE_THE_SERVICEKEY_ERROR    일시적으로 사용할 수 없는 서비스 키
+22    LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR    서비스 요청제한횟수 초과에러
+30    SERVICE_KEY_IS_NOT_REGISTERED_ERROR    등록되지 않은 서비스키
+31    DEADLINE_HAS_EXPIRED_ERROR    활용기간만료
+32    UNREGISTERED_IP_ERROR    등록되지 않은 IP
+33    UNSIGNED_CALL_ERROR    서명되지 않은 호출
+99    UNKNOWN_ERROR    기타에러
+오퍼레이션 번호    1    오퍼레이션 유형    조회 (목록)
+오퍼레이션명(국문)    광역 지자체 지역방문자수 집계 데이터 정보 조회    광역 지자체 지역방문자수 집계 데이터 정보 조회    광역 지자체 지역방문자수 집계 데이터 정보 조회
+오퍼레이션 설명    광역 지자체 지역방문자수 집계 데이터 정보를 조회하는 기능    광역 지자체 지역방문자수 집계 데이터 정보를 조회하는 기능    광역 지자체 지역방문자수 집계 데이터 정보를 조회하는 기능
+Call Back URL    http://apis.data.go.kr/B551011/DataLabService/metcoRegnVisitrDDList    http://apis.data.go.kr/B551011/DataLabService/metcoRegnVisitrDDList    http://apis.data.go.kr/B551011/DataLabService/metcoRegnVisitrDDList
+항목명(영문)    항목명(국문)    항목구분    샘플데이터    항목 설명
+numOfRows    한 페이지 결과 수    0    10    한 페이지 결과 수
+pageNo    페이지 번호    0    1    현재 페이지 번호
+MobileOS    OS 구분    1    ETC    IOS (아이폰), AND (안드로이드),  / WIN (윈도우폰), ETC
+MobileApp    서비스명    1    AppTest    서비스명=어플명
+serviceKey    인증키 (서비스키)    1    인증키 / (URL- Encode)    공공데이터포털에서  / 발급받은 인증키
+_type    응답메세지 형식    0        REST방식의 URL호출시 / Json값추가(디폴트 응답메세지 형식은XML)
+startYmd    시작연월일    1    20210513    조회시작연월일(yyyyMMdd)
+endYmd    종료연월일    1    20210513    조회종료연월일(yyyyMMdd)
+항목명    항목 설명    항목구분    샘플데이터    항목 설명
+resultCode    결과코드    1    0000    응답 결과코드
+resultMsg    결과메시지    1    OK    응답 결과메시지
+numOfRows    한 페이지 결과 수    1    10    한 페이지 결과 수
+pageNo    페이지 번호    1    1    현재 페이지 번호
+totalCount    전체 결과 수    1    51    전체 결과 수
+areaCode    시도코드    1    11    시도코드
+areaNm    시도명    1    서울특별시    시도명
+daywkDivCd    요일구분코드    1    4    요일구분코드 / (1:월요일,2:화요일,3:수요일,4:목요일,5:금요일,6:토요일,7:일요일)
+daywkDivNm    요일구분명    1    목요일    요일구분명
+touDivCd    관광객구분코드    1    1    관광객구분코드 / (1    :현지인(a),2:외지인(b), / 3:외국인(c))
+touDivNm    관광객구분명    1    현지인(a)    관광객구분명
+touNum    관광객수    1    4828435.5    관광객수
+baseYmd    기준연월일    1    20210513    기준연월일
+REST (URI)
+http://apis.data.go.kr/B551011/DataLabService/metcoRegnVisitrDDList?serviceKey=서비스인증키&pageNo=1&numOfRows=10&MobileOS=ETC&MobileApp=AppTest&startYmd=20210513&endYmd=20210513
+응답 메시지
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?> / <response> /  <header> /  <resultCode>0000</resultCode> /  <resultMsg>OK</resultMsg> /  </header> /  <body> /  <items> /  <item> /  <areaCode>11</areaCode> /  <areaNm>서울특별시</areaNm> /  <daywkDivCd>4</daywkDivCd> /  <daywkDivNm>목요일</daywkDivNm> /  <touDivCd>1</touDivCd> /  <touDivNm>현지인(a)</touDivNm> /  <touNum>4828435.5</touNum> /  <baseYmd>20210513</baseYmd> /  </item> /  </items> /  <numOfRows>10</numOfRows> /  <pageNo>1</pageNo> /  <totalCount>51</totalCount> /  </body> / </response>
+오퍼레이션 번호    2    오퍼레이션 유형    조회 (목록)
+오퍼레이션명(국문)    기초 지자체 지역방문자수 집계 데이터 정보 조회    기초 지자체 지역방문자수 집계 데이터 정보 조회    기초 지자체 지역방문자수 집계 데이터 정보 조회
+오퍼레이션 설명    기초 지자체 지역방문자수 집계 데이터 정보를 조회하는 기능    기초 지자체 지역방문자수 집계 데이터 정보를 조회하는 기능    기초 지자체 지역방문자수 집계 데이터 정보를 조회하는 기능
+Call Back URL    http://apis.data.go.kr/B551011/DataLabService/locgoRegnVisitrDDList    http://apis.data.go.kr/B551011/DataLabService/locgoRegnVisitrDDList    http://apis.data.go.kr/B551011/DataLabService/locgoRegnVisitrDDList
+항목명(영문)    항목명(국문)    항목구분    샘플데이터    항목 설명
+numOfRows    한 페이지 결과 수    0    10    한 페이지 결과 수
+pageNo    페이지 번호    0    1    현재 페이지 번호
+MobileOS    OS 구분    1    ETC    IOS (아이폰), AND (안드로이드),  / WIN (윈도우폰), ETC
+MobileApp    서비스명    1    AppTest    서비스명=어플명
+serviceKey    인증키 (서비스키)    1    인증키 / (URL- Encode)    공공데이터포털에서  / 발급받은 인증키
+_type    응답메세지 형식    0        REST방식의 URL호출시 / Json값추가(디폴트 응답메세지 형식은XML)
+startYmd    시작연월일    1    20210513    조회시작연월일(yyyyMMdd)
+endYmd    종료연월일    1    20210513    조회종료연월일(yyyyMMdd)
+항목명    항목 설명    항목구분    샘플데이터    항목 설명
+resultCode    결과코드    1    0000    응답 결과코드
+resultMsg    결과메시지    1    OK    응답 결과메시지
+numOfRows    한 페이지 결과 수    1    10    한 페이지 결과 수
+pageNo    페이지 번호    1    1    현재 페이지 번호
+totalCount    전체 결과 수    1    740    전체 결과 수
+signguCode    시군구코드    1    11110    시군구코드
+signguNm    시군구명    1    종로구    시군구명
+daywkDivCd    요일구분코드    1    4    요일구분코드 / (1:월요일,2:화요일,3:수요일,4:목요일,5:금요일,6:토요일,7:일요일)
+daywkDivNm    요일구분명    1    목요일    요일구분명
+touDivCd    관광객구분코드    1    1    관광객구분코드 / (1    :현지인(a),2:외지인(b), / 3:외국인(c))
+touDivNm    관광객구분명    1    현지인(a)    관광객구분명
+touNum    관광객수    1    176473.5    관광객수
+baseYmd    기준연월일    1    20210513    기준연월일
+REST (URI)
+http://apis.data.go.kr/B551011/DataLabService/locgoRegnVisitrDDList?serviceKey=서비스인증키& pageNo=1&numOfRows=10&MobileOS=ETC&MobileApp=AppTest&startYmd=20210513&endYmd=20210513
+응답 메시지
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?> / <response> /   <header> /     <resultCode>0000</resultCode> /     <resultMsg>OK</resultMsg> /   </header> /   <body> /     <items> /       <item> /         <signguCode>11110</signguCode> /         <signguNm>종로구</signguNm> /         <daywkDivCd>4</daywkDivCd> /         <daywkDivNm>목요일</daywkDivNm> /         <touDivCd>1</touDivCd> /         <touDivNm>현지인(a)</touDivNm> /         <touNum>176473.5</touNum> /         <baseYmd>20210513</baseYmd> /       </item> / </items> /     <numOfRows>10</numOfRows> /     <pageNo>1</pageNo> /     <totalCount>740</totalCount> /   </body> / </response>

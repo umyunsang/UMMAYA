@@ -1,0 +1,15 @@
+{
+  "id": "15149911",
+  "url": "https://www.data.go.kr/data/15149911/openapi.do",
+  "source_kind": "category",
+  "source_value": "법률",
+  "category": "법률",
+  "provider_type": "국가행정기관",
+  "org": "법무부",
+  "title_hint": "법무부_장단기체류외국인 국적(지역)별 체류외국인 현황 조회서비스",
+  "og_title": "법무부_장단기체류외국인 국적(지역)별 체류외국인 현황 조회서비스",
+  "og_description": "관광, 친지방문 등의 목적으로 입국하여 90일 이내에서 단기간 국내 체류하는 단기체류외국인 및 등록외국인과 외국국적동포 국내거소신고자를 포함하는 장기체류 외국인의 국적(지역)별 현황을 월별로 제공\r 장단기체류외국인, 즉 체류외국인 전체의 국적(지역)별 현황입니다.\r \r 원본 데이터는 출입국외국인정책본부 홈페이지의 통계월보에서 확인하실 수 있으며 경로는 아래와 같습니다.\r https://www.immigration.go.kr/immigration/1569/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGaW1taWdyYXRpb24lMkYyMjclMkY1OTU0MjYlMkZhcnRjbFZpZXcuZG8lM0ZwYXNzd29yZCUzRCUyNnJnc0JnbmRlU3RyJTNEJTI2YmJzQ2xTZXElM0QlMjZyZ3NFbmRkZVN0ciUzRCUyNmlzVmlld01pbmUlM0RmYWxzZSUyNnBhZ2UlM0QxJTI2YmJzT3BlbldyZFNlcSUzRCUyNnNyY2hDb2x1bW4lM0QlMjZzcmNoV3JkJTNEJTI2",
+  "swagger_url": "",
+  "has_inline_swagger": true,
+  "downloaded_docs": []
+}

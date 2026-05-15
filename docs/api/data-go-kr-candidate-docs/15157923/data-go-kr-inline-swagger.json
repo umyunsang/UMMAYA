@@ -1,0 +1,1173 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "1. 광주광역시 BIS 노선-정류소 정보 : 광주광역시에서 운영 중인 버스 노선별 정류소 정보를 제공하는 API 입니다.\\n2. 광주광역시 BIS 노선 정보 : 광주광역시에서 운영 중인 버스 노선에 대한 운행 시간 및 배차 간격 등 정보를 제공하는 API 입니다.\\n3. 광주광역시 BIS 정류소 정보 : 광주광역시에서 운영 중인 정류소에 대한 정보를 제공하는 API 입니다.\\n4. 광주광역시 BIS 도착 정보 : 광주광역시에서 운영 중인 특정 정류소에 버스 도착정보를 제공하는 API 입니다.\\n5. 광주광역시 BIS 노선 버스위치정보 : 광주광역시에서 운영 중인 특정 노선에 대하여 버스위정보를 제공하는 API 입니다.",
+    "version": "1.0.0",
+    "title": "광주광역시_광주버스정보"
+  },
+  "host": "apis.data.go.kr/6290000/gj_bis",
+  "basePath": "",
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/lineStationInfo": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "RESPONSE": {
+                  "type": "object",
+                  "description": "응답",
+                  "properties": {
+                    "RESULT": {
+                      "type": "object",
+                      "description": "결과",
+                      "properties": {
+                        "RESULT_MSG": {
+                          "type": "string",
+                          "description": "결과메시지",
+                          "properties": {}
+                        },
+                        "RESULT_CODE": {
+                          "type": "string",
+                          "description": "결과코드",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "BUSSTOP_LIST": {
+                      "type": "object",
+                      "description": "결과리스트",
+                      "properties": {
+                        "ITEM": {
+                          "type": "array",
+                          "description": "아이템",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "BUSSTOP_NUM": {
+                                "type": "integer",
+                                "description": "레코드 순번",
+                                "properties": {}
+                              },
+                              "LINE_ID": {
+                                "type": "integer",
+                                "description": "노선 ID",
+                                "properties": {}
+                              },
+                              "LINE_NAME": {
+                                "type": "string",
+                                "description": "노선명",
+                                "properties": {}
+                              },
+                              "BUSSTOP_ID": {
+                                "type": "integer",
+                                "description": "정류소 ID",
+                                "properties": {}
+                              },
+                              "BUSSTOP_NAME": {
+                                "type": "string",
+                                "description": "정류소명",
+                                "properties": {}
+                              },
+                              "ARS_ID": {
+                                "type": "string",
+                                "description": "ARS_ID",
+                                "properties": {}
+                              },
+                              "LONGITUDE": {
+                                "type": "number",
+                                "description": "경도",
+                                "properties": {}
+                              },
+                              "LATITUDE": {
+                                "type": "number",
+                                "description": "위도",
+                                "properties": {}
+                              },
+                              "RETURN_FLAG": {
+                                "type": "integer",
+                                "description": "정류소 구분 : 1: 운행정류장, 2: 시작기점,3: 종점, 4: 종료기점",
+                                "properties": {}
+                              },
+                              "SEQ": {
+                                "type": "integer",
+                                "description": "정류소 순번",
+                                "properties": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ROW_COUNT": {
+                      "type": "integer",
+                      "description": "행갯수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "BIS 노선-정류소 정보",
+        "description": "광주광역시에서 운영중인 노선 경유 정류소",
+        "operationId": "lineStationInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "서비스키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "LINE_ID",
+          "description": "노선 ID",
+          "type": "integer",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답형식",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/lineInfo": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "RESPONSE": {
+                  "type": "object",
+                  "description": "응답",
+                  "properties": {
+                    "RESULT": {
+                      "type": "object",
+                      "description": "결과",
+                      "properties": {
+                        "RESULT_MSG": {
+                          "type": "string",
+                          "description": "결과메시지",
+                          "properties": {}
+                        },
+                        "RESULT_CODE": {
+                          "type": "string",
+                          "description": "결과코드",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "LINE_LIST": {
+                      "type": "object",
+                      "description": "결과리스트",
+                      "properties": {
+                        "ITEM": {
+                          "type": "array",
+                          "description": "아이템",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "LINE_NUM": {
+                                "type": "integer",
+                                "description": "리스트 번호",
+                                "properties": {}
+                              },
+                              "LINE_ID": {
+                                "type": "integer",
+                                "description": "노선 ID",
+                                "properties": {}
+                              },
+                              "LINE_NAME": {
+                                "type": "string",
+                                "description": "노선 이름",
+                                "properties": {}
+                              },
+                              "DIR_UP_NAME": {
+                                "type": "string",
+                                "description": "기점(정류소명칭)",
+                                "properties": {}
+                              },
+                              "DIR_DOWN_NAME": {
+                                "type": "string",
+                                "description": "종점(정류소명칭)",
+                                "properties": {}
+                              },
+                              "FIRST_RUN_TIME": {
+                                "type": "string",
+                                "description": "첫차시각",
+                                "properties": {}
+                              },
+                              "LAST_RUN_TIME": {
+                                "type": "string",
+                                "description": "막차시각",
+                                "properties": {}
+                              },
+                              "RUN_INTERVAL": {
+                                "type": "integer",
+                                "description": "배차간격(분)",
+                                "properties": {}
+                              },
+                              "LINE_KIND": {
+                                "type": "integer",
+                                "description": "노선종류",
+                                "properties": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ROW_COUNT": {
+                      "type": "integer",
+                      "description": "행갯수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "BIS 노선 정보",
+        "description": "광주광역시에서 운영중인 노선 정보",
+        "operationId": "lineInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "서비스키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답형식",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/stationInfo": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "RESPONSE": {
+                  "type": "object",
+                  "description": "응답",
+                  "properties": {
+                    "RESULT": {
+                      "type": "object",
+                      "description": "결과",
+                      "properties": {
+                        "RESULT_MSG": {
+                          "type": "string",
+                          "description": "결과메시지",
+                          "properties": {}
+                        },
+                        "RESULT_CODE": {
+                          "type": "string",
+                          "description": "결과코드",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "STATION_LIST": {
+                      "type": "object",
+                      "description": "결과리스트",
+                      "properties": {
+                        "ITEM": {
+                          "type": "array",
+                          "description": "아이템",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "STATION_NUM": {
+                                "type": "integer",
+                                "description": "레코드 순번",
+                                "properties": {}
+                              },
+                              "BUSSTOP_ID": {
+                                "type": "integer",
+                                "description": "정류소 ID",
+                                "properties": {}
+                              },
+                              "BUSSTOP_NAME": {
+                                "type": "string",
+                                "description": "정류소명(국문)",
+                                "properties": {}
+                              },
+                              "NAME_E": {
+                                "type": "string",
+                                "description": "정류소명(영문)",
+                                "properties": {}
+                              },
+                              "LONGITUDE": {
+                                "type": "number",
+                                "description": "경도",
+                                "properties": {}
+                              },
+                              "LATITUDE": {
+                                "type": "number",
+                                "description": "위도",
+                                "properties": {}
+                              },
+                              "ARS_ID": {
+                                "type": "string",
+                                "description": "ARS_ID",
+                                "properties": {}
+                              },
+                              "NEXT_BUSSTOP": {
+                                "type": "string",
+                                "description": "정류소방향",
+                                "properties": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ROW_COUNT": {
+                      "type": "integer",
+                      "description": "행갯수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "BIS 정류소 정보",
+        "description": "광주광역시에서 운영중인 정류소 정보",
+        "operationId": "stationInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "서비스키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답형식",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/arriveInfo": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "RESPONSE": {
+                  "type": "object",
+                  "description": "응답",
+                  "properties": {
+                    "RESULT": {
+                      "type": "object",
+                      "description": "결과",
+                      "properties": {
+                        "RESULT_MSG": {
+                          "type": "string",
+                          "description": "결과메시지",
+                          "properties": {}
+                        },
+                        "RESULT_CODE": {
+                          "type": "string",
+                          "description": "결과코드",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "ARRIVE_LIST": {
+                      "type": "object",
+                      "description": "결과리스트",
+                      "properties": {
+                        "ITEM": {
+                          "type": "array",
+                          "description": "아이템",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ARRIVE": {
+                                "type": "string",
+                                "description": "레코드 구분",
+                                "properties": {}
+                              },
+                              "LINE_ID": {
+                                "type": "integer",
+                                "description": "노선 ID",
+                                "properties": {}
+                              },
+                              "LINE_NAME": {
+                                "type": "string",
+                                "description": "노선명",
+                                "properties": {}
+                              },
+                              "SHORT_LINE_NAME": {
+                                "type": "string",
+                                "description": "노선명",
+                                "properties": {}
+                              },
+                              "BUS_ID": {
+                                "type": "string",
+                                "description": "버스 ID",
+                                "properties": {}
+                              },
+                              "METRO_FLAG": {
+                                "type": "integer",
+                                "description": "광역노선구분 0:광주, 1:나주, 2:담양, 3:장성, 4:화순",
+                                "properties": {}
+                              },
+                              "CURR_STOP_ID": {
+                                "type": "integer",
+                                "description": "현재 정류소 ID",
+                                "properties": {}
+                              },
+                              "BUSSTOP_NAME": {
+                                "type": "string",
+                                "description": "현재 정류소 명칭(국문)",
+                                "properties": {}
+                              },
+                              "REMAIN_MIN": {
+                                "type": "integer",
+                                "description": "도착 예정 시간",
+                                "properties": {}
+                              },
+                              "REMAIN_STOP": {
+                                "type": "integer",
+                                "description": "남은 정류소 개수",
+                                "properties": {}
+                              },
+                              "DIR_START": {
+                                "type": "string",
+                                "description": "기점명",
+                                "properties": {}
+                              },
+                              "DIR_END": {
+                                "type": "string",
+                                "description": "종정명",
+                                "properties": {}
+                              },
+                              "LOW_BUS": {
+                                "type": "string",
+                                "description": "저상버스 노선구분 0:일반, 1저상",
+                                "properties": {}
+                              },
+                              "ENG_BUSSTOP_NAME": {
+                                "type": "string",
+                                "description": "현재 정류소 명칭(영문)",
+                                "properties": {}
+                              },
+                              "ARRIVE_FLAG": {
+                                "type": "integer",
+                                "description": "곧도착 FLAG 0:일반, 1:곧도착",
+                                "properties": {}
+                              },
+                              "LINE_KIND": {
+                                "type": "integer",
+                                "description": "노선 구분 1:급행간선, 2:간선, 3:지선, 4:마을버스, 5:공항버스",
+                                "properties": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ROW_COUNT": {
+                      "type": "integer",
+                      "description": "행갯수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "BIS 도착 정보",
+        "description": "광주광역시에서 운영중인 도착 정보",
+        "operationId": "arriveInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "서비스키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "BUSSTOP_ID",
+          "description": "정류소 ID",
+          "type": "integer",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답형식",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    },
+    "/busLocationInfo": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "성공",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "RESPONSE": {
+                  "type": "object",
+                  "description": "응답",
+                  "properties": {
+                    "RESULT": {
+                      "type": "object",
+                      "description": "결과",
+                      "properties": {
+                        "RESULT_MSG": {
+                          "type": "string",
+                          "description": "결과메시지",
+                          "properties": {}
+                        },
+                        "RESULT_CODE": {
+                          "type": "string",
+                          "description": "결과코드",
+                          "properties": {}
+                        }
+                      }
+                    },
+                    "BUSLOCATION_LIST": {
+                      "type": "object",
+                      "description": "결과리스트",
+                      "properties": {
+                        "ITEM": {
+                          "type": "array",
+                          "description": "아이템",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "NUM": {
+                                "type": "integer",
+                                "description": "레코드 순번",
+                                "properties": {}
+                              },
+                              "LINE_ID": {
+                                "type": "integer",
+                                "description": "노선 ID",
+                                "properties": {}
+                              },
+                              "BUS_ID": {
+                                "type": "string",
+                                "description": "차량 ID",
+                                "properties": {}
+                              },
+                              "CURR_STOP_ID": {
+                                "type": "integer",
+                                "description": "현재 정류소 ID",
+                                "properties": {}
+                              },
+                              "CARNO": {
+                                "type": "string",
+                                "description": "차량번호",
+                                "properties": {}
+                              },
+                              "LOW_BUS": {
+                                "type": "string",
+                                "description": "저상버스 구분 : 0:일반, 1:저상",
+                                "properties": {}
+                              },
+                              "CARDY": {
+                                "type": "string",
+                                "description": "내부정보",
+                                "properties": {}
+                              },
+                              "SEQ": {
+                                "type": "integer",
+                                "description": "정류소 순번",
+                                "properties": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ROW_COUNT": {
+                      "type": "integer",
+                      "description": "행갯수",
+                      "properties": {}
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "response"
+              }
+            }
+          },
+          "": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "API 목록"
+        ],
+        "summary": "BIS 노선 버스위치정보",
+        "description": "광주광역시에서 운영중인 노선 버스위치정보",
+        "operationId": "busLocationInfo",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "serviceKey",
+          "description": "서비스키",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "LINE_ID",
+          "description": "노선 ID",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        },
+        {
+          "name": "resultType",
+          "description": "응답형식",
+          "type": "string",
+          "required": true,
+          "in": "query"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "lineStationInfo_response": {
+      "type": "object",
+      "properties": {
+        "RESPONSE": {
+          "type": "object",
+          "description": "응답",
+          "properties": {
+            "RESULT": {
+              "type": "object",
+              "description": "결과",
+              "properties": {
+                "RESULT_MSG": {
+                  "type": "string",
+                  "description": "결과메시지"
+                },
+                "RESULT_CODE": {
+                  "type": "string",
+                  "description": "결과코드"
+                }
+              }
+            },
+            "BUSSTOP_LIST": {
+              "type": "object",
+              "description": "결과리스트",
+              "properties": {
+                "ITEM": {
+                  "type": "array",
+                  "description": "아이템",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "BUSSTOP_NUM": {
+                        "type": "integer",
+                        "description": "레코드 순번"
+                      },
+                      "LINE_ID": {
+                        "type": "integer",
+                        "description": "노선 ID"
+                      },
+                      "LINE_NAME": {
+                        "type": "string",
+                        "description": "노선명"
+                      },
+                      "BUSSTOP_ID": {
+                        "type": "integer",
+                        "description": "정류소 ID"
+                      },
+                      "BUSSTOP_NAME": {
+                        "type": "string",
+                        "description": "정류소명"
+                      },
+                      "ARS_ID": {
+                        "type": "string",
+                        "description": "ARS_ID"
+                      },
+                      "LONGITUDE": {
+                        "type": "number",
+                        "description": "경도"
+                      },
+                      "LATITUDE": {
+                        "type": "number",
+                        "description": "위도"
+                      },
+                      "RETURN_FLAG": {
+                        "type": "integer",
+                        "description": "정류소 구분 : 1: 운행정류장, 2: 시작기점,3: 종점, 4: 종료기점"
+                      },
+                      "SEQ": {
+                        "type": "integer",
+                        "description": "정류소 순번"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "ROW_COUNT": {
+              "type": "integer",
+              "description": "행갯수"
+            }
+          }
+        }
+      }
+    },
+    "lineInfo_response": {
+      "type": "object",
+      "properties": {
+        "RESPONSE": {
+          "type": "object",
+          "description": "응답",
+          "properties": {
+            "RESULT": {
+              "type": "object",
+              "description": "결과",
+              "properties": {
+                "RESULT_MSG": {
+                  "type": "string",
+                  "description": "결과메시지"
+                },
+                "RESULT_CODE": {
+                  "type": "string",
+                  "description": "결과코드"
+                }
+              }
+            },
+            "LINE_LIST": {
+              "type": "object",
+              "description": "결과리스트",
+              "properties": {
+                "ITEM": {
+                  "type": "array",
+                  "description": "아이템",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "LINE_NUM": {
+                        "type": "integer",
+                        "description": "리스트 번호"
+                      },
+                      "LINE_ID": {
+                        "type": "integer",
+                        "description": "노선 ID"
+                      },
+                      "LINE_NAME": {
+                        "type": "string",
+                        "description": "노선 이름"
+                      },
+                      "DIR_UP_NAME": {
+                        "type": "string",
+                        "description": "기점(정류소명칭)"
+                      },
+                      "DIR_DOWN_NAME": {
+                        "type": "string",
+                        "description": "종점(정류소명칭)"
+                      },
+                      "FIRST_RUN_TIME": {
+                        "type": "string",
+                        "description": "첫차시각"
+                      },
+                      "LAST_RUN_TIME": {
+                        "type": "string",
+                        "description": "막차시각"
+                      },
+                      "RUN_INTERVAL": {
+                        "type": "integer",
+                        "description": "배차간격(분)"
+                      },
+                      "LINE_KIND": {
+                        "type": "integer",
+                        "description": "노선종류"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "ROW_COUNT": {
+              "type": "integer",
+              "description": "행갯수"
+            }
+          }
+        }
+      }
+    },
+    "stationInfo_response": {
+      "type": "object",
+      "properties": {
+        "RESPONSE": {
+          "type": "object",
+          "description": "응답",
+          "properties": {
+            "RESULT": {
+              "type": "object",
+              "description": "결과",
+              "properties": {
+                "RESULT_MSG": {
+                  "type": "string",
+                  "description": "결과메시지"
+                },
+                "RESULT_CODE": {
+                  "type": "string",
+                  "description": "결과코드"
+                }
+              }
+            },
+            "STATION_LIST": {
+              "type": "object",
+              "description": "결과리스트",
+              "properties": {
+                "ITEM": {
+                  "type": "array",
+                  "description": "아이템",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "STATION_NUM": {
+                        "type": "integer",
+                        "description": "레코드 순번"
+                      },
+                      "BUSSTOP_ID": {
+                        "type": "integer",
+                        "description": "정류소 ID"
+                      },
+                      "BUSSTOP_NAME": {
+                        "type": "string",
+                        "description": "정류소명(국문)"
+                      },
+                      "NAME_E": {
+                        "type": "string",
+                        "description": "정류소명(영문)"
+                      },
+                      "LONGITUDE": {
+                        "type": "number",
+                        "description": "경도"
+                      },
+                      "LATITUDE": {
+                        "type": "number",
+                        "description": "위도"
+                      },
+                      "ARS_ID": {
+                        "type": "string",
+                        "description": "ARS_ID"
+                      },
+                      "NEXT_BUSSTOP": {
+                        "type": "string",
+                        "description": "정류소방향"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "ROW_COUNT": {
+              "type": "integer",
+              "description": "행갯수"
+            }
+          }
+        }
+      }
+    },
+    "arriveInfo_response": {
+      "type": "object",
+      "properties": {
+        "RESPONSE": {
+          "type": "object",
+          "description": "응답",
+          "properties": {
+            "RESULT": {
+              "type": "object",
+              "description": "결과",
+              "properties": {
+                "RESULT_MSG": {
+                  "type": "string",
+                  "description": "결과메시지"
+                },
+                "RESULT_CODE": {
+                  "type": "string",
+                  "description": "결과코드"
+                }
+              }
+            },
+            "ARRIVE_LIST": {
+              "type": "object",
+              "description": "결과리스트",
+              "properties": {
+                "ITEM": {
+                  "type": "array",
+                  "description": "아이템",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ARRIVE": {
+                        "type": "string",
+                        "description": "레코드 구분"
+                      },
+                      "LINE_ID": {
+                        "type": "integer",
+                        "description": "노선 ID"
+                      },
+                      "LINE_NAME": {
+                        "type": "string",
+                        "description": "노선명"
+                      },
+                      "SHORT_LINE_NAME": {
+                        "type": "string",
+                        "description": "노선명"
+                      },
+                      "BUS_ID": {
+                        "type": "string",
+                        "description": "버스 ID"
+                      },
+                      "METRO_FLAG": {
+                        "type": "integer",
+                        "description": "광역노선구분 0:광주, 1:나주, 2:담양, 3:장성, 4:화순"
+                      },
+                      "CURR_STOP_ID": {
+                        "type": "integer",
+                        "description": "현재 정류소 ID"
+                      },
+                      "BUSSTOP_NAME": {
+                        "type": "string",
+                        "description": "현재 정류소 명칭(국문)"
+                      },
+                      "REMAIN_MIN": {
+                        "type": "integer",
+                        "description": "도착 예정 시간"
+                      },
+                      "REMAIN_STOP": {
+                        "type": "integer",
+                        "description": "남은 정류소 개수"
+                      },
+                      "DIR_START": {
+                        "type": "string",
+                        "description": "기점명"
+                      },
+                      "DIR_END": {
+                        "type": "string",
+                        "description": "종정명"
+                      },
+                      "LOW_BUS": {
+                        "type": "string",
+                        "description": "저상버스 노선구분 0:일반, 1저상"
+                      },
+                      "ENG_BUSSTOP_NAME": {
+                        "type": "string",
+                        "description": "현재 정류소 명칭(영문)"
+                      },
+                      "ARRIVE_FLAG": {
+                        "type": "integer",
+                        "description": "곧도착 FLAG 0:일반, 1:곧도착"
+                      },
+                      "LINE_KIND": {
+                        "type": "integer",
+                        "description": "노선 구분 1:급행간선, 2:간선, 3:지선, 4:마을버스, 5:공항버스"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "ROW_COUNT": {
+              "type": "integer",
+              "description": "행갯수"
+            }
+          }
+        }
+      }
+    },
+    "busLocationInfo_response": {
+      "type": "object",
+      "properties": {
+        "RESPONSE": {
+          "type": "object",
+          "description": "응답",
+          "properties": {
+            "RESULT": {
+              "type": "object",
+              "description": "결과",
+              "properties": {
+                "RESULT_MSG": {
+                  "type": "string",
+                  "description": "결과메시지"
+                },
+                "RESULT_CODE": {
+                  "type": "string",
+                  "description": "결과코드"
+                }
+              }
+            },
+            "BUSLOCATION_LIST": {
+              "type": "object",
+              "description": "결과리스트",
+              "properties": {
+                "ITEM": {
+                  "type": "array",
+                  "description": "아이템",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "NUM": {
+                        "type": "integer",
+                        "description": "레코드 순번"
+                      },
+                      "LINE_ID": {
+                        "type": "integer",
+                        "description": "노선 ID"
+                      },
+                      "BUS_ID": {
+                        "type": "string",
+                        "description": "차량 ID"
+                      },
+                      "CURR_STOP_ID": {
+                        "type": "integer",
+                        "description": "현재 정류소 ID"
+                      },
+                      "CARNO": {
+                        "type": "string",
+                        "description": "차량번호"
+                      },
+                      "LOW_BUS": {
+                        "type": "string",
+                        "description": "저상버스 구분 : 0:일반, 1:저상"
+                      },
+                      "CARDY": {
+                        "type": "string",
+                        "description": "내부정보"
+                      },
+                      "SEQ": {
+                        "type": "integer",
+                        "description": "정류소 순번"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "ROW_COUNT": {
+              "type": "integer",
+              "description": "행갯수"
+            }
+          }
+        }
+      }
+    }
+  }
+}

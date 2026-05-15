@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "서울특별시교육청_평생학습포털 에버러닝 강좌정보 서비스",
+  "description": "①강좌명, 기관명, 대상구분, 모집기간, 강의기간 등을 기준으로 ② 조건에 맞는 평생학습 강좌 정보(강좌명, 기관명, 대상, 모집기간, 강의기간 등)를 조회하는 ③서울특별시교육청 평생학습포털 에버러닝 강좌 정보 조회 서비스",
+  "url": "https://data.go.kr/data/15126482/openapi.do",
+  "keywords": [
+    "서울,평생학습,에버러닝"
+  ],
+  "license": "https://data.go.kr/ugs/selectPortalPolicyView.do",
+  "creator": {
+    "@type": "Organization",
+    "name": "서울특별시교육청",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "평생교육과",
+      "telephone": "+82-0260336018"
+    }
+  },
+  "dateCreated": "2024-01-26",
+  "dateModified": "2024-02-08",
+  "datePublished": "2024-01-26",
+  "includedInDataCatalog": {
+    "@type": "DataCatalog",
+    "name": "data.go.kr"
+  },
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "XML",
+      "contentUrl": "https://data.go.kr/data/15126482/openapi.do"
+    }
+  ],
+  "datasetTimeInterval": "실시간"
+}

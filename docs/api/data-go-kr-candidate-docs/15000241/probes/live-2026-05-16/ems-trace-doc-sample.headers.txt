@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+RequestMsgID: null
+Content-Type: application/xml;charset=UTF-8
+ReturnCode: 99
+ResponseTime: 20260516:005135837
+ResponseMsgID:
+SuccessYN: N
+Date: Fri, 15 May 2026 15:51:35 GMT
+ErrMsg: null
+Transfer-Encoding: chunked
