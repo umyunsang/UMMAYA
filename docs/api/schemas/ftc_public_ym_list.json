@@ -1,0 +1,71 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/ftc_public_ym_list.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for FTC public disclosure year/month.",
+  "properties": {
+    "job_se_code": {
+      "description": "FTC job section code.",
+      "minLength": 1,
+      "title": "Job Se Code",
+      "type": "string"
+    },
+    "num_of_rows": {
+      "default": 10,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    },
+    "presentn_year": {
+      "description": "Disclosure year.",
+      "minLength": 4,
+      "title": "Presentn Year",
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_se_code",
+    "presentn_year"
+  ],
+  "title": "ftc_public_ym_list",
+  "type": "object"
+}

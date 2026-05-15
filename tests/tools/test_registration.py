@@ -35,10 +35,12 @@ class TestToolRegistration:
         # adapter wrappers (10 verify + 5 submit via discovery_bridge) = 33.
         # Locate adapter split: + 5 first-class locate provider adapters
         # (Kakao address/keyword/coord-region, JUSO adm_cd, SGIS adm_cd) = 38.
+        # Spec #2797 verified public-data wave: + 14 direct-curl verified
+        # data.go.kr/LINK adapters = 52.
         # is_core=False so the LLM's primary tool list stays at active
         # primitives + lookup-class; these participate in
         # lookup(mode="search") BM25 corpus only.
-        assert len(registry) == 38
+        assert len(registry) == 52
 
     def test_tool_ids_present(self) -> None:
         """Each expected tool_id is in the registry.
@@ -72,6 +74,21 @@ class TestToolRegistration:
             # Phase 2 adapters (spec 029)
             "nfa_emergency_info_service",
             "mohw_welfare_eligibility_search",
+            # Spec #2797 verified public-data adapters
+            "fsc_corporate_finance_summary",
+            "airkorea_ctprvn_air_quality",
+            "ftc_large_group_status",
+            "ftc_public_ym_list",
+            "tago_bus_route_search",
+            "tago_bus_arrival_search",
+            "tago_bus_location_search",
+            "tago_bus_station_search",
+            "kepco_contract_power_usage",
+            "pps_bid_public_info",
+            "reb_real_estate_stat_table",
+            "bfc_funeral_area_fee",
+            "kcue_finance_regional_tuition",
+            "kcue_student_regional_foreign",
         }
         for tool_id in expected:
             assert tool_id in registry, f"{tool_id} not found in registry"
@@ -99,6 +116,21 @@ class TestToolRegistration:
             # Phase 2 adapters (spec 029)
             "nfa_emergency_info_service",
             "mohw_welfare_eligibility_search",
+            # Spec #2797 verified public-data adapters
+            "fsc_corporate_finance_summary",
+            "airkorea_ctprvn_air_quality",
+            "ftc_large_group_status",
+            "ftc_public_ym_list",
+            "tago_bus_route_search",
+            "tago_bus_arrival_search",
+            "tago_bus_location_search",
+            "tago_bus_station_search",
+            "kepco_contract_power_usage",
+            "pps_bid_public_info",
+            "reb_real_estate_stat_table",
+            "bfc_funeral_area_fee",
+            "kcue_finance_regional_tuition",
+            "kcue_student_regional_foreign",
         }
         for tool_id in expected:
             assert tool_id in executor._adapters, f"No adapter for {tool_id}"

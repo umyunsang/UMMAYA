@@ -1,0 +1,68 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/reb_real_estate_stat_table.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for REB statistic table search.",
+  "properties": {
+    "p_index": {
+      "default": 1,
+      "description": "Page index.",
+      "minimum": 1,
+      "title": "P Index",
+      "type": "integer"
+    },
+    "p_size": {
+      "default": 100,
+      "description": "Page size.",
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "P Size",
+      "type": "integer"
+    },
+    "statbl_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional statistic table ID.",
+      "title": "Statbl Id"
+    }
+  },
+  "title": "reb_real_estate_stat_table",
+  "type": "object"
+}

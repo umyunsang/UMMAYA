@@ -2,7 +2,7 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the active count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 38 entries
+  - Main ToolRegistry: 52 entries
   - ummaya.primitives.verify._VERIFY_ADAPTERS: 10 families
   - ummaya.primitives.submit._ADAPTER_REGISTRY: 5 families
 
@@ -16,7 +16,7 @@ do NOT silently adjust the expected values.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Main ToolRegistry count — 38 total
+# Main ToolRegistry count — 52 total
 # ---------------------------------------------------------------------------
 # Epic η #2298 — extended from 16 to 18 by adding `check` / `send`
 # to mvp_surface as `is_core=True` GovAPITool entries (FR-021).
@@ -38,10 +38,12 @@ from __future__ import annotations
 # Agentic locate refactor — extended from 33 to 38 by registering five
 # provider-specific locate adapters instead of hiding them behind a fused
 # locate primitive.
-_EXPECTED_MAIN_REGISTRY_COUNT = 38
+# Spec #2797 — extended from 38 to 52 by registering fourteen direct-curl
+# verified public-data adapters under src/ummaya/tools/verified_data_go_kr/.
+_EXPECTED_MAIN_REGISTRY_COUNT = 52
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
-    "live_adapters": 12,  # 12 Live: koroad ×2, kma ×6, hira ×1, nfa ×1, nmc ×1, mohw ×1
+    "live_adapters": 26,  # 12 existing Live + 14 verified public-data adapters
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
@@ -61,6 +63,20 @@ _EXPECTED_LIVE_TOOL_IDS = frozenset(
         "nfa_emergency_info_service",
         "nmc_emergency_search",
         "mohw_welfare_eligibility_search",
+        "fsc_corporate_finance_summary",
+        "airkorea_ctprvn_air_quality",
+        "ftc_large_group_status",
+        "ftc_public_ym_list",
+        "tago_bus_route_search",
+        "tago_bus_arrival_search",
+        "tago_bus_location_search",
+        "tago_bus_station_search",
+        "kepco_contract_power_usage",
+        "pps_bid_public_info",
+        "reb_real_estate_stat_table",
+        "bfc_funeral_area_fee",
+        "kcue_finance_regional_tuition",
+        "kcue_student_regional_foreign",
     }
 )
 
@@ -75,7 +91,7 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 38 entries after register_all_tools()."""
+    """Main ToolRegistry must have exactly 52 entries after register_all_tools()."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -94,7 +110,7 @@ def test_main_registry_total_count() -> None:
 
 
 def test_main_registry_live_tool_ids_present() -> None:
-    """All 12 expected Live tool IDs must be registered in the main ToolRegistry."""
+    """All 26 expected Live tool IDs must be registered in the main ToolRegistry."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -309,7 +325,7 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # corpus so find(mode="search") surfaces them. is_core=False so the
         # primary LLM tool list stays at active primitives + find-class Live.
         # Locate-provider adapters add five first-class registry entries.
-        "main_registry": 38,
+        "main_registry": 52,
         "verify_families": 10,
         "submit_adapters": 5,
     }

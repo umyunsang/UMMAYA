@@ -49,6 +49,14 @@ Ministry = Literal[
     "KEC",  # 한국교통안전공단 — vehicle inspection / e-signature
     "MFDS",  # 식품의약품안전처 — food & drug safety
     "GOV24",  # 정부24 — citizen submission portal (OPAQUE per feedback_mock_evidence_based)
+    "FSC",  # 금융위원회 — financial services
+    "KECO",  # 한국환경공단 — environment / AirKorea
+    "FTC",  # 공정거래위원회 — fair trade
+    "KEPCO",  # 한국전력공사 — electricity / utility data
+    "PPS",  # 조달청 — public procurement
+    "REB",  # 한국부동산원 — real-estate statistics
+    "BFC",  # 부산시설공단 — Busan public facilities
+    "KCUE",  # 한국대학교육협의회 — university disclosure data
     "UMMAYA",  # harness-internal synthetic surface (locate, find, mvp_surface)
     "OTHER",  # transitional escape hatch — CI emits warning
 ]

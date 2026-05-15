@@ -163,15 +163,14 @@ class TestInvariant4UniqueToolId:
 
 # ---------------------------------------------------------------------------
 # Check 7 — Tool list closure
-# The Python-side registered tool set matches the 14-adapter closed set.
+# The Python-side registered tool set matches the active closed set.
 # LLM-visible primitive names (find/locate/send/check) and auxiliary
 # tools live on the TUI side and are validated by `bun test` CI.
 # ---------------------------------------------------------------------------
 
 
 class TestCheck7ToolListClosure:
-    """The Python-side registered tool set matches the 16-adapter registry
-    (Spec 2296 SC-003: 12 Live + 2 MVP-surface + 2 lookup mocks).
+    """The Python-side registered tool set matches the 52-entry registry.
 
     Divergence from this set indicates either an unauthorized addition or
     an inadvertent removal — both are CI failures.
@@ -233,11 +232,26 @@ class TestCheck7ToolListClosure:
             "mock_submit_module_public_mydata_action",
             "mock_traffic_fine_pay_v1",
             "mock_welfare_application_submit_v1",
+            # Spec #2797 — direct-curl verified public-data find adapters.
+            "fsc_corporate_finance_summary",
+            "airkorea_ctprvn_air_quality",
+            "ftc_large_group_status",
+            "ftc_public_ym_list",
+            "tago_bus_route_search",
+            "tago_bus_arrival_search",
+            "tago_bus_location_search",
+            "tago_bus_station_search",
+            "kepco_contract_power_usage",
+            "pps_bid_public_info",
+            "reb_real_estate_stat_table",
+            "bfc_funeral_area_fee",
+            "kcue_finance_regional_tuition",
+            "kcue_student_regional_foreign",
         }
     )
 
     def test_registered_set_matches_expected(self, live_registry):
-        """Registry tool set exactly matches the 14-entry closed set."""
+        """Registry tool set exactly matches the active closed set."""
         registry, _ = live_registry
         actual = frozenset(registry._tools.keys())
         assert actual == self.EXPECTED_REGISTERED_TOOL_IDS, (

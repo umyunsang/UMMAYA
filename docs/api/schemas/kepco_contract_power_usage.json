@@ -1,0 +1,97 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kepco_contract_power_usage.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for KEPCO contract-type power usage.",
+  "properties": {
+    "city_cd": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "City/county/district code.",
+      "title": "City Cd"
+    },
+    "cntr_cd": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Contract type code.",
+      "title": "Cntr Cd"
+    },
+    "metro_cd": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Metropolitan code.",
+      "title": "Metro Cd"
+    },
+    "month": {
+      "description": "Usage month.",
+      "maxLength": 2,
+      "minLength": 1,
+      "title": "Month",
+      "type": "string"
+    },
+    "year": {
+      "description": "Usage year.",
+      "maxLength": 4,
+      "minLength": 4,
+      "title": "Year",
+      "type": "string"
+    }
+  },
+  "required": [
+    "year",
+    "month"
+  ],
+  "title": "kepco_contract_power_usage",
+  "type": "object"
+}

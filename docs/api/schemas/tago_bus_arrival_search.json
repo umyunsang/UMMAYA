@@ -1,0 +1,71 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/tago_bus_arrival_search.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for TAGO bus arrival search.",
+  "properties": {
+    "city_code": {
+      "description": "TAGO city code.",
+      "minLength": 1,
+      "title": "City Code",
+      "type": "string"
+    },
+    "node_id": {
+      "description": "TAGO bus station ID.",
+      "minLength": 1,
+      "title": "Node Id",
+      "type": "string"
+    },
+    "num_of_rows": {
+      "default": 10,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "city_code",
+    "node_id"
+  ],
+  "title": "tago_bus_arrival_search",
+  "type": "object"
+}

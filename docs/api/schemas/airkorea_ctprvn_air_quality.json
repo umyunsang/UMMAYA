@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/airkorea_ctprvn_air_quality.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for AirKorea city/province air quality.",
+  "properties": {
+    "num_of_rows": {
+      "default": 10,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    },
+    "sido_name": {
+      "description": "Korean province/city name.",
+      "minLength": 1,
+      "title": "Sido Name",
+      "type": "string"
+    },
+    "ver": {
+      "default": "1.0",
+      "description": "AirKorea response version.",
+      "title": "Ver",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sido_name"
+  ],
+  "title": "airkorea_ctprvn_air_quality",
+  "type": "object"
+}

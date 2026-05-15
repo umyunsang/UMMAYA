@@ -48,7 +48,8 @@ logger = logging.getLogger(__name__)
 def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> RoutingIndex:
     """Register all available government API tool adapters.
 
-    Registers the following 16 tools in order (Epic ε #2296: 2 new lookup mocks added):
+    Registers the following 52 tools in order after discovery bridging and
+    Spec #2797 verified public-data expansion:
       1. locate — MVP LLM core surface: location resolution (is_core=True)
       2. lookup — MVP LLM core surface: adapter discovery + invocation (is_core=True)
       3. koroad_accident_search — KOROAD accident hotspot search (by enum codes)
@@ -63,8 +64,9 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
      12. hira_hospital_search — HIRA hospital search by coordinates + radius
      13. nfa_emergency_info_service — NFA EMS statistics (Phase 2, Layer 3 gated stub)
      14. mohw_welfare_eligibility_search — SSIS welfare service list (Phase 2, real XML handler — T025)
-     15. mock_lookup_module_hometax_simplified — Hometax simplified data (Mock, Epic ε T028)
-     16. mock_lookup_module_gov24_certificate — Gov24 certificate lookup (Mock, Epic ε T029)
+     15-28. verified_data_go_kr — fourteen direct-curl verified public-data adapters
+     29. mock_lookup_module_hometax_simplified — Hometax simplified data (Mock, Epic ε T028)
+     30. mock_lookup_module_gov24_certificate — Gov24 certificate lookup (Mock, Epic ε T029)
 
     After registration, ``build_routing_index()`` validates every adapter against
     the six invariants in ``contracts/routing-consistency.md § 2``. Violations
@@ -111,6 +113,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     from ummaya.tools.mvp_surface import register_mvp_surface
     from ummaya.tools.nfa119.emergency_info_service import register as reg_nfa
     from ummaya.tools.nmc.emergency_search import register as reg_nmc
+    from ummaya.tools.verified_data_go_kr import register as reg_verified_data_go_kr
 
     # Register MVP LLM-visible core surface first (FR-001, SC-003)
     register_mvp_surface(registry)
@@ -150,6 +153,11 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     # Phase 2 adapters (spec 029 — NFA 119 + MOHW SSIS, Layer 3 gated stubs)
     reg_nfa(registry, executor)  # T014 — NFA EMS statistics (interface-only)
     reg_mohw(registry, executor)  # T025 — MOHW welfare eligibility search (real XML handler)
+
+    # Spec #2797 — direct-curl verified public-data adapters. These are real
+    # read-only find adapters backed by saved live-probe fixtures and direct
+    # HTTP handlers; newly applied but not-yet-authorized candidates stay out.
+    reg_verified_data_go_kr(registry, executor)
 
     # Epic ε #2296 T028/T029 — New lookup mock GovAPITools (main ToolRegistry,
     # not per-primitive sub-registry — lookup adapters use BM25 discovery).

@@ -1,6 +1,6 @@
 # UMMAYA API Catalog
 
-This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637). Active adapters span seven Korean ministries and agencies: live `find` adapters call `data.go.kr` or public-infrastructure endpoints, live `locate` adapters wrap provider-specific geocoding APIs, and mock `send`/`check` adapters replay public-spec-mirrored fixtures. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
+This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637) plus the direct-curl verified public-data wave from Epic #2797. Active adapters span Korean ministries, public corporations, and public-infrastructure endpoints: live `find` adapters call `data.go.kr` or provider LINK APIs, live `locate` adapters wrap provider-specific geocoding APIs, and mock `send`/`check` adapters replay public-spec-mirrored fixtures. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
 
 The catalog is intended for three audiences:
 
@@ -32,6 +32,20 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | NMC | `nmc_emergency_search` | `find` | live | 3 | [nmc/emergency_search.md](./nmc/emergency_search.md) | [nmc_emergency_search.json](./schemas/nmc_emergency_search.json) |
 | NFA119 | `nfa_emergency_info_service` | `find` | live | 1 | [nfa119/emergency_info_service.md](./nfa119/emergency_info_service.md) | [nfa_emergency_info_service.json](./schemas/nfa_emergency_info_service.json) |
 | MOHW | `mohw_welfare_eligibility_search` | `find` | live | 1 | [mohw/welfare_eligibility_search.md](./mohw/welfare_eligibility_search.md) | [mohw_welfare_eligibility_search.json](./schemas/mohw_welfare_eligibility_search.json) |
+| FSC | `fsc_corporate_finance_summary` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [fsc_corporate_finance_summary.json](./schemas/fsc_corporate_finance_summary.json) |
+| KECO / AirKorea | `airkorea_ctprvn_air_quality` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [airkorea_ctprvn_air_quality.json](./schemas/airkorea_ctprvn_air_quality.json) |
+| FTC | `ftc_large_group_status` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [ftc_large_group_status.json](./schemas/ftc_large_group_status.json) |
+| FTC | `ftc_public_ym_list` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [ftc_public_ym_list.json](./schemas/ftc_public_ym_list.json) |
+| MOLIT / TAGO | `tago_bus_route_search` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [tago_bus_route_search.json](./schemas/tago_bus_route_search.json) |
+| MOLIT / TAGO | `tago_bus_arrival_search` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [tago_bus_arrival_search.json](./schemas/tago_bus_arrival_search.json) |
+| MOLIT / TAGO | `tago_bus_location_search` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [tago_bus_location_search.json](./schemas/tago_bus_location_search.json) |
+| MOLIT / TAGO | `tago_bus_station_search` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [tago_bus_station_search.json](./schemas/tago_bus_station_search.json) |
+| KEPCO | `kepco_contract_power_usage` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [kepco_contract_power_usage.json](./schemas/kepco_contract_power_usage.json) |
+| PPS | `pps_bid_public_info` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [pps_bid_public_info.json](./schemas/pps_bid_public_info.json) |
+| REB | `reb_real_estate_stat_table` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [reb_real_estate_stat_table.json](./schemas/reb_real_estate_stat_table.json) |
+| BFC | `bfc_funeral_area_fee` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [bfc_funeral_area_fee.json](./schemas/bfc_funeral_area_fee.json) |
+| KCUE | `kcue_finance_regional_tuition` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [kcue_finance_regional_tuition.json](./schemas/kcue_finance_regional_tuition.json) |
+| KCUE | `kcue_student_regional_foreign` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [kcue_student_regional_foreign.json](./schemas/kcue_student_regional_foreign.json) |
 | Mock — Check | `mock_verify_digital_onepass` | `check` | mock | 2 | [verify/digital_onepass.md](./verify/digital_onepass.md) | [mock_verify_digital_onepass.json](./schemas/mock_verify_digital_onepass.json) |
 | Mock — Check | `mock_verify_mobile_id` | `check` | mock | 2 | [verify/mobile_id.md](./verify/mobile_id.md) | [mock_verify_mobile_id.json](./schemas/mock_verify_mobile_id.json) |
 | Mock — Check | `mock_verify_gongdong_injeungseo` | `check` | mock | 3 | [verify/gongdong_injeungseo.md](./verify/gongdong_injeungseo.md) | [mock_verify_gongdong_injeungseo.json](./schemas/mock_verify_gongdong_injeungseo.json) |
@@ -48,11 +62,19 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 
 ## Matrix B — adapters by primitive
 
-### `find` (12 ministry adapters)
+### `find` (26 ministry and public-data adapters)
 
 | tool_id | Source | Tier | Permission | Spec |
 |---|---|---|---|---|
+| `airkorea_ctprvn_air_quality` | KECO / AirKorea | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `bfc_funeral_area_fee` | BFC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `fsc_corporate_finance_summary` | FSC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `ftc_large_group_status` | FTC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `ftc_public_ym_list` | FTC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `hira_hospital_search` | HIRA | live | 1 | [hira/hospital_search.md](./hira/hospital_search.md) |
+| `kcue_finance_regional_tuition` | KCUE | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `kcue_student_regional_foreign` | KCUE | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `kepco_contract_power_usage` | KEPCO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `kma_current_observation` | KMA | live | 1 | [kma/current_observation.md](./kma/current_observation.md) |
 | `kma_forecast_fetch` | KMA | live | 1 | [kma/forecast_fetch.md](./kma/forecast_fetch.md) |
 | `kma_pre_warning` | KMA | live | 1 | [kma/pre_warning.md](./kma/pre_warning.md) |
@@ -64,6 +86,12 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | `mohw_welfare_eligibility_search` | MOHW | live | 1 | [mohw/welfare_eligibility_search.md](./mohw/welfare_eligibility_search.md) |
 | `nfa_emergency_info_service` | NFA119 | live | 1 | [nfa119/emergency_info_service.md](./nfa119/emergency_info_service.md) |
 | `nmc_emergency_search` | NMC | live | 3 (gated) | [nmc/emergency_search.md](./nmc/emergency_search.md) |
+| `pps_bid_public_info` | PPS | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `reb_real_estate_stat_table` | REB | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `tago_bus_arrival_search` | MOLIT / TAGO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `tago_bus_location_search` | MOLIT / TAGO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `tago_bus_route_search` | MOLIT / TAGO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `tago_bus_station_search` | MOLIT / TAGO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 
 ### `locate` (5 provider adapters)
 
