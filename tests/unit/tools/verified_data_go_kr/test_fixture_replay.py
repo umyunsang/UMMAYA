@@ -121,6 +121,30 @@ async def test_adapter_handle_replays_live_probe_fixture(spec: object) -> None:
         assert expected_field in raw["items"][0]["record"]
 
 
+def test_kepco_input_accepts_official_wire_param_aliases() -> None:
+    """KEPCO public docs expose metroCd/cityCd/cntrCd, while model fields stay snake_case."""
+
+    module = module_for_tool_id("kepco_contract_power_usage")
+
+    validated_input = module.INPUT_SCHEMA.model_validate(
+        {
+            "year": "2020",
+            "month": "11",
+            "metroCd": "11",
+            "cityCd": "110",
+            "cntrCd": "100",
+        }
+    )
+
+    assert validated_input.model_dump(mode="python") == {
+        "year": "2020",
+        "month": "11",
+        "metro_cd": "11",
+        "city_cd": "110",
+        "cntr_cd": "100",
+    }
+
+
 @pytest.mark.asyncio
 async def test_adapter_fixture_output_normalizes_to_lookup_collection() -> None:
     spec = next(

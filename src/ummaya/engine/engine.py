@@ -77,6 +77,17 @@ def _contains_location_dependent_key(value: object) -> bool:
     return False
 
 
+def _allowed_core_tools_for_available_adapters(
+    visible_primitives: set[str],
+    has_location_dependent_schema: bool,
+) -> frozenset[str] | None:
+    """Constrain root primitive exposure for location-independent find turns."""
+
+    if visible_primitives == {"find"} and not has_location_dependent_schema:
+        return frozenset({"find"})
+    return None
+
+
 class QueryEngine:
     """Per-session orchestrator for the UMMAYA query engine.
 
@@ -197,6 +208,8 @@ class QueryEngine:
             )
             return
 
+        turn_start_message_index = len(self._state.messages)
+
         # --- Context assembly: insert turn attachment after passing budget check ---
         # Re-use the turn_attachment already computed in assembled; avoids a second
         # call to build_turn_attachment() which would duplicate context assembly work.
@@ -225,6 +238,7 @@ class QueryEngine:
             config=self._config,
             session_context=self._permission_session,
             allowed_core_tool_ids=allowed_core_tool_ids,
+            turn_start_message_index=turn_start_message_index,
         )
 
         # Delegate to per-turn query loop
@@ -293,6 +307,7 @@ class QueryEngine:
         adapter_lines: list[str] = []
         visible_primitives: set[str] = set()
         has_location_dependent_schema = False
+        primary_find_without_location = False
         visible_count = 0
         for candidate in candidates:
             try:
@@ -301,12 +316,19 @@ class QueryEngine:
                 continue
             if tool.is_core or tool.ministry == "UMMAYA":
                 continue
-            if isinstance(candidate.primitive, str):
-                visible_primitives.add(candidate.primitive)
-            if _schema_requires_location_resolution(
+            primitive = candidate.primitive if isinstance(candidate.primitive, str) else None
+            requires_location = _schema_requires_location_resolution(
                 candidate.input_schema_json,
                 candidate.required_params,
-            ):
+            )
+            primary_find_without_location = primary_find_without_location or (
+                visible_count == 0 and primitive == "find" and not requires_location
+            )
+            if visible_count > 0 and primary_find_without_location and requires_location:
+                continue
+            if primitive is not None:
+                visible_primitives.add(primitive)
+            if requires_location:
                 has_location_dependent_schema = True
             schema_json = json.dumps(
                 candidate.input_schema_json,
@@ -332,9 +354,10 @@ class QueryEngine:
         if not adapter_lines:
             return None, None
 
-        allowed_core_tool_ids: frozenset[str] | None = None
-        if visible_primitives == {"find"} and not has_location_dependent_schema:
-            allowed_core_tool_ids = frozenset({"find"})
+        allowed_core_tool_ids = _allowed_core_tools_for_available_adapters(
+            visible_primitives,
+            has_location_dependent_schema,
+        )
 
         content = "\n".join(
             [

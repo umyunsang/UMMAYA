@@ -134,6 +134,19 @@ class TestToolResultRendering:
         output = console.file.getvalue()  # type: ignore[union-attr]
         assert "성공" in output
 
+    def test_success_result_shows_adapter_source_for_primitive_result(self) -> None:
+        console = _make_console()
+        renderer = EventRenderer(console)
+        result = ToolResult(
+            tool_id="find",
+            success=True,
+            data={"kind": "collection", "meta": {"source": "bfc_funeral_area_fee"}},
+        )
+        renderer.render(QueryEvent(type="tool_result", tool_result=result))
+        output = console.file.getvalue()  # type: ignore[union-attr]
+        assert "tool_id='find'" in output
+        assert "adapter='bfc_funeral_area_fee'" in output
+
     def test_error_result(self) -> None:
         console = _make_console()
         renderer = EventRenderer(console)

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.models import GovAPITool
@@ -19,13 +19,25 @@ from ummaya.tools.verified_data_go_kr._manifest import require_spec
 class KepcoPowerUsageInput(BaseModel):
     """Input for KEPCO contract-type power usage."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     year: str = Field(..., min_length=4, max_length=4, description="Usage year.")
     month: str = Field(..., min_length=1, max_length=2, description="Usage month.")
-    metro_cd: str | None = Field(default=None, description="Metropolitan code.")
-    city_cd: str | None = Field(default=None, description="City/county/district code.")
-    cntr_cd: str | None = Field(default=None, description="Contract type code.")
+    metro_cd: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("metro_cd", "metroCd"),
+        description="Metropolitan code.",
+    )
+    city_cd: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("city_cd", "cityCd"),
+        description="City/county/district code.",
+    )
+    cntr_cd: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("cntr_cd", "cntrCd"),
+        description="Contract type code.",
+    )
 
 
 SPEC = require_spec("kepco_contract_power_usage")

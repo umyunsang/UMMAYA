@@ -36,6 +36,7 @@ from ummaya.llm.usage import UsageTracker
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool
 from ummaya.tools.mvp_surface import register_mvp_surface
+from ummaya.tools.register_all import register_all_tools
 from ummaya.tools.registry import ToolRegistry
 
 QueryContext.model_rebuild()
@@ -231,6 +232,50 @@ async def test_available_adapters_context_constrains_public_data_turn_to_find() 
         if isinstance(name, str):
             tool_names.append(name)
     assert tool_names == ["find"]
+
+
+def test_available_adapters_context_constrains_from_primary_candidate() -> None:
+    """Lower-ranked location adapters must not expose direct KMA tools for public-data turns."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, allowed_core_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "대학알리미 학교구분코드 02의 지역별 등록금 현황을 5건 공공 API 도구로 조회해줘."
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert "kcue_finance_regional_tuition" in content
+    assert "koroad_accident_search" not in content
+    assert allowed_core_tool_ids == frozenset({"find"})
+
+
+def test_available_adapters_context_preserves_locate_for_location_candidates() -> None:
+    """When visible candidates need location resolution, root primitives stay available."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, allowed_core_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "서울 강남구 교통사고 다발지역을 공공 API로 조회해줘"
+    )
+
+    assert message is not None
+    assert "koroad_accident_hazard_search" in (message.content or "")
+    assert allowed_core_tool_ids is None
 
 
 # ---------------------------------------------------------------------------

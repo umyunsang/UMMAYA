@@ -191,9 +191,14 @@ class EventRenderer:
             return
 
         if result.success:
+            adapter_source = _adapter_source_from_result_data(result.data)
+            adapter_line = ""
+            if adapter_source is not None and adapter_source != result.tool_id:
+                adapter_line = f"\n  adapter={escape(repr(adapter_source))}"
             panel = Panel(
                 f"[{self._theme.tool_result_ok}]성공[/{self._theme.tool_result_ok}]"
-                f"  tool_id={escape(repr(result.tool_id))}",
+                f"  tool_id={escape(repr(result.tool_id))}"
+                f"{adapter_line}",
                 title=f"[{self._theme.tool_result_ok}]도구 결과[/{self._theme.tool_result_ok}]",
                 border_style=self._theme.tool_result_ok,
             )
@@ -274,3 +279,15 @@ class EventRenderer:
                 logger.debug("Error stopping Live display", exc_info=True)
             finally:
                 self._live = None
+
+
+def _adapter_source_from_result_data(data: object) -> str | None:
+    """Return the adapter source id embedded in a primitive tool result."""
+
+    if not isinstance(data, dict):
+        return None
+    meta = data.get("meta")
+    if not isinstance(meta, dict):
+        return None
+    source = meta.get("source")
+    return source if isinstance(source, str) and source else None

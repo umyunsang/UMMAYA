@@ -93,6 +93,159 @@ def _tool_definition_name(tool_def: ToolDefinition | dict[str, object]) -> str |
     return name if isinstance(name, str) else None
 
 
+def _latest_successful_tool_payload(messages: list[ChatMessage]) -> dict[str, object] | None:
+    """Return the latest non-error tool-result JSON payload, if present."""
+
+    for message in reversed(messages):
+        if message.role != "tool" or not message.content:
+            continue
+        try:
+            data = json.loads(message.content)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(data, dict) or data.get("kind") == "error":
+            continue
+        return cast("dict[str, object]", data)
+    return None
+
+
+def _latest_user_utterance(messages: list[ChatMessage]) -> str:
+    """Return the latest citizen utterance, ignoring repair observations."""
+
+    for message in reversed(messages):
+        if message.role != "user" or not message.content:
+            continue
+        if message.content.startswith("[UMMAYA FINAL ANSWER OBSERVATION]"):
+            continue
+        return message.content
+    return ""
+
+
+def _should_repair_successful_tool_final_answer(text: str) -> bool:
+    """Detect final prose that ignores an already successful tool result."""
+
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return True
+    lowered = normalized.lower()
+    retry_markers = (
+        "다른 검색어로 재시도",
+        "다른 검색어 / 다른 지역",
+        "다른 지역으로 재시도",
+        "재시도하시겠습니까",
+        "다시 검색해",
+        "try another search",
+        "try a different search",
+        "would you like me to retry",
+    )
+    if any(marker in lowered for marker in retry_markers):
+        return True
+
+    wrapper_markers = (
+        "도구가 반환한 메시지",
+        "컬렉션 아이템 배열",
+        "공식 agency 채널 안내",
+    )
+    return any(marker in normalized for marker in wrapper_markers)
+
+
+def _remove_unneeded_mock_disclosure(
+    text: str,
+    payload: dict[str, object] | None,
+) -> str:
+    """Strip mock disclosure text from live successful tool answers."""
+
+    if _payload_contains_mock_marker(payload):
+        return text
+    if "실제 행정 영향" not in text and "시연(모의)" not in text:
+        return text
+    fragments = (
+        "이 결과는 실제 행정 영향이 없는 시연(모의) 결과입니다.",
+        "실제 행정 영향이 없는 시연(모의) 결과입니다.",
+        "접수번호는 시연용이며 실제 기관 포털에서 조회되지 않습니다.",
+    )
+    cleaned = text
+    for fragment in fragments:
+        cleaned = cleaned.replace(fragment, "")
+    lines = [
+        line.rstrip() for line in cleaned.splitlines() if not ("시연" in line and "모의" in line)
+    ]
+    return "\n".join(lines).strip()
+
+
+def _remove_generic_retry_footer(text: str) -> str:
+    """Drop generic retry footer lines from an otherwise useful final answer."""
+
+    fragments = (
+        "다른 검색어 / 다른 지역 / 다른 도구로 재시도하시겠습니까?",
+        "다른 검색어 / 다른 지역 / 다른 도구로 재시도하시겠습니까",
+        "다른 검색어 / 다른 도구 / 다른 매개변수로 재시도하시겠습니까?",
+        "다른 검색어 / 다른 도구 / 다른 매개변수로 재시도하시겠습니까",
+        "다른 검색어로 재시도하시겠습니까?",
+        "다른 검색어로 재시도하시겠습니까",
+        "재시도하시겠습니까?",
+    )
+    cleaned = text
+    for fragment in fragments:
+        cleaned = cleaned.replace(fragment, "")
+    lines = [
+        line.rstrip() for line in cleaned.splitlines() if not _line_is_generic_retry_footer(line)
+    ]
+    return "\n".join(lines).strip()
+
+
+def _line_is_generic_retry_footer(line: str) -> bool:
+    """Return True when a single final-answer line is only a retry affordance."""
+
+    normalized = " ".join(line.strip().split())
+    if not normalized:
+        return False
+    return "재시도" in normalized and (
+        "다른 검색어" in normalized
+        or "다른 지역" in normalized
+        or "다른 도구" in normalized
+        or "다른 매개변수" in normalized
+    )
+
+
+def _payload_contains_mock_marker(value: object) -> bool:
+    """Return True when a tool result carries mock-mode transparency evidence."""
+
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in {"_mode", "transparency_mode"} and item == "mock":
+                return True
+            if key == "mock" and item is True:
+                return True
+            if _payload_contains_mock_marker(item):
+                return True
+    elif isinstance(value, list):
+        return any(_payload_contains_mock_marker(item) for item in value)
+    return False
+
+
+def _final_answer_repair_message(
+    *,
+    payload: dict[str, object],
+    latest_user_utterance: str,
+) -> str:
+    """Build a no-tools observation that forces answer synthesis from tool data."""
+
+    payload_json = json.dumps(payload, ensure_ascii=False, default=str)
+    return (
+        "[UMMAYA FINAL ANSWER OBSERVATION]\n"
+        "The previous assistant turn produced a generic retry, handoff, raw-tool "
+        "wrapper, or mock-disclosure answer after a successful tool_result. "
+        "Do not call another tool. Do not ask the citizen to retry. Do not call "
+        "a live public-data result a mock or simulation result. Produce a concise "
+        "Korean final answer using only the latest successful tool_result JSON.\n"
+        f"Citizen request: {latest_user_utterance}\n"
+        f"Latest successful tool_result JSON: {payload_json}\n"
+        "If items is empty, state that the API returned zero rows for the requested "
+        "parameters. If items is non-empty, summarize concrete returned fields."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Concurrent tool dispatch (partition-sort algorithm, R-004)
 # ---------------------------------------------------------------------------
@@ -345,6 +498,8 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
     """
     iteration = 0
     stream_interrupted_count = 0
+    final_answer_repair_count = 0
+    force_no_tools_next_turn = False
     pipeline = PreprocessingPipeline()
 
     while iteration < ctx.config.max_iterations:
@@ -367,16 +522,24 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
 
         # --- Immutable snapshot for prompt cache stability (R-003) ---
         snapshot = list(ctx.state.messages)
+        current_turn_messages = snapshot[ctx.turn_start_message_index :]
+        latest_successful_tool_payload = _latest_successful_tool_payload(current_turn_messages)
+        buffer_final_answer = latest_successful_tool_payload is not None
 
         # --- Export tool definitions (sorted for cache stability) ---
-        raw_defs = ctx.tool_registry.export_core_tools_openai()
-        if ctx.allowed_core_tool_ids is not None:
-            raw_defs = [
-                tool_def
-                for tool_def in raw_defs
-                if _tool_definition_name(tool_def) in ctx.allowed_core_tool_ids
-            ]
-        tool_defs: list[ToolDefinition | dict[str, object]] | None = list(raw_defs) or None
+        suppress_tools_this_turn = force_no_tools_next_turn
+        if suppress_tools_this_turn:
+            tool_defs: list[ToolDefinition | dict[str, object]] | None = None
+            force_no_tools_next_turn = False
+        else:
+            raw_defs = ctx.tool_registry.export_core_tools_openai()
+            if ctx.allowed_core_tool_ids is not None:
+                raw_defs = [
+                    tool_def
+                    for tool_def in raw_defs
+                    if _tool_definition_name(tool_def) in ctx.allowed_core_tool_ids
+                ]
+            tool_defs = list(raw_defs) or None
 
         # --- Stream LLM completion ---
         pending_calls: dict[int, _PendingToolCall] = {}
@@ -390,7 +553,8 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
             ):
                 if event.type == "content_delta" and event.content is not None:
                     content_parts.append(event.content)
-                    yield QueryEvent(type="text_delta", content=event.content)
+                    if not buffer_final_answer:
+                        yield QueryEvent(type="text_delta", content=event.content)
 
                 elif event.type == "tool_call_delta":
                     idx = event.tool_call_index if event.tool_call_index is not None else 0
@@ -474,8 +638,64 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
             ),
         )
 
+        if assembled_calls and suppress_tools_this_turn:
+            if ctx.state.messages and ctx.state.messages[-1].role == "assistant":
+                ctx.state.messages.pop()
+            if latest_successful_tool_payload is not None and final_answer_repair_count < 3:
+                final_answer_repair_count += 1
+                force_no_tools_next_turn = True
+                ctx.state.messages.append(
+                    ChatMessage(
+                        role="user",
+                        content=_final_answer_repair_message(
+                            payload=latest_successful_tool_payload,
+                            latest_user_utterance=_latest_user_utterance(current_turn_messages),
+                        )
+                        + "\nThe previous assistant tried to call another tool during "
+                        "final-answer repair. Answer directly from the provided JSON.",
+                    )
+                )
+                logger.debug(
+                    "Suppressed tool call during final-answer repair; retrying final "
+                    "answer generation (%d/3)",
+                    final_answer_repair_count,
+                )
+                continue
+
         # --- No tool calls: yield usage, stop, and return ---
         if not assembled_calls:
+            if buffer_final_answer:
+                final_text = _remove_unneeded_mock_disclosure(
+                    assistant_content or "",
+                    latest_successful_tool_payload,
+                )
+                final_text = _remove_generic_retry_footer(final_text)
+                if ctx.state.messages and ctx.state.messages[-1].role == "assistant":
+                    ctx.state.messages[-1] = ChatMessage(role="assistant", content=final_text)
+                if (
+                    _should_repair_successful_tool_final_answer(final_text)
+                    and latest_successful_tool_payload is not None
+                    and final_answer_repair_count < 2
+                ):
+                    final_answer_repair_count += 1
+                    force_no_tools_next_turn = True
+                    ctx.state.messages.append(
+                        ChatMessage(
+                            role="user",
+                            content=_final_answer_repair_message(
+                                payload=latest_successful_tool_payload,
+                                latest_user_utterance=_latest_user_utterance(current_turn_messages),
+                            ),
+                        )
+                    )
+                    logger.debug(
+                        "Rejected generic final answer after successful tool result; "
+                        "retrying final answer generation (%d/2)",
+                        final_answer_repair_count,
+                    )
+                    continue
+                if final_text:
+                    yield QueryEvent(type="text_delta", content=final_text)
             if usage:
                 yield QueryEvent(type="usage_update", usage=usage)
             yield QueryEvent(type="stop", stop_reason=StopReason.end_turn)
