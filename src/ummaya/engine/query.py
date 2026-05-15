@@ -522,7 +522,8 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
 
         # --- Immutable snapshot for prompt cache stability (R-003) ---
         snapshot = list(ctx.state.messages)
-        latest_successful_tool_payload = _latest_successful_tool_payload(snapshot)
+        current_turn_messages = snapshot[ctx.turn_start_message_index :]
+        latest_successful_tool_payload = _latest_successful_tool_payload(current_turn_messages)
         buffer_final_answer = latest_successful_tool_payload is not None
 
         # --- Export tool definitions (sorted for cache stability) ---
@@ -648,7 +649,7 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
                         role="user",
                         content=_final_answer_repair_message(
                             payload=latest_successful_tool_payload,
-                            latest_user_utterance=_latest_user_utterance(snapshot),
+                            latest_user_utterance=_latest_user_utterance(current_turn_messages),
                         )
                         + "\nThe previous assistant tried to call another tool during "
                         "final-answer repair. Answer directly from the provided JSON.",
@@ -683,7 +684,7 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
                             role="user",
                             content=_final_answer_repair_message(
                                 payload=latest_successful_tool_payload,
-                                latest_user_utterance=_latest_user_utterance(snapshot),
+                                latest_user_utterance=_latest_user_utterance(current_turn_messages),
                             ),
                         )
                     )

@@ -1,6 +1,6 @@
 {
-  "started_at": "2026-05-15T21:45:49.173581+00:00",
-  "finished_at": "2026-05-15T21:48:29.607259+00:00",
+  "started_at": "2026-05-15T22:00:00.163551+00:00",
+  "finished_at": "2026-05-15T22:03:14.068033+00:00",
   "command": "uv run ummaya (PTY, one process per adapter prompt; exit sent after answer prompt returns)",
   "env": {
     "UMMAYA_LIVE_ADAPTER_MODE": "direct",
@@ -22,8 +22,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/01-fsc-corporate-finance.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/01-fsc-corporate-finance.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/01-fsc-corporate-finance.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/01-fsc-corporate-finance.clean.txt"
     },
     {
       "slug": "02-airkorea-ctprvn",
@@ -36,8 +36,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/02-airkorea-ctprvn.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/02-airkorea-ctprvn.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/02-airkorea-ctprvn.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/02-airkorea-ctprvn.clean.txt"
     },
     {
       "slug": "03-ftc-large-group",
@@ -50,8 +50,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/03-ftc-large-group.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/03-ftc-large-group.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/03-ftc-large-group.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/03-ftc-large-group.clean.txt"
     },
     {
       "slug": "04-ftc-public-ym",
@@ -64,8 +64,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/04-ftc-public-ym.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/04-ftc-public-ym.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/04-ftc-public-ym.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/04-ftc-public-ym.clean.txt"
     },
     {
       "slug": "05-tago-route",
@@ -78,8 +78,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/05-tago-route.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/05-tago-route.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/05-tago-route.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/05-tago-route.clean.txt"
     },
     {
       "slug": "06-tago-arrival",
@@ -92,8 +92,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/06-tago-arrival.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/06-tago-arrival.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/06-tago-arrival.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/06-tago-arrival.clean.txt"
     },
     {
       "slug": "07-tago-location",
@@ -106,8 +106,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/07-tago-location.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/07-tago-location.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/07-tago-location.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/07-tago-location.clean.txt"
     },
     {
       "slug": "08-tago-station",
@@ -120,8 +120,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/08-tago-station.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/08-tago-station.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/08-tago-station.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/08-tago-station.clean.txt"
     },
     {
       "slug": "09-kepco-power",
@@ -134,8 +134,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/09-kepco-power.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/09-kepco-power.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/09-kepco-power.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/09-kepco-power.clean.txt"
     },
     {
       "slug": "10-pps-bid",
@@ -148,8 +148,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/10-pps-bid.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/10-pps-bid.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/10-pps-bid.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/10-pps-bid.clean.txt"
     },
     {
       "slug": "11-reb-stat-table",
@@ -162,8 +162,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/11-reb-stat-table.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/11-reb-stat-table.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/11-reb-stat-table.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/11-reb-stat-table.clean.txt"
     },
     {
       "slug": "12-bfc-funeral",
@@ -176,8 +176,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/12-bfc-funeral.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/12-bfc-funeral.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/12-bfc-funeral.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/12-bfc-funeral.clean.txt"
     },
     {
       "slug": "13-kcue-tuition",
@@ -190,8 +190,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/13-kcue-tuition.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/13-kcue-tuition.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/13-kcue-tuition.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/13-kcue-tuition.clean.txt"
     },
     {
       "slug": "14-kcue-foreign-students",
@@ -204,8 +204,8 @@
       "observed_success_panel": true,
       "bad_markers": [],
       "passed": true,
-      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/14-kcue-foreign-students.raw.txt",
-      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-4/14-kcue-foreign-students.clean.txt"
+      "raw_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/14-kcue-foreign-students.raw.txt",
+      "clean_path": "/Users/um-yunsang/UMMAYA/specs/2797-data-go-kr-verified-adapters/terminal-matrix/2026-05-16-rerun-5/14-kcue-foreign-students.clean.txt"
     }
   ]
 }

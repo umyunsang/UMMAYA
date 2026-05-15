@@ -251,8 +251,31 @@ def test_available_adapters_context_constrains_from_primary_candidate() -> None:
     )
 
     assert message is not None
-    assert "kcue_finance_regional_tuition" in (message.content or "")
+    content = message.content or ""
+    assert "kcue_finance_regional_tuition" in content
+    assert "koroad_accident_search" not in content
     assert allowed_core_tool_ids == frozenset({"find"})
+
+
+def test_available_adapters_context_preserves_locate_for_location_candidates() -> None:
+    """When visible candidates need location resolution, root primitives stay available."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, allowed_core_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "서울 강남구 교통사고 다발지역을 공공 API로 조회해줘"
+    )
+
+    assert message is not None
+    assert "koroad_accident_hazard_search" in (message.content or "")
+    assert allowed_core_tool_ids is None
 
 
 # ---------------------------------------------------------------------------

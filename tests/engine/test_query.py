@@ -52,6 +52,7 @@ def _make_ctx(
     config: QueryEngineConfig,
     *,
     messages: list[ChatMessage] | None = None,
+    turn_start_message_index: int = 0,
 ) -> QueryContext:
     """Construct a QueryContext with sensible defaults for testing."""
     if messages is None:
@@ -73,6 +74,7 @@ def _make_ctx(
         tool_registry=tool_registry,
         config=config,
         iteration=0,
+        turn_start_message_index=turn_start_message_index,
     )
 
 
@@ -176,6 +178,57 @@ async def test_successful_tool_result_retries_generic_final_answer(
     assert "다른 검색어로 재시도" not in visible_text
     assert "컬렉션 아이템 배열" not in visible_text
     assert "Mock result for 서울 강남구 교통사고" in visible_text
+
+
+@pytest.mark.asyncio
+async def test_final_answer_guard_ignores_previous_turn_tool_results(
+    mock_llm_client,
+    tool_executor_with_mocks,
+    populated_registry,
+    sample_config,
+):
+    """A successful tool result from an earlier turn must not trigger repair."""
+
+    client = mock_llm_client.__class__(
+        responses=[
+            [
+                StreamEvent(
+                    type="content_delta",
+                    content="다른 검색어로 재시도하시겠습니까?",
+                ),
+                StreamEvent(type="done"),
+            ],
+        ],
+    )
+    messages = [
+        ChatMessage(role="system", content="You are UMMAYA."),
+        ChatMessage(role="user", content="이전 조회"),
+        ChatMessage(role="assistant", content=None),
+        ChatMessage(
+            role="tool",
+            content='{"kind":"collection","items":[{"record":{"old":true}}],"total_count":1}',
+            tool_call_id="call_old",
+        ),
+        ChatMessage(role="user", content="새 요청"),
+    ]
+    ctx = _make_ctx(
+        client,
+        tool_executor_with_mocks,
+        populated_registry,
+        sample_config,
+        messages=messages,
+        turn_start_message_index=4,
+    )
+
+    events = await _collect(ctx)
+    visible_text = "".join(e.content or "" for e in events if e.type == "text_delta")
+
+    assert client.call_count == 1
+    assert "다른 검색어로 재시도하시겠습니까?" in visible_text
+    assert not any(
+        (message.content or "").startswith("[UMMAYA FINAL ANSWER OBSERVATION]")
+        for message in ctx.state.messages
+    )
 
 
 @pytest.mark.asyncio

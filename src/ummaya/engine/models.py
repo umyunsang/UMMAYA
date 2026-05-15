@@ -128,6 +128,13 @@ class QueryContext(BaseModel):
     selected adapter primitive instead of letting unrelated root primitives race.
     """
 
+    turn_start_message_index: int = 0
+    """Index of the first message appended for this user turn.
+
+    Query-loop guards use this to distinguish tool results produced during the
+    current turn from successful tool results left in prior session history.
+    """
+
 
 # ---------------------------------------------------------------------------
 # SessionBudget
