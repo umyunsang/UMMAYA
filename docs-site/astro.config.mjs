@@ -25,6 +25,41 @@ export default defineConfig({
         src: './src/assets/ummaya-logo.png',
         alt: 'UMMAYA',
       },
+      favicon: '/favicon.png',
+      head: [
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'icon',
+            type: 'image/png',
+            sizes: '64x64',
+            href: '/favicon.png',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'icon',
+            type: 'image/x-icon',
+            href: '/favicon.ico',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'apple-touch-icon',
+            sizes: '180x180',
+            href: '/apple-touch-icon.png',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'manifest',
+            href: '/site.webmanifest',
+          },
+        },
+      ],
       customCss: ['./src/styles/custom.css'],
       editLink: {
         baseUrl: 'https://github.com/umyunsang/UMMAYA/edit/main/docs-site/',
