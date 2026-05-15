@@ -32,12 +32,15 @@ The UMMAYA migration-completion release. Initiative #1631 closed; the six Phase 
 
 ## [Unreleased]
 
-### Fixed
-- Corrected prepackage TUI branding so resume instructions, terminal titles, and package/version output use UMMAYA/ummaya and `v0.1.0-alpha` instead of upstream Claude CLI names or issue-number build metadata.
-
 ### Added
+
+- Added fourteen direct-curl verified data.go.kr-style `find` adapters, generated JSON schemas, and docs for the first credential-backed public-data adapter wave.
 - Initial project scaffold with `README.md` and `.gitignore`
 - Apache License 2.0
 - Contribution guide, Code of Conduct (Contributor Covenant 2.1), security policy
 - Issue templates for bug reports, feature requests, and API adapter proposals
 - Pull request template
+
+### Fixed
+
+- Corrected prepackage TUI branding so resume instructions, terminal titles, and package/version output use UMMAYA/ummaya and `v0.1.0-alpha` instead of upstream Claude CLI names or issue-number build metadata.
