@@ -6,7 +6,7 @@ from __future__ import annotations
 import httpx
 from pydantic import BaseModel
 
-from ummaya.tools._outbound_trace import _redact_url
+from ummaya.tools._outbound_trace import _redact_url, traced_async_client
 from ummaya.tools.errors import _require_env
 from ummaya.tools.verified_data_go_kr._models import (
     VerifiedAdapterSpec,
@@ -34,7 +34,7 @@ async def fetch_verified_output(
 
     params = _build_query_params(input_model, spec)
     headers = dict(spec.request_headers) or None
-    async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
+    async with traced_async_client(timeout=_TIMEOUT_SECONDS) as client:
         response = await client.get(str(spec.endpoint), params=params, headers=headers)
         _raise_for_status_sanitized(response)
         return parse_verified_payload(
@@ -71,11 +71,22 @@ def _raise_for_status_sanitized(response: httpx.Response) -> None:
                 f"{message}\nFor more information check: "
                 f"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/{status_code}"
             )
-        redacted_request = httpx.Request(exc.request.method, redacted_url)
+        redacted_request = httpx.Request(
+            exc.request.method,
+            redacted_url,
+            headers=exc.request.headers,
+        )
+        redacted_response = httpx.Response(
+            status_code,
+            headers=exc.response.headers,
+            content=exc.response.content,
+            request=redacted_request,
+            extensions=exc.response.extensions,
+        )
         raise httpx.HTTPStatusError(
             message,
             request=redacted_request,
-            response=exc.response,
+            response=redacted_response,
         ) from None
 
 

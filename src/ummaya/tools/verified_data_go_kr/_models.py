@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Literal
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -63,6 +64,16 @@ class VerifiedAdapterSpec(BaseModel):
     primitive: Literal["find"] = "find"
     adapter_mode: Literal["live"] = "live"
     citizen_facing_gate: Literal["read-only"] = "read-only"
+
+    @field_validator("endpoint")
+    @classmethod
+    def _endpoint_scheme_is_safe(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme == "https":
+            return value
+        if parsed.scheme == "http" and parsed.netloc == "apis.data.go.kr":
+            return value
+        raise ValueError("http endpoints are only allowed for apis.data.go.kr gateway probes")
 
     @field_validator("request_headers")
     @classmethod
