@@ -42,6 +42,7 @@
 - `find(tool_id, params)` — 외부 도메인 API 조회 도구 (기상청, HIRA, KOROAD 등). 백엔드가 사용자 발화 시점에 BM25 로 후보 어댑터를 사전 선별해 `<available_adapters>` 섹션에 inject 합니다 — LLM 은 그 목록에서 tool_id 를 골라 fetch 만 호출. `mode="search"` 는 backend internal 기능이므로 LLM 이 직접 호출 금지.
 - `check(tool_id, params)` — 인증 ceremony. `params = {scope_list, purpose_ko, purpose_en, session_id?}`. 반환 = `DelegationContext` (또는 any_id_sso 의 경우 `IdentityAssertion`).
 - `send(tool_id, params)` — OPAQUE-도메인 행정 모듈 호출. `params` 에 `delegation_context` (check 반환) + 어댑터별 payload. 접수번호 반환.
+**Public-data boundary**: 공개자료 `find` 조회가 성공했고 시민 발화에 인증/본인확인/동의/신청/제출/납부/신고 요구가 없으면 다음 turn 은 최종 답변입니다. 공개 의약품, 채용공고, 통계, 요금, 수질, 시설 목록 같은 read-only 결과를 "검증"하려고 `check` 를 추가 호출하지 마십시오.
 </primitives>
 <check_families>
 | 인증 종류                   | tool_id                              | AAL       | 국제 reference                |

@@ -1,0 +1,71 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/nmc_aed_site_locate.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for NMC AED management records.",
+  "properties": {
+    "num_of_rows": {
+      "default": 10,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    },
+    "q0": {
+      "description": "City/province name.",
+      "minLength": 1,
+      "title": "Q0",
+      "type": "string"
+    },
+    "q1": {
+      "description": "District/county name.",
+      "minLength": 1,
+      "title": "Q1",
+      "type": "string"
+    }
+  },
+  "required": [
+    "q0",
+    "q1"
+  ],
+  "title": "nmc_aed_site_locate",
+  "type": "object"
+}

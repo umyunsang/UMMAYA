@@ -57,6 +57,15 @@ Ministry = Literal[
     "REB",  # 한국부동산원 — real-estate statistics
     "BFC",  # 부산시설공단 — Busan public facilities
     "KCUE",  # 한국대학교육협의회 — university disclosure data
+    "MOJ",  # 법무부 — justice / immigration statistics
+    "MSIT",  # 과학기술정보통신부 — science and ICT notices
+    "MPM",  # 인사혁신처 — public job notices
+    "MSS",  # 중소벤처기업부 — SME support notices
+    "KSD",  # 한국예탁결제원 — securities terminology
+    "CCOURT",  # 헌법재판소 — constitutional court publications
+    "DJTC",  # 대전교통공사 — Daejeon metro
+    "MOF",  # 해양수산부 — marine water quality
+    "GYERYONG",  # 계룡시 — local accessibility infrastructure
     "UMMAYA",  # harness-internal synthetic surface (locate, find, mvp_surface)
     "OTHER",  # transitional escape hatch — CI emits warning
 ]

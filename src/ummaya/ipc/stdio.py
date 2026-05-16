@@ -2172,6 +2172,35 @@ def _check_duplicate_submit_prerequisite(
     )
 
 
+def _check_unrequested_verify_after_public_find(
+    fname: str,
+    llm_messages: list[Any],
+    user_query: str,
+) -> str | None:
+    """Suppress identity checks that were not requested after public lookup.
+
+    Public data ``find`` results are read-only.  If the citizen did not ask
+    for authentication, submission, consent, or identity verification, a later
+    ``check`` call can only create a spurious permission prompt.  Keep that
+    recoverable routing error inside the agentic loop and ask the model to
+    finish from the successful public-data result instead.
+    """
+
+    if fname != "check":
+        return None
+    if _verify_requirement_for_query(user_query) is not None:
+        return None
+    if not _conversation_has_successful_primitive_any_tool(llm_messages, primitive="find"):
+        return None
+    return (
+        "The citizen request has a successful public-data find result and does "
+        "not contain an authentication, identity, consent, submit, payment, or "
+        "filing requirement. RECOVERY: do NOT call check and do NOT show a "
+        "permission prompt. Produce the citizen-facing final answer from the "
+        "latest successful find tool_result."
+    )
+
+
 def _submit_requirement_params(requirement: dict[str, str]) -> dict[str, object] | None:
     try:
         parsed = _stdlib_json.loads(requirement["params_json"])
@@ -4206,6 +4235,14 @@ async def run(  # noqa: C901
             'locate/find/check/send({"tool_id":"...", "params":{...}}). '
             "동일 tool_id 를 한 turn 안에서 반복 호출하지 마세요."
         )
+        listed_primitives = {str(candidate.primitive or "find") for candidate in candidates}
+        if listed_primitives == {"find"}:
+            lines.append(
+                "공개자료 조회 규칙: 위 후보가 모두 primitive=find 이면 시민이 "
+                "인증/본인확인/동의/신청/제출/납부/신고를 명시하지 않은 한 "
+                "check/send 를 호출하지 마세요. 성공한 find 결과가 있으면 "
+                "다음 turn 은 최종 답변입니다."
+            )
         lines.append(
             "호출 전 검증: 시민 발화의 명시 조건(개수, 반경/거리, 날짜/시간, 종류, "
             "카테고리, 진료과/분야, 키워드, 행정구역 등)이 아래 schema 의 선택 "
@@ -6119,6 +6156,25 @@ async def run(  # noqa: C901
                             "Produce the citizen-facing final answer from the latest "
                             "successful tool_result."
                         ),
+                    )
+                    continue_free_next_turn = True
+                    continue
+
+                unrequested_verify_msg = _check_unrequested_verify_after_public_find(
+                    fname,
+                    llm_messages,
+                    latest_user_utt,
+                )
+                if unrequested_verify_msg is not None:
+                    logger.warning(
+                        "_handle_chat_request: suppressed unrequested %s "
+                        "call_id=%s after successful public find",
+                        fname,
+                        call_id[:12],
+                    )
+                    _append_final_answer_observation(
+                        "suppressed unrequested check after successful public find",
+                        unrequested_verify_msg,
                     )
                     continue_free_next_turn = True
                     continue

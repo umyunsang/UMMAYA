@@ -37,10 +37,11 @@ class TestToolRegistration:
         # (Kakao address/keyword/coord-region, JUSO adm_cd, SGIS adm_cd) = 38.
         # Spec #2797 verified public-data wave: + 14 direct-curl verified
         # data.go.kr/LINK adapters = 52.
+        # Spec #2798 live expansion: + 16 approved data.go.kr adapters = 68.
         # is_core=False so the LLM's primary tool list stays at active
         # primitives + lookup-class; these participate in
         # lookup(mode="search") BM25 corpus only.
-        assert len(registry) == 52
+        assert len(registry) == 68
 
     def test_tool_ids_present(self) -> None:
         """Each expected tool_id is in the registry.
@@ -89,6 +90,23 @@ class TestToolRegistration:
             "bfc_funeral_area_fee",
             "kcue_finance_regional_tuition",
             "kcue_student_regional_foreign",
+            # Spec #2798 additional approved public-data adapters
+            "moj_village_lawyer_lookup",
+            "mois_facility_safety_info_lookup",
+            "hira_medical_institution_detail",
+            "mois_emergency_call_box_lookup",
+            "djtc_subway_segment_fare_time_check",
+            "gyeryong_assistive_device_charging_place_locate",
+            "nmc_aed_site_locate",
+            "mof_ocean_water_quality_check",
+            "mfds_easy_drug_info_lookup",
+            "mpm_public_job_lookup",
+            "pps_shopping_mall_product_lookup",
+            "ksd_financial_term_lookup",
+            "mss_sme_support_notice_lookup",
+            "ccourt_publication_documents",
+            "moj_stay_person_counter",
+            "msit_business_announcement_lookup",
         }
         for tool_id in expected:
             assert tool_id in registry, f"{tool_id} not found in registry"
@@ -131,6 +149,23 @@ class TestToolRegistration:
             "bfc_funeral_area_fee",
             "kcue_finance_regional_tuition",
             "kcue_student_regional_foreign",
+            # Spec #2798 additional approved public-data adapters
+            "moj_village_lawyer_lookup",
+            "mois_facility_safety_info_lookup",
+            "hira_medical_institution_detail",
+            "mois_emergency_call_box_lookup",
+            "djtc_subway_segment_fare_time_check",
+            "gyeryong_assistive_device_charging_place_locate",
+            "nmc_aed_site_locate",
+            "mof_ocean_water_quality_check",
+            "mfds_easy_drug_info_lookup",
+            "mpm_public_job_lookup",
+            "pps_shopping_mall_product_lookup",
+            "ksd_financial_term_lookup",
+            "mss_sme_support_notice_lookup",
+            "ccourt_publication_documents",
+            "moj_stay_person_counter",
+            "msit_business_announcement_lookup",
         }
         for tool_id in expected:
             assert tool_id in executor._adapters, f"No adapter for {tool_id}"

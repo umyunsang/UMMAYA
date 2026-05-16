@@ -6,6 +6,7 @@ from __future__ import annotations
 import httpx
 from pydantic import BaseModel
 
+from ummaya.tools._outbound_trace import _redact_url, traced_async_client
 from ummaya.tools.errors import _require_env
 from ummaya.tools.verified_data_go_kr._models import (
     VerifiedAdapterSpec,
@@ -32,9 +33,10 @@ async def fetch_verified_output(
         )
 
     params = _build_query_params(input_model, spec)
-    async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
-        response = await client.get(str(spec.endpoint), params=params)
-        response.raise_for_status()
+    headers = dict(spec.request_headers) or None
+    async with traced_async_client(timeout=_TIMEOUT_SECONDS) as client:
+        response = await client.get(str(spec.endpoint), params=params, headers=headers)
+        _raise_for_status_sanitized(response)
         return parse_verified_payload(
             response.content,
             response_format=spec.response_format,
@@ -51,3 +53,48 @@ def _build_query_params(input_model: BaseModel, spec: VerifiedAdapterSpec) -> di
         if value is not None:
             params[query_name] = str(value)
     return params
+
+
+def _raise_for_status_sanitized(response: httpx.Response) -> None:
+    """Raise HTTPStatusError with auth query params redacted from the message."""
+
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        status_code = exc.response.status_code
+        reason_phrase = exc.response.reason_phrase
+        redacted_url = _redact_url(exc.request.url)
+        error_kind = _http_error_kind(status_code)
+        message = f"{error_kind} '{status_code} {reason_phrase}' for url '{redacted_url}'"
+        if 400 <= status_code < 600:
+            message = (
+                f"{message}\nFor more information check: "
+                f"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/{status_code}"
+            )
+        redacted_request = httpx.Request(
+            exc.request.method,
+            redacted_url,
+            headers=exc.request.headers,
+        )
+        redacted_response = httpx.Response(
+            status_code,
+            headers=exc.response.headers,
+            content=exc.response.content,
+            request=redacted_request,
+            extensions=exc.response.extensions,
+        )
+        raise httpx.HTTPStatusError(
+            message,
+            request=redacted_request,
+            response=redacted_response,
+        ) from None
+
+
+def _http_error_kind(status_code: int) -> str:
+    if 300 <= status_code < 400:
+        return "Redirect response"
+    if 400 <= status_code < 500:
+        return "Client error"
+    if 500 <= status_code < 600:
+        return "Server error"
+    return "HTTP status error"

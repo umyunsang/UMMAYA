@@ -42,8 +42,6 @@ _LOCATION_DEPENDENT_SCHEMA_KEYS = frozenset(
         "lng",
         "nx",
         "ny",
-        "q0",
-        "q1",
         "region_cd",
         "region_code",
     }

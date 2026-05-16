@@ -55,6 +55,47 @@ def test_parse_xml_with_nonstandard_repeating_record_tag() -> None:
     assert parsed.items[0].record["unityGrupNm"] == "삼성"
 
 
+def test_parse_xml_preserves_repeated_child_elements_as_lists() -> None:
+    parsed = parse_verified_payload(
+        b"""
+        <response>
+          <header><resultCode>00</resultCode><resultMsg>NORMAL_CODE</resultMsg></header>
+          <body>
+            <items>
+              <item>
+                <subject>notice</subject>
+                <files>
+                  <file><fileName>a.hwp</fileName></file>
+                  <file><fileName>b.odt</fileName></file>
+                </files>
+              </item>
+            </items>
+          </body>
+        </response>
+        """,
+        response_format="xml",
+    )
+
+    files = parsed.items[0].record["files"]
+    assert isinstance(files, dict)
+    assert files["file"] == [{"fileName": "a.hwp"}, {"fileName": "b.odt"}]
+
+
+def test_parse_msit_fixture_preserves_all_attachment_entries() -> None:
+    parsed = parse_verified_payload(
+        _read("15074634/probes/live-2026-05-16-blocker-resolution/msit-rawkey-ua-only.body"),
+        response_format="xml",
+    )
+
+    files = parsed.items[1].record["files"]
+    assert isinstance(files, dict)
+    attachment_entries = files["file"]
+    assert isinstance(attachment_entries, list)
+    assert len(attachment_entries) == 5
+    assert attachment_entries[0]["fileName"].endswith(".hwp")
+    assert attachment_entries[-1]["fileName"].endswith(".zip")
+
+
 def test_parse_reb_openapi_json_rows() -> None:
     parsed = parse_verified_payload(
         _read("15134761/probes/live-2026-05-16/reb-stat-table.body.json"),

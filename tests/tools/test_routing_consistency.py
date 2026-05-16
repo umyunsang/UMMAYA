@@ -170,7 +170,7 @@ class TestInvariant4UniqueToolId:
 
 
 class TestCheck7ToolListClosure:
-    """The Python-side registered tool set matches the 52-entry registry.
+    """The Python-side registered tool set matches the 68-entry registry.
 
     Divergence from this set indicates either an unauthorized addition or
     an inadvertent removal — both are CI failures.
@@ -247,6 +247,23 @@ class TestCheck7ToolListClosure:
             "bfc_funeral_area_fee",
             "kcue_finance_regional_tuition",
             "kcue_student_regional_foreign",
+            # Spec #2798 — approved public-data live expansion.
+            "moj_village_lawyer_lookup",
+            "mois_facility_safety_info_lookup",
+            "hira_medical_institution_detail",
+            "mois_emergency_call_box_lookup",
+            "djtc_subway_segment_fare_time_check",
+            "gyeryong_assistive_device_charging_place_locate",
+            "nmc_aed_site_locate",
+            "mof_ocean_water_quality_check",
+            "mfds_easy_drug_info_lookup",
+            "mpm_public_job_lookup",
+            "pps_shopping_mall_product_lookup",
+            "ksd_financial_term_lookup",
+            "mss_sme_support_notice_lookup",
+            "ccourt_publication_documents",
+            "moj_stay_person_counter",
+            "msit_business_announcement_lookup",
         }
     )
 

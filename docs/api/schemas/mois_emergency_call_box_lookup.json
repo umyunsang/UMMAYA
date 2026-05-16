@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/mois_emergency_call_box_lookup.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for MOIS emergency call-box lookup.",
+  "properties": {
+    "num_of_rows": {
+      "default": 10,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    },
+    "road_address": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Road-address substring to match.",
+      "title": "Road Address"
+    }
+  },
+  "title": "mois_emergency_call_box_lookup",
+  "type": "object"
+}

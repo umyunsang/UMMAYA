@@ -278,6 +278,29 @@ def test_available_adapters_context_preserves_locate_for_location_candidates() -
     assert allowed_core_tool_ids is None
 
 
+def test_available_adapters_context_constrains_aed_region_filters_to_find() -> None:
+    """NMC AED q0/q1 are official region filters, not a locate prerequisite."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, allowed_core_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "종로구 자동심장충격기 위치 알려줘."
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert "nmc_aed_site_locate" in content
+    assert "kakao_keyword_search" not in content
+    assert allowed_core_tool_ids == frozenset({"find"})
+
+
 # ---------------------------------------------------------------------------
 # Scenario 1: One tool call -> task_complete
 # ---------------------------------------------------------------------------

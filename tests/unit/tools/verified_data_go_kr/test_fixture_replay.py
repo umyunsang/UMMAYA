@@ -100,6 +100,96 @@ FIXTURE_CASES = {
         "15158684/probes/live-2026-05-16/student-regional-foreign.body.xml",
         "schlDivCd",
     ),
+    "moj_village_lawyer_lookup": (
+        {"page_no": 1, "num_of_rows": 5},
+        "15121954/probes/live-2026-05-16-direct-check/moj-village-lawyer-http.body",
+        "Attorney",
+    ),
+    "mois_facility_safety_info_lookup": (
+        {"fclts_nm": "호텔", "page_no": 1, "num_of_rows": 5},
+        "15073554/probes/live-2026-05-16-direct-check/mois-facility-safety-search.body",
+        "fcltyNm",
+    ),
+    "hira_medical_institution_detail": (
+        {
+            "ykiho": (
+                "JDQ4MTYyMiM1MSMkMSMkMCMkODkkMzgxMzUxIzIxIyQxIyQ5IyQ3MiQyNjEyMjIjNjEjJDEjJDgjJDgz"
+            )
+        },
+        "15001699/probes/live-2026-05-16-direct-check/hira-medical-detail.body",
+        "emyDayYn",
+    ),
+    "mois_emergency_call_box_lookup": (
+        {"road_address": "서울", "page_no": 1, "num_of_rows": 5},
+        "15155046/probes/live-2026-05-16-direct-check/emergency-call-box.body",
+        "INSTL_PSTN",
+    ),
+    "djtc_subway_segment_fare_time_check": (
+        {"strstnno": "104", "endstnno": "111"},
+        "15158794/probes/live-2026-05-16-direct-check/djtc-time-distance.body",
+        "fee",
+    ),
+    "gyeryong_assistive_device_charging_place_locate": (
+        {"current_page": 1, "per_page": 5, "indoor_outdoor": "실내"},
+        "15096040/probes/live-2026-05-16-direct-check/gyeryong-charger.body",
+        "INSTL_PLACE",
+    ),
+    "nmc_aed_site_locate": (
+        {"q0": "서울특별시", "q1": "종로구", "page_no": 1, "num_of_rows": 5},
+        "15000652/probes/live-2026-05-16-direct-check/nmc-aed-manage.body",
+        "buildAddress",
+    ),
+    "mof_ocean_water_quality_check": (
+        {"station_code": "SEA3003", "page_no": 1, "num_of_rows": 5},
+        "15127779/probes/live-2026-05-16-direct-check/ocean-water-quality.body",
+        "rtmWqWtchStaCd",
+    ),
+    "mfds_easy_drug_info_lookup": (
+        {"item_name": "타이레놀", "page_no": 1, "num_of_rows": 5},
+        "15075057/probes/live-2026-05-16-direct-check/mfds-easy-drug.body",
+        "itemName",
+    ),
+    "mpm_public_job_lookup": (
+        {
+            "pblanc_ty": "e01",
+            "instt_se": "g01",
+            "sort_order": "내림차순",
+            "page_no": 1,
+            "num_of_rows": 5,
+        },
+        "15156780/probes/live-2026-05-16-direct-check/mpm-public-job-g01.body",
+        "insttname",
+    ),
+    "pps_shopping_mall_product_lookup": (
+        {"inqry_div": "1", "prdct_clsfc_no_nm": "의자", "page_no": 1, "num_of_rows": 5},
+        "15129471/probes/live-2026-05-16-direct-check/pps-shopping-product.body",
+        "cntrctCorpNm",
+    ),
+    "ksd_financial_term_lookup": (
+        {"term": "주식", "page_no": 1, "num_of_rows": 5},
+        "15158905/probes/live-2026-05-16-direct-check/ksd-financial-term.body",
+        "fnceDictNm",
+    ),
+    "mss_sme_support_notice_lookup": (
+        {"hashtags": "소상공인", "page_no": 1, "num_of_rows": 5},
+        "15157820/probes/live-2026-05-16-direct-check/sme-support-announcement.body",
+        "pblancNm",
+    ),
+    "ccourt_publication_documents": (
+        {"title": "헌법", "page_no": 1, "num_of_rows": 5},
+        "15140950/probes/live-2026-05-16-direct-check/ccourt-publication.body",
+        "title",
+    ),
+    "moj_stay_person_counter": (
+        {"search_ym": "202504", "page_no": 1, "num_of_rows": 5},
+        "15149906/probes/live-2026-05-16-blocker-resolution/moj-gateway-ServiceKey.body",
+        "division",
+    ),
+    "msit_business_announcement_lookup": (
+        {"page_no": 1, "num_of_rows": 10, "return_type": "xml"},
+        "15074634/probes/live-2026-05-16-blocker-resolution/msit-rawkey-ua-only.body",
+        "subject",
+    ),
 }
 
 

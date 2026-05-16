@@ -51,7 +51,7 @@ def _parse_json_payload(raw: object) -> VerifiedPublicDataOutput:
         raise VerifiedUpstreamError(code, message or "")
 
     records = _extract_json_records(raw)
-    total_count = _find_first_int(raw, ("totalCount", "totData", "list_total_count"))
+    total_count = _find_first_int(raw, ("totalCount", "totalRows", "totData", "list_total_count"))
     return VerifiedPublicDataOutput(
         items=[VerifiedPublicDataItem(record=record) for record in records],
         total_count=total_count if total_count is not None else len(records),
@@ -102,12 +102,13 @@ def _extract_json_records(raw: object) -> list[dict[str, object]]:
 
     response = _as_mapping(root.get("response"))
     if response is not None:
-        body = _as_mapping(response.get("body"))
-        if body is not None:
-            items = body.get("items")
-            item_records = _extract_items_value(items)
-            if item_records:
-                return item_records
+        body_records = _extract_body_records(response.get("body"))
+        if body_records:
+            return body_records
+
+    body_records = _extract_body_records(root.get("body"))
+    if body_records:
+        return body_records
 
     reb_rows = _extract_reb_rows(root)
     if reb_rows:
@@ -132,6 +133,30 @@ def _extract_items_value(value: object) -> list[dict[str, object]]:
             return nested
         return _coerce_records(items)
     return _coerce_records(value)
+
+
+def _extract_body_records(value: object) -> list[dict[str, object]]:
+    body = _as_mapping(value)
+    if body is None:
+        return _coerce_records(value)
+
+    item_records = _extract_items_value(body.get("items"))
+    if item_records:
+        return item_records
+
+    direct_items = _coerce_records(body.get("item"))
+    if direct_items:
+        return direct_items
+
+    data_records = _coerce_records(body.get("data"))
+    if data_records:
+        return data_records
+
+    row_records = _coerce_records(body.get("row"))
+    if row_records:
+        return row_records
+
+    return []
 
 
 def _extract_reb_rows(root: Mapping[object, object]) -> list[dict[str, object]]:
@@ -242,13 +267,25 @@ def _xml_record(element: ET.Element) -> dict[str, object]:
     for child in list(element):
         tag = _strip_namespace(child.tag)
         if list(child):
-            record[tag] = _xml_record(child)
+            value: object = _xml_record(child)
         else:
-            record[tag] = child.text.strip() if child.text is not None else ""
+            value = child.text.strip() if child.text is not None else ""
+        _append_xml_field(record, tag, value)
     if not record:
         text = element.text.strip() if element.text is not None else ""
         record[_strip_namespace(element.tag)] = text
     return record
+
+
+def _append_xml_field(record: dict[str, object], tag: str, value: object) -> None:
+    existing = record.get(tag)
+    if existing is None and tag not in record:
+        record[tag] = value
+        return
+    if isinstance(existing, list):
+        existing.append(value)
+        return
+    record[tag] = [existing, value]
 
 
 def _strip_namespace(tag: str) -> str:

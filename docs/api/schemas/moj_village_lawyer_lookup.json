@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/moj_village_lawyer_lookup.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for MOJ village lawyer regional assignment rows.",
+  "properties": {
+    "num_of_rows": {
+      "default": 20,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    }
+  },
+  "title": "moj_village_lawyer_lookup",
+  "type": "object"
+}
