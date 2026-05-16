@@ -2,7 +2,7 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the active count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 52 entries
+  - Main ToolRegistry: 68 entries
   - ummaya.primitives.verify._VERIFY_ADAPTERS: 10 families
   - ummaya.primitives.submit._ADAPTER_REGISTRY: 5 families
 
@@ -16,7 +16,7 @@ do NOT silently adjust the expected values.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Main ToolRegistry count — 52 total
+# Main ToolRegistry count — 68 total
 # ---------------------------------------------------------------------------
 # Epic η #2298 — extended from 16 to 18 by adding `check` / `send`
 # to mvp_surface as `is_core=True` GovAPITool entries (FR-021).
@@ -40,10 +40,12 @@ from __future__ import annotations
 # locate primitive.
 # Spec #2797 — extended from 38 to 52 by registering fourteen direct-curl
 # verified public-data adapters under src/ummaya/tools/verified_data_go_kr/.
-_EXPECTED_MAIN_REGISTRY_COUNT = 52
+# Spec #2798 — extended from 52 to 68 by registering sixteen additional
+# approved live public-data adapters from the 2026-05-16 direct evidence batch.
+_EXPECTED_MAIN_REGISTRY_COUNT = 68
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
-    "live_adapters": 26,  # 12 existing Live + 14 verified public-data adapters
+    "live_adapters": 42,  # 12 existing Live + 30 verified public-data adapters
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
@@ -77,6 +79,22 @@ _EXPECTED_LIVE_TOOL_IDS = frozenset(
         "bfc_funeral_area_fee",
         "kcue_finance_regional_tuition",
         "kcue_student_regional_foreign",
+        "moj_village_lawyer_lookup",
+        "mois_facility_safety_info_lookup",
+        "hira_medical_institution_detail",
+        "mois_emergency_call_box_lookup",
+        "djtc_subway_segment_fare_time_check",
+        "gyeryong_assistive_device_charging_place_locate",
+        "nmc_aed_site_locate",
+        "mof_ocean_water_quality_check",
+        "mfds_easy_drug_info_lookup",
+        "mpm_public_job_lookup",
+        "pps_shopping_mall_product_lookup",
+        "ksd_financial_term_lookup",
+        "mss_sme_support_notice_lookup",
+        "ccourt_publication_documents",
+        "moj_stay_person_counter",
+        "msit_business_announcement_lookup",
     }
 )
 
@@ -91,7 +109,7 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 52 entries after register_all_tools()."""
+    """Main ToolRegistry must have exactly 68 entries after register_all_tools()."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -110,7 +128,7 @@ def test_main_registry_total_count() -> None:
 
 
 def test_main_registry_live_tool_ids_present() -> None:
-    """All 26 expected Live tool IDs must be registered in the main ToolRegistry."""
+    """All 42 expected Live tool IDs must be registered in the main ToolRegistry."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -325,7 +343,9 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # corpus so find(mode="search") surfaces them. is_core=False so the
         # primary LLM tool list stays at active primitives + find-class Live.
         # Locate-provider adapters add five first-class registry entries.
-        "main_registry": 52,
+        # Spec #2798 adds sixteen approved live data.go.kr adapters, bringing
+        # the main ToolRegistry from 52 to 68.
+        "main_registry": 68,
         "verify_families": 10,
         "submit_adapters": 5,
     }

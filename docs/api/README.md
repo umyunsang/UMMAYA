@@ -1,6 +1,6 @@
 # UMMAYA API Catalog
 
-This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637) plus the direct-curl verified public-data wave from Epic #2797. Active adapters span Korean ministries, public corporations, and public-infrastructure endpoints: live `find` adapters call `data.go.kr` or provider LINK APIs, live `locate` adapters wrap provider-specific geocoding APIs, and mock `send`/`check` adapters replay public-spec-mirrored fixtures. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
+This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637) plus the direct-curl verified public-data waves from Epics #2797 and #2832. Active adapters span Korean ministries, public corporations, and public-infrastructure endpoints: live `find` adapters call `data.go.kr` or provider LINK APIs, live `locate` adapters wrap provider-specific geocoding APIs, and mock `send`/`check` adapters replay public-spec-mirrored fixtures. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
 
 The catalog is intended for three audiences:
 
@@ -46,6 +46,22 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | BFC | `bfc_funeral_area_fee` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [bfc_funeral_area_fee.json](./schemas/bfc_funeral_area_fee.json) |
 | KCUE | `kcue_finance_regional_tuition` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [kcue_finance_regional_tuition.json](./schemas/kcue_finance_regional_tuition.json) |
 | KCUE | `kcue_student_regional_foreign` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [kcue_student_regional_foreign.json](./schemas/kcue_student_regional_foreign.json) |
+| CCOURT | `ccourt_publication_documents` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [ccourt_publication_documents.json](./schemas/ccourt_publication_documents.json) |
+| DJTC | `djtc_subway_segment_fare_time_check` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [djtc_subway_segment_fare_time_check.json](./schemas/djtc_subway_segment_fare_time_check.json) |
+| Gyeryong | `gyeryong_assistive_device_charging_place_locate` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [gyeryong_assistive_device_charging_place_locate.json](./schemas/gyeryong_assistive_device_charging_place_locate.json) |
+| HIRA | `hira_medical_institution_detail` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [hira_medical_institution_detail.json](./schemas/hira_medical_institution_detail.json) |
+| KSD | `ksd_financial_term_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [ksd_financial_term_lookup.json](./schemas/ksd_financial_term_lookup.json) |
+| MFDS | `mfds_easy_drug_info_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [mfds_easy_drug_info_lookup.json](./schemas/mfds_easy_drug_info_lookup.json) |
+| MOF | `mof_ocean_water_quality_check` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [mof_ocean_water_quality_check.json](./schemas/mof_ocean_water_quality_check.json) |
+| MOIS | `mois_emergency_call_box_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [mois_emergency_call_box_lookup.json](./schemas/mois_emergency_call_box_lookup.json) |
+| MOIS | `mois_facility_safety_info_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [mois_facility_safety_info_lookup.json](./schemas/mois_facility_safety_info_lookup.json) |
+| MOJ | `moj_stay_person_counter` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [moj_stay_person_counter.json](./schemas/moj_stay_person_counter.json) |
+| MOJ | `moj_village_lawyer_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [moj_village_lawyer_lookup.json](./schemas/moj_village_lawyer_lookup.json) |
+| MPM | `mpm_public_job_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [mpm_public_job_lookup.json](./schemas/mpm_public_job_lookup.json) |
+| MSIT | `msit_business_announcement_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [msit_business_announcement_lookup.json](./schemas/msit_business_announcement_lookup.json) |
+| MSS | `mss_sme_support_notice_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [mss_sme_support_notice_lookup.json](./schemas/mss_sme_support_notice_lookup.json) |
+| NMC | `nmc_aed_site_locate` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [nmc_aed_site_locate.json](./schemas/nmc_aed_site_locate.json) |
+| PPS | `pps_shopping_mall_product_lookup` | `find` | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) | [pps_shopping_mall_product_lookup.json](./schemas/pps_shopping_mall_product_lookup.json) |
 | Mock — Check | `mock_verify_digital_onepass` | `check` | mock | 2 | [verify/digital_onepass.md](./verify/digital_onepass.md) | [mock_verify_digital_onepass.json](./schemas/mock_verify_digital_onepass.json) |
 | Mock — Check | `mock_verify_mobile_id` | `check` | mock | 2 | [verify/mobile_id.md](./verify/mobile_id.md) | [mock_verify_mobile_id.json](./schemas/mock_verify_mobile_id.json) |
 | Mock — Check | `mock_verify_gongdong_injeungseo` | `check` | mock | 3 | [verify/gongdong_injeungseo.md](./verify/gongdong_injeungseo.md) | [mock_verify_gongdong_injeungseo.json](./schemas/mock_verify_gongdong_injeungseo.json) |
@@ -62,16 +78,20 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 
 ## Matrix B — adapters by primitive
 
-### `find` (26 ministry and public-data adapters)
+### `find` (42 live ministry and public-data adapters)
 
 | tool_id | Source | Tier | Permission | Spec |
 |---|---|---|---|---|
 | `airkorea_ctprvn_air_quality` | KECO / AirKorea | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `bfc_funeral_area_fee` | BFC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `ccourt_publication_documents` | CCOURT | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `djtc_subway_segment_fare_time_check` | DJTC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `fsc_corporate_finance_summary` | FSC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `ftc_large_group_status` | FTC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `ftc_public_ym_list` | FTC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `gyeryong_assistive_device_charging_place_locate` | Gyeryong | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `hira_hospital_search` | HIRA | live | 1 | [hira/hospital_search.md](./hira/hospital_search.md) |
+| `hira_medical_institution_detail` | HIRA | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `kcue_finance_regional_tuition` | KCUE | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `kcue_student_regional_foreign` | KCUE | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `kepco_contract_power_usage` | KEPCO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
@@ -83,10 +103,22 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | `kma_weather_alert_status` | KMA | live | 1 | [kma/weather_alert_status.md](./kma/weather_alert_status.md) |
 | `koroad_accident_hazard_search` | KOROAD | live | 1 | [koroad/accident_hazard_search.md](./koroad/accident_hazard_search.md) |
 | `koroad_accident_search` | KOROAD | live | 1 | [koroad/accident_search.md](./koroad/accident_search.md) |
+| `ksd_financial_term_lookup` | KSD | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `mfds_easy_drug_info_lookup` | MFDS | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `mof_ocean_water_quality_check` | MOF | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `mohw_welfare_eligibility_search` | MOHW | live | 1 | [mohw/welfare_eligibility_search.md](./mohw/welfare_eligibility_search.md) |
+| `mois_emergency_call_box_lookup` | MOIS | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `mois_facility_safety_info_lookup` | MOIS | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `moj_stay_person_counter` | MOJ | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `moj_village_lawyer_lookup` | MOJ | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `mpm_public_job_lookup` | MPM | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `msit_business_announcement_lookup` | MSIT | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `mss_sme_support_notice_lookup` | MSS | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `nfa_emergency_info_service` | NFA119 | live | 1 | [nfa119/emergency_info_service.md](./nfa119/emergency_info_service.md) |
+| `nmc_aed_site_locate` | NMC | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `nmc_emergency_search` | NMC | live | 3 (gated) | [nmc/emergency_search.md](./nmc/emergency_search.md) |
 | `pps_bid_public_info` | PPS | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
+| `pps_shopping_mall_product_lookup` | PPS | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `reb_real_estate_stat_table` | REB | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `tago_bus_arrival_search` | MOLIT / TAGO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |
 | `tago_bus_location_search` | MOLIT / TAGO | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |

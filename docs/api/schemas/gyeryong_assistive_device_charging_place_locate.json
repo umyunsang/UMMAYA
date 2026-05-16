@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/gyeryong_assistive_device_charging_place_locate.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for Gyeryong assistive-device charger locations.",
+  "properties": {
+    "current_page": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Current Page",
+      "type": "integer"
+    },
+    "indoor_outdoor": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Indoor/outdoor filter.",
+      "title": "Indoor Outdoor"
+    },
+    "per_page": {
+      "default": 10,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Per Page",
+      "type": "integer"
+    }
+  },
+  "title": "gyeryong_assistive_device_charging_place_locate",
+  "type": "object"
+}

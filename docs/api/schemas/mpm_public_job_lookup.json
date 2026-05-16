@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/mpm_public_job_lookup.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for MPM public job notices.",
+  "properties": {
+    "instt_se": {
+      "default": "g01",
+      "description": "Institution class code.",
+      "minLength": 1,
+      "title": "Instt Se",
+      "type": "string"
+    },
+    "num_of_rows": {
+      "default": 10,
+      "description": "Rows per page.",
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "Page number.",
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    },
+    "pblanc_ty": {
+      "default": "e01",
+      "description": "Notice type code.",
+      "minLength": 1,
+      "title": "Pblanc Ty",
+      "type": "string"
+    },
+    "sort_order": {
+      "default": "내림차순",
+      "description": "Sort order.",
+      "minLength": 1,
+      "title": "Sort Order",
+      "type": "string"
+    }
+  },
+  "title": "mpm_public_job_lookup",
+  "type": "object"
+}

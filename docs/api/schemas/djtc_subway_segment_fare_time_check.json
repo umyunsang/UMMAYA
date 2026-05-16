@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "_VerifiedCollectionSchema": {
+      "description": "Output schema used by legacy ToolExecutor.dispatch validation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "total_count": {
+          "title": "Total Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "items",
+        "total_count"
+      ],
+      "title": "_VerifiedCollectionSchema",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/djtc_subway_segment_fare_time_check.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for Daejeon subway segment fare and time.",
+  "properties": {
+    "endstnno": {
+      "description": "Ending station number.",
+      "minLength": 1,
+      "title": "Endstnno",
+      "type": "string"
+    },
+    "strstnno": {
+      "description": "Starting station number.",
+      "minLength": 1,
+      "title": "Strstnno",
+      "type": "string"
+    }
+  },
+  "required": [
+    "strstnno",
+    "endstnno"
+  ],
+  "title": "djtc_subway_segment_fare_time_check",
+  "type": "object"
+}

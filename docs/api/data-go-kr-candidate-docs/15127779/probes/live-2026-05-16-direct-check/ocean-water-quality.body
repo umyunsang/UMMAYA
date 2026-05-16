@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><response>
+  <header>
+    <resultCode>00</resultCode>
+    <resultMsg>NORMAL SERVIE</resultMsg>
+  </header>
+  <body>
+    <items>
+  <item>
+    <num>1</num>
+    <rtmWqWtchStaCd>SEA3003</rtmWqWtchStaCd>
+    <rtmWqWtchDtlDt>2020-02-06 16:20:00.0</rtmWqWtchDtlDt>
+    <rtmWtchWtem>13.560</rtmWtchWtem>
+    <rtmWqCndctv>37.572</rtmWqCndctv>
+    <ph>7.92</ph>
+    <rtmWqDoxn>7.750</rtmWqDoxn>
+    <rtmWqTu/>
+    <rtmWqBgalgsQy/>
+    <rtmWqChpla/>
+    <rtmWqSlnty/>
+  </item>
+  <item>
+    <num>2</num>
+    <rtmWqWtchStaCd>SEA3003</rtmWqWtchStaCd>
+    <rtmWqWtchDtlDt>2020-02-06 16:25:00.0</rtmWqWtchDtlDt>
+    <rtmWtchWtem>13.460</rtmWtchWtem>
+    <rtmWqCndctv>36.675</rtmWqCndctv>
+    <ph>7.89</ph>
+    <rtmWqDoxn>7.570</rtmWqDoxn>
+    <rtmWqTu/>
+    <rtmWqBgalgsQy/>
+    <rtmWqChpla/>
+    <rtmWqSlnty/>
+  </item>
+  <item>
+    <num>3</num>
+    <rtmWqWtchStaCd>SEA3003</rtmWqWtchStaCd>
+    <rtmWqWtchDtlDt>2020-02-06 16:30:00.0</rtmWqWtchDtlDt>
+    <rtmWtchWtem>13.480</rtmWtchWtem>
+    <rtmWqCndctv>36.783</rtmWqCndctv>
+    <ph>7.89</ph>
+    <rtmWqDoxn>7.610</rtmWqDoxn>
+    <rtmWqTu/>
+    <rtmWqBgalgsQy/>
+    <rtmWqChpla/>
+    <rtmWqSlnty/>
+  </item>
+  <item>
+    <num>4</num>
+    <rtmWqWtchStaCd>SEA3003</rtmWqWtchStaCd>
+    <rtmWqWtchDtlDt>2020-02-06 16:35:00.0</rtmWqWtchDtlDt>
+    <rtmWtchWtem>13.440</rtmWtchWtem>
+    <rtmWqCndctv>36.022</rtmWqCndctv>
+    <ph>7.86</ph>
+    <rtmWqDoxn>7.450</rtmWqDoxn>
+    <rtmWqTu/>
+    <rtmWqBgalgsQy/>
+    <rtmWqChpla/>
+    <rtmWqSlnty/>
+  </item>
+  <item>
+    <num>5</num>
+    <rtmWqWtchStaCd>SEA3003</rtmWqWtchStaCd>
+    <rtmWqWtchDtlDt>2020-02-06 16:40:00.0</rtmWqWtchDtlDt>
+    <rtmWtchWtem>13.360</rtmWtchWtem>
+    <rtmWqCndctv>36.079</rtmWqCndctv>
+    <ph>7.85</ph>
+    <rtmWqDoxn>7.400</rtmWqDoxn>
+    <rtmWqTu/>
+    <rtmWqBgalgsQy/>
+    <rtmWqChpla/>
+    <rtmWqSlnty/>
+  </item>
+</items>
+    <numOfRows>5</numOfRows>
+    <pageNo>1</pageNo>
+    <totalCount>294857</totalCount>
+  </body>
+</response>

@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ummaya.tools.models import Ministry
 
@@ -45,12 +45,13 @@ class VerifiedAdapterSpec(BaseModel):
     name_ko: str
     ministry: Ministry
     category: list[str]
-    endpoint: str = Field(pattern=r"^https://")
+    endpoint: str = Field(pattern=r"^https?://")
     env_var: str
     auth_query_param: str
     response_format: ResponseFormat
     query_param_map: dict[str, str]
     static_query_params: dict[str, str] = Field(default_factory=dict)
+    request_headers: dict[str, str] = Field(default_factory=dict)
     record_tag: str | None = None
     evidence_path: str
     policy_url: str
@@ -62,3 +63,11 @@ class VerifiedAdapterSpec(BaseModel):
     primitive: Literal["find"] = "find"
     adapter_mode: Literal["live"] = "live"
     citizen_facing_gate: Literal["read-only"] = "read-only"
+
+    @field_validator("request_headers")
+    @classmethod
+    def _headers_are_non_empty(cls, value: dict[str, str]) -> dict[str, str]:
+        for key, header_value in value.items():
+            if not key.strip() or not header_value.strip():
+                raise ValueError("request_headers keys and values must be non-empty")
+        return value
