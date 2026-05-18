@@ -251,6 +251,32 @@
     "tool_id": "mfds_easy_drug_info_lookup"
   },
   {
+    "docs_path": "docs/api/submit/kftc_opengiro.md",
+    "permission_tier": 2,
+    "primitive": "send",
+    "schema_path": "docs/api/schemas/mock_kftc_opengiro_bill_send_v1.json",
+    "source": "Mock — Send",
+    "tier": "mock",
+    "tool_id": "mock_kftc_opengiro_bill_send_v1"
+  },
+  {
+    "docs_path": "docs/api/submit/kftc_opengiro.md",
+    "permission_tier": 2,
+    "primitive": "send",
+    "schema_path": null,
+    "tier": "mock",
+    "tool_id": "mock_kftc_opengiro_bill_send_v1 / mock_kftc_opengiro_payment_send_v1"
+  },
+  {
+    "docs_path": "docs/api/submit/kftc_opengiro.md",
+    "permission_tier": 2,
+    "primitive": "send",
+    "schema_path": "docs/api/schemas/mock_kftc_opengiro_payment_send_v1.json",
+    "source": "Mock — Send",
+    "tier": "mock",
+    "tool_id": "mock_kftc_opengiro_payment_send_v1"
+  },
+  {
     "docs_path": "docs/api/submit/traffic_fine_pay.md",
     "permission_tier": 2,
     "primitive": "send",
