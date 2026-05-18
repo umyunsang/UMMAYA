@@ -42,10 +42,12 @@ from __future__ import annotations
 # verified public-data adapters under src/ummaya/tools/verified_data_go_kr/.
 # Spec #2798 — extended from 52 to 68 by registering sixteen additional
 # approved live public-data adapters from the 2026-05-16 direct evidence batch.
-_EXPECTED_MAIN_REGISTRY_COUNT = 68
+# Spec live-mobileid-check — extended from 68 to 69 by registering one explicit
+# live MobileID check adapter.
+_EXPECTED_MAIN_REGISTRY_COUNT = 69
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
-    "live_adapters": 42,  # 12 existing Live + 30 verified public-data adapters
+    "live_adapters": 43,  # 12 existing Live + 30 verified public-data + 1 MobileID check
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
@@ -95,6 +97,7 @@ _EXPECTED_LIVE_TOOL_IDS = frozenset(
         "ccourt_publication_documents",
         "moj_stay_person_counter",
         "msit_business_announcement_lookup",
+        "live_verify_mobile_id",
     }
 )
 
@@ -185,12 +188,12 @@ def test_main_registry_lookup_mock_ids_present() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Verify sub-registry count — 10 families
+# Verify sub-registry count — 10 family adapters + 1 explicit live tool adapter
 # ---------------------------------------------------------------------------
 
-_EXPECTED_VERIFY_COUNT = 10
+_EXPECTED_VERIFY_COUNT = 11
 
-_EXPECTED_VERIFY_FAMILIES = frozenset(
+_EXPECTED_VERIFY_ADAPTER_KEYS = frozenset(
     {
         # 5 existing (retrofitted)
         "ganpyeon_injeung",
@@ -204,12 +207,14 @@ _EXPECTED_VERIFY_FAMILIES = frozenset(
         "kec",
         "geumyung_module",
         "any_id_sso",
+        # Explicit live tool adapter sharing family=mobile_id.
+        "live_verify_mobile_id",
     }
 )
 
 
 def test_verify_adapter_registry_count() -> None:
-    """ummaya.primitives.verify._VERIFY_ADAPTERS must have exactly 10 families."""
+    """ummaya.primitives.verify._VERIFY_ADAPTERS must have the canonical adapter keys."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.primitives.verify import _VERIFY_ADAPTERS
 
@@ -222,20 +227,20 @@ def test_verify_adapter_registry_count() -> None:
 
 
 def test_verify_adapter_registry_families() -> None:
-    """All 10 expected verify family keys must be present in _VERIFY_ADAPTERS."""
+    """All expected verify adapter keys must be present in _VERIFY_ADAPTERS."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.primitives.verify import _VERIFY_ADAPTERS
 
     registered = frozenset(_VERIFY_ADAPTERS.keys())
-    missing = _EXPECTED_VERIFY_FAMILIES - registered
+    missing = _EXPECTED_VERIFY_ADAPTER_KEYS - registered
     assert not missing, (
         f"Missing verify families in _VERIFY_ADAPTERS: {missing}. Registered: {sorted(registered)}"
     )
 
-    extra = registered - _EXPECTED_VERIFY_FAMILIES
+    extra = registered - _EXPECTED_VERIFY_ADAPTER_KEYS
     assert not extra, (
         f"Unexpected extra verify families in _VERIFY_ADAPTERS: {extra}. "
-        f"Expected only: {sorted(_EXPECTED_VERIFY_FAMILIES)}"
+        f"Expected only: {sorted(_EXPECTED_VERIFY_ADAPTER_KEYS)}"
     )
 
 
@@ -344,9 +349,10 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # primary LLM tool list stays at active primitives + find-class Live.
         # Locate-provider adapters add five first-class registry entries.
         # Spec #2798 adds sixteen approved live data.go.kr adapters, bringing
-        # the main ToolRegistry from 52 to 68.
-        "main_registry": 68,
-        "verify_families": 10,
+        # the main ToolRegistry from 52 to 68. The MobileID live check adds one
+        # more adapter key and one more ToolRegistry entry.
+        "main_registry": 69,
+        "verify_families": 11,
         "submit_adapters": 5,
     }
 

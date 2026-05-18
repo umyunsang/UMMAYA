@@ -170,7 +170,7 @@ class TestInvariant4UniqueToolId:
 
 
 class TestCheck7ToolListClosure:
-    """The Python-side registered tool set matches the 68-entry registry.
+    """The Python-side registered tool set matches the 69-entry registry.
 
     Divergence from this set indicates either an unauthorized addition or
     an inadvertent removal — both are CI failures.
@@ -225,6 +225,7 @@ class TestCheck7ToolListClosure:
             "mock_verify_geumyung_injeungseo",
             "mock_verify_ganpyeon_injeung",
             "mock_verify_mobile_id",
+            "live_verify_mobile_id",
             "mock_verify_mydata",
             # 5 submit wrappers
             "mock_submit_module_hometax_taxreturn",

@@ -38,6 +38,7 @@ from types import MappingProxyType
 # Source: data-model.md § 2 + src/ummaya/primitives/verify.py
 # (Literal["simple_auth_module"] / Literal["geumyung_module"]).
 _FAMILY_OVERRIDES: dict[str, str] = {
+    "live_verify_mobile_id": "mobile_id",
     "mock_verify_module_simple_auth": "simple_auth_module",
     "mock_verify_module_geumyung": "geumyung_module",
 }

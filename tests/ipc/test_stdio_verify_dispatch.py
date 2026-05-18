@@ -114,6 +114,11 @@ def test_resolve_family_unknown_tool_id_returns_none() -> None:
     assert resolve_family("submit_something_else") is None
 
 
+def test_resolve_family_covers_live_mobileid_tool_id_without_dispatching_it() -> None:
+    """The live MobileID id maps to mobile_id but is not included in mock dispatch cases."""
+    assert resolve_family("live_verify_mobile_id") == "mobile_id"
+
+
 # ---------------------------------------------------------------------------
 # 2. IPC dispatcher integration — minimal harness
 # ---------------------------------------------------------------------------

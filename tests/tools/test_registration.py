@@ -38,10 +38,11 @@ class TestToolRegistration:
         # Spec #2797 verified public-data wave: + 14 direct-curl verified
         # data.go.kr/LINK adapters = 52.
         # Spec #2798 live expansion: + 16 approved data.go.kr adapters = 68.
+        # Live MobileID check adapter: + 1 explicit check adapter = 69.
         # is_core=False so the LLM's primary tool list stays at active
         # primitives + lookup-class; these participate in
         # lookup(mode="search") BM25 corpus only.
-        assert len(registry) == 68
+        assert len(registry) == 69
 
     def test_tool_ids_present(self) -> None:
         """Each expected tool_id is in the registry.
@@ -107,6 +108,7 @@ class TestToolRegistration:
             "ccourt_publication_documents",
             "moj_stay_person_counter",
             "msit_business_announcement_lookup",
+            "live_verify_mobile_id",
         }
         for tool_id in expected:
             assert tool_id in registry, f"{tool_id} not found in registry"
@@ -166,6 +168,7 @@ class TestToolRegistration:
             "ccourt_publication_documents",
             "moj_stay_person_counter",
             "msit_business_announcement_lookup",
+            "live_verify_mobile_id",
         }
         for tool_id in expected:
             assert tool_id in executor._adapters, f"No adapter for {tool_id}"

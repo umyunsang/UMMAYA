@@ -430,18 +430,58 @@ class VerifyOutput(BaseModel):
 # Dispatcher (T041) — delegation only, no CA/signing logic here
 # ---------------------------------------------------------------------------
 
-# Registry for mock/live verify adapters.  Keys are FamilyHint strings.
+# Registry for mock/live verify adapters. Keys are family strings for legacy
+# adapters, or explicit tool_ids when multiple adapters share one family.
 _VERIFY_ADAPTERS: dict[str, object] = {}
+_VERIFY_ADAPTER_FAMILIES: dict[str, str] = {}
 
 
-def register_verify_adapter(family: str, adapter: object) -> None:
-    """Register a callable adapter for a given family.
+def register_verify_adapter(
+    family: str,
+    adapter: object,
+    *,
+    tool_id: str | None = None,
+) -> None:
+    """Register a callable adapter for a given family or explicit check tool id.
 
     Adapters must accept ``(session_context: dict[str, object]) -> AuthContext``
     or raise / return ``VerifyMismatchError``.  Called at module import time by
     each ``src/ummaya/tools/mock/verify_<family>.py``.
+
+    ``tool_id`` is additive for live adapters that share a family with an
+    existing mock. Registering a tool-specific adapter does not replace the
+    legacy family adapter.
     """
-    _VERIFY_ADAPTERS[family] = adapter
+    adapter_key = tool_id or family
+    _VERIFY_ADAPTERS[adapter_key] = adapter
+    _VERIFY_ADAPTER_FAMILIES[adapter_key] = family
+
+
+def _select_verify_adapter_key(family_hint: str, session_context: dict[str, object]) -> str:
+    """Choose a tool-specific adapter only when one is explicitly registered."""
+    selected_tool_id = session_context.get("_verify_tool_id")
+    if not isinstance(selected_tool_id, str) or not selected_tool_id.strip():
+        return family_hint
+
+    selected_key = selected_tool_id.strip()
+    if selected_key in _VERIFY_ADAPTERS:
+        return selected_key
+    if selected_key.startswith("mock_verify_"):
+        return family_hint
+    return selected_key
+
+
+def _missing_adapter_message(*, family_hint: str, adapter_key: str) -> str:
+    if adapter_key != family_hint:
+        return (
+            f"No check adapter registered for tool_id {adapter_key!r} "
+            f"(family {family_hint!r}). Register a mock or live adapter via "
+            "register_verify_adapter()."
+        )
+    return (
+        f"No check adapter registered for family {family_hint!r}. "
+        "Register a mock or live adapter via register_verify_adapter()."
+    )
 
 
 async def verify(
@@ -469,18 +509,45 @@ async def verify(
         span.set_attribute("gen_ai.tool.name", f"check:{family_hint}")
         span.set_attribute("ummaya.verify.family_hint", family_hint)
 
-        adapter = _VERIFY_ADAPTERS.get(family_hint)
+        adapter_key = _select_verify_adapter_key(family_hint, session_context)
+        adapter_family = _VERIFY_ADAPTER_FAMILIES.get(adapter_key, adapter_key)
+        span.set_attribute("ummaya.verify.adapter_key", adapter_key)
+
+        adapter = _VERIFY_ADAPTERS.get(adapter_key)
         if adapter is None:
-            logger.warning("check: no adapter registered for family=%s", family_hint)
+            logger.warning(
+                "check: no adapter registered for family=%s adapter_key=%s",
+                family_hint,
+                adapter_key,
+            )
             span.set_attribute("error.type", "adapter_not_found")
             return VerifyMismatchError(
                 family="mismatch_error",
                 reason="family_mismatch",
                 expected_family=family_hint,
                 observed_family="<no_adapter>",
+                message=_missing_adapter_message(
+                    family_hint=family_hint,
+                    adapter_key=adapter_key,
+                ),
+            )
+
+        if adapter_family != family_hint:
+            logger.error(
+                "verify FR-010: family_hint=%s but adapter_key=%s maps to family=%s",
+                family_hint,
+                adapter_key,
+                adapter_family,
+            )
+            span.set_attribute("error.type", "adapter_family_mismatch")
+            return VerifyMismatchError(
+                family="mismatch_error",
+                reason="family_mismatch",
+                expected_family=family_hint,
+                observed_family=adapter_family,
                 message=(
-                    f"No check adapter registered for family {family_hint!r}. "
-                    "Register a mock or live adapter via register_verify_adapter()."
+                    f"Adapter key {adapter_key!r} maps to family={adapter_family!r} "
+                    f"but caller specified family_hint={family_hint!r}."
                 ),
             )
 

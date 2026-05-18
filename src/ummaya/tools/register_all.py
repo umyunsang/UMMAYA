@@ -102,6 +102,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     from ummaya.tools.kma.kma_weather_alert_status import register as reg_kma_alert
     from ummaya.tools.koroad.accident_hazard_search import register as reg_koroad_hazard
     from ummaya.tools.koroad.koroad_accident_search import register as reg_koroad
+    from ummaya.tools.live.verify_mobile_id import register as reg_live_mobile_id
     from ummaya.tools.location_adapters import register as reg_locate
     from ummaya.tools.mock.lookup_module_gov24_certificate import (
         register as reg_mock_gov24_cert,
@@ -163,6 +164,11 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     # not per-primitive sub-registry — lookup adapters use BM25 discovery).
     reg_mock_hometax_simplified(registry, executor)  # T028 — Hometax simplified data
     reg_mock_gov24_cert(registry, executor)  # T029 — Gov24 certificate lookup
+
+    # Live MobileID check adapter. Register before discovery_bridge so the
+    # bridge metadata remains a canonical-map source without creating a
+    # duplicate registry wrapper.
+    reg_live_mobile_id(registry, executor)
 
     # Epic ζ #2297 path B (live smoke 2026-04-30 follow-up) — bridge per-primitive
     # registries (verify/submit) into the main ToolRegistry's BM25 corpus

@@ -41,12 +41,12 @@ def test_b1_total_tool_count_includes_mocks(
 ) -> None:
     """Path B-1: bridge registers active non-core mock adapters into main registry.
 
-    Expected total: 68 after both verified public-data adapter waves.
+    Expected total: 69 after both verified public-data adapter waves plus live MobileID check.
     """
     r, _ = loaded_registry
     total = len(r.all_tools())
-    assert total == 68, (
-        f"Expected 68 total tools after discovery_bridge runs; got {total}. "
+    assert total == 69, (
+        f"Expected 69 total tools after discovery_bridge runs; got {total}. "
         f"Verify the bridge registered the active mock adapters."
     )
 

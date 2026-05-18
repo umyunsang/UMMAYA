@@ -225,6 +225,25 @@ _VERIFY_FAMILIES: list[dict[str, Any]] = [
         ),
     },
     {
+        "tool_id": "live_verify_mobile_id",
+        "family": "mobile_id",
+        "name_ko": "모바일신분증 실시간 본인확인",
+        "search_hint_ko": [
+            "모바일신분증",
+            "모바일 운전면허증",
+            "모바일 주민등록증",
+            "모바일ID",
+            "실시간 본인확인",
+        ],
+        "search_hint_en": ["mobile ID", "mobile driver license", "live identity check"],
+        "endpoint": "https://dev.mobileid.go.kr/mip/dfs/useguide/mdGuide.do?guide=demonapiguide",
+        "policy_authority": "https://dev.mobileid.go.kr/mip/dfs/apiuse/apiusestep.do",
+        "scope_rules": (
+            "Scope rule: live MobileID verifies an existing daemon transaction and "
+            "returns only MobileIdContext-safe fields. It does not mint send delegation."
+        ),
+    },
+    {
         "tool_id": "mock_verify_mydata",
         "family": "mydata",
         "name_ko": "마이데이터 (KFTC)",

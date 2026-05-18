@@ -28,6 +28,7 @@ from ummaya.tools.verify_canonical_map import get_canonical_map, resolve_family
 # ---------------------------------------------------------------------------
 
 EXPECTED_MAPPING: dict[str, str] = {
+    "live_verify_mobile_id": "mobile_id",
     "mock_verify_gongdong_injeungseo": "gongdong_injeungseo",
     "mock_verify_geumyung_injeungseo": "geumyung_injeungseo",
     "mock_verify_ganpyeon_injeung": "ganpyeon_injeung",
@@ -52,8 +53,8 @@ def test_canonical_map_has_at_least_ten_entries() -> None:
     assert len(mapping) >= 10, f"Expected ≥10 entries in canonical map, got {len(mapping)}"
 
 
-def test_all_ten_canonical_tool_ids_present() -> None:
-    """All 10 canonical tool_id keys from data-model.md § 2 MUST be present."""
+def test_all_expected_canonical_tool_ids_present() -> None:
+    """All expected check tool_id keys MUST be present."""
     mapping = get_canonical_map()
     missing = [tid for tid in EXPECTED_MAPPING if tid not in mapping]
     assert not missing, f"Missing tool_ids in canonical map: {missing}"
@@ -113,15 +114,19 @@ def test_get_canonical_map_is_idempotent() -> None:
 
 
 def test_canonical_family_hint_values_are_all_present() -> None:
-    """All 10 expected family_hint values from data-model.md § 2 MUST appear."""
+    """All expected family_hint values MUST appear."""
     expected_families = set(EXPECTED_MAPPING.values())
     actual_families = set(get_canonical_map().values())
     missing_families = expected_families - actual_families
     assert not missing_families, f"Missing family_hint values in canonical map: {missing_families}"
 
 
-def test_canonical_map_tool_ids_start_with_mock_verify() -> None:
-    """All canonical tool_id keys MUST start with 'mock_verify_'."""
+def test_canonical_map_tool_ids_use_supported_verify_prefixes() -> None:
+    """Canonical check tool ids are either mock verify ids or approved live verify ids."""
     mapping = get_canonical_map()
-    invalid = [tid for tid in mapping if not tid.startswith("mock_verify_")]
-    assert not invalid, f"tool_ids NOT starting with 'mock_verify_': {invalid}"
+    invalid = [
+        tid
+        for tid in mapping
+        if not (tid.startswith("mock_verify_") or tid == "live_verify_mobile_id")
+    ]
+    assert not invalid, f"tool_ids with unsupported verify prefix: {invalid}"

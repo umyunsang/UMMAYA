@@ -171,9 +171,14 @@ def test_verify_adapter_registry_exact_family_count_after_deletion() -> None:
     AND the presence of the 10 replacement families.
     """
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
-    from ummaya.primitives.verify import _VERIFY_ADAPTERS
+    from ummaya.primitives.verify import (
+        _VERIFY_ADAPTER_FAMILIES,
+        _VERIFY_ADAPTERS,
+    )
 
-    families = list(_VERIFY_ADAPTERS.keys())
+    families = {
+        _VERIFY_ADAPTER_FAMILIES.get(adapter_key, adapter_key) for adapter_key in _VERIFY_ADAPTERS
+    }
     assert len(families) == 10, (
         f"Expected exactly 10 verify families after digital_onepass deletion "
         f"(FR-004 + 5 existing + 5 new Epic ε). "

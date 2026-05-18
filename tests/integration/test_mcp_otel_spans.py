@@ -87,8 +87,9 @@ class TestMCPToolsListShape:
         tools = response["result"]["tools"]
         # Subscribe is deferred out of the active surface until UMMAYA owns an
         # app/push delivery runtime. The MCP tool list mirrors the active
-        # registry: 68 tools after Spec #2798's 16-adapter live expansion.
-        assert len(tools) == 68, f"Tool list count drift: got {len(tools)}, expected 68"
+        # registry: 69 tools after Spec #2798's 16-adapter live expansion plus
+        # the explicit live MobileID check adapter.
+        assert len(tools) == 69, f"Tool list count drift: got {len(tools)}, expected 69"
 
     def test_tools_list_entries_have_required_keys(self, mcp_server: MCPServer) -> None:
         response = asyncio.run(

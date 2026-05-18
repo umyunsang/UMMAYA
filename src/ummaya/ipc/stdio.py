@@ -1023,6 +1023,9 @@ def _build_verify_session_context(
         if isinstance(raw_nested_context, dict):
             session_context.update({str(k): v for k, v in raw_nested_context.items()})
         session_context.update({str(k): v for k, v in raw_params.items() if k != "session_context"})
+    raw_tool_id = args_obj.get("tool_id")
+    if isinstance(raw_tool_id, str) and raw_tool_id.strip():
+        session_context.setdefault("_verify_tool_id", raw_tool_id.strip())
     raw_scope_list = session_context.get("scope_list")
     if isinstance(raw_scope_list, list):
         session_context["scope_list"] = _normalize_verify_scope_list(raw_scope_list)
