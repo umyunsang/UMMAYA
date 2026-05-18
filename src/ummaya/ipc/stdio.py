@@ -3106,7 +3106,7 @@ def _extract_explicit_find_tool_id_request(user_query: str, registry: Any) -> st
         return None
 
     seen: set[str] = set()
-    for token in _EXPLICIT_TOOL_ID_TOKEN_RE.findall(query):
+    for token in cast(list[str], _EXPLICIT_TOOL_ID_TOKEN_RE.findall(query)):
         if token in seen:
             continue
         seen.add(token)
