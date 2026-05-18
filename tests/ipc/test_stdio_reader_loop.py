@@ -201,6 +201,28 @@ def test_inject_delegation_context_overwrites_partial_llm_copy() -> None:
     }
 
 
+def test_strip_model_supplied_delegation_context_without_mutation() -> None:
+    """Submit dispatch must not trust LLM-emitted delegation_context."""
+    from ummaya.ipc.stdio import _strip_model_supplied_delegation_context
+
+    original = {
+        "fine_reference": "MOCK-FINE-2026-001",
+        "payment_method": "virtual_account",
+        "delegation_context": {
+            "status": "verified",
+            "external_session_ref": "model-supplied",
+        },
+    }
+
+    stripped = _strip_model_supplied_delegation_context(original)
+
+    assert stripped == {
+        "fine_reference": "MOCK-FINE-2026-001",
+        "payment_method": "virtual_account",
+    }
+    assert "delegation_context" in original
+
+
 def test_bind_submit_session_id_overwrites_llm_value_without_mutation() -> None:
     """Submit session binding must stay tied to the verified delegation session."""
     from ummaya.ipc.stdio import _bind_submit_session_id

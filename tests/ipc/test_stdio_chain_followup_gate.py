@@ -46,6 +46,7 @@ from ummaya.ipc.stdio import (
     _effective_chat_max_tokens,
     _final_answer_looks_like_generic_retry_after_success,
     _final_answer_looks_like_incomplete_sentence,
+    _final_answer_looks_like_mismatched_kma_forecast_hour_label,
     _final_answer_looks_like_recursive_tool_message,
     _final_answer_looks_like_tool_call_narration,
     _final_answer_looks_like_unclosed_markdown,
@@ -109,6 +110,14 @@ def test_current_weather_query_requires_observation() -> None:
     assert _query_implies_current_weather_observation("다대포해수욕장 오늘 날씨 알려줘")
     assert _query_implies_current_weather_observation("부산 지금 기온")
     assert _query_implies_current_weather_observation("다대포 산책 가도 될까? 비 오는지만 봐줘")
+    assert not _query_implies_current_weather_observation(
+        "kma_ultra_short_term_forecast 도구로 서울 종로구 현재 초단기예보 조회해줘"
+    )
+    assert not _query_implies_current_weather_observation(
+        "kma_ultra_short_term_forecast 도구로 서울 종로구 현재 초단기예보를 조회해서 "
+        "15시와 16시 날씨를 요약해줘"
+    )
+    assert _query_implies_current_weather_observation("서울 현재 기온과 초단기예보 둘 다 알려줘")
     assert not _query_implies_current_weather_observation("내일 서울 날씨 예보")
     assert not _query_implies_current_weather_observation(
         "다대1동에서 오늘 전화해볼 만한 내과나 이비인후과 3곳 알려줘"
@@ -172,6 +181,47 @@ def test_tool_call_narration_final_answer_is_rejected() -> None:
     )
     assert not _final_answer_looks_like_tool_call_narration(
         "가까운 병원은 부산본병원이며, 자료 출처는 건강보험심사평가원입니다."
+    )
+
+
+def test_kma_forecast_final_answer_rejects_mismatched_hour_labels() -> None:
+    """KMA forecast final prose must use returned fcst_time literally."""
+    messages = [
+        _msg_assistant_tool_call(
+            "find",
+            {
+                "tool_id": "kma_ultra_short_term_forecast",
+                "params": {"base_date": "20260518", "base_time": "1500", "nx": 61, "ny": 128},
+            },
+        ),
+        _msg_tool_result(
+            "find",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "collection",
+                    "items": [
+                        {
+                            "base_date": "20260518",
+                            "base_time": "1530",
+                            "fcst_date": "20260518",
+                            "fcst_time": "1600",
+                            "category": "T1H",
+                            "fcst_value": "30",
+                        }
+                    ],
+                },
+            },
+        ),
+    ]
+
+    assert _final_answer_looks_like_mismatched_kma_forecast_hour_label(
+        "15시(16:00) 예보 기온은 30°C입니다.",
+        messages,
+    )
+    assert not _final_answer_looks_like_mismatched_kma_forecast_hour_label(
+        "16:00 예보 기온은 30°C입니다.",
+        messages,
     )
 
 
@@ -984,6 +1034,8 @@ def test_traffic_fine_verify_normalizes_lookup_and_payment_scope_aliases() -> No
                 "find:traffic.fine.search",
                 "send:traffic_fine.payment",
                 "send:traffic.fine.pay",
+                "send:traffic_fine_pay_v1",
+                "send:traffic.fine_pay_v1",
             ],
             "purpose_ko": "교통 과태료 확인 및 납부",
             "purpose_en": "Traffic fine check and payment",
@@ -1820,6 +1872,66 @@ def test_today_weather_forecast_only_is_rejected_until_current_observation() -> 
     )
 
 
+def test_explicit_ultra_short_forecast_can_finish_without_current_observation() -> None:
+    """Forecast-intent prompt should not demand kma_current_observation."""
+    msgs: list[Any] = [
+        LLMChatMessage(
+            role="user",
+            content=(
+                "kma_ultra_short_term_forecast 도구로 서울 종로구 현재 초단기예보를 조회해서 "
+                "15시와 16시 날씨를 요약해줘"
+            ),
+        ),
+        _msg_assistant_tool_call(
+            "locate",
+            {"tool_id": "kakao_address_search", "params": {"query": "서울 종로구"}},
+        ),
+        _msg_tool_result(
+            "locate",
+            {"result": {"lat": 37.5735, "lon": 126.9788, "nx": 61, "ny": 128}},
+        ),
+        _msg_assistant_tool_call(
+            "find",
+            {
+                "tool_id": "kma_ultra_short_term_forecast",
+                "params": {
+                    "base_date": "20260518",
+                    "base_time": "1500",
+                    "nx": 61,
+                    "ny": 128,
+                },
+            },
+        ),
+        _msg_tool_result(
+            "find",
+            {
+                "result": {
+                    "kind": "collection",
+                    "items": [
+                        {
+                            "base_date": "20260518",
+                            "base_time": "1530",
+                            "fcst_date": "20260518",
+                            "fcst_time": "1600",
+                            "category": "T1H",
+                            "fcst_value": "29",
+                        }
+                    ],
+                }
+            },
+        ),
+    ]
+
+    assert (
+        _check_current_weather_terminated_without_observation(
+            msgs,
+            "kma_ultra_short_term_forecast 도구로 서울 종로구 현재 초단기예보를 조회해서 "
+            "15시와 16시 날씨를 요약해줘",
+        )
+        is None
+    )
+
+
 def test_resolve_only_then_terminate_is_rejected() -> None:
     """G-class regression: resolve called but no follow-up lookup → reject."""
     msgs: list[Any] = [
@@ -1912,6 +2024,33 @@ def test_existing_prerequisite_gate_unchanged() -> None:
     )
     assert err is not None
     assert "locate" in err
+
+
+def test_explicit_find_tool_id_mismatch_is_rejected() -> None:
+    """A citizen-specified adapter id must not be silently substituted."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "kma_ultra_short_term_forecast":
+                return SimpleNamespace(primitive="find")
+            if tool_id == "kma_forecast_fetch":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    err = _check_chain_prerequisite(
+        "find",
+        {
+            "tool_id": "kma_forecast_fetch",
+            "params": {"lat": 37.5747, "lon": 126.9796, "base_date": "20260518"},
+        },
+        [],
+        registry=Registry(),
+        user_query="반드시 kma_ultra_short_term_forecast tool_id로 호출해.",
+    )
+
+    assert err is not None
+    assert "kma_ultra_short_term_forecast" in err
+    assert "kma_forecast_fetch" in err
 
 
 def test_nmc_prerequisite_message_names_region_mode() -> None:

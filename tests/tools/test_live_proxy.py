@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import httpx
 import pytest
 import respx
@@ -67,6 +69,19 @@ def test_auto_mode_routes_packaged_verified_non_data_go_hosts(
 def test_auto_mode_keeps_source_tree_direct(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("UMMAYA_LIVE_ADAPTER_MODE", raising=False)
     monkeypatch.delenv("UMMAYA_PACKAGE_ROOT", raising=False)
+
+    assert should_use_live_adapter_proxy(_make_proxyable_tool()) is False
+
+
+def test_auto_mode_keeps_git_checkout_package_root_direct(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    package_root = tmp_path
+    git_dir = package_root / ".git"
+    git_dir.mkdir()
+    monkeypatch.delenv("UMMAYA_LIVE_ADAPTER_MODE", raising=False)
+    monkeypatch.setenv("UMMAYA_PACKAGE_ROOT", str(package_root))
 
     assert should_use_live_adapter_proxy(_make_proxyable_tool()) is False
 

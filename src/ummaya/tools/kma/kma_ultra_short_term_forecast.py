@@ -3,14 +3,16 @@
 
 Wraps the ``getUltraSrtFcst`` endpoint from the Korea Meteorological Administration
 (기상청) via the shared data.go.kr service key.
-Returns forecast items for the next 6 hours, published every hour at HH:30 KST.
+Returns forecast items for the next 6 hours; the live API canonicalizes requested
+HHMM times to the published baseTime carried in response rows.
 
 Wire format quirks handled by this module:
   - Single-item response returns ``item`` as a dict (not array) — normalized to list.
   - XML is the default; JSON is requested via ``_type=json`` and ``dataType=JSON``.
   - ``resultCode != "00"`` is always an error regardless of HTTP 200.
   - Wire fields use camelCase; output model fields use snake_case.
-  - base_time must be HH30 (every hour at the half-hour mark).
+  - base_time accepts HHMM; KMA may canonicalize it to the nearest published
+    baseTime in the response.
 """
 
 from __future__ import annotations
@@ -54,8 +56,9 @@ class KmaUltraShortTermForecastInput(BaseModel):
     base_time: str = Field(
         ...,
         description=(
-            "발표 시각 (HH30 format). 매 시각의 30분 발표만 유효. "
-            "Example: 0630 / 1130 / 1430. MM != 30 인 값은 reject."
+            "조회 기준 시각 (HHMM format). KMA live API accepts HHMM and may "
+            "canonicalize to the actually published baseTime in the response. "
+            "Example: 0630 / 1130 / 1430 / 1500."
         ),
     )
     nx: int = Field(
@@ -95,13 +98,13 @@ class KmaUltraShortTermForecastInput(BaseModel):
     @field_validator("base_time")
     @classmethod
     def _validate_base_time(cls, v: str) -> str:
-        """Validate that base_time is in HH30 format."""
+        """Validate that base_time is in HHMM format."""
         if not re.fullmatch(r"\d{4}", v):
             raise ValueError(f"base_time must be HHMM, got {v!r}")
-        if not v.endswith("30"):
-            raise ValueError(
-                f"Ultra-short-term forecast base_time must end in '30' (e.g. 0630), got {v!r}"
-            )
+        hour = int(v[:2])
+        minute = int(v[2:])
+        if hour > 23 or minute > 59:
+            raise ValueError(f"base_time must be a valid HHMM clock time, got {v!r}")
         return v
 
 
@@ -300,14 +303,16 @@ KMA_ULTRA_SHORT_TERM_FORECAST_TOOL = GovAPITool(
         input_quirk=(
             "nx (1-149), ny (1-253) Lambert 5 km 격자. "
             "base_date=YYYYMMDD (오늘). "
-            "base_time=HH30 format (매 시각 30분 발표만 유효). "
-            "예: 0630, 1130, 1430. MM != 30 인 값은 validator reject. "
-            "base_time 은 시스템 프롬프트의 '현재 KST 시각' 의 직전 HH30 사용. "
-            "추측 금지 — 16:30 이면 1630, 16:50 이면 1630, 17:25 이면 1630."
+            "base_time=HHMM format. live evidence confirms KMA accepts values "
+            "such as 1500/1515/1529 and canonicalizes returned rows to the "
+            "published baseTime. 현재 KST 시각 system hint를 기준으로 최신 "
+            "HHMM clock time을 선택 when the citizen asks for 'now'; "
+            "use the response item's base_time as "
+            "the authoritative issued time."
         ),
         short_reference=kma_grid_short_reference(),
         domain_quirk=(
-            "매 정시 HH:30 발표 후 ~+10분 데이터 안정. "
+            "초단기예보는 빈번히 갱신되며 응답 baseTime 이 요청 base_time 과 다를 수 있음. "
             "resultCode string '00'=정상. "
             "HTTP 200 이어도 resultCode != '00' 이면 에러. dataType=JSON 권장."
         ),
@@ -360,5 +365,13 @@ def register(registry: ToolRegistry, executor: ToolExecutor) -> None:
     from ummaya.tools.executor import AdapterFn
 
     registry.register(KMA_ULTRA_SHORT_TERM_FORECAST_TOOL)
-    executor.register_adapter("kma_ultra_short_term_forecast", cast(AdapterFn, _call))
+
+    async def _kma_ultra_short_term_adapter(inp: BaseModel) -> dict[str, object]:
+        raw = await _call(cast("KmaUltraShortTermForecastInput", inp))
+        return {"kind": "record", "item": raw}
+
+    executor.register_adapter(
+        "kma_ultra_short_term_forecast",
+        cast(AdapterFn, _kma_ultra_short_term_adapter),
+    )
     logger.info("Registered tool: kma_ultra_short_term_forecast")

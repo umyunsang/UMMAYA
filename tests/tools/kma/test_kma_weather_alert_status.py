@@ -11,6 +11,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+import ummaya.tools.kma.kma_weather_alert_status as alert_module
 from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.kma.kma_weather_alert_status import (
     KMA_WEATHER_ALERT_STATUS_TOOL,
@@ -22,6 +23,7 @@ from ummaya.tools.kma.kma_weather_alert_status import (
     _parse_response,
     register,
 )
+from ummaya.tools.models import LookupCollection
 
 # ---------------------------------------------------------------------------
 # Fixture helpers
@@ -93,13 +95,15 @@ class TestWeatherWarningModel:
 
 class TestKmaWeatherAlertStatusInput:
     def test_defaults(self) -> None:
-        """Default values are num_of_rows=100, page_no=1, data_type='JSON'.
-        stn_id must be provided (required by model_validator).
+        """Default values are num_of_rows=2000, page_no=1, data_type='JSON'.
+        stn_id/tmFc are optional for nationwide active-warning lookup.
         """
-        inp = KmaWeatherAlertStatusInput(stn_id="108")
-        assert inp.num_of_rows == 100
+        inp = KmaWeatherAlertStatusInput()
+        assert inp.num_of_rows == 2000
         assert inp.page_no == 1
         assert inp.data_type == "JSON"
+        assert inp.stn_id is None
+        assert inp.tmFc is None
 
     def test_custom_values(self) -> None:
         """Custom values are accepted when stn_id is provided."""
@@ -107,11 +111,6 @@ class TestKmaWeatherAlertStatusInput:
         assert inp.num_of_rows == 100
         assert inp.page_no == 2
         assert inp.data_type == "JSON"
-
-    def test_both_none_raises(self) -> None:
-        """Both stn_id=None and tmFc=None must raise ValidationError (model_validator)."""
-        with pytest.raises(ValidationError):
-            KmaWeatherAlertStatusInput()
 
     def test_stn_id_only_valid(self) -> None:
         """stn_id alone is sufficient."""
@@ -249,6 +248,33 @@ class TestParseResponse:
         assert result.total_count == 0
         assert result.warnings == []
 
+    def test_compact_live_list_shape_preserves_title(self) -> None:
+        """Live getWthrWrnList can return compact rows with title only."""
+        raw = {
+            "response": {
+                "header": {"resultCode": "00", "resultMsg": "NORMAL_SERVICE"},
+                "body": {
+                    "totalCount": 1,
+                    "items": {
+                        "item": {
+                            "stnId": "108",
+                            "title": "[특보] 제05-63호 : 2026.05.18.15:00 / 건조주의보 발표 (*)",
+                            "tmFc": 202605181500,
+                            "tmSeq": 63,
+                        }
+                    },
+                },
+            }
+        }
+
+        result = _parse_response(raw)
+
+        expected_title = "[특보] 제05-63호 : 2026.05.18.15:00 / 건조주의보 발표 (*)"
+        assert result.total_count == 1
+        assert result.warnings[0].stn_id == "108"
+        assert result.warnings[0].tm_fc == "202605181500"
+        assert result.warnings[0].title == expected_title
+
 
 # ---------------------------------------------------------------------------
 # _call async adapter tests
@@ -272,7 +298,7 @@ class TestCall:
         mock_client = AsyncMock(spec=httpx.AsyncClient)
         mock_client.get.return_value = mock_response
 
-        inp = KmaWeatherAlertStatusInput(stn_id="108")
+        inp = KmaWeatherAlertStatusInput()
         result = await _call(inp, client=mock_client)
 
         assert result["total_count"] == 2
@@ -280,15 +306,16 @@ class TestCall:
         mock_client.get.assert_called_once()
         call_kwargs = mock_client.get.call_args
         assert (
-            call_kwargs[0][0] == "https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnMsg"
+            call_kwargs[0][0] == "https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"
         )
         params = call_kwargs[1]["params"]
         assert params["serviceKey"] == "test-key"
-        assert params["numOfRows"] == 100
+        assert params["numOfRows"] == 2000
         assert params["pageNo"] == 1
         assert params["dataType"] == "JSON"
         assert params["_type"] == "json"
-        assert params["stnId"] == "108"
+        assert "stnId" not in params
+        assert "tmFc" not in params
 
     @pytest.mark.asyncio
     async def test_missing_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -369,3 +396,40 @@ class TestRegister:
 
         # Verify adapter is in executor
         assert "kma_weather_alert_status" in executor._adapters
+
+    @pytest.mark.asyncio
+    async def test_registered_adapter_returns_lookup_collection_envelope(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Regression: registered find adapters must return a LookupOutput envelope."""
+        from ummaya.tools.executor import ToolExecutor
+        from ummaya.tools.registry import ToolRegistry
+
+        async def fake_call(inp: KmaWeatherAlertStatusInput) -> dict[str, object]:
+            return {"total_count": 1, "warnings": [{"stn_id": "108", "tm_fc": "202605181000"}]}
+
+        monkeypatch.setattr(alert_module, "_call", fake_call)
+        registry = ToolRegistry()
+        executor = ToolExecutor(registry)
+        register(registry, executor)
+
+        adapter = executor._adapters["kma_weather_alert_status"]
+        result = await adapter(KmaWeatherAlertStatusInput(stn_id="108"))
+
+        assert result == {
+            "kind": "collection",
+            "items": [{"stn_id": "108", "tm_fc": "202605181000"}],
+            "total_count": 1,
+        }
+        normalized = LookupCollection.model_validate(
+            {
+                **result,
+                "meta": {
+                    "source": "kma_weather_alert_status",
+                    "fetched_at": "2026-05-18T12:00:00+09:00",
+                    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "elapsed_ms": 1,
+                },
+            }
+        )
+        assert normalized.kind == "collection"

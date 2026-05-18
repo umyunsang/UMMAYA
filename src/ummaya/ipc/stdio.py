@@ -89,6 +89,8 @@ _CANONICAL_SCOPE_ALIASES: Final[dict[str, str]] = {
     "send:traffic.fine.payment": "send:traffic.fine-pay",
     "send:traffic.fine.pay": "send:traffic.fine-pay",
     "send:traffic.fine_pay": "send:traffic.fine-pay",
+    "send:traffic.fine_pay_v1": "send:traffic.fine-pay",
+    "send:traffic_fine_pay_v1": "send:traffic.fine-pay",
 }
 _NON_DELEGATING_VERIFY_SCOPE_ALIASES: Final[frozenset[str]] = frozenset(
     {
@@ -128,6 +130,7 @@ _QUERY_BOUND_NON_DELEGATING_SCOPE_PREFIXES: Final[dict[str, tuple[str, ...]]] = 
     "send:gov24.minwon": ("find:gov24.",),
 }
 _PRIMITIVE_TOOL_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+_EXPLICIT_TOOL_ID_TOKEN_RE = re.compile(r"\b[a-z][a-z0-9_]*[a-z0-9]\b")
 _MOCK_DISCLOSURE_KO: Final = "이 결과는 실제 행정 영향이 없는 시연(모의) 결과입니다."
 _MOCK_SUBMIT_RECEIPT_DISCLOSURE_KO: Final = (
     f"{_MOCK_DISCLOSURE_KO} 접수번호는 시연용이며 실제 기관 포털에서 조회되지 않습니다."
@@ -612,6 +615,43 @@ def _final_answer_looks_like_incomplete_sentence(text: str) -> bool:
     return any(normalized.endswith(suffix) for suffix in dangling_suffixes)
 
 
+_KMA_FORECAST_MISMATCHED_HOUR_LABEL_RE: Final = re.compile(
+    r"(?P<label>\d{1,2})\s*시\s*\(\s*(?P<actual>\d{1,2})\s*:\s*00\s*\)"
+)
+
+
+def _conversation_has_successful_kma_forecast_result(llm_messages: list[Any]) -> bool:
+    """Return true after any KMA forecast-family adapter succeeded."""
+    return any(
+        _latest_successful_primitive_result_for_tool(
+            llm_messages,
+            primitive="find",
+            tool_id=tool_id,
+        )
+        is not None
+        for tool_id in (
+            "kma_ultra_short_term_forecast",
+            "kma_short_term_forecast",
+            "kma_forecast_fetch",
+        )
+    )
+
+
+def _final_answer_looks_like_mismatched_kma_forecast_hour_label(
+    text: str,
+    llm_messages: list[Any],
+) -> bool:
+    """Detect answers that relabel returned KMA forecast times incorrectly."""
+    if not _conversation_has_successful_kma_forecast_result(llm_messages):
+        return False
+    for match in _KMA_FORECAST_MISMATCHED_HOUR_LABEL_RE.finditer(text):
+        label_hour = int(match.group("label"))
+        actual_hour = int(match.group("actual"))
+        if label_hour != actual_hour:
+            return True
+    return False
+
+
 def _final_answer_looks_like_tool_call_narration(text: str) -> bool:
     """Return true when final prose narrates internal tool calls to the citizen."""
     normalized = " ".join(text.strip().split())
@@ -1081,6 +1121,21 @@ def _inject_delegation_context(
         merged["delegation_context"] = dump(mode="json")
     else:
         merged["delegation_context"] = delegation_context
+    return merged
+
+
+def _strip_model_supplied_delegation_context(
+    params: dict[str, object],
+) -> dict[str, object]:
+    """Remove LLM-emitted delegation_context before submit dispatch."""
+    if "delegation_context" not in params:
+        return params
+    merged = dict(params)
+    merged.pop("delegation_context", None)
+    logger.info(
+        "send: removed model-supplied delegation_context before backend-owned "
+        "authorization handling"
+    )
     return merged
 
 
@@ -3039,11 +3094,38 @@ _ADMCD_INPUT_FIELDS: frozenset[str] = frozenset(
 )
 
 
+def _extract_explicit_find_tool_id_request(user_query: str, registry: Any) -> str | None:
+    """Return a citizen-mentioned find adapter id when the query explicitly asks for one."""
+    if registry is None:
+        return None
+    query = (user_query or "").strip()
+    if not query:
+        return None
+    markers = ("tool_id", "tool id", "도구", "어댑터", "adapter", "tool")
+    if not any(marker in query for marker in markers):
+        return None
+
+    seen: set[str] = set()
+    for token in _EXPLICIT_TOOL_ID_TOKEN_RE.findall(query):
+        if token in seen:
+            continue
+        seen.add(token)
+        try:
+            tool = registry.find(token)
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("explicit find tool_id candidate %s unavailable: %s", token, exc)
+            continue
+        if getattr(tool, "primitive", None) == "find":
+            return token
+    return None
+
+
 def _check_chain_prerequisite(  # noqa: C901
     fname: str,
     args_obj: dict[str, object],
     llm_messages: list[Any],
     registry: Any = None,
+    user_query: str = "",
 ) -> str | None:
     """Return chain-recovery error message when a prerequisite is missing.
 
@@ -3081,6 +3163,18 @@ def _check_chain_prerequisite(  # noqa: C901
         return None
     params_obj = args_obj.get("params")
     params: dict[str, object] = params_obj if isinstance(params_obj, dict) else {}
+
+    explicit_tool_id = _extract_explicit_find_tool_id_request(user_query, registry)
+    if explicit_tool_id is not None and explicit_tool_id != tool_id:
+        return (
+            "Find tool-choice mismatch: the citizen explicitly requested "
+            f"tool_id={explicit_tool_id!r}, but the model emitted "
+            f"tool_id={tool_id!r}. RECOVERY: re-invoke "
+            f"find(tool_id={explicit_tool_id!r}) using the same citizen request "
+            "and any prior locate result already present in the conversation. "
+            "Do NOT substitute another find adapter when the citizen names an "
+            "available tool_id."
+        )
 
     # Recognise coord-input adapter calls only when the model actually
     # supplied coordinate/admcd fields. Empty or coord-free params are left
@@ -3219,6 +3313,41 @@ _FUTURE_TIME_HINTS_KO: frozenset[str] = frozenset(
     {"내일", "모레", "글피", "주말", "다음주", "다음 주", "이번 주말"}
 )
 _FUTURE_TIME_HINTS_EN: frozenset[str] = frozenset({"tomorrow", "weekend", "next week", "forecast"})
+_FORECAST_INTENT_HINTS_KO: frozenset[str] = frozenset(
+    {"예보", "초단기예보", "단기예보", "날씨예보", "기상예보"}
+)
+_FORECAST_INTENT_HINTS_EN: frozenset[str] = frozenset(
+    {
+        "forecast",
+        "kma_forecast_fetch",
+        "kma_short_term_forecast",
+        "kma_ultra_short_term_forecast",
+    }
+)
+_CURRENT_OBSERVATION_DIRECT_HINTS_KO: frozenset[str] = frozenset(
+    {
+        "현재 기온",
+        "지금 기온",
+        "실시간 기온",
+        "현재 온도",
+        "지금 온도",
+        "현재 날씨",
+        "지금 날씨",
+        "실시간 날씨",
+        "현재 관측",
+        "실황",
+        "관측",
+    }
+)
+_CURRENT_OBSERVATION_DIRECT_HINTS_EN: frozenset[str] = frozenset(
+    {
+        "current temperature",
+        "current weather",
+        "now temperature",
+        "live weather",
+        "observation",
+    }
+)
 
 _AVAILABLE_ADAPTER_FIND_LINE_RE: Final = re.compile(
     r"^\s*-\s+[A-Za-z0-9_.:-]+\s+\(primitive=find\)",
@@ -3262,6 +3391,14 @@ def _query_implies_current_weather_observation(user_query: str) -> bool:
         or any(kw in q for kw in _CURRENT_WEATHER_KEYWORDS_EN)
     )
     if not has_weather:
+        return False
+    has_forecast_intent = any(kw in user_query for kw in _FORECAST_INTENT_HINTS_KO) or any(
+        kw in q for kw in _FORECAST_INTENT_HINTS_EN
+    )
+    has_direct_observation_intent = any(
+        kw in user_query for kw in _CURRENT_OBSERVATION_DIRECT_HINTS_KO
+    ) or any(kw in q for kw in _CURRENT_OBSERVATION_DIRECT_HINTS_EN)
+    if has_forecast_intent and not has_direct_observation_intent:
         return False
     if any(kw in user_query for kw in _CURRENT_TIME_HINTS_KO) or any(
         kw in q for kw in _CURRENT_TIME_HINTS_EN
@@ -4323,6 +4460,18 @@ async def run(  # noqa: C901
                 span.set_attribute("ummaya.tool.dispatched", fname)
             return True
 
+        if os.environ.get("UMMAYA_PERMISSION_MODE", "").strip() == "bypassPermissions":
+            with _tracer.start_as_current_span("ummaya.permission") as span:
+                span.set_attribute("ummaya.permission.mode", "bypassPermissions")
+                span.set_attribute("ummaya.permission.decision", "allow_once")
+                span.set_attribute("ummaya.tool.dispatched", fname)
+            logger.debug(
+                "permission: bypassPermissions auto-allow for %s session=%s",
+                f"{fname}:{args_obj.get('tool_id', fname)}",
+                session_id,
+            )
+            return True
+
         # Check session grant cache first (allow_session shortcut — T048).
         session_grant_set = _session_grants.get(session_id, set())
         tool_key = f"{fname}:{args_obj.get('tool_id', fname)}"
@@ -4951,6 +5100,9 @@ async def run(  # noqa: C901
                         submit_params = cast(
                             "dict[str, object]",
                             args_obj.get("params") or {},
+                        )
+                        submit_params = _strip_model_supplied_delegation_context(
+                            submit_params
                         )
                         if auth_context is not None:
                             submit_params = _inject_delegation_context(
@@ -5889,6 +6041,29 @@ async def run(  # noqa: C901
                 if (
                     merged_prose.strip()
                     and has_successful_tool_result
+                    and _final_answer_looks_like_mismatched_kma_forecast_hour_label(
+                        merged_prose,
+                        llm_messages,
+                    )
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_final_answer_observation(
+                        "rejected mismatched KMA forecast hour label after successful tool result",
+                        (
+                            "The previous assistant turn relabeled KMA forecast times "
+                            "with a different requested hour, such as '15시(16:00)'. "
+                            "Use the fcst_time values exactly as returned in the latest "
+                            "successful tool_result. If the citizen requested an hour "
+                            "that is absent from the returned rows, say that the KMA "
+                            "response did not include that hour instead of shifting labels."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
                     and _final_answer_looks_like_tool_call_narration(merged_prose)
                     and empty_final_retry_count < 2
                 ):
@@ -6203,7 +6378,11 @@ async def run(  # noqa: C901
                 # hospital lists. Rejecting here forces the next turn
                 # through locate.
                 chain_error_msg = _check_chain_prerequisite(
-                    fname, args_obj, llm_messages, registry=_ensure_tool_registry()
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    registry=_ensure_tool_registry(),
+                    user_query=latest_user_utt,
                 )
                 if chain_error_msg is not None:
                     _append_tool_routing_observation(

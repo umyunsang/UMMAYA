@@ -443,12 +443,12 @@ class TestOrderingBlockAbsence:
 
 
 # ---------------------------------------------------------------------------
-# 7. KmaWeatherAlertStatusInput model_validator
+# 7. KmaWeatherAlertStatusInput optional filter contract
 # ---------------------------------------------------------------------------
 
 
 class TestKmaWeatherAlertStatusInputValidator:
-    """model_validator(mode='after') requires stn_id or tmFc — not both None."""
+    """stn_id and tmFc are optional filters for nationwide active-warning lookup."""
 
     def test_stn_id_only_is_valid(self) -> None:
         from ummaya.tools.kma.kma_weather_alert_status import KmaWeatherAlertStatusInput
@@ -471,22 +471,19 @@ class TestKmaWeatherAlertStatusInputValidator:
         assert inp.stn_id == "184"
         assert inp.tmFc == "202605031100"
 
-    def test_both_none_raises_validation_error(self) -> None:
-        """Both stn_id and tmFc = None must raise ValidationError."""
+    def test_both_none_is_nationwide_lookup(self) -> None:
+        """Both stn_id and tmFc = None is the nationwide getWthrWrnList lookup."""
         from ummaya.tools.kma.kma_weather_alert_status import KmaWeatherAlertStatusInput
 
-        with pytest.raises(ValidationError) as exc_info:
-            KmaWeatherAlertStatusInput()  # defaults: stn_id=None, tmFc=None
-
-        error_str = str(exc_info.value)
-        # Must mention at least one of the fields or the error message
-        assert "stn_id" in error_str or "tmFc" in error_str or "mandatory" in error_str.lower()
+        inp = KmaWeatherAlertStatusInput()
+        assert inp.stn_id is None
+        assert inp.tmFc is None
 
     def test_default_num_of_rows(self) -> None:
         from ummaya.tools.kma.kma_weather_alert_status import KmaWeatherAlertStatusInput
 
-        inp = KmaWeatherAlertStatusInput(stn_id="108")
-        assert inp.num_of_rows == 100
+        inp = KmaWeatherAlertStatusInput()
+        assert inp.num_of_rows == 2000
 
     def test_num_of_rows_ge1(self) -> None:
         from ummaya.tools.kma.kma_weather_alert_status import KmaWeatherAlertStatusInput

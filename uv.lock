@@ -2725,7 +2725,7 @@ wheels = [
 
 [[package]]
 name = "ummaya"
-version = "0.1.10"
+version = "0.1.11"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

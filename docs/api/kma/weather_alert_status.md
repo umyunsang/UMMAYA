@@ -20,26 +20,29 @@ Retrieves the current list of active weather warnings and watches issued by the 
 
 ## Envelope
 
-**Input model**: `KmaWeatherAlertStatusInput` defined at `src/ummaya/tools/kma/kma_weather_alert_status.py:58–71`.
+**Input model**: `KmaWeatherAlertStatusInput` defined in `src/ummaya/tools/kma/kma_weather_alert_status.py`.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
+| `stn_id` | `str \| None` | no | Optional KMA station/region ID filter. If omitted, the adapter performs nationwide active-warning lookup. |
+| `tmFc` | `str \| None` | no | Optional announcement-time filter in YYYYMMDDHHMI format. If omitted, the adapter returns the currently available announcement list. |
 | `num_of_rows` | `int` (≥1, default 2000) | no | Number of rows per page (`numOfRows` wire parameter). 2000 returns all active alerts in a single page. |
 | `page_no` | `int` (≥1, default 1) | no | Page number, 1-indexed (`pageNo` wire parameter). |
 | `data_type` | `Literal["JSON", "XML"]` (default "JSON") | no | Response format (`dataType` wire parameter). Always leave as "JSON". |
 
-**Output model**: `KmaWeatherAlertStatusOutput` defined at `src/ummaya/tools/kma/kma_weather_alert_status.py:130–140`.
+**Output model**: `KmaWeatherAlertStatusOutput` defined in `src/ummaya/tools/kma/kma_weather_alert_status.py`.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `total_count` | `int` | yes | Count of active (non-cancelled) warnings in the response. |
 | `warnings` | `list[WeatherWarning]` | yes | Active warnings only; cancelled items (`cancel=1`) are filtered before this field is populated. |
 
-Each `WeatherWarning` item (defined at lines 73–128) carries:
+Each `WeatherWarning` item carries:
 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `stn_id` | `str` | yes | Station/region ID. |
+| `title` | `str \| None` | no | Compact announcement title from `getWthrWrnList` when KMA returns title-centered rows. |
 | `tm_fc` | `str` | yes | Announcement time in YYYYMMDDHHMI format (coerced from int if needed). |
 | `tm_ef` | `str \| None` | no | Effective time in YYYYMMDDHHMI format (absent in compact responses). |
 | `tm_seq` | `int` | yes | Sequence number within the announcement (default 0). |
@@ -74,11 +77,7 @@ This adapter is classified as Permission tier 1 because it returns entirely non-
 {
   "mode": "fetch",
   "tool_id": "kma_weather_alert_status",
-  "params": {
-    "num_of_rows": 2000,
-    "page_no": 1,
-    "data_type": "JSON"
-  }
+  "params": {}
 }
 ```
 
@@ -92,26 +91,28 @@ This adapter is classified as Permission tier 1 because it returns entirely non-
     "warnings": [
       {
         "stn_id": "108",
-        "tm_fc": "202604261000",
-        "tm_ef": "202604261200",
-        "tm_seq": 1,
-        "area_code": "S1151300",
-        "area_name": "서울",
-        "warn_var": 2,
-        "warn_stress": 1,
+        "title": "[특보] 제05-63호 : 2026.05.18.15:00 / 건조주의보 발표 (*)",
+        "tm_fc": "202605181500",
+        "tm_ef": null,
+        "tm_seq": 63,
+        "area_code": null,
+        "area_name": null,
+        "warn_var": null,
+        "warn_stress": null,
         "cancel": 0,
         "command": null,
         "warn_fc": null
       },
       {
-        "stn_id": "159",
-        "tm_fc": "202604261000",
-        "tm_ef": "202604261800",
-        "tm_seq": 1,
-        "area_code": "S2600000",
-        "area_name": "부산",
-        "warn_var": 6,
-        "warn_stress": 0,
+        "stn_id": "109",
+        "title": "[특보] 제05-10호 : 2026.05.18.15:00 / 건조주의보 발표 (*)",
+        "tm_fc": "202605181500",
+        "tm_ef": null,
+        "tm_seq": 10,
+        "area_code": null,
+        "area_name": null,
+        "warn_var": null,
+        "warn_stress": null,
         "cancel": 0,
         "command": null,
         "warn_fc": null
@@ -125,14 +126,14 @@ This adapter is classified as Permission tier 1 because it returns entirely non-
 
 ```text
 Citizen: 지금 전국에 기상특보 발효 중인 거 있어요?
-UMMAYA: 현재 2건의 기상특보가 발효 중입니다. 서울 지역에 호우경보(warn_var=2, warn_stress=1)가, 부산 지역에 태풍 주의보(warn_var=6, warn_stress=0)가 발효 중입니다. 외출 시 주의하시기 바랍니다.
+UMMAYA: 현재 2건의 기상특보 발표가 조회됩니다. 2026년 5월 18일 15:00 기준 기상청 본청과 부산지방기상청 발표 건조주의보가 포함되어 있습니다.
 ```
 
 ## Constraints
 
 - **Rate limit**: `rate_limit_per_minute=10`; data.go.kr daily quota applies per API key.
 - **Freshness window**: `cache_ttl_seconds=300` (5 minutes). KMA typically updates active alerts within minutes of issuance or cancellation.
-- **Fixture coverage gaps**: The wire response may return a single dict instead of a list when exactly one warning is active — the adapter normalizes this automatically. Compact responses (only `stnId`, `tmFc`, `tmSeq`) are observed live; all non-required `WeatherWarning` fields may be `None`.
+- **Fixture coverage gaps**: The wire response may return a single dict instead of a list when exactly one warning is active — the adapter normalizes this automatically. Compact responses (`stnId`, `title`, `tmFc`, `tmSeq`) are observed live; all non-required `WeatherWarning` fields may be `None`.
 - **Error envelope examples**:
   - Tier-1 fail (no active alerts): `resultCode="03"` is treated as a normal empty result, not an error. Output will be `{"total_count": 0, "warnings": []}`.
   - Network timeout: `httpx.TimeoutException` propagates as `ToolExecutionError` after 30 s.

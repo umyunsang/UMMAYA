@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import quote, urlparse
 
@@ -64,10 +65,10 @@ def should_use_live_adapter_proxy(
 ) -> bool:
     """Decide whether this invocation should use the operator gateway.
 
-    ``auto`` is release-aware: the npm/Homebrew wrapper sets
-    ``UMMAYA_PACKAGE_ROOT`` for packaged executions, while source-tree Python
-    entry points normally do not. This keeps local development direct without
-    asking public release users for operator credentials.
+    ``auto`` is release-aware: packaged npm/Homebrew executions route through
+    the gateway, while a Git checkout routes direct so local adapter fixes are
+    exercised against the current source tree instead of a previously deployed
+    gateway image.
     """
     if not is_proxyable_live_adapter(tool):
         return False
@@ -77,7 +78,18 @@ def should_use_live_adapter_proxy(
         return False
     if mode == "proxy":
         return True
-    return bool(os.environ.get("UMMAYA_PACKAGE_ROOT", "").strip())
+    package_root = os.environ.get("UMMAYA_PACKAGE_ROOT", "").strip()
+    if not package_root:
+        return False
+    return not _package_root_is_source_checkout(package_root)
+
+
+def _package_root_is_source_checkout(package_root: str) -> bool:
+    """Return True when package_root points at a local Git checkout."""
+    try:
+        return (Path(package_root) / ".git").exists()
+    except OSError:
+        return False
 
 
 async def invoke_live_adapter_proxy(
