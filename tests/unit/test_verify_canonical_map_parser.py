@@ -38,6 +38,7 @@ EXPECTED_MAPPING: dict[str, str] = {
     "mock_verify_module_kec": "kec",
     "mock_verify_module_geumyung": "geumyung_module",
     "mock_verify_module_any_id_sso": "any_id_sso",
+    "live_verify_ganpyeon_injeung": "ganpyeon_injeung",
 }
 
 
@@ -120,8 +121,12 @@ def test_canonical_family_hint_values_are_all_present() -> None:
     assert not missing_families, f"Missing family_hint values in canonical map: {missing_families}"
 
 
-def test_canonical_map_tool_ids_start_with_mock_verify() -> None:
-    """All canonical tool_id keys MUST start with 'mock_verify_'."""
+def test_canonical_map_tool_ids_use_verify_prefix() -> None:
+    """All canonical tool_id keys MUST use an explicit verify adapter prefix."""
     mapping = get_canonical_map()
-    invalid = [tid for tid in mapping if not tid.startswith("mock_verify_")]
-    assert not invalid, f"tool_ids NOT starting with 'mock_verify_': {invalid}"
+    invalid = [
+        tid
+        for tid in mapping
+        if not (tid.startswith("mock_verify_") or tid.startswith("live_verify_"))
+    ]
+    assert not invalid, f"tool_ids NOT using verify adapter prefix: {invalid}"

@@ -74,7 +74,7 @@ def _load_map() -> Mapping[str, str]:
     from ummaya.tools.discovery_bridge import _VERIFY_FAMILIES  # noqa: PLC0415
 
     mapping: dict[str, str] = {
-        str(entry["tool_id"]): _tool_id_to_family(str(entry["tool_id"]))
+        str(entry["tool_id"]): str(entry.get("family") or _tool_id_to_family(str(entry["tool_id"])))
         for entry in _VERIFY_FAMILIES
         if isinstance(entry, dict) and isinstance(entry.get("tool_id"), str)
     }

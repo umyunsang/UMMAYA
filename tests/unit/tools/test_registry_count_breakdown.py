@@ -2,7 +2,7 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the active count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 68 entries
+  - Main ToolRegistry: 69 entries
   - ummaya.primitives.verify._VERIFY_ADAPTERS: 10 families
   - ummaya.primitives.submit._ADAPTER_REGISTRY: 5 families
 
@@ -16,7 +16,7 @@ do NOT silently adjust the expected values.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Main ToolRegistry count — 68 total
+# Main ToolRegistry count — 69 total
 # ---------------------------------------------------------------------------
 # Epic η #2298 — extended from 16 to 18 by adding `check` / `send`
 # to mvp_surface as `is_core=True` GovAPITool entries (FR-021).
@@ -42,10 +42,11 @@ from __future__ import annotations
 # verified public-data adapters under src/ummaya/tools/verified_data_go_kr/.
 # Spec #2798 — extended from 52 to 68 by registering sixteen additional
 # approved live public-data adapters from the 2026-05-16 direct evidence batch.
-_EXPECTED_MAIN_REGISTRY_COUNT = 68
+# Spec live-barocert-identity-check adds one live check adapter.
+_EXPECTED_MAIN_REGISTRY_COUNT = 69
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
-    "live_adapters": 42,  # 12 existing Live + 30 verified public-data adapters
+    "live_adapters": 43,  # 12 existing Live + 30 public-data + 1 live check adapter
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
@@ -95,6 +96,7 @@ _EXPECTED_LIVE_TOOL_IDS = frozenset(
         "ccourt_publication_documents",
         "moj_stay_person_counter",
         "msit_business_announcement_lookup",
+        "live_verify_ganpyeon_injeung",
     }
 )
 
@@ -109,7 +111,7 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 68 entries after register_all_tools()."""
+    """Main ToolRegistry must have exactly 69 entries after register_all_tools()."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -128,7 +130,7 @@ def test_main_registry_total_count() -> None:
 
 
 def test_main_registry_live_tool_ids_present() -> None:
-    """All 42 expected Live tool IDs must be registered in the main ToolRegistry."""
+    """All 43 expected Live tool IDs must be registered in the main ToolRegistry."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -344,8 +346,9 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # primary LLM tool list stays at active primitives + find-class Live.
         # Locate-provider adapters add five first-class registry entries.
         # Spec #2798 adds sixteen approved live data.go.kr adapters, bringing
-        # the main ToolRegistry from 52 to 68.
-        "main_registry": 68,
+        # the main ToolRegistry from 52 to 68. The BaroCert live check adapter
+        # brings the main ToolRegistry from 68 to 69.
+        "main_registry": 69,
         "verify_families": 10,
         "submit_adapters": 5,
     }

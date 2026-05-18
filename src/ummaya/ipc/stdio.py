@@ -1026,6 +1026,11 @@ def _build_verify_session_context(
     raw_scope_list = session_context.get("scope_list")
     if isinstance(raw_scope_list, list):
         session_context["scope_list"] = _normalize_verify_scope_list(raw_scope_list)
+    raw_tool_id = args_obj.get("tool_id")
+    if isinstance(raw_tool_id, str) and raw_tool_id.strip():
+        selected_tool_id = raw_tool_id.strip()
+        session_context.setdefault("_tool_id", selected_tool_id)
+        session_context.setdefault("tool_id", selected_tool_id)
     session_context.setdefault("session_id", session_id)
     return session_context
 
