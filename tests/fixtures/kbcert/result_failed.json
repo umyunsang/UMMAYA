@@ -1,0 +1,16 @@
+{
+  "dataHeader": {
+    "resultCode": "9999",
+    "resultMessage": "failed",
+    "successCode": "1",
+    "category": "API"
+  },
+  "dataBody": {
+    "result-code": "fail",
+    "client-message": "expired transaction",
+    "system-message": "synthetic expired transaction",
+    "reqTxId": "synthetic-req-tx-id",
+    "certTxId": "synthetic-cert-tx-id",
+    "CI": "SENTINEL_CI_SHOULD_NOT_LEAK"
+  }
+}

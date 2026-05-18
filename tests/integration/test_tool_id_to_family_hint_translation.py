@@ -9,7 +9,7 @@ Covers contracts/verify-input-shape.md invariants I-V1 / I-V2 / I-V3 / I-V5.
 
 US3 acceptance criterion:
   ``pytest tests/integration/test_tool_id_to_family_hint_translation.py -v``
-  reports ≥12 PASS / 0 FAIL (10 canonical-family cases + 1 legacy + 1 unknown
+  reports ≥13 PASS / 0 FAIL (11 canonical-family cases + 1 legacy + 1 unknown
   + 1 idempotency).
 
 References
@@ -28,7 +28,7 @@ from ummaya.tools.mvp_surface import _VerifyInputForLLM
 
 # ---------------------------------------------------------------------------
 # Parametrised canonical-family cases (I-V1)
-# One case per canonical family; 10 total.
+# One case per canonical family; 11 total.
 # ---------------------------------------------------------------------------
 
 _CANONICAL_CASES: list[tuple[str, str]] = [
@@ -42,6 +42,7 @@ _CANONICAL_CASES: list[tuple[str, str]] = [
     ("mock_verify_module_kec", "kec"),
     ("mock_verify_module_geumyung", "geumyung_module"),
     ("mock_verify_module_any_id_sso", "any_id_sso"),
+    ("live_verify_kb_identity", "kb_identity"),
 ]
 
 _SAMPLE_PARAMS: dict[str, object] = {

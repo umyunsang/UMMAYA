@@ -244,6 +244,7 @@ class GovAPITool(BaseModel):
             "mobile_id_mdl_aal2",
             "mobile_id_resident_aal2",
             "mydata_individual_aal2",
+            "kb_identity_aal2",
         ]
         | None
     ) = None

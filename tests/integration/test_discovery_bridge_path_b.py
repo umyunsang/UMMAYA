@@ -41,12 +41,12 @@ def test_b1_total_tool_count_includes_mocks(
 ) -> None:
     """Path B-1: bridge registers active non-core mock adapters into main registry.
 
-    Expected total: 68 after both verified public-data adapter waves.
+    Expected total: 69 after both verified public-data adapter waves plus KB live check.
     """
     r, _ = loaded_registry
     total = len(r.all_tools())
-    assert total == 68, (
-        f"Expected 68 total tools after discovery_bridge runs; got {total}. "
+    assert total == 69, (
+        f"Expected 69 total tools after discovery_bridge runs; got {total}. "
         f"Verify the bridge registered the active mock adapters."
     )
 
@@ -54,7 +54,7 @@ def test_b1_total_tool_count_includes_mocks(
 def test_b1_verify_mocks_in_registry(
     loaded_registry: tuple[ToolRegistry, ToolExecutor],
 ) -> None:
-    """All 10 canonical verify family tool_ids are registered."""
+    """All canonical check family tool_ids are registered."""
     r, _ = loaded_registry
     ids = {t.id for t in r.all_tools()}
     expected = {
@@ -68,9 +68,23 @@ def test_b1_verify_mocks_in_registry(
         "mock_verify_ganpyeon_injeung",
         "mock_verify_mobile_id",
         "mock_verify_mydata",
+        "live_verify_kb_identity",
     }
     missing = expected - ids
     assert not missing, f"Missing verify adapters in main registry: {missing}"
+
+
+def test_b1_kb_live_check_registered_as_non_core_check(
+    loaded_registry: tuple[ToolRegistry, ToolExecutor],
+) -> None:
+    """KB identity is an opt-in live check adapter, not a core primitive."""
+    r, _ = loaded_registry
+    tool = r.lookup("live_verify_kb_identity")
+
+    assert tool.primitive == "check"
+    assert tool.adapter_mode == "live"
+    assert tool.is_core is False
+    assert "live" in tool.category
 
 
 def test_b1_submit_mocks_in_registry(

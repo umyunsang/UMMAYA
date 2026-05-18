@@ -39,6 +39,7 @@ FamilyHint = Literal[
     "digital_onepass",
     "mobile_id",
     "mydata",
+    "kb_identity",
 ]
 
 
@@ -107,6 +108,7 @@ _MODID_TIERS: frozenset[str] = frozenset({"modid_aal3"})
 _KEC_TIERS: frozenset[str] = frozenset({"kec_aal3"})
 _GEUMYUNG_MODULE_TIERS: frozenset[str] = frozenset({"geumyung_module_aal3"})
 _ANY_ID_SSO_TIERS: frozenset[str] = frozenset({"any_id_sso_aal2"})
+_KB_IDENTITY_TIERS: frozenset[str] = frozenset({"kb_identity_aal2"})
 
 
 class _AuthContextBase(BaseModel):
@@ -363,6 +365,26 @@ class AnyIdSsoContext(_AuthContextBase):
         return self
 
 
+class KbIdentityContext(_AuthContextBase):
+    """KB국민인증서 identity-check context.
+
+    The provider returns personal identity fields, but this context keeps only
+    opaque KB transaction references in ``external_session_ref``.
+    """
+
+    family: Literal["kb_identity"] = "kb_identity"
+    provider: Literal["kb"] = "kb"
+
+    @model_validator(mode="after")
+    def _check_published_tier(self) -> KbIdentityContext:
+        if self.published_tier not in _KB_IDENTITY_TIERS:
+            raise ValueError(
+                f"KbIdentityContext.published_tier must be one of "
+                f"{sorted(_KB_IDENTITY_TIERS)}, got {self.published_tier!r}"
+            )
+        return self
+
+
 # ---------------------------------------------------------------------------
 # AuthContext discriminated union + VerifyMismatchError + VerifyOutput
 # ---------------------------------------------------------------------------
@@ -379,7 +401,8 @@ AuthContext = Annotated[
     | ModidContext
     | KECContext
     | GeumyungModuleContext
-    | AnyIdSsoContext,
+    | AnyIdSsoContext
+    | KbIdentityContext,
     Field(discriminator="family"),
 ]
 
@@ -421,6 +444,7 @@ class VerifyOutput(BaseModel):
         | DigitalOnepassContext
         | MobileIdContext
         | MyDataContext
+        | KbIdentityContext
         | VerifyMismatchError,
         Field(discriminator="family"),
     ]
@@ -516,6 +540,7 @@ async def verify(
                 KECContext,
                 GeumyungModuleContext,
                 AnyIdSsoContext,
+                KbIdentityContext,
             ),
         ):
             span.set_attribute("error.type", "unexpected_adapter_return_type")
@@ -563,6 +588,7 @@ __all__ = [
     "GanpyeonInjeungContext",
     "GeumyungInjeungseoContext",
     "GongdongInjeungseoContext",
+    "KbIdentityContext",
     "MobileIdContext",
     "MyDataContext",
     "VerifyInput",

@@ -359,7 +359,7 @@ class _VerifyInputForLLM(BaseModel):
             "values documented in the system prompt's <check_families> table: "
             "gongdong_injeungseo / geumyung_injeungseo / ganpyeon_injeung / "
             "mobile_id / mydata / simple_auth_module / modid / kec / "
-            "geumyung_module / any_id_sso. "
+            "geumyung_module / any_id_sso / kb_identity. "
             "Set automatically from tool_id by the pre-validator when "
             "citizen-shape input is supplied."
         ),
@@ -474,12 +474,15 @@ VERIFY_TOOL = GovAPITool(
         "family_hint values + canonical AAL hints are documented in the "
         "system prompt's <check_families> table. The LLM defaults to the "
         "lowest AAL satisfying the citizen's stated purpose.\n\n"
+        "KB국민인증서 live identity checks return a sanitized AuthContext with "
+        "only reqTxId/certTxId-derived external_session_ref; raw identity "
+        "attributes are never returned.\n\n"
         "Exception: family_hint='any_id_sso' returns an IdentityAssertion "
         "with no DelegationToken — do NOT chain a send after this check."
     ),
     search_hint=(
         "인증 위임 토큰 check 모바일ID 공동인증서 금융인증서 간편인증 "
-        "마이데이터 KEC SSO delegation token authentication ceremony"
+        "마이데이터 KB국민인증서 KEC SSO delegation token authentication ceremony"
     ),
     policy=AdapterRealDomainPolicy(
         real_classification_url="https://www.data.go.kr/policy/privacyPolicy.do",

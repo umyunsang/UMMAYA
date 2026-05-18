@@ -234,6 +234,14 @@
     "tool_id": "ksd_financial_term_lookup"
   },
   {
+    "docs_path": "docs/api/verify/live-kb-identity.md",
+    "permission_tier": 2,
+    "primitive": "check",
+    "schema_path": null,
+    "tier": "live",
+    "tool_id": "live_verify_kb_identity"
+  },
+  {
     "docs_path": "docs/api/locate/index.md",
     "permission_tier": 1,
     "primitive": "locate",

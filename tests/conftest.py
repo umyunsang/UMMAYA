@@ -61,7 +61,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     if not _marker_selected("live", marker_expr):
         skip_live = pytest.mark.skip(reason="live tests require -m live")
         for item in items:
-            if "live" in item.keywords:
+            if item.get_closest_marker("live") is not None:
                 item.add_marker(skip_live)
 
     # ``live_embedder`` family (spec 026, NFR-NoNetAtRuntime)
@@ -70,5 +70,5 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             reason="live_embedder tests require -m live_embedder (downloads HF weights)"
         )
         for item in items:
-            if "live_embedder" in item.keywords:
+            if item.get_closest_marker("live_embedder") is not None:
                 item.add_marker(skip_embedder)

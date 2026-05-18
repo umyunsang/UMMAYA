@@ -106,7 +106,8 @@
                 "modid_aal3",
                 "kec_aal3",
                 "geumyung_module_aal3",
-                "any_id_sso_aal2"
+                "any_id_sso_aal2",
+                "kb_identity_aal2"
               ],
               "type": "string"
             },

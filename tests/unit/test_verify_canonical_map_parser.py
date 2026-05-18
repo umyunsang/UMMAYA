@@ -3,7 +3,7 @@
 
 Asserts FR-008b regression criteria:
 - The canonical map has ≥10 entries.
-- All 10 canonical tool_id keys are present.
+- All canonical tool_id keys are present.
 - Each family_hint value matches the expected canonical value.
 - ``resolve_family`` returns the correct family_hint for every key.
 - ``resolve_family`` returns ``None`` for an unknown tool_id.
@@ -38,6 +38,7 @@ EXPECTED_MAPPING: dict[str, str] = {
     "mock_verify_module_kec": "kec",
     "mock_verify_module_geumyung": "geumyung_module",
     "mock_verify_module_any_id_sso": "any_id_sso",
+    "live_verify_kb_identity": "kb_identity",
 }
 
 
@@ -52,8 +53,8 @@ def test_canonical_map_has_at_least_ten_entries() -> None:
     assert len(mapping) >= 10, f"Expected ≥10 entries in canonical map, got {len(mapping)}"
 
 
-def test_all_ten_canonical_tool_ids_present() -> None:
-    """All 10 canonical tool_id keys from data-model.md § 2 MUST be present."""
+def test_all_canonical_tool_ids_present() -> None:
+    """All canonical tool_id keys from discovery metadata MUST be present."""
     mapping = get_canonical_map()
     missing = [tid for tid in EXPECTED_MAPPING if tid not in mapping]
     assert not missing, f"Missing tool_ids in canonical map: {missing}"
@@ -113,15 +114,19 @@ def test_get_canonical_map_is_idempotent() -> None:
 
 
 def test_canonical_family_hint_values_are_all_present() -> None:
-    """All 10 expected family_hint values from data-model.md § 2 MUST appear."""
+    """All expected family_hint values from discovery metadata MUST appear."""
     expected_families = set(EXPECTED_MAPPING.values())
     actual_families = set(get_canonical_map().values())
     missing_families = expected_families - actual_families
     assert not missing_families, f"Missing family_hint values in canonical map: {missing_families}"
 
 
-def test_canonical_map_tool_ids_start_with_mock_verify() -> None:
-    """All canonical tool_id keys MUST start with 'mock_verify_'."""
+def test_canonical_map_tool_ids_are_check_verify_ids() -> None:
+    """All canonical tool_id keys MUST be explicit check adapter ids."""
     mapping = get_canonical_map()
-    invalid = [tid for tid in mapping if not tid.startswith("mock_verify_")]
-    assert not invalid, f"tool_ids NOT starting with 'mock_verify_': {invalid}"
+    invalid = [
+        tid
+        for tid in mapping
+        if not (tid.startswith("mock_verify_") or tid.startswith("live_verify_"))
+    ]
+    assert not invalid, f"tool_ids NOT in check verify namespace: {invalid}"
