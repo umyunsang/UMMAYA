@@ -12,6 +12,7 @@
 - [Adapter Matrix](/_llm/pages/ch/coverage/adapter-matrix.md) — UMMAYA coverage、adapter status 和 primitive support 背后的 evidence ledger。
 - [当前覆盖范围](/_llm/pages/ch/coverage/current-coverage.md) — 按用户任务、状态标签和证据来源说明 UMMAYA 当前 capability。
 - [Domain Roadmap](/_llm/pages/ch/coverage/domain-roadmap.md) — UMMAYA 如何把 domain 从 target-state scenario 推进到 mock，再到 live capability。
+- [Live Adapters](/_llm/pages/ch/coverage/live-adapters.md) — 按用户问题整理既有 Live adapter 与新验证的 public-data adapter。
 - [Scenario Matrix](/_llm/pages/ch/coverage/scenario-matrix.md) — 用于判断 UMMAYA 是否覆盖真实公共服务需求的 target-state citizen scenarios。
 - [UMMAYA 文档](/_llm/pages/ch.md) — 用于使用、评估和扩展 UMMAYA 这个韩国 national-infrastructure AX harness 的文档。
 - [LLM-Readable Docs](/_llm/pages/ch/reference/llm-readable-docs.md) — 让 agent 不用 scraping site 就能检查 UMMAYA 的 generated documentation surfaces。
@@ -41,6 +42,7 @@
 - [Adapter Matrix](/_llm/pages/en/coverage/adapter-matrix.md) — The evidence ledger behind UMMAYA coverage, adapter status, and primitive support.
 - [Current Coverage](/_llm/pages/en/coverage/current-coverage.md) — Current UMMAYA capability by user task, status label, and evidence source.
 - [Domain Roadmap](/_llm/pages/en/coverage/domain-roadmap.md) — How UMMAYA moves domains from target-state scenario to mock to live capability.
+- [Live Adapters](/_llm/pages/en/coverage/live-adapters.md) — Existing and newly verified Live adapters, organized by the user questions they can answer.
 - [Scenario Matrix](/_llm/pages/en/coverage/scenario-matrix.md) — Target-state citizen scenarios used to judge whether UMMAYA covers real public-service demand.
 - [UMMAYA Docs](/_llm/pages/en.md) — Documentation for using, evaluating, and extending UMMAYA as a Korean national-infrastructure AX harness.
 - [LLM-Readable Docs](/_llm/pages/en/reference/llm-readable-docs.md) — The generated documentation surfaces that let agents inspect UMMAYA without scraping the site.
@@ -70,6 +72,7 @@
 - [Adapter Matrix](/_llm/pages/jg/coverage/adapter-matrix.md) — UMMAYA coverage、adapter status、primitive support の背後にある evidence ledger。
 - [現在の coverage](/_llm/pages/jg/coverage/current-coverage.md) — user task、status label、evidence source で UMMAYA の現在 capability を説明します。
 - [Domain Roadmap](/_llm/pages/jg/coverage/domain-roadmap.md) — UMMAYA が domains を target-state scenario から mock、live capability へ進める方法。
+- [Live Adapters](/_llm/pages/jg/coverage/live-adapters.md) — 既存 Live adapter と新しく検証された public-data adapter を user question 別に整理します。
 - [Scenario Matrix](/_llm/pages/jg/coverage/scenario-matrix.md) — UMMAYA が実際の public-service demand を覆うか判断する target-state citizen scenarios。
 - [UMMAYA Docs](/_llm/pages/jg.md) — Korean national-infrastructure AX harness として UMMAYA を使い、評価し、拡張するための documentation。
 - [LLM-Readable Docs](/_llm/pages/jg/reference/llm-readable-docs.md) — agents が site scraping なしに UMMAYA を inspect できる generated documentation surfaces。
@@ -99,6 +102,7 @@
 - [Adapter Matrix](/_llm/pages/ko/coverage/adapter-matrix.md) — UMMAYA coverage, adapter status, primitive support의 evidence ledger입니다.
 - [현재 커버리지](/_llm/pages/ko/coverage/current-coverage.md) — 현재 UMMAYA capability를 user task, status label, evidence source로 설명합니다.
 - [Domain Roadmap](/_llm/pages/ko/coverage/domain-roadmap.md) — UMMAYA가 domain을 target-state scenario에서 mock, live capability로 이동시키는 방식입니다.
+- [Live Adapter 현황](/_llm/pages/ko/coverage/live-adapters.md) — 기존 Live adapter와 새로 검증된 public-data adapter를 사용자 질문 기준으로 정리합니다.
 - [Scenario Matrix](/_llm/pages/ko/coverage/scenario-matrix.md) — UMMAYA가 실제 public-service demand를 다루는지 판단하는 target-state citizen scenario입니다.
 - [UMMAYA 문서](/_llm/pages/ko.md) — 대한민국 국가 인프라 AX harness로서 UMMAYA를 사용하고, 평가하고, 확장하기 위한 문서입니다.
 - [LLM-Readable Docs](/_llm/pages/ko/reference/llm-readable-docs.md) — agent가 site scraping 없이 UMMAYA를 검사할 수 있게 하는 generated documentation surface입니다.

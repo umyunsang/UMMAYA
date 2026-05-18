@@ -5,6 +5,8 @@ source_of_truth:
 - docs/research/ummaya-docs-goal-brief-2026-05-15.md
 - docs-site/src/data/generated/adapters.json
 - docs/api/README.md
+- docs/api/verified-data-go-kr/README.md
+- tests/unit/tools/test_registry_count_breakdown.py
 audience:
 - considering_user
 - public_sector_evaluator
@@ -15,15 +17,18 @@ Coverage means what public-service path UMMAYA can represent with evidence. It d
 
 Read coverage by user outcome and state label. Live, Mock, Handoff, and Planned are different promises, and the docs should not blur them.
 
+The new [Live Adapters](/en/coverage/live-adapters/) page explains the existing KMA, KOROAD, HIRA, NMC, NFA, and MOHW surface together with the public-data expansion wave. Read the count as the current registry evidence: 42 live `find` adapters and 5 live `locate` provider adapters, not merely "thirty new APIs."
+
 ## Coverage Summary
 
 | User outcome | Current state | Evidence source |
 |---|---|---|
-| Weather, forecast, warning, and public safety lookup | Live | KMA and related public-data adapters where configured |
-| Road accident and hazard lookup | Live | KOROAD public-data adapters where configured |
-| Hospital and emergency information lookup | Live | HIRA, NMC, NFA119-style public adapters where configured |
+| Weather, forecast, warning, public safety, and air-quality lookup | Live | KMA, AirKorea, and MOIS public-data adapters where configured |
+| Road, bus, subway accident/hazard/arrival/fare lookup | Live | KOROAD, TAGO, and DJTC public-data adapters where configured |
+| Hospital, emergency, AED, and drug-information lookup | Live | HIRA, NMC, NFA119, and MFDS public adapters where configured |
 | Location and administrative area resolution | Live | JUSO, Kakao, SGIS-style location adapters where configured |
-| Welfare public guidance | Live for public guidance | MOHW public guidance/search surfaces where configured |
+| Welfare, public jobs, business support, and procurement lookup | Live for public lookup | MOHW, MPM, MSS, MSIT, and PPS public-data surfaces where configured |
+| Legal, public records, statistics, utility/public-corporation lookup | Live for public lookup | MOJ, CCOURT, FTC, REB, KCUE, KEPCO, KSD, BFC, and MOF adapters where configured |
 | Traffic fine payment and welfare application submission | Mock | Shape-faithful `send` adapters |
 | Digital OnePass, simple auth, mobile ID, certificates, MyData | Mock or Handoff | `check` mock adapters and scenario docs |
 | Government24/Hometax final submissions | Handoff or target-state | Requires official callable channel, credential, consent, and artifacts |

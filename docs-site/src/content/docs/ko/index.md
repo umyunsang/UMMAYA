@@ -46,7 +46,7 @@ Use section은 실제 공공서비스 상황으로 구성되어 있습니다. em
 
 ## Coverage와 Architecture 평가하기
 
-Coverage page는 current capability, adapter evidence, target-state scenario, roadmap logic을 보여줍니다. Architecture page는 왜 UMMAYA가 Claude Code-style harness를 이식하는지, primitive가 어떻게 동작하는지, query engine이 retrieval, tool call, permission, stop reason을 어떻게 조정하는지 설명합니다.
+Coverage page는 current capability, [Live Adapter 현황](/ko/coverage/live-adapters/), adapter evidence, target-state scenario, roadmap logic을 보여줍니다. Architecture page는 왜 UMMAYA가 Claude Code-style harness를 이식하는지, primitive가 어떻게 동작하는지, query engine이 retrieval, tool call, permission, stop reason을 어떻게 조정하는지 설명합니다.
 
 지원 여부를 확인하려면 coverage를 읽고, national AX goal을 감당할 수 있는 설계인지 확인하려면 architecture를 읽습니다. 두 영역은 분리되어 있지만 같은 사실을 말해야 합니다. coverage가 현재 상태를 말하고, architecture가 그 상태를 확장 가능한 구조로 설명합니다.
 

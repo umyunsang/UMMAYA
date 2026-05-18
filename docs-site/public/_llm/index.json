@@ -102,7 +102,8 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md"
       ],
       "source_path": "docs-site/src/content/docs/ch/coverage/adapter-matrix.md",
       "title": "Adapter Matrix",
@@ -119,7 +120,9 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py"
       ],
       "source_path": "docs-site/src/content/docs/ch/coverage/current-coverage.md",
       "title": "当前覆盖范围",
@@ -141,6 +144,25 @@
       "source_path": "docs-site/src/content/docs/ch/coverage/domain-roadmap.md",
       "title": "Domain Roadmap",
       "url_path": "/ch/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "按用户问题整理既有 Live adapter 与新验证的 public-data adapter。",
+      "raw_path": "/_llm/pages/ch/coverage/live-adapters.md",
+      "source_of_truth": [
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py",
+        "specs/2798-data-go-kr-live-expansion/"
+      ],
+      "source_path": "docs-site/src/content/docs/ch/coverage/live-adapters.md",
+      "title": "Live Adapters",
+      "url_path": "/ch/coverage/live-adapters/"
     },
     {
       "audience": [
@@ -601,7 +623,8 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md"
       ],
       "source_path": "docs-site/src/content/docs/en/coverage/adapter-matrix.md",
       "title": "Adapter Matrix",
@@ -618,7 +641,9 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py"
       ],
       "source_path": "docs-site/src/content/docs/en/coverage/current-coverage.md",
       "title": "Current Coverage",
@@ -640,6 +665,25 @@
       "source_path": "docs-site/src/content/docs/en/coverage/domain-roadmap.md",
       "title": "Domain Roadmap",
       "url_path": "/en/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "Existing and newly verified Live adapters, organized by the user questions they can answer.",
+      "raw_path": "/_llm/pages/en/coverage/live-adapters.md",
+      "source_of_truth": [
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py",
+        "specs/2798-data-go-kr-live-expansion/"
+      ],
+      "source_path": "docs-site/src/content/docs/en/coverage/live-adapters.md",
+      "title": "Live Adapters",
+      "url_path": "/en/coverage/live-adapters/"
     },
     {
       "audience": [
@@ -1094,7 +1138,8 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md"
       ],
       "source_path": "docs-site/src/content/docs/jg/coverage/adapter-matrix.md",
       "title": "Adapter Matrix",
@@ -1111,7 +1156,9 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py"
       ],
       "source_path": "docs-site/src/content/docs/jg/coverage/current-coverage.md",
       "title": "現在の coverage",
@@ -1133,6 +1180,25 @@
       "source_path": "docs-site/src/content/docs/jg/coverage/domain-roadmap.md",
       "title": "Domain Roadmap",
       "url_path": "/jg/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "既存 Live adapter と新しく検証された public-data adapter を user question 別に整理します。",
+      "raw_path": "/_llm/pages/jg/coverage/live-adapters.md",
+      "source_of_truth": [
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py",
+        "specs/2798-data-go-kr-live-expansion/"
+      ],
+      "source_path": "docs-site/src/content/docs/jg/coverage/live-adapters.md",
+      "title": "Live Adapters",
+      "url_path": "/jg/coverage/live-adapters/"
     },
     {
       "audience": [
@@ -1587,7 +1653,8 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md"
       ],
       "source_path": "docs-site/src/content/docs/ko/coverage/adapter-matrix.md",
       "title": "Adapter Matrix",
@@ -1604,7 +1671,9 @@
       "source_of_truth": [
         "docs/research/ummaya-docs-goal-brief-2026-05-15.md",
         "docs-site/src/data/generated/adapters.json",
-        "docs/api/README.md"
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py"
       ],
       "source_path": "docs-site/src/content/docs/ko/coverage/current-coverage.md",
       "title": "현재 커버리지",
@@ -1626,6 +1695,25 @@
       "source_path": "docs-site/src/content/docs/ko/coverage/domain-roadmap.md",
       "title": "Domain Roadmap",
       "url_path": "/ko/coverage/domain-roadmap/"
+    },
+    {
+      "audience": [
+        "considering_user",
+        "public_sector_evaluator",
+        "adapter_author",
+        "maintainer"
+      ],
+      "description": "기존 Live adapter와 새로 검증된 public-data adapter를 사용자 질문 기준으로 정리합니다.",
+      "raw_path": "/_llm/pages/ko/coverage/live-adapters.md",
+      "source_of_truth": [
+        "docs/api/README.md",
+        "docs/api/verified-data-go-kr/README.md",
+        "tests/unit/tools/test_registry_count_breakdown.py",
+        "specs/2798-data-go-kr-live-expansion/"
+      ],
+      "source_path": "docs-site/src/content/docs/ko/coverage/live-adapters.md",
+      "title": "Live Adapter 현황",
+      "url_path": "/ko/coverage/live-adapters/"
     },
     {
       "audience": [

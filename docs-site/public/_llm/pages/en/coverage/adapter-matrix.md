@@ -6,6 +6,7 @@ source_of_truth:
 - docs/research/ummaya-docs-goal-brief-2026-05-15.md
 - docs-site/src/data/generated/adapters.json
 - docs/api/README.md
+- docs/api/verified-data-go-kr/README.md
 audience:
 - public_sector_evaluator
 - adapter_author
@@ -20,11 +21,11 @@ Users do not need to read adapter IDs first, but evaluators and contributors do.
 
 The generated adapter data currently represents three broad groups:
 
-- live `find` adapters for public lookup domains such as weather, road, hospital, emergency, and welfare guidance;
+- 42 live `find` adapters for public lookup domains such as weather, road, bus, hospital, emergency, welfare guidance, jobs, procurement, legal/public records, and statistics;
 - location and administrative-area adapters that support `locate`;
 - mock `check` or `send` adapters for identity, certificate, authentication, MyData, protected submission, or payment-shaped workflows.
 
-This split mirrors UMMAYA's trust model. Public lookup can often be Live earlier. Protected completion requires stronger authority and usually remains Mock or Handoff until official access exists.
+Registry count evidence separately validates the 4 main primitive surfaces: `find`, `locate`, `check`, and `send`, plus non-core adapter registry entries. This split mirrors UMMAYA's trust model. Public lookup can often be Live earlier. Protected completion requires stronger authority and usually remains Mock or Handoff until official access exists. Read [Live Adapters](/en/coverage/live-adapters/) for user-task grouping, then use this matrix and `docs/api/README.md` for canonical row-level evidence.
 
 ## What Each Adapter Must Carry
 
@@ -49,7 +50,7 @@ That is why adapter metadata is part of user trust, not only developer inventory
 
 ## Where To Inspect
 
-The canonical adapter catalog lives in `docs/api/README.md`. Generated metadata is copied into `docs-site/src/data/generated/adapters.json` and `/_llm/generated/adapters.json`.
+The canonical adapter catalog lives in `docs/api/README.md`. Generated metadata merges catalog rows with individual adapter front matter, then copies the result into `docs-site/src/data/generated/adapters.json` and `/_llm/generated/adapters.json`.
 
 After adapter changes, run:
 

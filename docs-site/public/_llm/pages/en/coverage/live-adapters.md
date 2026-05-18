@@ -1,0 +1,48 @@
+---
+title: Live Adapters
+description: Existing and newly verified Live adapters, organized by the user questions
+  they can answer.
+source_of_truth:
+- docs/api/README.md
+- docs/api/verified-data-go-kr/README.md
+- tests/unit/tools/test_registry_count_breakdown.py
+- specs/2798-data-go-kr-live-expansion/
+audience:
+- considering_user
+- public_sector_evaluator
+- adapter_author
+- maintainer
+---
+
+This page is not just a list of the thirty newly approved APIs. It is the current live-surface map: the existing Live adapters and the newly verified public-data adapters, grouped by the user questions they can answer.
+
+Current registry evidence separates 42 live `find` adapters, 5 live `locate` provider adapters, and the 4 main primitive surfaces: `find`, `locate`, `check`, and `send`. The new wave adds 30 read-only public-data adapters verified by approval, direct call, and fixture replay on top of the existing KMA, KOROAD, HIRA, NMC, NFA, and MOHW live surface.
+
+## What Changed
+
+The new public-data wave lets UMMAYA route a wider set of everyday administrative lookup questions through the same `find` primitive. Beyond weather and hospital lookup, it now covers bus data, air quality, AED and emergency-call-box locations, drug summaries, public jobs, SME support notices, procurement, real-estate statistics, university statistics, power-usage statistics, legal/public records, and related public datasets.
+
+Live means the read-only lookup has a callable channel and credential path. It does not mean UMMAYA can complete protected submissions, payments, identity checks, certificate issuance, tax filing, or other binding official actions. Those workflows must remain Mock or Handoff unless live authority and receipt evidence exist.
+
+## Live Adapter Groups
+
+| User question group | Matching tool IDs | Example prompts |
+|---|---|---|
+| Weather, air quality, disaster, and safety | `kma_current_observation`, `kma_forecast_fetch`, `kma_pre_warning`, `kma_short_term_forecast`, `kma_ultra_short_term_forecast`, `kma_weather_alert_status`, `airkorea_ctprvn_air_quality`, `mois_facility_safety_info_lookup`, `mois_emergency_call_box_lookup` | "Check today's Seoul air quality and weather alerts", "Find nearby emergency call boxes or safety facilities" |
+| Emergency healthcare, hospitals, AED, and welfare guidance | `hira_hospital_search`, `hira_medical_institution_detail`, `nmc_emergency_search`, `nmc_aed_site_locate`, `nfa_emergency_info_service`, `mohw_welfare_eligibility_search`, `mfds_easy_drug_info_lookup`, `gyeryong_assistive_device_charging_place_locate` | "Find nearby AED locations", "Look up this drug summary", "Check public welfare guidance" |
+| Transit, bus, road, and subway | `koroad_accident_search`, `koroad_accident_hazard_search`, `tago_bus_route_search`, `tago_bus_arrival_search`, `tago_bus_location_search`, `tago_bus_station_search`, `djtc_subway_segment_fare_time_check` | "Find bus arrival information", "Tell me travel time and fare between two Daejeon subway stations" |
+| Jobs, business, procurement, and support programs | `mpm_public_job_lookup`, `mss_sme_support_notice_lookup`, `msit_business_announcement_lookup`, `pps_bid_public_info`, `pps_shopping_mall_product_lookup`, `fsc_corporate_finance_summary`, `ksd_financial_term_lookup` | "Find SME support notices", "Check public jobs and procurement notices" |
+| Civic statistics, legal help, and public records | `moj_village_lawyer_lookup`, `moj_stay_person_counter`, `ccourt_publication_documents`, `ftc_large_group_status`, `ftc_public_ym_list`, `reb_real_estate_stat_table`, `bfc_funeral_area_fee`, `kcue_finance_regional_tuition`, `kcue_student_regional_foreign`, `kepco_contract_power_usage`, `mof_ocean_water_quality_check` | "Find village lawyer status", "Check real-estate statistics", "Look up university tuition statistics" |
+| Address and administrative-area resolution | `juso_adm_cd_lookup`, `kakao_address_search`, `kakao_coord_to_region`, `kakao_keyword_search`, `sgis_adm_cd_lookup` | "Convert this address to an administrative-dong code", "Resolve a place into location context" |
+
+This table is a user-task view. Use [Adapter Matrix](/en/coverage/adapter-matrix/) and `docs/api/README.md` for the canonical tool ID list, schema paths, and permission tiers.
+
+## Still Deferred
+
+Approved candidates `15038392`, `15058923`, and `15063444` are not advertised as Live adapters. They still need provider entitlement, endpoint mapping, or key-specific success evidence. They should stay Deferred until a successful probe proves the callable shape.
+
+## Evidence Trail
+
+`docs/api/verified-data-go-kr/README.md` records each included adapter, data.go.kr ID, env var, and saved probe path. Default tests replay saved fixtures and do not call live public APIs. Runtime calls require the listed `UMMAYA_*` environment variables and flow through the `find` meta-tool or `ToolExecutor.invoke()`.
+
+The docs-site machine-readable adapter metadata is generated by merging `docs/api/README.md` catalog rows with individual adapter spec front matter. After adding a Live adapter, run `npm run docs:generate` and `npm run docs:check` so prose, generated JSON, and `llms.txt` stay aligned.

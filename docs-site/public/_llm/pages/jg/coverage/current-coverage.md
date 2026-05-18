@@ -5,6 +5,8 @@ source_of_truth:
 - docs/research/ummaya-docs-goal-brief-2026-05-15.md
 - docs-site/src/data/generated/adapters.json
 - docs/api/README.md
+- docs/api/verified-data-go-kr/README.md
+- tests/unit/tools/test_registry_count_breakdown.py
 audience:
 - considering_user
 - public_sector_evaluator
@@ -15,15 +17,18 @@ coverage は、UMMAYA が evidence を持って表現できる public-service pa
 
 coverage は user outcome と state label で読んでください。Live、Mock、Handoff、Planned は異なる promises であり、docs はそれらを曖昧にしてはいけません。
 
+新しい [Live Adapters](/jg/coverage/live-adapters/) page は、既存の KMA、KOROAD、HIRA、NMC、NFA、MOHW surface と public-data expansion wave を一緒に説明します。count は単なる「三十個の新 API」ではなく、現在の registry evidence として 42 個の live `find` adapters と 5 個の live `locate` provider adapters と読んでください。
+
 ## Coverage Summary
 
 | User outcome | Current state | Evidence source |
 |---|---|---|
-| Weather、forecast、warning、public safety lookup | Live | configured された KMA と関連 public-data adapters |
-| Road accident と hazard lookup | Live | configured された KOROAD public-data adapters |
-| Hospital と emergency information lookup | Live | configured された HIRA、NMC、NFA119-style public adapters |
+| Weather、forecast、warning、public safety、air-quality lookup | Live | configured された KMA、AirKorea、MOIS public-data adapters |
+| Road、bus、subway accident/hazard/arrival/fare lookup | Live | configured された KOROAD、TAGO、DJTC public-data adapters |
+| Hospital、emergency、AED、drug-information lookup | Live | configured された HIRA、NMC、NFA119、MFDS public adapters |
 | Location と administrative area resolution | Live | configured された JUSO、Kakao、SGIS-style location adapters |
-| Welfare public guidance | Live for public guidance | configured された MOHW public guidance/search surfaces |
+| Welfare、public jobs、business support、procurement lookup | public lookup は Live | configured された MOHW、MPM、MSS、MSIT、PPS public-data surfaces |
+| Legal、public records、statistics、utility/public-corporation lookup | public lookup は Live | configured された MOJ、CCOURT、FTC、REB、KCUE、KEPCO、KSD、BFC、MOF adapters |
 | Traffic fine payment と welfare application submission | Mock | shape-faithful `send` adapters |
 | Digital OnePass、simple auth、mobile ID、certificates、MyData | Mock or Handoff | `check` mock adapters and scenario docs |
 | Government24/Hometax final submissions | Handoff or target-state | official callable channel、credential、consent、artifacts が必要 |

@@ -46,7 +46,7 @@ Use section は real public-service situations で整理されています。eme
 
 ## Coverage と Architecture を評価する
 
-Coverage pages は current capability、adapter evidence、target-state scenarios、roadmap logic を示します。Architecture pages は UMMAYA がなぜ Claude Code-style harness を migrate するか、primitives がどう働くか、query engine が retrieval、tool calls、permission、stop reasons をどう coordinate するかを説明します。
+Coverage pages は current capability、[Live Adapters](/jg/coverage/live-adapters/)、adapter evidence、target-state scenarios、roadmap logic を示します。Architecture pages は UMMAYA がなぜ Claude Code-style harness を migrate するか、primitives がどう働くか、query engine が retrieval、tool calls、permission、stop reasons をどう coordinate するかを説明します。
 
 supported か確認するには coverage を使います。system design が national AX goal を支えられるか確認するには architecture を使います。
 

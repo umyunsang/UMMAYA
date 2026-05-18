@@ -1,17 +1,163 @@
 [
   {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/airkorea_ctprvn_air_quality.json",
+    "source": "KECO / AirKorea",
+    "tier": "live",
+    "tool_id": "airkorea_ctprvn_air_quality"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/bfc_funeral_area_fee.json",
+    "source": "BFC",
+    "tier": "live",
+    "tool_id": "bfc_funeral_area_fee"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/ccourt_publication_documents.json",
+    "source": "CCOURT",
+    "tier": "live",
+    "tool_id": "ccourt_publication_documents"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/djtc_subway_segment_fare_time_check.json",
+    "source": "DJTC",
+    "tier": "live",
+    "tool_id": "djtc_subway_segment_fare_time_check"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/fsc_corporate_finance_summary.json",
+    "source": "FSC",
+    "tier": "live",
+    "tool_id": "fsc_corporate_finance_summary"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/ftc_large_group_status.json",
+    "source": "FTC",
+    "tier": "live",
+    "tool_id": "ftc_large_group_status"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/ftc_public_ym_list.json",
+    "source": "FTC",
+    "tier": "live",
+    "tool_id": "ftc_public_ym_list"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/gyeryong_assistive_device_charging_place_locate.json",
+    "source": "Gyeryong",
+    "tier": "live",
+    "tool_id": "gyeryong_assistive_device_charging_place_locate"
+  },
+  {
     "docs_path": "docs/api/hira/hospital_search.md",
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/hira_hospital_search.json",
+    "source": "HIRA",
     "tier": "live",
     "tool_id": "hira_hospital_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/hira_medical_institution_detail.json",
+    "source": "HIRA",
+    "tier": "live",
+    "tool_id": "hira_medical_institution_detail"
+  },
+  {
+    "docs_path": "docs/api/locate/index.md",
+    "permission_tier": 1,
+    "primitive": "locate",
+    "schema_path": "docs/api/schemas/juso_adm_cd_lookup.json",
+    "source": "Geocoding",
+    "tier": "live",
+    "tool_id": "juso_adm_cd_lookup"
+  },
+  {
+    "docs_path": "docs/api/locate/index.md",
+    "permission_tier": 1,
+    "primitive": "locate",
+    "schema_path": "docs/api/schemas/kakao_address_search.json",
+    "source": "Geocoding",
+    "tier": "live",
+    "tool_id": "kakao_address_search"
+  },
+  {
+    "docs_path": "docs/api/locate/index.md",
+    "permission_tier": 1,
+    "primitive": "locate",
+    "schema_path": "docs/api/schemas/kakao_coord_to_region.json",
+    "source": "Geocoding",
+    "tier": "live",
+    "tool_id": "kakao_coord_to_region"
+  },
+  {
+    "docs_path": "docs/api/locate/index.md",
+    "permission_tier": 1,
+    "primitive": "locate",
+    "schema_path": "docs/api/schemas/kakao_keyword_search.json",
+    "source": "Geocoding",
+    "tier": "live",
+    "tool_id": "kakao_keyword_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kcue_finance_regional_tuition.json",
+    "source": "KCUE",
+    "tier": "live",
+    "tool_id": "kcue_finance_regional_tuition"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kcue_student_regional_foreign.json",
+    "source": "KCUE",
+    "tier": "live",
+    "tool_id": "kcue_student_regional_foreign"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/kepco_contract_power_usage.json",
+    "source": "KEPCO",
+    "tier": "live",
+    "tool_id": "kepco_contract_power_usage"
   },
   {
     "docs_path": "docs/api/kma/current_observation.md",
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/kma_current_observation.json",
+    "source": "KMA",
     "tier": "live",
     "tool_id": "kma_current_observation"
   },
@@ -20,6 +166,7 @@
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/kma_forecast_fetch.json",
+    "source": "KMA",
     "tier": "live",
     "tool_id": "kma_forecast_fetch"
   },
@@ -28,6 +175,7 @@
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/kma_pre_warning.json",
+    "source": "KMA",
     "tier": "live",
     "tool_id": "kma_pre_warning"
   },
@@ -36,6 +184,7 @@
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/kma_short_term_forecast.json",
+    "source": "KMA",
     "tier": "live",
     "tool_id": "kma_short_term_forecast"
   },
@@ -44,6 +193,7 @@
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/kma_ultra_short_term_forecast.json",
+    "source": "KMA",
     "tier": "live",
     "tool_id": "kma_ultra_short_term_forecast"
   },
@@ -52,6 +202,7 @@
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/kma_weather_alert_status.json",
+    "source": "KMA",
     "tier": "live",
     "tool_id": "kma_weather_alert_status"
   },
@@ -60,6 +211,7 @@
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/koroad_accident_hazard_search.json",
+    "source": "KOROAD",
     "tier": "live",
     "tool_id": "koroad_accident_hazard_search"
   },
@@ -68,8 +220,18 @@
     "permission_tier": 1,
     "primitive": "find",
     "schema_path": "docs/api/schemas/koroad_accident_search.json",
+    "source": "KOROAD",
     "tier": "live",
     "tool_id": "koroad_accident_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/ksd_financial_term_lookup.json",
+    "source": "KSD",
+    "tier": "live",
+    "tool_id": "ksd_financial_term_lookup"
   },
   {
     "docs_path": "docs/api/locate/index.md",
@@ -80,50 +242,29 @@
     "tool_id": "locate"
   },
   {
-    "docs_path": "docs/api/mohw/welfare_eligibility_search.md",
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
     "permission_tier": 1,
     "primitive": "find",
-    "schema_path": "docs/api/schemas/mohw_welfare_eligibility_search.json",
+    "schema_path": "docs/api/schemas/mfds_easy_drug_info_lookup.json",
+    "source": "MFDS",
     "tier": "live",
-    "tool_id": "mohw_welfare_eligibility_search"
-  },
-  {
-    "docs_path": "docs/api/nfa119/emergency_info_service.md",
-    "permission_tier": 1,
-    "primitive": "find",
-    "schema_path": "docs/api/schemas/nfa_emergency_info_service.json",
-    "tier": "live",
-    "tool_id": "nfa_emergency_info_service"
-  },
-  {
-    "docs_path": "docs/api/nmc/emergency_search.md",
-    "permission_tier": 3,
-    "primitive": "find",
-    "schema_path": "docs/api/schemas/nmc_emergency_search.json",
-    "tier": "live",
-    "tool_id": "nmc_emergency_search"
+    "tool_id": "mfds_easy_drug_info_lookup"
   },
   {
     "docs_path": "docs/api/submit/traffic_fine_pay.md",
     "permission_tier": 2,
     "primitive": "send",
     "schema_path": "docs/api/schemas/mock_traffic_fine_pay_v1.json",
+    "source": "Mock — Send",
     "tier": "mock",
     "tool_id": "mock_traffic_fine_pay_v1"
-  },
-  {
-    "docs_path": "docs/api/submit/welfare_application.md",
-    "permission_tier": 2,
-    "primitive": "send",
-    "schema_path": "docs/api/schemas/mock_welfare_application_submit_v1.json",
-    "tier": "mock",
-    "tool_id": "mock_welfare_application_submit_v1"
   },
   {
     "docs_path": "docs/api/verify/digital_onepass.md",
     "permission_tier": 2,
     "primitive": "check",
     "schema_path": "docs/api/schemas/mock_verify_digital_onepass.json",
+    "source": "Mock — Check",
     "tier": "mock",
     "tool_id": "mock_verify_digital_onepass"
   },
@@ -132,6 +273,7 @@
     "permission_tier": 2,
     "primitive": "check",
     "schema_path": "docs/api/schemas/mock_verify_ganpyeon_injeung.json",
+    "source": "Mock — Check",
     "tier": "mock",
     "tool_id": "mock_verify_ganpyeon_injeung"
   },
@@ -140,6 +282,7 @@
     "permission_tier": 2,
     "primitive": "check",
     "schema_path": "docs/api/schemas/mock_verify_geumyung_injeungseo.json",
+    "source": "Mock — Check",
     "tier": "mock",
     "tool_id": "mock_verify_geumyung_injeungseo"
   },
@@ -148,6 +291,7 @@
     "permission_tier": 3,
     "primitive": "check",
     "schema_path": "docs/api/schemas/mock_verify_gongdong_injeungseo.json",
+    "source": "Mock — Check",
     "tier": "mock",
     "tool_id": "mock_verify_gongdong_injeungseo"
   },
@@ -156,6 +300,7 @@
     "permission_tier": 2,
     "primitive": "check",
     "schema_path": "docs/api/schemas/mock_verify_mobile_id.json",
+    "source": "Mock — Check",
     "tier": "mock",
     "tool_id": "mock_verify_mobile_id"
   },
@@ -164,7 +309,197 @@
     "permission_tier": 2,
     "primitive": "check",
     "schema_path": "docs/api/schemas/mock_verify_mydata.json",
+    "source": "Mock — Check",
     "tier": "mock",
     "tool_id": "mock_verify_mydata"
+  },
+  {
+    "docs_path": "docs/api/submit/welfare_application.md",
+    "permission_tier": 2,
+    "primitive": "send",
+    "schema_path": "docs/api/schemas/mock_welfare_application_submit_v1.json",
+    "source": "Mock — Send",
+    "tier": "mock",
+    "tool_id": "mock_welfare_application_submit_v1"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/mof_ocean_water_quality_check.json",
+    "source": "MOF",
+    "tier": "live",
+    "tool_id": "mof_ocean_water_quality_check"
+  },
+  {
+    "docs_path": "docs/api/mohw/welfare_eligibility_search.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/mohw_welfare_eligibility_search.json",
+    "source": "MOHW",
+    "tier": "live",
+    "tool_id": "mohw_welfare_eligibility_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/mois_emergency_call_box_lookup.json",
+    "source": "MOIS",
+    "tier": "live",
+    "tool_id": "mois_emergency_call_box_lookup"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/mois_facility_safety_info_lookup.json",
+    "source": "MOIS",
+    "tier": "live",
+    "tool_id": "mois_facility_safety_info_lookup"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/moj_stay_person_counter.json",
+    "source": "MOJ",
+    "tier": "live",
+    "tool_id": "moj_stay_person_counter"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/moj_village_lawyer_lookup.json",
+    "source": "MOJ",
+    "tier": "live",
+    "tool_id": "moj_village_lawyer_lookup"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/mpm_public_job_lookup.json",
+    "source": "MPM",
+    "tier": "live",
+    "tool_id": "mpm_public_job_lookup"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/msit_business_announcement_lookup.json",
+    "source": "MSIT",
+    "tier": "live",
+    "tool_id": "msit_business_announcement_lookup"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/mss_sme_support_notice_lookup.json",
+    "source": "MSS",
+    "tier": "live",
+    "tool_id": "mss_sme_support_notice_lookup"
+  },
+  {
+    "docs_path": "docs/api/nfa119/emergency_info_service.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/nfa_emergency_info_service.json",
+    "source": "NFA119",
+    "tier": "live",
+    "tool_id": "nfa_emergency_info_service"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/nmc_aed_site_locate.json",
+    "source": "NMC",
+    "tier": "live",
+    "tool_id": "nmc_aed_site_locate"
+  },
+  {
+    "docs_path": "docs/api/nmc/emergency_search.md",
+    "permission_tier": 3,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/nmc_emergency_search.json",
+    "source": "NMC",
+    "tier": "live",
+    "tool_id": "nmc_emergency_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/pps_bid_public_info.json",
+    "source": "PPS",
+    "tier": "live",
+    "tool_id": "pps_bid_public_info"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/pps_shopping_mall_product_lookup.json",
+    "source": "PPS",
+    "tier": "live",
+    "tool_id": "pps_shopping_mall_product_lookup"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/reb_real_estate_stat_table.json",
+    "source": "REB",
+    "tier": "live",
+    "tool_id": "reb_real_estate_stat_table"
+  },
+  {
+    "docs_path": "docs/api/locate/index.md",
+    "permission_tier": 1,
+    "primitive": "locate",
+    "schema_path": "docs/api/schemas/sgis_adm_cd_lookup.json",
+    "source": "Geocoding",
+    "tier": "live",
+    "tool_id": "sgis_adm_cd_lookup"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/tago_bus_arrival_search.json",
+    "source": "MOLIT / TAGO",
+    "tier": "live",
+    "tool_id": "tago_bus_arrival_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/tago_bus_location_search.json",
+    "source": "MOLIT / TAGO",
+    "tier": "live",
+    "tool_id": "tago_bus_location_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/tago_bus_route_search.json",
+    "source": "MOLIT / TAGO",
+    "tier": "live",
+    "tool_id": "tago_bus_route_search"
+  },
+  {
+    "docs_path": "docs/api/verified-data-go-kr/README.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas/tago_bus_station_search.json",
+    "source": "MOLIT / TAGO",
+    "tier": "live",
+    "tool_id": "tago_bus_station_search"
   }
 ]

@@ -10,21 +10,26 @@ source_of_truth:
   - docs/research/ummaya-docs-goal-brief-2026-05-15.md
   - docs-site/src/data/generated/adapters.json
   - docs/api/README.md
+  - docs/api/verified-data-go-kr/README.md
+  - tests/unit/tools/test_registry_count_breakdown.py
 ---
 
 coverage 指 UMMAYA 能用 evidence 表达的公共服务路径。它不表示一个 domain 中的每个 task 今天都可以完成。
 
 请按 user outcome 和 state label 阅读 coverage。Live、Mock、Handoff、Planned 是不同承诺，文档不能把它们混在一起。
 
+新的 [Live Adapters](/ch/coverage/live-adapters/) 页面把既有 KMA、KOROAD、HIRA、NMC、NFA、MOHW surface 与 public-data expansion wave 放在一起说明。数量应按当前 registry evidence 阅读：42 个 live `find` adapters 和 5 个 live `locate` provider adapters，而不只是“三十个新 API”。
+
 ## Coverage Summary
 
 | User outcome | Current state | Evidence source |
 |---|---|---|
-| Weather、forecast、warning 和 public safety lookup | Live | configured 时的 KMA 与相关 public-data adapters |
-| Road accident 和 hazard lookup | Live | configured 时的 KOROAD public-data adapters |
-| Hospital 和 emergency information lookup | Live | configured 时的 HIRA、NMC、NFA119-style public adapters |
+| Weather、forecast、warning、public safety、air-quality lookup | Live | configured 时的 KMA、AirKorea、MOIS public-data adapters |
+| Road、bus、subway accident/hazard/arrival/fare lookup | Live | configured 时的 KOROAD、TAGO、DJTC public-data adapters |
+| Hospital、emergency、AED、drug-information lookup | Live | configured 时的 HIRA、NMC、NFA119、MFDS public adapters |
 | Location 和 administrative area resolution | Live | configured 时的 JUSO、Kakao、SGIS-style location adapters |
-| Welfare public guidance | Live for public guidance | configured 时的 MOHW public guidance/search surfaces |
+| Welfare、public jobs、business support、procurement lookup | public lookup 为 Live | configured 时的 MOHW、MPM、MSS、MSIT、PPS public-data surfaces |
+| Legal、public records、statistics、utility/public-corporation lookup | public lookup 为 Live | configured 时的 MOJ、CCOURT、FTC、REB、KCUE、KEPCO、KSD、BFC、MOF adapters |
 | Traffic fine payment 和 welfare application submission | Mock | shape-faithful `send` adapters |
 | Digital OnePass、simple auth、mobile ID、certificates、MyData | Mock or Handoff | `check` mock adapters 和 scenario docs |
 | Government24/Hometax final submissions | Handoff or target-state | 需要 official callable channel、credential、consent 和 artifacts |

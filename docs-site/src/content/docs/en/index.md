@@ -46,7 +46,7 @@ Each page should answer the same practical questions: what can I ask, what shoul
 
 ## Evaluate Coverage And Architecture
 
-Coverage pages show current capability, adapter evidence, target-state scenarios, and roadmap logic. Architecture pages explain why UMMAYA migrates the Claude Code-style harness, how primitives work, and how the query engine coordinates retrieval, tool calls, permission, and stop reasons.
+Coverage pages show current capability, [Live Adapters](/en/coverage/live-adapters/), adapter evidence, target-state scenarios, and roadmap logic. Architecture pages explain why UMMAYA migrates the Claude Code-style harness, how primitives work, and how the query engine coordinates retrieval, tool calls, permission, and stop reasons.
 
 Use coverage to check what is supported. Use architecture to check whether the system design can support the national AX goal.
 

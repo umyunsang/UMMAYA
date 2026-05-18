@@ -133,6 +133,7 @@ export default defineConfig({
           },
           items: [
             { slug: 'coverage/current-coverage' },
+            { slug: 'coverage/live-adapters' },
             { slug: 'coverage/domain-roadmap' },
             { slug: 'coverage/adapter-matrix' },
             { slug: 'coverage/scenario-matrix' },

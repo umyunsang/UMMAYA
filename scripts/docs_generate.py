@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -128,25 +129,101 @@ def _normalize_primitives(value: Any) -> Any:
     return value
 
 
+def _markdown_table_cells(line: str) -> list[str]:
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def _strip_code_span(value: str) -> str:
+    match = re.fullmatch(r"`([^`]+)`", value.strip())
+    return match.group(1) if match else value.strip()
+
+
+def _extract_markdown_link_path(value: str) -> str | None:
+    match = re.search(r"\]\(([^)]+)\)", value)
+    return match.group(1) if match else None
+
+
+def _api_catalog_path(link_path: str | None) -> str | None:
+    if not link_path:
+        return None
+    clean = link_path.split("#", 1)[0]
+    if clean.startswith("./"):
+        return str((Path("docs") / "api" / clean[2:]).as_posix())
+    if clean.startswith("../"):
+        return str((Path("docs") / "api" / clean).as_posix())
+    return clean
+
+
+def _permission_tier(value: str) -> int | str | None:
+    match = re.search(r"\d+", value)
+    if match:
+        return int(match.group(0))
+    clean = value.strip()
+    return clean or None
+
+
+def _adapter_catalog_rows() -> list[dict[str, Any]]:
+    path = REPO_ROOT / "docs" / "api" / "README.md"
+    if not path.exists():
+        return []
+
+    rows: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("|"):
+            continue
+        if "`" not in line or "](" not in line:
+            continue
+        cells = _markdown_table_cells(line)
+        if len(cells) != 7:
+            continue
+        (
+            source,
+            tool_cell,
+            primitive_cell,
+            tier_cell,
+            permission_cell,
+            spec_cell,
+            schema_cell,
+        ) = cells
+        tool_match = re.search(r"`([^`]+)`", tool_cell)
+        if not tool_match:
+            continue
+        rows.append(
+            {
+                "tool_id": tool_match.group(1),
+                "primitive": _strip_code_span(primitive_cell),
+                "tier": _strip_code_span(tier_cell),
+                "permission_tier": _permission_tier(permission_cell),
+                "docs_path": _api_catalog_path(_extract_markdown_link_path(spec_cell)),
+                "schema_path": _api_catalog_path(_extract_markdown_link_path(schema_cell)),
+                "source": source,
+            }
+        )
+    return rows
+
+
 def _adapter_frontmatter() -> list[dict[str, Any]]:
-    adapters: list[dict[str, Any]] = []
+    adapters_by_id: dict[str, dict[str, Any]] = {}
     for path in sorted((REPO_ROOT / "docs" / "api").rglob("*.md")):
         fm, _ = _read_frontmatter(path)
         tool_id = fm.get("tool_id")
         if not tool_id:
             continue
         schema = REPO_ROOT / "docs" / "api" / "schemas" / f"{tool_id}.json"
-        adapters.append(
-            {
-                "tool_id": tool_id,
-                "primitive": fm.get("primitive"),
-                "tier": fm.get("tier"),
-                "permission_tier": fm.get("permission_tier"),
-                "docs_path": str(path.relative_to(REPO_ROOT)),
-                "schema_path": (str(schema.relative_to(REPO_ROOT)) if schema.exists() else None),
-            }
-        )
-    return adapters
+        adapters_by_id[str(tool_id)] = {
+            "tool_id": str(tool_id),
+            "primitive": fm.get("primitive"),
+            "tier": fm.get("tier"),
+            "permission_tier": fm.get("permission_tier"),
+            "docs_path": str(path.relative_to(REPO_ROOT)),
+            "schema_path": (str(schema.relative_to(REPO_ROOT)) if schema.exists() else None),
+        }
+
+    for row in _adapter_catalog_rows():
+        existing = adapters_by_id.get(row["tool_id"], {})
+        adapters_by_id[row["tool_id"]] = {**existing, **row}
+
+    return [adapters_by_id[key] for key in sorted(adapters_by_id)]
 
 
 def _workflow_cards() -> list[dict[str, Any]]:

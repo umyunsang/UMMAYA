@@ -45,7 +45,7 @@ Use section 按真实公共服务情况组织：emergency and safety、moving an
 
 ## 评估 Coverage 与 Architecture
 
-Coverage pages 显示 current capability、adapter evidence、target-state scenarios 和 roadmap logic。Architecture pages 解释 UMMAYA 为什么迁移 Claude Code-style harness、primitives 如何工作、query engine 如何协调 retrieval、tool calls、permission 和 stop reasons。
+Coverage pages 显示 current capability、[Live Adapters](/ch/coverage/live-adapters/)、adapter evidence、target-state scenarios 和 roadmap logic。Architecture pages 解释 UMMAYA 为什么迁移 Claude Code-style harness、primitives 如何工作、query engine 如何协调 retrieval、tool calls、permission 和 stop reasons。
 
 使用 coverage 检查支持范围；使用 architecture 检查 system design 是否能支撑 national AX goal。
 

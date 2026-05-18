@@ -10,21 +10,26 @@ source_of_truth:
   - docs/research/ummaya-docs-goal-brief-2026-05-15.md
   - docs-site/src/data/generated/adapters.json
   - docs/api/README.md
+  - docs/api/verified-data-go-kr/README.md
+  - tests/unit/tools/test_registry_count_breakdown.py
 ---
 
 Coverage는 UMMAYA가 evidence로 표현할 수 있는 public-service path를 뜻합니다. 어떤 domain의 모든 task가 오늘 완료 가능하다는 뜻은 아닙니다.
 
 Coverage는 user outcome과 state label로 읽어야 합니다. Live, Mock, Handoff, Planned는 서로 다른 약속이며 문서는 이를 흐리면 안 됩니다.
 
+새로 정리된 [Live Adapter 현황](/ko/coverage/live-adapters/)은 기존 KMA/KOROAD/HIRA/NMC/NFA/MOHW surface와 새 public-data wave를 함께 설명합니다. 숫자는 "새 30개"가 아니라 현재 registry evidence 기준으로 42개의 live `find` adapter와 5개의 live `locate` provider adapter를 구분해 읽어야 합니다.
+
 ## Coverage Summary
 
 | User outcome | Current state | Evidence source |
 |---|---|---|
-| weather, forecast, warning, public safety lookup | Live | configured KMA 및 관련 public-data adapter |
-| road accident와 hazard lookup | Live | configured KOROAD public-data adapter |
-| hospital과 emergency information lookup | Live | configured HIRA, NMC, NFA119-style public adapter |
+| weather, forecast, warning, public safety, air quality lookup | Live | configured KMA, AirKorea, MOIS public-data adapter |
+| road, bus, subway accident/hazard/arrival/fare lookup | Live | configured KOROAD, TAGO, DJTC public-data adapter |
+| hospital, emergency, AED, drug information lookup | Live | configured HIRA, NMC, NFA119, MFDS public adapter |
 | location과 administrative area resolution | Live | configured JUSO, Kakao, SGIS-style location adapter |
-| welfare public guidance | public guidance는 Live | configured MOHW public guidance/search surface |
+| welfare, public jobs, business support, procurement lookup | public lookup은 Live | configured MOHW, MPM, MSS, MSIT, PPS public-data surface |
+| legal, public records, statistics, utility/public corporation lookup | public lookup은 Live | configured MOJ, CCOURT, FTC, REB, KCUE, KEPCO, KSD, BFC, MOF adapter |
 | traffic fine payment와 welfare application submission | Mock | shape-faithful `send` adapter |
 | Digital OnePass, simple auth, mobile ID, certificates, MyData | Mock 또는 Handoff | `check` mock adapter와 scenario docs |
 | Government24/Hometax final submissions | Handoff 또는 target-state | official callable channel, credential, consent, artifacts 필요 |
