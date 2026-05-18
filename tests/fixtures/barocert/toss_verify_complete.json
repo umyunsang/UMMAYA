@@ -1,0 +1,14 @@
+{
+  "provider": "toss",
+  "receiptID": "TOSS_RECEIPT_SANITIZED_001",
+  "state": 1,
+  "receiverName": "ENCRYPTED_NAME_PLACEHOLDER",
+  "receiverYear": "ENCRYPTED_YEAR_PLACEHOLDER",
+  "receiverDay": "ENCRYPTED_DAY_PLACEHOLDER",
+  "receiverGender": "ENCRYPTED_GENDER_PLACEHOLDER",
+  "receiverForeign": "ENCRYPTED_FOREIGN_PLACEHOLDER",
+  "receiverAgeGroup": "ENCRYPTED_AGE_PLACEHOLDER",
+  "signedData": "SYNTHETIC_SIGNED_DATA_PLACEHOLDER",
+  "ci": "SYNTHETIC_CI_PLACEHOLDER",
+  "di": "SYNTHETIC_DI_PLACEHOLDER"
+}

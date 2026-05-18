@@ -1,0 +1,7 @@
+{
+  "provider": "kakao",
+  "receiptID": "KAKAO_RECEIPT_SANITIZED_001",
+  "clientCode": "TESTCLIENT01",
+  "state": 1,
+  "expireDT": "20260518235959"
+}

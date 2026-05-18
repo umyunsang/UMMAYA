@@ -28,13 +28,15 @@ from ummaya.tools.mvp_surface import _VerifyInputForLLM
 
 # ---------------------------------------------------------------------------
 # Parametrised canonical-family cases (I-V1)
-# One case per canonical family; 10 total.
+# One case per canonical tool id. Live BaroCert deliberately shares the
+# existing ganpyeon_injeung family while preserving explicit tool selection.
 # ---------------------------------------------------------------------------
 
 _CANONICAL_CASES: list[tuple[str, str]] = [
     ("mock_verify_gongdong_injeungseo", "gongdong_injeungseo"),
     ("mock_verify_geumyung_injeungseo", "geumyung_injeungseo"),
     ("mock_verify_ganpyeon_injeung", "ganpyeon_injeung"),
+    ("live_verify_ganpyeon_injeung", "ganpyeon_injeung"),
     ("mock_verify_mobile_id", "mobile_id"),
     ("mock_verify_mydata", "mydata"),
     ("mock_verify_module_simple_auth", "simple_auth_module"),

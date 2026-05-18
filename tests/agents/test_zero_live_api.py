@@ -33,6 +33,8 @@ _BANNED_HOSTS = frozenset(
         "api.friendli.ai",
         "friendli.ai",
         "apis.data.go.kr",
+        "developers.barocert.com",
+        "barocert.com",
     ]
 )
 

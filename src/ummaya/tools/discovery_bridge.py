@@ -30,7 +30,7 @@ from __future__ import annotations
 import importlib
 import logging
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
@@ -211,6 +211,36 @@ _VERIFY_FAMILIES: list[dict[str, Any]] = [
         ),
     },
     {
+        "tool_id": "live_verify_ganpyeon_injeung",
+        "family": "ganpyeon_injeung",
+        "name_ko": "BaroCert 간편인증 본인확인",
+        "search_hint_ko": [
+            "BaroCert Toss Kakao Naver 간편인증 본인확인",
+            "토스 본인확인",
+            "카카오 본인인증",
+            "네이버 본인인증",
+            "CI DI 검증",
+        ],
+        "search_hint_en": [
+            "BaroCert identity check",
+            "Toss user identity",
+            "Kakao identity",
+            "Naver identity",
+            "simple auth identity proof",
+        ],
+        "endpoint": "https://barocert.linkhub.co.kr",
+        "policy_authority": "https://developers.barocert.com/reference/toss/asp/userIdentity/api",
+        "adapter_mode": "live",
+        "auth_type": "api_key",
+        "last_verified": datetime(2026, 5, 18, tzinfo=UTC),
+        "scope_rules": (
+            "Scope rule: BaroCert identity check returns a sanitized "
+            "ganpyeon_injeung AuthContext only. Use scope_list "
+            "['check:ganpyeon.identity']; do not request submit delegation "
+            "from this live adapter."
+        ),
+    },
+    {
         "tool_id": "mock_verify_mobile_id",
         "family": "mobile_id",
         "name_ko": "모바일 신분증 (mDL)",
@@ -293,13 +323,21 @@ def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
     """Build a GovAPITool wrapper for one verify family mock adapter."""
     scope_rules = str(entry.get("scope_rules", "")).strip()
     scope_clause = f"{scope_rules}\n\n" if scope_rules else ""
+    adapter_mode = str(entry.get("adapter_mode", "mock"))
+    if adapter_mode not in {"live", "mock"}:
+        adapter_mode = "mock"
+    adapter_mode_value = cast(Literal["live", "mock"], adapter_mode)
+    auth_type = str(entry.get("auth_type", "api_key"))
+    if auth_type not in {"public", "api_key", "oauth"}:
+        auth_type = "api_key"
+    auth_type_value = cast(Literal["public", "api_key", "oauth"], auth_type)
     return GovAPITool(
         id=entry["tool_id"],
         name_ko=entry["name_ko"],
         ministry="UMMAYA",
-        category=["check", "mock", "delegation"],
+        category=["check", adapter_mode, "delegation"],
         endpoint=entry["endpoint"],
-        auth_type="api_key",
+        auth_type=auth_type_value,
         input_schema=_VerifyParamsShell,
         output_schema=_OpaqueOutput,
         llm_description=(
@@ -323,13 +361,14 @@ def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
                 "see AGENTS.md § Hard rules)."
             ),
             citizen_facing_gate="login",
-            last_verified=datetime(2026, 4, 30, tzinfo=UTC),
+            last_verified=entry.get("last_verified", datetime(2026, 4, 30, tzinfo=UTC)),
         ),
         is_concurrency_safe=False,
         cache_ttl_seconds=0,
         rate_limit_per_minute=30,
         is_core=False,  # Discoverable via lookup search; NOT in primary LLM tool list
         primitive="check",
+        adapter_mode=adapter_mode_value,
     )
 
 

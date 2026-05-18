@@ -1,0 +1,5 @@
+{
+  "provider": "toss",
+  "receiptID": "TOSS_RECEIPT_SANITIZED_001",
+  "scheme": "barocert-toss://identity/SANITIZED"
+}
