@@ -215,8 +215,8 @@ _EXPECTED_VERIFY_FAMILIES = frozenset(
 
 def test_verify_adapter_registry_count() -> None:
     """ummaya.primitives.verify._VERIFY_ADAPTERS must have exactly 11 families."""
-    import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     import ummaya.tools.live  # noqa: F401 — trigger side-effect registration
+    import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.primitives.verify import _VERIFY_ADAPTERS
 
     actual = len(_VERIFY_ADAPTERS)
@@ -229,8 +229,8 @@ def test_verify_adapter_registry_count() -> None:
 
 def test_verify_adapter_registry_families() -> None:
     """All 11 expected verify family keys must be present in _VERIFY_ADAPTERS."""
-    import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     import ummaya.tools.live  # noqa: F401 — trigger side-effect registration
+    import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.primitives.verify import _VERIFY_ADAPTERS
 
     registered = frozenset(_VERIFY_ADAPTERS.keys())

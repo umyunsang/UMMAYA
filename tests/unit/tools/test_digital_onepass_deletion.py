@@ -170,8 +170,8 @@ def test_verify_adapter_registry_exact_family_count_after_deletion() -> None:
     This is the SC-003/SC-004 compound check: both the absence of digital_onepass
     AND the presence of the 10 replacement families plus the KB live check family.
     """
-    import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     import ummaya.tools.live  # noqa: F401 — trigger side-effect registration
+    import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.primitives.verify import _VERIFY_ADAPTERS
 
     families = list(_VERIFY_ADAPTERS.keys())
