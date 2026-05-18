@@ -117,6 +117,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
 
     # Register MVP LLM-visible core surface first (FR-001, SC-003)
     register_mvp_surface(registry)
+    import ummaya.tools.live  # noqa: F401 — registers opt-in live check adapters
     import ummaya.tools.mock  # noqa: F401 — registers all mock surfaces in production
 
     # Locate provider endpoints are first-class adapters under the central
@@ -173,7 +174,7 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
 
     bridge_count = bridge_per_primitive_registries(registry)
     logger.info(
-        "discovery_bridge: bridged %d non-core mock adapters into BM25 corpus",
+        "discovery_bridge: bridged %d non-core check/send adapters into BM25 corpus",
         bridge_count,
     )
 

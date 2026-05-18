@@ -1,0 +1,16 @@
+{
+  "dataHeader": {
+    "resultCode": "0000",
+    "resultMessage": "success",
+    "successCode": "0",
+    "category": "API"
+  },
+  "dataBody": {
+    "reqTxId": "synthetic-req-tx-id",
+    "certTxId": "synthetic-cert-tx-id",
+    "callUrl": "https://cert.kbstar.com/quics?page=C111978",
+    "result-code": "ok",
+    "client-message": "success",
+    "system-message": "success"
+  }
+}

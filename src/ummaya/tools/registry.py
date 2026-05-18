@@ -99,6 +99,7 @@ PublishedTier = Literal[
     "kec_aal3",  # 공동인증서 AX-channel (AAL3, joint-cert legacy)
     "geumyung_module_aal3",  # 금융인증서 AX-channel (AAL3, FNS managed)
     "any_id_sso_aal2",  # Any-ID SSO (identity-only — no delegation grant)
+    "kb_identity_aal2",  # KB국민인증서 본인확인 live check
 ]
 
 # T008 — advisory secondary axis; hint for external consumers only.

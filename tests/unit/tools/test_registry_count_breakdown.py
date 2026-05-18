@@ -2,8 +2,8 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the active count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 68 entries
-  - ummaya.primitives.verify._VERIFY_ADAPTERS: 10 families
+  - Main ToolRegistry: 69 entries
+  - ummaya.primitives.verify._VERIFY_ADAPTERS: 11 families
   - ummaya.primitives.submit._ADAPTER_REGISTRY: 5 families
 
 Test FAILS if any count is off-by-one.
@@ -16,7 +16,7 @@ do NOT silently adjust the expected values.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Main ToolRegistry count — 68 total
+# Main ToolRegistry count — 69 total
 # ---------------------------------------------------------------------------
 # Epic η #2298 — extended from 16 to 18 by adding `check` / `send`
 # to mvp_surface as `is_core=True` GovAPITool entries (FR-021).
@@ -42,10 +42,12 @@ from __future__ import annotations
 # verified public-data adapters under src/ummaya/tools/verified_data_go_kr/.
 # Spec #2798 — extended from 52 to 68 by registering sixteen additional
 # approved live public-data adapters from the 2026-05-16 direct evidence batch.
-_EXPECTED_MAIN_REGISTRY_COUNT = 68
+# Spec live-kbcert-identity-check — extended from 68 to 69 by adding one opt-in
+# live KB identity check adapter under the check primitive.
+_EXPECTED_MAIN_REGISTRY_COUNT = 69
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
-    "live_adapters": 42,  # 12 existing Live + 30 verified public-data adapters
+    "live_adapters": 43,  # 12 existing Live + 30 verified public-data + KB check
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
@@ -95,6 +97,7 @@ _EXPECTED_LIVE_TOOL_IDS = frozenset(
         "ccourt_publication_documents",
         "moj_stay_person_counter",
         "msit_business_announcement_lookup",
+        "live_verify_kb_identity",
     }
 )
 
@@ -109,7 +112,7 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 68 entries after register_all_tools()."""
+    """Main ToolRegistry must have exactly 69 entries after register_all_tools()."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -185,10 +188,10 @@ def test_main_registry_lookup_mock_ids_present() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Verify sub-registry count — 10 families
+# Verify sub-registry count — 11 families
 # ---------------------------------------------------------------------------
 
-_EXPECTED_VERIFY_COUNT = 10
+_EXPECTED_VERIFY_COUNT = 11
 
 _EXPECTED_VERIFY_FAMILIES = frozenset(
     {
@@ -204,13 +207,16 @@ _EXPECTED_VERIFY_FAMILIES = frozenset(
         "kec",
         "geumyung_module",
         "any_id_sso",
+        # 1 live check adapter
+        "kb_identity",
     }
 )
 
 
 def test_verify_adapter_registry_count() -> None:
-    """ummaya.primitives.verify._VERIFY_ADAPTERS must have exactly 10 families."""
+    """ummaya.primitives.verify._VERIFY_ADAPTERS must have exactly 11 families."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
+    import ummaya.tools.live  # noqa: F401 — trigger side-effect registration
     from ummaya.primitives.verify import _VERIFY_ADAPTERS
 
     actual = len(_VERIFY_ADAPTERS)
@@ -222,8 +228,9 @@ def test_verify_adapter_registry_count() -> None:
 
 
 def test_verify_adapter_registry_families() -> None:
-    """All 10 expected verify family keys must be present in _VERIFY_ADAPTERS."""
+    """All 11 expected verify family keys must be present in _VERIFY_ADAPTERS."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
+    import ummaya.tools.live  # noqa: F401 — trigger side-effect registration
     from ummaya.primitives.verify import _VERIFY_ADAPTERS
 
     registered = frozenset(_VERIFY_ADAPTERS.keys())
@@ -345,8 +352,9 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # Locate-provider adapters add five first-class registry entries.
         # Spec #2798 adds sixteen approved live data.go.kr adapters, bringing
         # the main ToolRegistry from 52 to 68.
-        "main_registry": 68,
-        "verify_families": 10,
+        # Spec live-kbcert-identity-check adds one opt-in live check adapter.
+        "main_registry": 69,
+        "verify_families": 11,
         "submit_adapters": 5,
     }
 

@@ -78,7 +78,7 @@ class _OpaqueOutput(RootModel[dict[str, Any]]):
 
 
 # ---------------------------------------------------------------------------
-# Verify family metadata table (hand-rolled — verify mocks register by family
+# Verify family metadata table (hand-rolled — verify adapters register by family
 # name into ummaya.primitives.verify._ADAPTER_REGISTRY without an
 # AdapterRegistration object, so we capture metadata declaratively here).
 #
@@ -279,6 +279,43 @@ _VERIFY_FAMILIES: list[dict[str, Any]] = [
             "or find:mydata.public.consent; never invent find:mydata.public.consent."
         ),
     },
+    {
+        "tool_id": "live_verify_kb_identity",
+        "family": "kb_identity",
+        "name_ko": "KB국민인증서 본인확인",
+        "search_hint_ko": [
+            "KB국민인증서",
+            "국민인증서",
+            "KB 인증서",
+            "KB스타뱅킹",
+            "본인확인",
+            "신원검증",
+        ],
+        "search_hint_en": [
+            "KB certificate",
+            "Kookmin certificate",
+            "KB identity",
+            "KB Star Banking",
+            "identity verification",
+        ],
+        "endpoint": "https://stg-openapi.kbstar.com:8443/kbsign/api",
+        "policy_authority": "https://cert.kbstar.com/quics?page=C112279",
+        "category": ["check", "live", "identity"],
+        "adapter_mode": "live",
+        "rate_limit_per_minute": 10,
+        "scope_rules": (
+            "Scope rule: KB identity verification uses exactly scope_list "
+            "['check:kb_identity.identity']. This live check returns only a sanitized "
+            "AuthContext external_session_ref based on reqTxId/certTxId; do not expect "
+            "a DelegationToken and do not persist CI, DI, name, birthdate, gender, "
+            "nationality, or encrypted identity payloads."
+        ),
+        "llm_result_description": (
+            "Returns a KbIdentityContext with provider='kb' and an opaque "
+            "external_session_ref. It never returns raw identity attributes."
+        ),
+        "last_verified": datetime(2026, 5, 18, tzinfo=UTC),
+    },
 ]
 
 
@@ -290,16 +327,23 @@ def _build_verify_search_hint(entry: dict[str, Any]) -> str:
 
 
 def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
-    """Build a GovAPITool wrapper for one verify family mock adapter."""
+    """Build a GovAPITool wrapper for one check-family adapter."""
     scope_rules = str(entry.get("scope_rules", "")).strip()
     scope_clause = f"{scope_rules}\n\n" if scope_rules else ""
+    result_description = str(
+        entry.get(
+            "llm_result_description",
+            "Returns the DelegationContext that downstream find/send calls pass via "
+            "params['delegation_context'].",
+        )
+    )
     return GovAPITool(
         id=entry["tool_id"],
         name_ko=entry["name_ko"],
         ministry="UMMAYA",
-        category=["check", "mock", "delegation"],
+        category=list(entry.get("category", ["check", "mock", "delegation"])),
         endpoint=entry["endpoint"],
-        auth_type="api_key",
+        auth_type=str(entry.get("auth_type", "api_key")),
         input_schema=_VerifyParamsShell,
         output_schema=_OpaqueOutput,
         llm_description=(
@@ -307,9 +351,10 @@ def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
             f"check(tool_id='{entry['tool_id']}', params={{...}}). "
             "Do not call this adapter through find.\n\n"
             f"{scope_clause}"
-            f"Verify ceremony for {entry['name_ko']}. Issues a DelegationToken bound to "
-            "the citizen's session and the requested scope_list. Returns the DelegationContext "
-            "that downstream find/send calls pass via params['delegation_context'].\n\n"
+            f"Verify ceremony for {entry['name_ko']}. Binds the result to the citizen's "
+            "session and requested scope_list. Providers that support delegation issue "
+            f"a DelegationToken; identity-only providers return a sanitized AuthContext. "
+            f"{result_description}\n\n"
             "Citizen-shape input: {tool_id, params={scope_list, purpose_ko, purpose_en}}. "
             "The check primitive translates this to the dispatcher's family_hint via "
             "adapter metadata, not via the system prompt."
@@ -323,13 +368,14 @@ def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
                 "see AGENTS.md § Hard rules)."
             ),
             citizen_facing_gate="login",
-            last_verified=datetime(2026, 4, 30, tzinfo=UTC),
+            last_verified=entry.get("last_verified", datetime(2026, 4, 30, tzinfo=UTC)),
         ),
         is_concurrency_safe=False,
         cache_ttl_seconds=0,
-        rate_limit_per_minute=30,
+        rate_limit_per_minute=int(entry.get("rate_limit_per_minute", 30)),
         is_core=False,  # Discoverable via lookup search; NOT in primary LLM tool list
         primitive="check",
+        adapter_mode=str(entry.get("adapter_mode", "mock")),
     )
 
 

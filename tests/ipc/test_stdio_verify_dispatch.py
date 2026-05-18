@@ -19,7 +19,7 @@ Fix:
     when the tool_id lookup misses (legacy compatibility).
 
 This test asserts:
-1. All 10 canonical ``mock_verify_*`` ↔ family_hint pairs resolve
+1. All canonical ``*_verify_*`` ↔ family_hint pairs resolve
    correctly via the canonical map (single source-of-truth derived from
    ``prompts/system_v1.md`` ``<check_families>``).
 2. The full IPC dispatch path translates ``tool_id`` → ``family_hint``
@@ -79,6 +79,13 @@ _EXPECTED_PAIRS: dict[str, str] = {
     "mock_verify_module_kec": "kec",
     "mock_verify_module_geumyung": "geumyung_module",
     "mock_verify_module_any_id_sso": "any_id_sso",
+    "live_verify_kb_identity": "kb_identity",
+}
+
+_DISPATCH_PAIRS: dict[str, str] = {
+    tool_id: family
+    for tool_id, family in _EXPECTED_PAIRS.items()
+    if tool_id.startswith("mock_verify_")
 }
 
 
@@ -86,8 +93,8 @@ _EXPECTED_PAIRS: dict[str, str] = {
     ("tool_id", "expected_family"),
     list(_EXPECTED_PAIRS.items()),
 )
-def test_resolve_family_covers_all_10_canonical_pairs(tool_id: str, expected_family: str) -> None:
-    """All 10 canonical mock_verify_* tool_ids resolve to the right family_hint.
+def test_resolve_family_covers_all_canonical_pairs(tool_id: str, expected_family: str) -> None:
+    """All canonical check tool_ids resolve to the right family_hint.
 
     This is the SOT-mirror assertion: prompt-side
     ``<check_families>`` and code-side mapping must agree.
@@ -328,7 +335,7 @@ def _extract_verify_envelope(frames: list[dict[str, Any]]) -> dict[str, Any]:
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("tool_id", "expected_family"),
-    list(_EXPECTED_PAIRS.items()),
+    list(_DISPATCH_PAIRS.items()),
 )
 async def test_dispatch_verify_translates_tool_id_to_family_hint(
     tool_id: str,

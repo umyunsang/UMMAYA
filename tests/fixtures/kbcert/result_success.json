@@ -1,0 +1,21 @@
+{
+  "dataHeader": {
+    "resultCode": "0000",
+    "resultMessage": "success",
+    "successCode": "0",
+    "category": "API"
+  },
+  "dataBody": {
+    "result-code": "ok",
+    "client-message": "success",
+    "system-message": "success",
+    "reqTxId": "synthetic-req-tx-id",
+    "certTxId": "synthetic-cert-tx-id",
+    "userNm": "SENTINEL_USER_NAME_SHOULD_NOT_LEAK",
+    "birthday": "SENTINEL_BIRTHDAY_SHOULD_NOT_LEAK",
+    "CI": "SENTINEL_CI_SHOULD_NOT_LEAK",
+    "DI": "SENTINEL_DI_SHOULD_NOT_LEAK",
+    "gender": "SENTINEL_GENDER_SHOULD_NOT_LEAK",
+    "krnFrgnDstcd": "SENTINEL_NATIONALITY_SHOULD_NOT_LEAK"
+  }
+}
