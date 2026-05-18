@@ -5101,9 +5101,7 @@ async def run(  # noqa: C901
                             "dict[str, object]",
                             args_obj.get("params") or {},
                         )
-                        submit_params = _strip_model_supplied_delegation_context(
-                            submit_params
-                        )
+                        submit_params = _strip_model_supplied_delegation_context(submit_params)
                         if auth_context is not None:
                             submit_params = _inject_delegation_context(
                                 submit_params,
