@@ -11,6 +11,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+import ummaya.tools.kma.kma_ultra_short_term_forecast as ultra_module
 from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.kma_ultra_short_term_forecast import (
@@ -21,6 +22,7 @@ from ummaya.tools.kma.kma_ultra_short_term_forecast import (
     _parse_response,
     register,
 )
+from ummaya.tools.models import LookupRecord
 from ummaya.tools.registry import ToolRegistry
 
 # ---------------------------------------------------------------------------
@@ -66,19 +68,18 @@ class TestKmaUltraShortTermForecastInput:
         assert params.page_no == 1
         assert params.data_type == "JSON"
 
-    def test_valid_half_hour_times(self):
-        """Any HH30 combination must be accepted."""
-        for hour in range(24):
-            t = f"{hour:02d}30"
+    def test_valid_clock_times(self):
+        """Any valid HHMM clock time must be accepted."""
+        for t in ("0000", "0630", "0830", "1500", "1515", "1529", "2359"):
             params = KmaUltraShortTermForecastInput(
                 base_date="20260414", base_time=t, nx=61, ny=126
             )
             assert params.base_time == t
 
-    def test_non_half_hour_raises(self):
-        """base_time not ending in '30' must raise ValidationError."""
+    def test_invalid_clock_time_raises(self):
+        """base_time must be a valid HHMM clock time."""
         with pytest.raises(ValidationError):
-            KmaUltraShortTermForecastInput(base_date="20260414", base_time="0800", nx=61, ny=126)
+            KmaUltraShortTermForecastInput(base_date="20260414", base_time="2460", nx=61, ny=126)
 
     def test_invalid_format_raises(self):
         with pytest.raises(ValidationError):
@@ -316,3 +317,63 @@ class TestRegister:
             registry.lookup("kma_ultra_short_term_forecast") is KMA_ULTRA_SHORT_TERM_FORECAST_TOOL
         )
         assert "kma_ultra_short_term_forecast" in executor._adapters
+
+    @pytest.mark.asyncio
+    async def test_registered_adapter_returns_lookup_record_envelope(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Regression: registered find adapters must return a LookupOutput envelope."""
+
+        async def fake_call(params: KmaUltraShortTermForecastInput) -> dict[str, object]:
+            return {"total_count": 0, "items": []}
+
+        monkeypatch.setattr(ultra_module, "_call", fake_call)
+        registry = ToolRegistry()
+        executor = ToolExecutor(registry)
+        register(registry, executor)
+
+        adapter = executor._adapters["kma_ultra_short_term_forecast"]
+        result = await adapter(
+            KmaUltraShortTermForecastInput(base_date="20260414", base_time="0830", nx=61, ny=126)
+        )
+
+        assert result == {"kind": "record", "item": {"total_count": 0, "items": []}}
+        normalized = LookupRecord.model_validate(
+            {
+                **result,
+                "meta": {
+                    "source": "kma_ultra_short_term_forecast",
+                    "fetched_at": "2026-05-18T12:00:00+09:00",
+                    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "elapsed_ms": 1,
+                },
+            }
+        )
+        assert normalized.kind == "record"
+
+    @pytest.mark.asyncio
+    async def test_dispatch_accepts_registered_lookup_record_envelope(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Legacy direct dispatch accepts the registered find adapter envelope."""
+
+        async def fake_call(params: KmaUltraShortTermForecastInput) -> dict[str, object]:
+            return {"total_count": 0, "items": []}
+
+        monkeypatch.setattr(ultra_module, "_call", fake_call)
+        registry = ToolRegistry()
+        executor = ToolExecutor(registry)
+        register(registry, executor)
+
+        result = await executor.dispatch(
+            "kma_ultra_short_term_forecast",
+            json.dumps({"base_date": "20260414", "base_time": "0830", "nx": 61, "ny": 126}),
+            tool_call_id="forecast-direct-dispatch",
+        )
+
+        assert result.success is True
+        assert result.error_type is None
+        assert result.data is not None
+        assert result.data["kind"] == "record"
+        assert result.data["item"] == {"total_count": 0, "items": []}
+        assert result.data["meta"]["source"] == "kma_ultra_short_term_forecast"

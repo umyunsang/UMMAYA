@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 """KMA weather alert status adapter.
 
-Wraps the ``getWthrWrnMsg`` endpoint from the Korea Meteorological Administration
-(기상청) via the shared data.go.kr service key.
-Returns the detailed message text for a specific weather warning identified by
-``stn_id`` and/or ``tmFc`` from a prior ``kma_pre_warning`` call.
+Wraps the ``getWthrWrnList`` endpoint from the Korea Meteorological
+Administration (기상청) via the shared data.go.kr service key.
+Returns the current active weather-warning list; an empty parameter set means
+nationwide lookup.
 
 Wire format quirks handled by this module:
-  - ``stn_id`` or ``tmFc`` (or both) must be supplied; both absent → resultCode=11.
+  - ``stn_id`` and ``tmFc`` are optional filters; neither is required for
+    nationwide active-warning lookup.
   - Single-item response returns ``item`` as a dict (not array) — normalized to list.
   - XML is the default; JSON is requested via ``_type=json`` and ``dataType=JSON``.
   - ``resultCode != "00"`` is always an error regardless of HTTP 200.
@@ -19,10 +20,10 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ummaya.tools._outbound_trace import traced_async_client
 from ummaya.tools.errors import ConfigurationError, ToolExecutionError, _require_env  # noqa: F401
@@ -36,11 +37,12 @@ logger = logging.getLogger(__name__)
 # KMA API endpoint constants
 # ---------------------------------------------------------------------------
 
-_BASE_URL = "https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnMsg"
+_BASE_URL = "https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"
 
 # Mapping from wire camelCase field names to snake_case model field names
 _FIELD_MAP: dict[str, str] = {
     "stnId": "stn_id",
+    "title": "title",
     "tmFc": "tm_fc",
     "tmEf": "tm_ef",
     "tmSeq": "tm_seq",
@@ -62,9 +64,8 @@ _FIELD_MAP: dict[str, str] = {
 class KmaWeatherAlertStatusInput(BaseModel):
     """Input parameters for the kma_weather_alert_status tool.
 
-    At least one of ``stn_id`` or ``tmFc`` must be provided.  Omitting both
-    causes the KMA API to return resultCode=11 (NO_MANDATORY_REQUEST_PARAMETERS_ERROR).
-    Typically ``stn_id`` is obtained from a prior ``kma_pre_warning`` call.
+    Omitting both ``stn_id`` and ``tmFc`` performs the canonical nationwide
+    active-warning lookup.  Supplying one or both narrows the KMA list request.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -72,23 +73,21 @@ class KmaWeatherAlertStatusInput(BaseModel):
     stn_id: str | None = Field(
         default=None,
         description=(
-            "기상청 관서 ID (기상청 station code). kma_pre_warning 응답의 stn_id 값 사용 권장. "
+            "기상청 관서 ID (기상청 station code). 생략하면 전국 기상특보 현황을 조회. "
             "예: 서울=108, 부산=159, 대구=143, 인천=112, 광주=156, 대전=133, 울산=152, 제주=184. "
-            "stn_id 또는 tmFc 중 하나 이상 필수."
         ),
     )
     tmFc: str | None = Field(
         default=None,
         description=(
-            "특보 발표 시각 (YYYYMMDDHHMI 형식, integer string). "
-            "kma_pre_warning 응답의 tmFc 값 사용 권장. "
-            "stn_id 또는 tmFc 중 하나 이상 필수."
+            "특보 발표 시각 필터 (YYYYMMDDHHMI 형식, integer string). "
+            "생략하면 현재 조회 가능한 발표 목록 전체를 조회."
         ),
     )
     num_of_rows: int = Field(
-        default=100,
+        default=2000,
         ge=1,
-        description="결과 행 수 (default 100).",
+        description="결과 행 수 (default 2000, nationwide lookup 권장값).",
     )
     page_no: int = Field(
         default=1,
@@ -99,22 +98,6 @@ class KmaWeatherAlertStatusInput(BaseModel):
         default="JSON",
         description="응답 형식 (JSON 권장).",
     )
-
-    @model_validator(mode="after")
-    def _require_stn_id_or_tmFc(self) -> KmaWeatherAlertStatusInput:
-        """Validate that at least one of stn_id or tmFc is provided.
-
-        KMA getWthrWrnMsg returns resultCode=11 (NO_MANDATORY_REQUEST_PARAMETERS_ERROR)
-        when both are absent.  Fail early with a clear message rather than letting
-        the live API call fail.
-        """
-        if self.stn_id is None and self.tmFc is None:
-            raise ValueError(
-                "kma_weather_alert_status requires at least one of 'stn_id' or 'tmFc'. "
-                "Obtain stn_id from a prior kma_pre_warning call. "
-                "Evidence: KMA getWthrWrnMsg resultCode=11 NO_MANDATORY_REQUEST_PARAMETERS_ERROR."
-            )
-        return self
 
 
 class WeatherWarning(BaseModel):
@@ -132,6 +115,9 @@ class WeatherWarning(BaseModel):
 
     stn_id: str
     """Station/region ID."""
+
+    title: str | None = None
+    """Compact announcement title from getWthrWrnList when present."""
 
     tm_fc: str
     """Announcement time in YYYYMMDDHHMI format (coerced from int if needed)."""
@@ -322,7 +308,7 @@ async def _call(
 
     try:
         logger.debug(
-            "Calling KMA getWthrWrnMsg: numOfRows=%s pageNo=%s stnId=%s tmFc=%s",
+            "Calling KMA getWthrWrnList: numOfRows=%s pageNo=%s stnId=%s tmFc=%s",
             inp.num_of_rows,
             inp.page_no,
             inp.stn_id,
@@ -336,7 +322,8 @@ async def _call(
         if "xml" in content_type.lower() and "json" not in content_type.lower():
             raise ToolExecutionError(
                 "kma_weather_alert_status",
-                f"KMA getWthrWrnMsg returned XML instead of JSON (Content-Type: {content_type!r}). "
+                "KMA getWthrWrnList returned XML instead of JSON "
+                f"(Content-Type: {content_type!r}). "
                 "Add Accept: application/json header or check _type parameter.",
             )
 
@@ -355,14 +342,14 @@ async def _call(
 
 KMA_WEATHER_ALERT_STATUS_TOOL = GovAPITool(
     id="kma_weather_alert_status",
-    name_ko="기상특보 발표문 상세 조회",
+    name_ko="기상특보 현황 조회",
     llm_description=(
         # 섹션 1 — 목적
-        "기상청 특보 발표문 상세 조회 — 특정 관서/발표 시각의 기상특보 전문(全文) 반환. "
-        "시민이 특보 내용 / 발효 구역 / 취소 여부 등 상세 정보를 원하는 경우 2단계 조회.\n\n"
+        "기상청 기상특보 현황 조회 — 현재 조회 가능한 전국 기상특보 목록을 반환. "
+        "시민이 현재 발효/발표된 특보, 전국 특보 현황, 지역별 특보 제목을 묻는 경우 사용.\n\n"
         # 섹션 2 — 입력 quirk
-        "**입력**: `stn_id` (관서 ID) 또는 `tmFc` (발표 시각 YYYYMMDDHHMI) 중 하나 이상 필수. "
-        "둘 다 None 이면 KMA API resultCode=11 NO_MANDATORY_REQUEST_PARAMETERS_ERROR 반환.\n\n"
+        "**입력**: 필수 파라미터 없음. `{}` 또는 기본값으로 전국 현황 조회. "
+        "`stn_id` (관서 ID) / `tmFc` (발표 시각 YYYYMMDDHHMI)는 선택 필터.\n\n"
         # 섹션 3 — 17 광역시도 station short reference
         "**관서 ID 참조** (stn_id 주요 값): "
         "서울=108 부산=159 대구=143 인천=112 광주=156 "
@@ -370,11 +357,13 @@ KMA_WEATHER_ALERT_STATUS_TOOL = GovAPITool(
         "충북(청주)=131 충남(천안)=232 전북(전주)=146 전남(목포)=165 "
         "경북(포항)=138 경남(창원)=155 제주=184.\n\n"
         # 섹션 4 — domain quirk
-        "**도메인 quirk**: stn_id/tmFc 는 kma_pre_warning 응답에서 가져옴. "
+        "**도메인 quirk**: getWthrWrnList live JSON은 `title` 중심 compact row "
+        "(`stnId`, `title`, `tmFc`, `tmSeq`)를 반환할 수 있음. "
         "resultCode=03 → 해당 특보 없음 (정상). cancel=1 항목은 취소된 특보 (자동 필터).\n\n"
         # 섹션 5 — self-contained + autonomous chain note
-        "**autonomous chain 권장**: turn 1 = kma_pre_warning (stn_id/tmFc 확보), "
-        "turn 2 = 이 도구. chain 강제 X — LLM 이 stn_id 를 이미 알면 직접 호출 가능."
+        "**autonomous chain**: 전국/현재 현황은 이 도구를 직접 호출. "
+        "chain 강제 X — 시민이 예비특보/향후 발표 예정 특보를 묻는 경우에만 "
+        "kma_pre_warning 사용."
     ),
     ministry="KMA",
     category=["기상", "특보", "경보"],
@@ -383,8 +372,8 @@ KMA_WEATHER_ALERT_STATUS_TOOL = GovAPITool(
     input_schema=KmaWeatherAlertStatusInput,
     output_schema=KmaWeatherAlertStatusOutput,
     search_hint=(
-        "기상특보 기상경보 태풍 호우 대설 한파 폭염 강풍 특보발표문 상세 "
-        "weather warning alert typhoon heavy rain snow cold wave heat wind bulletin"
+        "기상특보 현황 현재특보 발효중 전국특보 기상경보 태풍 호우 대설 한파 폭염 강풍 "
+        "weather warning alert active nationwide typhoon heavy rain snow cold wave heat wind"
     ),
     policy=AdapterRealDomainPolicy(
         real_classification_url="https://www.kma.go.kr/data/policy.html",
@@ -398,8 +387,8 @@ KMA_WEATHER_ALERT_STATUS_TOOL = GovAPITool(
     is_core=True,
     primitive="find",
     trigger_examples=[
-        "특보 발표문 상세",
-        "서울 호우경보 내용",
+        "전국 기상특보 현황",
+        "현재 발효 중인 특보",
     ],
 )
 
@@ -411,10 +400,20 @@ def register(registry: ToolRegistry, executor: ToolExecutor) -> None:
         registry: The central ``ToolRegistry`` to add the tool to.
         executor: The ``ToolExecutor`` to bind the adapter function to.
     """
-    from typing import cast
-
     from ummaya.tools.executor import AdapterFn
 
     registry.register(KMA_WEATHER_ALERT_STATUS_TOOL)
-    executor.register_adapter("kma_weather_alert_status", cast(AdapterFn, _call))
+
+    async def _kma_weather_alert_status_adapter(inp: BaseModel) -> dict[str, object]:
+        raw = await _call(cast("KmaWeatherAlertStatusInput", inp))
+        return {
+            "kind": "collection",
+            "items": raw["warnings"],
+            "total_count": raw["total_count"],
+        }
+
+    executor.register_adapter(
+        "kma_weather_alert_status",
+        cast(AdapterFn, _kma_weather_alert_status_adapter),
+    )
     logger.info("Registered tool: kma_weather_alert_status")

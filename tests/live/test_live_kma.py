@@ -45,7 +45,7 @@ async def test_live_kma_weather_alert_basic(
 
     Verifies that the result contains ``total_count`` (int >= 0) and
     ``warnings`` (list).  If any warnings are present, also checks that the
-    first entry exposes the ``area_name`` and ``warn_var`` fields.
+    first entry exposes either the compact ``title`` field or full alert fields.
     """
     monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", data_go_kr_api_key)
 
@@ -65,8 +65,7 @@ async def test_live_kma_weather_alert_basic(
 
     if result["warnings"]:
         first = result["warnings"][0]
-        assert "area_name" in first, "Missing field 'area_name' in first warning"
-        assert "warn_var" in first, "Missing field 'warn_var' in first warning"
+        assert first.get("title") or first.get("area_name") or first.get("warn_var") is not None
 
 
 @pytest.mark.live

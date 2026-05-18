@@ -26,8 +26,13 @@ from ummaya.observability import (
     GEN_AI_TOOL_TYPE,
     filter_metadata,
 )
-from ummaya.tools.envelope import make_error_envelope
-from ummaya.tools.errors import LookupErrorReason, ToolNotFoundError, UmmayaToolError
+from ummaya.tools.envelope import make_error_envelope, normalize
+from ummaya.tools.errors import (
+    EnvelopeNormalizationError,
+    LookupErrorReason,
+    ToolNotFoundError,
+    UmmayaToolError,
+)
 from ummaya.tools.models import ToolResult
 from ummaya.tools.registry import ToolRegistry
 
@@ -41,6 +46,10 @@ logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
 
 AdapterFn = Callable[[BaseModel], Awaitable[dict[str, Any]]]
+
+_LOOKUP_ENVELOPE_KINDS: frozenset[str] = frozenset(
+    {"record", "collection", "timeseries", "error", "search"}
+)
 
 
 def _log_adapter_exception(message: str, tool_id: str, exc: Exception) -> None:
@@ -79,6 +88,12 @@ def _classify_adapter_exception(exc: Exception) -> tuple[LookupErrorReason, bool
     if isinstance(exc, (httpx.HTTPStatusError, httpx.RequestError)):
         return (LookupErrorReason.upstream_unavailable, True)
     return (LookupErrorReason.upstream_unavailable, True)
+
+
+def _is_lookup_envelope_dict(value: dict[str, Any]) -> bool:
+    """Return True when an adapter already emitted a LookupOutput-shaped envelope."""
+    kind = value.get("kind")
+    return isinstance(kind, str) and kind in _LOOKUP_ENVELOPE_KINDS
 
 
 class ToolExecutor:
@@ -767,6 +782,50 @@ class ToolExecutor:
                 result_dict = sanitized_dict
 
                 # Step 6: Validate output
+                if tool.primitive == "find" and _is_lookup_envelope_dict(result_dict):
+                    try:
+                        normalized_output = normalize(
+                            output=result_dict,
+                            tool=tool,
+                            request_id=tool_call_id or f"{tool_name}-dispatch",
+                            elapsed_ms=int((time.monotonic() - dispatch_start) * 1000),
+                        )
+                    except EnvelopeNormalizationError as exc:
+                        logger.warning(
+                            "Lookup envelope mismatch for tool %s: %s",
+                            tool_name,
+                            exc,
+                        )
+                        self._metrics_increment("tool.error_count", tool_name)
+                        self._metrics_observe_duration(
+                            "tool.duration_ms",
+                            tool_name,
+                            (time.monotonic() - dispatch_start) * 1000,
+                        )
+                        _final_result = ToolResult(
+                            tool_id=tool_name,
+                            success=False,
+                            error=str(exc),
+                            error_type="schema_mismatch",
+                        )
+                        return _final_result
+
+                    logger.info("Tool dispatch succeeded: %s", tool_name)
+                    self._metrics_increment("tool.success_count", tool_name)
+                    self._metrics_observe_duration(
+                        "tool.duration_ms",
+                        tool_name,
+                        (time.monotonic() - dispatch_start) * 1000,
+                    )
+                    _final_result = ToolResult(
+                        tool_id=tool_name,
+                        success=True,
+                        data=normalized_output.model_dump()
+                        if isinstance(normalized_output, BaseModel)
+                        else result_dict,
+                    )
+                    return _final_result
+
                 try:
                     validated_output = tool.output_schema.model_validate(result_dict)
                 except ValidationError as exc:

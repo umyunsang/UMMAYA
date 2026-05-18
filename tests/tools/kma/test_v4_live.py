@@ -293,10 +293,10 @@ class TestKmaPreWarningLive:
 
 
 class TestKmaWeatherAlertStatusLive:
-    """Live tests for kma_weather_alert_status (getWthrWrnMsg).
+    """Live tests for kma_weather_alert_status (getWthrWrnList).
 
-    Evidence: stn_id or tmFc required — both absent → resultCode=11.
-    Chain pattern: turn 1 kma_pre_warning → get stn_id/tmFc → turn 2 this tool.
+    Evidence: empty params perform nationwide active-warning lookup.
+    stn_id and tmFc remain optional filters.
     """
 
     @pytest.mark.asyncio
@@ -336,13 +336,10 @@ class TestKmaWeatherAlertStatusLive:
         assert "warnings" in result
 
     @pytest.mark.asyncio
-    async def test_missing_both_raises_validation_error(self) -> None:
-        """Both stn_id=None and tmFc=None must raise ValidationError before API call."""
-        from pydantic import ValidationError
-
+    async def test_missing_both_is_nationwide_lookup(self) -> None:
+        """Both stn_id=None and tmFc=None is accepted for nationwide lookup."""
         from ummaya.tools.kma.kma_weather_alert_status import KmaWeatherAlertStatusInput
 
-        with pytest.raises(ValidationError) as exc_info:
-            KmaWeatherAlertStatusInput()  # no stn_id, no tmFc
-
-        assert "stn_id" in str(exc_info.value) or "tmFc" in str(exc_info.value)
+        inp = KmaWeatherAlertStatusInput()
+        assert inp.stn_id is None
+        assert inp.tmFc is None

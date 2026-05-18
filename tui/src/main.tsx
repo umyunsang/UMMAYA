@@ -869,6 +869,7 @@ async function run(): Promise<CommanderCommand> {
       permissionModeCli,
       dangerouslySkipPermissions
     });
+    process.env.UMMAYA_PERMISSION_MODE = permissionMode;
 
     // Store session bypass permissions mode for trust dialog check
     setSessionBypassPermissionsMode(permissionMode === 'bypassPermissions');

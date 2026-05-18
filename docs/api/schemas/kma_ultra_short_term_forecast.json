@@ -82,7 +82,7 @@
       "type": "string"
     },
     "base_time": {
-      "description": "발표 시각 (HH30 format). 매 시각의 30분 발표만 유효. Example: 0630 / 1130 / 1430. MM != 30 인 값은 reject.",
+      "description": "조회 기준 시각 (HHMM format). KMA live API accepts HHMM and may canonicalize to the actually published baseTime in the response. Example: 0630 / 1130 / 1430 / 1500.",
       "title": "Base Time",
       "type": "string"
     },
