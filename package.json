@@ -1,6 +1,6 @@
 {
   "name": "ummaya",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Conversational multi-agent harness for Korean public-service channels",
   "license": "Apache-2.0",
   "type": "module",

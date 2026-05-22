@@ -698,11 +698,9 @@ function parseKeypress(s: string = ''): ParsedKey {
     return createNavKey(s, 'mouse', false)
   }
 
-  if (s === '\r') {
+  if (s === '\r' || s === '\n') {
     key.raw = undefined
     key.name = 'return'
-  } else if (s === '\n') {
-    key.name = 'enter'
   } else if (s === '\t') {
     key.name = 'tab'
   } else if (s === '\b' || s === '\x1b\b') {
