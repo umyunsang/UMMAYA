@@ -14,6 +14,7 @@ on:
       - "tui/**"
       - "specs/**"
       - "docs/**"
+      - "Casks/ummaya.rb"
       - "*.md"
       # Required CI contexts must materialize for workflow-only PRs too.
       - ".github/workflows/**"
