@@ -1,0 +1,23 @@
+TUI text-debug summary (asciinema → pyte)
+  source   : /private/tmp/ummaya-fix-lf-enter-v0.1.14/specs/lf-coalesced-enter/asciinema/raw.cast
+  outdir   : /private/tmp/ummaya-fix-lf-enter-v0.1.14/specs/lf-coalesced-enter/asciinema
+  frames   : 5
+  timeline : /private/tmp/ummaya-fix-lf-enter-v0.1.14/specs/lf-coalesced-enter/asciinema/timeline.txt
+
+=== final frame ===
+     ▗▖ ▗▖
+    ▟▛▛▀▜▜▙   UMMAYA v0.1.14
+    ██▘ ▝██   K-EXAONE with high effort · API Usage Billing
+   ▐█▘ ▄ ▝█▌  /private/tmp/ummaya-fix-lf-enter-v0.1.14/tui
+   ▝▜▙███▟▛▘
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Login
+
+  Paste your FriendliAI API key to sign in for this installation.
+
+  API key:
+
+  The key is saved to your local UMMAYA user store and restored on the next start until /logout removes it.
+
+  Esc to cancel

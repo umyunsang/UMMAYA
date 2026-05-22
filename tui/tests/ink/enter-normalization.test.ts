@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { InputEvent } from '../../src/ink/events/input-event'
 import { INITIAL_STATE, parseMultipleKeypresses } from '../../src/ink/parse-keypress'
+import { splitCoalescedEnter } from '../../src/hooks/useTextInput'
 
 describe('Enter key normalization', () => {
   test('treats LF as Return so terminal variants still submit input', () => {
@@ -18,5 +19,21 @@ describe('Enter key normalization', () => {
     const event = new InputEvent(keypress)
     expect(event.key.return).toBe(true)
     expect(event.input).toBe('')
+  })
+
+  test('recognizes text followed by LF as one coalesced submit chunk', () => {
+    expect(splitCoalescedEnter('/login\n')).toBe('/login')
+  })
+
+  test('recognizes text followed by CRLF as one coalesced submit chunk', () => {
+    expect(splitCoalescedEnter('/login\r\n')).toBe('/login')
+  })
+
+  test('does not treat multiline text paste as coalesced Enter', () => {
+    expect(splitCoalescedEnter('line one\nline two\n')).toBeNull()
+  })
+
+  test('does not treat backslash LF as coalesced Enter', () => {
+    expect(splitCoalescedEnter('line\\\n')).toBeNull()
   })
 })
