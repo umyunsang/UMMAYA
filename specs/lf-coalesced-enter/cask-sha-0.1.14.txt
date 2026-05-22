@@ -1,0 +1,8 @@
+UMMAYA 0.1.14 Cask SHA evidence
+
+Command:
+curl -L https://registry.npmjs.org/ummaya/-/ummaya-0.1.14.tgz -o /tmp/ummaya-cask-sha-0.1.14.tgz
+shasum -a 256 /tmp/ummaya-cask-sha-0.1.14.tgz
+
+Output:
+5c6dc87292534e0bbea1acf46831f3bbcf654237f6c07f8174b3d4eac23e8891  /tmp/ummaya-cask-sha-0.1.14.tgz
