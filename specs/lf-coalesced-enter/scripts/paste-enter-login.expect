@@ -1,0 +1,27 @@
+#!/usr/bin/env expect
+# SPDX-License-Identifier: Apache-2.0
+# Layer 3/5 text smoke for bracketed paste + immediate Enter submission.
+
+set timeout 30
+set env(UMMAYA_MEMDIR_USER) [exec mktemp -d /tmp/ummaya-paste-enter-expect.XXXXXX]
+set env(UMMAYA_FRIENDLI_TOKEN) ""
+set env(UMMAYA_BACKEND_CMD) "sleep 60"
+set env(UMMAYA_TUI_LOG_LEVEL) "DEBUG"
+set env(NODE_ENV) "test"
+set env(IS_DEMO) "1"
+
+spawn -noecho ../bin/ummaya
+expect -re {UMMAYA.*v0\.1\.15}
+expect {
+  -re {Run.*/login} {}
+  -re {Not.*logged.*in} {}
+}
+
+send -- "\033\[200~/login\033\[201~\r"
+expect -re {API.*key:|FriendliAI API key}
+
+send -- "\033\[200~TEST_TOKEN_FOR_ENTER_SMOKE\033\[201~\r"
+expect -re {Login.*successful}
+
+send "\003\003"
+expect eof

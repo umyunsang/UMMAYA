@@ -1,0 +1,19 @@
+TUI text-debug summary (asciinema → pyte)
+  source   : /private/tmp/ummaya-fix-paste-enter-submit-v0.1.15/specs/lf-coalesced-enter/paste-enter-frames/raw.cast
+  outdir   : /private/tmp/ummaya-fix-paste-enter-submit-v0.1.15/specs/lf-coalesced-enter/paste-enter-frames
+  frames   : 12
+  timeline : /private/tmp/ummaya-fix-paste-enter-submit-v0.1.15/specs/lf-coalesced-enter/paste-enter-frames/timeline.txt
+
+=== final frame ===
+     ▗▖ ▗▖
+    ▟▛▛▀▜▜▙   UMMAYA v0.1.15
+    ██▘ ▝██   K-EXAONE with high effort · API Usage Billing
+   ▐█▘ ▄ ▝█▌  /private/tmp/ummaya-fix-paste-enter-submit-v0.1.15/tui
+   ▝▜▙███▟▛▘
+
+❯ /login
+  ⎿  Login successful
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

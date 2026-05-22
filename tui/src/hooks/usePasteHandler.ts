@@ -15,6 +15,52 @@ import { getPlatform } from '../utils/platform.js'
 const CLIPBOARD_CHECK_DEBOUNCE_MS = 50
 const PASTE_COMPLETION_TIMEOUT_MS = 100
 
+const TEXT_INPUT_KEY: Key = {
+  upArrow: false,
+  downArrow: false,
+  leftArrow: false,
+  rightArrow: false,
+  pageDown: false,
+  pageUp: false,
+  wheelUp: false,
+  wheelDown: false,
+  home: false,
+  end: false,
+  return: false,
+  escape: false,
+  ctrl: false,
+  shift: false,
+  fn: false,
+  tab: false,
+  backspace: false,
+  delete: false,
+  meta: false,
+  super: false,
+}
+
+function normalizePasteChunks(chunks: ReadonlyArray<string>): string {
+  return chunks
+    .join('')
+    .replace(/\[I$/, '')
+    .replace(/\[O$/, '')
+}
+
+function canSubmitFastPaste(text: string): boolean {
+  return (
+    text.length > 0 &&
+    !text.includes('\r') &&
+    !text.includes('\n') &&
+    !text.endsWith('\\')
+  )
+}
+
+function containsImageFilePath(text: string): boolean {
+  return text
+    .split(/ (?=\/|[A-Za-z]:\\)/)
+    .flatMap(part => part.split('\n'))
+    .some(line => isImageFilePath(line.trim()))
+}
+
 type PasteHandlerProps = {
   onPaste?: (text: string) => void
   onInput: (input: string, key: Key) => void
@@ -51,6 +97,10 @@ export function usePasteHandler({
   // reads stale pasteState.timeoutId (null) and takes the onInput path. If
   // that key is Enter, it submits the old input and the paste is lost.
   const pastePendingRef = React.useRef(false)
+  const pasteChunksRef = React.useRef<string[]>([])
+  const pasteTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
 
   const isMacOS = React.useMemo(() => getPlatform() === 'macos', [])
 
@@ -105,15 +155,16 @@ export function usePasteHandler({
           checkClipboardForImage,
           isMacOS,
           pastePendingRef,
+          pasteChunksRef,
+          pasteTimeoutRef,
         ) => {
           pastePendingRef.current = false
+          pasteChunksRef.current = []
+          pasteTimeoutRef.current = null
           setPasteState(({ chunks }) => {
             // Join chunks and filter out orphaned focus sequences
             // These can appear when focus events split during paste
-            const pastedText = chunks
-              .join('')
-              .replace(/\[I$/, '')
-              .replace(/\[O$/, '')
+            const pastedText = normalizePasteChunks(chunks)
 
             // Check if the pasted text contains image file paths
             // When dragging multiple images, they may come as:
@@ -200,6 +251,8 @@ export function usePasteHandler({
         checkClipboardForImage,
         isMacOS,
         pastePendingRef,
+        pasteChunksRef,
+        pasteTimeoutRef,
       )
     },
     [checkClipboardForImage, isMacOS, onImagePaste, onPaste],
@@ -233,10 +286,7 @@ export function usePasteHandler({
     // When dragging multiple images, they may come as newline-separated or
     // space-separated paths. Split on spaces preceding absolute paths:
     // - Unix: ` /` - Windows: ` C:\` etc.
-    const hasImageFilePath = input
-      .split(/ (?=\/|[A-Za-z]:\\)/)
-      .flatMap(part => part.split('\n'))
-      .some(line => isImageFilePath(line.trim()))
+    const hasImageFilePath = containsImageFilePath(input)
 
     // Handle empty paste (clipboard image on macOS)
     // When the user pastes an image with Cmd+V, the terminal sends an empty
@@ -246,6 +296,34 @@ export function usePasteHandler({
       checkClipboardForImage()
       // Reset isPasting since there's no text content to process
       setIsPasting(false)
+      return
+    }
+
+    if (
+      pastePendingRef.current &&
+      key.return &&
+      !key.meta &&
+      !key.shift &&
+      !isFromPaste
+    ) {
+      const pastedText = normalizePasteChunks(pasteChunksRef.current)
+      if (
+        !canSubmitFastPaste(pastedText) ||
+        (containsImageFilePath(pastedText) && onImagePaste)
+      ) {
+        return
+      }
+
+      if (pasteTimeoutRef.current) {
+        clearTimeout(pasteTimeoutRef.current)
+      }
+      pasteTimeoutRef.current = null
+      pastePendingRef.current = false
+      pasteChunksRef.current = []
+      setPasteState({ chunks: [], timeoutId: null })
+      setIsPasting(false)
+
+      onInput(`${pastedText}\r`, TEXT_INPUT_KEY)
       return
     }
 
@@ -259,10 +337,13 @@ export function usePasteHandler({
 
     if (shouldHandleAsPaste) {
       pastePendingRef.current = true
-      setPasteState(({ chunks, timeoutId }) => {
+      pasteChunksRef.current = [...pasteChunksRef.current, input]
+      const nextTimeoutId = resetPasteTimeout(pasteTimeoutRef.current)
+      pasteTimeoutRef.current = nextTimeoutId
+      setPasteState(({ chunks }) => {
         return {
           chunks: [...chunks, input],
-          timeoutId: resetPasteTimeout(timeoutId),
+          timeoutId: nextTimeoutId,
         }
       })
       return
