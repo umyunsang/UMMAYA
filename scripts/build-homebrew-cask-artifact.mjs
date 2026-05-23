@@ -153,17 +153,16 @@ if [[ "$use_cached_runtime" == "1" && -n "\${HOME:-}" ]]; then
   cache_home="\${XDG_CACHE_HOME:-$HOME/.cache}"
   cache_dir="$cache_home/ummaya/runtime/bun-$runtime_sha256"
   cache_bun="$cache_dir/bun"
+  cache_marker="$cache_dir/.sha256"
   cache_ok=0
-  if [[ -x "$cache_bun" ]]; then
-    cached_sha="$(/usr/bin/shasum -a 256 "$cache_bun" | /usr/bin/awk '{print $1}')"
-    if [[ "$cached_sha" == "$runtime_sha256" ]]; then
-      cache_ok=1
-    fi
+  if [[ -x "$cache_bun" && -f "$cache_marker" && "$(cat "$cache_marker")" == "$runtime_sha256" ]]; then
+    cache_ok=1
   fi
   if [[ "$cache_ok" != "1" ]]; then
     mkdir -p "$cache_dir"
     /bin/cp -X "$runtime_bun" "$cache_bun"
     chmod 0755 "$cache_bun"
+    printf '%s\n' "$runtime_sha256" > "$cache_marker"
   fi
   export PATH="$cache_dir:$PATH"
   exec "$cache_bun" "$root_dir/package/bin/ummaya" "$@"
