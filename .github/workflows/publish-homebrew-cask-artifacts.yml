@@ -86,12 +86,30 @@ jobs:
           retention-days: 90
 
   release:
-    name: Attach cask artifacts to GitHub Release
+    name: Publish cask artifacts
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      CLOUDFLARE_ACCOUNT_ID: "657819314c95688d19e6d72cd138927e"
+      CLOUDFLARE_PROJECT_NAME: "ummaya-docs"
     steps:
       - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.12.0"
+          package-manager-cache: false
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: "1.3.5"
 
       - uses: actions/download-artifact@v8
         with:
@@ -131,3 +149,67 @@ jobs:
             dist/homebrew/ummaya-*-macos-*.tar.gz.sha256 \
             dist/homebrew/ummaya-*-macos-*.json \
             --clobber
+
+      - name: Build docs site
+        run: |
+          uv sync --frozen --all-extras --dev
+          uv run python scripts/docs_generate.py --check
+          cd docs-site
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Stage cask downloads on docs site
+        run: |
+          tag="${{ steps.release.outputs.tag }}"
+          version="${tag#v}"
+          download_dir="docs-site/dist/downloads/homebrew/${tag}"
+          mkdir -p "${download_dir}"
+          cp dist/homebrew/ummaya-*-macos-*.tar.gz "${download_dir}/"
+          cp dist/homebrew/ummaya-*-macos-*.tar.gz.sha256 "${download_dir}/"
+          cp dist/homebrew/ummaya-*-macos-*.json "${download_dir}/"
+          node <<'EOF'
+          const fs = require('node:fs')
+          const path = require('node:path')
+
+          const tag = process.env.UMMAYA_RELEASE_TAG
+          const version = tag.replace(/^v/, '')
+          const root = 'docs-site/dist/downloads/homebrew'
+          const versionDir = path.join(root, tag)
+          const manifest = {
+            version,
+            tag,
+            baseUrl: `https://ummaya-docs.pages.dev/downloads/homebrew/${tag}`,
+            artifacts: Object.fromEntries(
+              ['arm64', 'x64'].map((arch) => {
+                const metadataPath = path.join(versionDir, `ummaya-${version}-macos-${arch}.json`)
+                const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'))
+                return [arch, metadata]
+              }),
+            ),
+          }
+          fs.writeFileSync(path.join(root, 'latest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
+          fs.writeFileSync(path.join(versionDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
+          EOF
+        env:
+          UMMAYA_RELEASE_TAG: ${{ steps.release.outputs.tag }}
+
+      - name: Verify cask download URLs
+        run: |
+          tag="${{ steps.release.outputs.tag }}"
+          version="${tag#v}"
+          for arch in arm64 x64; do
+            test -s "docs-site/dist/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.tar.gz"
+            test -s "docs-site/dist/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.tar.gz.sha256"
+            test -s "docs-site/dist/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.json"
+          done
+          test -s docs-site/dist/downloads/homebrew/latest.json
+
+      - name: Deploy cask downloads to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.91.0"
+          workingDirectory: docs-site
+          command: pages deploy dist --project-name=${{ env.CLOUDFLARE_PROJECT_NAME }} --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

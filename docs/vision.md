@@ -111,7 +111,7 @@ UMMAYA adapts architectural patterns from the conversational AI agent ecosystem 
 | PyPA / PyPI packaging docs | Public | `pyproject.toml`, Trusted Publishing, and OIDC release workflow reference for UMMAYA PyPI distribution. |
 | uv package publishing docs | Public | `uv build --no-sources`, `uv publish`, clean install smoke, and attestation upload behavior for Python release workflows. |
 | npm package and Trusted Publishing docs | Public | `package.json` `bin` / `files` / `publishConfig`, `npm pack --dry-run`, npm OIDC publishing, and provenance requirements for TUI distribution. |
-| Homebrew Formula Cookbook and Taps docs | Public | Third-party tap structure, formula audit/test expectations, stable source URL, Python resource workflow, and formula naming conventions. |
+| Homebrew Formula Cookbook, Cask Cookbook, Acceptable Casks, and Taps docs | Public | Third-party tap structure, official cask acceptance gates, prebuilt artifact rules, formula audit/test expectations, stable source URL, Python resource workflow, and formula/cask naming conventions. |
 | GitHub artifact attestations | Public | Build provenance and SBOM attestation for release wheels, sdists, npm tarballs, and release manifests. |
 | OpenTelemetry GenAI semantic conventions | Public | Agent, model, tool, event, and metric telemetry naming baseline for release-time LLMOps evidence. |
 | Langfuse / MLflow GenAI / Arize Phoenix / W&B Weave docs | Public | Open LLMOps comparison set for traces, prompt management, evaluations, datasets, and experiments in release evidence planning. |

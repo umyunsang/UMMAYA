@@ -7,15 +7,16 @@ cask "ummaya" do
   sha256 arm:   "66704302a670fa8efcbba36d7cbd6927d045179db46a51998106bfa202625ecb",
          intel: "9ffe3b85d2e3da65434c1000bcd8831bccc8120ee755ad8faedf6c6a1262b31d"
 
-  url "https://github.com/umyunsang/UMMAYA/releases/download/v#{version}/ummaya-#{version}-macos-#{arch}.tar.gz"
+  url "https://ummaya-docs.pages.dev/downloads/homebrew/v#{version}/ummaya-#{version}-macos-#{arch}.tar.gz"
   name "UMMAYA"
   desc "Conversational multi-agent harness for Korean public-service channels"
-  homepage "https://github.com/umyunsang/UMMAYA"
+  homepage "https://ummaya-docs.pages.dev/"
 
   livecheck do
-    url :url
-    regex(/^v?(\d+(?:\.\d+)+)$/i)
-    strategy :github_latest
+    url "https://ummaya-docs.pages.dev/downloads/homebrew/latest.json"
+    strategy :json do |json|
+      json["version"]
+    end
   end
 
   depends_on :macos
