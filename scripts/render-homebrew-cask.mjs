@@ -50,12 +50,6 @@ cask "ummaya" do
 
   binary "ummaya"
 
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", staged_path.to_s],
-                   sudo: false
-  end
-
   zap trash: "~/.ummaya"
 end
 `

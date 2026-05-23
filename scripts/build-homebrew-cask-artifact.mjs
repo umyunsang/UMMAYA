@@ -121,7 +121,7 @@ async function downloadBunRuntime(workdir, arch) {
   return binaryPath
 }
 
-function writeWrapper(path) {
+function writeWrapper(path, runtimeSha256) {
   writeFileSync(
     path,
     `#!/bin/bash
@@ -139,8 +139,38 @@ while [ -h "$source_path" ]; do
 done
 
 root_dir="$(cd -P "$(dirname "$source_path")" >/dev/null 2>&1 && pwd)"
+runtime_bun="$root_dir/runtime/bun"
+runtime_sha256="${runtimeSha256}"
+
+use_cached_runtime=0
+if [[ "\${UMMAYA_FORCE_RUNTIME_CACHE:-}" == "1" ]]; then
+  use_cached_runtime=1
+elif [[ "$root_dir" == */Caskroom/ummaya/* ]]; then
+  use_cached_runtime=1
+fi
+
+if [[ "$use_cached_runtime" == "1" && -n "\${HOME:-}" ]]; then
+  cache_home="\${XDG_CACHE_HOME:-$HOME/.cache}"
+  cache_dir="$cache_home/ummaya/runtime/bun-$runtime_sha256"
+  cache_bun="$cache_dir/bun"
+  cache_ok=0
+  if [[ -x "$cache_bun" ]]; then
+    cached_sha="$(/usr/bin/shasum -a 256 "$cache_bun" | /usr/bin/awk '{print $1}')"
+    if [[ "$cached_sha" == "$runtime_sha256" ]]; then
+      cache_ok=1
+    fi
+  fi
+  if [[ "$cache_ok" != "1" ]]; then
+    mkdir -p "$cache_dir"
+    /bin/cp -X "$runtime_bun" "$cache_bun"
+    chmod 0755 "$cache_bun"
+  fi
+  export PATH="$cache_dir:$PATH"
+  exec "$cache_bun" "$root_dir/package/bin/ummaya" "$@"
+fi
+
 export PATH="$root_dir/runtime:$PATH"
-exec "$root_dir/runtime/bun" "$root_dir/package/bin/ummaya" "$@"
+exec "$runtime_bun" "$root_dir/package/bin/ummaya" "$@"
 `,
   )
   chmodSync(path, 0o755)
@@ -200,9 +230,11 @@ async function main() {
     )
 
     const bunBinary = await downloadBunRuntime(workdir, args.arch)
-    copyFileSync(bunBinary, join(runtimeDir, 'bun'))
-    chmodSync(join(runtimeDir, 'bun'), 0o755)
-    writeWrapper(join(artifactRoot, 'ummaya'))
+    const runtimePath = join(runtimeDir, 'bun')
+    copyFileSync(bunBinary, runtimePath)
+    chmodSync(runtimePath, 0o755)
+    const runtimeSha256 = await sha256(runtimePath)
+    writeWrapper(join(artifactRoot, 'ummaya'), runtimeSha256)
 
     const artifactName = `ummaya-${version}-macos-${args.arch}.tar.gz`
     const artifactPath = join(outDir, artifactName)

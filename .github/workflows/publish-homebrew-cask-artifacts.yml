@@ -72,6 +72,7 @@ jobs:
           test -d "${RUNNER_TEMP}/ummaya-cask-smoke/package/node_modules"
           test -f "${artifact}.sha256"
           "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --version
+          UMMAYA_FORCE_RUNTIME_CACHE=1 "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --version
           "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --help >/dev/null
 
       - name: Upload cask artifact

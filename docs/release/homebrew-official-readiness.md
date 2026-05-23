@@ -17,7 +17,7 @@ not controlled by UMMAYA release automation alone.
 
 ## Current State
 
-UMMAYA v0.1.17 now publishes macOS release archives:
+UMMAYA v0.1.18 now publishes macOS release archives:
 
 - `ummaya-<version>-macos-arm64.tar.gz`
 - `ummaya-<version>-macos-x64.tar.gz`
@@ -49,7 +49,7 @@ This keeps already published Homebrew URLs stable across later documentation-onl
 
 ### 1. Prebuilt artifact gate
 
-Status: satisfied for the current tap cask.
+Status: satisfied for the current tap and official cask candidate.
 
 The original rejected cask used the npm registry tarball and a `preflight` block that ran
 `npm install`. Official casks install prebuilt software artifacts, so that shape was not
@@ -94,21 +94,17 @@ manual notability discretion during review.
 
 ### 4. Gatekeeper/runtime gate
 
-Status: review risk remains.
+Status: addressed in the v0.1.18 release artifact.
 
-The current archive bundles Bun 1.3.14 so users do not run `npm install` during cask
-installation. The bundled Bun binary is Developer ID signed but not accepted by Gatekeeper when
-Homebrew quarantine is present:
+The archive bundles Bun 1.3.14 so users do not run `npm install` during cask installation.
+Earlier tap-only casks removed `com.apple.quarantine` in `postflight` to make the bundled
+runtime work from `Caskroom`, but official casks should not bypass Homebrew's quarantine model.
+The v0.1.18 wrapper therefore keeps the cask DSL free of quarantine-stripping hooks and, when
+running from Homebrew `Caskroom`, copies the bundled runtime into a SHA-256-addressed user cache
+with `cp -X` before execution. The copied runtime SHA is checked before reuse, and the archive
+itself is still verified by the cask SHA.
 
-```text
-spctl: rejected
-source=Unnotarized Developer ID
-```
-
-The tap cask removes `com.apple.quarantine` in `postflight` to make the installed runtime work.
-That is acceptable for the project tap only as an operational workaround. For official
-homebrew-cask, this is a review risk because accepted CLI casks generally install binaries that
-run under Homebrew quarantine without a quarantine-removal workaround.
+Official cask candidates must not include a `postflight` stanza that strips quarantine.
 
 ## Current Recommendation
 
@@ -119,14 +115,14 @@ The minimum safe sequence is:
 1. Keep the project tap cask on the prebuilt artifact path.
 2. Publish prebuilt cask artifacts to the UMMAYA docs/download domain.
 3. Render the cask from the docs/download URL, not the GitHub source repository URL.
-4. Remove cask syntax/style issues (`verified:` and missing `depends_on :macos`).
+4. Remove cask syntax/style issues (`verified:`, missing `depends_on :macos`, and quarantine
+   removal hooks).
 5. If maintainers request the formula-first route, cite that UMMAYA's cask artifact includes a
    bundled macOS runtime so installation is a prebuilt binary distribution rather than a
    source-build formula. If they still require `homebrew/core`, open the formula discussion and
    link it from the cask PR.
-6. Remove the official cask runtime risk by shipping a runtime that works under Homebrew
-   quarantine, or by changing the packaging model so the cask does not need to remove
-   quarantine attributes.
+6. Use the v0.1.18+ wrapper so the official cask can run without a quarantine-removal
+   `postflight`.
 7. Re-run `brew audit --cask --new --online` or `brew audit --formula --new --online` in the
    target official repository before opening another official PR.
 
