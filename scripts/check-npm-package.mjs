@@ -53,11 +53,18 @@ function readHomebrewCaskVersion(path) {
 
 function readHomebrewCaskSha256(path) {
   const text = readFileSync(path, 'utf8')
-  const match = text.match(/^\s*sha256\s+"([^"]+)"\s*$/m)
-  if (!match) {
+  const single = text.match(/^\s*sha256\s+"([^"]+)"\s*$/m)
+  if (single) {
+    return [single[1]]
+  }
+
+  const arch = text.match(
+    /^\s*sha256\s+arm:\s+"([0-9a-f]{64})",\s*\n\s*intel:\s+"([0-9a-f]{64})"\s*$/m,
+  )
+  if (!arch) {
     throw new Error(`${path} missing cask sha256`)
   }
-  return match[1]
+  return [arch[1], arch[2]]
 }
 
 function assertSameVersion(label, actual, expected) {
@@ -96,10 +103,12 @@ assertSameVersion(
   rootPackageVersion,
 )
 
-const caskSha256 = readHomebrewCaskSha256('Casks/ummaya.rb')
+const caskSha256Values = readHomebrewCaskSha256('Casks/ummaya.rb')
 assertSameVersion('Casks/ummaya.rb', readHomebrewCaskVersion('Casks/ummaya.rb'), rootPackageVersion)
-if (!/^[0-9a-f]{64}$/.test(caskSha256)) {
-  throw new Error(`Casks/ummaya.rb sha256 is not a 64-character lowercase hex digest`)
+for (const caskSha256 of caskSha256Values) {
+  if (!/^[0-9a-f]{64}$/.test(caskSha256)) {
+    throw new Error(`Casks/ummaya.rb sha256 is not a 64-character lowercase hex digest`)
+  }
 }
 
 const required = [

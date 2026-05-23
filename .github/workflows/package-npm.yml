@@ -17,9 +17,11 @@ on:
       - "Casks/ummaya.rb"
       - "install.sh"
       - "scripts/check-npm-package.mjs"
+      - "scripts/build-homebrew-cask-artifact.mjs"
       - "scripts/render-homebrew-cask.mjs"
       - ".github/workflows/package-npm.yml"
       - ".github/workflows/publish-npm.yml"
+      - ".github/workflows/publish-homebrew-cask-artifacts.yml"
       - ".github/workflows/publish-homebrew.yml"
   workflow_dispatch:
 

@@ -1,6 +1,6 @@
 {
   "name": "ummaya",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Conversational multi-agent harness for Korean public-service channels",
   "license": "Apache-2.0",
   "type": "module",
@@ -41,7 +41,8 @@
     "docs:check": "uv run python scripts/docs_generate.py --check && cd docs-site && bun run build",
     "docs:build": "cd docs-site && bun run build",
     "package:dry-run": "mkdir -p package-evidence && npm pack --dry-run --json > package-evidence/npm-pack-dry-run.json",
-    "package:check": "npm run package:dry-run && node scripts/check-npm-package.mjs package-evidence/npm-pack-dry-run.json"
+    "package:check": "npm run package:dry-run && node scripts/check-npm-package.mjs package-evidence/npm-pack-dry-run.json",
+    "package:homebrew-cask": "node scripts/build-homebrew-cask-artifact.mjs --arch arm64 && node scripts/build-homebrew-cask-artifact.mjs --arch x64"
   },
   "engines": {
     "bun": ">=1.3.0"

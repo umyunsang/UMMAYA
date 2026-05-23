@@ -42,19 +42,23 @@ jobs:
           fi
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
-      - name: Download npm tarball
+      - name: Download prebuilt macOS artifacts
         run: |
           version="${{ steps.version.outputs.version }}"
-          url="https://registry.npmjs.org/ummaya/-/ummaya-${version}.tgz"
-          curl -fsSL "${url}" -o "ummaya-${version}.tgz"
-          sha256="$(sha256sum "ummaya-${version}.tgz" | cut -d ' ' -f1)"
-          echo "UMMAYA_TARBALL_SHA256=${sha256}" >> "${GITHUB_ENV}"
+          for arch in arm64 x64; do
+            url="https://github.com/umyunsang/UMMAYA/releases/download/v${version}/ummaya-${version}-macos-${arch}.tar.gz"
+            curl -fsSL "${url}" -o "ummaya-${version}-macos-${arch}.tar.gz"
+            sha256="$(sha256sum "ummaya-${version}-macos-${arch}.tar.gz" | cut -d ' ' -f1)"
+            key="UMMAYA_CASK_SHA256_${arch}"
+            echo "${key}=${sha256}" >> "${GITHUB_ENV}"
+          done
 
       - name: Render cask
         run: |
           node scripts/render-homebrew-cask.mjs \
             "${{ steps.version.outputs.version }}" \
-            "${UMMAYA_TARBALL_SHA256}" \
+            "${UMMAYA_CASK_SHA256_arm64}" \
+            "${UMMAYA_CASK_SHA256_x64}" \
             Casks/ummaya.rb
 
       - name: Fetch Homebrew tap token from Infisical

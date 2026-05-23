@@ -1,0 +1,133 @@
+name: Publish Homebrew Cask Artifacts
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, without leading v"
+        required: true
+        type: string
+
+concurrency:
+  group: publish-homebrew-cask-artifacts-${{ github.ref }}-${{ github.event.inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build macOS ${{ matrix.arch }} cask artifact
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-14
+          - arch: x64
+            runner: macos-15-intel
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Verify package version
+        run: |
+          package_version="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            expected_version="${GITHUB_REF_NAME#v}"
+          else
+            expected_version="${{ github.event.inputs.version }}"
+          fi
+          if [ "${package_version}" != "${expected_version}" ]; then
+            echo "::error::package.json version ${package_version} does not match release version ${expected_version}"
+            exit 1
+          fi
+
+      - name: Install npm CLI
+        run: npm install --global npm@11.14.1
+
+      - name: Install release tooling dependencies
+        run: npm ci --ignore-scripts --legacy-peer-deps
+
+      - name: Build prebuilt cask artifact
+        run: node scripts/build-homebrew-cask-artifact.mjs --arch "${{ matrix.arch }}" --out-dir dist/homebrew
+
+      - name: Verify archive shape
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          artifact="dist/homebrew/ummaya-${version}-macos-${{ matrix.arch }}.tar.gz"
+          mkdir -p "${RUNNER_TEMP}/ummaya-cask-smoke"
+          tar -xzf "${artifact}" -C "${RUNNER_TEMP}/ummaya-cask-smoke"
+          test -x "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya"
+          test -x "${RUNNER_TEMP}/ummaya-cask-smoke/runtime/bun"
+          test -d "${RUNNER_TEMP}/ummaya-cask-smoke/package/node_modules"
+          test -f "${artifact}.sha256"
+          "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --version
+          "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --help >/dev/null
+
+      - name: Upload cask artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: homebrew-cask-${{ matrix.arch }}
+          path: |
+            dist/homebrew/ummaya-*-macos-${{ matrix.arch }}.tar.gz
+            dist/homebrew/ummaya-*-macos-${{ matrix.arch }}.tar.gz.sha256
+            dist/homebrew/ummaya-*-macos-${{ matrix.arch }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  release:
+    name: Attach cask artifacts to GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: homebrew-cask-*
+          path: dist/homebrew
+          merge-multiple: true
+
+      - name: Resolve tag
+        id: release
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            tag="${GITHUB_REF_NAME}"
+          else
+            tag="v${{ github.event.inputs.version }}"
+          fi
+          if ! printf '%s' "${tag}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::Invalid release tag: ${tag}"
+            exit 1
+          fi
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+
+      - name: Ensure GitHub Release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.release.outputs.tag }}"
+          if ! gh release view "${tag}" >/dev/null 2>&1; then
+            gh release create "${tag}" --title "UMMAYA ${tag}" --target "${GITHUB_SHA}" --generate-notes
+          fi
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ steps.release.outputs.tag }}" \
+            dist/homebrew/ummaya-*-macos-*.tar.gz \
+            dist/homebrew/ummaya-*-macos-*.tar.gz.sha256 \
+            dist/homebrew/ummaya-*-macos-*.json \
+            --clobber
