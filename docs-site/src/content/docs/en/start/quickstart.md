@@ -31,8 +31,7 @@ If you are evaluating UMMAYA as a user, prefer these packaged paths over a sourc
 Install or upgrade through the Homebrew cask:
 
 ```bash
-brew tap umyunsang/ummaya
-brew install --cask ummaya
+brew install --cask umyunsang/ummaya/ummaya
 ummaya --version
 ```
 
@@ -98,7 +97,7 @@ If a public lookup fails, try a simpler prompt with a location and one public in
 Use the same package manager you used for install:
 
 ```bash
-brew upgrade --cask ummaya
+brew upgrade --cask umyunsang/ummaya/ummaya
 ```
 
 ```bash

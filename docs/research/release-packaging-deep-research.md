@@ -192,7 +192,7 @@ Recommended install story:
 | User need | Preferred install |
 |---|---|
 | General CLI | `curl -fsSL https://raw.githubusercontent.com/umyunsang/UMMAYA/main/install.sh \| bash` |
-| Homebrew manual install | `brew tap umyunsang/ummaya && brew install --cask ummaya` |
+| Homebrew manual install | `brew install --cask umyunsang/ummaya/ummaya` |
 | npm fallback | `npm install -g ummaya` |
 | Source checkout | `uv sync --frozen --all-extras --dev`, then `cd tui && bun install --frozen-lockfile` |
 

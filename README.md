@@ -30,8 +30,8 @@ brew install --cask umyunsang/ummaya/ummaya
 ```
 
 The Homebrew cask installs a prebuilt macOS archive and does not run `npm install`
-or `bun install` during installation. The shorter `brew install --cask ummaya`
-form will work only after Homebrew accepts UMMAYA into `Homebrew/homebrew-cask`.
+or `bun install` during installation. The unqualified official-cask form will
+work only after Homebrew accepts UMMAYA into `Homebrew/homebrew-cask`.
 
 Run `ummaya`, type `/login`, and paste your FriendliAI API key. Public CLI users should not need to prepare Kakao, JUSO, SGIS, data.go.kr, or other public API keys.
 

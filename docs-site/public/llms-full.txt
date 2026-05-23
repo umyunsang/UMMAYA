@@ -750,8 +750,7 @@ macOS 用户优先使用 Homebrew。想使用 npm 发布包路径，或没有使
 通过 Homebrew cask 安装或升级：
 
 ```bash
-brew tap umyunsang/ummaya
-brew install --cask ummaya
+brew install --cask umyunsang/ummaya/ummaya
 ummaya --version
 ```
 
@@ -817,7 +816,7 @@ ummaya
 使用安装时同一个 package manager：
 
 ```bash
-brew upgrade --cask ummaya
+brew upgrade --cask umyunsang/ummaya/ummaya
 ```
 
 ```bash
@@ -2531,8 +2530,7 @@ If you are evaluating UMMAYA as a user, prefer these packaged paths over a sourc
 Install or upgrade through the Homebrew cask:
 
 ```bash
-brew tap umyunsang/ummaya
-brew install --cask ummaya
+brew install --cask umyunsang/ummaya/ummaya
 ummaya --version
 ```
 
@@ -2598,7 +2596,7 @@ If a public lookup fails, try a simpler prompt with a location and one public in
 Use the same package manager you used for install:
 
 ```bash
-brew upgrade --cask ummaya
+brew upgrade --cask umyunsang/ummaya/ummaya
 ```
 
 ```bash
@@ -4218,8 +4216,7 @@ macOS では可能なら Homebrew を使います。published package path を�
 Homebrew cask で install または upgrade します。
 
 ```bash
-brew tap umyunsang/ummaya
-brew install --cask ummaya
+brew install --cask umyunsang/ummaya/ummaya
 ummaya --version
 ```
 
@@ -4285,7 +4282,7 @@ public lookup が失敗する場合は、location と一つの public informatio
 インストールに使った package manager を使います。
 
 ```bash
-brew upgrade --cask ummaya
+brew upgrade --cask umyunsang/ummaya/ummaya
 ```
 
 ```bash
@@ -6005,8 +6002,7 @@ UMMAYA를 user로 평가한다면 source checkout보다 packaged path를 우선�
 Homebrew cask로 설치하거나 upgrade합니다.
 
 ```bash
-brew tap umyunsang/ummaya
-brew install --cask ummaya
+brew install --cask umyunsang/ummaya/ummaya
 ummaya --version
 ```
 
@@ -6072,7 +6068,7 @@ public lookup이 실패하면 location과 하나의 public information need만 �
 설치에 사용한 package manager를 그대로 사용하세요.
 
 ```bash
-brew upgrade --cask ummaya
+brew upgrade --cask umyunsang/ummaya/ummaya
 ```
 
 ```bash

@@ -31,8 +31,7 @@ macOS 用户优先使用 Homebrew。想使用 npm 发布包路径，或没有使
 通过 Homebrew cask 安装或升级：
 
 ```bash
-brew tap umyunsang/ummaya
-brew install --cask ummaya
+brew install --cask umyunsang/ummaya/ummaya
 ummaya --version
 ```
 
@@ -98,7 +97,7 @@ ummaya
 使用安装时同一个 package manager：
 
 ```bash
-brew upgrade --cask ummaya
+brew upgrade --cask umyunsang/ummaya/ummaya
 ```
 
 ```bash

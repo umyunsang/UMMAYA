@@ -132,10 +132,5 @@ The current project tap remains the correct public install path:
 brew install --cask umyunsang/ummaya/ummaya
 ```
 
-The shorter command:
-
-```bash
-brew install --cask ummaya
-```
-
-should not be documented as available until an official Homebrew PR is actually merged.
+The unqualified official-cask command should not be documented as available until
+an official Homebrew PR is actually merged.
