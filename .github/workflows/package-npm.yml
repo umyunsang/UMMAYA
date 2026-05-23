@@ -18,6 +18,7 @@ on:
       - "install.sh"
       - "scripts/check-npm-package.mjs"
       - "scripts/build-homebrew-cask-artifact.mjs"
+      - "scripts/stage-homebrew-downloads.mjs"
       - "scripts/render-homebrew-cask.mjs"
       - ".github/workflows/package-npm.yml"
       - ".github/workflows/publish-npm.yml"

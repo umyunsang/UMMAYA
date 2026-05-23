@@ -67,6 +67,11 @@ jobs:
       - name: Build docs
         working-directory: docs-site
         run: bun run build
+      - name: Preserve Homebrew cask downloads
+        run: |
+          node scripts/stage-homebrew-downloads.mjs \
+            --root docs-site/dist/downloads/homebrew \
+            --preserve-remote
       - name: Verify LLM-readable docs outputs
         run: |
           test -s docs-site/public/llms.txt

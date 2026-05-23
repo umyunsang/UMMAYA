@@ -31,10 +31,16 @@ the UMMAYA docs/download domain rather than the GitHub source repository URL:
 
 - download base: `https://ummaya-docs.pages.dev/downloads/homebrew/v<version>/`
 - livecheck JSON: `https://ummaya-docs.pages.dev/downloads/homebrew/latest.json`
+- version index: `https://ummaya-docs.pages.dev/downloads/homebrew/versions.json`
 
 This avoids coupling official cask auditability to a GitHub source repository URL while keeping
 the downloadable artifact on a user-facing UMMAYA-owned release surface. It also needs
 `depends_on :macos` so Linux cask jobs do not attempt to install a macOS archive.
+
+The release and docs workflows both run `scripts/stage-homebrew-downloads.mjs`. Release deploys
+add the new artifacts and manifests; ordinary docs deploys first rehydrate the existing
+`versions.json` index and referenced artifact files from the live site before redeploying. This
+keeps already published Homebrew URLs stable across later documentation-only deployments.
 
 ## Official Submission Gates
 

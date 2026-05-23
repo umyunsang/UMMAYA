@@ -161,37 +161,11 @@ jobs:
       - name: Stage cask downloads on docs site
         run: |
           tag="${{ steps.release.outputs.tag }}"
-          version="${tag#v}"
-          download_dir="docs-site/dist/downloads/homebrew/${tag}"
-          mkdir -p "${download_dir}"
-          cp dist/homebrew/ummaya-*-macos-*.tar.gz "${download_dir}/"
-          cp dist/homebrew/ummaya-*-macos-*.tar.gz.sha256 "${download_dir}/"
-          cp dist/homebrew/ummaya-*-macos-*.json "${download_dir}/"
-          node <<'EOF'
-          const fs = require('node:fs')
-          const path = require('node:path')
-
-          const tag = process.env.UMMAYA_RELEASE_TAG
-          const version = tag.replace(/^v/, '')
-          const root = 'docs-site/dist/downloads/homebrew'
-          const versionDir = path.join(root, tag)
-          const manifest = {
-            version,
-            tag,
-            baseUrl: `https://ummaya-docs.pages.dev/downloads/homebrew/${tag}`,
-            artifacts: Object.fromEntries(
-              ['arm64', 'x64'].map((arch) => {
-                const metadataPath = path.join(versionDir, `ummaya-${version}-macos-${arch}.json`)
-                const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'))
-                return [arch, metadata]
-              }),
-            ),
-          }
-          fs.writeFileSync(path.join(root, 'latest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
-          fs.writeFileSync(path.join(versionDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
-          EOF
-        env:
-          UMMAYA_RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          node scripts/stage-homebrew-downloads.mjs \
+            --artifact-dir dist/homebrew \
+            --tag "${tag}" \
+            --root docs-site/dist/downloads/homebrew \
+            --preserve-remote
 
       - name: Verify cask download URLs
         run: |
@@ -203,6 +177,7 @@ jobs:
             test -s "docs-site/dist/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.json"
           done
           test -s docs-site/dist/downloads/homebrew/latest.json
+          test -s docs-site/dist/downloads/homebrew/versions.json
 
       - name: Deploy cask downloads to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
