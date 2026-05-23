@@ -33,19 +33,25 @@ cask "ummaya" do
   sha256 arm:   "${arm64Sha256}",
          intel: "${x64Sha256}"
 
-  url "https://github.com/umyunsang/UMMAYA/releases/download/v#{version}/ummaya-#{version}-macos-#{arch}.tar.gz",
-      verified: "github.com/umyunsang/UMMAYA/"
+  url "https://github.com/umyunsang/UMMAYA/releases/download/v#{version}/ummaya-#{version}-macos-#{arch}.tar.gz"
   name "UMMAYA"
   desc "Conversational multi-agent harness for Korean public-service channels"
   homepage "https://github.com/umyunsang/UMMAYA"
 
+  livecheck do
+    url :url
+    regex(/^v?(\\d+(?:\\.\\d+)+)$/i)
+    strategy :github_latest
+  end
+
+  depends_on :macos
   depends_on formula: "uv"
 
   binary "ummaya"
 
   postflight do
     system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{staged_path}"],
+                   args: ["-dr", "com.apple.quarantine", staged_path.to_s],
                    sudo: false
   end
 
