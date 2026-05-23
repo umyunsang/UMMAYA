@@ -17,7 +17,7 @@ not controlled by UMMAYA release automation alone.
 
 ## Current State
 
-UMMAYA v0.1.16 now publishes macOS release archives:
+UMMAYA v0.1.17 now publishes macOS release archives:
 
 - `ummaya-<version>-macos-arm64.tar.gz`
 - `ummaya-<version>-macos-x64.tar.gz`
@@ -34,13 +34,16 @@ the UMMAYA docs/download domain rather than the GitHub source repository URL:
 - version index: `https://ummaya-docs.pages.dev/downloads/homebrew/versions.json`
 
 This avoids coupling official cask auditability to a GitHub source repository URL while keeping
-the downloadable artifact on a user-facing UMMAYA-owned release surface. It also needs
+the downloadable artifact on a user-facing UMMAYA-owned release surface. Cloudflare Pages has
+a 25 MiB per-file limit, so Pages hosts only the small manifests, SHA files, and `_redirects`
+rules; the large tarballs are GitHub Release assets reached through first-party docs/download
+URLs. It also needs
 `depends_on :macos` so Linux cask jobs do not attempt to install a macOS archive.
 
 The release and docs workflows both run `scripts/stage-homebrew-downloads.mjs`. Release deploys
-add the new artifacts and manifests; ordinary docs deploys first rehydrate the existing
-`versions.json` index and referenced artifact files from the live site before redeploying. This
-keeps already published Homebrew URLs stable across later documentation-only deployments.
+add the new manifests, SHA files, and redirect rules; ordinary docs deploys first rehydrate the
+existing `versions.json` index and referenced small files from the live site before redeploying.
+This keeps already published Homebrew URLs stable across later documentation-only deployments.
 
 ## Official Submission Gates
 

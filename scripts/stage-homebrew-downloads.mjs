@@ -5,19 +5,23 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
-  readdirSync,
   readFileSync,
+  statSync,
   writeFileSync,
 } from 'node:fs'
 import { basename, join } from 'node:path'
 
 const DEFAULT_BASE_URL = 'https://ummaya-docs.pages.dev/downloads/homebrew'
+const DEFAULT_RELEASE_BASE_URL = 'https://github.com/umyunsang/UMMAYA/releases/download'
 const ARCHES = ['arm64', 'x64']
+const REDIRECTS_BEGIN = '# BEGIN UMMAYA HOMEBREW DOWNLOAD REDIRECTS'
+const REDIRECTS_END = '# END UMMAYA HOMEBREW DOWNLOAD REDIRECTS'
 
 function parseArgs(argv) {
   const args = {
     root: 'docs-site/dist/downloads/homebrew',
     baseUrl: DEFAULT_BASE_URL,
+    releaseBaseUrl: DEFAULT_RELEASE_BASE_URL,
     preserveRemote: false,
   }
 
@@ -31,6 +35,10 @@ function parseArgs(argv) {
       args.root = argv[++index]
     } else if (arg === '--base-url') {
       args.baseUrl = argv[++index].replace(/\/$/, '')
+    } else if (arg === '--release-base-url') {
+      args.releaseBaseUrl = argv[++index].replace(/\/$/, '')
+    } else if (arg === '--redirects-path') {
+      args.redirectsPath = argv[++index]
     } else if (arg === '--preserve-remote') {
       args.preserveRemote = true
     } else if (arg === '-h' || arg === '--help') {
@@ -47,11 +55,12 @@ function parseArgs(argv) {
   if (args.tag && !/^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(args.tag)) {
     throw new Error(`Invalid release tag: ${args.tag}`)
   }
+  args.redirectsPath ??= join(args.root, '..', '..', '_redirects')
   return args
 }
 
 function usage() {
-  process.stdout.write(`Usage: scripts/stage-homebrew-downloads.mjs [--artifact-dir dist/homebrew --tag vX.Y.Z] [--root docs-site/dist/downloads/homebrew] [--base-url URL] [--preserve-remote]\n`)
+  process.stdout.write(`Usage: scripts/stage-homebrew-downloads.mjs [--artifact-dir dist/homebrew --tag vX.Y.Z] [--root docs-site/dist/downloads/homebrew] [--base-url URL] [--release-base-url URL] [--redirects-path docs-site/dist/_redirects] [--preserve-remote]\n`)
 }
 
 async function fetchJson(url) {
@@ -87,7 +96,15 @@ function writeJson(path, data) {
   writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`)
 }
 
-function stageLocalArtifacts({ artifactDir, baseUrl, root, tag }) {
+function assertSmallPagesFile(path) {
+  const maxPagesFileBytes = 25 * 1024 * 1024
+  const size = statSync(path).size
+  if (size > maxPagesFileBytes) {
+    throw new Error(`${path} is ${size} bytes; Cloudflare Pages supports files up to 25 MiB`)
+  }
+}
+
+function stageLocalArtifacts({ artifactDir, baseUrl, releaseBaseUrl, root, tag }) {
   const version = tag.replace(/^v/, '')
   const versionDir = join(root, tag)
   mkdirSync(versionDir, { recursive: true })
@@ -102,9 +119,17 @@ function stageLocalArtifacts({ artifactDir, baseUrl, root, tag }) {
       if (!existsSync(path)) {
         throw new Error(`Missing local cask artifact: ${path}`)
       }
+    }
+    for (const path of [metadataPath, shaPath]) {
+      assertSmallPagesFile(path)
       copyFileSync(path, join(versionDir, basename(path)))
     }
-    artifacts[arch] = readJson(metadataPath)
+    const metadata = readJson(metadataPath)
+    artifacts[arch] = {
+      ...metadata,
+      url: `${baseUrl}/${tag}/${metadata.artifact}`,
+      releaseUrl: `${releaseBaseUrl}/${tag}/${metadata.artifact}`,
+    }
   }
 
   const manifest = {
@@ -117,7 +142,7 @@ function stageLocalArtifacts({ artifactDir, baseUrl, root, tag }) {
   return manifest
 }
 
-async function preserveRemoteArtifacts({ baseUrl, root }) {
+async function preserveRemoteArtifacts({ baseUrl, releaseBaseUrl, root }) {
   const manifests = new Map()
   const versions = await fetchJson(`${baseUrl}/versions.json`)
   const latest = await fetchJson(`${baseUrl}/latest.json`)
@@ -144,7 +169,6 @@ async function preserveRemoteArtifacts({ baseUrl, root }) {
         continue
       }
       const names = [
-        metadata.artifact,
         `${metadata.artifact}.sha256`,
         `ummaya-${manifest.version}-macos-${arch}.json`,
       ]
@@ -154,6 +178,13 @@ async function preserveRemoteArtifacts({ baseUrl, root }) {
       }
     }
     if (complete) {
+      for (const arch of ARCHES) {
+        const metadata = manifest.artifacts?.[arch]
+        if (metadata?.artifact) {
+          metadata.url ??= `${baseUrl}/${manifest.tag}/${metadata.artifact}`
+          metadata.releaseUrl ??= `${releaseBaseUrl}/${manifest.tag}/${metadata.artifact}`
+        }
+      }
       writeJson(join(versionDir, 'manifest.json'), manifest)
       manifests.set(manifest.tag, manifest)
     }
@@ -178,6 +209,38 @@ function compareVersionsDesc(left, right) {
     }
   }
   return 0
+}
+
+function homebrewDownloadPath(baseUrl, manifest, artifact) {
+  const basePath = new URL(baseUrl).pathname.replace(/\/$/, '')
+  return `${basePath}/${manifest.tag}/${artifact}`
+}
+
+function buildRedirectBlock({ baseUrl, manifests }) {
+  const lines = [REDIRECTS_BEGIN]
+  const sorted = [...manifests.values()].sort(compareVersionsDesc)
+  for (const manifest of sorted) {
+    for (const arch of ARCHES) {
+      const metadata = manifest.artifacts?.[arch]
+      if (!metadata?.artifact) {
+        continue
+      }
+      const source = homebrewDownloadPath(baseUrl, manifest, metadata.artifact)
+      const target = metadata.releaseUrl ?? `${DEFAULT_RELEASE_BASE_URL}/${manifest.tag}/${metadata.artifact}`
+      lines.push(`${source} ${target} 302`)
+    }
+  }
+  lines.push(REDIRECTS_END)
+  return `${lines.join('\n')}\n`
+}
+
+function writeRedirects({ baseUrl, manifests, redirectsPath }) {
+  const existing = existsSync(redirectsPath) ? readFileSync(redirectsPath, 'utf8') : ''
+  const pattern = new RegExp(`${REDIRECTS_BEGIN}[\\s\\S]*?${REDIRECTS_END}\\n?`, 'm')
+  const retained = existing.replace(pattern, '').replace(/\s+$/, '')
+  const block = buildRedirectBlock({ baseUrl, manifests })
+  const next = retained ? `${retained}\n\n${block}` : block
+  writeFileSync(redirectsPath, next)
 }
 
 async function main() {
@@ -211,6 +274,11 @@ async function main() {
 
   writeJson(join(args.root, 'versions.json'), {
     versions: [...staged.values()].sort(compareVersionsDesc),
+  })
+  writeRedirects({
+    baseUrl: args.baseUrl,
+    manifests: staged,
+    redirectsPath: args.redirectsPath,
   })
 
   console.log(`stage-homebrew-downloads: staged ${staged.size} version(s) under ${args.root}`)

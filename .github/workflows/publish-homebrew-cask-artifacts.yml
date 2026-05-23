@@ -138,6 +138,8 @@ jobs:
           tag="${{ steps.release.outputs.tag }}"
           if ! gh release view "${tag}" >/dev/null 2>&1; then
             gh release create "${tag}" --title "UMMAYA ${tag}" --target "${GITHUB_SHA}" --generate-notes
+          else
+            gh release edit "${tag}" --title "UMMAYA ${tag}" --target "${GITHUB_SHA}" --latest
           fi
 
       - name: Upload release assets
@@ -172,9 +174,9 @@ jobs:
           tag="${{ steps.release.outputs.tag }}"
           version="${tag#v}"
           for arch in arm64 x64; do
-            test -s "docs-site/dist/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.tar.gz"
             test -s "docs-site/dist/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.tar.gz.sha256"
             test -s "docs-site/dist/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.json"
+            grep -F "/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.tar.gz https://github.com/umyunsang/UMMAYA/releases/download/${tag}/ummaya-${version}-macos-${arch}.tar.gz 302" docs-site/dist/_redirects
           done
           test -s docs-site/dist/downloads/homebrew/latest.json
           test -s docs-site/dist/downloads/homebrew/versions.json
@@ -188,3 +190,32 @@ jobs:
           workingDirectory: docs-site
           command: pages deploy dist --project-name=${{ env.CLOUDFLARE_PROJECT_NAME }} --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify deployed cask download redirects
+        run: |
+          tag="${{ steps.release.outputs.tag }}"
+          version="${tag#v}"
+          for arch in arm64 x64; do
+            url="https://ummaya-docs.pages.dev/downloads/homebrew/${tag}/ummaya-${version}-macos-${arch}.tar.gz"
+            for attempt in {1..12}; do
+              if curl -fsSIL "${url}" | grep -F "https://github.com/umyunsang/UMMAYA/releases/download/${tag}/ummaya-${version}-macos-${arch}.tar.gz"; then
+                break
+              fi
+              if [ "${attempt}" = "12" ]; then
+                echo "::error::Published redirect did not become visible for ${url}"
+                exit 1
+              fi
+              sleep 5
+            done
+          done
+          for attempt in {1..12}; do
+            if curl -fsSL "https://ummaya-docs.pages.dev/downloads/homebrew/latest.json" \
+              | node -e 'const expected = process.argv[1]; let input = ""; process.stdin.on("data", c => input += c); process.stdin.on("end", () => { const json = JSON.parse(input); if (json.version !== expected) process.exit(1); });' "${version}"; then
+              break
+            fi
+            if [ "${attempt}" = "12" ]; then
+              echo "::error::latest.json did not become visible for ${version}"
+              exit 1
+            fi
+            sleep 5
+          done
