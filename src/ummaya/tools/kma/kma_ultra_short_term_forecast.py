@@ -2,13 +2,13 @@
 """KMA ultra-short-term forecast adapter (초단기예보 조회).
 
 Wraps the ``getUltraSrtFcst`` endpoint from the Korea Meteorological Administration
-(기상청) via the shared data.go.kr service key.
+(기상청) via the KMA API Hub ``authKey`` surface.
 Returns forecast items for the next 6 hours; the live API canonicalizes requested
 HHMM times to the published baseTime carried in response rows.
 
 Wire format quirks handled by this module:
   - Single-item response returns ``item`` as a dict (not array) — normalized to list.
-  - XML is the default; JSON is requested via ``_type=json`` and ``dataType=JSON``.
+  - XML is the official default; JSON is requested only when explicitly selected.
   - ``resultCode != "00"`` is always an error regardless of HTTP 200.
   - Wire fields use camelCase; output model fields use snake_case.
   - base_time accepts HHMM; KMA may canonicalize it to the nearest published
@@ -27,7 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ummaya.tools._description_template import build_description_v4
 from ummaya.tools._outbound_trace import traced_async_client
-from ummaya.tools.errors import ConfigurationError, ToolExecutionError, _require_env
+from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.grid_coords import kma_grid_short_reference
 from ummaya.tools.kma.kma_short_term_forecast import (
@@ -35,12 +35,23 @@ from ummaya.tools.kma.kma_short_term_forecast import (
     KmaShortTermForecastOutput,
     _normalize_items,
 )
+from ummaya.tools.kma.response_payload import (
+    KmaPayloadDecodeError,
+    apply_format_params,
+    decode_response_payload,
+    summarize_http_status_error,
+)
+from ummaya.tools.kma.vilage_fcst_endpoint import (
+    KMA_API_HUB_VILAGE_FCST_BASE_URL,
+    resolve_vilage_fcst_endpoint,
+)
 from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool
 from ummaya.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst"
+_OPERATION = "getUltraSrtFcst"
+_BASE_URL = f"{KMA_API_HUB_VILAGE_FCST_BASE_URL}/{_OPERATION}"
 
 # ---------------------------------------------------------------------------
 # Input model (output reuses ForecastItem / KmaShortTermForecastOutput)
@@ -56,9 +67,9 @@ class KmaUltraShortTermForecastInput(BaseModel):
     base_time: str = Field(
         ...,
         description=(
-            "조회 기준 시각 (HHMM format). KMA live API accepts HHMM and may "
-            "canonicalize to the actually published baseTime in the response. "
-            "Example: 0630 / 1130 / 1430 / 1500."
+            "조회 기준 시각 (HHMM format). Official guide examples use HH30 and "
+            "call after HH:45 KST. KMA live API may canonicalize a non-HH30 "
+            "request to the actually published baseTime in the response."
         ),
     )
     nx: int = Field(
@@ -84,8 +95,8 @@ class KmaUltraShortTermForecastInput(BaseModel):
         description="페이지 번호 (1-based, default 1).",
     )
     data_type: Literal["JSON", "XML"] = Field(
-        default="JSON",
-        description="응답 형식 (JSON 권장).",
+        default="XML",
+        description="응답 형식. XML is the official default; JSON is available if requested.",
     )
 
     @field_validator("base_date")
@@ -118,7 +129,7 @@ KmaUltraShortTermForecastOutput = KmaShortTermForecastOutput
 
 
 def _parse_response(payload: dict[str, object]) -> KmaUltraShortTermForecastOutput:
-    """Parse a full KMA getUltraSrtFcst JSON response.
+    """Parse a full KMA getUltraSrtFcst response envelope.
 
     Args:
         payload: Decoded JSON dict from the API.
@@ -200,28 +211,21 @@ async def _call(
         A plain dict matching ``KmaUltraShortTermForecastOutput`` field names.
 
     Raises:
-        ConfigurationError: If ``UMMAYA_DATA_GO_KR_API_KEY`` is not set.
+        ConfigurationError: If ``UMMAYA_KMA_API_HUB_AUTH_KEY`` is not set.
         ToolExecutionError: On HTTP errors or unexpected API response shapes.
     """
-    api_key = _require_env("UMMAYA_DATA_GO_KR_API_KEY")
-
-    if params.data_type == "XML":
-        raise ToolExecutionError(
-            tool_id="kma_ultra_short_term_forecast",
-            message="XML data_type is not supported; use JSON.",
-        )
+    endpoint = resolve_vilage_fcst_endpoint(_OPERATION)
 
     query_params: dict[str, str | int] = {
-        "serviceKey": api_key,
+        endpoint.auth_query_param: endpoint.api_key,
         "base_date": params.base_date,
         "base_time": params.base_time,
         "nx": params.nx,
         "ny": params.ny,
         "numOfRows": params.num_of_rows,
         "pageNo": params.page_no,
-        "dataType": params.data_type,
-        "_type": "json",
     }
+    query_params = apply_format_params(query_params, params.data_type)
 
     logger.debug(
         "KMA ultra-short-term forecast request: base_date=%s base_time=%s nx=%d ny=%d",
@@ -237,21 +241,10 @@ async def _call(
 
     try:
         assert client is not None  # noqa: S101
-        response = await client.get(_BASE_URL, params=query_params)
+        response = await client.get(endpoint.url, params=query_params)
         response.raise_for_status()
 
-        content_type = response.headers.get("content-type", "")
-        if "xml" in content_type.lower() and "json" not in content_type.lower():
-            raise ToolExecutionError(
-                tool_id="kma_ultra_short_term_forecast",
-                message=(
-                    f"Unexpected XML response from KMA API "
-                    f"(content-type={content_type!r}). "
-                    "Check serviceKey validity."
-                ),
-            )
-
-        payload: dict[str, object] = response.json()
+        payload = decode_response_payload(response)
         output = _parse_response(payload)
 
         logger.info(
@@ -271,7 +264,8 @@ async def _call(
         raise ToolExecutionError(
             tool_id="kma_ultra_short_term_forecast",
             message=(
-                f"HTTP error from KMA ultra-short-term forecast API: {exc.response.status_code}"
+                "HTTP error from KMA ultra-short-term forecast API: "
+                f"{summarize_http_status_error(exc)}"
             ),
             cause=exc,
         ) from exc
@@ -279,6 +273,12 @@ async def _call(
         raise ToolExecutionError(
             tool_id="kma_ultra_short_term_forecast",
             message=f"Network error reaching KMA ultra-short-term forecast API: {exc}",
+            cause=exc,
+        ) from exc
+    except KmaPayloadDecodeError as exc:
+        raise ToolExecutionError(
+            tool_id="kma_ultra_short_term_forecast",
+            message=f"Unable to decode KMA ultra-short-term forecast API response: {exc}",
             cause=exc,
         ) from exc
     finally:
@@ -303,18 +303,16 @@ KMA_ULTRA_SHORT_TERM_FORECAST_TOOL = GovAPITool(
         input_quirk=(
             "nx (1-149), ny (1-253) Lambert 5 km 격자. "
             "base_date=YYYYMMDD (오늘). "
-            "base_time=HHMM format. live evidence confirms KMA accepts values "
-            "such as 1500/1515/1529 and canonicalizes returned rows to the "
-            "published baseTime. 현재 KST 시각 system hint를 기준으로 최신 "
-            "HHMM clock time을 선택 when the citizen asks for 'now'; "
-            "use the response item's base_time as "
-            "the authoritative issued time."
+            "base_time=HHMM format; prefer the latest HH30 slot after HH:45 KST. "
+            "Use the system prompt's 현재 KST 시각 hint to select that slot. "
+            "KMA may canonicalize a non-HH30 request to the published baseTime. "
+            "Use the response item's base_time as the authoritative issued time."
         ),
         short_reference=kma_grid_short_reference(),
         domain_quirk=(
             "초단기예보는 빈번히 갱신되며 응답 baseTime 이 요청 base_time 과 다를 수 있음. "
             "resultCode string '00'=정상. "
-            "HTTP 200 이어도 resultCode != '00' 이면 에러. dataType=JSON 권장."
+            "HTTP 200 이어도 resultCode != '00' 이면 에러. XML is the official default."
         ),
         self_contained_decl=(
             "REQUIRED: nx/ny 입력 필수. 지역명 ('동아대학교', '부산 사하구 다대1동') 은 "

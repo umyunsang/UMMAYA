@@ -14,8 +14,8 @@ environment variable that carries that provider's credential. Used by:
 Lookup order for a given tool id:
 
 1. ``UMMAYA_<TOOL_ID_UPPER>_API_KEY`` — tool-specific override.
-2. ``UMMAYA_KAKAO_API_KEY`` for Kakao-backed tools, or
-   ``UMMAYA_DATA_GO_KR_API_KEY`` for data.go.kr-backed tools.
+2. Provider-level key such as ``UMMAYA_KAKAO_API_KEY``,
+   ``UMMAYA_KMA_API_HUB_AUTH_KEY``, or ``UMMAYA_DATA_GO_KR_API_KEY``.
 3. ``UMMAYA_API_KEY`` — legacy global fallback.
 
 The mapping is intentionally explicit (no heuristic prefix matching) so that
@@ -41,16 +41,20 @@ class CredentialProvider(StrEnum):
     """data.go.kr federated APIs (KMA, KOROAD, etc.); shared key
     ``UMMAYA_DATA_GO_KR_API_KEY``."""
 
+    kma_api_hub = "kma_api_hub"
+    """KMA API Hub; credential is ``UMMAYA_KMA_API_HUB_AUTH_KEY``."""
+
 
 # Primary env var per provider.
 _PROVIDER_ENV_VAR: dict[CredentialProvider, str] = {
     CredentialProvider.kakao: "UMMAYA_KAKAO_API_KEY",
     CredentialProvider.data_go_kr: "UMMAYA_DATA_GO_KR_API_KEY",
+    CredentialProvider.kma_api_hub: "UMMAYA_KMA_API_HUB_AUTH_KEY",
 }
 
-# Tool-id → provider mapping.  Every registered tool that requires a
-# credential MUST appear here; omissions cause fail-closed behaviour at
-# step 1 of the permission pipeline.
+# Tool-id → provider mapping.  Static adapters that require a credential appear
+# here. Catalog-generated families may add a checked dynamic mapping in
+# provider_for() when the catalog itself owns the canonical id list.
 _TOOL_PROVIDERS: dict[str, CredentialProvider] = {
     # Kakao Local API
     "address_to_region": CredentialProvider.kakao,
@@ -58,12 +62,13 @@ _TOOL_PROVIDERS: dict[str, CredentialProvider] = {
     # KOROAD (data.go.kr)
     "koroad_accident_search": CredentialProvider.data_go_kr,
     "koroad_accident_hazard_search": CredentialProvider.data_go_kr,
-    # KMA (data.go.kr)
-    "kma_forecast_fetch": CredentialProvider.data_go_kr,
+    # KMA API Hub VilageFcstInfoService_2.0
+    "kma_forecast_fetch": CredentialProvider.kma_api_hub,
+    "kma_current_observation": CredentialProvider.kma_api_hub,
+    "kma_short_term_forecast": CredentialProvider.kma_api_hub,
+    "kma_ultra_short_term_forecast": CredentialProvider.kma_api_hub,
+    # KMA warning adapters still mirror the data.go.kr WthrWrnInfoService shape.
     "kma_weather_alert_status": CredentialProvider.data_go_kr,
-    "kma_current_observation": CredentialProvider.data_go_kr,
-    "kma_short_term_forecast": CredentialProvider.data_go_kr,
-    "kma_ultra_short_term_forecast": CredentialProvider.data_go_kr,
     "kma_pre_warning": CredentialProvider.data_go_kr,
     # HIRA / NMC / NFA / MOHW (data.go.kr)
     "hira_hospital_search": CredentialProvider.data_go_kr,
@@ -92,7 +97,20 @@ def provider_for(tool_id: str) -> CredentialProvider | None:
     callers should treat this as "no provider credential known" and rely on
     the tool-specific override or global fallback only.
     """
-    return _TOOL_PROVIDERS.get(tool_id)
+    provider = _TOOL_PROVIDERS.get(tool_id)
+    if provider is not None:
+        return provider
+
+    if tool_id.startswith("kma_apihub_"):
+        try:
+            from ummaya.tools.kma.apihub_catalog import get_operation_by_tool_id
+
+            get_operation_by_tool_id(tool_id)
+        except KeyError:
+            return None
+        return CredentialProvider.kma_api_hub
+
+    return None
 
 
 def expected_env_var(tool_id: str) -> str | None:

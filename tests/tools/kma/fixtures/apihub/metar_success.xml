@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header>
+    <resultCode>00</resultCode>
+    <resultMsg>NORMAL_SERVICE</resultMsg>
+  </header>
+  <body>
+    <items>
+      <item>
+        <icao>RKSI</icao>
+        <tm>202605240900</tm>
+        <metarMsg>METAR RKSI 240900Z 22005KT CAVOK 20/12 Q1016</metarMsg>
+      </item>
+    </items>
+    <numOfRows>10</numOfRows>
+    <pageNo>1</pageNo>
+    <totalCount>1</totalCount>
+  </body>
+</response>

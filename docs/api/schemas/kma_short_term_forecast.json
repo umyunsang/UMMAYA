@@ -87,8 +87,8 @@
       "type": "string"
     },
     "data_type": {
-      "default": "JSON",
-      "description": "응답 형식. JSON 권장 (default).",
+      "default": "XML",
+      "description": "응답 형식. XML is the official default; JSON is available if requested.",
       "enum": [
         "JSON",
         "XML"

@@ -46,4 +46,3 @@ Live라는 말은 read-only 조회가 실제 callable channel과 credential path
 Live public-data wave는 `docs/api/verified-data-go-kr/README.md`에 포함 adapter, data.go.kr ID, env var, saved probe path를 기록합니다. 기본 테스트는 live channel을 다시 호출하지 않고 saved fixture를 replay합니다. 실제 runtime 호출은 필요한 `UMMAYA_*` env var가 있을 때 `find` meta-tool 또는 `ToolExecutor.invoke()`를 통해 이루어집니다.
 
 문서사이트의 machine-readable adapter metadata는 `docs/api/README.md`의 catalog row와 개별 spec front matter를 병합해 생성됩니다. 따라서 새 Live adapter를 추가한 뒤에는 `npm run docs:generate`와 `npm run docs:check`로 prose, generated JSON, `llms.txt`가 같은 사실을 말하는지 확인해야 합니다.
-

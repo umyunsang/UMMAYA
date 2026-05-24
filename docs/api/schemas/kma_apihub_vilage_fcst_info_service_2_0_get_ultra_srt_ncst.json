@@ -1,0 +1,157 @@
+{
+  "$defs": {
+    "KmaApiHubStructuredOutput": {
+      "additionalProperties": false,
+      "description": "Normalized output from one KMA APIHub structured operation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "num_of_rows": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Num Of Rows"
+        },
+        "operation": {
+          "title": "Operation",
+          "type": "string"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "page_no": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page No"
+        },
+        "raw_format": {
+          "enum": [
+            "json",
+            "xml",
+            "text_error"
+          ],
+          "title": "Raw Format",
+          "type": "string"
+        },
+        "result_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Code"
+        },
+        "result_msg": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Msg"
+        },
+        "service": {
+          "title": "Service",
+          "type": "string"
+        },
+        "total_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total Count"
+        }
+      },
+      "required": [
+        "operation_id",
+        "service",
+        "operation",
+        "items",
+        "raw_format"
+      ],
+      "title": "KmaApiHubStructuredOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kma_apihub_vilage_fcst_info_service_2_0_get_ultra_srt_ncst.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "base_date": {
+      "default": "20210628",
+      "description": "KMA APIHub request parameter base_date.",
+      "title": "Base Date",
+      "type": "string"
+    },
+    "base_time": {
+      "default": "0600",
+      "description": "KMA APIHub request parameter base_time.",
+      "title": "Base Time",
+      "type": "string"
+    },
+    "data_type": {
+      "default": "XML",
+      "description": "KMA APIHub request parameter dataType.",
+      "title": "Data Type",
+      "type": "string"
+    },
+    "num_of_rows": {
+      "default": 1000,
+      "description": "KMA APIHub request parameter numOfRows.",
+      "title": "Num Of Rows",
+      "type": "integer"
+    },
+    "nx": {
+      "default": 55,
+      "description": "KMA APIHub request parameter nx.",
+      "title": "Nx",
+      "type": "integer"
+    },
+    "ny": {
+      "default": 127,
+      "description": "KMA APIHub request parameter ny.",
+      "title": "Ny",
+      "type": "integer"
+    },
+    "page_no": {
+      "default": 1,
+      "description": "KMA APIHub request parameter pageNo.",
+      "title": "Page No",
+      "type": "integer"
+    }
+  },
+  "title": "kma_apihub_vilage_fcst_info_service_2_0_get_ultra_srt_ncst",
+  "type": "object"
+}

@@ -88,6 +88,9 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
             (invariant violation — see routing-consistency.md).
     """
     from ummaya.tools.hira.hospital_search import register as reg_hira
+    from ummaya.tools.kma.apihub_structured_adapter import (
+        register as reg_kma_apihub_structured,
+    )
     from ummaya.tools.kma.forecast_fetch import (
         KMA_FORECAST_FETCH_TOOL,
         KmaForecastFetchInput,
@@ -149,6 +152,12 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
 
     executor.register_adapter("kma_forecast_fetch", _kma_forecast_fetch_adapter)
     logger.info("Registered tool: kma_forecast_fetch")
+
+    # Spec #2800 — KMA APIHub structured typ02/openApi catalog. These generic
+    # read-only wrappers cover the 85 structured operations discovered from
+    # the agency-owned APIHub catalog while preserving the specialized weather
+    # adapters above for citizen-facing forecast/current-weather flows.
+    reg_kma_apihub_structured(registry, executor)
 
     # Phase 2 adapters (spec 029 — NFA 119 + MOHW SSIS, Layer 3 gated stubs)
     reg_nfa(registry, executor)  # T014 — NFA EMS statistics (interface-only)

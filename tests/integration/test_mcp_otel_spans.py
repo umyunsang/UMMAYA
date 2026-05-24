@@ -87,8 +87,8 @@ class TestMCPToolsListShape:
         tools = response["result"]["tools"]
         # Subscribe is deferred out of the active surface until UMMAYA owns an
         # app/push delivery runtime. The MCP tool list mirrors the active
-        # registry: 70 tools after Spec #2799 adds two KFTC OpenGiro send adapters.
-        assert len(tools) == 70, f"Tool list count drift: got {len(tools)}, expected 70"
+        # registry: 155 tools after Spec #2800 adds 85 KMA APIHub structured adapters.
+        assert len(tools) == 155, f"Tool list count drift: got {len(tools)}, expected 155"
 
     def test_tools_list_entries_have_required_keys(self, mcp_server: MCPServer) -> None:
         response = asyncio.run(

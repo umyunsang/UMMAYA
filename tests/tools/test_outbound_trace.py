@@ -206,7 +206,7 @@ async def test_large_multibyte_body_truncates_without_replacement_character() ->
 
 
 @pytest.mark.asyncio
-async def test_kma_forecast_fetch_emits_trace() -> None:
+async def test_kma_forecast_fetch_emits_trace(monkeypatch: pytest.MonkeyPatch) -> None:
     """Real adapter end-to-end: kma_forecast_fetch via httpx MockTransport.
 
     Proves the full pipeline:
@@ -214,11 +214,13 @@ async def test_kma_forecast_fetch_emits_trace() -> None:
     →  adapter calls own ``traced_async_client(timeout=30.0)``
     →  httpx event hooks fire
     →  trace lands in the buffer
-    →  drain returns one OutboundCallTrace with the redacted serviceKey URL
+    →  drain returns one OutboundCallTrace with the redacted authKey URL
     """
-    import os
-
     from ummaya.tools.kma.forecast_fetch import KmaForecastFetchInput, _fetch
+
+    api_hub_key = "test-api-hub-key-only"
+    monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", api_hub_key)
+    monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
 
     def handler(request: httpx.Request) -> httpx.Response:
         # Minimal valid KMA envelope.
@@ -243,9 +245,6 @@ async def test_kma_forecast_fetch_emits_trace() -> None:
             },
             headers={"content-type": "application/json"},
         )
-
-    # _require_env reads the api key — set a placeholder for the test run.
-    os.environ.setdefault("UMMAYA_DATA_GO_KR_API_KEY", "test-key-only")
 
     inp = KmaForecastFetchInput(
         lat=37.5665,
@@ -272,10 +271,10 @@ async def test_kma_forecast_fetch_emits_trace() -> None:
     trace = traces[0]
     assert trace.method == "GET"
     assert "getVilageFcst" in trace.url
-    # The serviceKey query param is redacted.
-    assert "serviceKey=***" in trace.url
+    # The APIHub authKey query param is redacted.
+    assert "authKey=***" in trace.url
     # Real key value never leaks.
-    assert "test-key-only" not in trace.url
+    assert api_hub_key not in trace.url
     assert trace.response_status == 200
 
 

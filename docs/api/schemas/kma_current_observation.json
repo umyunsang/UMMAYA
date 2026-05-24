@@ -122,13 +122,13 @@
       "type": "string"
     },
     "base_time": {
-      "description": "관측 기준 시각 (HHMM format, 24-hour, no separator). 직전 정시로 내림 (예: 14:35 → 1400). 매 시각 40분 이후만 데이터 안정. Example: 1400 (오후 2시 관측), 0900 (오전 9시 관측).",
+      "description": "관측 기준 시각 (HHMM format, 24-hour, no separator). 직전 정시로 내림 (예: 14:35 → 1400). 매 시각 10분 이후 호출. Example: 1400 (오후 2시 관측), 0900 (오전 9시 관측).",
       "title": "Base Time",
       "type": "string"
     },
     "data_type": {
-      "default": "JSON",
-      "description": "응답 형식. JSON 권장 (default).",
+      "default": "XML",
+      "description": "응답 형식. XML is the official default; JSON is available if requested.",
       "enum": [
         "JSON",
         "XML"

@@ -41,12 +41,12 @@ def test_b1_total_tool_count_includes_mocks(
 ) -> None:
     """Path B-1: bridge registers active non-core mock adapters into main registry.
 
-    Expected total: 70 after both verified public-data adapter waves plus KFTC OpenGiro.
+    Expected total: 155 after KMA APIHub structured adapter expansion.
     """
     r, _ = loaded_registry
     total = len(r.all_tools())
-    assert total == 70, (
-        f"Expected 70 total tools after discovery_bridge runs; got {total}. "
+    assert total == 155, (
+        f"Expected 155 total tools after discovery_bridge runs; got {total}. "
         f"Verify the bridge registered the active mock adapters."
     )
 

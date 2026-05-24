@@ -90,7 +90,7 @@ class TestKmaCurrentObservationInput:
         assert params.ny == 126
         assert params.num_of_rows == 10
         assert params.page_no == 1
-        assert params.data_type == "JSON"
+        assert params.data_type == "XML"
 
     def test_base_time_rounds_down(self):
         """Minutes are stripped; '0610' must become '0600'."""
@@ -295,7 +295,8 @@ class TestCall:
     @pytest.mark.asyncio
     async def test_success_flow(self, monkeypatch):
         """_call with a mocked httpx client returns a dict matching output schema."""
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-abc")
+        monkeypatch.delenv("UMMAYA_KMA_API_HUB_AUTH_KEY", raising=False)
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
         fixture_data = _load_fixture("kma_obs_success.json")
         mock_client = _make_mock_client(fixture_data)
 
@@ -307,10 +308,90 @@ class TestCall:
         assert result["t1h"] == 12.3
         assert result["rn1"] == 0.0
         assert result["pty"] == 0
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert "dataType" not in query_params
+        assert "_type" not in query_params
+
+    @pytest.mark.asyncio
+    async def test_api_hub_key_uses_auth_key_and_api_hub_endpoint(self, monkeypatch):
+        """KMA API Hub credentials must use authKey on the API Hub endpoint."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "api-hub-key")
+        monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
+        fixture_data = _load_fixture("kma_obs_success.json")
+        mock_client = _make_mock_client(fixture_data)
+
+        params = KmaCurrentObservationInput(base_date="20260413", base_time="0600", nx=61, ny=126)
+        await _call(params, client=mock_client)
+
+        called_url = mock_client.get.await_args.args[0]
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert called_url == (
+            "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtNcst"
+        )
+        assert query_params["authKey"] == "api-hub-key"
+        assert "serviceKey" not in query_params
+
+    @pytest.mark.asyncio
+    async def test_xml_response_flow(self, monkeypatch):
+        """Official XML response envelopes are parsed into the same output model."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+
+        xml_body = """<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header><resultCode>00</resultCode><resultMsg>NORMAL_SERVICE</resultMsg></header>
+  <body>
+    <items>
+      <item>
+        <baseDate>20260413</baseDate><baseTime>0600</baseTime>
+        <category>T1H</category><nx>61</nx><ny>126</ny><obsrValue>18.5</obsrValue>
+      </item>
+      <item>
+        <baseDate>20260413</baseDate><baseTime>0600</baseTime>
+        <category>RN1</category><nx>61</nx><ny>126</ny><obsrValue>-</obsrValue>
+      </item>
+    </items>
+    <numOfRows>10</numOfRows><pageNo>1</pageNo><totalCount>2</totalCount>
+  </body>
+</response>"""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.status_code = 200
+        mock_response.headers = {"content-type": "application/xml; charset=UTF-8"}
+        mock_response.text = xml_body
+        mock_response.raise_for_status = MagicMock()
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get.return_value = mock_response
+
+        params = KmaCurrentObservationInput(base_date="20260413", base_time="0600", nx=61, ny=126)
+        result = await _call(params, client=mock_client)
+
+        assert result["base_date"] == "20260413"
+        assert result["base_time"] == "0600"
+        assert result["t1h"] == 18.5
+        assert result["rn1"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_json_data_type_uses_json_selectors(self, monkeypatch):
+        """JSON remains available when explicitly requested."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        fixture_data = _load_fixture("kma_obs_success.json")
+        mock_client = _make_mock_client(fixture_data)
+
+        params = KmaCurrentObservationInput(
+            base_date="20260413",
+            base_time="0600",
+            nx=61,
+            ny=126,
+            data_type="JSON",
+        )
+        await _call(params, client=mock_client)
+
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert query_params["dataType"] == "JSON"
+        assert query_params["_type"] == "json"
 
     @pytest.mark.asyncio
     async def test_no_data_retries_previous_hour(self, monkeypatch):
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-abc")
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
         fixture_data = _load_fixture("kma_obs_success.json")
         mock_client = _make_mock_client_sequence([_no_data_payload(), fixture_data])
 
@@ -324,7 +405,7 @@ class TestCall:
 
     @pytest.mark.asyncio
     async def test_no_data_exhaustion_raises(self, monkeypatch):
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-abc")
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
         mock_client = _make_mock_client_sequence([_no_data_payload()] * 6)
 
         params = KmaCurrentObservationInput(base_date="20260413", base_time="0100", nx=61, ny=126)
@@ -336,8 +417,30 @@ class TestCall:
         assert mock_client.get.await_count == 6
 
     @pytest.mark.asyncio
+    async def test_http_rate_limit_error_includes_upstream_body(self, monkeypatch):
+        """HTTP 429 should preserve the short upstream diagnostic body."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        request = httpx.Request("GET", "https://apihub.kma.go.kr/test")
+        mock_response = httpx.Response(
+            status_code=429,
+            text="API rate limit exceeded",
+            request=request,
+        )
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get.return_value = mock_response
+
+        params = KmaCurrentObservationInput(base_date="20260413", base_time="0600", nx=61, ny=126)
+        with pytest.raises(ToolExecutionError) as exc_info:
+            await _call(params, client=mock_client)
+
+        message = str(exc_info.value)
+        assert "429" in message
+        assert "API rate limit exceeded" in message
+
+    @pytest.mark.asyncio
     async def test_missing_api_key(self, monkeypatch):
-        """Absent UMMAYA_DATA_GO_KR_API_KEY raises ConfigurationError."""
+        """Absent KMA API Hub key raises ConfigurationError."""
+        monkeypatch.delenv("UMMAYA_KMA_API_HUB_AUTH_KEY", raising=False)
         monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
 
         params = KmaCurrentObservationInput(base_date="20260413", base_time="0600", nx=61, ny=126)

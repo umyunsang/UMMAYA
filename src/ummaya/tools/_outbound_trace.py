@@ -13,10 +13,10 @@ response body so the citizen / operator can see exactly what hit the agency
 API and what came back — without enabling Wireshark or staring at OTEL
 spans.
 
-Sensitive headers (``Authorization``, the ``serviceKey`` query param) are
-redacted before being attached to the envelope. Body capture is capped at
-8 KiB per direction; over the cap the body is replaced with the SHA-256
-hash and a ``…(truncated)`` marker.
+Sensitive headers (``Authorization``) and credential query params
+(``serviceKey``, ``authKey``) are redacted before being attached to the
+envelope. Body capture is capped at 8 KiB per direction; over the cap the body
+is replaced with the SHA-256 hash and a ``…(truncated)`` marker.
 """
 
 from __future__ import annotations
@@ -40,7 +40,9 @@ _MAX_BODY_BYTES = 8 * 1024
 
 # Headers and query-param keys that must never leave the backend process.
 _REDACT_HEADERS = frozenset({"authorization", "x-api-key", "x-secret-key", "cookie", "set-cookie"})
-_REDACT_QUERY_PARAMS = frozenset({"servicekey", "service_key", "apikey", "api_key"})
+_REDACT_QUERY_PARAMS = frozenset(
+    {"servicekey", "service_key", "authkey", "auth_key", "apikey", "api_key"}
+)
 
 # ---------------------------------------------------------------------------
 # Public schema

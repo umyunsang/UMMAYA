@@ -65,7 +65,7 @@ class TestKmaShortTermForecastInput:
         assert params.ny == 126
         assert params.num_of_rows == 290
         assert params.page_no == 1
-        assert params.data_type == "JSON"
+        assert params.data_type == "XML"
 
     def test_all_valid_base_times(self):
         """All eight published base times must be accepted."""
@@ -227,7 +227,8 @@ class TestCall:
     @pytest.mark.asyncio
     async def test_success_flow(self, monkeypatch):
         """_call with a mocked httpx client returns a dict matching output schema."""
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-abc")
+        monkeypatch.delenv("UMMAYA_KMA_API_HUB_AUTH_KEY", raising=False)
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
         fixture_data = _load_fixture("kma_short_term_forecast_success.json")
         mock_client = _make_mock_client(fixture_data)
 
@@ -238,10 +239,33 @@ class TestCall:
         assert result["total_count"] == 14
         assert isinstance(result["items"], list)
         assert len(result["items"]) == 14
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert "dataType" not in query_params
+        assert "_type" not in query_params
+
+    @pytest.mark.asyncio
+    async def test_api_hub_key_uses_auth_key_and_api_hub_endpoint(self, monkeypatch):
+        """KMA API Hub credentials must use authKey on the API Hub endpoint."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "api-hub-key")
+        monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
+        fixture_data = _load_fixture("kma_short_term_forecast_success.json")
+        mock_client = _make_mock_client(fixture_data)
+
+        params = KmaShortTermForecastInput(base_date="20260414", base_time="0800", nx=61, ny=126)
+        await _call(params, client=mock_client)
+
+        called_url = mock_client.get.await_args.args[0]
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert called_url == (
+            "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getVilageFcst"
+        )
+        assert query_params["authKey"] == "api-hub-key"
+        assert "serviceKey" not in query_params
 
     @pytest.mark.asyncio
     async def test_missing_api_key(self, monkeypatch):
-        """Absent UMMAYA_DATA_GO_KR_API_KEY raises ConfigurationError."""
+        """Absent KMA API Hub key raises ConfigurationError."""
+        monkeypatch.delenv("UMMAYA_KMA_API_HUB_AUTH_KEY", raising=False)
         monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
 
         params = KmaShortTermForecastInput(base_date="20260414", base_time="0800", nx=61, ny=126)
@@ -249,38 +273,62 @@ class TestCall:
             await _call(params)
 
     @pytest.mark.asyncio
-    async def test_xml_content_type_guard(self, monkeypatch):
-        """An XML content-type response must raise ToolExecutionError."""
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-abc")
+    async def test_xml_content_type_parses(self, monkeypatch):
+        """Official XML response envelopes must parse successfully."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
 
+        xml_body = """<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header><resultCode>00</resultCode><resultMsg>NORMAL_SERVICE</resultMsg></header>
+  <body>
+    <items>
+      <item>
+        <baseDate>20260414</baseDate><baseTime>0800</baseTime>
+        <fcstDate>20260414</fcstDate><fcstTime>0900</fcstTime>
+        <category>TMP</category><fcstValue>12</fcstValue><nx>61</nx><ny>126</ny>
+      </item>
+    </items>
+    <numOfRows>1</numOfRows><pageNo>1</pageNo><totalCount>1</totalCount>
+  </body>
+</response>"""
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 200
         mock_response.headers = {"content-type": "application/xml; charset=UTF-8"}
+        mock_response.text = xml_body
         mock_response.raise_for_status = MagicMock()
         mock_client = AsyncMock(spec=httpx.AsyncClient)
         mock_client.get.return_value = mock_response
 
         params = KmaShortTermForecastInput(base_date="20260414", base_time="0800", nx=61, ny=126)
-        with pytest.raises(ToolExecutionError) as exc_info:
-            await _call(params, client=mock_client)
-        assert "XML" in str(exc_info.value)
+        result = await _call(params, client=mock_client)
+
+        assert result["total_count"] == 1
+        assert result["items"][0]["category"] == "TMP"
 
     @pytest.mark.asyncio
-    async def test_xml_data_type_raises(self, monkeypatch):
-        """Setting data_type='XML' must raise ToolExecutionError immediately."""
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-abc")
+    async def test_json_data_type_uses_json_selectors(self, monkeypatch):
+        """JSON remains available when explicitly requested."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        fixture_data = _load_fixture("kma_short_term_forecast_success.json")
+        mock_client = _make_mock_client(fixture_data)
 
         params = KmaShortTermForecastInput(
-            base_date="20260414", base_time="0800", nx=61, ny=126, data_type="XML"
+            base_date="20260414",
+            base_time="0800",
+            nx=61,
+            ny=126,
+            data_type="JSON",
         )
-        with pytest.raises(ToolExecutionError) as exc_info:
-            await _call(params)
-        assert "XML" in str(exc_info.value)
+        await _call(params, client=mock_client)
+
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert query_params["dataType"] == "JSON"
+        assert query_params["_type"] == "json"
 
     @pytest.mark.asyncio
     async def test_http_status_error(self, monkeypatch):
         """An HTTP 500 must raise ToolExecutionError."""
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key-abc")
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
 
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.status_code = 500

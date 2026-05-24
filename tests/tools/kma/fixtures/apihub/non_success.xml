@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header>
+    <resultCode>03</resultCode>
+    <resultMsg>NO_DATA</resultMsg>
+  </header>
+  <body/>
+</response>

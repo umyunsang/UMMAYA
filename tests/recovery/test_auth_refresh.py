@@ -281,11 +281,7 @@ async def test_all_live_data_go_kr_adapters_use_shared_data_go_kr_key(
     tool_ids = [
         "koroad_accident_search",
         "koroad_accident_hazard_search",
-        "kma_forecast_fetch",
         "kma_weather_alert_status",
-        "kma_current_observation",
-        "kma_short_term_forecast",
-        "kma_ultra_short_term_forecast",
         "kma_pre_warning",
         "hira_hospital_search",
         "nmc_emergency_search",
@@ -296,6 +292,26 @@ async def test_all_live_data_go_kr_adapters_use_shared_data_go_kr_key(
         monkeypatch.delenv(f"UMMAYA_{tool_id.upper()}_API_KEY", raising=False)
         assert await attempt_auth_refresh(tool_id) is True
         assert get_credential(tool_id) == "data-key"
+
+
+async def test_kma_vilage_fcst_adapters_use_api_hub_auth_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """KMA VilageFcst API Hub adapters discover UMMAYA_KMA_API_HUB_AUTH_KEY."""
+    monkeypatch.delenv("UMMAYA_API_KEY", raising=False)
+    monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
+    monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "api-hub-key")
+
+    tool_ids = [
+        "kma_forecast_fetch",
+        "kma_current_observation",
+        "kma_short_term_forecast",
+        "kma_ultra_short_term_forecast",
+    ]
+    for tool_id in tool_ids:
+        monkeypatch.delenv(f"UMMAYA_{tool_id.upper()}_API_KEY", raising=False)
+        assert await attempt_auth_refresh(tool_id) is True
+        assert get_credential(tool_id) == "api-hub-key"
 
 
 async def test_kakao_tool_rejects_data_go_kr_only_environment(

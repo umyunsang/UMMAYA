@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from ummaya.tools.executor import ToolExecutor
+from ummaya.tools.kma.apihub_catalog import iter_structured_operations
 from ummaya.tools.register_all import register_all_tools
 from ummaya.tools.registry import ToolRegistry
 from ummaya.tools.routing_index import (
@@ -267,7 +268,7 @@ class TestCheck7ToolListClosure:
             "moj_stay_person_counter",
             "msit_business_announcement_lookup",
         }
-    )
+    ) | frozenset(operation.tool_id for operation in iter_structured_operations())
 
     def test_registered_set_matches_expected(self, live_registry):
         """Registry tool set exactly matches the active closed set."""

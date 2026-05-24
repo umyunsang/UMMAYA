@@ -24,15 +24,26 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ummaya.tools._description_template import build_description_v4
 from ummaya.tools._outbound_trace import traced_async_client
-from ummaya.tools.errors import ConfigurationError, ToolExecutionError, _require_env
+from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.grid_coords import kma_grid_short_reference
+from ummaya.tools.kma.response_payload import (
+    KmaPayloadDecodeError,
+    apply_format_params,
+    decode_response_payload,
+    summarize_http_status_error,
+)
+from ummaya.tools.kma.vilage_fcst_endpoint import (
+    KMA_API_HUB_VILAGE_FCST_BASE_URL,
+    resolve_vilage_fcst_endpoint,
+)
 from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool
 from ummaya.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"
+_OPERATION = "getUltraSrtNcst"
+_BASE_URL = f"{KMA_API_HUB_VILAGE_FCST_BASE_URL}/{_OPERATION}"
 _NO_DATA_RESULT_CODE = "03"
 _MAX_OBSERVATION_SLOT_ATTEMPTS = 6
 
@@ -58,7 +69,7 @@ class KmaCurrentObservationInput(BaseModel):
         ...,
         description=(
             "관측 기준 시각 (HHMM format, 24-hour, no separator). "
-            "직전 정시로 내림 (예: 14:35 → 1400). 매 시각 40분 이후만 데이터 안정. "
+            "직전 정시로 내림 (예: 14:35 → 1400). 매 시각 10분 이후 호출. "
             "Example: 1400 (오후 2시 관측), 0900 (오전 9시 관측)."
         ),
     )
@@ -93,8 +104,8 @@ class KmaCurrentObservationInput(BaseModel):
         description="페이지 번호 (1-based, default 1). 보통 기본값 사용.",
     )
     data_type: Literal["JSON", "XML"] = Field(
-        default="JSON",
-        description="응답 형식. JSON 권장 (default).",
+        default="XML",
+        description="응답 형식. XML is the official default; JSON is available if requested.",
     )
 
     @field_validator("base_date")
@@ -278,7 +289,7 @@ def _is_retryable_no_data_error(exc: ToolExecutionError) -> bool:
 
 
 def _parse_response(payload: dict[str, object]) -> KmaCurrentObservationOutput:
-    """Parse a full KMA getUltraSrtNcst JSON response.
+    """Parse a full KMA getUltraSrtNcst response envelope.
 
     Args:
         payload: Decoded JSON dict from the API.
@@ -345,16 +356,10 @@ async def _call(  # noqa: C901
         A plain dict matching ``KmaCurrentObservationOutput`` field names.
 
     Raises:
-        ConfigurationError: If ``UMMAYA_DATA_GO_KR_API_KEY`` is not set.
+        ConfigurationError: If ``UMMAYA_KMA_API_HUB_AUTH_KEY`` is not set.
         ToolExecutionError: On HTTP errors or unexpected API response shapes.
     """
-    api_key = _require_env("UMMAYA_DATA_GO_KR_API_KEY")
-
-    if params.data_type == "XML":
-        raise ToolExecutionError(
-            tool_id="kma_current_observation",
-            message="XML data_type is not supported; use JSON.",
-        )
+    endpoint = resolve_vilage_fcst_endpoint(_OPERATION)
 
     logger.debug(
         "KMA observation request: base_date=%s base_time=%s nx=%d ny=%d",
@@ -376,35 +381,23 @@ async def _call(  # noqa: C901
             params.base_time,
         ):
             query_params: dict[str, str | int] = {
-                "serviceKey": api_key,
+                endpoint.auth_query_param: endpoint.api_key,
                 "base_date": base_date,
                 "base_time": base_time,
                 "nx": params.nx,
                 "ny": params.ny,
                 "numOfRows": params.num_of_rows,
                 "pageNo": params.page_no,
-                "dataType": params.data_type,
-                "_type": "json",
             }
+            query_params = apply_format_params(query_params, params.data_type)
 
             response = await client.get(
-                _BASE_URL,
+                endpoint.url,
                 params=query_params,
             )
             response.raise_for_status()
 
-            content_type = response.headers.get("content-type", "")
-            if "xml" in content_type.lower():
-                raise ToolExecutionError(
-                    tool_id="kma_current_observation",
-                    message=(
-                        f"Unexpected XML response from KMA API "
-                        f"(content-type={content_type!r}). "
-                        "Check serviceKey validity."
-                    ),
-                )
-
-            payload: dict[str, object] = response.json()
+            payload = decode_response_payload(response)
             try:
                 output = _parse_response(payload)
             except ToolExecutionError as exc:
@@ -437,13 +430,19 @@ async def _call(  # noqa: C901
     except httpx.HTTPStatusError as exc:
         raise ToolExecutionError(
             tool_id="kma_current_observation",
-            message=f"HTTP error from KMA API: {exc.response.status_code}",
+            message=f"HTTP error from KMA API: {summarize_http_status_error(exc)}",
             cause=exc,
         ) from exc
     except httpx.RequestError as exc:
         raise ToolExecutionError(
             tool_id="kma_current_observation",
             message=f"Network error reaching KMA API: {exc}",
+            cause=exc,
+        ) from exc
+    except KmaPayloadDecodeError as exc:
+        raise ToolExecutionError(
+            tool_id="kma_current_observation",
+            message=f"Unable to decode KMA API response: {exc}",
             cause=exc,
         ) from exc
     finally:
@@ -474,12 +473,13 @@ KMA_CURRENT_OBSERVATION_TOOL = GovAPITool(
             "nx/ny 는 locate 결과의 KMA 격자 X/Y를 그대로 복사. "
             "base_date=YYYYMMDD, base_time=HH00. "
             "시스템 프롬프트의 '현재 KST 시각'을 기준으로 직전 정시 사용; "
-            ":40 전이면 한 시간 더 이전이 안정. NO_DATA 시 이전 시간 자동 재시도. "
-            "data_type=JSON, resultCode '00'=정상."
+            "정시 +10분 전이면 한 시간 더 이전이 안정. NO_DATA 시 이전 시간 자동 재시도. "
+            "XML is the official default wire format; resultCode '00'=정상."
         ),
         short_reference=kma_grid_short_reference(),
         domain_quirk=(
-            "매 정시 :40 이후만 안정. 14:25 호출 → base_time='1300'. "
+            "매 정시 +10분 이후 호출. 14:05 호출 → base_time='1300', "
+            "14:25 호출 → base_time='1400'. "
             "RN1='-' 는 강수 없음(0.0). HTTP 200 이어도 resultCode != '00' 이면 에러. "
             "VEC(풍향, 도): 0=북, 90=동, 180=남, 270=서. 16방위 매핑 — "
             "N(348.75-11.25), NNE(11.25-33.75), NE(33.75-56.25), ENE(56.25-78.75), "

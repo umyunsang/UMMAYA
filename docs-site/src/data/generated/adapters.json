@@ -153,6 +153,15 @@
     "tool_id": "kepco_contract_power_usage"
   },
   {
+    "docs_path": "docs/api/kma/apihub_structured_adapters.md",
+    "permission_tier": 1,
+    "primitive": "find",
+    "schema_path": "docs/api/schemas",
+    "source": "KMA APIHub",
+    "tier": "live",
+    "tool_id": "kma_apihub_*"
+  },
+  {
     "docs_path": "docs/api/kma/current_observation.md",
     "permission_tier": 1,
     "primitive": "find",

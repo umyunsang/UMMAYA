@@ -199,7 +199,8 @@ class TestBaseSlotRecovery:
 class TestFetch:
     @pytest.mark.asyncio
     async def test_happy_path_returns_timeseries(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key")
+        monkeypatch.delenv("UMMAYA_KMA_API_HUB_AUTH_KEY", raising=False)
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
         fixture = _load_fixture("forecast_fetch_happy.json")
         mock_client = _make_mock_client(fixture)
 
@@ -223,12 +224,86 @@ class TestFetch:
         # TMN/TMX slots may lack it)
         temps = [pt["temperature_c"] for pt in result.points if pt["temperature_c"] is not None]
         assert len(temps) > 0, "No point had a temperature_c value"
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert "dataType" not in query_params
+        assert "_type" not in query_params
+
+    @pytest.mark.asyncio
+    async def test_api_hub_key_uses_auth_key_and_api_hub_endpoint(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "api-hub-key")
+        monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
+        fixture = _load_fixture("forecast_fetch_happy.json")
+        mock_client = _make_mock_client(fixture)
+
+        inp = KmaForecastFetchInput(
+            lat=37.5665,
+            lon=127.0495,
+            base_date="20260416",
+            base_time="0800",
+        )
+        result = await _fetch(inp, client=mock_client)
+
+        assert isinstance(result, LookupTimeseries)
+        called_url = mock_client.get.await_args.args[0]
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert called_url == (
+            "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getVilageFcst"
+        )
+        assert query_params["authKey"] == "api-hub-key"
+        assert "serviceKey" not in query_params
+
+    @pytest.mark.asyncio
+    async def test_xml_response_returns_timeseries(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Official XML response envelopes are decoded before timeseries aggregation."""
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
+
+        xml_body = """<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header><resultCode>00</resultCode><resultMsg>NORMAL_SERVICE</resultMsg></header>
+  <body>
+    <items>
+      <item>
+        <baseDate>20260416</baseDate><baseTime>0800</baseTime>
+        <fcstDate>20260416</fcstDate><fcstTime>0900</fcstTime>
+        <category>TMP</category><fcstValue>14</fcstValue><nx>60</nx><ny>127</ny>
+      </item>
+      <item>
+        <baseDate>20260416</baseDate><baseTime>0800</baseTime>
+        <fcstDate>20260416</fcstDate><fcstTime>0900</fcstTime>
+        <category>POP</category><fcstValue>10</fcstValue><nx>60</nx><ny>127</ny>
+      </item>
+    </items>
+    <numOfRows>2</numOfRows><pageNo>1</pageNo><totalCount>2</totalCount>
+  </body>
+</response>"""
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.status_code = 200
+        mock_response.headers = {"content-type": "application/xml; charset=UTF-8"}
+        mock_response.text = xml_body
+        mock_response.raise_for_status = MagicMock()
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get.return_value = mock_response
+
+        inp = KmaForecastFetchInput(
+            lat=37.5665,
+            lon=127.0495,
+            base_date="20260416",
+            base_time="0800",
+        )
+        result = await _fetch(inp, client=mock_client)
+
+        assert isinstance(result, LookupTimeseries)
+        assert len(result.points) == 1
+        assert result.points[0]["temperature_c"] == 14.0
+        assert result.points[0]["pop_pct"] == 10
 
     @pytest.mark.asyncio
     async def test_out_of_domain_coords_returns_error(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key")
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
         inp = KmaForecastFetchInput(
             lat=5.0,  # outside KMA domain (< 22°)
             lon=127.0,
@@ -243,6 +318,7 @@ class TestFetch:
 
     @pytest.mark.asyncio
     async def test_missing_api_key_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("UMMAYA_KMA_API_HUB_AUTH_KEY", raising=False)
         monkeypatch.delenv("UMMAYA_DATA_GO_KR_API_KEY", raising=False)
         inp = KmaForecastFetchInput(
             lat=37.5665,
@@ -259,7 +335,7 @@ class TestFetch:
     async def test_upstream_error_result_code_returns_lookup_error(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "bad-key")
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "bad-key")
         error_payload = {
             "response": {
                 "header": {"resultCode": "10", "resultMsg": "APPLICATION_ERROR"},
@@ -281,10 +357,37 @@ class TestFetch:
         assert result.upstream_code == "10"
 
     @pytest.mark.asyncio
+    async def test_http_rate_limit_error_includes_upstream_body(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
+        request = httpx.Request("GET", "https://apihub.kma.go.kr/test")
+        mock_response = httpx.Response(
+            status_code=429,
+            text="API rate limit exceeded",
+            request=request,
+        )
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get.return_value = mock_response
+
+        inp = KmaForecastFetchInput(
+            lat=37.5665,
+            lon=127.0495,
+            base_date="20260416",
+            base_time="0800",
+        )
+        result = await _fetch(inp, client=mock_client)
+
+        assert isinstance(result, LookupError)
+        assert result.reason == "upstream_unavailable"
+        assert "429" in result.message
+        assert "API rate limit exceeded" in result.message
+
+    @pytest.mark.asyncio
     async def test_no_data_retries_previous_base_slot(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key")
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
         fixture = _load_fixture("forecast_fetch_happy.json")
         mock_client = _make_mock_client_sequence([_no_data_payload(), fixture])
 
@@ -306,7 +409,7 @@ class TestFetch:
     async def test_no_data_exhaustion_returns_retryable_error(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("UMMAYA_DATA_GO_KR_API_KEY", "test-key")
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
         mock_client = _make_mock_client_sequence([_no_data_payload()] * 8)
 
         inp = KmaForecastFetchInput(

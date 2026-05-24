@@ -1,0 +1,139 @@
+{
+  "$defs": {
+    "KmaApiHubStructuredOutput": {
+      "additionalProperties": false,
+      "description": "Normalized output from one KMA APIHub structured operation.",
+      "properties": {
+        "items": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "num_of_rows": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Num Of Rows"
+        },
+        "operation": {
+          "title": "Operation",
+          "type": "string"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "page_no": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page No"
+        },
+        "raw_format": {
+          "enum": [
+            "json",
+            "xml",
+            "text_error"
+          ],
+          "title": "Raw Format",
+          "type": "string"
+        },
+        "result_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Code"
+        },
+        "result_msg": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Msg"
+        },
+        "service": {
+          "title": "Service",
+          "type": "string"
+        },
+        "total_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total Count"
+        }
+      },
+      "required": [
+        "operation_id",
+        "service",
+        "operation",
+        "items",
+        "raw_format"
+      ],
+      "title": "KmaApiHubStructuredOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kma_apihub_kimmodel_info_service_get_kimldaps_unis_area.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "base_time": {
+      "default": "202603161500",
+      "description": "KMA APIHub request parameter baseTime.",
+      "title": "Base Time",
+      "type": "string"
+    },
+    "data_type": {
+      "default": "XML",
+      "description": "KMA APIHub request parameter dataType.",
+      "title": "Data Type",
+      "type": "string"
+    },
+    "data_type_cd": {
+      "default": "Humi",
+      "description": "KMA APIHub request parameter dataTypeCd.",
+      "title": "Data Type Cd",
+      "type": "string"
+    },
+    "dong_code": {
+      "default": "1111051500",
+      "description": "KMA APIHub request parameter dongCode.",
+      "title": "Dong Code",
+      "type": "string"
+    }
+  },
+  "title": "kma_apihub_kimmodel_info_service_get_kimldaps_unis_area",
+  "type": "object"
+}

@@ -2,13 +2,13 @@
 """KMA short-term forecast adapter (단기예보 조회).
 
 Wraps the ``getVilageFcst`` endpoint from the Korea Meteorological Administration
-(기상청) via the shared data.go.kr service key.
+(기상청) via the KMA API Hub ``authKey`` surface.
 Returns a list of forecast items covering approximately 3 days ahead, published
 8 times a day at 0200, 0500, 0800, 1100, 1400, 1700, 2000, 2300 KST.
 
 Wire format quirks handled by this module:
   - Single-item response returns ``item`` as a dict (not array) — normalized to list.
-  - XML is the default; JSON is requested via ``_type=json`` and ``dataType=JSON``.
+  - XML is the official default; JSON is requested only when explicitly selected.
   - ``resultCode != "00"`` is always an error regardless of HTTP 200.
   - Wire fields use camelCase; output model fields use snake_case.
   - PCP / SNO values may be strings like "30.0~50.0mm" — stored as-is.
@@ -26,15 +26,26 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ummaya.tools._description_template import build_description_v4
 from ummaya.tools._outbound_trace import traced_async_client
-from ummaya.tools.errors import ConfigurationError, ToolExecutionError, _require_env
+from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.grid_coords import kma_grid_short_reference
+from ummaya.tools.kma.response_payload import (
+    KmaPayloadDecodeError,
+    apply_format_params,
+    decode_response_payload,
+    summarize_http_status_error,
+)
+from ummaya.tools.kma.vilage_fcst_endpoint import (
+    KMA_API_HUB_VILAGE_FCST_BASE_URL,
+    resolve_vilage_fcst_endpoint,
+)
 from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool
 from ummaya.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
+_OPERATION = "getVilageFcst"
+_BASE_URL = f"{KMA_API_HUB_VILAGE_FCST_BASE_URL}/{_OPERATION}"
 
 # Valid base times for the short-term forecast service (KST)
 _VALID_BASE_TIMES = frozenset({"0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"})
@@ -90,8 +101,8 @@ class KmaShortTermForecastInput(BaseModel):
         description="페이지 번호 (1-based, default 1). 보통 기본값.",
     )
     data_type: Literal["JSON", "XML"] = Field(
-        default="JSON",
-        description="응답 형식. JSON 권장 (default).",
+        default="XML",
+        description="응답 형식. XML is the official default; JSON is available if requested.",
     )
 
     @field_validator("base_date")
@@ -188,7 +199,7 @@ def _normalize_items(raw: object) -> list[dict[str, object]]:
 
 
 def _parse_response(payload: dict[str, object]) -> KmaShortTermForecastOutput:
-    """Parse a full KMA getVilageFcst JSON response.
+    """Parse a full KMA getVilageFcst response envelope.
 
     Args:
         payload: Decoded JSON dict from the API.
@@ -270,28 +281,21 @@ async def _call(
         A plain dict matching ``KmaShortTermForecastOutput`` field names.
 
     Raises:
-        ConfigurationError: If ``UMMAYA_DATA_GO_KR_API_KEY`` is not set.
+        ConfigurationError: If ``UMMAYA_KMA_API_HUB_AUTH_KEY`` is not set.
         ToolExecutionError: On HTTP errors or unexpected API response shapes.
     """
-    api_key = _require_env("UMMAYA_DATA_GO_KR_API_KEY")
-
-    if params.data_type == "XML":
-        raise ToolExecutionError(
-            tool_id="kma_short_term_forecast",
-            message="XML data_type is not supported; use JSON.",
-        )
+    endpoint = resolve_vilage_fcst_endpoint(_OPERATION)
 
     query_params: dict[str, str | int] = {
-        "serviceKey": api_key,
+        endpoint.auth_query_param: endpoint.api_key,
         "base_date": params.base_date,
         "base_time": params.base_time,
         "nx": params.nx,
         "ny": params.ny,
         "numOfRows": params.num_of_rows,
         "pageNo": params.page_no,
-        "dataType": params.data_type,
-        "_type": "json",
     }
+    query_params = apply_format_params(query_params, params.data_type)
 
     logger.debug(
         "KMA short-term forecast request: base_date=%s base_time=%s nx=%d ny=%d",
@@ -307,21 +311,10 @@ async def _call(
 
     try:
         assert client is not None  # noqa: S101
-        response = await client.get(_BASE_URL, params=query_params)
+        response = await client.get(endpoint.url, params=query_params)
         response.raise_for_status()
 
-        content_type = response.headers.get("content-type", "")
-        if "xml" in content_type.lower() and "json" not in content_type.lower():
-            raise ToolExecutionError(
-                tool_id="kma_short_term_forecast",
-                message=(
-                    f"Unexpected XML response from KMA API "
-                    f"(content-type={content_type!r}). "
-                    "Check serviceKey validity."
-                ),
-            )
-
-        payload: dict[str, object] = response.json()
+        payload = decode_response_payload(response)
         output = _parse_response(payload)
 
         logger.info(
@@ -339,13 +332,21 @@ async def _call(
     except httpx.HTTPStatusError as exc:
         raise ToolExecutionError(
             tool_id="kma_short_term_forecast",
-            message=f"HTTP error from KMA short-term forecast API: {exc.response.status_code}",
+            message=(
+                f"HTTP error from KMA short-term forecast API: {summarize_http_status_error(exc)}"
+            ),
             cause=exc,
         ) from exc
     except httpx.RequestError as exc:
         raise ToolExecutionError(
             tool_id="kma_short_term_forecast",
             message=f"Network error reaching KMA short-term forecast API: {exc}",
+            cause=exc,
+        ) from exc
+    except KmaPayloadDecodeError as exc:
+        raise ToolExecutionError(
+            tool_id="kma_short_term_forecast",
+            message=f"Unable to decode KMA short-term forecast API response: {exc}",
             cause=exc,
         ) from exc
     finally:

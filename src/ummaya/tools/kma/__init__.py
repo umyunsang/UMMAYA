@@ -1,6 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 """KMA (Korea Meteorological Administration) API adapter package for UMMAYA Tool System."""
 
+from ummaya.tools.kma.apihub_catalog import (
+    KMA_APIHUB_STRUCTURED_OPERATIONS,
+    KmaApiHubOperation,
+    KmaApiHubRequestParam,
+)
+from ummaya.tools.kma.apihub_structured_adapter import KmaApiHubStructuredOutput
 from ummaya.tools.kma.kma_current_observation import (
     KMA_CURRENT_OBSERVATION_TOOL,
     KmaCurrentObservationInput,
@@ -31,6 +37,11 @@ from ummaya.tools.kma.kma_weather_alert_status import (
 )
 
 __all__ = [
+    # APIHub structured catalog
+    "KMA_APIHUB_STRUCTURED_OPERATIONS",
+    "KmaApiHubOperation",
+    "KmaApiHubRequestParam",
+    "KmaApiHubStructuredOutput",
     # Current observation
     "KMA_CURRENT_OBSERVATION_TOOL",
     "KmaCurrentObservationInput",

@@ -2,7 +2,7 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the active count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 70 entries
+  - Main ToolRegistry: 155 entries
   - ummaya.primitives.verify._VERIFY_ADAPTERS: 10 families
   - ummaya.primitives.submit._ADAPTER_REGISTRY: 7 families
 
@@ -16,7 +16,7 @@ do NOT silently adjust the expected values.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Main ToolRegistry count — 70 total
+# Main ToolRegistry count — 155 total
 # ---------------------------------------------------------------------------
 # Epic η #2298 — extended from 16 to 18 by adding `check` / `send`
 # to mvp_surface as `is_core=True` GovAPITool entries (FR-021).
@@ -45,10 +45,12 @@ from __future__ import annotations
 # approved live public-data adapters from the 2026-05-16 direct evidence batch.
 # Spec #2799 — extended from 68 to 70 by registering two fixture-backed KFTC
 # OpenGiro send adapters.
-_EXPECTED_MAIN_REGISTRY_COUNT = 70
+# Spec #2800 — extended from 70 to 155 by registering 85 KMA APIHub structured
+# typ02/openApi adapters generated from the 2026-05-24 agency catalog evidence.
+_EXPECTED_MAIN_REGISTRY_COUNT = 155
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
-    "live_adapters": 42,  # 12 existing Live + 30 verified public-data adapters
+    "live_adapters": 127,  # 42 existing Live + 85 KMA APIHub structured adapters
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
@@ -112,7 +114,7 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 70 entries after register_all_tools()."""
+    """Main ToolRegistry must have exactly 155 entries after register_all_tools()."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -353,7 +355,9 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # Locate-provider adapters add five first-class registry entries.
         # Spec #2798 adds sixteen approved live data.go.kr adapters, bringing
         # the main ToolRegistry from 52 to 68.
-        "main_registry": 70,
+        # Spec #2800 adds 85 KMA APIHub structured typ02/openApi wrappers,
+        # bringing the main ToolRegistry from 70 to 155.
+        "main_registry": 155,
         "verify_families": 10,
         "submit_adapters": 7,
     }

@@ -2,7 +2,7 @@
 """KMA short-term forecast fetch adapter — kma_forecast_fetch (T046).
 
 Wraps the ``getVilageFcst`` endpoint from the Korea Meteorological Administration
-(기상청) via the shared data.go.kr service key.
+(기상청) via the KMA API Hub ``authKey`` surface.
 
 Input: (lat, lon) coordinates + base_date + base_time.
 Internally projects (lat, lon) → (nx, ny) via Lambert Conformal Conic before
@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -35,8 +35,17 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ummaya.tools._description_template import build_description_v4
 from ummaya.tools._outbound_trace import traced_async_client
-from ummaya.tools.errors import LookupErrorReason, _require_env
+from ummaya.tools.errors import LookupErrorReason
 from ummaya.tools.kma.projection import KMADomainError, latlon_to_lcc
+from ummaya.tools.kma.response_payload import (
+    KmaPayloadDecodeError,
+    decode_response_payload,
+    summarize_http_status_error,
+)
+from ummaya.tools.kma.vilage_fcst_endpoint import (
+    KMA_API_HUB_VILAGE_FCST_BASE_URL,
+    resolve_vilage_fcst_endpoint,
+)
 from ummaya.tools.models import (  # noqa: A004
     AdapterRealDomainPolicy,
     GovAPITool,
@@ -51,7 +60,8 @@ _SEOUL_TZ = ZoneInfo("Asia/Seoul")
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
+_OPERATION = "getVilageFcst"
+_BASE_URL = f"{KMA_API_HUB_VILAGE_FCST_BASE_URL}/{_OPERATION}"
 
 _BASE_TIME_ORDER: tuple[str, ...] = (
     "0200",
@@ -297,12 +307,12 @@ async def _fetch(  # noqa: C901
         inp.base_time,
     )
 
-    api_key = _require_env("UMMAYA_DATA_GO_KR_API_KEY")
+    endpoint = resolve_vilage_fcst_endpoint(_OPERATION)
 
     own_client = client is None
     # Spec 2521 (2026-05-01) — switch to the traced client so the verbose
     # tool view in the TUI can surface request/response JSON for the
-    # outbound data.go.kr call. When no capture scope is open (unit tests
+    # outbound KMA API Hub call. When no capture scope is open (unit tests
     # invoking ``_fetch`` directly) the hook is a no-op.
     _client: httpx.AsyncClient = (
         traced_async_client(timeout=30.0) if own_client else client  # type: ignore[assignment]
@@ -318,33 +328,26 @@ async def _fetch(  # noqa: C901
     try:
         for base_date, base_time in _candidate_base_slots(inp.base_date, inp.base_time):
             query_params: dict[str, str | int] = {
-                "serviceKey": api_key,
+                endpoint.auth_query_param: endpoint.api_key,
                 "base_date": base_date,
                 "base_time": base_time,
                 "nx": nx,
                 "ny": ny,
                 "numOfRows": 290,
                 "pageNo": 1,
-                "dataType": "JSON",
-                "_type": "json",
             }
 
-            response = await _client.get(_BASE_URL, params=query_params)
+            response = await _client.get(endpoint.url, params=query_params)
             response.raise_for_status()
 
-            content_type = response.headers.get("content-type", "")
-            if "xml" in content_type.lower() and "json" not in content_type.lower():
+            try:
+                payload = cast(dict[str, Any], decode_response_payload(response))
+            except KmaPayloadDecodeError as exc:
                 return LookupError(
                     kind="error",
                     reason=LookupErrorReason.upstream_unavailable,
-                    message=(
-                        f"KMA API returned XML instead of JSON "
-                        f"(content-type={content_type!r}). "
-                        "Check UMMAYA_DATA_GO_KR_API_KEY validity."
-                    ),
+                    message=f"Unable to decode KMA forecast API response: {exc}",
                 )
-
-            payload: dict[str, Any] = response.json()
 
             try:
                 current_resp_body, result_code, result_msg = _extract_response_header(payload)
@@ -396,7 +399,7 @@ async def _fetch(  # noqa: C901
         return LookupError(
             kind="error",
             reason=LookupErrorReason.upstream_unavailable,
-            message=f"HTTP error from KMA forecast API: {exc.response.status_code}",
+            message=f"HTTP error from KMA forecast API: {summarize_http_status_error(exc)}",
         )
     except httpx.RequestError as exc:
         return LookupError(

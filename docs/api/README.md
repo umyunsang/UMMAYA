@@ -1,6 +1,6 @@
 # UMMAYA API Catalog
 
-This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637) plus the direct-curl verified public-data waves from Epics #2797 and #2832. Active adapters span Korean ministries, public corporations, and public-infrastructure endpoints: live `find` adapters call `data.go.kr` or provider LINK APIs, live `locate` adapters wrap provider-specific geocoding APIs, and mock `send`/`check` adapters replay public-spec-mirrored fixtures. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
+This directory documents every active adapter registered with UMMAYA at the close of the Claude Code → Korean public-service harness migration (Initiative #1631, Epic P6 #1637), the direct-curl verified public-data waves from Epics #2797 and #2832, and the KMA APIHub structured expansion from Spec #2800. Active adapters span Korean ministries, public corporations, and public-infrastructure endpoints: live `find` adapters call `data.go.kr`, KMA APIHub, or provider LINK APIs, live `locate` adapters wrap provider-specific geocoding APIs, and mock `send`/`check` adapters replay public-spec-mirrored fixtures. Subscription adapters are intentionally deferred until UMMAYA has an app/push-notification runtime.
 
 The catalog is intended for three audiences:
 
@@ -9,6 +9,27 @@ The catalog is intended for three audiences:
 - **Maintainers** keeping schemas in sync with `src/ummaya/tools/` source.
 
 Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-smoke/contracts/adapter-spec-template.md`](../../specs/1637-p6-docs-smoke/contracts/adapter-spec-template.md): YAML front matter (`tool_id` · `primitive` · `tier` · `permission_tier`) followed by Overview · Envelope · Search hints · Endpoint · Permission tier rationale · Worked example · Constraints. JSON Schema Draft 2020-12 exports for every adapter live under [`schemas/`](./schemas/) and are produced deterministically by [`scripts/build_schemas.py`](../../scripts/build_schemas.py).
+
+Provider portfolio notes that are broader than one active adapter live next to
+the catalog. The current KFTC portfolio analysis is
+[`kftc-openapi-portfolio.md`](./kftc-openapi-portfolio.md); it maps the full
+KFTC OpenAPI service surface to UMMAYA primitives and records approval/testbed
+gates before future adapter specs are opened. The endpoint-by-endpoint KFTC
+developer-site inventory is
+[`kftc-openapi-endpoint-inventory.md`](./kftc-openapi-endpoint-inventory.md).
+The deeper section-by-section debug report is
+[`kftc-openapi-56-section-debug-report.md`](./kftc-openapi-56-section-debug-report.md);
+it records the scroll-verified KFTC OpenAPI sidebar routes, direct probe
+outcomes, root-cause classifications, and the UMMAYA adapter treatment for each
+route.
+
+The KMA APIHub structured catalog is grouped under
+[`kma/apihub_structured_adapters.md`](./kma/apihub_structured_adapters.md). It
+wraps 85 `typ02/openApi` operations as generated `kma_apihub_*` `find`
+adapters with individual JSON Schema files under [`schemas/`](./schemas/).
+They are grouped here to keep the index readable; the generated schema
+filenames and stable `tool_id` values are the source of truth for individual
+operations.
 
 ## How to use this catalog
 
@@ -28,6 +49,7 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | KMA | `kma_weather_alert_status` | `find` | live | 1 | [kma/weather_alert_status.md](./kma/weather_alert_status.md) | [kma_weather_alert_status.json](./schemas/kma_weather_alert_status.json) |
 | KMA | `kma_pre_warning` | `find` | live | 1 | [kma/pre_warning.md](./kma/pre_warning.md) | [kma_pre_warning.json](./schemas/kma_pre_warning.json) |
 | KMA | `kma_forecast_fetch` | `find` | live | 1 | [kma/forecast_fetch.md](./kma/forecast_fetch.md) | [kma_forecast_fetch.json](./schemas/kma_forecast_fetch.json) |
+| KMA APIHub | `kma_apihub_*` (85 generated adapters) | `find` | live | 1 | [kma/apihub_structured_adapters.md](./kma/apihub_structured_adapters.md) | [`kma_apihub_*.json`](./schemas/) |
 | HIRA | `hira_hospital_search` | `find` | live | 1 | [hira/hospital_search.md](./hira/hospital_search.md) | [hira_hospital_search.json](./schemas/hira_hospital_search.json) |
 | NMC | `nmc_emergency_search` | `find` | live | 3 | [nmc/emergency_search.md](./nmc/emergency_search.md) | [nmc_emergency_search.json](./schemas/nmc_emergency_search.json) |
 | NFA119 | `nfa_emergency_info_service` | `find` | live | 1 | [nfa119/emergency_info_service.md](./nfa119/emergency_info_service.md) | [nfa_emergency_info_service.json](./schemas/nfa_emergency_info_service.json) |
@@ -80,7 +102,7 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 
 ## Matrix B — adapters by primitive
 
-### `find` (42 live ministry and public-data adapters)
+### `find` (127 live ministry, public-data, and KMA APIHub adapters)
 
 | tool_id | Source | Tier | Permission | Spec |
 |---|---|---|---|---|
@@ -103,6 +125,7 @@ Every adapter spec follows the seven-section template in [`specs/1637-p6-docs-sm
 | `kma_short_term_forecast` | KMA | live | 1 | [kma/short_term_forecast.md](./kma/short_term_forecast.md) |
 | `kma_ultra_short_term_forecast` | KMA | live | 1 | [kma/ultra_short_term_forecast.md](./kma/ultra_short_term_forecast.md) |
 | `kma_weather_alert_status` | KMA | live | 1 | [kma/weather_alert_status.md](./kma/weather_alert_status.md) |
+| `kma_apihub_*` (85 generated adapters) | KMA APIHub | live | 1 | [kma/apihub_structured_adapters.md](./kma/apihub_structured_adapters.md) |
 | `koroad_accident_hazard_search` | KOROAD | live | 1 | [koroad/accident_hazard_search.md](./koroad/accident_hazard_search.md) |
 | `koroad_accident_search` | KOROAD | live | 1 | [koroad/accident_search.md](./koroad/accident_search.md) |
 | `ksd_financial_term_lookup` | KSD | live | 1 | [verified-data-go-kr/README.md](./verified-data-go-kr/README.md) |

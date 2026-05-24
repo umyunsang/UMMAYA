@@ -82,13 +82,13 @@
       "type": "string"
     },
     "base_time": {
-      "description": "조회 기준 시각 (HHMM format). KMA live API accepts HHMM and may canonicalize to the actually published baseTime in the response. Example: 0630 / 1130 / 1430 / 1500.",
+      "description": "조회 기준 시각 (HHMM format). Official guide examples use HH30 and call after HH:45 KST. KMA live API may canonicalize a non-HH30 request to the actually published baseTime in the response.",
       "title": "Base Time",
       "type": "string"
     },
     "data_type": {
-      "default": "JSON",
-      "description": "응답 형식 (JSON 권장).",
+      "default": "XML",
+      "description": "응답 형식. XML is the official default; JSON is available if requested.",
       "enum": [
         "JSON",
         "XML"
