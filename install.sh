@@ -5,6 +5,7 @@ set -eu
 
 tap="umyunsang/ummaya"
 cask="ummaya"
+cask_ref="$tap/$cask"
 dry_run=0
 target="stable"
 
@@ -83,21 +84,24 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 
 log "Installing UMMAYA via Homebrew cask..."
-run brew tap "$tap"
+
+if [ "$dry_run" -eq 1 ]; then
+  run brew install --cask "$cask_ref"
+  printf '+ %s\n' "verify $cask"
+  exit 0
+fi
 
 if brew list --cask "$cask" >/dev/null 2>&1; then
-  outdated="$(brew outdated --cask "$cask" || true)"
+  outdated="$(brew outdated --cask "$cask_ref" || true)"
   if [ -n "$outdated" ]; then
-    run brew upgrade --cask "$cask"
-  elif [ "$dry_run" -eq 1 ]; then
-    printf '+ %s\n' "verify $cask"
+    run brew upgrade --cask "$cask_ref"
   elif [ -x "$(brew --prefix)/bin/ummaya" ] && "$(brew --prefix)/bin/ummaya" --version >/dev/null 2>&1; then
     log "UMMAYA is already installed and healthy."
   else
-    run brew reinstall --cask "$cask"
+    run brew reinstall --cask "$cask_ref"
   fi
 else
-  run brew install --cask "$cask"
+  run brew install --cask "$cask_ref"
 fi
 
 if [ "$dry_run" -eq 1 ]; then
