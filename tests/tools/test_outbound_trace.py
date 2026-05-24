@@ -68,7 +68,11 @@ async def test_get_request_response_captured() -> None:
         async with traced_async_client(transport=_mock_transport_factory(handler)) as cli:
             r = await cli.get(
                 "https://example.kr/api/items",
-                params={"limit": 2, "serviceKey": "secret-XYZ"},
+                params={
+                    "limit": 2,
+                    "serviceKey": "secret-XYZ",
+                    "authKey": "kma-apihub-secret",
+                },
             )
             assert r.status_code == 200
     finally:
@@ -80,6 +84,9 @@ async def test_get_request_response_captured() -> None:
     assert t.method == "GET"
     # Sensitive query param is redacted, others preserved.
     assert "serviceKey=***" in t.url
+    assert "authKey=***" in t.url
+    assert "secret-XYZ" not in t.url
+    assert "kma-apihub-secret" not in t.url
     assert "limit=2" in t.url
     assert t.response_status == 200
     assert t.response_headers.get("x-served-by") == "test-fixture"
