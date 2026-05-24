@@ -110,6 +110,7 @@ import { errorMessage, getErrnoCode, isENOENT, toError } from 'src/utils/errors.
 import { getFsImplementation, safeResolvePath } from 'src/utils/fsOperations.js';
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
 import { setAllHookEventsEnabled } from 'src/utils/hooks/hookEvents.js';
+import { assertFriendliApiKeyForUse } from 'src/utils/auth.js';
 import { refreshModelCapabilities } from 'src/utils/model/modelCapabilities.js';
 import { peekForStdinData, writeToStderr } from 'src/utils/process.js';
 import { setCwd } from 'src/utils/Shell.js';
@@ -1734,6 +1735,13 @@ async function run(): Promise<CommanderCommand> {
       // This includes potentially dangerous environment variables from untrusted sources
       // but print mode is considered trusted (as documented in help text)
       applyConfigEnvironmentVariables();
+      try {
+        assertFriendliApiKeyForUse();
+      } catch (error) {
+        writeToStderr(`${errorMessage(error)}\n`);
+        gracefulShutdownSync(1);
+        return;
+      }
 
       // TODO(1633-T012): invoke Spec 021 UMMAYA OTEL init here
       // once initUmmayaOtel() exists (separate commit).

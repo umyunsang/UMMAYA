@@ -246,13 +246,6 @@ def _field_description(operation: KmaApiHubOperation, param_name: str) -> str:
     return f"{base} Official parameter name: {param_name}. Operation: {operation.operation_id}."
 
 
-def _field_extra(param_name: str) -> dict[str, object]:
-    pattern = _FIELD_PATTERNS.get(param_name)
-    if pattern is None:
-        return {}
-    return {"pattern": pattern}
-
-
 def _operation_guidance(operation: KmaApiHubOperation) -> tuple[str, str, str]:
     specific = _OPERATION_GUIDANCE.get(operation.operation_id)
     if specific is not None:
@@ -311,13 +304,22 @@ def input_schema_for(operation_id: str) -> type[BaseModel]:
     fields: dict[str, tuple[object, object]] = {}
     for param in operation.non_credential_params:
         default = _field_default(operation, param.name, param.default)
-        fields[param.field_name] = (
-            _field_type(param.value_type),
+        pattern = _FIELD_PATTERNS.get(param.name)
+        field = (
             Field(
                 default,
                 description=_field_description(operation, param.name),
-                **_field_extra(param.name),
-            ),
+                pattern=pattern,
+            )
+            if pattern is not None
+            else Field(
+                default,
+                description=_field_description(operation, param.name),
+            )
+        )
+        fields[param.field_name] = (
+            _field_type(param.value_type),
+            field,
         )
 
     model = create_model(  # type: ignore[call-overload]

@@ -7242,10 +7242,12 @@ async def run(  # noqa: C901
                     ToolResultFrame,
                 )
 
-                envelope = ToolResultEnvelope(
-                    kind="find",
-                    error=f"Unknown concrete adapter tool {dispatch_name!r}.",
-                    tool_id=dispatch_name,
+                envelope = ToolResultEnvelope.model_validate(
+                    {
+                        "kind": "find",
+                        "error": f"Unknown concrete adapter tool {dispatch_name!r}.",
+                        "tool_id": dispatch_name,
+                    }
                 )
                 await write_frame(
                     ToolResultFrame(
@@ -7266,13 +7268,15 @@ async def run(  # noqa: C901
                     ToolResultFrame,
                 )
 
-                envelope = ToolResultEnvelope(
-                    kind="find",
-                    error=(
-                        f"Concrete adapter tool {dispatch_name!r} belongs to "
-                        f"unknown primitive family {primitive_name!r}."
-                    ),
-                    tool_id=dispatch_name,
+                envelope = ToolResultEnvelope.model_validate(
+                    {
+                        "kind": "find",
+                        "error": (
+                            f"Concrete adapter tool {dispatch_name!r} belongs to "
+                            f"unknown primitive family {primitive_name!r}."
+                        ),
+                        "tool_id": dispatch_name,
+                    }
                 )
                 await write_frame(
                     ToolResultFrame(

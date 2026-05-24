@@ -233,7 +233,7 @@ def _build_registry() -> tuple[object, object]:
             "register",
             registry,
             executor,
-            requires_executor=False,
+            requires_executor=True,
         )
         _try_register_adapter(
             "ummaya.tools.hira.hospital_search",

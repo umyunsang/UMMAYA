@@ -48,6 +48,7 @@ jobs:
           GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
           GCP_SECRET_DATA_GO_KR_API_KEY: ${{ vars.GCP_SECRET_DATA_GO_KR_API_KEY }}
+          GCP_SECRET_KMA_API_HUB_AUTH_KEY: ${{ vars.GCP_SECRET_KMA_API_HUB_AUTH_KEY }}
           GCP_SECRET_KAKAO_API_KEY: ${{ vars.GCP_SECRET_KAKAO_API_KEY }}
           GCP_SECRET_JUSO_CONFM_KEY: ${{ vars.GCP_SECRET_JUSO_CONFM_KEY }}
           GCP_SECRET_SGIS_KEY: ${{ vars.GCP_SECRET_SGIS_KEY }}
@@ -63,6 +64,7 @@ jobs:
             GCP_WORKLOAD_IDENTITY_PROVIDER \
             GCP_DEPLOY_SERVICE_ACCOUNT \
             GCP_SECRET_DATA_GO_KR_API_KEY \
+            GCP_SECRET_KMA_API_HUB_AUTH_KEY \
             GCP_SECRET_KAKAO_API_KEY \
             GCP_SECRET_JUSO_CONFM_KEY \
             GCP_SECRET_SGIS_KEY \
@@ -107,6 +109,7 @@ jobs:
         id: cloudrun-secrets
         env:
           GCP_SECRET_DATA_GO_KR_API_KEY: ${{ vars.GCP_SECRET_DATA_GO_KR_API_KEY }}
+          GCP_SECRET_KMA_API_HUB_AUTH_KEY: ${{ vars.GCP_SECRET_KMA_API_HUB_AUTH_KEY }}
           GCP_SECRET_KAKAO_API_KEY: ${{ vars.GCP_SECRET_KAKAO_API_KEY }}
           GCP_SECRET_JUSO_CONFM_KEY: ${{ vars.GCP_SECRET_JUSO_CONFM_KEY }}
           GCP_SECRET_SGIS_KEY: ${{ vars.GCP_SECRET_SGIS_KEY }}
@@ -116,6 +119,7 @@ jobs:
           {
             echo "value<<EOF"
             echo "UMMAYA_DATA_GO_KR_API_KEY=${GCP_SECRET_DATA_GO_KR_API_KEY}:latest"
+            echo "UMMAYA_KMA_API_HUB_AUTH_KEY=${GCP_SECRET_KMA_API_HUB_AUTH_KEY}:latest"
             echo "UMMAYA_KAKAO_API_KEY=${GCP_SECRET_KAKAO_API_KEY}:latest"
             echo "UMMAYA_JUSO_CONFM_KEY=${GCP_SECRET_JUSO_CONFM_KEY}:latest"
             echo "UMMAYA_SGIS_KEY=${GCP_SECRET_SGIS_KEY}:latest"

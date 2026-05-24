@@ -49,9 +49,7 @@ def test_representative_tools_follow_primitive_agency_service_adapter_tree() -> 
         ),
         "tago_bus_route_search": "find/molit/tago_bus_route/tago_bus_route_search",
         "kakao_address_search": "locate/ummaya/kakao_local/kakao_address_search",
-        "mock_kftc_opengiro_bill_send_v1": (
-            "send/kftc/opengiro/mock_kftc_opengiro_bill_send_v1"
-        ),
+        "mock_kftc_opengiro_bill_send_v1": ("send/kftc/opengiro/mock_kftc_opengiro_bill_send_v1"),
         "mock_verify_mobile_id": "check/mobile_id/verify/mock_verify_mobile_id",
     }
 

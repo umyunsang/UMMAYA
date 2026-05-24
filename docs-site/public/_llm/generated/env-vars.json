@@ -32,6 +32,14 @@
     "variable": "UMMAYA_DATA_GO_KR_API_KEY"
   },
   {
+    "consumed_by": "`ummaya.settings.UmmayaSettings.kma_api_hub_auth_key`; KMA VilageFcst adapters",
+    "default": "—",
+    "range": "API Hub auth key string",
+    "required": "No (operator-managed)",
+    "source_doc": "[KMA API Hub](https://apihub.kma.go.kr/)",
+    "variable": "UMMAYA_KMA_API_HUB_AUTH_KEY"
+  },
+  {
     "consumed_by": "`proxy` \\",
     "default": "`auto`",
     "range": "`auto` \\",
@@ -574,14 +582,6 @@
     "required": "No",
     "source_doc": "`WARN` \\",
     "variable": "UMMAYA_TUI_LOG_LEVEL"
-  },
-  {
-    "consumed_by": "`readline`",
-    "default": "`fork`",
-    "range": "`fork` \\",
-    "required": "No",
-    "source_doc": "`ummaya.config.env_registry.TUISettings.ime_strategy`",
-    "variable": "UMMAYA_TUI_IME_STRATEGY"
   },
   {
     "consumed_by": "`ummaya.config.env_registry.TUISettings.soak_events_per_sec`",

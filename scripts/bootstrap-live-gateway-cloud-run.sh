@@ -27,6 +27,7 @@ require_command gcloud
 SEED_SECRETS="${GCP_SEED_SECRETS:-1}"
 if [[ "${SEED_SECRETS}" == "1" ]]; then
   require_env UMMAYA_DATA_GO_KR_API_KEY
+  require_env UMMAYA_KMA_API_HUB_AUTH_KEY
   require_env UMMAYA_KAKAO_API_KEY
   require_env UMMAYA_JUSO_CONFM_KEY
   require_env UMMAYA_SGIS_KEY
@@ -44,6 +45,7 @@ RUNTIME_SA_EMAIL="${RUNTIME_SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
 DEPLOY_SA_EMAIL="${DEPLOY_SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
 
 DATA_GO_KR_SECRET="${GCP_SECRET_DATA_GO_KR_API_KEY:-ummaya-data-go-kr-api-key}"
+KMA_API_HUB_SECRET="${GCP_SECRET_KMA_API_HUB_AUTH_KEY:-ummaya-kma-api-hub-auth-key}"
 KAKAO_SECRET="${GCP_SECRET_KAKAO_API_KEY:-ummaya-kakao-api-key}"
 JUSO_SECRET="${GCP_SECRET_JUSO_CONFM_KEY:-ummaya-juso-confm-key}"
 SGIS_KEY_SECRET="${GCP_SECRET_SGIS_KEY:-ummaya-sgis-key}"
@@ -137,6 +139,7 @@ create_or_seed_secret() {
 }
 
 create_or_seed_secret "${DATA_GO_KR_SECRET}" UMMAYA_DATA_GO_KR_API_KEY
+create_or_seed_secret "${KMA_API_HUB_SECRET}" UMMAYA_KMA_API_HUB_AUTH_KEY
 create_or_seed_secret "${KAKAO_SECRET}" UMMAYA_KAKAO_API_KEY
 create_or_seed_secret "${JUSO_SECRET}" UMMAYA_JUSO_CONFM_KEY
 create_or_seed_secret "${SGIS_KEY_SECRET}" UMMAYA_SGIS_KEY

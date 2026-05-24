@@ -191,6 +191,7 @@ jobs:
           container_id="$(
             docker run -d -p 8123:8080 \
               -e UMMAYA_DATA_GO_KR_API_KEY=ci-dummy-data-go-kr \
+              -e UMMAYA_KMA_API_HUB_AUTH_KEY=ci-dummy-kma-api-hub \
               -e UMMAYA_KAKAO_API_KEY=ci-dummy-kakao \
               -e UMMAYA_JUSO_CONFM_KEY=ci-dummy-juso \
               -e UMMAYA_SGIS_KEY=ci-dummy-sgis-key \

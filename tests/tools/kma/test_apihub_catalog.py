@@ -70,16 +70,10 @@ def test_disabled_operations_are_kept_in_catalog_but_not_active() -> None:
         "NwpModelInfoService/getRdapsUnisAll",
         "NwpModelInfoService/getRdapsUnisArea",
     }
-    assert disabled.isdisjoint(
-        operation.operation_id for operation in iter_structured_operations()
-    )
+    assert disabled.isdisjoint(operation.operation_id for operation in iter_structured_operations())
 
-    assert get_operation_by_id("GtsInfoService/getSynop").availability == (
-        "upstream_unavailable"
-    )
-    assert get_operation_by_id("NwpModelInfoService/getLdapsUnisAll").availability == (
-        "retired"
-    )
+    assert get_operation_by_id("GtsInfoService/getSynop").availability == ("upstream_unavailable")
+    assert get_operation_by_id("NwpModelInfoService/getLdapsUnisAll").availability == ("retired")
 
 
 def test_catalog_lookup_helpers_return_stable_operations() -> None:

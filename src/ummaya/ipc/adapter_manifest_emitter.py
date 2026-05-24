@@ -259,11 +259,7 @@ def _build_entries(  # noqa: C901, ANN401 — three-source walker, refactor defe
 
     for tool in tools_list:
         tool_id_opt: str | None = tool.id if hasattr(tool, "id") else getattr(tool, "tool_id", None)
-        if (
-            tool_id_opt is None
-            or tool_id_opt in root_primitive_tool_ids
-            or tool_id_opt in seen
-        ):
+        if tool_id_opt is None or tool_id_opt in root_primitive_tool_ids or tool_id_opt in seen:
             continue
         tool_id = tool_id_opt
         try:

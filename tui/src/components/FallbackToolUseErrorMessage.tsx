@@ -13,6 +13,33 @@ type Props = {
   result: ToolResultBlockParam['content'];
   verbose: boolean;
 };
+
+function unwrapStructuredErrorMessage(error: string): string {
+  try {
+    const parsed: unknown = JSON.parse(error);
+    if (parsed === null || typeof parsed !== "object") {
+      return error;
+    }
+    const envelope = parsed as {
+      ok?: unknown;
+      error?: unknown;
+    };
+    if (envelope.ok !== false || envelope.error === null || typeof envelope.error !== "object") {
+      return error;
+    }
+    const details = envelope.error as {
+      message?: unknown;
+    };
+    if (typeof details.message !== "string") {
+      return error;
+    }
+    const message = details.message.trim();
+    return message.length > 0 ? message : error;
+  } catch {
+    return error;
+  }
+}
+
 export function FallbackToolUseErrorMessage(t0) {
   const $ = _c(25);
   const {
@@ -35,7 +62,7 @@ export function FallbackToolUseErrorMessage(t0) {
       const extractedError = extractTag(result, "tool_use_error") ?? result;
       const withoutSandboxViolations = removeSandboxViolationTags(extractedError);
       const withoutErrorTags = withoutSandboxViolations.replace(/<\/?error>/g, "");
-      const trimmed = withoutErrorTags.trim();
+      const trimmed = unwrapStructuredErrorMessage(withoutErrorTags.trim());
       if (!verbose && trimmed.includes("InputValidationError: ")) {
         error = "Invalid tool parameters";
       } else {

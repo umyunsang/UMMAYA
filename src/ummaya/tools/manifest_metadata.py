@@ -97,9 +97,7 @@ def build_verified_llm_description(spec: VerifiedAdapterSpec) -> str:
         f"{name}={value}" for name, value in sorted(spec.static_query_params.items())
     )
     static_clause = (
-        f" Runtime also sends fixed provider parameters: {static_params}."
-        if static_params
-        else ""
+        f" Runtime also sends fixed provider parameters: {static_params}." if static_params else ""
     )
     examples = "; ".join(spec.trigger_examples)
     example_clause = f" Example request: {examples}." if examples else ""
@@ -140,9 +138,7 @@ def enrich_input_schema_json(
             additions.append(f"Official upstream query parameter name: {official_param}.")
 
         common_description = _COMMON_FIELD_DESCRIPTIONS.get(field_name)
-        if common_description and (
-            len(description) < 24 or common_description not in description
-        ):
+        if common_description and (len(description) < 24 or common_description not in description):
             additions.append(common_description)
 
         if len(description) < 24 and not additions:

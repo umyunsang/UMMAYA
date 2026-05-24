@@ -11,6 +11,7 @@ Local operator run:
 
 ```bash
 UMMAYA_DATA_GO_KR_API_KEY=<redacted> \
+UMMAYA_KMA_API_HUB_AUTH_KEY=<redacted> \
 UMMAYA_KAKAO_API_KEY=<redacted> \
 uv run --extra gateway ummaya-live-gateway
 ```
@@ -44,6 +45,7 @@ release clients should not need to set it.
 docker build -f docker/Dockerfile.gateway -t ummaya-live-gateway .
 docker run --rm -p 8080:8080 \
   -e UMMAYA_DATA_GO_KR_API_KEY=<redacted> \
+  -e UMMAYA_KMA_API_HUB_AUTH_KEY=<redacted> \
   -e UMMAYA_KAKAO_API_KEY=<redacted> \
   ummaya-live-gateway
 ```
@@ -66,6 +68,7 @@ GCP_PROJECT_ID=<project-id> \
 GCP_REGION=asia-northeast3 \
 GITHUB_REPOSITORY=umyunsang/UMMAYA \
 UMMAYA_DATA_GO_KR_API_KEY=<redacted> \
+UMMAYA_KMA_API_HUB_AUTH_KEY=<redacted> \
 UMMAYA_KAKAO_API_KEY=<redacted> \
 UMMAYA_JUSO_CONFM_KEY=<redacted> \
 UMMAYA_SGIS_KEY=<redacted> \
@@ -87,6 +90,7 @@ GCP_REGION=asia-northeast3 \
 GCP_ARTIFACT_REGISTRY_REPOSITORY=ummaya \
 GCP_RUN_RUNTIME_SERVICE_ACCOUNT=ummaya-live-gateway-runtime@<project-id>.iam.gserviceaccount.com \
 GCP_SECRET_DATA_GO_KR_API_KEY=ummaya-data-go-kr-api-key \
+GCP_SECRET_KMA_API_HUB_AUTH_KEY=ummaya-kma-api-hub-auth-key \
 GCP_SECRET_KAKAO_API_KEY=ummaya-kakao-api-key \
 GCP_SECRET_JUSO_CONFM_KEY=ummaya-juso-confm-key \
 GCP_SECRET_SGIS_KEY=ummaya-sgis-key \
@@ -109,6 +113,7 @@ GCP_WORKLOAD_IDENTITY_PROVIDER
 GCP_DEPLOY_SERVICE_ACCOUNT
 GCP_RUN_RUNTIME_SERVICE_ACCOUNT
 GCP_SECRET_DATA_GO_KR_API_KEY
+GCP_SECRET_KMA_API_HUB_AUTH_KEY
 GCP_SECRET_KAKAO_API_KEY
 GCP_SECRET_JUSO_CONFM_KEY
 GCP_SECRET_SGIS_KEY

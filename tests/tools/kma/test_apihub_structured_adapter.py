@@ -103,9 +103,7 @@ def test_failed_live_apihub_ops_expose_precise_schema_and_tool_selection_hints()
     nwp_tool = build_tool(nwp)
     assert nwp.availability == "retired"
     assert "resultCode=99" in nwp_schema["properties"]["base_time"]["description"]
-    assert "Do not choose this for citizen-facing current weather" in str(
-        nwp_tool.llm_description
-    )
+    assert "Do not choose this for citizen-facing current weather" in str(nwp_tool.llm_description)
 
 
 @pytest.mark.asyncio
@@ -194,7 +192,7 @@ async def test_call_operation_non_recoverable_result_code_raises_tool_error(
     response = httpx.Response(
         200,
         text=(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            '<?xml version="1.0" encoding="UTF-8"?>'
             "<response><header><resultCode>02</resultCode>"
             "<resultMsg>DB_ERROR</resultMsg></header></response>"
         ),

@@ -2,7 +2,7 @@
 // Spec 2521 T004 — Layer 1b ink-testing-library scaffold for thinking_delta render.
 //
 // This test asserts that an assistant message containing a `{ type: 'thinking',
-// thinking: <text> }` content block renders as `∴ Processing...` via the
+// thinking: <text> }` content block renders as `∴ Thinking...` via the
 // AssistantThinkingMessage component.
 //
 // Scaffold (T004): mount harness + skeleton assertions only — full assertions
@@ -12,10 +12,18 @@
 // target in CC's restored-src — UMMAYA port at tui/src/components/messages/
 // AssistantThinkingMessage.tsx is byte-equivalent per Spec 2292 audit).
 
-import { describe, it, expect } from 'bun:test'
+import { describe, it, expect, mock } from 'bun:test'
 import React from 'react'
 import { render } from 'ink-testing-library'
-import { AssistantThinkingMessage } from '../../src/components/messages/AssistantThinkingMessage.js'
+import { Text } from '../../src/ink.js'
+
+mock.module(new URL('../../src/components/Markdown.js', import.meta.url).pathname, () => ({
+  Markdown: ({ children }: { children: React.ReactNode }) => <Text dimColor>{children}</Text>,
+}))
+
+const { AssistantThinkingMessage } = await import(
+  '../../src/components/messages/AssistantThinkingMessage.js'
+)
 
 // Bun 1.3.12 on Linux x64 (CI runner) repeatedly emits
 //   SyntaxError: Export named 'isEmptyMessageText' not found in module
@@ -29,13 +37,13 @@ import { AssistantThinkingMessage } from '../../src/components/messages/Assistan
 // runs of progressive narrowing (reorder + helper split + Bun pin).
 //
 // Skipping in CI only — local development still runs the test and
-// catches genuine ∴ Processing render regressions. Tracking issue
+// catches genuine ∴ Thinking render regressions. Tracking issue
 // will follow once reproducible against an installable Bun patch.
 const _isCI = !!(process.env.CI ?? process.env.GITHUB_ACTIONS)
 const _describe = _isCI ? describe.skip : describe
 
 _describe('thinking-delta-render (Spec 2521 T004 scaffold)', () => {
-  it('renders ∴ Processing glyph in collapsed (non-verbose, non-transcript) mode', () => {
+  it('renders ∴ Thinking glyph in collapsed (non-verbose, non-transcript) mode', () => {
     const { lastFrame } = render(
       <AssistantThinkingMessage
         param={{ type: 'thinking', thinking: '사용자가 부산 날씨를 물어보고 있습니다.' }}
@@ -46,11 +54,11 @@ _describe('thinking-delta-render (Spec 2521 T004 scaffold)', () => {
     )
     const frame = lastFrame() ?? ''
     // Collapsed mode shows the reasoning activity label.
-    expect(frame).toContain('Processing')
+    expect(frame).toContain('Thinking')
     expect(frame).toContain('∴')
   })
 
-  it('keeps reasoning text hidden in verbose mode', () => {
+  it('renders reasoning text in verbose mode through the CC Markdown path', () => {
     const reasoning =
       '사용자가 부산 날씨를 물어보고 있습니다. resolve_location → kma_forecast_fetch 순서로 호출.'
     const { lastFrame } = render(
@@ -62,8 +70,8 @@ _describe('thinking-delta-render (Spec 2521 T004 scaffold)', () => {
       />,
     )
     const frame = lastFrame() ?? ''
-    expect(frame).toContain('Processing')
-    expect(frame).not.toContain('부산 날씨')
+    expect(frame).toContain('Thinking')
+    expect(frame).toContain('부산 날씨')
   })
 
   it('returns null when hideInTranscript is true', () => {
@@ -77,7 +85,7 @@ _describe('thinking-delta-render (Spec 2521 T004 scaffold)', () => {
       />,
     )
     const frame = lastFrame() ?? ''
-    expect(frame).not.toContain('Processing')
+    expect(frame).not.toContain('Thinking')
     expect(frame).not.toContain('∴')
     expect(frame).not.toContain('hidden')
   })
@@ -92,6 +100,6 @@ _describe('thinking-delta-render (Spec 2521 T004 scaffold)', () => {
       />,
     )
     const frame = lastFrame() ?? ''
-    expect(frame).not.toContain('Processing')
+    expect(frame).not.toContain('Thinking')
   })
 })
