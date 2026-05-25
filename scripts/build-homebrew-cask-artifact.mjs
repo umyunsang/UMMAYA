@@ -322,7 +322,7 @@ async function main() {
     run(
       'npm',
       [
-        'install',
+        'ci',
         '--omit=dev',
         '--omit=optional',
         '--legacy-peer-deps',
