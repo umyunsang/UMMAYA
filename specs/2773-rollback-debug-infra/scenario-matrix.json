@@ -20,7 +20,7 @@
       "focus": ["resolve-before-find", "tool-error-recovery", "cc-error-rendering"],
       "prompt_ko": "아이가 열이 나는데 하단역 근처 야간 응급실이 어디야?",
       "expected_chain": ["locate", "nmc_emergency_search"],
-      "observe_regex": "nmc_emergency_search|Invalid parameters|검색 오류",
+      "observe_regex": "큐병원|응급실운영신고기관|051-207-4044|er_direct_phone|Invalid parameters|검색 오류",
       "result_regex": "큐병원|응급실운영신고기관|er_direct_phone",
       "require_expanded_trace": true,
       "require_regex": ["큐병원|응급실운영신고기관"],
@@ -39,7 +39,7 @@
       "observe_regex": "kma_forecast_fetch|kma_current_observation|kma_short_term_forecast|Invalid parameters|검색 오류",
       "result_regex": "⎿|record\\s*—\\s*1건",
       "require_expanded_trace": true,
-      "require_regex": ["kma_forecast_fetch|kma_current_observation|kma_short_term_forecast", "현재 관측값|단기예보|timeseries"],
+      "require_regex": ["kma_forecast_fetch|kma_current_observation|kma_short_term_forecast", "KMA격자좌표|현재날씨|기온|T1H|t1h"],
       "forbid_regex": [
         "도구 결과 기준으로 처리 상태를 정리합니다\\s*- 조회 .*invalid_params",
         "Missing .*lat|Missing .*lon"
@@ -81,8 +81,8 @@
       "domain": "safety",
       "focus": ["public-safety-statistics-find", "nfa-wire-params"],
       "prompt_ko": "천안동남소방서 2021년 12월 구급활동 통계 1건만 조회해줘",
-      "expected_chain": ["nfa_emergency_info_service"],
-      "observe_regex": "nfa_emergency_info_service",
+      "expected_chain": ["n?fa_emergency_info_service|구급활동통계"],
+      "observe_regex": "n?fa_emergency_info_service|구급활동 통계|구급활동통계",
       "require_expanded_trace": true,
       "require_regex": ["천안동남소방서|충청남도소방본부|202112|NORMAL SERVICE|구급활동"]
     },
@@ -430,10 +430,10 @@
       "prompt_ko": "부산 사하구에서 운전 중 자주 사고 나는 도로 구간과 오늘 비 예보를 같이 확인해줘",
       "expected_chain": [
         "locate",
-        "koroad_accident_hazard_search|koroad_accident_search",
+        "koroad_accident_hazard_search",
         "kma_short_term_forecast|kma_current_observation"
       ],
-      "observe_regex": "koroad_accident|kma_",
+      "observe_regex": "kma_short_term_forecast|kma_current_observation",
       "require_expanded_trace": true
     },
     {

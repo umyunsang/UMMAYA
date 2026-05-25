@@ -1,0 +1,82 @@
+{
+  "overall": "pass",
+  "checks": [
+    {
+      "name": "capture_completeness",
+      "status": "pass",
+      "details": "Capture contains final state and intermediate artifacts.",
+      "evidence": [
+        "frames=124",
+        "snapshots=4"
+      ]
+    },
+    {
+      "name": "utf8_replacement_character",
+      "status": "pass",
+      "details": "No UTF-8 replacement characters were found in captured text.",
+      "evidence": []
+    },
+    {
+      "name": "backend_log_health",
+      "status": "pass",
+      "details": "backend.log contains no audited traceback or OpenTelemetry context errors.",
+      "evidence": []
+    },
+    {
+      "name": "agentic_chain_order",
+      "status": "pass",
+      "details": "Expected tool chain was visible in order inside one chronological capture.",
+      "evidence": [
+        "chain@49:frames/frame_0049_798547bfb482.txt"
+      ]
+    },
+    {
+      "name": "submit_ledger_evidence",
+      "status": "pass",
+      "details": "No submit adapter ledger evidence is required for this scenario.",
+      "evidence": []
+    },
+    {
+      "name": "recoverable_error_loop",
+      "status": "pass",
+      "details": "No recoverable invalid-parameter error was visible.",
+      "evidence": []
+    },
+    {
+      "name": "visible_abnormal_flow",
+      "status": "pass",
+      "details": "No audited avoidable tool-selection recovery artifact was visible.",
+      "evidence": []
+    },
+    {
+      "name": "cc_error_rendering",
+      "status": "pass",
+      "details": "No tool error was visible in this capture.",
+      "evidence": []
+    },
+    {
+      "name": "expanded_tool_trace",
+      "status": "pass",
+      "details": "Tool trace details were visible.",
+      "evidence": []
+    },
+    {
+      "name": "submit_rejected_status",
+      "status": "pass",
+      "details": "No rejected submit status was visible.",
+      "evidence": []
+    },
+    {
+      "name": "raw_protocol_leak",
+      "status": "pass",
+      "details": "No raw IPC frame leak was detected in captured text.",
+      "evidence": []
+    },
+    {
+      "name": "require_regex",
+      "status": "pass",
+      "details": "Required regex matched: 천안동남소방서|충청남도소방본부|202112|NORMAL SERVICE|구급활동",
+      "evidence": []
+    }
+  ]
+}

@@ -111,6 +111,30 @@ for (const caskSha256 of caskSha256Values) {
   }
 }
 
+const launcherText = readFileSync('bin/ummaya', 'utf8')
+const launcherContracts = [
+  'configurePackageEnv',
+  'UMMAYA_PACKAGE_ROOT',
+  'UMMAYA_BACKEND_CMD_JSON',
+  'UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE',
+  'UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS',
+  '.venv',
+  '--directory',
+  '--frozen',
+  '--no-dev',
+]
+for (const expected of launcherContracts) {
+  if (!launcherText.includes(expected)) {
+    throw new Error(`bin/ummaya missing packaged launcher contract: ${expected}`)
+  }
+}
+if (launcherText.includes('UMMAYA_PACKAGE_ROOT ??=')) {
+  throw new Error('bin/ummaya must not preserve stale UMMAYA_PACKAGE_ROOT')
+}
+if (launcherText.includes('UMMAYA_BACKEND_CMD_JSON ??=')) {
+  throw new Error('bin/ummaya must not preserve stale UMMAYA_BACKEND_CMD_JSON')
+}
+
 const required = [
   'bin/ummaya',
   'package.json',

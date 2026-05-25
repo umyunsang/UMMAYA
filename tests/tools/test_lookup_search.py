@@ -79,6 +79,38 @@ class TestLookupSearchHazardRanking:
             assert isinstance(c.required_params, list)
 
     @pytest.mark.asyncio
+    async def test_station_emergency_query_surfaces_poi_locate_adapter(
+        self, full_registry, full_executor
+    ):
+        """Station-nearby ER queries must keep a coordinate-producing locate adapter."""
+        inp = LookupSearchInput(
+            mode="search",
+            query="아이가 열이 나는데 하단역 근처 야간 응급실이 어디야?",
+            top_k=5,
+        )
+        result = await lookup(inp, registry=full_registry, executor=full_executor)
+        assert isinstance(result, LookupSearchResult)
+        tool_ids = [c.tool_id for c in result.candidates]
+        assert "nmc_emergency_search" in tool_ids
+        assert "kakao_keyword_search" in tool_ids
+
+    @pytest.mark.asyncio
+    async def test_child_zone_accident_query_surfaces_koroad_adapter(
+        self, full_registry, full_executor
+    ):
+        """Natural Korean spacing around accident risk must still retrieve KOROAD."""
+        inp = LookupSearchInput(
+            mode="search",
+            query="강남역 주변 어린이보호구역 사고 위험 구간 알려줘",
+            top_k=5,
+        )
+        result = await lookup(inp, registry=full_registry, executor=full_executor)
+        assert isinstance(result, LookupSearchResult)
+        tool_ids = [c.tool_id for c in result.candidates]
+        assert "koroad_accident_hazard_search" in tool_ids
+        assert "koroad_accident_search" not in tool_ids
+
+    @pytest.mark.asyncio
     async def test_empty_registry_returns_empty_result(self):
         """Empty registry returns LookupSearchResult with empty candidates."""
         empty_registry = ToolRegistry()

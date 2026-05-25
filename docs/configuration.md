@@ -82,7 +82,10 @@ Column definitions:
 | `UMMAYA_RETRIEVAL_MODEL_ID` | No | `intfloat/multilingual-e5-small` | Hugging Face model ID string | `ummaya.tools.retrieval.backend.build_retriever_from_env` | Epic #585 |
 | `UMMAYA_MEMDIR_USER` | No | `~/.ummaya/memdir/user` | Filesystem path (expanduser) | `ummaya.session.store._get_session_dir`; TUI memdir/session helpers | Spec 027 |
 | `UMMAYA_SESSION_DIR` | No | `~/.ummaya/sessions` | Filesystem path (expanduser) | `ummaya.session.store._get_session_dir` | Epic #287 |
-| `UMMAYA_BACKEND_CMD` | No | `uv run python -m ummaya.ipc.mcp_server` | Shell command string spawned by the TUI as the backend process | TUI-side `tui/src/services/api` IPC bridge spawner; `ummaya.ipc.demo.mock_backend` is the canonical Mock-backend value used by Spec 2296 PTY + vhs smoke artefacts | Epic #2296 |
+| `UMMAYA_BACKEND_CMD_JSON` | No | Set by packaged launcher to `["uv","--directory",<packageRoot>,"run","--frozen","--no-dev","ummaya","--ipc","stdio"]`, or to `<packageRoot>/.venv/bin/python -m ummaya.cli --ipc stdio` when that venv exists | JSON string array spawned by the TUI as the backend process; preferred over `UMMAYA_BACKEND_CMD` because paths with spaces stay unambiguous | `bin/ummaya`; TUI-side `tui/src/ipc/bridge.ts` | Release packaging |
+| `UMMAYA_BACKEND_CMD` | No | `uv run ummaya --ipc stdio` when no JSON command or package launcher is present | Shell command string spawned by the TUI as the backend process | TUI-side `tui/src/ipc/bridge.ts`; `ummaya.ipc.demo.mock_backend` is the canonical Mock-backend value used by Spec 2296 PTY + vhs smoke artefacts | Epic #2296 |
+| `UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE` | No | `0` | Set `1` only for release/debug harnesses that intentionally replace the packaged backend command | `bin/ummaya` | Release packaging |
+| `UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS` | No | `30000` in raw TUI; packaged launcher sets `90000` unless already set | Milliseconds before a model-facing primitive tool call reports a TUI-side delayed-backend timeout | `tui/src/tools/_shared/dispatchPrimitive.ts`; packaged override in `bin/ummaya` | Release packaging |
 | `UMMAYA_BACKEND_LOG_FILE` | No | — | Filesystem path | `ummaya.ipc.stdio.run` diagnostic FileHandler | Spec multi-turn contamination |
 | `UMMAYA_CHAT_REQUEST_DUMP` | No | `false` | `1` enables diagnostic dumps; unset disables | `ummaya.ipc.stdio._diag_chat_request_enabled` | Spec multi-turn contamination |
 | `UMMAYA_CLI_HISTORY_SIZE` | No | `1000` | Integer >= 0 | `ummaya.cli.config.CLIConfig.history_size` | This doc |
@@ -294,7 +297,9 @@ before adapter dispatch.
 
 Internal path set by the npm/Homebrew `bin/ummaya` wrapper. In `UMMAYA_LIVE_ADAPTER_MODE=auto`,
 presence of this value marks a packaged CLI execution and selects the live adapter gateway for
-eligible Kakao/data.go.kr/KMA API Hub-style adapters. Users should not set this manually.
+eligible Kakao/data.go.kr/KMA API Hub-style adapters. The packaged launcher now force-sets this
+to its own package root so arbitrary-cwd runs and stale shell environments cannot point the backend
+at another checkout. Users should not set this manually.
 
 ---
 

@@ -66,6 +66,7 @@ _tracer = trace.get_tracer(__name__)
 _BACKGROUND_FRAME_KINDS: frozenset[str] = frozenset(
     {"chat_request", "user_input", "tool_call", "plugin_op"}
 )
+_ROOT_PRIMITIVE_TOOL_IDS: Final[frozenset[str]] = frozenset({"locate", "find", "check", "send"})
 _SCOPE_ENTRY_RE = re.compile(r"^(find|send|check):[a-z0-9_]+\.[a-z0-9_-]+$")
 _TOOL_ID_SCOPE_RE = re.compile(r"^(?P<verb>find|send|check):(?P<tool_id>[a-z][a-z0-9_]*[a-z0-9])$")
 _LEGACY_SCOPE_VERB_ALIASES: Final[dict[str, str]] = {
@@ -187,6 +188,20 @@ _PRIMITIVE_ERROR_REASONS: Final[frozenset[str]] = frozenset(
         "verify_tool_choice_mismatch",
     }
 )
+
+
+def _should_append_tui_tool_to_llm_tools(
+    tui_name: object | None,
+    backend_tool_names: set[object],
+    *,
+    has_concrete_backend_tools: bool,
+) -> bool:
+    """Return whether a TUI-sent tool should remain in the model tool list."""
+    if tui_name and tui_name in backend_tool_names:
+        return False
+    return not (has_concrete_backend_tools and tui_name in _ROOT_PRIMITIVE_TOOL_IDS)
+
+
 _VERIFY_QUERY_REQUIREMENTS: Final[tuple[tuple[tuple[str, ...], dict[str, str]], ...]] = (
     (
         ("간편인증", "pass 인증", "kakao 인증", "naver 인증"),
@@ -1535,12 +1550,34 @@ def _primitive_payload_is_success(payload: object, *, primitive: str) -> bool:
     return True
 
 
+def _primitive_payload_result_dict(payload: object) -> dict[str, object] | None:
+    """Extract the primitive result object from direct or wrapped payloads."""
+    if not isinstance(payload, dict):
+        return None
+    result = payload.get("result")
+    if not isinstance(result, dict):
+        return None
+    nested_result = result.get("result")
+    if result.get("ok") is True and isinstance(nested_result, dict):
+        return cast("dict[str, object]", nested_result)
+    return cast("dict[str, object]", result)
+
+
 def _canonical_primitive_args(args: dict[str, object]) -> str:
     """Stable signature for comparing repeated primitive calls."""
     try:
         return _stdlib_json.dumps(args, ensure_ascii=False, sort_keys=True, default=str)
     except TypeError:
         return repr(sorted(args.items()))
+
+
+def _copy_primitive_args(args: dict[str, object]) -> dict[str, object]:
+    """Copy primitive arguments while detaching the nested params dict."""
+    copied = dict(args)
+    params = copied.get("params")
+    if isinstance(params, dict):
+        copied["params"] = dict(params)
+    return copied
 
 
 def _conversation_has_successful_identical_primitive_call(  # noqa: C901
@@ -1682,17 +1719,37 @@ def _latest_successful_primitive_result(
     llm_messages: list[Any],
     *,
     primitive: str,
+    registry: Any = None,
 ) -> dict[str, object] | None:
     """Return the most recent successful primitive result payload."""
+    if registry is not None:
+        matching_call_ids = _primitive_call_ids_for_tool(
+            llm_messages,
+            primitive=primitive,
+            registry=registry,
+        )
+        for msg in reversed(llm_messages):
+            payload = _tool_result_payload_for_primitive_call(
+                msg,
+                primitive=primitive,
+                matching_call_ids=matching_call_ids,
+            )
+            if payload is None or not _primitive_payload_is_success(
+                payload,
+                primitive=primitive,
+            ):
+                continue
+            result = _primitive_payload_result_dict(payload)
+            if result is not None:
+                return result
+
     for msg in reversed(llm_messages):
         payload = _tool_result_payload_for_primitive(msg, primitive=primitive)
         if payload is None or not _primitive_payload_is_success(payload, primitive=primitive):
             continue
-        if not isinstance(payload, dict):
-            continue
-        result = payload.get("result")
-        if isinstance(result, dict):
-            return cast("dict[str, object]", result)
+        result = _primitive_payload_result_dict(payload)
+        if result is not None:
+            return result
     return None
 
 
@@ -1842,6 +1899,27 @@ def _nonempty_str(value: object) -> str | None:
     return stripped or None
 
 
+_KOREAN_SIDO_ABBREVIATIONS: dict[str, str] = {
+    "서울": "서울특별시",
+    "부산": "부산광역시",
+    "대구": "대구광역시",
+    "인천": "인천광역시",
+    "광주": "광주광역시",
+    "대전": "대전광역시",
+    "울산": "울산광역시",
+    "세종": "세종특별자치시",
+    "경기": "경기도",
+    "강원": "강원특별자치도",
+    "충북": "충청북도",
+    "충남": "충청남도",
+    "전북": "전북특별자치도",
+    "전남": "전라남도",
+    "경북": "경상북도",
+    "경남": "경상남도",
+    "제주": "제주특별자치도",
+}
+
+
 def _region_pair_from_address_text(text: object) -> tuple[str, str] | None:
     """Derive NMC Q0/Q1 from a structured Korean address string.
 
@@ -1853,7 +1931,7 @@ def _region_pair_from_address_text(text: object) -> tuple[str, str] | None:
     parts = [part.strip() for part in text.split() if part.strip()]
     if len(parts) < 2:
         return None
-    q0 = parts[0]
+    q0 = _KOREAN_SIDO_ABBREVIATIONS.get(parts[0], parts[0])
     if not q0.endswith(("특별시", "광역시", "특별자치시", "특별자치도", "도")):
         return None
     q1 = parts[1]
@@ -1920,10 +1998,132 @@ def _locate_result_coords(result: dict[str, object]) -> tuple[float, float] | No
     return None
 
 
+def _locate_result_adm_cd(result: dict[str, object]) -> str | None:
+    """Extract a 10-digit administrative code from a locate result."""
+    candidates: list[object] = [result.get("adm_cd"), result.get("region"), result]
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        for key in ("code", "adm_cd", "h_code", "b_code"):
+            value = candidate.get(key)
+            if isinstance(value, str) and len(value) == 10 and value.isdigit():
+                return value
+    return None
+
+
+_REVERSE_GEOCODE_TOOL_IDS = frozenset({"kakao_coord_to_region", "sgis_adm_cd_lookup"})
+_GENERIC_NMC_QN_FILTERS = frozenset(
+    {
+        "응급실",
+        "야간응급실",
+        "야간 응급실",
+        "응급의료",
+        "응급의료기관",
+        "응급의료센터",
+        "응급센터",
+        "응급 병원",
+        "emergency",
+        "emergency room",
+        "er",
+    }
+)
+
+
+def _normalized_nmc_qn_filter(value: object) -> str | None:
+    """Return a valid NMC institution-name filter or None for generic intent."""
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    if not stripped:
+        return None
+    lowered = stripped.lower()
+    if lowered in _GENERIC_NMC_QN_FILTERS:
+        return None
+    if "," in stripped or "，" in stripped:
+        return None
+    return stripped
+
+
+def _nmc_lookup_params_with_clean_qn(
+    args_obj: dict[str, object],
+) -> tuple[object, dict[str, object]]:
+    """Copy NMC params and remove generic emergency-intent QN filters."""
+    raw_params = args_obj.get("params")
+    params = dict(raw_params) if isinstance(raw_params, dict) else {}
+    if "qn" in params:
+        qn_filter = _normalized_nmc_qn_filter(params.get("qn"))
+        if qn_filter is None:
+            params.pop("qn", None)
+        else:
+            params["qn"] = qn_filter
+    return raw_params, params
+
+
+def _is_whole_degree_pair(lat: object, lon: object) -> bool:
+    """Return True for rounded whole-degree WGS-84 coordinate pairs."""
+    if isinstance(lat, bool) or isinstance(lon, bool):
+        return False
+    if not isinstance(lat, int | float) or not isinstance(lon, int | float):
+        return False
+    return float(lat).is_integer() and float(lon).is_integer()
+
+
+def _normalize_reverse_geocode_args_from_prior_locate(
+    fname: str,
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> dict[str, object]:
+    """Copy exact locate coordinates into reverse-geocode retries.
+
+    KMA forecast adapters may accept coarse lat/lon because they convert to a
+    grid internally, but reverse-geocode adapters resolve an exact coordinate
+    back to an administrative region. When the model rounded a coordinate that
+    was already available in the prior locate result, keep the selected adapter
+    and repair only this derived argument pair.
+    """
+    if fname != "locate" or args_obj.get("tool_id") not in _REVERSE_GEOCODE_TOOL_IDS:
+        return args_obj
+
+    raw_params = args_obj.get("params")
+    if not isinstance(raw_params, dict):
+        return args_obj
+
+    if not _is_whole_degree_pair(raw_params.get("lat"), raw_params.get("lon")):
+        return args_obj
+
+    locate_result = _latest_successful_primitive_result(
+        llm_messages,
+        primitive="locate",
+        registry=registry,
+    )
+    if locate_result is None:
+        return args_obj
+
+    coords = _locate_result_coords(locate_result)
+    if coords is None:
+        return args_obj
+
+    next_params = dict(raw_params)
+    next_params["lat"], next_params["lon"] = coords
+    normalized = dict(args_obj)
+    normalized["params"] = next_params
+    logger.info(
+        "locate: normalized %s rounded lat/lon from prior locate lat=%s lon=%s",
+        args_obj.get("tool_id"),
+        coords[0],
+        coords[1],
+    )
+    return normalized
+
+
 def _normalize_nmc_lookup_args_from_prior_locate(
     fname: str,
     args_obj: dict[str, object],
     llm_messages: list[Any],
+    *,
+    registry: Any = None,
 ) -> dict[str, object]:
     """Fill NMC region-mode params from the latest successful locate result.
 
@@ -1936,8 +2136,7 @@ def _normalize_nmc_lookup_args_from_prior_locate(
     if fname != "find" or args_obj.get("tool_id") != "nmc_emergency_search":
         return args_obj
 
-    raw_params = args_obj.get("params")
-    params = dict(raw_params) if isinstance(raw_params, dict) else {}
+    raw_params, params = _nmc_lookup_params_with_clean_qn(args_obj)
     limit = params.get("limit")
     needs_default_limit = not isinstance(limit, int) or isinstance(limit, bool)
 
@@ -1947,9 +2146,17 @@ def _normalize_nmc_lookup_args_from_prior_locate(
         and bool(_nonempty_str(params.get("q1")))
     )
     if has_region_params and not needs_default_limit:
+        if params != raw_params and isinstance(raw_params, dict):
+            normalized = dict(args_obj)
+            normalized["params"] = params
+            return normalized
         return args_obj
 
-    locate_result = _latest_successful_primitive_result(llm_messages, primitive="locate")
+    locate_result = _latest_successful_primitive_result(
+        llm_messages,
+        primitive="locate",
+        registry=registry,
+    )
     if locate_result is None:
         if has_region_params and needs_default_limit:
             normalized = dict(args_obj)
@@ -1959,8 +2166,39 @@ def _normalize_nmc_lookup_args_from_prior_locate(
             return normalized
         return args_obj
 
+    return _normalize_nmc_lookup_args_from_locate_result(args_obj, locate_result)
+
+
+def _normalize_nmc_lookup_args_from_locate_result(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+) -> dict[str, object]:
+    """Fill NMC region-mode params from an already observed locate result."""
+
+    raw_params, params = _nmc_lookup_params_with_clean_qn(args_obj)
+    limit = params.get("limit")
+    needs_default_limit = not isinstance(limit, int) or isinstance(limit, bool)
+
+    has_region_params = (
+        params.get("mode") == "region"
+        and bool(_nonempty_str(params.get("q0")))
+        and bool(_nonempty_str(params.get("q1")))
+    )
+    if has_region_params and not needs_default_limit:
+        if params != raw_params and isinstance(raw_params, dict):
+            normalized = dict(args_obj)
+            normalized["params"] = params
+            return normalized
+        return args_obj
+
     region_pair = _locate_result_region_pair(locate_result)
     if region_pair is None:
+        if has_region_params and needs_default_limit:
+            normalized = dict(args_obj)
+            next_params = dict(params)
+            next_params["limit"] = 5
+            normalized["params"] = next_params
+            return normalized
         return args_obj
     origin_coords = _locate_result_coords(locate_result)
 
@@ -1986,6 +2224,182 @@ def _normalize_nmc_lookup_args_from_prior_locate(
         origin_coords,
     )
     return normalized
+
+
+_HIRA_DEPARTMENT_HINTS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"소아청소년과|소아과|pediatrics?", re.IGNORECASE), "소아청소년과"),
+    (re.compile(r"이비인후과|ent\b", re.IGNORECASE), "이비인후과"),
+    (re.compile(r"내과|internal medicine", re.IGNORECASE), "내과"),
+    (re.compile(r"피부과|dermatology", re.IGNORECASE), "피부과"),
+    (re.compile(r"정형외과|orthopedics?", re.IGNORECASE), "정형외과"),
+    (re.compile(r"산부인과|obgyn|ob/gyn", re.IGNORECASE), "산부인과"),
+    (re.compile(r"안과|ophthalmology", re.IGNORECASE), "안과"),
+)
+
+
+def _hira_department_from_query(user_query: str) -> str | None:
+    for pattern, value in _HIRA_DEPARTMENT_HINTS:
+        if pattern.search(user_query):
+            return value
+    return None
+
+
+def _normalize_hira_lookup_args_from_prior_locate(
+    fname: str,
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    user_query: str,
+    *,
+    registry: Any = None,
+) -> dict[str, object]:
+    """Fill HIRA coordinate-radius params from the latest successful locate result."""
+    if fname != "find" or args_obj.get("tool_id") != "hira_hospital_search":
+        return args_obj
+    locate_result = _latest_successful_primitive_result(
+        llm_messages,
+        primitive="locate",
+        registry=registry,
+    )
+    if locate_result is None:
+        return args_obj
+    return _normalize_hira_lookup_args_from_locate_result(args_obj, locate_result, user_query)
+
+
+def _normalize_hira_lookup_args_from_locate_result(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+    user_query: str,
+) -> dict[str, object]:
+    """Fill HIRA coordinate-radius params from an already observed locate result."""
+
+    raw_params = args_obj.get("params")
+    params = dict(raw_params) if isinstance(raw_params, dict) else {}
+    valid_coords = (
+        isinstance(params.get("xPos"), int | float)
+        and isinstance(params.get("yPos"), int | float)
+        and not _is_whole_degree_pair(params.get("yPos"), params.get("xPos"))
+    )
+    valid_radius = (
+        isinstance(params.get("radius"), int)
+        and not isinstance(params.get("radius"), bool)
+        and 1 <= int(params["radius"]) <= 10000
+    )
+
+    changed = not isinstance(raw_params, dict)
+    if not valid_coords:
+        coords = _locate_result_coords(locate_result)
+        if coords is None:
+            return args_obj
+        lat, lon = coords
+        params["xPos"] = lon
+        params["yPos"] = lat
+        changed = True
+
+    if not valid_radius:
+        params["radius"] = 2000
+        changed = True
+
+    if params.get("dgsbjt") in (None, ""):
+        department = _hira_department_from_query(user_query)
+        if department is not None:
+            params["dgsbjt"] = department
+            changed = True
+
+    if not changed:
+        return args_obj
+    normalized = dict(args_obj)
+    normalized["params"] = params
+    logger.info(
+        "find: normalized hira_hospital_search params from prior locate "
+        "xPos=%s yPos=%s radius=%s dgsbjt=%s",
+        params.get("xPos"),
+        params.get("yPos"),
+        params.get("radius"),
+        params.get("dgsbjt"),
+    )
+    return normalized
+
+
+def _normalize_koroad_lookup_args_from_prior_locate(
+    fname: str,
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> dict[str, object]:
+    """Fill KOROAD adm_cd/year params from the latest successful locate result."""
+    if fname != "find" or args_obj.get("tool_id") != "koroad_accident_hazard_search":
+        return args_obj
+    locate_result = _latest_successful_primitive_result(
+        llm_messages,
+        primitive="locate",
+        registry=registry,
+    )
+    if locate_result is None:
+        return args_obj
+    return _normalize_koroad_lookup_args_from_locate_result(args_obj, locate_result)
+
+
+def _normalize_koroad_lookup_args_from_locate_result(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+) -> dict[str, object]:
+    """Fill KOROAD adm_cd/year params from an already observed locate result."""
+
+    raw_params = args_obj.get("params")
+    params = dict(raw_params) if isinstance(raw_params, dict) else {}
+    changed = not isinstance(raw_params, dict)
+
+    adm_cd = params.get("adm_cd")
+    if not (isinstance(adm_cd, str) and len(adm_cd) == 10 and adm_cd.isdigit()):
+        adm_cd_from_locate = _locate_result_adm_cd(locate_result)
+        if adm_cd_from_locate is None:
+            return args_obj
+        params["adm_cd"] = adm_cd_from_locate
+        changed = True
+
+    year = params.get("year")
+    if not isinstance(year, int) or isinstance(year, bool):
+        # Latest KOROAD frequentzoneLg dataset code currently maps to 2024 in
+        # accident_hazard_search._YEAR_TO_SEARCH_CD. Keep the adapter contract
+        # explicit instead of asking the model to guess a dataset vintage.
+        params["year"] = 2024
+        changed = True
+
+    if not changed:
+        return args_obj
+    normalized = dict(args_obj)
+    normalized["params"] = params
+    logger.info(
+        "find: normalized koroad_accident_hazard_search params from prior locate adm_cd=%s year=%s",
+        params.get("adm_cd"),
+        params.get("year"),
+    )
+    return normalized
+
+
+def _normalize_lookup_args_from_cached_locate_result(
+    fname: str,
+    args_obj: dict[str, object],
+    locate_result: dict[str, object] | None,
+    *,
+    user_query: str = "",
+) -> dict[str, object]:
+    """Apply locate-derived argument repair in inbound concrete tool dispatch."""
+    if fname != "find" or locate_result is None:
+        return args_obj
+    tool_id = args_obj.get("tool_id")
+    if tool_id == "nmc_emergency_search":
+        return _normalize_nmc_lookup_args_from_locate_result(args_obj, locate_result)
+    if tool_id == "hira_hospital_search":
+        return _normalize_hira_lookup_args_from_locate_result(
+            args_obj,
+            locate_result,
+            user_query,
+        )
+    if tool_id == "koroad_accident_hazard_search":
+        return _normalize_koroad_lookup_args_from_locate_result(args_obj, locate_result)
+    return args_obj
 
 
 def _check_sensitive_lookup_terminated_without_lookup(
@@ -3018,6 +3432,39 @@ def _maybe_reroute_locate_admin_keyword_args(
     return {**args_obj, "tool_id": "kakao_address_search", "params": next_params}
 
 
+_POI_ADDRESS_QUERY_RE: Final = re.compile(
+    r"(역|터미널|공항|캠퍼스|대학교|대학|해수욕장|시장|공원|병원|의원|약국|랜드마크)"
+)
+_ROAD_ADDRESS_QUERY_RE: Final = re.compile(r"(?:로|길)\s*\d{0,4}(?:번길)?")
+
+
+def _maybe_reroute_locate_poi_address_args(
+    fname: str,
+    args_obj: dict[str, Any],
+) -> dict[str, Any]:
+    """Rewrite named-place Kakao address calls to the documented keyword adapter."""
+
+    if fname != "locate" or args_obj.get("tool_id") != "kakao_address_search":
+        return args_obj
+    params = args_obj.get("params")
+    if not isinstance(params, dict):
+        return args_obj
+    query = params.get("query")
+    if not isinstance(query, str):
+        return args_obj
+    if not _POI_ADDRESS_QUERY_RE.search(query):
+        return args_obj
+    if _ROAD_ADDRESS_QUERY_RE.search(query):
+        return args_obj
+
+    next_params = {**params, "query": query.strip()}
+    logger.info(
+        "locate: rerouted Kakao address POI query to keyword search: %r",
+        query,
+    )
+    return {**args_obj, "tool_id": "kakao_keyword_search", "params": next_params}
+
+
 def _effective_chat_max_tokens(requested: int) -> int:
     """Clamp interactive chat completions so bad tool-routing loops fail fast."""
     raw = os.getenv("UMMAYA_CHAT_MAX_TOKENS")
@@ -3345,7 +3792,8 @@ def _check_chain_prerequisite(  # noqa: C901
                 "nmc_emergency_search({mode:'region', q0:region.region_1depth_name, "
                 "q1:region.region_2depth_name, origin_lat:coords.lat, "
                 "origin_lon:coords.lon, limit:<N>}). Do NOT retry coordinate mode for "
-                "station/neighborhood ER search and do NOT invent NMC filters such as QZ."
+                "station/neighborhood ER search. Leave qn unset unless the citizen "
+                "explicitly gave a specific institution name."
             )
 
     # Require a successful prior locate for this context. If resolve
@@ -3388,8 +3836,8 @@ def _check_chain_prerequisite(  # noqa: C901
             "then kakao_coord_to_region({lat:<lat>, lon:<lon>}), "
             "then call nmc_emergency_search({mode:'region', q0:region.region_1depth_name, "
             "q1:region.region_2depth_name, origin_lat:coords.lat, origin_lon:coords.lon, "
-            "limit:<N>}). Do NOT guess coordinates or set NMC filters such as QZ unless "
-            "the citizen explicitly supplied them."
+            "limit:<N>}). Do NOT guess coordinates. Leave qn unset unless the citizen "
+            "explicitly gave a specific institution name."
         )
     if has_coord or schema_coord_fields:
         field_kind = "coordinates"
@@ -4105,6 +4553,7 @@ async def run(  # noqa: C901
     # LLM to reconstruct auth_context from a prior tool result.
     _session_auth_contexts: dict[str, object] = {}
     _session_auth_session_ids: dict[str, str] = {}
+    _session_latest_locate_results: dict[str, dict[str, object]] = {}
 
     # Epic #2077 T010 — single ToolRegistry + ToolExecutor instance pair
     # reused across every chat_request. Adapter registration happens lazily
@@ -4197,14 +4646,12 @@ async def run(  # noqa: C901
         if _llm_system_prompt_cached[0] is not None:
             return _llm_system_prompt_cached[0] or None
         try:
-            from pathlib import Path  # noqa: PLC0415
+            from ummaya.context.prompt_loader import (  # noqa: PLC0415
+                PromptLoader,
+                default_manifest_path,
+            )
 
-            from ummaya.context.prompt_loader import PromptLoader  # noqa: PLC0415
-
-            # Default manifest lives at repo-root/prompts/manifest.yaml. The
-            # stdio backend runs from repo root when invoked via
-            # `uv run ummaya --ipc stdio`, so resolve relative to CWD.
-            manifest = Path("prompts") / "manifest.yaml"
+            manifest = default_manifest_path()
             if not manifest.is_file():
                 _llm_system_prompt_cached[0] = ""
                 return None
@@ -4348,7 +4795,7 @@ async def run(  # noqa: C901
     _AVAILABLE_ADAPTERS_TOP_K = int(  # noqa: N806 — env-derived constant
         _os_chat_env.environ.get("UMMAYA_AVAILABLE_ADAPTERS_TOP_K", "5")
     )
-    _root_primitive_tool_ids = frozenset({"locate", "find", "check", "send"})
+    _root_primitive_tool_ids = _ROOT_PRIMITIVE_TOOL_IDS
 
     def _select_concrete_adapter_tools_for_turn(user_query: str) -> list[Any]:
         """Return concrete, non-core adapter tools for this citizen turn.
@@ -5361,6 +5808,11 @@ async def run(  # noqa: C901
                     "tool_id": str(args_obj.get("tool_id", fname)),
                 }
 
+            if fname == "locate" and dispatch_error is None:
+                locate_result = result_payload.get("result")
+                if isinstance(locate_result, dict) and locate_result.get("kind") != "error":
+                    _session_latest_locate_results[session_id] = locate_result
+
             # Drain the outbound HTTP trace buffer + attach to the envelope.
             outbound_traces = consume_outbound_capture(_outbound_trace_token)
             if outbound_traces:
@@ -5517,9 +5969,14 @@ async def run(  # noqa: C901
         llm_tools: list[LLMToolDefinition] = [
             LLMToolDefinition.model_validate(raw) for raw in backend_tools_raw
         ]
+        has_concrete_backend_tools = bool(backend_tools_raw)
         for t in frame.tools:
             tui_name = getattr(getattr(t, "function", None), "name", None)
-            if tui_name and tui_name in backend_tool_names:
+            if not _should_append_tui_tool_to_llm_tools(
+                tui_name,
+                backend_tool_names,
+                has_concrete_backend_tools=has_concrete_backend_tools,
+            ):
                 continue
             llm_tools.append(LLMToolDefinition.model_validate(t.model_dump()))
 
@@ -5605,14 +6062,14 @@ async def run(  # noqa: C901
                 "base_time 추측 금지 — 위 hint 또는 그 이전 정시 사용.\n"
             )
 
-            # Spec 2521 (2026-05-01) — BM25 adapter discovery is a backend
-            # function, NOT an LLM-callable tool. Run the search against the
-            # latest citizen utterance and inject the top-K candidates into
-            # the dynamic suffix as ``<available_adapters>``. The LLM picks
-            # a tool_id from this block and calls ``find({tool_id, params})``
-            # — search-mode calls were the source of the "● find(search:)"
-            # phantom tool-UI noise that user surfaced via Layer 5 frame
-            # capture (specs/2521 frames/raw.cast frame_0160 onwards).
+            # 2026 tool-surface migration — adapter discovery is a backend
+            # function, NOT an LLM-callable mode. Run the search against the
+            # latest citizen utterance and inject top-K candidates into the
+            # dynamic suffix as ``<available_adapters>``. The normal path is a
+            # concrete adapter function call; the root primitive wrappers stay
+            # available only for legacy transcript compatibility. Search-mode
+            # calls were the source of the "● find(search:)" phantom tool-UI
+            # noise that user surfaced via Layer 5 frame capture.
             try:
                 for m in reversed(frame.messages):
                     if m.role == "user" and m.content:
@@ -6417,7 +6874,35 @@ async def run(  # noqa: C901
                     fname = primitive_name
                     args_obj = {"tool_id": model_tool_name, "params": dict(model_args_obj)}
 
+                raw_dispatch_args_obj = _copy_primitive_args(args_obj)
+
                 args_obj = _maybe_reroute_locate_admin_keyword_args(fname, args_obj)
+                args_obj = _maybe_reroute_locate_poi_address_args(fname, args_obj)
+                args_obj = _normalize_reverse_geocode_args_from_prior_locate(
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    registry=registry,
+                )
+                args_obj = _normalize_nmc_lookup_args_from_prior_locate(
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    registry=registry,
+                )
+                args_obj = _normalize_hira_lookup_args_from_prior_locate(
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    latest_user_utt,
+                    registry=registry,
+                )
+                args_obj = _normalize_koroad_lookup_args_from_prior_locate(
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    registry=registry,
+                )
                 args_obj = _normalize_lookup_args_for_query(fname, args_obj, latest_user_utt)
                 args_obj = _normalize_verify_args_for_query(fname, args_obj, latest_user_utt)
                 args_obj = _normalize_verify_tool_id_for_query(fname, args_obj, latest_user_utt)
@@ -6551,7 +7036,16 @@ async def run(  # noqa: C901
                     )
                     continue
 
-                if _conversation_has_successful_identical_primitive_call(
+                raw_duplicate = _canonical_primitive_args(
+                    raw_dispatch_args_obj
+                ) != _canonical_primitive_args(
+                    args_obj
+                ) and _conversation_has_successful_identical_primitive_call(
+                    llm_messages,
+                    primitive=fname,
+                    args=raw_dispatch_args_obj,
+                )
+                if raw_duplicate or _conversation_has_successful_identical_primitive_call(
                     llm_messages,
                     primitive=fname,
                     args=args_obj,
@@ -7292,6 +7786,12 @@ async def run(  # noqa: C901
                 return
             dispatch_name = primitive_name
             dispatch_args = {"tool_id": frame.name, "params": dict(args_obj)}
+
+        dispatch_args = _normalize_lookup_args_from_cached_locate_result(
+            dispatch_name,
+            dispatch_args,
+            _session_latest_locate_results.get(frame.session_id),
+        )
 
         await _dispatch_primitive(
             frame.call_id,

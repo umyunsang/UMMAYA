@@ -19,9 +19,10 @@ values (10 active families per Epic ε #2296). The dispatcher's
 of Spec 031). This is the same pattern find uses — permissive ``tool_id: str``
 where the prompt + BM25 search hint tells the LLM what's valid.
 
-FR-001 (Epic η updated): The LLM sees exactly four tools: locate,
-find, check, send. Subscribe is deferred until UMMAYA has a real
-app/push-notification runtime rather than a CLI-only subscription surface.
+2026 migration note: these root primitives are high-level categories and legacy
+transcript compatibility wrappers. The normal model-facing surface is a small
+turn-local set of concrete adapter functions selected by ToolSearch or backend
+retrieval.
 """
 
 from __future__ import annotations
@@ -136,11 +137,13 @@ RESOLVE_LOCATION_TOOL = GovAPITool(
     input_schema=_LocateInputForLLM,
     output_schema=_ResolveLocationOutput,
     llm_description=(
-        "Location primitive. Choose a locate adapter from the dynamic "
-        "<available_adapters> block and call locate({tool_id, params}). "
-        "Provider endpoints are separate adapters: Kakao address search, Kakao "
-        "keyword/POI search, Kakao coordinate-to-region, JUSO admCd lookup, and "
-        "SGIS coordinate-to-adm_cd lookup.\n\n"
+        "Location primitive category and legacy wrapper. Prefer concrete locate "
+        "adapter functions selected by ToolSearch or backend retrieval, and call "
+        "them directly with their schema arguments. Use locate({tool_id, params}) "
+        "only for old transcripts or compatibility paths. Provider endpoints are "
+        "separate adapters: Kakao address search, Kakao keyword/POI search, Kakao "
+        "coordinate-to-region, JUSO admCd lookup, and SGIS coordinate-to-adm_cd "
+        "lookup.\n\n"
         "Do not invent coordinates or administrative codes. If the citizen gives "
         "a named place/campus/station/landmark, prefer kakao_keyword_search. If "
         "the citizen gives a structured road/jibun address or district text, "
@@ -148,8 +151,8 @@ RESOLVE_LOCATION_TOOL = GovAPITool(
         "adapter needs q0/q1 region names after you have lat/lon, call "
         "kakao_coord_to_region with those coordinates.\n\n"
         "Examples:\n"
-        "  locate({tool_id:'kakao_keyword_search', params:{query:'동아대학교 승학캠퍼스'}})\n"
-        "  locate({tool_id:'kakao_coord_to_region', params:{lat:35.115446, lon:128.967669}})"
+        "  kakao_keyword_search({query:'동아대학교 승학캠퍼스'})\n"
+        "  kakao_coord_to_region({lat:35.115446, lon:128.967669})"
     ),
     search_hint=(
         "위치 조회 주소 변환 행정동 코드 좌표 지오코딩 POI 장소 검색 "
@@ -190,26 +193,21 @@ LOOKUP_SEARCH_TOOL = GovAPITool(
     input_schema=_LookupInputForLLM,
     output_schema=_LookupOutput,
     llm_description=(
-        "외부 도메인 API (기상청 단기예보, HIRA 병원 검색, KOROAD 사고 데이터, "
-        "KMA 현재 관측 등) 를 조회하는 추상 도구. 시스템 프롬프트의 "
-        "<available_adapters> 블록에 백엔드가 매 사용자 발화마다 후보 어댑터를 "
-        "자동으로 inject 합니다 — LLM 은 그 목록의 tool_id 중 하나를 선택해 "
-        "이 find 도구를 호출하면 됩니다.\n\n"
-        "사용법:\n"
-        "  Call the root function named find, but set tool_id to a concrete "
-        "adapter id from <available_adapters>.\n"
-        '  {"tool_id": "<후보 목록의 adapter tool_id>", "params": {...}}\n'
-        "  Never use root primitive names as tool_id values: find, locate, "
+        "Lookup primitive category and legacy wrapper for external-domain "
+        "public-service data such as KMA forecasts, KMA current observations, "
+        "HIRA hospital search, and KOROAD accident data. Prefer concrete adapter "
+        "functions selected by ToolSearch or backend retrieval, and call them "
+        "directly with their schema arguments.\n\n"
+        "Use find({tool_id, params}) only for old transcripts or compatibility "
+        "paths. Do not use root primitive names as tool_id values: find, locate, "
         "check, send.\n\n"
-        "예시 (시민: '오늘 부산 날씨'):\n"
-        "  {\n"
-        '    "tool_id": "kma_forecast_fetch",\n'
-        '    "params": {"lat": 35.18, "lon": 129.08,\n'
-        '               "base_date": "20260501", "base_time": "1400"}\n'
-        "  }\n\n"
-        "ORDERING RULE: <available_adapters> 에서 tool_id 선택 → 호출 → 결과 "
-        "분석 → 다음 도구 또는 답변. 동일 tool_id 를 한 turn 안에서 반복 호출하지 "
-        "않습니다 — 결과를 바탕으로 답변하거나, 필요하면 다른 tool_id 로 보완 호출."
+        "Example for a selected weather adapter:\n"
+        "  kma_forecast_fetch({lat:35.18, lon:129.08, base_date:'20260501', "
+        "base_time:'1400'})\n\n"
+        "Ordering rule: select a concrete adapter, call it once with valid schema "
+        "arguments, analyze the result, then answer or choose a different adapter "
+        "if another official data source is needed. Do not repeat the same "
+        "adapter in a turn unless validation feedback requires corrected args."
     ),
     search_hint=(
         "데이터 조회 도구 호출 검색 패치 find search fetch invoke tool adapter data query"
@@ -470,17 +468,18 @@ VERIFY_TOOL = GovAPITool(
     input_schema=_VerifyInputForLLM,
     output_schema=_LookupOutput,  # opaque envelope wrapper (RootModel[object])
     llm_description=(
-        "Authentication-ceremony primitive that issues a scope-bound "
-        "DelegationContext (or IdentityAssertion for any_id_sso). Call this "
-        "FIRST when the citizen requests any OPAQUE-domain send-class action "
-        "(홈택스 신고 / 정부24 민원 / 마이데이터 액션). Pass the scope_list "
-        "covering ALL downstream find + send calls in a single check "
-        "invocation. The returned DelegationContext is then passed as a "
-        "param into the subsequent find(mode='fetch', params={'delegation_"
-        "context': ctx}) and send(delegation_context=ctx) calls.\n\n"
-        "family_hint values + canonical AAL hints are documented in the "
-        "system prompt's <check_families> table. The LLM defaults to the "
-        "lowest AAL satisfying the citizen's stated purpose.\n\n"
+        "Authentication-ceremony primitive category and legacy wrapper. Prefer "
+        "concrete check adapter functions selected by ToolSearch or backend "
+        "retrieval, and call them directly with their schema arguments. A check "
+        "adapter issues a scope-bound DelegationContext or IdentityAssertion. "
+        "Call an appropriate check adapter first when the citizen requests an "
+        "OPAQUE-domain send-class action (홈택스 신고 / 정부24 민원 / 마이데이터 액션). "
+        "Pass the scope_list covering all downstream lookup and send adapters in "
+        "one check invocation. The returned DelegationContext is then passed as a "
+        "param into subsequent concrete lookup/send adapter calls.\n\n"
+        "Use check({tool_id, params}) only for old transcripts or compatibility "
+        "paths. The LLM defaults to the lowest AAL satisfying the citizen's "
+        "stated purpose.\n\n"
         "Exception: family_hint='any_id_sso' returns an IdentityAssertion "
         "with no DelegationToken — do NOT chain a send after this check."
     ),
@@ -521,12 +520,14 @@ SUBMIT_TOOL = GovAPITool(
     input_schema=_SubmitInputForLLM,
     output_schema=_LookupOutput,
     llm_description=(
-        "send primitive — invokes a write-transaction adapter (홈택스 신고, "
-        "정부24 민원, mydata 액션 등). REQUIRES a valid DelegationContext "
-        "from a prior check call with matching scope. tool_id MUST be one of "
-        "the registered send adapters (e.g. mock_submit_module_hometax_"
-        "taxreturn). params MUST include 'delegation_context' (the value "
-        "returned by check) and the adapter-specific payload.\n\n"
+        "Send primitive category and legacy wrapper for write-transaction "
+        "adapters (홈택스 신고, 정부24 민원, mydata 액션 등). Prefer concrete send "
+        "adapter functions selected by ToolSearch or backend retrieval, and call "
+        "them directly with their schema arguments. A send adapter requires a "
+        "valid DelegationContext from a prior check adapter with matching scope. "
+        "Use send({tool_id, params}) only for old transcripts or compatibility "
+        "paths. params must include the returned DelegationContext and the "
+        "adapter-specific payload.\n\n"
         "On success: returns transaction_id (deterministic URN) + adapter_"
         "receipt with the agency's 접수번호 (e.g. 'hometax-2026-MM-DD-RX-XXXXX'). "
         "Cite the receipt in the citizen-facing Korean response.\n\n"

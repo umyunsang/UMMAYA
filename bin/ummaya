@@ -7,9 +7,27 @@ import { delimiter, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const MINIMUM_BUN_VERSION = '1.3.0'
-const launcherPath = realpathSync(fileURLToPath(import.meta.url))
+const PACKAGED_PRIMITIVE_TIMEOUT_MS = '90000'
 
-function bunVersionAtLeast(version, minimum) {
+function currentLauncherPath() {
+  return realpathSync(fileURLToPath(import.meta.url))
+}
+
+function invokedLauncherPath() {
+  const argvPath = process.argv[1]
+  if (!argvPath) return null
+  try {
+    return realpathSync(argvPath)
+  } catch {
+    return null
+  }
+}
+
+function isDirectLaunch() {
+  return invokedLauncherPath() === currentLauncherPath()
+}
+
+export function bunVersionAtLeast(version, minimum) {
   const current = String(version)
     .split('.')
     .map((part) => Number.parseInt(part, 10))
@@ -62,7 +80,7 @@ function probeBunVersion(candidate) {
   return (result.stdout || result.stderr).trim()
 }
 
-function launchWithCompatibleBun(currentVersion = null) {
+function launchWithCompatibleBun(launcherPath, currentVersion = null) {
   const checked = []
   for (const candidate of collectBunCandidates()) {
     const version = probeBunVersion(candidate)
@@ -94,17 +112,7 @@ function launchWithCompatibleBun(currentVersion = null) {
   process.exit(1)
 }
 
-const runningBun = globalThis.Bun
-if (!runningBun) {
-  launchWithCompatibleBun()
-}
-if (!bunVersionAtLeast(runningBun.version, MINIMUM_BUN_VERSION)) {
-  launchWithCompatibleBun(runningBun.version)
-}
-
-const packageRoot = dirname(dirname(launcherPath))
-
-function loadPackageDotenv(root) {
+export function loadPackageDotenv(root, env = process.env) {
   const envPath = join(root, '.env')
   if (!existsSync(envPath)) return
   const lines = readFileSync(envPath, 'utf8').split(/\r?\n/)
@@ -114,29 +122,66 @@ function loadPackageDotenv(root) {
     const index = line.indexOf('=')
     const key = line.slice(0, index).trim()
     let value = line.slice(index + 1).trim()
-    if (!key || process.env[key] !== undefined) continue
+    if (!key || env[key] !== undefined) continue
     if (
       (value.startsWith('"') && value.endsWith('"')) ||
       (value.startsWith("'") && value.endsWith("'"))
     ) {
       value = value.slice(1, -1)
     }
-    process.env[key] = value
+    env[key] = value
   }
 }
 
-loadPackageDotenv(packageRoot)
+export function buildBackendCommand(root) {
+  const packagedPython = join(root, '.venv', 'bin', 'python')
+  if (existsSync(packagedPython)) {
+    return [packagedPython, '-m', 'ummaya.cli', '--ipc', 'stdio']
+  }
 
-process.env.UMMAYA_PACKAGE_ROOT ??= packageRoot
-process.env.UMMAYA_BACKEND_CMD_JSON ??= JSON.stringify([
-  'uv',
-  '--directory',
-  packageRoot,
-  'run',
-  'ummaya',
-  '--ipc',
-  'stdio',
-])
+  return ['uv', '--directory', root, 'run', '--frozen', '--no-dev', 'ummaya', '--ipc', 'stdio']
+}
 
-await import(join(packageRoot, 'tui/src/stubs/macro-preload.ts'))
-await import(join(packageRoot, 'tui/src/entrypoints/cli.tsx'))
+export function configurePackageEnv(root, env = process.env) {
+  env.UMMAYA_PACKAGE_ROOT = root
+  if (env.UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE !== '1' || !env.UMMAYA_BACKEND_CMD_JSON) {
+    env.UMMAYA_BACKEND_CMD_JSON = JSON.stringify(buildBackendCommand(root))
+  }
+  env.UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS ??= PACKAGED_PRIMITIVE_TIMEOUT_MS
+  return env
+}
+
+function inspectLauncherAndExit() {
+  if (process.env.UMMAYA_LAUNCHER_INSPECT !== '1') return
+  process.stdout.write(
+    `${JSON.stringify({
+      packageRoot: process.env.UMMAYA_PACKAGE_ROOT,
+      backendCommand: JSON.parse(process.env.UMMAYA_BACKEND_CMD_JSON ?? '[]'),
+      primitiveTimeoutMs: process.env.UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS,
+    })}\n`,
+  )
+  process.exit(0)
+}
+
+export async function main() {
+  const launcherPath = currentLauncherPath()
+  const runningBun = globalThis.Bun
+  if (!runningBun) {
+    launchWithCompatibleBun(launcherPath)
+  }
+  if (!bunVersionAtLeast(runningBun.version, MINIMUM_BUN_VERSION)) {
+    launchWithCompatibleBun(launcherPath, runningBun.version)
+  }
+
+  const packageRoot = dirname(dirname(launcherPath))
+  loadPackageDotenv(packageRoot)
+  configurePackageEnv(packageRoot)
+  inspectLauncherAndExit()
+
+  await import(join(packageRoot, 'tui/src/stubs/macro-preload.ts'))
+  await import(join(packageRoot, 'tui/src/entrypoints/cli.tsx'))
+}
+
+if (isDirectLaunch()) {
+  await main()
+}

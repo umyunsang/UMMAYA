@@ -48,6 +48,33 @@ run() {
   "$@"
 }
 
+verify_launcher_health() {
+  command_path="$1"
+  tmp_root="${TMPDIR:-/tmp}"
+  smoke_dir="$(mktemp -d "$tmp_root/ummaya-launcher-smoke.XXXXXX")" || return 1
+  inspect_file="$smoke_dir/inspect.json"
+  if ! (
+    cd "$smoke_dir" &&
+      UMMAYA_LAUNCHER_INSPECT=1 \
+        UMMAYA_BACKEND_CMD_JSON='["stale","backend"]' \
+        "$command_path" >"$inspect_file"
+  ); then
+    rm -rf "$smoke_dir"
+    return 1
+  fi
+  inspect="$(cat "$inspect_file")"
+  rm -rf "$smoke_dir"
+
+  case "$inspect" in
+    *'"packageRoot":'*'"backendCommand":'*'"primitiveTimeoutMs":"90000"'*) ;;
+    *) return 1 ;;
+  esac
+  case "$inspect" in
+    *'"--directory"'*|*'/.venv/bin/python'*) ;;
+    *) return 1 ;;
+  esac
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --dry-run)
@@ -95,7 +122,9 @@ if brew list --cask "$cask" >/dev/null 2>&1; then
   outdated="$(brew outdated --cask "$cask_ref" || true)"
   if [ -n "$outdated" ]; then
     run brew upgrade --cask "$cask_ref"
-  elif [ -x "$(brew --prefix)/bin/ummaya" ] && "$(brew --prefix)/bin/ummaya" --version >/dev/null 2>&1; then
+  elif [ -x "$(brew --prefix)/bin/ummaya" ] &&
+    "$(brew --prefix)/bin/ummaya" --version >/dev/null 2>&1 &&
+    verify_launcher_health "$(brew --prefix)/bin/ummaya" >/dev/null 2>&1; then
     log "UMMAYA is already installed and healthy."
   else
     run brew reinstall --cask "$cask_ref"
@@ -113,6 +142,7 @@ brew_bin="$brew_prefix/bin/ummaya"
 
 if [ -x "$brew_bin" ]; then
   "$brew_bin" --version
+  verify_launcher_health "$brew_bin" || fail "UMMAYA installed, but launcher backend contract verification failed."
   resolved="$(command -v ummaya || true)"
   if [ -n "$resolved" ] && [ "$resolved" != "$brew_bin" ]; then
     log "Homebrew installed UMMAYA at $brew_bin, but PATH resolves 'ummaya' to $resolved."

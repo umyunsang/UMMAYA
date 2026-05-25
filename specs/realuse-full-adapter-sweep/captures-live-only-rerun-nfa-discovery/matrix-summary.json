@@ -1,0 +1,21 @@
+{
+  "overall": "pass",
+  "results": [
+    {
+      "id": "SAFETY-NFA119-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-rerun-nfa-discovery/SAFETY-NFA119-001"
+    },
+    {
+      "id": "DISCOVERY-TOOL-SEARCH-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-rerun-nfa-discovery/DISCOVERY-TOOL-SEARCH-001"
+    }
+  ]
+}

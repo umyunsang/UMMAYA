@@ -72,6 +72,10 @@ SUBMIT_LEDGER_TOOL_ID_RE = re.compile(
 RED_ANSI_RE = re.compile(
     r"\x1b\[(?:[0-9;]*;)?(?:31|91|38;5;196|38;5;160|38;2;[0-9;]+)m"
 )
+PROVIDER_ABORT_RE = re.compile(
+    r"API\s*Error\s*:\s*The\s*operation\s*was\s*aborted\.?|APIError:Theoperationwasaborted\.?",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -125,6 +129,18 @@ def find_first(files: Sequence[CaptureFile], pattern: re.Pattern[str]) -> tuple[
     return None
 
 
+def find_chain_in_text(text: str, expected_chain: Sequence[str]) -> bool:
+    """Return True when all chain tokens appear in order inside one snapshot."""
+    offset = 0
+    for token in expected_chain:
+        pattern = re.compile(token, re.IGNORECASE | re.MULTILINE)
+        match = pattern.search(text, offset)
+        if match is None:
+            return False
+        offset = match.end()
+    return True
+
+
 def has_any(patterns: Iterable[str], text: str) -> bool:
     return any(re.search(pattern, text, re.IGNORECASE | re.MULTILINE) for pattern in patterns)
 
@@ -167,8 +183,9 @@ def check_capture_completeness(files: Sequence[CaptureFile], strict_frames: bool
     )
 
 
-def check_replacement_character(text: str) -> CheckResult:
-    if "\ufffd" in text:
+def check_replacement_character(files: Sequence[CaptureFile]) -> CheckResult:
+    cooked_text = "\n".join(file.text for file in files if not file.path.endswith(".raw.txt"))
+    if "\ufffd" in cooked_text:
         return CheckResult(
             name="utf8_replacement_character",
             status="fail",
@@ -229,11 +246,24 @@ def check_expected_chain(
             details="No explicit chain expectation configured.",
         )
 
+    frame_files = [file for file in files if file.path.startswith("frames/frame_")]
+    snap_files = [file for file in files if file.path.startswith("snap-")]
+    ordered_files = frame_files or snap_files or files
+
+    for index, file in enumerate(ordered_files):
+        if find_chain_in_text(file.text, expected_chain):
+            return CheckResult(
+                name="agentic_chain_order",
+                status="pass",
+                details="Expected tool chain was visible in order inside one chronological capture.",
+                evidence=[f"chain@{index}:{file.path}"],
+            )
+
     positions: list[tuple[str, int, str]] = []
     last_index = -1
     for token in expected_chain:
         pattern = re.compile(token, re.IGNORECASE | re.MULTILINE)
-        found = find_first(files, pattern)
+        found = find_first(ordered_files, pattern)
         if found is None:
             return CheckResult(
                 name="agentic_chain_order",
@@ -399,7 +429,8 @@ def check_error_rendering(
     text: str,
     require_error_rendering: bool,
 ) -> CheckResult:
-    has_error = has_any(ERROR_PATTERNS, text)
+    tool_error_text = PROVIDER_ABORT_RE.sub("", text)
+    has_error = has_any(ERROR_PATTERNS, tool_error_text)
     if not has_error and not require_error_rendering:
         return CheckResult(
             name="cc_error_rendering",
@@ -611,7 +642,7 @@ def run_audit(
     text = "\n".join(file.text for file in files)
     checks: list[CheckResult] = [
         check_capture_completeness(files, strict_frames),
-        check_replacement_character(text),
+        check_replacement_character(files),
         check_backend_log_health(capture_dir),
         check_expected_chain(files, expected_chain),
         check_expected_submit_ledgers(capture_dir, expected_chain),

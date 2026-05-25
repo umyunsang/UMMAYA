@@ -66,6 +66,75 @@ def test_passes_visible_resolve_lookup_trace(tmp_path: Path) -> None:
     assert json.loads((tmp_path / "audit.json").read_text(encoding="utf-8"))["overall"] == "pass"
 
 
+def test_chain_order_uses_chronological_frames_before_cumulative_final_raw(
+    tmp_path: Path,
+) -> None:
+    write_capture(
+        tmp_path,
+        "final.txt",
+        "UMMAYA final answer\noutbound_traces status_code url",
+    )
+    write_capture(
+        tmp_path,
+        "final.raw.txt",
+        "end-state summary mentions koroad_accident_search before locate text",
+    )
+    write_capture(tmp_path, "frames/frame_0000_boot.txt", "UMMAYA boot")
+    write_capture(tmp_path, "frames/frame_0001_locate.txt", "⏺ locate(kakao_keyword_search)")
+    write_capture(
+        tmp_path,
+        "frames/frame_0002_lookup.txt",
+        "⏺ find(koroad_accident_search)",
+    )
+
+    result = run_audit(
+        tmp_path,
+        expected_chain=["locate", "koroad_accident_search"],
+        require_expanded_trace=True,
+        strict_frames=True,
+    )
+
+    assert result["overall"] == "pass"
+
+
+def test_chain_order_accepts_ordered_sequence_inside_later_expanded_frame(
+    tmp_path: Path,
+) -> None:
+    write_capture(
+        tmp_path,
+        "final.txt",
+        "UMMAYA final answer\noutbound_traces status_code url",
+    )
+    write_capture(tmp_path, "frames/frame_0000_boot.txt", "UMMAYA boot")
+    write_capture(
+        tmp_path,
+        "frames/frame_0001_partial.txt",
+        "⏺ find(koroad_accident_hazard_search)",
+    )
+    write_capture(
+        tmp_path,
+        "frames/frame_0002_expanded.txt",
+        (
+            "⏺ locate(kakao_address_search)\n"
+            "⏺ find(koroad_accident_hazard_search)\n"
+            "⏺ find(kma_current_observation)"
+        ),
+    )
+
+    result = run_audit(
+        tmp_path,
+        expected_chain=[
+            "locate",
+            "koroad_accident_hazard_search",
+            "kma_current_observation",
+        ],
+        require_expanded_trace=True,
+        strict_frames=True,
+    )
+
+    assert result["overall"] == "pass"
+
+
 def test_fails_utf8_replacement_character(tmp_path: Path) -> None:
     write_capture(tmp_path, "final.txt", "UMMAYA 마이�레이션")
     write_capture(tmp_path, "frames/frame_0000_final.txt", "UMMAYA 마이�레이션")
@@ -75,6 +144,18 @@ def test_fails_utf8_replacement_character(tmp_path: Path) -> None:
     statuses = status_by_name(result)
     assert result["overall"] == "fail"
     assert statuses["utf8_replacement_character"] == "fail"
+
+
+def test_ignores_raw_pty_replacement_character(tmp_path: Path) -> None:
+    write_capture(tmp_path, "final.txt", "UMMAYA migration")
+    write_capture(tmp_path, "final.raw.txt", "UMMAYA migration�")
+    write_capture(tmp_path, "frames/frame_0000_final.txt", "UMMAYA migration")
+
+    result = run_audit(tmp_path)
+
+    statuses = status_by_name(result)
+    assert result["overall"] == "pass"
+    assert statuses["utf8_replacement_character"] == "pass"
 
 
 def test_fails_recoverable_invalid_params_without_retry(tmp_path: Path) -> None:
@@ -120,6 +201,22 @@ def test_passes_error_rendering_with_red_ansi(tmp_path: Path) -> None:
     result = run_audit(tmp_path, require_error_rendering=True)
 
     statuses = status_by_name(result)
+    assert statuses["cc_error_rendering"] == "pass"
+
+
+def test_provider_abort_banner_is_not_tool_error_rendering(tmp_path: Path) -> None:
+    write_capture(
+        tmp_path,
+        "final.txt",
+        "APIError:Theoperationwasaborted.\nShowing detailed transcript",
+    )
+    write_capture(tmp_path, "final.raw.txt", "APIError:Theoperationwasaborted.")
+    write_capture(tmp_path, "frames/frame_0000_boot.txt", "UMMAYA")
+
+    result = run_audit(tmp_path)
+
+    statuses = status_by_name(result)
+    assert result["overall"] == "pass"
     assert statuses["cc_error_rendering"] == "pass"
 
 

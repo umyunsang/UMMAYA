@@ -15,6 +15,7 @@ Public API (for external callers):
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING
 
 from ummaya.tools.bm25_index import BM25Index
@@ -30,6 +31,61 @@ if TYPE_CHECKING:
     from ummaya.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
+
+
+_POI_LOCATION_RE = re.compile(
+    r"(근처|주변|인근|가까운|역|터미널|공항|캠퍼스|대학교|대학|해수욕장|시장|공원|랜드마크)"
+)
+_ADMIN_LOCATION_RE = re.compile(
+    r"(?:[가-힣]{2,}(?:시|군|구|동|읍|면)\b|[가-힣0-9]{2,}(?<!으)(?:로|길)\b)"
+)
+_EMERGENCY_RE = re.compile(r"(응급|응급실|응급의료|\bemergency\b|\ber\b)", re.IGNORECASE)
+_TRAFFIC_HAZARD_RE = re.compile(
+    r"(교통사고|사고\s*위험|사고다발|위험\s*(?:구간|도로|지점)|어린이보호구역|보호구역|"
+    r"도로\s*구간|accident|hazard|hotspot)",
+    re.IGNORECASE,
+)
+_TRAFFIC_HAZARD_SPECIFIC_RE = re.compile(
+    r"(사고\s*위험|위험\s*(?:구간|도로|지점)|어린이보호구역|보호구역|스쿨존|"
+    r"도로\s*구간|행정동코드|adm_cd|hazard|hotspot)",
+    re.IGNORECASE,
+)
+
+
+def _expand_query_for_adapter_retrieval(query: str) -> str:
+    """Add domain-neutral retrieval hints that Korean spacing can hide.
+
+    The retriever indexes adapter search hints, not a Korean morphological
+    parse.  A station query such as "하단역 근처 응급실" contains a POI suffix,
+    but does not literally contain the "키워드/POI/랜드마크" terms in
+    ``kakao_keyword_search``.  Expanding only the retrieval query keeps the
+    adapter contract unchanged while letting the concrete locate adapter stay
+    visible to the model.
+    """
+    additions: list[str] = []
+    if _POI_LOCATION_RE.search(query):
+        additions.extend(["장소", "키워드", "POI", "랜드마크", "역", "keyword"])
+    if _ADMIN_LOCATION_RE.search(query):
+        additions.extend(["주소", "행정동", "법정동", "도로명", "지번", "address"])
+    if _EMERGENCY_RE.search(query):
+        additions.extend(["응급실", "응급의료", "NMC", "emergency"])
+    if _TRAFFIC_HAZARD_RE.search(query):
+        additions.extend(
+            [
+                "교통사고",
+                "사고다발구역",
+                "위험지점",
+                "도로위험구역",
+                "어린이보호구역",
+                "행정동코드",
+                "KOROAD",
+                "accident",
+                "hazard",
+            ]
+        )
+    if not additions:
+        return query
+    return f"{query} {' '.join(additions)}"
 
 
 def search(
@@ -72,7 +128,7 @@ def search(
 
     retriever = registry._retriever
     try:
-        scored = retriever.score(query)
+        scored = retriever.score(_expand_query_for_adapter_retrieval(query))
     except Exception as exc:
         # FR-002 fail-open: a mid-session retriever failure (dense OOM,
         # tokenizer crash, encoder corruption) must not surface as a 5xx
@@ -96,7 +152,7 @@ def search(
             )
             return []
         try:
-            scored = bm25_companion.score(query)
+            scored = bm25_companion.score(_expand_query_for_adapter_retrieval(query))
         except Exception as bm25_exc:
             logger.warning(
                 "search: BM25 companion also failed (%s: %s) — returning empty ranking",
@@ -104,6 +160,11 @@ def search(
                 bm25_exc,
             )
             return []
+
+    if _TRAFFIC_HAZARD_SPECIFIC_RE.search(query):
+        scored = [
+            (tool_id, score) for tool_id, score in scored if tool_id != "koroad_accident_search"
+        ]
 
     # Enforce the deterministic tie-break once, here. Backend-internal
     # orderings are not trusted (HybridBackend returns unordered union).

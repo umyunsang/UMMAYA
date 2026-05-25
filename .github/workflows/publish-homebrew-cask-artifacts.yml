@@ -74,6 +74,16 @@ jobs:
           "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --version
           UMMAYA_FORCE_RUNTIME_CACHE=1 "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --version
           "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" --help >/dev/null
+          arbitrary_cwd="${RUNNER_TEMP}/ummaya arbitrary cwd"
+          mkdir -p "${arbitrary_cwd}"
+          (
+            cd "${arbitrary_cwd}"
+            UMMAYA_LAUNCHER_INSPECT=1 \
+              UMMAYA_BACKEND_CMD_JSON='["stale","backend"]' \
+              "${RUNNER_TEMP}/ummaya-cask-smoke/ummaya" >"${RUNNER_TEMP}/ummaya-cask-launcher-inspect.json"
+          )
+          EXPECTED_PACKAGE_ROOT="$(cd "${RUNNER_TEMP}/ummaya-cask-smoke/package" && pwd -P)" \
+            node -e 'const fs = require("node:fs"); const payload = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const expected = process.env.EXPECTED_PACKAGE_ROOT; if (payload.packageRoot !== expected) throw new Error(`packageRoot ${payload.packageRoot} !== ${expected}`); const command = payload.backendCommand; if (!Array.isArray(command) || !command.includes("--directory") || !command.includes(expected) || !command.includes("--frozen") || !command.includes("--no-dev")) throw new Error(`unexpected backend command ${JSON.stringify(command)}`); if (payload.primitiveTimeoutMs !== "90000") throw new Error(`unexpected primitive timeout ${payload.primitiveTimeoutMs}`);' "${RUNNER_TEMP}/ummaya-cask-launcher-inspect.json"
 
       - name: Upload cask artifact
         uses: actions/upload-artifact@v7

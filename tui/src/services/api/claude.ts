@@ -215,6 +215,10 @@ import {
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
 } from '../../tools/ToolSearchTool/prompt.js'
+import {
+  isRootPrimitiveToolName,
+  selectTopKAdapterToolNamesForQuery,
+} from '../../tools/AdapterTool/AdapterTool.js'
 import { count } from '../../utils/array.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
@@ -820,6 +824,32 @@ function shouldDeferLspTool(tool: Tool): boolean {
   return status.status === 'pending' || status.status === 'not-started'
 }
 
+function latestUserTextForToolRetrieval(messages: Message[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i] as {
+      type?: string
+      message?: { content?: unknown }
+    }
+    if (message?.type !== 'user') continue
+    const content = message.message?.content
+    if (typeof content === 'string') {
+      if (content.trim().length > 0) return content
+      continue
+    }
+    if (Array.isArray(content)) {
+      const text = content
+        .filter(
+          (block): block is { type: string; text: string } =>
+            block?.type === 'text' && typeof block.text === 'string',
+        )
+        .map(block => block.text)
+        .join('')
+      if (text.trim().length > 0) return text
+    }
+  }
+  return ''
+}
+
 /**
  * Per-attempt timeout for non-streaming fallback requests, in milliseconds.
  * Reads API_TIMEOUT_MS when set so slow backends and the streaming path
@@ -1175,6 +1205,17 @@ async function* queryModel(
     useToolSearch = false
   }
 
+  const turnLocalAdapterToolNames = new Set(
+    selectTopKAdapterToolNamesForQuery(
+      latestUserTextForToolRetrieval(messages),
+    ),
+  )
+  if (turnLocalAdapterToolNames.size > 0) {
+    logForDebugging(
+      `UMMAYA turn-local adapter schemas: ${[...turnLocalAdapterToolNames].join(', ')}`,
+    )
+  }
+
   // Filter out ToolSearchTool if tool search is not enabled for this model
   // ToolSearchTool returns tool_reference blocks which unsupported models can't handle
   let filteredTools: Tools
@@ -1186,6 +1227,10 @@ async function* queryModel(
     const discoveredToolNames = extractDiscoveredToolNames(messages)
 
     filteredTools = tools.filter(tool => {
+      if (turnLocalAdapterToolNames.size > 0 && isRootPrimitiveToolName(tool.name)) {
+        return false
+      }
+      if (turnLocalAdapterToolNames.has(tool.name)) return true
       // Always include non-deferred tools
       if (!deferredToolNames.has(tool.name)) return true
       // Always include ToolSearchTool (so it can discover more tools)
@@ -1194,9 +1239,14 @@ async function* queryModel(
       return discoveredToolNames.has(tool.name)
     })
   } else {
-    filteredTools = tools.filter(
-      t => !toolMatchesName(t, TOOL_SEARCH_TOOL_NAME),
-    )
+    filteredTools = tools.filter(t => {
+      if (toolMatchesName(t, TOOL_SEARCH_TOOL_NAME)) return false
+      if (turnLocalAdapterToolNames.size > 0 && isRootPrimitiveToolName(t.name)) {
+        return false
+      }
+      if (isDeferredTool(t)) return turnLocalAdapterToolNames.has(t.name)
+      return true
+    })
   }
 
   // Add tool search beta header if enabled - required for defer_loading to be accepted

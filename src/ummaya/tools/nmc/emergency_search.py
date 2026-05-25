@@ -53,6 +53,33 @@ logger = logging.getLogger(__name__)
 # is left for a follow-up adapter once region resolution lands.
 _BASE_URL = "https://apis.data.go.kr/B552657/ErmctInfoInqireService/getEgytLcinfoInqire"
 _LIST_URL = "https://apis.data.go.kr/B552657/ErmctInfoInqireService/getEgytListInfoInqire"
+_GENERIC_QN_FILTERS = frozenset(
+    {
+        "응급실",
+        "야간응급실",
+        "야간 응급실",
+        "응급의료",
+        "응급의료기관",
+        "응급의료센터",
+        "응급센터",
+        "응급 병원",
+        "emergency",
+        "emergency room",
+        "er",
+    }
+)
+
+
+def _invalid_qn_filter(qn: str | None) -> bool:
+    if qn is None:
+        return False
+    stripped = qn.strip()
+    if not stripped:
+        return True
+    if stripped.lower() in _GENERIC_QN_FILTERS:
+        return True
+    return "," in stripped or "，" in stripped
+
 
 # ---------------------------------------------------------------------------
 # Input schema (T032 — lat/lon/limit, Pydantic v2 strict)
@@ -118,7 +145,6 @@ class NmcEmergencySearchInput(BaseModel):
     )
     qn: str | None = Field(
         default=None,
-        min_length=1,
         max_length=80,
         description=(
             "Optional NMC QN institution-name filter. Leave unset for general "
@@ -157,10 +183,36 @@ class NmcEmergencySearchInput(BaseModel):
     def _validate_operation_params(self) -> NmcEmergencySearchInput:
         if self.mode == "coordinate" and (self.lat is None or self.lon is None):
             raise ValueError("mode='coordinate' requires lat and lon")
+        if (
+            self.mode == "coordinate"
+            and self.lat is not None
+            and self.lon is not None
+            and float(self.lat).is_integer()
+            and float(self.lon).is_integer()
+        ):
+            raise ValueError(
+                "mode='coordinate' requires decimal WGS84 lat/lon copied exactly "
+                "from locate; do not round both coordinates to whole degrees"
+            )
         if self.mode == "region" and (not self.q0 or not self.q1):
             raise ValueError("mode='region' requires q0 and q1 from locate region")
+        if _invalid_qn_filter(self.qn):
+            raise ValueError(
+                "qn is an institution-name filter; leave qn unset for generic "
+                "emergency-room searches"
+            )
         if (self.origin_lat is None) ^ (self.origin_lon is None):
             raise ValueError("origin_lat and origin_lon must be supplied together")
+        if (
+            self.origin_lat is not None
+            and self.origin_lon is not None
+            and float(self.origin_lat).is_integer()
+            and float(self.origin_lon).is_integer()
+        ):
+            raise ValueError(
+                "origin_lat/origin_lon must preserve decimal WGS84 precision from locate; "
+                "do not round both coordinates to whole degrees"
+            )
         return self
 
 

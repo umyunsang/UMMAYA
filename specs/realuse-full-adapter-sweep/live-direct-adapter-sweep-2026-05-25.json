@@ -1,0 +1,3880 @@
+{
+  "generated_at": "2026-05-25T21:51:20.819899+09:00",
+  "scope": "live adapters only; root primitives, mock_ adapters, check/send side-effect surfaces excluded",
+  "registry_total": 148,
+  "selected_count": 125,
+  "skipped_count": 0,
+  "status_counts": {
+    "pass": 122,
+    "upstream_error": 3
+  },
+  "pass_by_ministry": {
+    "BFC": 1,
+    "CCOURT": 1,
+    "DJTC": 1,
+    "FSC": 1,
+    "FTC": 2,
+    "GYERYONG": 1,
+    "HIRA": 2,
+    "KCUE": 2,
+    "KECO": 1,
+    "KEPCO": 1,
+    "KMA": 83,
+    "KOROAD": 2,
+    "KSD": 1,
+    "MFDS": 1,
+    "MOF": 1,
+    "MOHW": 1,
+    "MOIS": 2,
+    "MOLIT": 4,
+    "MPM": 1,
+    "MSIT": 1,
+    "MSS": 1,
+    "NFA": 1,
+    "NMC": 2,
+    "PPS": 2,
+    "REB": 1,
+    "UMMAYA": 5
+  },
+  "time_samples": {
+    "obs_date": "20260525",
+    "obs_time": "2100",
+    "short_date": "20260525",
+    "short_time": "2000",
+    "ultra_date": "20260525",
+    "ultra_time": "2130",
+    "recent_yyyymmddhhmm": "202605252020",
+    "model_yyyymmddhhmm": "202605251500"
+  },
+  "results": [
+    {
+      "tool_id": "airkorea_ctprvn_air_quality",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KECO",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 4453,
+      "params_used": {
+        "sido_name": "서울",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 40,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 4453,
+        "source": "airkorea_ctprvn_air_quality"
+      }
+    },
+    {
+      "tool_id": "bfc_funeral_area_fee",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "BFC",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 4423,
+      "params_used": {
+        "page_no": 1,
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 4,
+        "items_count": 4,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 4423,
+        "source": "bfc_funeral_area_fee"
+      }
+    },
+    {
+      "tool_id": "ccourt_publication_documents",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "CCOURT",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 4411,
+      "params_used": {
+        "title": "헌법",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 5,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 4410,
+        "source": "ccourt_publication_documents"
+      }
+    },
+    {
+      "tool_id": "djtc_subway_segment_fare_time_check",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "DJTC",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 4415,
+      "params_used": {
+        "strstnno": "104",
+        "endstnno": "111"
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 1,
+        "items_count": 1,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 4415,
+        "source": "djtc_subway_segment_fare_time_check"
+      }
+    },
+    {
+      "tool_id": "fsc_corporate_finance_summary",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "FSC",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 319,
+      "params_used": {
+        "crno": "1746110000741",
+        "biz_year": "2019",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 2,
+        "items_count": 2,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 319,
+        "source": "fsc_corporate_finance_summary"
+      }
+    },
+    {
+      "tool_id": "ftc_large_group_status",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "FTC",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 2012,
+      "params_used": {
+        "presentn_year": "202105",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 71,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 2012,
+        "source": "ftc_large_group_status"
+      }
+    },
+    {
+      "tool_id": "ftc_public_ym_list",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "FTC",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 512,
+      "params_used": {
+        "job_se_code": "0001",
+        "presentn_year": "2021",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 1,
+        "items_count": 1,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 512,
+        "source": "ftc_public_ym_list"
+      }
+    },
+    {
+      "tool_id": "gyeryong_assistive_device_charging_place_locate",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "GYERYONG",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 309,
+      "params_used": {
+        "current_page": 1,
+        "per_page": 5,
+        "indoor_outdoor": "실내"
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 7,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 309,
+        "source": "gyeryong_assistive_device_charging_place_locate"
+      }
+    },
+    {
+      "tool_id": "hira_hospital_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "HIRA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1855,
+      "params_used": {
+        "xPos": 128.967669,
+        "yPos": 35.115446,
+        "radius": 3000,
+        "numOfRows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 306,
+        "items_count": 5,
+        "first_item_keys": [
+          "ykiho",
+          "yadmNm",
+          "addr",
+          "telno",
+          "clCd",
+          "clCdNm",
+          "xPos",
+          "yPos",
+          "distance",
+          "sidoCdNm",
+          "sgguCdNm"
+        ],
+        "elapsed_ms": 1855,
+        "source": "hira_hospital_search"
+      }
+    },
+    {
+      "tool_id": "hira_medical_institution_detail",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "HIRA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 191,
+      "params_used": {
+        "ykiho": "JDQ4MTg4MSM1MSMkMSMkMCMkODkkMzgxMzUxIzExIyQxIyQzIyQ4OSQyNjE4MzIjNTEjJDEjJDYjJDgz",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 0,
+        "items_count": 1,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 191,
+        "source": "hira_medical_institution_detail"
+      }
+    },
+    {
+      "tool_id": "juso_adm_cd_lookup",
+      "status": "pass",
+      "primitive": "locate",
+      "ministry": "UMMAYA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 129,
+      "params_used": {
+        "query": "부산광역시 사하구 다대동"
+      },
+      "summary": {
+        "kind": "adm_cd"
+      }
+    },
+    {
+      "tool_id": "kakao_address_search",
+      "status": "pass",
+      "primitive": "locate",
+      "ministry": "UMMAYA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 81,
+      "params_used": {
+        "query": "부산광역시 사하구 다대동"
+      },
+      "summary": {
+        "kind": "bundle"
+      }
+    },
+    {
+      "tool_id": "kakao_coord_to_region",
+      "status": "pass",
+      "primitive": "locate",
+      "ministry": "UMMAYA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 72,
+      "params_used": {
+        "lat": 35.115446,
+        "lon": 128.967669
+      },
+      "summary": {
+        "kind": "region"
+      }
+    },
+    {
+      "tool_id": "kakao_keyword_search",
+      "status": "pass",
+      "primitive": "locate",
+      "ministry": "UMMAYA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 84,
+      "params_used": {
+        "query": "동아대학교 승학캠퍼스"
+      },
+      "summary": {
+        "kind": "poi"
+      }
+    },
+    {
+      "tool_id": "kcue_finance_regional_tuition",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KCUE",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 167,
+      "params_used": {
+        "schl_div_cd": "02",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 20,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 167,
+        "source": "kcue_finance_regional_tuition"
+      }
+    },
+    {
+      "tool_id": "kcue_student_regional_foreign",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KCUE",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 180,
+      "params_used": {
+        "schl_div_cd": "02",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 20,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 179,
+        "source": "kcue_student_regional_foreign"
+      }
+    },
+    {
+      "tool_id": "kepco_contract_power_usage",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KEPCO",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 177,
+      "params_used": {
+        "year": "2020",
+        "month": "11",
+        "metro_cd": "11",
+        "city_cd": "110",
+        "cntr_cd": "100"
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 1,
+        "items_count": 1,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 177,
+        "source": "kepco_contract_power_usage"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_amm_iwxxm_service_get_metar",
+      "status": "upstream_error",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 229,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "error",
+        "reason": "upstream_unavailable",
+        "retryable": true,
+        "upstream_code": null,
+        "upstream_message": null,
+        "message": "Adapter 'kma_apihub_amm_iwxxm_service_get_metar' raised an exception during upstream call. Detail: ToolExecutionError: KMA APIHub error: operation='AmmIwxxmService/getMetar' resultCode='01' resultMsg='APPLICATION_ERROR'. Do NOT fabricate a response from prior knowledge — tell the citizen the lookup failed, cite the official agency channel, and offer to retry or try a different tool.",
+        "elapsed_ms": 229,
+        "source": "kma_apihub_amm_iwxxm_service_get_metar"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2aapps_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 780,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 780,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2aapps_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2aapps_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 258,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 258,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2aapps_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2acla_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 603,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 603,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2acla_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2acla_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 394,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 394,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2acla_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2acld_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 550,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 550,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2acld_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2acld_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 399,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 399,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2acld_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2adcoew_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1163,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 1163,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2adcoew_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2adcoew_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 499,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 499,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2adcoew_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2afog_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 986,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 986,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2afog_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_cloud_satlit_info_service_get_gk2afog_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 220,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 220,
+        "source": "kma_apihub_cloud_satlit_info_service_get_gk2afog_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_eqk_info_service_get_eqk_msg",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 767,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "from_tm_fc": "20260523",
+        "to_tm_fc": "20260525"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 767,
+        "source": "kma_apihub_eqk_info_service_get_eqk_msg"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_eqk_info_service_get_eqk_msg_list",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 284,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "from_tm_fc": "20260523",
+        "to_tm_fc": "20260525"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 284,
+        "source": "kma_apihub_eqk_info_service_get_eqk_msg_list"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_kimmodel_info_service_get_kimldaps_unis_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 572,
+      "params_used": {
+        "base_time": "202605251500"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 0,
+        "nested_total_count": 0,
+        "result_code": "03",
+        "result_msg": "NO_DATA",
+        "elapsed_ms": 572,
+        "source": "kma_apihub_kimmodel_info_service_get_kimldaps_unis_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_kimmodel_info_service_get_kimldaps_unis_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 731,
+      "params_used": {
+        "base_time": "202605251500"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 0,
+        "nested_total_count": 0,
+        "result_code": "03",
+        "result_msg": "NO_DATA",
+        "elapsed_ms": 731,
+        "source": "kma_apihub_kimmodel_info_service_get_kimldaps_unis_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_kimmodel_info_service_get_kimrdaps_unis_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 283,
+      "params_used": {
+        "base_time": "202605251500"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 0,
+        "nested_total_count": 0,
+        "result_code": "03",
+        "result_msg": "NO_DATA",
+        "elapsed_ms": 282,
+        "source": "kma_apihub_kimmodel_info_service_get_kimrdaps_unis_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_kimmodel_info_service_get_kimrdaps_unis_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 213,
+      "params_used": {
+        "base_time": "202605251500"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 0,
+        "nested_total_count": 0,
+        "result_code": "03",
+        "result_msg": "NO_DATA",
+        "elapsed_ms": 213,
+        "source": "kma_apihub_kimmodel_info_service_get_kimrdaps_unis_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_buoy_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 270,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 270,
+        "source": "kma_apihub_sea_mtly_info_service_get_buoy_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_buoy_mm_sumry",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 321,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 321,
+        "source": "kma_apihub_sea_mtly_info_service_get_buoy_mm_sumry"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_buoy_mm_sumry2",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 303,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 303,
+        "source": "kma_apihub_sea_mtly_info_service_get_buoy_mm_sumry2"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_daily_buoy",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 343,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 343,
+        "source": "kma_apihub_sea_mtly_info_service_get_daily_buoy"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_daily_lhaws",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 292,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 292,
+        "source": "kma_apihub_sea_mtly_info_service_get_daily_lhaws"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_daily_wave_buoy",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 263,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 262,
+        "source": "kma_apihub_sea_mtly_info_service_get_daily_wave_buoy"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_lhaws_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 246,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 246,
+        "source": "kma_apihub_sea_mtly_info_service_get_lhaws_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_lhaws_mm_sumry",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 270,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 270,
+        "source": "kma_apihub_sea_mtly_info_service_get_lhaws_mm_sumry"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_lhaws_mm_sumry2",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 348,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 347,
+        "source": "kma_apihub_sea_mtly_info_service_get_lhaws_mm_sumry2"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_note",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 229,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 229,
+        "source": "kma_apihub_sea_mtly_info_service_get_note"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_obs_open_year",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 499,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 499,
+        "source": "kma_apihub_sea_mtly_info_service_get_obs_open_year"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_wave_buoy_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 258,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 258,
+        "source": "kma_apihub_sea_mtly_info_service_get_wave_buoy_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_wave_buoy_mm_sumry",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 237,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 237,
+        "source": "kma_apihub_sea_mtly_info_service_get_wave_buoy_mm_sumry"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sea_mtly_info_service_get_wave_buoy_mm_sumry2",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 461,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 461,
+        "source": "kma_apihub_sea_mtly_info_service_get_wave_buoy_mm_sumry2"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_get_air_note",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 485,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 485,
+        "source": "kma_apihub_sfc_mtly_info_service_get_air_note"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_get_daily_air_data",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 318,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 318,
+        "source": "kma_apihub_sfc_mtly_info_service_get_daily_air_data"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_get_daily_wthr_data",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 296,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 296,
+        "source": "kma_apihub_sfc_mtly_info_service_get_daily_wthr_data"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_get_mm_sumry",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 375,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 375,
+        "source": "kma_apihub_sfc_mtly_info_service_get_mm_sumry"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_get_mm_sumry2",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 318,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 318,
+        "source": "kma_apihub_sfc_mtly_info_service_get_mm_sumry2"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_get_note",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 207,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 207,
+        "source": "kma_apihub_sfc_mtly_info_service_get_note"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_get_sfc_stn_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 240,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 239,
+        "source": "kma_apihub_sfc_mtly_info_service_get_sfc_stn_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_mtly_info_service_getr_air_stn_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 330,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 330,
+        "source": "kma_apihub_sfc_mtly_info_service_getr_air_stn_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_air_stn_info",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 335,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 335,
+        "source": "kma_apihub_sfc_yearly_info_service_get_air_stn_info"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_air_stn_info2",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 345,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 344,
+        "source": "kma_apihub_sfc_yearly_info_service_get_air_stn_info2"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_air_stn_info3",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 323,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 323,
+        "source": "kma_apihub_sfc_yearly_info_service_get_air_stn_info3"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_avg_ta_anamaly",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 282,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 282,
+        "source": "kma_apihub_sfc_yearly_info_service_get_avg_ta_anamaly"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_note",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 191,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 190,
+        "source": "kma_apihub_sfc_yearly_info_service_get_note"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_rn_anamaly",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 360,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 360,
+        "source": "kma_apihub_sfc_yearly_info_service_get_rn_anamaly"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_sfc_stn_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 317,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 317,
+        "source": "kma_apihub_sfc_yearly_info_service_get_sfc_stn_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_stn_phnmn_data",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 404,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 404,
+        "source": "kma_apihub_sfc_yearly_info_service_get_stn_phnmn_data"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_stn_phnmn_data2",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 367,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 367,
+        "source": "kma_apihub_sfc_yearly_info_service_get_stn_phnmn_data2"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_stn_phnmn_data3",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 324,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 324,
+        "source": "kma_apihub_sfc_yearly_info_service_get_stn_phnmn_data3"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_typhoon_list",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 224,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 224,
+        "source": "kma_apihub_sfc_yearly_info_service_get_typhoon_list"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_year_sumry",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 430,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 430,
+        "source": "kma_apihub_sfc_yearly_info_service_get_year_sumry"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_get_year_sumry2",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 363,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 363,
+        "source": "kma_apihub_sfc_yearly_info_service_get_year_sumry2"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_sfc_yearly_info_service_getr_air_stn_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 250,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 250,
+        "source": "kma_apihub_sfc_yearly_info_service_getr_air_stn_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_upp_mtly_info_service_get_max_wind",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 676,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 676,
+        "source": "kma_apihub_upp_mtly_info_service_get_max_wind"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_upp_mtly_info_service_get_note",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 313,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 313,
+        "source": "kma_apihub_upp_mtly_info_service_get_note"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_upp_mtly_info_service_get_std_isbrsf_value",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 791,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 790,
+        "source": "kma_apihub_upp_mtly_info_service_get_std_isbrsf_value"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_upp_mtly_info_service_get_ta_hm_level",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 913,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 912,
+        "source": "kma_apihub_upp_mtly_info_service_get_ta_hm_level"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_upp_mtly_info_service_get_upp_lst_tbl",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 570,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 570,
+        "source": "kma_apihub_upp_mtly_info_service_get_upp_lst_tbl"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_upp_mtly_info_service_get_wind_level",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 760,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 759,
+        "source": "kma_apihub_upp_mtly_info_service_get_wind_level"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_vilage_fcst_info_service_2_0_get_fcst_version",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 692,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "basedatetime": "202605252000"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 692,
+        "source": "kma_apihub_vilage_fcst_info_service_2_0_get_fcst_version"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_vilage_fcst_info_service_2_0_get_ultra_srt_fcst",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 394,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "base_date": "20260525",
+        "base_time": "2000"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 5,
+        "nested_total_count": 60,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 393,
+        "source": "kma_apihub_vilage_fcst_info_service_2_0_get_ultra_srt_fcst"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_vilage_fcst_info_service_2_0_get_ultra_srt_ncst",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 532,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "base_date": "20260525",
+        "base_time": "2000"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 5,
+        "nested_total_count": 8,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 532,
+        "source": "kma_apihub_vilage_fcst_info_service_2_0_get_ultra_srt_ncst"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_vilage_fcst_info_service_2_0_get_vilage_fcst",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 290,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "base_date": "20260525",
+        "base_time": "2000"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 5,
+        "nested_total_count": 1016,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 290,
+        "source": "kma_apihub_vilage_fcst_info_service_2_0_get_vilage_fcst"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_vilage_fcst_msg_service_get_land_fcst",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 277,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 5,
+        "nested_total_count": 9,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 277,
+        "source": "kma_apihub_vilage_fcst_msg_service_get_land_fcst"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_vilage_fcst_msg_service_get_sea_fcst",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 191,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 5,
+        "nested_total_count": 9,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 191,
+        "source": "kma_apihub_vilage_fcst_msg_service_get_sea_fcst"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_vilage_fcst_msg_service_get_wthr_situation",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 194,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 194,
+        "source": "kma_apihub_vilage_fcst_msg_service_get_wthr_situation"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_radar_info_service_get_comp_cappi_qcd_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 12549,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 12549,
+        "source": "kma_apihub_wthr_radar_info_service_get_comp_cappi_qcd_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_radar_info_service_get_comp_cappi_qcd_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 253,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 253,
+        "source": "kma_apihub_wthr_radar_info_service_get_comp_cappi_qcd_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_ir_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1077,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 1077,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_ir_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_ir_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 319,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 319,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_ir_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_nr_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1721,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 1721,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_nr_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_nr_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 277,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 276,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_nr_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_sw_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 2054,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 2054,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_sw_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_sw_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 375,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 375,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_sw_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_vi_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 4611,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 4611,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_vi_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_vi_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 227,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 227,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_vi_area"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_wv_all",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1206,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 1206,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_wv_all"
+      }
+    },
+    {
+      "tool_id": "kma_apihub_wthr_satlit_info_service_get_gk2a_wv_area",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 715,
+      "params_used": {
+        "num_of_rows": 5,
+        "page_no": 1,
+        "date_time": "202605252020"
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "operation_id",
+          "service",
+          "operation",
+          "result_code",
+          "result_msg",
+          "page_no",
+          "num_of_rows",
+          "total_count",
+          "items",
+          "raw_format"
+        ],
+        "nested_items_count": 1,
+        "nested_total_count": 1,
+        "result_code": "00",
+        "result_msg": "NORMAL_SERVICE",
+        "elapsed_ms": 715,
+        "source": "kma_apihub_wthr_satlit_info_service_get_gk2a_wv_area"
+      }
+    },
+    {
+      "tool_id": "kma_current_observation",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1306,
+      "params_used": {
+        "base_date": "20260525",
+        "base_time": "2100",
+        "nx": 97,
+        "ny": 74
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "base_date",
+          "base_time",
+          "nx",
+          "ny",
+          "t1h",
+          "rn1",
+          "uuu",
+          "vvv",
+          "wsd",
+          "reh",
+          "pty",
+          "vec"
+        ],
+        "elapsed_ms": 1306,
+        "source": "kma_current_observation"
+      }
+    },
+    {
+      "tool_id": "kma_forecast_fetch",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 700,
+      "params_used": {
+        "lat": 35.0505,
+        "lon": 128.9669,
+        "base_date": "20260525",
+        "base_time": "2000"
+      },
+      "summary": {
+        "kind": "timeseries",
+        "elapsed_ms": 700,
+        "source": "kma_forecast_fetch"
+      }
+    },
+    {
+      "tool_id": "kma_pre_warning",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 91,
+      "params_used": {
+        "num_of_rows": 20
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 8,
+        "items_count": 8,
+        "first_item_keys": [
+          "stn_id",
+          "title",
+          "tm_fc",
+          "tm_seq"
+        ],
+        "elapsed_ms": 91,
+        "source": "kma_pre_warning"
+      }
+    },
+    {
+      "tool_id": "kma_short_term_forecast",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 457,
+      "params_used": {
+        "base_date": "20260525",
+        "base_time": "2000",
+        "nx": 97,
+        "ny": 74,
+        "num_of_rows": 20
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "total_count",
+          "items"
+        ],
+        "nested_items_count": 20,
+        "nested_total_count": 1016,
+        "elapsed_ms": 457,
+        "source": "kma_short_term_forecast"
+      }
+    },
+    {
+      "tool_id": "kma_ultra_short_term_forecast",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 334,
+      "params_used": {
+        "base_date": "20260525",
+        "base_time": "2130",
+        "nx": 97,
+        "ny": 74,
+        "num_of_rows": 20
+      },
+      "summary": {
+        "kind": "record",
+        "item_keys": [
+          "total_count",
+          "items"
+        ],
+        "nested_items_count": 20,
+        "nested_total_count": 60,
+        "elapsed_ms": 334,
+        "source": "kma_ultra_short_term_forecast"
+      }
+    },
+    {
+      "tool_id": "kma_weather_alert_status",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KMA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 208,
+      "params_used": {
+        "num_of_rows": 20
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 8,
+        "items_count": 8,
+        "first_item_keys": [
+          "stn_id",
+          "title",
+          "tm_fc",
+          "tm_ef",
+          "tm_seq",
+          "area_code",
+          "area_name",
+          "warn_var",
+          "warn_stress",
+          "cancel",
+          "command",
+          "warn_fc"
+        ],
+        "elapsed_ms": 208,
+        "source": "kma_weather_alert_status"
+      }
+    },
+    {
+      "tool_id": "koroad_accident_hazard_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KOROAD",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 188,
+      "params_used": {
+        "adm_cd": "1168000000",
+        "year": 2024,
+        "num_of_rows": 3
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 3,
+        "items_count": 3,
+        "first_item_keys": [
+          "spot_nm",
+          "tot_dth_cnt",
+          "spot_cd",
+          "sido_sgg_nm",
+          "occrrnc_cnt",
+          "caslt_cnt",
+          "la_crd",
+          "lo_crd"
+        ],
+        "elapsed_ms": 188,
+        "source": "koroad_accident_hazard_search"
+      }
+    },
+    {
+      "tool_id": "koroad_accident_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KOROAD",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1116,
+      "params_used": {
+        "search_year_cd": "2025119",
+        "si_do": "11",
+        "gu_gun": "680",
+        "num_of_rows": 3
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": null,
+        "items_count": 3,
+        "first_item_keys": [
+          "spot_cd",
+          "spot_nm",
+          "sido_sgg_nm",
+          "bjd_cd",
+          "occrrnc_cnt",
+          "caslt_cnt",
+          "dth_dnv_cnt",
+          "se_dnv_cnt",
+          "sl_dnv_cnt",
+          "wnd_dnv_cnt",
+          "la_crd",
+          "lo_crd"
+        ],
+        "elapsed_ms": 1116,
+        "source": "koroad_accident_search"
+      }
+    },
+    {
+      "tool_id": "ksd_financial_term_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "KSD",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 210,
+      "params_used": {
+        "term": "주식",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 26,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 210,
+        "source": "ksd_financial_term_lookup"
+      }
+    },
+    {
+      "tool_id": "mfds_easy_drug_info_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MFDS",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 1363,
+      "params_used": {
+        "item_name": "타이레놀",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 7,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 1363,
+        "source": "mfds_easy_drug_info_lookup"
+      }
+    },
+    {
+      "tool_id": "mof_ocean_water_quality_check",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOF",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 2138,
+      "params_used": {
+        "station_code": "SEA3003",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 294857,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 2137,
+        "source": "mof_ocean_water_quality_check"
+      }
+    },
+    {
+      "tool_id": "mohw_welfare_eligibility_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOHW",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 298,
+      "params_used": {
+        "search_wrd": "아동",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 72,
+        "items_count": 5,
+        "first_item_keys": [
+          "sprtCycNm",
+          "servDgst",
+          "onapPsbltYn",
+          "jurOrgNm",
+          "srvPvsnNm",
+          "intrsThemaArray",
+          "svcfrstRegTs",
+          "servId",
+          "servNm",
+          "jurMnofNm",
+          "inqNum",
+          "servDtlLink"
+        ],
+        "elapsed_ms": 298,
+        "source": "mohw_welfare_eligibility_search"
+      }
+    },
+    {
+      "tool_id": "mois_emergency_call_box_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOIS",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 250,
+      "params_used": {
+        "road_address": "서울",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 22464,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 250,
+        "source": "mois_emergency_call_box_lookup"
+      }
+    },
+    {
+      "tool_id": "mois_facility_safety_info_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOIS",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 6117,
+      "params_used": {
+        "fclts_nm": "호텔",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 43913,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 6117,
+        "source": "mois_facility_safety_info_lookup"
+      }
+    },
+    {
+      "tool_id": "moj_stay_person_counter",
+      "status": "upstream_error",
+      "primitive": "find",
+      "ministry": "MOJ",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 237,
+      "params_used": {
+        "search_ym": "202504",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "error",
+        "reason": "upstream_unavailable",
+        "retryable": true,
+        "upstream_code": null,
+        "upstream_message": null,
+        "message": "Adapter 'moj_stay_person_counter' raised an exception during upstream call. Detail: HTTPStatusError: Server error '502 Bad Gateway' for url 'http://apis.data.go.kr/1270000/stay_person_counter/getstaypersoncounter?ServiceKey=***&searchYm=202504&pageNo=1&numOfRows=5'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HT. Do NOT fabricate a response from prior knowledge — tell the citizen the lookup failed, cite the official agency channel, and offer to retry or try a differen",
+        "elapsed_ms": 237,
+        "source": "moj_stay_person_counter"
+      }
+    },
+    {
+      "tool_id": "moj_village_lawyer_lookup",
+      "status": "upstream_error",
+      "primitive": "find",
+      "ministry": "MOJ",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 68,
+      "params_used": {
+        "page_no": 1,
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "error",
+        "reason": "upstream_unavailable",
+        "retryable": true,
+        "upstream_code": null,
+        "upstream_message": null,
+        "message": "Adapter 'moj_village_lawyer_lookup' raised an exception during upstream call. Detail: HTTPStatusError: Server error '502 Bad Gateway' for url 'http://apis.data.go.kr/1270000/mojmabyun/mabyun?serviceKey=***&pageNo=1&numOfRows=5'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/502. Do NOT fabricate a response from prior knowledge — tell the citizen the lookup failed, cite the official agency channel, and offer to retry or try a different tool.",
+        "elapsed_ms": 68,
+        "source": "moj_village_lawyer_lookup"
+      }
+    },
+    {
+      "tool_id": "mpm_public_job_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MPM",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 2366,
+      "params_used": {
+        "pblanc_ty": "e01",
+        "instt_se": "g01",
+        "sort_order": "내림차순",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 57121,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 2366,
+        "source": "mpm_public_job_lookup"
+      }
+    },
+    {
+      "tool_id": "msit_business_announcement_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MSIT",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 799,
+      "params_used": {
+        "page_no": 1,
+        "num_of_rows": 5,
+        "return_type": "xml"
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 4129,
+        "items_count": 10,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 799,
+        "source": "msit_business_announcement_lookup"
+      }
+    },
+    {
+      "tool_id": "mss_sme_support_notice_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MSS",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 250,
+      "params_used": {
+        "hashtags": "소상공인",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 200,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 249,
+        "source": "mss_sme_support_notice_lookup"
+      }
+    },
+    {
+      "tool_id": "nfa_emergency_info_service",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "NFA",
+      "gate": "login",
+      "adapter_mode": "live",
+      "elapsed_ms": 303,
+      "params_used": {
+        "rsac_gut_fstt_ogid_nm": "천안동남소방서",
+        "stmt_ym": "202112",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 1351,
+        "items_count": 5,
+        "first_item_keys": [
+          "sidoHqOgidNm",
+          "rsacGutFsttOgidNm",
+          "gutYm",
+          "gutHh",
+          "sptMvmnDtc",
+          "ptntAge",
+          "ptntSdtSeCdNm",
+          "egrcSidoCdNm",
+          "egrcSiggCdNm",
+          "ruptOccrPlcCdNm",
+          "ruptSptmCdNm",
+          "rcptPathCdNm"
+        ],
+        "elapsed_ms": 303,
+        "source": "nfa_emergency_info_service"
+      }
+    },
+    {
+      "tool_id": "nmc_aed_site_locate",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "NMC",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 124,
+      "params_used": {
+        "q0": "서울특별시",
+        "q1": "종로구",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 484,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 124,
+        "source": "nmc_aed_site_locate"
+      }
+    },
+    {
+      "tool_id": "nmc_emergency_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "NMC",
+      "gate": "login",
+      "adapter_mode": "live",
+      "elapsed_ms": 82,
+      "params_used": {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "origin_lat": 35.0505,
+        "origin_lon": 128.9669,
+        "limit": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 1,
+        "items_count": 1,
+        "first_item_keys": [
+          "dutyAddr",
+          "dutyEmcls",
+          "dutyEmclsName",
+          "dutyName",
+          "dutyTel1",
+          "dutyTel3",
+          "hpid",
+          "phpid",
+          "rnum",
+          "wgs84Lat",
+          "wgs84Lon",
+          "er_24h_operating"
+        ],
+        "elapsed_ms": 82,
+        "source": "nmc_emergency_search"
+      }
+    },
+    {
+      "tool_id": "pps_bid_public_info",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "PPS",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 480,
+      "params_used": {
+        "inqry_div": "2",
+        "bid_ntce_no": "R25BK00934017",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 1,
+        "items_count": 1,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 480,
+        "source": "pps_bid_public_info"
+      }
+    },
+    {
+      "tool_id": "pps_shopping_mall_product_lookup",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "PPS",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 464,
+      "params_used": {
+        "inqry_div": "1",
+        "prdct_clsfc_no_nm": "의자",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 0,
+        "items_count": 1,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 464,
+        "source": "pps_shopping_mall_product_lookup"
+      }
+    },
+    {
+      "tool_id": "reb_real_estate_stat_table",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "REB",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 2508,
+      "params_used": {
+        "p_index": 1,
+        "p_size": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 738,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 2508,
+        "source": "reb_real_estate_stat_table"
+      }
+    },
+    {
+      "tool_id": "sgis_adm_cd_lookup",
+      "status": "pass",
+      "primitive": "locate",
+      "ministry": "UMMAYA",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 2660,
+      "params_used": {
+        "lat": 35.115446,
+        "lon": 128.967669
+      },
+      "summary": {
+        "kind": "adm_cd"
+      }
+    },
+    {
+      "tool_id": "tago_bus_arrival_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOLIT",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 124,
+      "params_used": {
+        "city_code": "25",
+        "node_id": "DJB8001793",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 4,
+        "items_count": 4,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 123,
+        "source": "tago_bus_arrival_search"
+      }
+    },
+    {
+      "tool_id": "tago_bus_location_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOLIT",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 125,
+      "params_used": {
+        "city_code": "25",
+        "route_id": "DJB30300052",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 5,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 125,
+        "source": "tago_bus_location_search"
+      }
+    },
+    {
+      "tool_id": "tago_bus_route_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOLIT",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 412,
+      "params_used": {
+        "city_code": "25",
+        "route_no": "5",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 17,
+        "items_count": 5,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 412,
+        "source": "tago_bus_route_search"
+      }
+    },
+    {
+      "tool_id": "tago_bus_station_search",
+      "status": "pass",
+      "primitive": "find",
+      "ministry": "MOLIT",
+      "gate": "read-only",
+      "adapter_mode": "live",
+      "elapsed_ms": 304,
+      "params_used": {
+        "city_code": "25",
+        "node_nm": "전통시장",
+        "node_no": "44810",
+        "num_of_rows": 5
+      },
+      "summary": {
+        "kind": "collection",
+        "total_count": 1,
+        "items_count": 1,
+        "first_item_keys": [
+          "record"
+        ],
+        "elapsed_ms": 304,
+        "source": "tago_bus_station_search"
+      }
+    }
+  ]
+}

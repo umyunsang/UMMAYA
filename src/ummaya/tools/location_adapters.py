@@ -17,7 +17,7 @@ import re
 from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 
 from ummaya.settings import settings
 from ummaya.tools.kma.projection import KMADomainError, latlon_to_lcc
@@ -41,6 +41,12 @@ _POI_HINT_RE = re.compile(
     r"(대학교|캠퍼스|초등학교|중학교|고등학교|학교|역|터미널|공항|해수욕장|해변|시장|"
     r"공원|병원|의원|약국|주민센터|보건소|도서관|박물관|카페|마트|백화점)"
 )
+
+
+def _is_whole_degree_pair(lat: float, lon: float) -> bool:
+    return float(lat).is_integer() and float(lon).is_integer()
+
+
 _TRAILING_LOCATION_WORDS = (
     "근처",
     "주변",
@@ -97,6 +103,15 @@ class KakaoCoordToRegionInput(BaseModel):
     lat: float = Field(ge=-90, le=90, description="Latitude returned by a prior locate adapter.")
     lon: float = Field(ge=-180, le=180, description="Longitude returned by a prior locate adapter.")
 
+    @model_validator(mode="after")
+    def _reject_rounded_coordinate_pair(self) -> KakaoCoordToRegionInput:
+        if _is_whole_degree_pair(self.lat, self.lon):
+            raise ValueError(
+                "lat/lon must preserve decimal WGS84 precision from the prior locate result; "
+                "do not round both coordinates to whole degrees."
+            )
+        return self
+
 
 class JusoAdmCdLookupInput(BaseModel):
     """JUSO address-link administrative code lookup input."""
@@ -117,6 +132,15 @@ class SgisAdmCdLookupInput(BaseModel):
 
     lat: float = Field(ge=-90, le=90, description="Latitude returned by a prior locate adapter.")
     lon: float = Field(ge=-180, le=180, description="Longitude returned by a prior locate adapter.")
+
+    @model_validator(mode="after")
+    def _reject_rounded_coordinate_pair(self) -> SgisAdmCdLookupInput:
+        if _is_whole_degree_pair(self.lat, self.lon):
+            raise ValueError(
+                "lat/lon must preserve decimal WGS84 precision from the prior locate result; "
+                "do not round both coordinates to whole degrees."
+            )
+        return self
 
 
 def _provider_policy(provider: str, url: str) -> AdapterRealDomainPolicy:

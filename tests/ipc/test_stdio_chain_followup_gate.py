@@ -53,8 +53,13 @@ from ummaya.ipc.stdio import (
     _final_answer_missing_current_weather_observation_values,
     _location_independent_resolve_redirect_for_query,
     _maybe_reroute_locate_admin_keyword_args,
+    _maybe_reroute_locate_poi_address_args,
+    _normalize_hira_lookup_args_from_prior_locate,
+    _normalize_koroad_lookup_args_from_prior_locate,
     _normalize_lookup_args_for_query,
+    _normalize_lookup_args_from_cached_locate_result,
     _normalize_nmc_lookup_args_from_prior_locate,
+    _normalize_reverse_geocode_args_from_prior_locate,
     _normalize_submit_args_for_query,
     _normalize_verify_args_for_query,
     _normalize_verify_tool_id_for_query,
@@ -147,6 +152,31 @@ def test_locate_poi_keyword_args_are_not_rerouted() -> None:
     }
 
     assert _maybe_reroute_locate_admin_keyword_args("locate", args) == args
+
+
+def test_locate_poi_address_args_reroute_to_keyword_adapter() -> None:
+    """Named POIs should not burn a Kakao address-search error first."""
+    args = {
+        "tool_id": "kakao_address_search",
+        "params": {"query": "부산 사하구 다대포해수욕장"},
+    }
+
+    rerouted = _maybe_reroute_locate_poi_address_args("locate", args)
+
+    assert rerouted == {
+        "tool_id": "kakao_keyword_search",
+        "params": {"query": "부산 사하구 다대포해수욕장"},
+    }
+
+
+def test_locate_road_address_args_are_not_rerouted_to_keyword() -> None:
+    """Concrete road addresses remain on Kakao address search."""
+    args = {
+        "tool_id": "kakao_address_search",
+        "params": {"query": "부산 사하구 낙동대로 408"},
+    }
+
+    assert _maybe_reroute_locate_poi_address_args("locate", args) == args
 
 
 def test_recursive_tool_message_final_answer_is_rejected() -> None:
@@ -2272,6 +2302,361 @@ def test_nmc_lookup_args_are_derived_from_prior_default_locate_result() -> None:
     )
 
 
+def test_nmc_lookup_args_expand_abbreviated_sido_from_prior_locate_result() -> None:
+    """Kakao may echo abbreviated Korean sido text from an address query."""
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="하단역 근처 야간 응급실"),
+        _msg_assistant_tool_call("locate", {"query": "하단역"}),
+        _msg_tool_result(
+            "locate",
+            {
+                "kind": "locate",
+                "result": {
+                    "kind": "bundle",
+                    "coords": {
+                        "kind": "coords",
+                        "lat": 35.1148094646099,
+                        "lon": 128.952594462616,
+                    },
+                    "adm_cd": {
+                        "kind": "adm_cd",
+                        "code": "2638010500",
+                        "name": "부산 사하구 하단동",
+                        "level": "eupmyeondong",
+                    },
+                },
+            },
+        ),
+    ]
+    args = {
+        "mode": "fetch",
+        "tool_id": "nmc_emergency_search",
+        "params": {"mode": "coordinate", "lat": 35, "lon": 128},
+    }
+
+    normalized = _normalize_nmc_lookup_args_from_prior_locate("find", args, msgs)
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "origin_lat": 35.1148094646099,
+        "origin_lon": 128.952594462616,
+        "limit": 5,
+    }
+    assert (
+        _check_chain_prerequisite(
+            "find",
+            normalized,
+            msgs,
+            registry=None,
+        )
+        is None
+    )
+
+
+def test_nmc_lookup_args_are_derived_from_prior_concrete_locate_result() -> None:
+    """TUI stores concrete Kakao adapter calls, so NMC recovery needs registry context."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id in {"kakao_address_search", "nmc_emergency_search"}:
+                primitive = "locate" if tool_id.startswith("kakao_") else "find"
+                return SimpleNamespace(primitive=primitive)
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="하단역 근처 야간 응급실"),
+        _msg_assistant_tool_call("kakao_address_search", {"query": "부산 사하구 하단동"}),
+        _msg_tool_result(
+            "kakao_address_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "bundle",
+                    "coords": {
+                        "kind": "coords",
+                        "lat": 35.1148094646099,
+                        "lon": 128.952594462616,
+                    },
+                    "adm_cd": {
+                        "kind": "adm_cd",
+                        "code": "2638010500",
+                        "name": "부산 사하구 하단동",
+                        "level": "eupmyeondong",
+                    },
+                },
+            },
+        ),
+    ]
+    args = {
+        "tool_id": "nmc_emergency_search",
+        "params": {"mode": "coordinate", "lat": 35, "origin_lat": 35, "origin_lon": 128},
+    }
+
+    normalized = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        args,
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "origin_lat": 35.1148094646099,
+        "origin_lon": 128.952594462616,
+        "limit": 5,
+    }
+
+
+def test_reverse_geocode_args_reuse_exact_prior_locate_coords_when_model_rounds() -> None:
+    """A rounded reverse-geocode retry must copy exact decimals from prior locate output."""
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산 사하구 다대1동 근처 야간 응급실"),
+        _msg_assistant_tool_call("kakao_address_search", {"query": "부산 사하구 다대1동"}),
+        _msg_tool_result(
+            "locate",
+            {
+                "kind": "locate",
+                "result": {
+                    "kind": "bundle",
+                    "coords": {
+                        "kind": "coords",
+                        "lat": 35.0591517638253,
+                        "lon": 128.971316010861,
+                    },
+                    "address": {
+                        "kind": "address",
+                        "jibun_address": "부산 사하구 다대1동",
+                    },
+                },
+            },
+        ),
+    ]
+    args = {
+        "tool_id": "kakao_coord_to_region",
+        "params": {"lat": 35, "lon": 129},
+    }
+
+    normalized = _normalize_reverse_geocode_args_from_prior_locate("locate", args, msgs)
+
+    assert normalized["params"] == {
+        "lat": 35.0591517638253,
+        "lon": 128.971316010861,
+    }
+
+
+def test_reverse_geocode_args_reuse_exact_prior_concrete_locate_coords() -> None:
+    """TUI history stores concrete adapter names, not only root primitive names."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id in {"kakao_address_search", "kakao_coord_to_region"}:
+                return SimpleNamespace(primitive="locate")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산 사하구 다대1동 근처 야간 응급실"),
+        _msg_assistant_tool_call("kakao_address_search", {"query": "부산 사하구 다대1동"}),
+        _msg_tool_result(
+            "kakao_address_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "bundle",
+                    "coords": {
+                        "kind": "coords",
+                        "lat": 35.0591517638253,
+                        "lon": 128.971316010861,
+                    },
+                },
+            },
+        ),
+    ]
+    args = {
+        "tool_id": "kakao_coord_to_region",
+        "params": {"lat": 35, "lon": 128},
+    }
+
+    normalized = _normalize_reverse_geocode_args_from_prior_locate(
+        "locate",
+        args,
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "lat": 35.0591517638253,
+        "lon": 128.971316010861,
+    }
+
+
+def test_hira_lookup_args_are_derived_from_prior_concrete_locate_result() -> None:
+    """HIRA needs exact xPos/yPos, but the model often calls it with empty params."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "kakao_keyword_search":
+                return SimpleNamespace(primitive="locate")
+            if tool_id == "hira_hospital_search":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="다대포해수욕장 근처 오늘 진료하는 소아청소년과"),
+        _msg_assistant_tool_call("kakao_keyword_search", {"query": "다대포해수욕장"}),
+        _msg_tool_result(
+            "kakao_keyword_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "다대포해수욕장",
+                    "lat": 35.0483022960665,
+                    "lon": 128.966674959454,
+                    "address_name": "부산 사하구 다대동",
+                },
+            },
+        ),
+    ]
+
+    normalized = _normalize_hira_lookup_args_from_prior_locate(
+        "find",
+        {"tool_id": "hira_hospital_search", "params": {}},
+        msgs,
+        "다대포해수욕장 근처 오늘 진료하는 소아청소년과 찾아줘",
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "xPos": 128.966674959454,
+        "yPos": 35.0483022960665,
+        "radius": 2000,
+        "dgsbjt": "소아청소년과",
+    }
+    assert (
+        _check_chain_prerequisite(
+            "find",
+            normalized,
+            msgs,
+            registry=Registry(),
+        )
+        is None
+    )
+
+
+def test_cached_locate_result_normalizes_inbound_concrete_hira_call() -> None:
+    """TUI-side concrete tool execution bypasses chat_request normalization."""
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {"tool_id": "hira_hospital_search", "params": {"xPos": 128, "yPos": 35}},
+        {
+            "kind": "poi",
+            "lat": 35.0465263488422,
+            "lon": 128.962741189119,
+        },
+    )
+
+    assert normalized["params"] == {
+        "xPos": 128.962741189119,
+        "yPos": 35.0465263488422,
+        "radius": 2000,
+    }
+
+
+def test_cached_locate_result_normalizes_inbound_concrete_nmc_call() -> None:
+    """Concrete NMC tool execution also needs cached locate-derived region params."""
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "coordinate",
+                "lat": 35,
+                "origin_lat": 35,
+                "origin_lon": 129,
+                "qn": "응급실",
+            },
+        },
+        {
+            "kind": "poi",
+            "name": "하단역 부산1호선",
+            "lat": 35.1062385683347,
+            "lon": 128.966786546793,
+            "address_name": "부산 사하구 하단동 491",
+        },
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "origin_lat": 35.1062385683347,
+        "origin_lon": 128.966786546793,
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "limit": 5,
+    }
+
+
+def test_koroad_lookup_args_are_derived_from_prior_concrete_locate_result() -> None:
+    """Traffic-risk searches need the locate adm_cd copied into KOROAD params."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "kakao_address_search":
+                return SimpleNamespace(primitive="locate")
+            if tool_id == "koroad_accident_hazard_search":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="강남역 주변 어린이보호구역 사고 위험 구간"),
+        _msg_assistant_tool_call("kakao_address_search", {"query": "서울 강남구 역삼동"}),
+        _msg_tool_result(
+            "kakao_address_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "bundle",
+                    "coords": {
+                        "kind": "coords",
+                        "lat": 37.498095,
+                        "lon": 127.02761,
+                    },
+                    "adm_cd": {
+                        "kind": "adm_cd",
+                        "code": "1168010100",
+                        "name": "서울 강남구 역삼동",
+                        "level": "eupmyeondong",
+                    },
+                },
+            },
+        ),
+    ]
+
+    normalized = _normalize_koroad_lookup_args_from_prior_locate(
+        "find",
+        {"tool_id": "koroad_accident_hazard_search", "params": {}},
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "adm_cd": "1168010100",
+        "year": 2024,
+    }
+    assert (
+        _check_chain_prerequisite(
+            "find",
+            normalized,
+            msgs,
+            registry=Registry(),
+        )
+        is None
+    )
+
+
 def test_nmc_lookup_args_keep_region_and_default_limit() -> None:
     """The normalizer only fills the missing limit when q0/q1 are already present."""
     normalized = _normalize_nmc_lookup_args_from_prior_locate(
@@ -2285,6 +2670,130 @@ def test_nmc_lookup_args_keep_region_and_default_limit() -> None:
 
     assert normalized["params"] == {
         "mode": "region",
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "limit": 5,
+    }
+
+
+def test_nmc_lookup_args_drop_generic_qn_filter() -> None:
+    """NMC QN is an institution-name filter, not the emergency-room intent."""
+    normalized = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "region",
+                "q0": "부산광역시",
+                "q1": "사하구",
+                "qn": "응급실",
+                "limit": 5,
+            },
+        },
+        [],
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "limit": 5,
+    }
+
+
+def test_nmc_lookup_args_drop_blank_and_keyword_list_qn_filters() -> None:
+    """K-EXAONE may emit blank or comma-list QN values; both are not institution names."""
+    blank = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "region",
+                "q0": "부산광역시",
+                "q1": "사하구",
+                "qn": "",
+                "limit": 5,
+            },
+        },
+        [],
+    )
+    keyword_list = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "region",
+                "q0": "부산광역시",
+                "q1": "사하구",
+                "qn": "응급실,24시간,야간,병원",
+                "limit": 5,
+            },
+        },
+        [],
+    )
+
+    expected = {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "limit": 5,
+    }
+    assert blank["params"] == expected
+    assert keyword_list["params"] == expected
+
+
+def test_nmc_lookup_args_normalize_first_poi_to_region_search() -> None:
+    """The first Hadan live failure rounded a POI result into coordinate mode."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "kakao_keyword_search":
+                return SimpleNamespace(primitive="locate")
+            if tool_id == "nmc_emergency_search":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="하단역 근처 야간 응급실"),
+        _msg_assistant_tool_call("kakao_keyword_search", {"query": "하단역"}),
+        _msg_tool_result(
+            "kakao_keyword_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "하단역 부산1호선",
+                    "lat": 35.1062385683347,
+                    "lon": 128.966786546793,
+                    "address_name": "부산 사하구 하단동 491",
+                },
+            },
+        ),
+    ]
+    args = {
+        "tool_id": "nmc_emergency_search",
+        "params": {
+            "mode": "coordinate",
+            "lat": 35,
+            "origin_lat": 35,
+            "origin_lon": 128,
+            "q0": "",
+            "q1": "",
+            "qn": "",
+        },
+    }
+
+    normalized = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        args,
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "origin_lat": 35.1062385683347,
+        "origin_lon": 128.966786546793,
         "q0": "부산광역시",
         "q1": "사하구",
         "limit": 5,

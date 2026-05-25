@@ -55,6 +55,23 @@ def test_dry_run_builds_capture_and_audit_commands(tmp_path: Path) -> None:
     assert "--strict-frames" in result["audit_cmd"]
 
 
+def test_dry_run_can_select_python_pty_driver(tmp_path: Path) -> None:
+    module = load_matrix_module()
+    matrix = Path("specs/2773-rollback-debug-infra/scenario-matrix.json")
+    scenario = next(item for item in module.load_matrix(matrix) if item.id == "LOC-ER-HADAN-001")
+
+    result = module.run_scenario(
+        scenario,
+        capture_root=tmp_path,
+        strict_frames=True,
+        dry_run=True,
+        driver="python-pty",
+    )
+
+    assert result["driver"] == "python-pty"
+    assert result["capture_cmd"][:2] == [sys.executable, "scripts/tui-realuse-pty-capture.py"]
+
+
 def test_audit_only_reuses_existing_capture_dir(tmp_path: Path) -> None:
     module = load_matrix_module()
     matrix = Path("specs/2773-rollback-debug-infra/scenario-matrix.json")

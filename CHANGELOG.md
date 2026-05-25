@@ -5,6 +5,17 @@ All notable changes to UMMAYA are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.2] - 2026-05-25
+
+### Fixed
+
+- Stabilized live adapter discovery so location-heavy citizen queries keep the relevant
+  concrete medical, emergency, traffic, and weather tools visible to the model.
+- Added fail-closed coordinate validation and recovery hints for HIRA, NMC, and locate
+  follow-up calls while preserving KMA's grid-based weather path.
+- Hardened packaged npm and Homebrew launchers against stale backend environment variables
+  and verified the 0.2.2 package metadata across npm, Python, TUI, uv, and Cask files.
+
 ## [v0.2.0] - 2026-05-25
 
 ### Added

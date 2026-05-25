@@ -289,6 +289,24 @@ class TestHiraHospitalSearchInputValidation:
         assert isinstance(result, LookupError)
         assert result.reason == "invalid_params"
 
+    async def test_whole_degree_coordinate_pair_returns_invalid_params(
+        self,
+        hira_registry_and_executor,
+    ) -> None:
+        """Rounded xPos/yPos pair is rejected before upstream HIRA call."""
+        registry, executor = hira_registry_and_executor
+        inp = LookupFetchInput(
+            mode="fetch",
+            tool_id="hira_hospital_search",
+            params={"xPos": 128, "yPos": 35, "radius": 2000},
+        )
+
+        result = await lookup(inp, executor=executor, session_identity="test-session")
+
+        assert isinstance(result, LookupError)
+        assert result.reason == "invalid_params"
+        assert "whole degrees" in result.message
+
 
 # ---------------------------------------------------------------------------
 # Tool definition assertions

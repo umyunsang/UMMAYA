@@ -7,14 +7,19 @@ export const CHECK_TOOL_NAME = 'check'
 
 /** One-line citizen-facing English description shown to the LLM (<= 240 chars). */
 export const DESCRIPTION =
-  'Delegate credential verification to an auth adapter. Use tool_id for registered methods such as certificates, simple auth, or mobile ID; UMMAYA never mints or stores credentials.'
+  'Discover credential-check adapters. Prefer concrete adapter functions loaded by retrieval; check never mints or stores credentials.'
 
 /** Extended prompt included in the system-prompt tool-use section. */
-export const CHECK_TOOL_PROMPT = `Delegate credential checking to a registered UMMAYA auth adapter.
+export const CHECK_TOOL_PROMPT = `Delegate credential checking to a concrete UMMAYA auth adapter.
 
-Input: { tool_id: string, params: object }
-  - tool_id: the auth adapter identifier (e.g. "gongdong_injeungseo", "mobile_id")
-  - params: adapter-defined credential parameter body
+Preferred path:
+- Call concrete adapter functions directly after their schemas are loaded.
+- Adapter schemas are progressively disclosed by ToolSearch or backend top-K retrieval for the current citizen request.
+- Use the adapter's exact schema fields for scope, purpose, and session-bound evidence.
+
+Legacy root wrapper:
+- If a concrete adapter function is not loaded and only the root primitive is available, check accepts { tool_id, params } for old transcripts and compatibility paths.
+- tool_id must be a registered check adapter id, not "check", "find", "locate", or "send".
 
 Output (discriminated by auth_family):
   - auth_family: "gongdong_injeungseo" | "geumyung_injeungseo" | "ganpyeon_injeung" | "digital_onepass" | "mobile_id" | "mydata"

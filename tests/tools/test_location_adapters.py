@@ -12,7 +12,9 @@ from ummaya.tools.geocoding.kakao_client import (
     KakaoSearchResult,
 )
 from ummaya.tools.location_adapters import (
+    KakaoCoordToRegionInput,
     KakaoKeywordSearchInput,
+    SgisAdmCdLookupInput,
     _kakao_keyword_search,
     canonical_admin_area_query,
     should_route_keyword_query_to_address,
@@ -31,6 +33,14 @@ def test_admin_area_keyword_query_is_detected() -> None:
 def test_canonical_admin_area_query_strips_location_suffix() -> None:
     assert canonical_admin_area_query("부산 사하구 다대1동에서") == "부산 사하구 다대1동"
     assert canonical_admin_area_query("사하구 하단동 근처") == "사하구 하단동"
+
+
+def test_reverse_geocode_inputs_reject_rounded_coordinate_pairs() -> None:
+    with pytest.raises(ValueError, match="do not round"):
+        KakaoCoordToRegionInput(lat=35, lon=129)
+
+    with pytest.raises(ValueError, match="do not round"):
+        SgisAdmCdLookupInput(lat=35, lon=129)
 
 
 @pytest.mark.asyncio

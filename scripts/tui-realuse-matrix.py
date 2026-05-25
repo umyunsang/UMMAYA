@@ -15,6 +15,7 @@ from typing import Any
 
 DEFAULT_MATRIX = Path("specs/2773-rollback-debug-infra/scenario-matrix.json")
 GENERIC_SCENARIO = Path("specs/2773-rollback-debug-infra/scripts/generic-realuse.bun-pty.ts")
+PYTHON_PTY_CAPTURE = Path("scripts/tui-realuse-pty-capture.py")
 
 
 @dataclass(frozen=True)
@@ -130,16 +131,24 @@ def run_scenario(
     strict_frames: bool,
     dry_run: bool,
     audit_only: bool = False,
+    driver: str = "bun-pty",
 ) -> dict[str, Any]:
     out_dir = capture_root / scenario.id
     env = build_scenario_env(scenario, out_dir)
 
-    capture_cmd = [
-        "bun",
-        "scripts/bun-pty-capture.ts",
-        str(out_dir),
-        str(GENERIC_SCENARIO),
-    ]
+    if driver == "python-pty":
+        capture_cmd = [
+            sys.executable,
+            str(PYTHON_PTY_CAPTURE),
+            str(out_dir),
+        ]
+    else:
+        capture_cmd = [
+            "bun",
+            "scripts/bun-pty-capture.ts",
+            str(out_dir),
+            str(GENERIC_SCENARIO),
+        ]
     audit_cmd = [
         sys.executable,
         "scripts/tui-realuse-audit.py",
@@ -164,6 +173,7 @@ def run_scenario(
         return {
             "id": scenario.id,
             "status": "dry_run",
+            "driver": driver,
             "capture_cmd": capture_cmd,
             "audit_cmd": audit_cmd,
         }
@@ -179,6 +189,7 @@ def run_scenario(
     return {
         "id": scenario.id,
         "status": status,
+        "driver": driver,
         "capture_status": capture_status,
         "audit_status": audit_status,
         "capture_dir": str(out_dir),
@@ -213,6 +224,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
+        "--driver",
+        choices=["bun-pty", "python-pty"],
+        default=os.environ.get("UMMAYA_REALUSE_DRIVER", "bun-pty"),
+    )
+    parser.add_argument(
         "--audit-only",
         action="store_true",
         help="rerun audits against existing capture directories without recapturing",
@@ -241,6 +257,7 @@ def main() -> int:
             strict_frames=args.strict_frames,
             dry_run=args.dry_run,
             audit_only=args.audit_only,
+            driver=args.driver,
         )
         for scenario in selected
     ]

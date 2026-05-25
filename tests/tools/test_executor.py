@@ -8,6 +8,10 @@ import json
 import pytest
 
 from ummaya.tools.executor import ToolExecutor
+from ummaya.tools.hira.hospital_search import HIRA_HOSPITAL_SEARCH_TOOL
+from ummaya.tools.kma.forecast_fetch import KMA_FORECAST_FETCH_TOOL
+from ummaya.tools.kma.kma_current_observation import KMA_CURRENT_OBSERVATION_TOOL
+from ummaya.tools.location_adapters import KAKAO_COORD_TO_REGION_TOOL
 from ummaya.tools.registry import ToolRegistry
 
 # ---------------------------------------------------------------------------
@@ -90,6 +94,106 @@ async def test_dispatch_invalid_input_schema_violation(sample_tool_factory, mock
     assert result.success is False
     assert result.error_type == "validation"
     assert result.data is None
+
+
+@pytest.mark.asyncio
+async def test_invoke_kma_current_observation_validation_names_time_recovery():
+    """KMA current observation validation should name the missing time fields."""
+    registry = ToolRegistry()
+    registry.register(KMA_CURRENT_OBSERVATION_TOOL)
+    executor = ToolExecutor(registry)
+
+    async def _never_called(_validated_input):
+        raise AssertionError("validation should fail before adapter execution")
+
+    executor.register_adapter("kma_current_observation", _never_called)
+
+    result = await executor.invoke(
+        "kma_current_observation",
+        {"nx": 97, "ny": 74},
+        request_id="test-request",
+    )
+
+    assert result.kind == "error"
+    assert result.reason.value == "invalid_params"
+    assert "base_date" in result.message
+    assert "base_time" in result.message
+    assert "nx/ny" in result.message
+    assert "KST" in result.message
+
+
+@pytest.mark.asyncio
+async def test_invoke_kma_forecast_fetch_validation_rejects_grid_retry():
+    """KMA forecast validation should tell the model not to retry nx/ny."""
+    registry = ToolRegistry()
+    registry.register(KMA_FORECAST_FETCH_TOOL)
+    executor = ToolExecutor(registry)
+
+    async def _never_called(_validated_input):
+        raise AssertionError("validation should fail before adapter execution")
+
+    executor.register_adapter("kma_forecast_fetch", _never_called)
+
+    result = await executor.invoke(
+        "kma_forecast_fetch",
+        {"nx": 97, "ny": 74, "base_date": "20260525", "base_time": "1700"},
+        request_id="test-request",
+    )
+
+    assert result.kind == "error"
+    assert result.reason.value == "invalid_params"
+    assert "lat" in result.message
+    assert "lon" in result.message
+    assert "Do NOT pass nx/ny" in result.message
+    assert "LOCATE FIRST" in result.message
+
+
+@pytest.mark.asyncio
+async def test_invoke_hira_hospital_search_validation_rejects_rounded_coords():
+    """HIRA validation should tell the model to preserve locate decimals."""
+    registry = ToolRegistry()
+    registry.register(HIRA_HOSPITAL_SEARCH_TOOL)
+    executor = ToolExecutor(registry)
+
+    async def _never_called(_validated_input):
+        raise AssertionError("validation should fail before adapter execution")
+
+    executor.register_adapter("hira_hospital_search", _never_called)
+
+    result = await executor.invoke(
+        "hira_hospital_search",
+        {"xPos": 128, "yPos": 35, "radius": 2000},
+        request_id="test-request",
+    )
+
+    assert result.kind == "error"
+    assert result.reason.value == "invalid_params"
+    assert "do NOT round" in result.message
+    assert "xPos:<exact lon>" in result.message
+
+
+@pytest.mark.asyncio
+async def test_invoke_raw_reverse_geocode_validation_rejects_rounded_coords():
+    """Locate adapters should expose exact-coordinate recovery hints."""
+    registry = ToolRegistry()
+    registry.register(KAKAO_COORD_TO_REGION_TOOL)
+    executor = ToolExecutor(registry)
+
+    async def _never_called(_validated_input):
+        raise AssertionError("validation should fail before adapter execution")
+
+    executor.register_adapter("kakao_coord_to_region", _never_called)
+
+    result = await executor.invoke_raw(
+        "kakao_coord_to_region",
+        {"lat": 35, "lon": 129},
+        request_id="test-request",
+    )
+
+    assert result.kind == "error"
+    assert result.reason.value == "invalid_params"
+    assert "COPY EXACT COORDINATES" in result.message
+    assert "Do NOT round" in result.message
 
 
 @pytest.mark.asyncio

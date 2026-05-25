@@ -284,7 +284,7 @@ async function* queryLoop(
     params.deps === undefined &&
     process.env.UMMAYA_SKIP_ADAPTER_MANIFEST_BOOTSTRAP !== 'true'
   ) {
-    const manifestSynced = await ensureUmmayaAdapterManifest()
+    const manifestSynced = await ensureUmmayaAdapterManifest(10_000)
     if (manifestSynced && state.toolUseContext.options.refreshTools) {
       const refreshedTools = state.toolUseContext.options.refreshTools()
       if (refreshedTools !== state.toolUseContext.options.tools) {

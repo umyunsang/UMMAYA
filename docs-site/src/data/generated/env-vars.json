@@ -320,12 +320,36 @@
     "variable": "UMMAYA_SESSION_DIR"
   },
   {
-    "consumed_by": "TUI-side `tui/src/services/api` IPC bridge spawner; `ummaya.ipc.demo.mock_backend` is the canonical Mock-backend value used by Spec 2296 PTY + vhs smoke artefacts",
-    "default": "`uv run python -m ummaya.ipc.mcp_server`",
+    "consumed_by": "`bin/ummaya`; TUI-side `tui/src/ipc/bridge.ts`",
+    "default": "Set by packaged launcher to `[\"uv\",\"--directory\",<packageRoot>,\"run\",\"--frozen\",\"--no-dev\",\"ummaya\",\"--ipc\",\"stdio\"]`, or to `<packageRoot>/.venv/bin/python -m ummaya.cli --ipc stdio` when that venv exists",
+    "range": "JSON string array spawned by the TUI as the backend process; preferred over `UMMAYA_BACKEND_CMD` because paths with spaces stay unambiguous",
+    "required": "No",
+    "source_doc": "Release packaging",
+    "variable": "UMMAYA_BACKEND_CMD_JSON"
+  },
+  {
+    "consumed_by": "TUI-side `tui/src/ipc/bridge.ts`; `ummaya.ipc.demo.mock_backend` is the canonical Mock-backend value used by Spec 2296 PTY + vhs smoke artefacts",
+    "default": "`uv run ummaya --ipc stdio` when no JSON command or package launcher is present",
     "range": "Shell command string spawned by the TUI as the backend process",
     "required": "No",
     "source_doc": "Epic #2296",
     "variable": "UMMAYA_BACKEND_CMD"
+  },
+  {
+    "consumed_by": "`bin/ummaya`",
+    "default": "`0`",
+    "range": "Set `1` only for release/debug harnesses that intentionally replace the packaged backend command",
+    "required": "No",
+    "source_doc": "Release packaging",
+    "variable": "UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE"
+  },
+  {
+    "consumed_by": "`tui/src/tools/_shared/dispatchPrimitive.ts`; packaged override in `bin/ummaya`",
+    "default": "`30000` in raw TUI; packaged launcher sets `90000` unless already set",
+    "range": "Milliseconds before a model-facing primitive tool call reports a TUI-side delayed-backend timeout",
+    "required": "No",
+    "source_doc": "Release packaging",
+    "variable": "UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS"
   },
   {
     "consumed_by": "`ummaya.ipc.stdio.run` diagnostic FileHandler",

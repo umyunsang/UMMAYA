@@ -82,7 +82,7 @@ def _assemble_tool_calls(
 
 
 def _tool_definition_name(tool_def: ToolDefinition | dict[str, object]) -> str | None:
-    """Extract a root primitive name from an OpenAI tool definition."""
+    """Extract a function name from an OpenAI tool definition."""
 
     if isinstance(tool_def, ToolDefinition):
         return tool_def.function.name
@@ -91,6 +91,27 @@ def _tool_definition_name(tool_def: ToolDefinition | dict[str, object]) -> str |
         return None
     name = function.get("name")
     return name if isinstance(name, str) else None
+
+
+def _export_turn_tool_definitions(
+    tool_registry: ToolRegistry,
+    tool_ids: tuple[str, ...],
+) -> list[dict[str, object]]:
+    """Export selected concrete adapter schemas in ranking order."""
+
+    tool_defs: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for tool_id in tool_ids:
+        if tool_id in seen:
+            continue
+        seen.add(tool_id)
+        try:
+            tool = tool_registry.find(tool_id)
+        except ToolNotFoundError:
+            logger.warning("Selected turn tool disappeared from registry: %s", tool_id)
+            continue
+        tool_defs.append(tool.to_openai_tool())
+    return tool_defs
 
 
 def _latest_successful_tool_payload(messages: list[ChatMessage]) -> dict[str, object] | None:
@@ -296,14 +317,38 @@ async def dispatch_tool_calls(  # noqa: C901
 
     async def _dispatch_one(tc: ToolCall) -> ToolResult:
         """Dispatch a single tool call via the executor."""
-        if tc.function.name in {"find", "locate"}:
+        if tc.function.name in {"find", "locate", "check", "send"}:
             return await _dispatch_root_primitive(
                 tc,
                 tool_registry,
                 tool_executor,
                 session_context=session_context,
             )
-        return await tool_executor.dispatch(tc.function.name, tc.function.arguments)
+        try:
+            tool = tool_registry.find(tc.function.name)
+        except ToolNotFoundError:
+            return await tool_executor.dispatch(tc.function.name, tc.function.arguments)
+        gate = tool.policy.citizen_facing_gate if tool.policy is not None else None
+        if gate in {None, "read-only"}:
+            return await tool_executor.dispatch(
+                tc.function.name,
+                tc.function.arguments,
+                tool_call_id=tc.id,
+            )
+        primitive = tool.primitive
+        if primitive is None:
+            return ToolResult(
+                tool_id=tc.function.name,
+                success=False,
+                error=f"{tc.function.name} is missing primitive metadata for gated dispatch.",
+                error_type="schema_mismatch",
+            )
+        return await _dispatch_concrete_adapter(
+            tc,
+            primitive,
+            tool_executor,
+            session_context=session_context,
+        )
 
     async def _flush_group(items: list[tuple[int, ToolCall]], safe: bool) -> None:
         """Execute a group of tool calls, concurrently if safe."""
@@ -405,6 +450,59 @@ async def _dispatch_root_primitive(
             error_type="execution",
         )
     return ToolResult(tool_id=primitive, success=True, data=data)
+
+
+async def _dispatch_concrete_adapter(
+    tc: ToolCall,
+    primitive: str,
+    tool_executor: ToolExecutor,
+    *,
+    session_context: SessionContext | None,
+) -> ToolResult:
+    """Dispatch a directly model-facing concrete adapter call."""
+
+    try:
+        raw_args = json.loads(tc.function.arguments)
+    except (TypeError, json.JSONDecodeError) as exc:
+        return ToolResult(
+            tool_id=tc.function.name,
+            success=False,
+            error=str(exc),
+            error_type="validation",
+        )
+    if not isinstance(raw_args, dict):
+        return ToolResult(
+            tool_id=tc.function.name,
+            success=False,
+            error=f"{tc.function.name} requires a JSON object argument.",
+            error_type="validation",
+        )
+
+    request_id = tc.id or f"{tc.function.name}-call"
+    if primitive == "find":
+        output = await tool_executor.invoke(
+            tc.function.name,
+            raw_args,
+            request_id=request_id,
+            session_identity=session_context,
+        )
+    else:
+        output = await tool_executor.invoke_raw(
+            tc.function.name,
+            raw_args,
+            request_id=request_id,
+            session_identity=session_context,
+        )
+
+    data = _primitive_output_dict(output)
+    if data.get("kind") == "error":
+        return ToolResult(
+            tool_id=tc.function.name,
+            success=False,
+            error=str(data.get("message") or data),
+            error_type="execution",
+        )
+    return ToolResult(tool_id=tc.function.name, success=True, data=data)
 
 
 def _primitive_output_dict(output: object) -> dict[str, object]:
@@ -532,8 +630,13 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
             tool_defs: list[ToolDefinition | dict[str, object]] | None = None
             force_no_tools_next_turn = False
         else:
-            raw_defs = ctx.tool_registry.export_core_tools_openai()
-            if ctx.allowed_core_tool_ids is not None:
+            raw_defs = _export_turn_tool_definitions(
+                ctx.tool_registry,
+                ctx.turn_tool_ids,
+            )
+            if not raw_defs:
+                raw_defs = ctx.tool_registry.export_core_tools_openai()
+            if ctx.allowed_core_tool_ids is not None and not ctx.turn_tool_ids:
                 raw_defs = [
                     tool_def
                     for tool_def in raw_defs

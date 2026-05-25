@@ -75,17 +75,6 @@ def _contains_location_dependent_key(value: object) -> bool:
     return False
 
 
-def _allowed_core_tools_for_available_adapters(
-    visible_primitives: set[str],
-    has_location_dependent_schema: bool,
-) -> frozenset[str] | None:
-    """Constrain root primitive exposure for location-independent find turns."""
-
-    if visible_primitives == {"find"} and not has_location_dependent_schema:
-        return frozenset({"find"})
-    return None
-
-
 class QueryEngine:
     """Per-session orchestrator for the UMMAYA query engine.
 
@@ -216,7 +205,7 @@ class QueryEngine:
                 ChatMessage(role="user", content=assembled.turn_attachment.content),
             )
 
-        dynamic_adapter_message, allowed_core_tool_ids = self._build_available_adapters_context(
+        dynamic_adapter_message, turn_tool_ids = self._build_available_adapters_context(
             user_message
         )
         if dynamic_adapter_message is not None:
@@ -235,7 +224,7 @@ class QueryEngine:
             tool_registry=self._tool_registry,
             config=self._config,
             session_context=self._permission_session,
-            allowed_core_tool_ids=allowed_core_tool_ids,
+            turn_tool_ids=turn_tool_ids,
             turn_start_message_index=turn_start_message_index,
         )
 
@@ -281,13 +270,13 @@ class QueryEngine:
     def _build_available_adapters_message(self, user_message: str) -> ChatMessage | None:
         """Inject BM25 adapter candidates for the current citizen utterance."""
 
-        message, _allowed_core_tool_ids = self._build_available_adapters_context(user_message)
+        message, _turn_tool_ids = self._build_available_adapters_context(user_message)
         return message
 
     def _build_available_adapters_context(
         self, user_message: str
-    ) -> tuple[ChatMessage | None, frozenset[str] | None]:
-        """Build dynamic adapter context and per-turn primitive exposure."""
+    ) -> tuple[ChatMessage | None, tuple[str, ...]]:
+        """Build dynamic adapter context and per-turn concrete tool exposure."""
 
         try:
             from ummaya.tools.search import search  # noqa: PLC0415
@@ -300,17 +289,18 @@ class QueryEngine:
             )
         except Exception:  # noqa: BLE001
             logger.exception("available_adapters auto-inject failed")
-            return None, None
+            return None, ()
 
         adapter_lines: list[str] = []
-        visible_primitives: set[str] = set()
-        has_location_dependent_schema = False
+        selected_tool_ids: list[str] = []
         primary_find_without_location = False
         visible_count = 0
         for candidate in candidates:
             try:
                 tool = self._tool_registry.find(candidate.tool_id)
             except ToolNotFoundError:
+                continue
+            if candidate.score <= 0:
                 continue
             if tool.is_core or tool.ministry == "UMMAYA":
                 continue
@@ -324,15 +314,12 @@ class QueryEngine:
             )
             if visible_count > 0 and primary_find_without_location and requires_location:
                 continue
-            if primitive is not None:
-                visible_primitives.add(primitive)
-            if requires_location:
-                has_location_dependent_schema = True
             schema_json = json.dumps(
                 candidate.input_schema_json,
                 ensure_ascii=False,
                 sort_keys=True,
             )
+            selected_tool_ids.append(candidate.tool_id)
             adapter_lines.extend(
                 [
                     f"- tool_id: {candidate.tool_id}",
@@ -340,8 +327,7 @@ class QueryEngine:
                     f"  description: {candidate.llm_description or tool.name_ko}",
                     f"  required_params: {candidate.required_params}",
                     f"  input_schema_json: {schema_json}",
-                    f"  call_hint: {candidate.primitive}("
-                    f'{{"tool_id":"{candidate.tool_id}","params":{{...}}}})',
+                    f"  call_hint: {candidate.tool_id}({{...}})",
                     f"  policy_url: {candidate.real_classification_url or ''}",
                 ]
             )
@@ -350,19 +336,16 @@ class QueryEngine:
                 break
 
         if not adapter_lines:
-            return None, None
-
-        allowed_core_tool_ids = _allowed_core_tools_for_available_adapters(
-            visible_primitives,
-            has_location_dependent_schema,
-        )
+            return None, ()
 
         content = "\n".join(
             [
                 "<available_adapters>",
                 "Use these adapter candidates for this citizen request. "
-                "For public-data lookup/list/statistics requests, call "
-                "find({tool_id, params}) with a tool_id from this block. "
+                "Call the function named exactly as tool_id with that adapter's "
+                "schema arguments. Do not wrap adapter calls in root primitives "
+                "such as find({tool_id, params}), locate({tool_id, params}), "
+                "check({tool_id, params}), or send({tool_id, params}). "
                 "Do not call locate just because the citizen text contains a "
                 "city/province name; treat that as the dataset/filter term. "
                 "Call locate only when the selected adapter schema requires "
@@ -371,7 +354,7 @@ class QueryEngine:
                 "</available_adapters>",
             ]
         )
-        return ChatMessage(role="system", content=content), allowed_core_tool_ids
+        return ChatMessage(role="system", content=content), tuple(selected_tool_ids)
 
     def set_permission_session(self, session: SessionContext | None) -> None:
         """Update the permission-pipeline session used for subsequent turns.

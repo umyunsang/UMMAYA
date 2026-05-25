@@ -121,11 +121,17 @@ class QueryContext(BaseModel):
     """
 
     allowed_core_tool_ids: frozenset[str] | None = None
-    """Optional per-turn provider tool allow-list for root primitives.
+    """Legacy per-turn allow-list for primitive wrappers.
 
-    Used by the Rich REPL path when BM25 has already selected location-independent
-    public-data adapters. It keeps the exposed provider surface aligned with the
-    selected adapter primitive instead of letting unrelated root primitives race.
+    Preserved for callers that still expose the old root primitives. New turns
+    should prefer ``turn_tool_ids`` so the model sees concrete adapter schemas.
+    """
+
+    turn_tool_ids: tuple[str, ...] = ()
+    """Concrete adapter tool IDs selected for this citizen turn.
+
+    When populated, the query loop exports these concrete adapter schemas as the
+    provider tool surface instead of dumping the root primitive wrappers.
     """
 
     turn_start_message_index: int = 0

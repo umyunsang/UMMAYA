@@ -527,6 +527,46 @@ class TestNmcUrlEncodingRegression:
         assert item["distance"] == pytest.approx(0.176, abs=0.01)
 
 
+class TestNmcInputValidation:
+    """NMC input validation should preserve locate coordinate precision."""
+
+    def test_coordinate_mode_rejects_rounded_coordinate_pair(self) -> None:
+        with pytest.raises(ValueError, match="do not round"):
+            NmcEmergencySearchInput(mode="coordinate", lat=35, lon=129, limit=5)
+
+    def test_region_mode_rejects_rounded_origin_pair(self) -> None:
+        with pytest.raises(ValueError, match="do not round"):
+            NmcEmergencySearchInput(
+                mode="region",
+                q0="부산광역시",
+                q1="사하구",
+                origin_lat=35,
+                origin_lon=129,
+                limit=5,
+            )
+
+    def test_region_mode_rejects_generic_qn_filter(self) -> None:
+        with pytest.raises(ValueError, match="institution-name filter"):
+            NmcEmergencySearchInput(
+                mode="region",
+                q0="부산광역시",
+                q1="사하구",
+                qn="응급실",
+                limit=5,
+            )
+
+    def test_region_mode_rejects_blank_or_keyword_list_qn_filter(self) -> None:
+        for qn in ("", "응급실,24시간,야간,병원"):
+            with pytest.raises(ValueError, match="institution-name filter"):
+                NmcEmergencySearchInput(
+                    mode="region",
+                    q0="부산광역시",
+                    q1="사하구",
+                    qn=qn,
+                    limit=5,
+                )
+
+
 # ---------------------------------------------------------------------------
 # Section 4: Description v4 token budget verification
 # ---------------------------------------------------------------------------

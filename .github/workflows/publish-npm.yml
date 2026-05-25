@@ -55,6 +55,16 @@ jobs:
           npm install --global --prefix "${prefix}" "./${tarball}"
           "${prefix}/bin/ummaya" --version
           "${prefix}/bin/ummaya" --help >/dev/null
+          arbitrary_cwd="${RUNNER_TEMP}/ummaya arbitrary cwd"
+          mkdir -p "${arbitrary_cwd}"
+          (
+            cd "${arbitrary_cwd}"
+            UMMAYA_LAUNCHER_INSPECT=1 \
+              UMMAYA_BACKEND_CMD_JSON='["stale","backend"]' \
+              "${prefix}/bin/ummaya" >"${RUNNER_TEMP}/ummaya-launcher-inspect.json"
+          )
+          EXPECTED_PACKAGE_ROOT="$(cd "${prefix}/lib/node_modules/ummaya" && pwd -P)" \
+            node -e 'const fs = require("node:fs"); const payload = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const expected = process.env.EXPECTED_PACKAGE_ROOT; if (payload.packageRoot !== expected) throw new Error(`packageRoot ${payload.packageRoot} !== ${expected}`); const command = payload.backendCommand; if (!Array.isArray(command) || !command.includes("--directory") || !command.includes(expected) || !command.includes("--frozen") || !command.includes("--no-dev")) throw new Error(`unexpected backend command ${JSON.stringify(command)}`); if (payload.primitiveTimeoutMs !== "90000") throw new Error(`unexpected primitive timeout ${payload.primitiveTimeoutMs}`);' "${RUNNER_TEMP}/ummaya-launcher-inspect.json"
           if "${prefix}/bin/ummaya" --print "smoke" >"${RUNNER_TEMP}/ummaya-print.out" 2>"${RUNNER_TEMP}/ummaya-print.err"; then
             echo "Expected unauthenticated print mode to fail" >&2
             exit 1

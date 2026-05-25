@@ -1,44 +1,33 @@
 // SPDX-License-Identifier: Apache-2.0
 // UMMAYA-original — Epic #1634 P3 · FindPrimitive prompt strings.
-// Spec 2521 (2026-05-01) — fetch-only surface; BM25 adapter discovery is a
-// backend-internal mechanism (auto-injected into the system prompt's
-// <available_adapters> dynamic suffix), not an LLM-callable mode. Older
-// "search/fetch two-mode" copy was the source of phantom tool-UI noise the
-// user surfaced via Layer 5 frame capture (specs/2521 frames/raw.cast).
+// 2026 migration note: root primitives are lightweight category descriptors
+// and legacy transcript compatibility wrappers. Concrete adapter functions are
+// loaded through CC ToolSearch/deferred schema expansion or backend top-K
+// retrieval, then called directly with adapter schema arguments.
 // Contract: specs/1634-tool-system-wiring/contracts/primitive-envelope.md § 2
 
 export const FIND_TOOL_NAME = 'find'
 
 /** Citizen-facing English description shown to the LLM (<= 240 chars). */
 export const DESCRIPTION =
-  'Invoke one concrete Korean public-service adapter. Use the function named find, but set tool_id to a listed adapter id from <available_adapters>, never to find/locate/check/send.'
+  'Discover Korean public-service lookup adapters. Prefer concrete adapter functions loaded by ToolSearch or backend retrieval; find is a legacy wrapper only.'
 
 /** Extended prompt included in the system-prompt tool-use section. */
-export const FIND_TOOL_PROMPT = `Invoke Korean public-service adapters registered in the UMMAYA tool registry.
+export const FIND_TOOL_PROMPT = `Discover Korean public-service lookup adapters registered in the UMMAYA tool registry.
 
-Single mode (Spec 2521 fetch-only):
+Preferred path:
+- Call concrete adapter functions directly after their schemas are loaded.
+- Example: kma_current_observation({ base_date: "YYYYMMDD", base_time: "HH00", nx: 97, ny: 74 })
+- Adapter schemas are progressively disclosed by ToolSearch or by backend top-K retrieval for the current citizen request.
+- Only top candidates should be loaded; do not expect every adapter schema in the prompt.
 
-  Input:  { tool_id: string, params: object }
-  Output: { tool_id: string, result: object }
-
-Adapter discovery
-─────────────────
-Adapter discovery is a BACKEND-INTERNAL function — NOT a callable mode.
-For every citizen turn the backend runs BM25 against the registry and
-injects the top-K candidates into the system prompt's
-<available_adapters> dynamic suffix. The LLM picks a tool_id from that
-block and calls find directly.
+Legacy root wrapper:
+- If a concrete adapter function is not loaded and only the root primitive is available, find accepts { tool_id, params } for old transcripts and compatibility paths.
+- tool_id must be a concrete adapter id from <available_adapters>, never "find", "locate", "check", or "send".
+- Invalid: find({ tool_id: "find", params: {...} })
+- Compatibility-only: find({ tool_id: "kma_current_observation", params: { base_date: "YYYYMMDD", base_time: "HH00", nx: 97, ny: 74 } })
 
 Rules:
-- The function name is find. The tool_id argument is NOT the function name.
-- tool_id must be a concrete adapter id listed in <available_adapters>, for example "kma_current_observation" or "kma_forecast_fetch".
-- Never set tool_id to a root primitive name: "find", "locate", "check", or "send".
-- Invalid: find({ tool_id: "find", params: {...} })
-- Valid:   find({ tool_id: "kma_current_observation", params: {...} })
-- Pick tool_id only from <available_adapters>. Never guess an id.
-- Do NOT call find with mode='search' / query — those payloads are
-  rejected with LookupErrorReason.invalid_params (Spec 2521).
-- Do NOT call the same tool_id twice in a single turn — answer with the
-  result you already have, or pick a different tool_id from the list.
-- params shape mirrors the adapter's Pydantic input_schema (see the
-  <available_adapters> hint for required keys).`
+- Do not call find with mode='search' or query; discovery is handled outside the primitive call.
+- Do not call the same adapter twice in a single turn unless a validation error requires corrected arguments.
+- Use the concrete adapter schema fields exactly; never invent required keys.`

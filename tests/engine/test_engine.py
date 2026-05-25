@@ -196,14 +196,15 @@ def test_available_adapters_context_includes_retrieved_adapter() -> None:
     assert message.role == "system"
     assert "<available_adapters>" in (message.content or "")
     assert "bfc_funeral_area_fee" in (message.content or "")
-    assert "find({tool_id, params})" in (message.content or "")
+    assert "Call the function named exactly as tool_id" in (message.content or "")
     assert "Do not call locate just because" in (message.content or "")
-    assert "call_hint: find(" in (message.content or "")
+    assert "call_hint: bfc_funeral_area_fee(" in (message.content or "")
+    assert "call_hint: find(" not in (message.content or "")
 
 
 @pytest.mark.asyncio
-async def test_available_adapters_context_constrains_public_data_turn_to_find() -> None:
-    """Location-independent public data turns should not expose locate."""
+async def test_available_adapters_context_exposes_concrete_public_data_tool() -> None:
+    """Location-independent public data turns should expose the retrieved adapter directly."""
     registry = ToolRegistry()
     register_mvp_surface(registry)
     registry.register(_adapter_context_tool())
@@ -231,7 +232,7 @@ async def test_available_adapters_context_constrains_public_data_turn_to_find() 
         name = function.get("name")
         if isinstance(name, str):
             tool_names.append(name)
-    assert tool_names == ["find"]
+    assert tool_names == ["bfc_funeral_area_fee"]
 
 
 def test_available_adapters_context_constrains_from_primary_candidate() -> None:
@@ -246,7 +247,7 @@ def test_available_adapters_context_constrains_from_primary_candidate() -> None:
         tool_executor=executor,
     )
 
-    message, allowed_core_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
         "대학알리미 학교구분코드 02의 지역별 등록금 현황을 5건 공공 API 도구로 조회해줘."
     )
 
@@ -254,11 +255,14 @@ def test_available_adapters_context_constrains_from_primary_candidate() -> None:
     content = message.content or ""
     assert "kcue_finance_regional_tuition" in content
     assert "koroad_accident_search" not in content
-    assert allowed_core_tool_ids == frozenset({"find"})
+    assert turn_tool_ids[:2] == (
+        "kcue_finance_regional_tuition",
+        "kcue_student_regional_foreign",
+    )
 
 
 def test_available_adapters_context_preserves_locate_for_location_candidates() -> None:
-    """When visible candidates need location resolution, root primitives stay available."""
+    """Location-dependent candidates remain exposed as concrete adapter tools."""
 
     registry = ToolRegistry()
     executor = ToolExecutor(registry)
@@ -269,13 +273,13 @@ def test_available_adapters_context_preserves_locate_for_location_candidates() -
         tool_executor=executor,
     )
 
-    message, allowed_core_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
         "서울 강남구 교통사고 다발지역을 공공 API로 조회해줘"
     )
 
     assert message is not None
     assert "koroad_accident_hazard_search" in (message.content or "")
-    assert allowed_core_tool_ids is None
+    assert "koroad_accident_hazard_search" in turn_tool_ids
 
 
 def test_available_adapters_context_constrains_aed_region_filters_to_find() -> None:
@@ -290,7 +294,7 @@ def test_available_adapters_context_constrains_aed_region_filters_to_find() -> N
         tool_executor=executor,
     )
 
-    message, allowed_core_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
         "종로구 자동심장충격기 위치 알려줘."
     )
 
@@ -298,7 +302,8 @@ def test_available_adapters_context_constrains_aed_region_filters_to_find() -> N
     content = message.content or ""
     assert "nmc_aed_site_locate" in content
     assert "kakao_keyword_search" not in content
-    assert allowed_core_tool_ids == frozenset({"find"})
+    assert "nmc_aed_site_locate" in turn_tool_ids
+    assert "kakao_keyword_search" not in turn_tool_ids
 
 
 # ---------------------------------------------------------------------------

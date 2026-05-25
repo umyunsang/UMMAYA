@@ -1,0 +1,95 @@
+{
+  "overall": "pass",
+  "checks": [
+    {
+      "name": "capture_completeness",
+      "status": "pass",
+      "details": "Capture contains final state and intermediate artifacts.",
+      "evidence": [
+        "frames=158",
+        "snapshots=4"
+      ]
+    },
+    {
+      "name": "utf8_replacement_character",
+      "status": "pass",
+      "details": "No UTF-8 replacement characters were found in captured text.",
+      "evidence": []
+    },
+    {
+      "name": "backend_log_health",
+      "status": "pass",
+      "details": "backend.log contains no audited traceback or OpenTelemetry context errors.",
+      "evidence": []
+    },
+    {
+      "name": "agentic_chain_order",
+      "status": "pass",
+      "details": "Expected tool chain was visible in chronological captures.",
+      "evidence": [
+        "locate@65:frames/frame_0065_eb987f7c2c3e.txt",
+        "nmc_emergency_search@151:frames/frame_0151_e8167bedbb1b.txt"
+      ]
+    },
+    {
+      "name": "submit_ledger_evidence",
+      "status": "pass",
+      "details": "No submit adapter ledger evidence is required for this scenario.",
+      "evidence": []
+    },
+    {
+      "name": "recoverable_error_loop",
+      "status": "pass",
+      "details": "No recoverable invalid-parameter error was visible.",
+      "evidence": []
+    },
+    {
+      "name": "visible_abnormal_flow",
+      "status": "pass",
+      "details": "No audited avoidable tool-selection recovery artifact was visible.",
+      "evidence": []
+    },
+    {
+      "name": "cc_error_rendering",
+      "status": "pass",
+      "details": "No tool error was visible in this capture.",
+      "evidence": []
+    },
+    {
+      "name": "expanded_tool_trace",
+      "status": "pass",
+      "details": "Tool trace details were visible.",
+      "evidence": []
+    },
+    {
+      "name": "submit_rejected_status",
+      "status": "pass",
+      "details": "No rejected submit status was visible.",
+      "evidence": []
+    },
+    {
+      "name": "raw_protocol_leak",
+      "status": "pass",
+      "details": "No raw IPC frame leak was detected in captured text.",
+      "evidence": []
+    },
+    {
+      "name": "require_regex",
+      "status": "pass",
+      "details": "Required regex matched: 큐병원|응급실운영신고기관",
+      "evidence": []
+    },
+    {
+      "name": "forbid_regex",
+      "status": "pass",
+      "details": "Forbidden regex absent: 도구 결과 기준으로 처리 상태를 정리합니다\\s*- 조회 .*invalid_params",
+      "evidence": []
+    },
+    {
+      "name": "forbid_regex",
+      "status": "pass",
+      "details": "Forbidden regex absent: collection\\s*—\\s*0건",
+      "evidence": []
+    }
+  ]
+}

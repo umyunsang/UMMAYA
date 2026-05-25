@@ -1,6 +1,6 @@
 [project]
 name = "ummaya"
-version = "0.2.1"
+version = "0.2.2"
 description = "Conversational multi-agent platform for Korean public APIs"
 readme = "README.md"
 license = "Apache-2.0"
@@ -314,7 +314,7 @@ min_confidence = 80
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.2.1"
+version = "0.2.2"
 tag_format = "v$version"
 
 # PyTorch CPU-only wheel for Docker image size discipline (SC-1: ≤ 2 GB).

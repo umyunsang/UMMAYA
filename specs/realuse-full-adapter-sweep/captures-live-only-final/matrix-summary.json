@@ -1,0 +1,101 @@
+{
+  "overall": "fail",
+  "results": [
+    {
+      "id": "LOC-ER-HADAN-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/LOC-ER-HADAN-001"
+    },
+    {
+      "id": "LOC-WEATHER-DADAE-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/LOC-WEATHER-DADAE-001"
+    },
+    {
+      "id": "LOC-WEATHER-CURRENT-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/LOC-WEATHER-CURRENT-001"
+    },
+    {
+      "id": "SAFETY-WEATHER-ALERT-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/SAFETY-WEATHER-ALERT-001"
+    },
+    {
+      "id": "HEALTH-HIRA-PEDIATRIC-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/HEALTH-HIRA-PEDIATRIC-001"
+    },
+    {
+      "id": "SAFETY-NFA119-001",
+      "status": "fail",
+      "driver": "python-pty",
+      "capture_status": 1,
+      "audit_status": 99,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/SAFETY-NFA119-001"
+    },
+    {
+      "id": "MOBILITY-ACCIDENT-HOTSPOT-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/MOBILITY-ACCIDENT-HOTSPOT-001"
+    },
+    {
+      "id": "WELFARE-ELIGIBILITY-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/WELFARE-ELIGIBILITY-001"
+    },
+    {
+      "id": "NEG-UNKNOWN-LOCATION-001",
+      "status": "fail",
+      "driver": "python-pty",
+      "capture_status": 1,
+      "audit_status": 99,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/NEG-UNKNOWN-LOCATION-001"
+    },
+    {
+      "id": "NEG-AMBIGUOUS-PLACE-001",
+      "status": "fail",
+      "driver": "python-pty",
+      "capture_status": 1,
+      "audit_status": 99,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/NEG-AMBIGUOUS-PLACE-001"
+    },
+    {
+      "id": "SESSION-CONTINUATION-001",
+      "status": "pass",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 0,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/SESSION-CONTINUATION-001"
+    },
+    {
+      "id": "DISCOVERY-TOOL-SEARCH-001",
+      "status": "fail",
+      "driver": "python-pty",
+      "capture_status": 0,
+      "audit_status": 1,
+      "capture_dir": "specs/realuse-full-adapter-sweep/captures-live-only-final/DISCOVERY-TOOL-SEARCH-001"
+    }
+  ]
+}

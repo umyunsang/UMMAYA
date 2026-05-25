@@ -10,6 +10,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -141,6 +142,23 @@ done
 root_dir="$(cd -P "$(dirname "$source_path")" >/dev/null 2>&1 && pwd)"
 runtime_bun="$root_dir/runtime/bun"
 runtime_sha256="${runtimeSha256}"
+package_root="$root_dir/package"
+
+json_escape() {
+  printf '%s' "$1" | sed 's/\\\\/\\\\\\\\/g; s/"/\\\\"/g'
+}
+
+export UMMAYA_PACKAGE_ROOT="$package_root"
+if [[ "\${UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE:-}" != "1" || -z "\${UMMAYA_BACKEND_CMD_JSON:-}" ]]; then
+  package_root_json="$(json_escape "$package_root")"
+  if [[ -x "$package_root/.venv/bin/python" ]]; then
+    python_json="$(json_escape "$package_root/.venv/bin/python")"
+    export UMMAYA_BACKEND_CMD_JSON="[\\"$python_json\\",\\"-m\\",\\"ummaya.cli\\",\\"--ipc\\",\\"stdio\\"]"
+  else
+    export UMMAYA_BACKEND_CMD_JSON="[\\"uv\\",\\"--directory\\",\\"$package_root_json\\",\\"run\\",\\"--frozen\\",\\"--no-dev\\",\\"ummaya\\",\\"--ipc\\",\\"stdio\\"]"
+  fi
+fi
+export UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS="\${UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS:-90000}"
 
 use_cached_runtime=0
 if [[ "\${UMMAYA_FORCE_RUNTIME_CACHE:-}" == "1" ]]; then
@@ -165,14 +183,73 @@ if [[ "$use_cached_runtime" == "1" && -n "\${HOME:-}" ]]; then
     printf '%s\n' "$runtime_sha256" > "$cache_marker"
   fi
   export PATH="$cache_dir:$PATH"
-  exec "$cache_bun" "$root_dir/package/bin/ummaya" "$@"
+  exec "$cache_bun" "$package_root/bin/ummaya" "$@"
 fi
 
 export PATH="$root_dir/runtime:$PATH"
-exec "$runtime_bun" "$root_dir/package/bin/ummaya" "$@"
+exec "$runtime_bun" "$package_root/bin/ummaya" "$@"
 `,
   )
   chmodSync(path, 0o755)
+}
+
+function smokeWrapper(artifactRoot, arch) {
+  if (arch !== process.arch) {
+    console.error(`Skipping wrapper smoke for ${arch} on ${process.arch}`)
+    return
+  }
+
+  const smokeCwd = mkdtempSync(join(tmpdir(), 'ummaya wrapper smoke cwd '))
+  try {
+    const wrapper = join(artifactRoot, 'ummaya')
+    const packageRoot = join(artifactRoot, 'package')
+    const result = spawnSync(wrapper, [], {
+      cwd: smokeCwd,
+      env: {
+        ...process.env,
+        UMMAYA_LAUNCHER_INSPECT: '1',
+        UMMAYA_BACKEND_CMD_JSON: '["stale","backend"]',
+      },
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    if (result.error) {
+      throw result.error
+    }
+    if (result.status !== 0) {
+      throw new Error(
+        `Homebrew wrapper smoke failed with status ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
+      )
+    }
+    const payload = JSON.parse(result.stdout.trim())
+    const expectedPackageRoot = realpathSync(packageRoot)
+    if (payload.packageRoot !== expectedPackageRoot) {
+      throw new Error(
+        `Wrapper package root ${payload.packageRoot} did not match ${expectedPackageRoot}`,
+      )
+    }
+    const expected = [
+      'uv',
+      '--directory',
+      expectedPackageRoot,
+      'run',
+      '--frozen',
+      '--no-dev',
+      'ummaya',
+      '--ipc',
+      'stdio',
+    ]
+    if (JSON.stringify(payload.backendCommand) !== JSON.stringify(expected)) {
+      throw new Error(
+        `Wrapper backend command ${JSON.stringify(payload.backendCommand)} did not match ${JSON.stringify(expected)}`,
+      )
+    }
+    if (payload.primitiveTimeoutMs !== '90000') {
+      throw new Error(`Wrapper primitive timeout ${payload.primitiveTimeoutMs} did not match 90000`)
+    }
+  } finally {
+    rmSync(smokeCwd, { recursive: true, force: true })
+  }
 }
 
 async function main() {
@@ -234,6 +311,7 @@ async function main() {
     chmodSync(runtimePath, 0o755)
     const runtimeSha256 = await sha256(runtimePath)
     writeWrapper(join(artifactRoot, 'ummaya'), runtimeSha256)
+    smokeWrapper(artifactRoot, args.arch)
 
     const artifactName = `ummaya-${version}-macos-${args.arch}.tar.gz`
     const artifactPath = join(outDir, artifactName)

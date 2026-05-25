@@ -39,7 +39,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator, model_validator
 
 from ummaya.tools._description_template import build_description_v4
 from ummaya.tools._outbound_trace import traced_async_client
@@ -481,6 +481,16 @@ class HiraHospitalSearchInput(BaseModel):
             f"(e.g. {valid_examples}) or a 2-digit clCd."
         )
 
+    @model_validator(mode="after")
+    def _reject_rounded_coordinate_pair(self) -> HiraHospitalSearchInput:
+        """Reject whole-degree coordinate pairs that lost locate precision."""
+        if float(self.xPos).is_integer() and float(self.yPos).is_integer():
+            raise ValueError(
+                "xPos/yPos must preserve decimal WGS84 precision from locate; "
+                "do not round both coordinates to whole degrees."
+            )
+        return self
+
 
 # ---------------------------------------------------------------------------
 # Async adapter handler
@@ -727,7 +737,10 @@ _HIRA_DESCRIPTION = build_description_v4(
         "JSON requires '_type=json' (underscore prefix). 'type=json' silently "
         "returns XML. Response coord fields uppercase: XPos/YPos. "
         "HIRA does NOT sort — UMMAYA sorts client-side by distance ASC, so the "
-        "first item is the closest. Response does NOT echo dgsbjtCd back."
+        "first item is the closest. Response does NOT echo dgsbjtCd back. "
+        "This is not an emergency-room locator; for 응급실/야간 응급실 prefer "
+        "nmc_emergency_search when an authenticated citizen session exists, "
+        "or a location POI search when no authenticated NMC session is present."
     ),
     self_contained_decl=(
         "REQUIRED: xPos/yPos. Citizen location text needs "

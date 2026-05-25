@@ -90,6 +90,44 @@ def _classify_adapter_exception(exc: Exception) -> tuple[LookupErrorReason, bool
     return (LookupErrorReason.upstream_unavailable, True)
 
 
+def _adapter_validation_recovery_hint(tool_id: str) -> str:
+    """Return adapter-specific recovery text for model-visible validation errors."""
+    if tool_id == "kma_current_observation":
+        return (
+            " LOCATE FIRST: use a coordinate-producing locate adapter that returns"
+            " KMA nx/ny, then call kma_current_observation with params"
+            " {base_date, base_time, nx, ny}. Use the current KST session context"
+            " for base_date (YYYYMMDD) and the latest available observation hour"
+            " for base_time (HH00). Copy nx/ny exactly from the locate result."
+        )
+    if tool_id == "kma_forecast_fetch":
+        return (
+            " LOCATE FIRST: use a coordinate-producing locate adapter that returns"
+            " WGS-84 lat/lon, then call kma_forecast_fetch with params"
+            " {lat, lon, base_date, base_time}. Do NOT pass nx/ny, x/y, or"
+            " administrative code; this adapter converts lat/lon to the KMA grid"
+            " internally. Use the current KST session context and the nearest"
+            " valid KMA forecast base slot for base_date/base_time."
+        )
+    if tool_id == "hira_hospital_search":
+        return (
+            " LOCATE FIRST: use a coordinate-producing locate adapter, then call"
+            " hira_hospital_search with params {xPos:<exact lon>, yPos:<exact lat>,"
+            " radius:<meters>}. Copy decimal WGS-84 coordinates exactly from the"
+            " locate result; do NOT round to whole degrees. For 응급실/야간 응급실,"
+            " prefer nmc_emergency_search when authenticated, or a location POI"
+            " search when no authenticated NMC session is present."
+        )
+    if tool_id in {"kakao_coord_to_region", "sgis_adm_cd_lookup"}:
+        return (
+            " COPY EXACT COORDINATES: call this reverse-geocode adapter with"
+            " {lat:<exact decimal lat>, lon:<exact decimal lon>} copied from the"
+            " previous locate result. Do NOT round decimal WGS-84 coordinates"
+            " to whole degrees."
+        )
+    return ""
+
+
 def _is_lookup_envelope_dict(value: dict[str, Any]) -> bool:
     """Return True when an adapter already emitted a LookupOutput-shaped envelope."""
     kind = value.get("kind")
@@ -218,14 +256,20 @@ class ToolExecutor:
         except ValidationError as exc:
             field_paths = [".".join(str(p) for p in e["loc"]) for e in exc.errors()]
             field_summary = ", ".join(field_paths) if field_paths else "(no field info)"
+            error_messages = "; ".join(str(e.get("msg", "")) for e in exc.errors() if e.get("msg"))
+            recovery_hint = _adapter_validation_recovery_hint(tool_id)
+            fallback_hint = (
+                "Read this adapter's input_schema in <available_adapters> and retry "
+                "with the exact field names."
+            )
             return make_error_envelope(
                 tool_id=tool_id,
                 reason=LookupErrorReason.invalid_params,
                 message=(
                     f"Invalid parameters for tool {tool_id!r}. "
                     f"Missing or invalid fields: {field_summary}. "
-                    "Read this adapter's input_schema in <available_adapters> and retry "
-                    "with the exact field names."
+                    f"{error_messages}. "
+                    f"{recovery_hint or fallback_hint}"
                 ),
                 request_id=request_id,
                 elapsed_ms=_elapsed(),
@@ -433,8 +477,8 @@ class ToolExecutor:
                 fp.split(".")[-1] in coord_fields or fp.split(".")[-1] in admcd_fields
                 for fp in field_paths
             )
-            recovery_hint = ""
-            if tool_id == "nmc_emergency_search":
+            recovery_hint = _adapter_validation_recovery_hint(tool_id)
+            if not recovery_hint and tool_id == "nmc_emergency_search":
                 recovery_hint = (
                     " LOCATE FIRST: call locate with a locate adapter from"
                     " <available_adapters>. For a named place use"
@@ -443,9 +487,11 @@ class ToolExecutor:
                     " params:{lat:<lat>, lon:<lon>}}). Re-invoke this tool with"
                     " params {mode:'region', q0:region.region_1depth_name,"
                     " q1:region.region_2depth_name, origin_lat:<lat>, origin_lon:<lon>,"
-                    " limit:<N>}. Do NOT guess coordinates or invent NMC filters such as QZ."
+                    " limit:<N>}. Copy decimal WGS-84 coordinates exactly from locate;"
+                    " do NOT round, guess coordinates, or set QN unless the citizen"
+                    " gave a specific institution name."
                 )
-            elif need_resolve:
+            elif not recovery_hint and need_resolve:
                 recovery_hint = (
                     " LOCATE FIRST: call locate with the appropriate locate adapter"
                     " from <available_adapters> to obtain the missing coordinates /"
