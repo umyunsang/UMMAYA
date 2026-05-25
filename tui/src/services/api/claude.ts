@@ -216,7 +216,6 @@ import {
   TOOL_SEARCH_TOOL_NAME,
 } from '../../tools/ToolSearchTool/prompt.js'
 import {
-  isRootPrimitiveToolName,
   selectTopKAdapterToolNamesForQuery,
 } from '../../tools/AdapterTool/AdapterTool.js'
 import { count } from '../../utils/array.js'
@@ -1227,9 +1226,10 @@ async function* queryModel(
     const discoveredToolNames = extractDiscoveredToolNames(messages)
 
     filteredTools = tools.filter(tool => {
-      if (turnLocalAdapterToolNames.size > 0 && isRootPrimitiveToolName(tool.name)) {
-        return false
-      }
+      // 0.2.1 exposed the lightweight root primitives together with concrete
+      // adapter schemas. Keep that surface so K-EXAONE preserves CC-style
+      // prose→tool→prose loop painting, while still limiting concrete adapter
+      // schemas to the turn-local top-k set.
       if (turnLocalAdapterToolNames.has(tool.name)) return true
       // Always include non-deferred tools
       if (!deferredToolNames.has(tool.name)) return true
@@ -1241,9 +1241,8 @@ async function* queryModel(
   } else {
     filteredTools = tools.filter(t => {
       if (toolMatchesName(t, TOOL_SEARCH_TOOL_NAME)) return false
-      if (turnLocalAdapterToolNames.size > 0 && isRootPrimitiveToolName(t.name)) {
-        return false
-      }
+      // Keep non-deferred root primitives even when concrete top-k adapter
+      // schemas are available; this matches the released 0.2.1 loop surface.
       if (isDeferredTool(t)) return turnLocalAdapterToolNames.has(t.name)
       return true
     })

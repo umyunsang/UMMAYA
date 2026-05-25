@@ -346,6 +346,40 @@ class _SingleLookupThenAnswerLLMClient(_BaseFakeLLMClient):
             yield StreamEvent(type="done")
 
 
+class _ProseThenToolLLMClient(_BaseFakeLLMClient):
+    """LLM that emits visible prose before a tool call in the same turn."""
+
+    recorded_calls: list[dict[str, Any]] = []
+
+    async def stream(
+        self,
+        messages: list[Any],
+        *,
+        tools: list[Any] | None = None,
+        tool_choice: Any = None,
+        temperature: float = 1.0,
+        top_p: float = 0.95,
+        presence_penalty: float = 0.0,
+        max_tokens: int = 1024,
+        stop: Any = None,
+    ) -> AsyncIterator[StreamEvent]:
+        type(self).recorded_calls.append({"messages": messages, "tools": tools})
+        yield StreamEvent(
+            type="content_delta",
+            content="먼저 위치를 확인하겠습니다.",
+        )
+        yield StreamEvent(
+            type="tool_call_delta",
+            tool_call_index=0,
+            tool_call_id="call-prose-before-tool",
+            function_name="locate",
+            function_args_delta=(
+                '{"tool_id":"kakao_address_search","params":{"query":"부산 사하구 다대1동"}}'
+            ),
+        )
+        yield StreamEvent(type="done")
+
+
 # ---------------------------------------------------------------------------
 # Scenario (a) test
 # ---------------------------------------------------------------------------
@@ -436,6 +470,54 @@ async def test_single_tool_call_closure(monkeypatch: pytest.MonkeyPatch) -> None
         "NotebookEdit/Task) found in emitted IPC frame stream. "
         f"Frames (truncated): {full_stream_text[:500]!r}"
     )
+
+
+@pytest.mark.asyncio
+async def test_visible_prose_before_tool_call_is_emitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """CC stream order: text before tool_use must paint before the tool row."""
+    frame = _make_chat_request(
+        prompt="부산 사하구 다대1동 현재 날씨 알려줘",
+        tools=[],
+    )
+
+    buf, _ = await _run_with_frame(
+        frame,
+        _ProseThenToolLLMClient,
+        monkeypatch=monkeypatch,
+        env_overrides={
+            "UMMAYA_TOOL_RESULT_TIMEOUT_SECONDS": "10",
+            "UMMAYA_AGENTIC_LOOP_MAX_TURNS": "8",
+        },
+    )
+
+    emitted = buf.as_frames()
+    assert emitted, "No IPC frames were emitted"
+
+    prose_index = next(
+        (
+            i
+            for i, f in enumerate(emitted)
+            if f.get("kind") == "assistant_chunk"
+            and f.get("done") is not True
+            and "먼저 위치를 확인" in str(f.get("delta", ""))
+        ),
+        -1,
+    )
+    tool_index = next(
+        (i for i, f in enumerate(emitted) if f.get("kind") == "tool_call"),
+        -1,
+    )
+    assert prose_index >= 0, f"Expected visible prose chunk before tool_call: {emitted}"
+    assert tool_index >= 0, f"Expected tool_call frame: {emitted}"
+    assert prose_index < tool_index, (
+        "Visible assistant text must be emitted before the tool_call frame so "
+        f"the TUI can commit text -> tool_use in CC order. Frames: {emitted}"
+    )
+    assert not [
+        f for f in emitted if f.get("kind") == "assistant_chunk" and f.get("done") is True
+    ], "chat_request must still stop at tool_use without a terminal done chunk"
 
 
 # ---------------------------------------------------------------------------

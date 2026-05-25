@@ -6,8 +6,8 @@ from __future__ import annotations
 from ummaya.ipc.stdio import _should_append_tui_tool_to_llm_tools
 
 
-def test_should_append_tui_tool_suppresses_root_wrappers_when_adapters_loaded():
-    """Concrete backend adapter schemas should replace legacy root wrappers."""
+def test_should_append_tui_tool_keeps_root_wrappers_when_adapters_loaded():
+    """Concrete adapter schemas augment root wrappers instead of replacing them."""
     backend_tool_names = {"kma_current_observation"}
 
     assert (
@@ -16,7 +16,7 @@ def test_should_append_tui_tool_suppresses_root_wrappers_when_adapters_loaded():
             backend_tool_names,
             has_concrete_backend_tools=True,
         )
-        is False
+        is True
     )
     assert (
         _should_append_tui_tool_to_llm_tools(

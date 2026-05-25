@@ -1148,14 +1148,14 @@ class _PreambleThenToolCallLLMClient(_BaseFakeLLMClient):
 
 
 @pytest.mark.asyncio
-async def test_render_order_tool_call_emitted_before_preamble_prose(
+async def test_render_order_preamble_prose_emitted_before_tool_call(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Epic #2766 issue B — when LLM emits prose then tool_call in the same
-    turn, the citizen-visible frame stream MUST have the tool_call emitted
-    BEFORE any assistant_chunk that carries non-empty prose for that turn's
-    message_id. The preamble is suppressed entirely; the next-turn answer
-    is what reaches the citizen.
+    """When the LLM emits prose then a tool call in one turn, keep that order.
+
+    UMMAYA mirrors Claude Code's visible loop: the assistant paints a short
+    progress sentence, then the tool invocation paints, then the next turn can
+    paint prose derived from the tool result.
     """
     frame = _make_chat_request(tools=[])
 
@@ -1168,38 +1168,27 @@ async def test_render_order_tool_call_emitted_before_preamble_prose(
 
     emitted = buf.as_frames()
 
-    # Find indices of the first tool_call frame and any assistant_chunk that
-    # carries the SAME message_id as the tool-call turn (turn 1).
+    # Find indices of the first visible preamble and first tool_call frame.
     tool_call_idx: int | None = None
-    turn1_message_id: str | None = None
+    preamble_idx: int | None = None
     for i, f in enumerate(emitted):
+        if (
+            f.get("kind") == "assistant_chunk"
+            and f.get("delta") == "병원을 검색해 보겠습니다."
+            and preamble_idx is None
+        ):
+            preamble_idx = i
         if f.get("kind") == "tool_call" and tool_call_idx is None:
             tool_call_idx = i
-            # The assistant_chunks emitted BEFORE this tool_call belong to
-            # turn 1 (the preamble). Capture their message_id.
-            for prev in emitted[:i]:
-                if prev.get("kind") == "assistant_chunk":
-                    turn1_message_id = prev.get("message_id")
-                    break
 
     assert tool_call_idx is not None, (
         f"No tool_call frame emitted; expected K-EXAONE preamble→tool_call to "
         f"trigger dispatch. Frames: {[f.get('kind') for f in emitted]}"
     )
-
-    # Pre-fix bug: turn-1 message_id appeared as assistant_chunk BEFORE
-    # tool_call. Post-fix: no non-empty assistant_chunk for turn-1 message_id
-    # exists at all (preamble suppressed).
-    if turn1_message_id is not None:
-        leaked_preamble = [
-            f
-            for f in emitted[:tool_call_idx]
-            if f.get("kind") == "assistant_chunk"
-            and f.get("message_id") == turn1_message_id
-            and f.get("delta")
-        ]
-        assert not leaked_preamble, (
-            f"Render-order regression: preamble prose for turn-1 message_id "
-            f"{turn1_message_id!r} leaked BEFORE tool_call. "
-            f"Leaked frames: {leaked_preamble}"
-        )
+    assert preamble_idx is not None, (
+        f"Expected visible assistant preamble before the tool call. Frames: {emitted}"
+    )
+    assert preamble_idx < tool_call_idx, (
+        f"Expected preamble before tool_call, got preamble_idx={preamble_idx} "
+        f"tool_call_idx={tool_call_idx}. Frames: {emitted}"
+    )

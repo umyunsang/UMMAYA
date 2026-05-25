@@ -199,7 +199,8 @@ def _should_append_tui_tool_to_llm_tools(
     """Return whether a TUI-sent tool should remain in the model tool list."""
     if tui_name and tui_name in backend_tool_names:
         return False
-    return not (has_concrete_backend_tools and tui_name in _ROOT_PRIMITIVE_TOOL_IDS)
+    _ = has_concrete_backend_tools
+    return True
 
 
 _VERIFY_QUERY_REQUIREMENTS: Final[tuple[tuple[tuple[str, ...], dict[str, str]], ...]] = (
@@ -5953,8 +5954,9 @@ async def run(  # noqa: C901
         # UMMAYA now follows that shape: BM25/dense retrieval selects a small
         # turn-local set of concrete adapter tools, and each selected
         # GovAPITool is exported directly as an OpenAI-compatible function.
-        # The root primitives remain internal dispatcher families and legacy
-        # transcript compatibility names, not the model-facing tool surface.
+        # Keep the root primitives alongside that set to preserve the 0.2.1
+        # CC-style loop contract: the model can paint progress prose, then call
+        # a primitive dispatcher with a concrete adapter in `tool_id`.
         registry = cast("Any", _ensure_tool_registry())
         backend_tools_raw = [
             t.to_openai_tool() for t in _select_concrete_adapter_tools_for_turn(latest_user_utt)
@@ -6172,23 +6174,44 @@ async def run(  # noqa: C901
         for _turn in range(_AGENTIC_LOOP_MAX_TURNS):
             message_id = str(uuid.uuid4())
             assistant_text_chunks: list[str] = []
-            # Epic #2766 issue B — render-order fix. K-EXAONE emits the
-            # assistant's prose preamble ("내과 병원을 검색해 보겠습니다.")
-            # BEFORE the structured ``tool_call_delta`` events arrive in the
-            # SAME turn. If we forward those prose chunks immediately, the
-            # citizen sees ``assistant text → tool_call → result``, the
-            # opposite of CC's canonical ``tool_call → result → assistant
-            # text`` order. The fix: buffer prose chunks for this turn; emit
-            # them as a single AssistantChunkFrame ONLY after we know whether
-            # this turn invoked tools. When tools are invoked we suppress the
-            # preamble entirely — the next turn produces the real answer
-            # after the tool result is appended to context. When no tools
-            # are invoked we flush the buffer as a single chunk so the prose
-            # still reaches the citizen.
+            # CC stream order: K-EXAONE may emit a visible progress sentence
+            # before the structured ``tool_call_delta`` in the same assistant
+            # turn. Claude Code commits that text block before opening the
+            # following tool_use block, so the TUI can paint
+            # ``assistant text → tool_call``. Buffer here only so textual
+            # ``<tool_call>`` markers can be stripped accurately across chunk
+            # boundaries; when a real ToolCallFrame is emitted below, flush the
+            # cleaned visible text immediately before the tool frame.
             buffered_visible: list[str] = []
             tool_call_buf: dict[int, dict[str, str]] = {}
             stream_error: Exception | None = None
             stream_gate = StreamGate()
+
+            async def _emit_buffered_visible_before_tool(current_message_id: str) -> None:
+                """Emit same-turn visible prose before opening a tool_use block."""
+                nonlocal buffered_visible
+                if not buffered_visible:
+                    return
+                from ummaya.llm.tool_call_parser import (  # noqa: PLC0415
+                    strip_leaked_thinking_markers,
+                )
+
+                merged_prose = strip_leaked_thinking_markers("".join(buffered_visible))
+                buffered_visible = []
+                if not merged_prose.strip():
+                    return
+                await write_frame(
+                    AssistantChunkFrame(
+                        session_id=frame.session_id,
+                        correlation_id=frame.correlation_id,
+                        role="llm",
+                        ts=_utcnow(),
+                        kind="assistant_chunk",
+                        message_id=current_message_id,
+                        delta=merged_prose,
+                        done=False,
+                    )
+                )
 
             def _append_tool_routing_observation(reason: str, message: str) -> None:
                 """Add an internal routing repair instruction for the next model turn."""
@@ -6796,11 +6819,10 @@ async def run(  # noqa: C901
                     )
                 )
                 return
-            # Tool calls present → suppress the prose preamble entirely.
-            # The next agentic-loop turn will produce the real answer after
-            # appending tool_result to context. CC-style ordering preserved:
-            # `tool_call → tool_result → final assistant prose`.
-            buffered_visible.clear()
+            # Tool calls present. Preserve any same-turn progress prose by
+            # emitting it immediately before the ToolCallFrame below; do not
+            # send a done=True chunk because this provider call must still stop
+            # at assistant(tool_use), not at an assistant final answer.
 
             # ---- T027/T029 — emit tool_call frames + register Futures -----
             issued_calls: list[tuple[str, str]] = []  # (call_id, name)
@@ -6963,6 +6985,7 @@ async def run(  # noqa: C901
                         ToolResultFrame,
                     )
 
+                    await _emit_buffered_visible_before_tool(message_id)
                     await write_frame(
                         ToolCallFrame(
                             session_id=frame.session_id,
@@ -7146,6 +7169,7 @@ async def run(  # noqa: C901
                         ToolResultFrame,
                     )
 
+                    await _emit_buffered_visible_before_tool(message_id)
                     await write_frame(
                         ToolCallFrame(
                             session_id=frame.session_id,
@@ -7301,6 +7325,7 @@ async def run(  # noqa: C901
                         ToolResultFrame,
                     )
 
+                    await _emit_buffered_visible_before_tool(message_id)
                     await write_frame(
                         ToolCallFrame(
                             session_id=frame.session_id,
@@ -7378,6 +7403,7 @@ async def run(  # noqa: C901
                     )
                     continue
 
+                await _emit_buffered_visible_before_tool(message_id)
                 await write_frame(
                     ToolCallFrame(
                         session_id=frame.session_id,
