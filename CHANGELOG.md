@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   follow-up calls while preserving KMA's grid-based weather path.
 - Hardened packaged npm and Homebrew launchers against stale backend environment variables
   and verified the 0.2.2 package metadata across npm, Python, TUI, uv, and Cask files.
+- Made Homebrew cask artifact archives deterministic and omitted optional native canvas builds
+  so committed Cask SHA values match the published macOS artifacts.
 
 ## [v0.2.0] - 2026-05-25
 

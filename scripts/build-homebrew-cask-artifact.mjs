@@ -7,11 +7,16 @@ import {
   copyFileSync,
   createReadStream,
   existsSync,
+  lstatSync,
+  lutimesSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
+  renameSync,
   readFileSync,
   realpathSync,
   rmSync,
+  utimesSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -19,6 +24,7 @@ import { basename, join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 const BUN_VERSION = '1.3.14'
+const ARCHIVE_MTIME = new Date('2020-01-01T00:00:00.000Z')
 const SUPPORTED_ARCHES = new Set(['arm64', 'x64'])
 const BUN_ASSETS = {
   arm64: {
@@ -90,6 +96,37 @@ function sha256(path) {
     stream.on('error', reject)
     stream.on('end', () => resolve(hash.digest('hex')))
   })
+}
+
+function collectArchiveEntries(root) {
+  const entries = []
+
+  function visit(relativeDir) {
+    const absoluteDir = join(root, relativeDir)
+    const names = readdirSync(absoluteDir).sort()
+    for (const name of names) {
+      const relativePath = relativeDir === '.' ? `./${name}` : `${relativeDir}/${name}`
+      entries.push(relativePath)
+      if (lstatSync(join(root, relativePath)).isDirectory()) {
+        visit(relativePath)
+      }
+    }
+  }
+
+  visit('.')
+  return entries
+}
+
+function normalizeArchiveMetadata(root, entries) {
+  for (const entry of ['.', ...entries]) {
+    const absolutePath = join(root, entry)
+    const stat = lstatSync(absolutePath)
+    if (stat.isSymbolicLink()) {
+      lutimesSync(absolutePath, ARCHIVE_MTIME, ARCHIVE_MTIME)
+    } else {
+      utimesSync(absolutePath, ARCHIVE_MTIME, ARCHIVE_MTIME)
+    }
+  }
 }
 
 function packageVersion() {
@@ -287,6 +324,7 @@ async function main() {
       [
         'install',
         '--omit=dev',
+        '--omit=optional',
         '--legacy-peer-deps',
         '--no-audit',
         '--no-fund',
@@ -315,7 +353,32 @@ async function main() {
 
     const artifactName = `ummaya-${version}-macos-${args.arch}.tar.gz`
     const artifactPath = join(outDir, artifactName)
-    run('tar', ['-czf', artifactPath, '-C', artifactRoot, '.'])
+    const archiveEntries = collectArchiveEntries(artifactRoot)
+    normalizeArchiveMetadata(artifactRoot, archiveEntries)
+    const archiveListPath = join(workdir, 'archive-files.txt')
+    const tarPath = join(outDir, `ummaya-${version}-macos-${args.arch}.tar`)
+    writeFileSync(archiveListPath, `${archiveEntries.join('\n')}\n`)
+    rmSync(tarPath, { force: true })
+    rmSync(artifactPath, { force: true })
+    run('tar', [
+      '--no-recursion',
+      '--uid',
+      '0',
+      '--gid',
+      '0',
+      '--uname',
+      'root',
+      '--gname',
+      'wheel',
+      '-cf',
+      tarPath,
+      '-C',
+      artifactRoot,
+      '-T',
+      archiveListPath,
+    ])
+    run('gzip', ['-n', '-9', tarPath])
+    renameSync(`${tarPath}.gz`, artifactPath)
     const digest = await sha256(artifactPath)
     writeFileSync(`${artifactPath}.sha256`, `${digest}  ${artifactName}\n`)
     writeFileSync(
