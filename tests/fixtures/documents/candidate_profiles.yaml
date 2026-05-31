@@ -1,0 +1,152 @@
+version: 1
+run_id: public_doc_candidate_profiles_v1
+created_at: "2026-06-01"
+source_policy: offline_fixtures_only
+live_network_allowed: false
+profiles:
+  - format: hwpx
+    engine_id: python-hwpx
+    supported_operations: [read, write, style, validate]
+    evaluate_operations: [read, write]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: Permissive candidate license recorded for promotion review.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Python-native candidate; dependency still remains behind the harness gate.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 18
+      style_layout_control: 14
+      deterministic_round_trip: 13
+      public_form_validation: 10
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwpx-public-form-baseline
+      - metadata:data-go-kr-public-doc-ai-corpus
+    decision_note: Promote for HWPX derivative writes behind the harness.
+  - format: hwpx
+    engine_id: direct-owpml-oracle
+    supported_operations: [read, validate]
+    evaluate_operations: [write]
+    license:
+      spdx: internal-test-oracle
+      gate: pass
+      notes: Direct XML assertions are allowed only as tests.
+    dependency:
+      runtime_dependency: false
+      gate: pass
+      notes: No runtime dependency; used as an oracle.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 0
+      style_layout_control: 15
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwpx-owpml-oracle
+    decision_note: Retain as a test oracle only, not a runtime engine.
+  - format: hwp
+    engine_id: pyhwp-read-only
+    supported_operations: [read]
+    evaluate_operations: [read, write]
+    license:
+      spdx: AGPL-3.0-only
+      gate: fail
+      notes: AGPL candidate retained for comparative read evidence only.
+    dependency:
+      runtime_dependency: false
+      gate: pass
+      notes: No runtime addition in this slice.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 0
+      style_layout_control: 10
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwp-read-only-baseline
+    operation_notes:
+      write: Binary HWP direct write remains blocked in this epic.
+    decision_note: Keep as read-only comparative HWP extraction evidence.
+  - format: hwp
+    engine_id: OpenHWP-read-only
+    supported_operations: [read]
+    evaluate_operations: [read, write]
+    license:
+      spdx: Apache-2.0
+      gate: pass
+      notes: Permissive candidate license for read-only comparative extraction.
+    dependency:
+      runtime_dependency: false
+      gate: pass
+      notes: No runtime addition in this slice.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 0
+      style_layout_control: 10
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwp-read-only-baseline
+    operation_notes:
+      write: Binary HWP direct write remains blocked in this epic.
+    decision_note: Promote only read extraction; direct HWP write remains blocked.
+  - format: docx
+    engine_id: python-docx
+    supported_operations: [read]
+    evaluate_operations: [read]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: Permissive license recorded from PyPI metadata for default DOCX inspection.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Core runtime dependency for default read-only DOCX inspection.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 0
+      style_layout_control: 10
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:docx-default-runtime-inspection
+      - metadata:data-go-kr-public-doc-ai-corpus
+    operation_notes:
+      write: DOCX write remains blocked until mutation and render gates are promoted.
+    decision_note: Promote read-only DOCX inspection for the default local harness runtime.
+  - format: hwpx
+    engine_id: rhwp
+    supported_operations: [read, write]
+    evaluate_operations: [write]
+    license:
+      spdx: Apache-2.0
+      gate: pass
+      notes: Permissive candidate license.
+    dependency:
+      runtime_dependency: true
+      gate: fail
+      notes: Rust/WASM bridge needs a separate architecture decision before adoption.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 20
+      style_layout_control: 15
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:rhwp-comparative-hwpx
+    decision_note: Defer runtime promotion until the bridge decision is approved.

@@ -1,0 +1,113 @@
+version: 1
+catalog_id: public-form-conformance-baselines-v1
+source_policy: offline_fixtures_only
+live_network_allowed: false
+baselines:
+  - template_id: birth-benefit-application-hwpx
+    schema_id: birth-benefit-application-v1
+    format: hwpx
+    authoritative_standard: KS X 6101 OWPML/HWPX
+    authority_refs:
+      - specs/2802-public-doc-harness/spec.md#FR-034
+      - specs/2802-public-doc-harness/research.md#hwpx
+    supports_conformance: true
+    expected_page_count: 2
+    required_fields:
+      - field_id: applicant_name
+        label: Applicant name
+        path: /body/section[1]/field[applicant_name]
+      - field_id: child_birth_date
+        label: Child birth date
+        path: /body/section[1]/field[child_birth_date]
+    protected_text:
+      - text: Birth benefit application
+        anchor: /body/section[1]/p[1]
+      - text: Required attachments
+        anchor: /body/section[2]/p[1]
+    required_labels:
+      - text: Applicant
+        anchor: /body/section[1]/table[1]/cell[1,1]
+      - text: Name
+        anchor: /body/section[1]/table[1]/cell[1,2]
+      - text: Child
+        anchor: /body/section[1]/table[1]/cell[2,1]
+      - text: Date of birth
+        anchor: /body/section[1]/table[1]/cell[2,2]
+    table_geometries:
+      - table_id: applicant-table
+        anchor: /body/section[1]/table[1]
+        rows: 2
+        columns: 2
+    signature_regions:
+      - text: Applicant signature or seal
+        anchor: /body/section[1]/p[2]
+    metadata_exact_matches:
+      page_count: 2
+      margin_top_mm: 20
+      margin_bottom_mm: 15
+  - template_id: civil-form-docx
+    schema_id: civil-form-ooxml-v1
+    format: docx
+    authoritative_standard: ECMA-376 Office Open XML
+    authority_refs:
+      - specs/2802-public-doc-harness/spec.md#FR-035
+    supports_conformance: true
+    required_fields: []
+    protected_text: []
+    required_labels: []
+    table_geometries: []
+    signature_regions: []
+    metadata_exact_matches: {}
+  - template_id: civil-ledger-xlsx
+    schema_id: civil-ledger-ooxml-v1
+    format: xlsx
+    authoritative_standard: ECMA-376 Office Open XML
+    authority_refs:
+      - specs/2802-public-doc-harness/spec.md#FR-035
+    supports_conformance: true
+    required_fields: []
+    protected_text: []
+    required_labels: []
+    table_geometries: []
+    signature_regions: []
+    metadata_exact_matches: {}
+  - template_id: civil-briefing-pptx
+    schema_id: civil-briefing-ooxml-v1
+    format: pptx
+    authoritative_standard: ECMA-376 Office Open XML
+    authority_refs:
+      - specs/2802-public-doc-harness/spec.md#FR-035
+    supports_conformance: true
+    required_fields: []
+    protected_text: []
+    required_labels: []
+    table_geometries: []
+    signature_regions: []
+    metadata_exact_matches: {}
+  - template_id: fillable-permit-pdf
+    schema_id: fillable-permit-pdf-v1
+    format: pdf
+    authoritative_standard: PDF AcroForm and rendered appearance
+    authority_refs:
+      - specs/2802-public-doc-harness/spec.md#FR-036
+    supports_conformance: true
+    required_fields: []
+    protected_text: []
+    required_labels: []
+    table_geometries: []
+    signature_regions: []
+    metadata_exact_matches: {}
+  - template_id: legacy-hwp-readonly
+    schema_id: legacy-hwp-readonly-v1
+    format: hwp
+    authoritative_standard: HWP binary read-only boundary
+    authority_refs:
+      - specs/2802-public-doc-harness/spec.md#FR-034
+    supports_conformance: false
+    unsupported_reason: HWP binary write is blocked in this epic; conformance-ready output requires HWPX or another promoted editable derivative.
+    required_fields: []
+    protected_text: []
+    required_labels: []
+    table_geometries: []
+    signature_regions: []
+    metadata_exact_matches: {}

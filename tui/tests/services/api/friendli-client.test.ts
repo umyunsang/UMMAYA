@@ -111,6 +111,89 @@ describe('FriendliAI CC provider shim', () => {
     })
   })
 
+  test('inlines Pydantic-local JSON Schema refs before sending OpenAI tools', async () => {
+    let requestBody: Record<string, unknown> | undefined
+    const fetchOverride = async (_input: string | URL | Request, init?: RequestInit) => {
+      requestBody = JSON.parse(String(init?.body))
+      return new Response(
+        JSON.stringify({
+          id: 'chatcmpl_schema_refs',
+          model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+          choices: [{ message: { content: 'done' }, finish_reason: 'stop' }],
+          usage: { prompt_tokens: 3, completion_tokens: 1 },
+        }),
+        { status: 200 },
+      )
+    }
+
+    const client = (await getAnthropicClient({
+      apiKey: 'friendli-token',
+      maxRetries: 0,
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      fetchOverride,
+    })) as {
+      beta: {
+        messages: { create: (params: Record<string, unknown>) => Promise<unknown> }
+      }
+    }
+
+    await client.beta.messages.create({
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      max_tokens: 128,
+      messages: [{ role: 'user', content: 'inspect document' }],
+      tools: [
+        {
+          name: 'document_inspect',
+          description: 'Inspect document',
+          input_schema: {
+            $defs: {
+              DocumentFormat: {
+                type: 'string',
+                enum: ['hwpx', 'hwp', 'docx', 'pdf', 'xlsx', 'pptx'],
+              },
+              DocumentLocator: {
+                type: 'object',
+                properties: {
+                  path: { type: 'string' },
+                  expected_format: {
+                    anyOf: [{ $ref: '#/$defs/DocumentFormat' }, { type: 'null' }],
+                  },
+                },
+                required: ['path'],
+              },
+            },
+            type: 'object',
+            properties: {
+              document: { $ref: '#/$defs/DocumentLocator' },
+            },
+            required: ['document'],
+          },
+        },
+      ],
+    })
+
+    const requestTools = requestBody?.['tools'] as Array<{
+      function: { parameters: Record<string, unknown> }
+    }>
+    const parameters = requestTools[0].function.parameters
+    expect(JSON.stringify(parameters)).not.toContain('$defs')
+    expect(JSON.stringify(parameters)).not.toContain('$ref')
+    expect(parameters).toMatchObject({
+      type: 'object',
+      properties: {
+        document: {
+          type: 'object',
+          properties: {
+            expected_format: {
+              anyOf: [{ type: 'string' }, { type: 'null' }],
+            },
+          },
+        },
+      },
+    })
+    expect(JSON.stringify(parameters)).toContain('hwpx')
+  })
+
   test('closes assistant text before the first tool block so mid-loop text can paint', async () => {
     const fetchOverride = async () => {
       return sseResponse([

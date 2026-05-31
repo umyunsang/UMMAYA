@@ -1,0 +1,29 @@
+version: 1
+snapshot_id: data_go_kr_public_doc_ai_metadata_v1
+created_at: "2026-06-01"
+source_policy: offline_metadata_snapshot
+live_network_allowed: false
+dataset_name: Ministry of the Interior and Safety public-document AI learning data lookup service
+source_ref: data.go.kr metadata page snapshot
+redistribution_status: metadata_only
+authoritative_layout_oracle: false
+usage_scope:
+  - semantic_structure_evaluation
+  - table_extraction_evaluation
+  - image_reference_evaluation
+  - summary_rewrite_evaluation
+metric_components:
+  - paragraph_block_f1
+  - table_cell_f1
+  - image_reference_f1
+  - metadata_exact_match
+aggregate_threshold: 0.85
+records:
+  - record_id: public-doc-ai-corpus-metadata
+    provider: Ministry of the Interior and Safety
+    expected_semantic_fields:
+      - paragraph_blocks
+      - tables
+      - image_references
+      - metadata
+    negative_assertion: Not authoritative proof of official submission-form layout conformance.

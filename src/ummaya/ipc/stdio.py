@@ -266,6 +266,11 @@ def _should_append_tui_tool_to_llm_tools(
     return True
 
 
+def _is_local_document_harness_tool(tool: object) -> bool:
+    endpoint = getattr(tool, "endpoint", "")
+    return isinstance(endpoint, str) and endpoint.startswith("local://document-harness/")
+
+
 def _normalize_root_primitive_adapter_envelope(
     fname: str,
     args_obj: dict[str, object],
@@ -6403,7 +6408,43 @@ async def run(  # noqa: C901
             _outbound_trace_token = start_outbound_capture()
 
             try:
-                if fname == "check":
+                document_harness_dispatched = False
+                document_tool_id = str(args_obj.get("tool_id") or "")
+                if document_tool_id:
+                    registry = _ensure_tool_registry()
+                    try:
+                        document_tool = registry.find(document_tool_id)
+                    except Exception:
+                        document_tool = None
+                    if document_tool is not None and _is_local_document_harness_tool(document_tool):
+                        document_harness_dispatched = True
+                        if document_tool.primitive != fname:
+                            dispatch_error = (
+                                f"Adapter {document_tool_id!r} is "
+                                f"primitive={document_tool.primitive!r}, "
+                                f"but was called through {fname}."
+                            )
+                        else:
+                            executor = _ensure_tool_executor()
+                            document_params = cast(
+                                "dict[str, object]",
+                                args_obj.get("params") or {},
+                            )
+                            raw = await executor.invoke_raw(
+                                tool_id=document_tool_id,
+                                params=document_params,
+                                request_id=str(uuid.uuid4()),
+                                session_identity=session_id,
+                            )
+                            result_payload = {
+                                "kind": fname,
+                                "result": _serialize_primitive_result(raw),
+                            }
+
+                if document_harness_dispatched:
+                    pass
+
+                elif fname == "check":
                     from ummaya.primitives.verify import (  # noqa: PLC0415
                         verify,
                     )

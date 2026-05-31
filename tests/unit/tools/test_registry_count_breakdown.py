@@ -2,7 +2,7 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the active count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 153 entries
+  - Main ToolRegistry: 162 entries
   - ummaya.primitives.verify._VERIFY_ADAPTERS: 10 families
   - ummaya.primitives.submit._ADAPTER_REGISTRY: 7 families
 
@@ -56,13 +56,16 @@ from __future__ import annotations
 # imagery.
 # TAGO route-station expansion — extended from 152 to 153 by registering the
 # official route-passing-stop endpoint from TAGO dataset 15098529.
-_EXPECTED_MAIN_REGISTRY_COUNT = 153
+# Spec #2802 Public AX document harness — extended from 153 to 162 by
+# registering nine local document tools under find/check/send.
+_EXPECTED_MAIN_REGISTRY_COUNT = 162
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
     "live_adapters": 125,  # 43 existing Live + 77 structured KMA + 5 KMA URL adapters
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
+    "document_harness_tools": 9,  # Spec #2802 local document harness tools
 }
 
 _EXPECTED_LIVE_TOOL_IDS = frozenset(
@@ -124,7 +127,7 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 153 entries after register_all_tools()."""
+    """Main ToolRegistry must have exactly 162 entries after register_all_tools()."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -368,7 +371,8 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # Spec #2800 adds 77 active KMA APIHub structured typ02/openApi wrappers,
         # and KMA APIHub URL expansion adds five non-structured URL wrappers.
         # The TAGO route-station endpoint brings the main ToolRegistry to 153.
-        "main_registry": 153,
+        # Spec #2802 adds nine local document harness tools, bringing it to 162.
+        "main_registry": 162,
         "verify_families": 10,
         "submit_adapters": 7,
     }

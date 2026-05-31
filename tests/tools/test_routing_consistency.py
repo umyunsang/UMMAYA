@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from ummaya.tools.documents.registry import DOCUMENT_TOOL_IDS
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.apihub_catalog import iter_structured_operations
 from ummaya.tools.kma.apihub_url_catalog import iter_url_operations
@@ -237,6 +238,8 @@ class TestCheck7ToolListClosure:
                 "mock_submit_module_public_mydata_action",
                 "mock_traffic_fine_pay_v1",
                 "mock_welfare_application_submit_v1",
+                # Spec #2802 — Public AX document harness tools.
+                *DOCUMENT_TOOL_IDS,
                 # Spec #2797 — direct-curl verified public-data find adapters.
                 "fsc_corporate_finance_summary",
                 "airkorea_ctprvn_air_quality",

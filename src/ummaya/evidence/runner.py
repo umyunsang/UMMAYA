@@ -9,9 +9,10 @@ service channels, LLM providers, or observability backends.
 from __future__ import annotations
 
 import argparse
+import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -264,6 +265,26 @@ def run_dataset(
     )
 
 
+def build_evidence_output_payload(
+    evidence: RunEvidence,
+    *,
+    include_document_harness: bool = True,
+) -> dict[str, Any]:
+    """Build the JSON payload emitted by the CLI."""
+    payload = evidence.model_dump(mode="json")
+    if include_document_harness:
+        from ummaya.evidence.document_harness import (  # noqa: PLC0415
+            load_document_harness_scenario,
+            records_from_scenario,
+        )
+
+        scenario = load_document_harness_scenario()
+        payload["document_evidence_records"] = [
+            record.model_dump(mode="json") for record in records_from_scenario(scenario)
+        ]
+    return payload
+
+
 def main() -> None:
     """CLI entrypoint for `python -m ummaya.evidence`."""
 
@@ -305,4 +326,5 @@ def main() -> None:
         dataset_ref=args.dataset_ref,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
+    payload = build_evidence_output_payload(evidence)
+    args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

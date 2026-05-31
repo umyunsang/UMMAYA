@@ -41,12 +41,15 @@ class TestToolRegistration:
         # Spec #2799 KFTC OpenGiro: + 2 fixture-backed send adapters = 70.
         # Spec #2800 KMA APIHub structured typ02/openApi wrappers: +77 active
         # plus 5 non-structured URL wrappers and TAGO route-station lookup =
-        # 153. Upstream-unavailable, retired, and approval-pending APIHub
+        # 153. Spec #2802 Public AX document harness adds nine local
+        # document GovAPITools (inspect/extract/form-schema/copy/fill/style/
+        # render/validate/save), bringing the active registry to 162.
+        # Upstream-unavailable, retired, and approval-pending APIHub
         # operations stay cataloged but are not registered as callable tools.
         # is_core=False so the LLM's primary tool list stays at active
         # primitives + lookup-class; these participate in
         # lookup(mode="search") BM25 corpus only.
-        assert len(registry) == 153
+        assert len(registry) == 162
 
     def test_tool_ids_present(self) -> None:
         """Each expected tool_id is in the registry.

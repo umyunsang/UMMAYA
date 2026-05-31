@@ -12,6 +12,7 @@ import random
 import time
 from collections.abc import AsyncIterator, Iterator
 from contextvars import Token
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
@@ -166,6 +167,62 @@ def _compute_prompt_hash(system_text: str) -> str:
     idx = system_text.find(_PROMPT_DYNAMIC_BOUNDARY_MARKER)
     hashed = system_text if idx == -1 else system_text[: idx + len(_PROMPT_DYNAMIC_BOUNDARY_MARKER)]
     return hashlib.sha256(hashed.encode("utf-8")).hexdigest()
+
+
+def _provider_safe_parameters_schema(schema: dict[str, object]) -> dict[str, object]:
+    """Inline Pydantic-local JSON Schema refs before sending tool schemas."""
+    root = deepcopy(schema)
+    defs_obj = root.get("$defs")
+    defs: dict[str, object] = {}
+    if isinstance(defs_obj, dict):
+        defs = {str(name): value for name, value in defs_obj.items()}
+
+    inlined = _inline_local_json_schema_refs(root, defs, ())
+    if not isinstance(inlined, dict):
+        raise ValueError("OpenAI tool parameters schema must be a JSON object")
+    return cast(dict[str, object], inlined)
+
+
+def _inline_local_json_schema_refs(
+    node: object,
+    defs: dict[str, object],
+    stack: tuple[str, ...],
+) -> object:
+    if isinstance(node, list):
+        return [_inline_local_json_schema_refs(item, defs, stack) for item in node]
+    if not isinstance(node, dict):
+        return node
+
+    ref_name = _local_def_ref_name(node.get("$ref"))
+    if ref_name is not None:
+        if ref_name in stack:
+            raise ValueError(f"Cyclic JSON Schema reference is not supported: #/$defs/{ref_name}")
+        if ref_name not in defs:
+            raise ValueError(f"Unknown JSON Schema reference: #/$defs/{ref_name}")
+
+        target = deepcopy(defs[ref_name])
+        expanded = _inline_local_json_schema_refs(target, defs, (*stack, ref_name))
+        siblings = {str(key): value for key, value in node.items() if key not in {"$ref", "$defs"}}
+        if not siblings:
+            return expanded
+        if not isinstance(expanded, dict):
+            raise ValueError(f"JSON Schema reference target must be an object: #/$defs/{ref_name}")
+        merged = cast(dict[str, object], expanded).copy()
+        for key, value in siblings.items():
+            merged[key] = _inline_local_json_schema_refs(value, defs, stack)
+        return merged
+
+    return {
+        str(key): _inline_local_json_schema_refs(value, defs, stack)
+        for key, value in node.items()
+        if key != "$defs"
+    }
+
+
+def _local_def_ref_name(ref: object) -> str | None:
+    if not isinstance(ref, str) or not ref.startswith("#/$defs/"):
+        return None
+    return ref.removeprefix("#/$defs/").replace("~1", "/").replace("~0", "~")
 
 
 class LLMClient:
@@ -1104,8 +1161,19 @@ class LLMClient:
         reaches FriendliAI's strict OpenAI-compatible validator.
         """
         if isinstance(tool, ToolDefinition):
-            return cast(dict[str, object], tool.model_dump())
-        return cast(dict[str, object], ToolDefinition.model_validate(tool).model_dump())
+            payload = cast(dict[str, object], tool.model_dump())
+        else:
+            payload = cast(dict[str, object], ToolDefinition.model_validate(tool).model_dump())
+
+        function_obj = payload.get("function")
+        if isinstance(function_obj, dict):
+            function = cast(dict[str, object], function_obj)
+            parameters_obj = function.get("parameters")
+            if isinstance(parameters_obj, dict):
+                function["parameters"] = _provider_safe_parameters_schema(
+                    cast(dict[str, object], parameters_obj)
+                )
+        return payload
 
     # ------------------------------------------------------------------
     # Private retry helpers (T015)

@@ -52,6 +52,7 @@ dependencies = [
     # (`uv sync --frozen`) do not install dev/extras groups, so yaml MUST be
     # a core runtime dependency or those entrypoints crash at import.
     "pyyaml>=6.0.3",
+    "python-docx>=1.2.0",
 ]
 
 [project.scripts]

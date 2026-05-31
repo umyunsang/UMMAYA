@@ -1,0 +1,86 @@
+version: 1
+scenario_id: document_harness_v1
+created_at: "2026-06-01"
+source_basis: public_ax_document_harness_spec
+target_system: "UMMAYA local document harness"
+network_policy: offline_only
+required_sequence:
+  - document_inspect
+  - document_form_schema
+  - document_copy_for_edit
+  - document_apply_fill
+  - document_render
+  - document_validate_public_form
+  - document_save
+acceptance_gates:
+  original_mutation: blocked
+  derivative_lineage: required
+  structured_result_schema: required
+  render_reread_evidence: required
+  live_government_calls: forbidden
+fixtures:
+  - fixture_id: hwpx-birth-benefit
+    format: hwpx
+    source_artifact_id: artifact-hwpx-source-001
+    source_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+    derivative_artifact_id: artifact-hwpx-derivative-001
+    derivative_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
+    structured_diff_id: diff-hwpx-001
+    structured_diff_sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+    render_artifact_ids:
+      - render-hwpx-page-001
+    validation_report_id: validation-hwpx-001
+    validation_report_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+    expected_correlation_id: corr-doc-hwpx-001
+  - fixture_id: docx-civil-form
+    format: docx
+    source_artifact_id: artifact-docx-source-001
+    source_sha256: "5555555555555555555555555555555555555555555555555555555555555555"
+    derivative_artifact_id: artifact-docx-derivative-001
+    derivative_sha256: "6666666666666666666666666666666666666666666666666666666666666666"
+    structured_diff_id: diff-docx-001
+    structured_diff_sha256: "7777777777777777777777777777777777777777777777777777777777777777"
+    render_artifact_ids:
+      - render-docx-page-001
+    validation_report_id: validation-docx-001
+    validation_report_sha256: "8888888888888888888888888888888888888888888888888888888888888888"
+    expected_correlation_id: corr-doc-docx-001
+  - fixture_id: xlsx-public-sheet
+    format: xlsx
+    source_artifact_id: artifact-xlsx-source-001
+    source_sha256: "9999999999999999999999999999999999999999999999999999999999999999"
+    derivative_artifact_id: artifact-xlsx-derivative-001
+    derivative_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    structured_diff_id: diff-xlsx-001
+    structured_diff_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    render_artifact_ids:
+      - render-xlsx-sheet-001
+    validation_report_id: validation-xlsx-001
+    validation_report_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    expected_correlation_id: corr-doc-xlsx-001
+  - fixture_id: pdf-permit-form
+    format: pdf
+    source_artifact_id: artifact-pdf-source-001
+    source_sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    derivative_artifact_id: artifact-pdf-derivative-001
+    derivative_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    structured_diff_id: diff-pdf-001
+    structured_diff_sha256: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    render_artifact_ids:
+      - render-pdf-page-001
+    validation_report_id: validation-pdf-001
+    validation_report_sha256: "abababababababababababababababababababababababababababababababab"
+    expected_correlation_id: corr-doc-pdf-001
+  - fixture_id: pptx-briefing-template
+    format: pptx
+    source_artifact_id: artifact-pptx-source-001
+    source_sha256: "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc"
+    derivative_artifact_id: artifact-pptx-derivative-001
+    derivative_sha256: "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+    structured_diff_id: diff-pptx-001
+    structured_diff_sha256: "dededededededededededededededededededededededededededededededede"
+    render_artifact_ids:
+      - render-pptx-slide-001
+    validation_report_id: validation-pptx-001
+    validation_report_sha256: "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef"
+    expected_correlation_id: corr-doc-pptx-001
