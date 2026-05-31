@@ -57,6 +57,53 @@ function frame(
 }
 
 describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision', () => {
+  test('progress_event frames are adapted to CC text_delta stream events', async () => {
+    const bridge = makeFakeBridge((corr) => [
+      frame('progress_event', corr, {
+        phase: 'analysis',
+        message_ko: '요청을 분석하고 있습니다.',
+        message_en: 'Analyzing the request.',
+        safe_to_persist: true,
+      }),
+      frame('assistant_chunk', corr, {
+        message_id: 'mid-progress-1',
+        delta: 'final',
+        done: false,
+      }),
+      frame('assistant_chunk', corr, {
+        message_id: 'mid-progress-1',
+        delta: '',
+        done: true,
+      }),
+    ])
+
+    const client = new LLMClient({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      bridge: bridge as any,
+      sessionId: 'test-session-progress',
+    })
+
+    const events: unknown[] = []
+    const gen = client.stream({
+      messages: [{ role: 'user', content: 'hi' }],
+      max_tokens: 128,
+    })
+    while (true) {
+      const next = await gen.next()
+      if (next.done) break
+      events.push(next.value)
+    }
+
+    expect(events).toContainEqual({
+      type: 'content_block_delta',
+      index: 0,
+      delta: {
+        type: 'text_delta',
+        text: '요청을 분석하고 있습니다.\n',
+      },
+    })
+  })
+
   test('thinking block survives tool_call frame in the same turn', async () => {
     const bridge = makeFakeBridge((corr) => [
       // Initial chunk carries text + reasoning_content (K-EXAONE pattern).
@@ -113,7 +160,7 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
     expect(toolBlock!.name).toBe('lookup')
   })
 
-  test('multiple tool_calls after thinking each get a unique index', async () => {
+  test('tool_call commits the current assistant turn before later frames', async () => {
     const bridge = makeFakeBridge((corr) => [
       frame('assistant_chunk', corr, {
         message_id: 'mid-collision-2',
@@ -149,12 +196,15 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
       systemPrompt: 'test',
     })
 
-    // text + thinking + 2 tool_use = 4 unique slots.
-    expect(final.content).toHaveLength(4)
+    // CC-compatible contract: the first tool_use commits the assistant turn.
+    // Later tool_call frames belong to a later query-loop turn and must not be
+    // folded into this assistant message.
+    expect(final.stop_reason).toBe('tool_use')
+    expect(final.content).toHaveLength(3)
     const toolUses = final.content.filter((b) => b.type === 'tool_use') as Array<{
       id: string
     }>
-    expect(toolUses.map((b) => b.id)).toEqual(['A', 'B'])
+    expect(toolUses.map((b) => b.id)).toEqual(['A'])
     const thinkingBlock = final.content.find((b) => b.type === 'thinking')
     expect(thinkingBlock).toBeDefined()
   })

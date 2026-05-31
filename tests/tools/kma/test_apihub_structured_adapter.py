@@ -9,6 +9,7 @@ from uuid import uuid4
 import httpx
 import pytest
 
+from ummaya.tools.bm25_index import BM25Index
 from ummaya.tools.errors import ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.apihub_catalog import get_operation_by_id
@@ -21,6 +22,7 @@ from ummaya.tools.kma.apihub_structured_adapter import (
 )
 from ummaya.tools.register_all import register_all_tools
 from ummaya.tools.registry import ToolRegistry
+from ummaya.tools.search import search
 
 _FIXTURE_DIR = Path(__file__).parent / "fixtures" / "apihub"
 
@@ -88,8 +90,32 @@ def test_failed_live_apihub_ops_expose_precise_schema_and_tool_selection_hints()
     metar = get_operation_by_id("AmmIwxxmService/getMetar")
     metar_schema = input_schema_for(metar.operation_id).model_json_schema()
     metar_tool = build_tool(metar)
+    assert metar.availability == "upstream_unavailable"
     assert "ICAO" in metar_schema["properties"]["icao"]["description"]
+    assert "RKSS" in metar_schema["properties"]["icao"]["description"]
+    assert "RKPK" in metar_schema["properties"]["icao"]["description"]
     assert "aviation" in str(metar_tool.llm_description).lower()
+    assert "APPLICATION_ERROR" in str(metar_tool.llm_description)
+
+    chart = get_operation_by_id("WthrChartInfoService/getSurfaceChart")
+    chart_schema = input_schema_for(chart.operation_id).model_json_schema()
+    chart_tool = build_tool(chart)
+    assert chart.availability == "upstream_unavailable"
+    assert {"time", "code"}.issubset(set(chart_schema["properties"]))
+    assert chart_schema["properties"]["time"]["pattern"] == r"^\d{8,12}$"
+    assert "resultCode=99" in str(chart_tool.llm_description)
+
+    pending = get_operation_by_id("AftnAmmService/getMetar")
+    pending_tool = build_tool(pending)
+    assert pending.availability == "approval_pending"
+    assert "not yet enabled" in str(pending_tool.llm_description)
+
+    air_station = get_operation_by_id("SfcMtlyInfoService/getrAirStnLstTbl")
+    air_station_tool = build_tool(air_station)
+    assert "historical" in str(air_station_tool.llm_description).lower()
+    assert "not live airport weather" in str(air_station_tool.llm_description).lower()
+    assert "METAR" not in air_station_tool.search_hint
+    assert "airport current weather" not in str(air_station_tool.llm_description).lower()
 
     village = get_operation_by_id("VilageFcstInfoService_2.0/getUltraSrtNcst")
     village_schema = input_schema_for(village.operation_id).model_json_schema()
@@ -243,7 +269,7 @@ async def test_register_binds_all_structured_tools_and_executor_path(
         client: object | None = None,
     ) -> KmaApiHubStructuredOutput:
         del params, client
-        op = get_operation_by_id("AmmIwxxmService/getMetar")
+        op = get_operation_by_id("EqkInfoService/getEqkMsg")
         assert operation == op
         return KmaApiHubStructuredOutput(
             operation_id=op.operation_id,
@@ -254,7 +280,7 @@ async def test_register_binds_all_structured_tools_and_executor_path(
             page_no=1,
             num_of_rows=10,
             total_count=1,
-            items=[{"icao": "RKSI"}],
+            items=[{"mt": 2.1}],
             raw_format="xml",
         )
 
@@ -267,18 +293,21 @@ async def test_register_binds_all_structured_tools_and_executor_path(
 
     register(registry, executor)
     result = await executor.invoke(
-        "kma_apihub_amm_iwxxm_service_get_metar",
-        {},
+        "kma_apihub_eqk_info_service_get_eqk_msg",
+        {"from_tm_fc": "20260526", "to_tm_fc": "20260526"},
         request_id=str(uuid4()),
     )
 
-    assert len(registry) == 78
-    assert len(executor._adapters) == 78
+    assert len(registry) == 77
+    assert len(executor._adapters) == 77
+    assert "kma_apihub_amm_iwxxm_service_get_metar" not in registry._tools
+    assert "kma_apihub_aftn_amm_service_get_metar" not in registry._tools
     assert "kma_apihub_gts_info_service_get_synop" not in registry._tools
     assert "kma_apihub_nwp_model_info_service_get_ldaps_unis_all" not in registry._tools
+    assert "kma_apihub_wthr_chart_info_service_get_surface_chart" not in registry._tools
     assert result.kind == "record"
-    assert result.item["operation_id"] == "AmmIwxxmService/getMetar"
-    assert result.item["items"] == [{"icao": "RKSI"}]
+    assert result.item["operation_id"] == "EqkInfoService/getEqkMsg"
+    assert result.item["items"] == [{"mt": 2.1}]
 
 
 def test_register_all_preserves_specialized_kma_weather_tools() -> None:
@@ -293,5 +322,30 @@ def test_register_all_preserves_specialized_kma_weather_tools() -> None:
         "kma_current_observation",
         "kma_short_term_forecast",
         "kma_ultra_short_term_forecast",
+        "kma_apihub_url_air_metar_decoded",
+        "kma_apihub_url_air_amos_minute",
+        "kma_apihub_url_high_resolution_grid_point",
+        "kma_apihub_url_aws_objective_analysis_grid",
+        "kma_apihub_url_analysis_weather_chart_image",
     }.issubset(registered_ids)
     assert "kma_apihub_vilage_fcst_info_service_2_0_get_vilage_fcst" in registered_ids
+
+
+def test_aviation_retrieval_prefers_metar_over_historical_station_lists() -> None:
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+
+    results = search(
+        "김해공항 김포공항 항공기상 METAR 항공 실황",
+        BM25Index({}),
+        registry,
+        top_k=12,
+    )
+    ids = [candidate.tool_id for candidate in results]
+
+    assert "kma_apihub_url_air_metar_decoded" in ids
+    assert "kma_apihub_sfc_mtly_info_service_getr_air_stn_lst_tbl" in ids
+    assert ids.index("kma_apihub_url_air_metar_decoded") < ids.index(
+        "kma_apihub_sfc_mtly_info_service_getr_air_stn_lst_tbl"
+    )

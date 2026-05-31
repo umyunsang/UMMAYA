@@ -111,41 +111,44 @@
   "properties": {
     "comp_type": {
       "default": "CPP",
-      "description": "KMA APIHub request parameter compType.",
+      "description": "KMA APIHub request parameter compType. Official parameter name: compType. Operation: WthrRadarInfoService/getCompCappiQcdAll.",
       "title": "Comp Type",
       "type": "string"
     },
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: WthrRadarInfoService/getCompCappiQcdAll.",
       "title": "Data Type",
       "type": "string"
     },
     "data_type_cd": {
       "default": "CZ",
-      "description": "KMA APIHub request parameter dataTypeCd.",
+      "description": "KMA APIHub request parameter dataTypeCd. Official parameter name: dataTypeCd. Operation: WthrRadarInfoService/getCompCappiQcdAll.",
       "title": "Data Type Cd",
       "type": "string"
     },
     "date_time": {
-      "default": "201911120300",
-      "description": "KMA APIHub request parameter dateTime.",
+      "description": "KMA satellite/radar observation datetime, YYYYMMDDHHMM. Use a recent KST observation; APIHub returns an error outside the current 2 days window for these satellite products. Official parameter name: dateTime. Operation: WthrRadarInfoService/getCompCappiQcdAll.",
+      "pattern": "^\\d{12}$",
       "title": "Date Time",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: WthrRadarInfoService/getCompCappiQcdAll.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: WthrRadarInfoService/getCompCappiQcdAll.",
       "title": "Page No",
       "type": "integer"
     }
   },
+  "required": [
+    "date_time"
+  ],
   "title": "kma_apihub_wthr_radar_info_service_get_comp_cappi_qcd_all",
   "type": "object"
 }

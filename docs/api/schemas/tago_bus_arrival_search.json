@@ -35,13 +35,13 @@
   "description": "Input for TAGO bus arrival search.",
   "properties": {
     "city_code": {
-      "description": "TAGO city code.",
+      "description": "Official TAGO cityCode from the provider getCtyCodeList contract. Common metropolitan examples: Busan=21, Daegu=22, Incheon=23, Gwangju=24, Daejeon=25, Ulsan=26.",
       "minLength": 1,
       "title": "City Code",
       "type": "string"
     },
     "node_id": {
-      "description": "TAGO bus station ID.",
+      "description": "Official TAGO nodeId returned by tago_bus_station_search.",
       "minLength": 1,
       "title": "Node Id",
       "type": "string"
@@ -60,6 +60,34 @@
       "minimum": 1,
       "title": "Page No",
       "type": "integer"
+    },
+    "route_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional client-side filter against the official TAGO response field routeid. Get it from tago_bus_route_search when route_no alone is ambiguous.",
+      "title": "Route Id"
+    },
+    "route_no": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional client-side filter against the official TAGO response field routeno. It is not sent upstream; use it when the citizen names a visible bus route such as 1001.",
+      "title": "Route No"
     }
   },
   "required": [

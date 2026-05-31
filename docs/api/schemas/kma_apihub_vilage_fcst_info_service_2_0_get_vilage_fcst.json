@@ -110,48 +110,52 @@
   "additionalProperties": false,
   "properties": {
     "base_date": {
-      "default": "20210628",
-      "description": "KMA APIHub request parameter base_date.",
+      "description": "KMA village forecast base date, YYYYMMDD. Use a recent KST date within the APIHub retention window; stale catalog sample dates are rejected. Official parameter name: base_date. Operation: VilageFcstInfoService_2.0/getVilageFcst.",
+      "pattern": "^\\d{8}$",
       "title": "Base Date",
       "type": "string"
     },
     "base_time": {
-      "default": "0500",
-      "description": "KMA APIHub request parameter base_time.",
+      "description": "KMA village forecast base time, HHMM. Use the latest valid KST issue slot for the selected operation; stale catalog sample times are rejected. Official parameter name: base_time. Operation: VilageFcstInfoService_2.0/getVilageFcst.",
+      "pattern": "^\\d{4}$",
       "title": "Base Time",
       "type": "string"
     },
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: VilageFcstInfoService_2.0/getVilageFcst.",
       "title": "Data Type",
       "type": "string"
     },
     "num_of_rows": {
       "default": 1000,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: VilageFcstInfoService_2.0/getVilageFcst.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "nx": {
       "default": 55,
-      "description": "KMA APIHub request parameter nx.",
+      "description": "KMA APIHub request parameter nx. Official parameter name: nx. Operation: VilageFcstInfoService_2.0/getVilageFcst.",
       "title": "Nx",
       "type": "integer"
     },
     "ny": {
       "default": 127,
-      "description": "KMA APIHub request parameter ny.",
+      "description": "KMA APIHub request parameter ny. Official parameter name: ny. Operation: VilageFcstInfoService_2.0/getVilageFcst.",
       "title": "Ny",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: VilageFcstInfoService_2.0/getVilageFcst.",
       "title": "Page No",
       "type": "integer"
     }
   },
+  "required": [
+    "base_date",
+    "base_time"
+  ],
   "title": "kma_apihub_vilage_fcst_info_service_2_0_get_vilage_fcst",
   "type": "object"
 }

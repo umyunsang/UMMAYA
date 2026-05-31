@@ -111,41 +111,44 @@
   "properties": {
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: CloudSatlitInfoService/getGk2aclaArea.",
       "title": "Data Type",
       "type": "string"
     },
     "date_time": {
-      "default": "202011290000",
-      "description": "KMA APIHub request parameter dateTime.",
+      "description": "KMA satellite/radar observation datetime, YYYYMMDDHHMM. Use a recent KST observation; APIHub returns an error outside the current 2 days window for these satellite products. Official parameter name: dateTime. Operation: CloudSatlitInfoService/getGk2aclaArea.",
+      "pattern": "^\\d{12}$",
       "title": "Date Time",
       "type": "string"
     },
     "dong_code": {
       "default": "1100000000",
-      "description": "KMA APIHub request parameter dongCode.",
+      "description": "Administrative area code for area-scoped KMA products. Use only for Area operations, not All operations. Official parameter name: dongCode. Operation: CloudSatlitInfoService/getGk2aclaArea.",
       "title": "Dong Code",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: CloudSatlitInfoService/getGk2aclaArea.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: CloudSatlitInfoService/getGk2aclaArea.",
       "title": "Page No",
       "type": "integer"
     },
     "result_type": {
       "default": "ca",
-      "description": "KMA APIHub request parameter resultType.",
+      "description": "KMA product/result code for this satellite, radar, or model product. Keep the catalog default unless the citizen names a product code. Official parameter name: resultType. Operation: CloudSatlitInfoService/getGk2aclaArea.",
       "title": "Result Type",
       "type": "string"
     }
   },
+  "required": [
+    "date_time"
+  ],
   "title": "kma_apihub_cloud_satlit_info_service_get_gk2acla_area",
   "type": "object"
 }

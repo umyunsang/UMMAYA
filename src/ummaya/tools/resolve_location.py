@@ -5,8 +5,9 @@ Single entry point for converting a natural-language place reference into
 structured location data (coordinates, 10-digit 행정동 code, address, POI).
 
 Legacy compatibility resolver chain: kakao → juso → sgis.
-New LLM-visible calls should use the root ``locate({tool_id, params})`` tool
-with provider adapters from ``ummaya.tools.location_adapters``.
+New LLM-visible calls should use concrete provider adapters from
+``ummaya.tools.location_adapters``. The root ``locate({tool_id, params})``
+shape is retained only for legacy transcripts and compatibility paths.
 
 FR-002: Accepts ``query``, ``want``, and optional ``near`` anchor.
 FR-003: Kakao / JUSO / SGIS are exposed as separate locate adapters; this
@@ -682,8 +683,7 @@ async def resolve_location(  # noqa: C901
         # Was previously routed through search_address — a structural bug:
         # the address endpoint returns empty for POI queries like
         # "동아대학교", so every want='poi' call ended in not_found and the
-        # LLM fell back to fabricated coordinates (frame:
-        # `specs/integration-verification/donga-univ-poi-bug/`). Routing
+        # LLM fell back to fabricated coordinates. Routing
         # through the keyword endpoint is the byte-correct PyKakao mapping
         # for POI queries.
         try:

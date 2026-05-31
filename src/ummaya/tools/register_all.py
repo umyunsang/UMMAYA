@@ -88,6 +88,9 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     from ummaya.tools.kma.apihub_structured_adapter import (
         register as reg_kma_apihub_structured,
     )
+    from ummaya.tools.kma.apihub_url_adapter import (
+        register as reg_kma_apihub_url,
+    )
     from ummaya.tools.kma.forecast_fetch import (
         register as reg_kma_forecast_fetch,
     )
@@ -140,6 +143,12 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     # the agency-owned APIHub catalog while preserving the specialized weather
     # adapters above for citizen-facing forecast/current-weather flows.
     reg_kma_apihub_structured(registry, executor)
+
+    # KMA APIHub non-structured URL families needed for official AMOS and
+    # analyzed-data products. These are kept separate from typ02/openApi because
+    # their response contracts are text, image, or binary rather than the
+    # structured OpenAPI XML/JSON envelope.
+    reg_kma_apihub_url(registry, executor)
 
     # Phase 2 adapters (spec 029 — NFA 119 + MOHW SSIS, Layer 3 gated stubs)
     reg_nfa(registry, executor)  # T014 — NFA EMS statistics (interface-only)

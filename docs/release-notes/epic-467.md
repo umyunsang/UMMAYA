@@ -8,7 +8,7 @@ Spec: `specs/026-cicd-prompt-registry/`. Branch: `feat/467-cicd-prompt-registry`
 2. **`.devcontainer/devcontainer.json`** — `mcr.microsoft.com/devcontainers/python:3.12` + `ghcr.io/astral-sh/uv:latest` feature; `postCreateCommand: uv sync --frozen --all-extras --dev`; forwards ports 4000 (LiteLLM) and 4318 (OTEL collector); opens with Python + Ruff + Mypy VS Code extensions.
 3. **Prompt Registry v1** — `prompts/system_v1.md`, `prompts/session_guidance_v1.md`, `prompts/compact_v1.md` with matching `prompts/manifest.yaml` (SHA-256-integrity entries). `PromptLoader` (`src/ummaya/context/prompt_loader.py`) loads the manifest at boot, fails closed on missing / tampered / orphan files, and caches immutable strings. `SystemPromptAssembler` and `session_compact` now consume the loader — byte-identical output preserved (golden fixtures in `tests/context/fixtures/`).
 4. **`ummaya.prompt.hash` OTEL span attribute** — Emitted by the Context Assembly layer on every LLM call under the UMMAYA extension namespace (reserved by Spec 021). Carries the 64-hex SHA-256 of the system prompt bytes actually sent. Consumed by Epic #501 for supply-chain observability.
-5. **Shadow-eval workflow** — `.github/workflows/shadow-eval.yml` fires on PRs that touch `prompts/**`. Runs the battery twice (merge-base vs PR head) through `httpx.MockTransport` (no live `data.go.kr` traffic per NFR-04), stamps `deployment.environment=main|shadow`, and uploads the merged JSON as a workflow artefact. `timeout-minutes: 15`.
+5. **Prompt-change verification** — originally shipped as a split prompt eval workflow; superseded on 2026-05-26 by Evidence Fabric v2, which runs on `prompts/**` and emits `.evidence/run.json`.
 6. **Release-manifest workflow** — `.github/workflows/release-manifest.yml` fires on `push.tags: v*.*.*`. Resolves `commit_sha`, `uv_lock_hash`, `docker_digest`, `prompt_hashes`, `friendli_model_id`, and `litellm_proxy_version`, then commits `docs/release-manifests/<sha>.yaml` back to `main` via a machine-authored commit referencing the tag.
 
 ## Cross-Epic contracts
@@ -22,7 +22,7 @@ Spec: `specs/026-cicd-prompt-registry/`. Branch: `feat/467-cicd-prompt-registry`
 - **I. Reference-Driven Design** — Five external + four internal reference mappings in `specs/026-cicd-prompt-registry/research.md`.
 - **II. Fail-Closed Security** — `PromptLoader` raises on missing file (R1), hash mismatch (R2), and orphan file (R3); tests in `tests/context/test_prompt_loader_fail_closed.py`.
 - **III. Pydantic v2 Strict Typing** — `PromptManifestEntry`, `PromptManifest`, `ReleaseManifest` all `frozen=True` + `extra="forbid"`; no `typing.Any`.
-- **IV. Gov API Compliance** — Shadow-eval uses `httpx.MockTransport` exclusively; no live `data.go.kr` traffic from CI.
+- **IV. Gov API Compliance** — prompt/evidence checks are fixture-only; no live `data.go.kr` traffic from CI.
 - **V. Policy Alignment** — Langfuse kept as `[project.optional-dependencies] langfuse` extras; `jsonschema` stays in dev extras; no new core runtime dependency.
 - **VI. Deferred-Work Accountability** — Six deferred items in `spec.md § Scope Boundaries` each tracked against a future Epic (see spec table).
 

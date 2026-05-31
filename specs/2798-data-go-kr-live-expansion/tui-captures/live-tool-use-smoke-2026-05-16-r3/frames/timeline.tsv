@@ -1,7 +1,0 @@
-seq	ts_ms	hash	label	file
-0000	27	2df97fcee336	pty-data	frame_0000_2df97fcee336.txt
-0001	1218	960c13aeac6f	pty-data	frame_0001_960c13aeac6f.txt
-0002	1219	a5ccd5b45e25	pty-data	frame_0002_a5ccd5b45e25.txt
-0003	1372	8a27b7d8bbf1	pty-data	frame_0003_8a27b7d8bbf1.txt
-0004	1650	69bf3835b3bf	pty-data	frame_0004_69bf3835b3bf.txt
-0005	1650	aeea96b659e3	pty-data	frame_0005_aeea96b659e3.txt

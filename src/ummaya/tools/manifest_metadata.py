@@ -43,7 +43,9 @@ _COMMON_FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
     "city_code": (
         "Official TAGO cityCode identifying the municipality for bus route, arrival, "
-        "location, or station queries."
+        "location, or station queries. Use the provider's getCtyCodeList contract; "
+        "common metropolitan examples from the TAGO city-code list include "
+        "Busan=21, Daegu=22, Incheon=23, Gwangju=24, Daejeon=25, and Ulsan=26."
     ),
     "route_no": "Bus route number visible to citizens, mapped to the provider routeNo filter.",
     "route_id": "Official provider routeId returned by a prior route lookup.",
@@ -62,8 +64,19 @@ _COMMON_FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
     "job_se_code": "Fair Trade Commission job-section code from the public-data contract.",
     "schl_div_cd": "University school-division code from the KCUE public-data contract.",
-    "inqry_div": "Procurement inquiry division code used by the PPS bid-public-info endpoint.",
-    "bid_ntce_no": "Bid notice number used by the PPS public procurement endpoint.",
+    "inqry_div": (
+        "Procurement inquiry division code used by the PPS endpoint. For PPS bid "
+        "search-condition operations, use 1 for notice-publication datetime and 2 "
+        "for bid-opening datetime."
+    ),
+    "bid_ntce_no": "Bid notice number used by PPS detail-style procurement endpoints.",
+    "inqry_bgn_dt": "PPS search start datetime in official YYYYMMDDHHMM format.",
+    "inqry_end_dt": "PPS search end datetime in official YYYYMMDDHHMM format.",
+    "bid_ntce_nm": "PPS bid notice-name keyword; partial Korean notice names are allowed.",
+    "ntce_instt_nm": "PPS public notice agency-name filter; partial agency names are allowed.",
+    "dminstt_nm": "PPS demand agency-name filter; partial agency names are allowed.",
+    "prtcpt_lmt_rgn_nm": "PPS participation-limit region-name filter, such as 부산광역시.",
+    "indstryty_nm": "PPS industry or license-name filter, such as 전기공사업.",
     "prdct_clsfc_no_nm": (
         "Product classification number or name search term for the PPS shopping endpoint."
     ),

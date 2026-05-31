@@ -18,7 +18,7 @@ import { trace, SpanStatusCode } from '@opentelemetry/api'
 import type { Span } from '@opentelemetry/api'
 import type { IPCBridge } from './bridge.js'
 import { makeUUIDv7, makeBaseEnvelope } from './envelope.js'
-import type { AssistantChunkFrame, BackpressureSignalFrame, ChatMessage as IPCChatMessage, ChatRequestFrame, ErrorFrame, ToolCallFrame, ToolResultFrame, ToolDefinition as IPCToolDefinition } from './frames.generated.js'
+import type { AssistantChunkFrame, BackpressureSignalFrame, ChatMessage as IPCChatMessage, ChatRequestFrame, ErrorFrame, ProgressEventFrame, ToolCallFrame, ToolResultFrame, ToolDefinition as IPCToolDefinition } from './frames.generated.js'
 import type { PendingCallRegistry } from '../tools/_shared/pendingCallRegistry.js'
 import { getOrCreatePendingCallRegistry } from './pendingCallSingleton.js'
 import type {
@@ -80,9 +80,8 @@ interface _TurnAccumulator {
   contentBlocks: UmmayaContentBlockParam[]
   usage: UmmayaUsage
   stopReason: UmmayaStopReason
-  /** Index of the single text block. UMMAYA streams text into one block per
-   *  turn, so this stays at 0 and is the target of every `content_block_delta`
-   *  and the final `content_block_stop` for text. */
+  /** Index of the current text block. It is opened lazily on the first
+   *  CC-compatible text delta, not at message_start. */
   blockIndex: number
   /** Monotonic counter for tool_use blocks within this turn. The nth
    *  tool_use block lands at index `blockIndex + n` (so text is 0, tool
@@ -94,9 +93,11 @@ interface _TurnAccumulator {
    *  channel is forwarded by the backend as `AssistantChunkFrame.thinking`;
    *  llmClient mirrors CC's claude.ts:2148-2165 by routing those chunks to
    *  a dedicated thinking content block (`type: 'thinking'`). The block
-   *  is opened lazily on the first thinking delta and closed at the same
-   *  time as the text block (done frame). Undefined until first delta. */
+   *  is opened lazily on the first thinking delta and closed before text/tool
+   *  blocks, matching CC's one-open-content-block stream shape. */
   thinkingBlockIndex: number | undefined
+  /** Currently open non-tool block. CC closes text/thinking before tool_use. */
+  openBlockIndex: number | undefined
   seenFirstChunk: boolean
 }
 
@@ -106,9 +107,10 @@ function _defaultAccumulator(): _TurnAccumulator {
     contentBlocks: [],
     usage: { input_tokens: 0, output_tokens: 0 },
     stopReason: 'end_turn',
-    blockIndex: 0,
+    blockIndex: -1,
     toolBlockCounter: 0,
     thinkingBlockIndex: undefined,
+    openBlockIndex: undefined,
     seenFirstChunk: false,
   }
 }
@@ -299,6 +301,9 @@ export class LLMClient {
         ...(params.system !== undefined ? { system: params.system } : {}),
         max_tokens: params.max_tokens,
         ...(params.temperature !== undefined ? { temperature: params.temperature } : {}),
+        ...(params.reasoning_mode !== undefined
+          ? { reasoning_mode: params.reasoning_mode }
+          : {}),
       }
 
       // ----------------------------------------------------------------
@@ -339,10 +344,108 @@ export class LLMClient {
       //     primitive bridge for all tool dispatch; no server-side tools
       // ----------------------------------------------------------------
       let streamDone = false
+      const model = this.model
+      const ensureMessageStart = function* (
+        messageId: string,
+      ): Generator<UmmayaRawMessageStreamEvent, void, unknown> {
+        if (acc.seenFirstChunk) return
+        acc.seenFirstChunk = true
+        acc.messageId = messageId
+        yield {
+          type: 'message_start',
+          message: {
+            id: messageId,
+            role: 'assistant',
+            model,
+          },
+        } satisfies UmmayaRawMessageStreamEvent
+      }
+
+      const closeOpenBlock = function* (): Generator<
+        UmmayaRawMessageStreamEvent,
+        void,
+        unknown
+      > {
+        if (acc.openBlockIndex === undefined) return
+        yield {
+          type: 'content_block_stop',
+          index: acc.openBlockIndex,
+        } satisfies UmmayaRawMessageStreamEvent
+        acc.openBlockIndex = undefined
+      }
+
+      const ensureTextBlock = function* (): Generator<
+        UmmayaRawMessageStreamEvent,
+        void,
+        unknown
+      > {
+        if (acc.openBlockIndex === acc.blockIndex && acc.blockIndex >= 0) {
+          return
+        }
+        yield* closeOpenBlock()
+        const textIndex = acc.contentBlocks.length
+        acc.blockIndex = textIndex
+        acc.contentBlocks[textIndex] = { type: 'text', text: '' }
+        acc.openBlockIndex = textIndex
+        yield {
+          type: 'content_block_start',
+          index: textIndex,
+          content_block: { type: 'text', text: '' },
+        } satisfies UmmayaRawMessageStreamEvent
+      }
+
+      const ensureThinkingBlock = function* (): Generator<
+        UmmayaRawMessageStreamEvent,
+        void,
+        unknown
+      > {
+        if (
+          acc.thinkingBlockIndex !== undefined &&
+          acc.openBlockIndex === acc.thinkingBlockIndex
+        ) {
+          return
+        }
+        yield* closeOpenBlock()
+        const thinkingIdx = acc.contentBlocks.length
+        acc.thinkingBlockIndex = thinkingIdx
+        acc.contentBlocks[thinkingIdx] = { type: 'thinking', thinking: '' }
+        acc.openBlockIndex = thinkingIdx
+        yield {
+          type: 'content_block_start',
+          index: thinkingIdx,
+          content_block: { type: 'thinking', thinking: '' },
+        } satisfies UmmayaRawMessageStreamEvent
+      }
 
       for await (const frame of this.bridge.frames()) {
         // Filter: only process frames for this turn's correlation_id.
         if (frame.correlation_id !== correlationId) continue
+
+        // ---- ProgressEventFrame ----------------------------------------
+        // Deterministic harness progress. This is safe UI state, not provider
+        // reasoning. It paints even when reasoning mode suppresses thinking.
+        if (frame.kind === 'progress_event') {
+          const progress = frame as ProgressEventFrame
+          yield* ensureMessageStart(`progress-${correlationId}`)
+          yield* ensureTextBlock()
+
+          const progressText = `${
+            progress.message_ko ?? progress.message_en ?? progress.phase
+          }\n`
+          yield {
+            type: 'content_block_delta',
+            index: acc.blockIndex,
+            delta: {
+              type: 'text_delta',
+              text: progressText,
+            },
+          } satisfies UmmayaRawMessageStreamEvent
+          const existing = acc.contentBlocks[acc.blockIndex]
+          if (existing && existing.type === 'text') {
+            existing.text += progressText
+          }
+          continue
+        }
 
         // ---- AssistantChunkFrame ----------------------------------------
         // CC reference: services/api/claude.ts:1980-2169 (the message_start +
@@ -356,26 +459,7 @@ export class LLMClient {
             // CC reference: services/api/claude.ts:1980 (message_start),
             //               services/api/claude.ts:2019 (text content_block_start).
             if (!acc.seenFirstChunk) {
-              acc.seenFirstChunk = true
-              acc.messageId = chunk.message_id
-
-              yield {
-                type: 'message_start',
-                message: {
-                  id: chunk.message_id,
-                  role: 'assistant',
-                  model: this.model,
-                },
-              } satisfies UmmayaRawMessageStreamEvent
-
-              yield {
-                type: 'content_block_start',
-                index: 0,
-                content_block: { type: 'text', text: '' },
-              } satisfies UmmayaRawMessageStreamEvent
-
-              acc.blockIndex = 0
-              acc.contentBlocks[0] = { type: 'text', text: '' }
+              yield* ensureMessageStart(chunk.message_id)
             }
 
             // Thinking delta — K-EXAONE's reasoning_content channel arrives
@@ -384,17 +468,8 @@ export class LLMClient {
             // `type: 'thinking'` blocks and route them to the
             // AssistantThinkingMessage component (∴ Thinking dim italic).
             if (chunk.thinking && chunk.thinking.length > 0) {
-              if (acc.thinkingBlockIndex === undefined) {
-                const thinkingIdx = acc.contentBlocks.length
-                acc.thinkingBlockIndex = thinkingIdx
-                yield {
-                  type: 'content_block_start',
-                  index: thinkingIdx,
-                  content_block: { type: 'thinking', thinking: '' },
-                } satisfies UmmayaRawMessageStreamEvent
-                acc.contentBlocks[thinkingIdx] = { type: 'thinking', thinking: '' }
-              }
-              const thinkingIdx = acc.thinkingBlockIndex
+              yield* ensureThinkingBlock()
+              const thinkingIdx = acc.thinkingBlockIndex!
               yield {
                 type: 'content_block_delta',
                 index: thinkingIdx,
@@ -408,6 +483,7 @@ export class LLMClient {
 
             // Emit text delta (even if delta is empty — forward compat).
             if (chunk.delta.length > 0) {
+              yield* ensureTextBlock()
               yield {
                 type: 'content_block_delta',
                 index: acc.blockIndex,
@@ -429,22 +505,12 @@ export class LLMClient {
             // If we never saw a first chunk (edge: backend sends done=true
             // immediately on an empty response), bootstrap the message events.
             if (!acc.seenFirstChunk) {
-              acc.seenFirstChunk = true
-              acc.messageId = chunk.message_id
-              yield {
-                type: 'message_start',
-                message: { id: chunk.message_id, role: 'assistant', model: this.model },
-              } satisfies UmmayaRawMessageStreamEvent
-              yield {
-                type: 'content_block_start',
-                index: 0,
-                content_block: { type: 'text', text: '' },
-              } satisfies UmmayaRawMessageStreamEvent
-              acc.blockIndex = 0
+              yield* ensureMessageStart(chunk.message_id)
             }
 
             // Emit any final delta text if present.
             if (chunk.delta.length > 0) {
+              yield* ensureTextBlock()
               yield {
                 type: 'content_block_delta',
                 index: acc.blockIndex,
@@ -463,7 +529,7 @@ export class LLMClient {
             acc.usage = usage
 
             // CC reference: services/api/claude.ts:2171 (content_block_stop).
-            yield { type: 'content_block_stop', index: acc.blockIndex } satisfies UmmayaRawMessageStreamEvent
+            yield* closeOpenBlock()
 
             // CC reference: services/api/claude.ts:2213 (message_delta with
             // stop_reason + usage).
@@ -490,6 +556,8 @@ export class LLMClient {
         // initial content_block_start payload.
         else if (frame.kind === 'tool_call') {
           const toolFrame = frame as ToolCallFrame
+          yield* ensureMessageStart(`tool-${correlationId}`)
+          yield* closeOpenBlock()
           // tool_call frames may arrive interleaved with text streaming AND
           // thinking streaming in a multi-turn / parallel-tool / K-EXAONE
           // reasoning scenario. Allocate the tool block at the next free
@@ -526,6 +594,17 @@ export class LLMClient {
             name: toolFrame.name,
             input: toolFrame.arguments as Record<string, unknown>,
           }
+
+          acc.stopReason = 'tool_use'
+          yield {
+            type: 'message_delta',
+            delta: { stop_reason: 'tool_use' },
+            usage: acc.usage,
+          } satisfies UmmayaRawMessageStreamEvent
+          yield { type: 'message_stop' } satisfies UmmayaRawMessageStreamEvent
+
+          streamDone = true
+          break
         }
 
         // ---- ToolResultFrame (I-D5 + Epic ζ smoke checkpoint, FR-013) ----

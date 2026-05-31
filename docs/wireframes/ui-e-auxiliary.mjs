@@ -43,7 +43,7 @@ function ConfigOverlay() {
     { k: 'UMMAYA_REDUCED_MOTION',     v: '0',            edit: true },
     { k: 'UMMAYA_OTEL_DISABLED',      v: '0',            edit: true },
     { k: 'UMMAYA_AGENT_MAILBOX_ROOT', v: '~/.ummaya/...', edit: false },
-    { k: 'FRIENDLI_API_KEY',          v: '(secret)',     edit: false },
+    { k: 'UMMAYA_FRIENDLI_TOKEN',     v: '(secret)',     edit: false },
   ]
   return h(BorderedNotice, {
     label: '◆ /config · UMMAYA 환경 설정', color: C.brand, width: 72,
@@ -66,8 +66,8 @@ function PluginBrowser() {
   const plugins = [
     { id: 'seoul-subway',  on: true,  ver: '0.2.1', desc: '지하철 실시간 도착' },
     { id: 'post-office',   on: true,  ver: '0.1.3', desc: '우체국 택배 추적' },
-    { id: 'nts-homtax',    on: false, ver: '0.1.0', desc: '홈택스 Mock' },
-    { id: 'nhis-check',    on: false, ver: '0.1.0', desc: '건강검진 Mock' },
+    { id: 'nts-homtax',    on: false, ver: '0.1.0', desc: '홈택스 shape-mirror' },
+    { id: 'nhis-check',    on: false, ver: '0.1.0', desc: '건강검진 handoff' },
   ]
   return h(BorderedNotice, {
     label: '◆ /plugins · 설치된 플러그인', color: '#a78bfa', width: 72,
@@ -101,7 +101,7 @@ function ExportPDF() {
       h(Text, { color: C.dim }, '2026-04-24 14:02:31 · session ab12cd34'),
       h(Text, null, ''),
       h(Text, null, '[사용자] 오늘 서울 날씨 어때?'),
-      h(Text, null, '[도구] KMA.lookup [LIVE]'),
+      h(Text, null, '[도구] KMA.find [LIVE]'),
       h(Text, null, '  → 12°C 맑음, 미세먼지 보통'),
       h(Text, null, '[답변] 서울 현재 12°C, 맑고 미세먼지는 보통입니다.'),
     ),

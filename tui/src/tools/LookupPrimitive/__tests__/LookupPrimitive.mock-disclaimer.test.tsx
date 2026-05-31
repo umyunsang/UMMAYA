@@ -161,6 +161,25 @@ describe('FindPrimitive renderToolResultMessage — error path preserved', () =>
 })
 
 describe('FindPrimitive validateInput — primitive self-target guard', () => {
+  test('normalizes find(find({tool_id: adapter})) envelope before validation', () => {
+    const parsed = LookupPrimitive.inputSchema.parse({
+      tool_id: 'find',
+      params: {
+        tool_id: 'pps_bid_public_info',
+        inqry_bgn_dt: '202605250000',
+        inqry_end_dt: '202605272359',
+      },
+    })
+
+    expect(parsed).toEqual({
+      tool_id: 'pps_bid_public_info',
+      params: {
+        inqry_bgn_dt: '202605250000',
+        inqry_end_dt: '202605272359',
+      },
+    })
+  })
+
   test('rejects find(find) before TS-side internal tool fallback', async () => {
     const result = await LookupPrimitive.validateInput!(
       { tool_id: 'find', params: {} },

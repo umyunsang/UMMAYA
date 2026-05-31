@@ -1,0 +1,155 @@
+{
+  "$defs": {
+    "KmaApiHubUrlOutput": {
+      "additionalProperties": false,
+      "description": "Normalized output from one KMA APIHub non-structured URL operation.",
+      "properties": {
+        "approval_state": {
+          "enum": [
+            "approved",
+            "approval_pending"
+          ],
+          "title": "Approval State",
+          "type": "string"
+        },
+        "content_type": {
+          "title": "Content Type",
+          "type": "string"
+        },
+        "endpoint_path": {
+          "title": "Endpoint Path",
+          "type": "string"
+        },
+        "line_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Count"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "raw_format": {
+          "enum": [
+            "text",
+            "json",
+            "image",
+            "binary"
+          ],
+          "title": "Raw Format",
+          "type": "string"
+        },
+        "raw_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Text"
+        },
+        "status_code": {
+          "title": "Status Code",
+          "type": "integer"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "operation_id",
+        "endpoint_path",
+        "approval_state",
+        "content_type",
+        "raw_format",
+        "status_code"
+      ],
+      "title": "KmaApiHubUrlOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kma_apihub_url_aws_objective_analysis_grid.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "gov": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "",
+      "description": "KMA APIHub URL request parameter gov. Official parameter name: gov. Operation: aws_objective_analysis_grid.",
+      "title": "Gov"
+    },
+    "grid": {
+      "default": 1,
+      "description": "KMA APIHub URL request parameter grid. Official parameter name: grid. Operation: aws_objective_analysis_grid.",
+      "title": "Grid",
+      "type": "integer"
+    },
+    "map": {
+      "default": "D3",
+      "description": "KMA APIHub URL request parameter map. Official parameter name: map. Operation: aws_objective_analysis_grid.",
+      "title": "Map",
+      "type": "string"
+    },
+    "obj": {
+      "default": "mq",
+      "description": "Objective-analysis method: mq for Multi Quadric or bn for Barnes. Official parameter name: obj. Operation: aws_objective_analysis_grid.",
+      "title": "Obj",
+      "type": "string"
+    },
+    "obs": {
+      "default": "ta",
+      "description": "KMA APIHub URL request parameter obs. Official parameter name: obs. Operation: aws_objective_analysis_grid.",
+      "title": "Obs",
+      "type": "string"
+    },
+    "stn": {
+      "default": 0,
+      "description": "KMA APIHub URL request parameter stn. Official parameter name: stn. Operation: aws_objective_analysis_grid.",
+      "title": "Stn",
+      "type": "integer"
+    },
+    "tm": {
+      "anyOf": [
+        {
+          "pattern": "^\\d{12}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "KMA APIHub URL request parameter tm. Official parameter name: tm. Operation: aws_objective_analysis_grid.",
+      "title": "Tm"
+    }
+  },
+  "title": "kma_apihub_url_aws_objective_analysis_grid",
+  "type": "object"
+}

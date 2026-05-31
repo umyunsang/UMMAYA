@@ -10,7 +10,7 @@ import logging
 import os
 import random
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from contextvars import Token
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
@@ -39,6 +39,7 @@ from ummaya.llm.models import (
     ToolCall,
     ToolDefinition,
 )
+from ummaya.llm.reasoning import ReasoningMode, resolve_reasoning_policy
 from ummaya.llm.usage import UsageTracker
 from ummaya.observability.semconv import (
     ERROR_TYPE,
@@ -238,6 +239,7 @@ class LLMClient:
         presence_penalty: float = 0.0,
         max_tokens: int = 1024,
         stop: list[str] | None = None,
+        reasoning_mode: ReasoningMode | str | None = None,
     ) -> ChatCompletionResponse:
         """Send a non-streaming chat completion request.
 
@@ -271,6 +273,7 @@ class LLMClient:
             tools=tools,
             tool_choice=tool_choice,
             stream=False,
+            reasoning_mode=reasoning_mode,
         )
 
         logger.debug(
@@ -365,6 +368,7 @@ class LLMClient:
         presence_penalty: float = 0.0,
         max_tokens: int = 1024,
         stop: list[str] | None = None,
+        reasoning_mode: ReasoningMode | str | None = None,
     ) -> AsyncIterator[StreamEvent]:
         """Send a streaming chat completion request.
 
@@ -403,7 +407,9 @@ class LLMClient:
             tools=tools,
             tool_choice=tool_choice,
             stream=True,
+            reasoning_mode=reasoning_mode,
         )
+        allow_reasoning = payload.get("include_reasoning") is True
 
         logger.debug(
             "LLM stream request: model=%s messages=%d",
@@ -447,7 +453,11 @@ class LLMClient:
         _finalize: dict[str, object] = {}
 
         try:
-            async for event in self._stream_with_retry(payload, _finalize):
+            async for event in self._stream_with_retry(
+                payload,
+                _finalize,
+                allow_reasoning=allow_reasoning,
+            ):
                 active_span.detach()
                 yield event
                 active_span.attach()
@@ -490,6 +500,8 @@ class LLMClient:
         self,
         payload: dict[str, object],
         _finalize: dict[str, object],
+        *,
+        allow_reasoning: bool,
     ) -> AsyncIterator[StreamEvent]:
         """Execute stream() with Retry-After-first backoff loop (T015/T016).
 
@@ -607,7 +619,10 @@ class LLMClient:
                             if chunk_info.get("model"):
                                 _response_model = chunk_info["model"]
 
-                            async for event in self._parse_sse_line(line):
+                            async for event in self._parse_sse_line(
+                                line,
+                                allow_reasoning=allow_reasoning,
+                            ):
                                 yield event
                                 if event.type == "done":
                                     _duration_ms = (time.monotonic() - _stream_start) * 1000
@@ -848,7 +863,12 @@ class LLMClient:
             if i + step < n:
                 await asyncio.sleep(_LLM_STREAM_PACE_S)
 
-    async def _parse_sse_line(self, line: str) -> AsyncIterator[StreamEvent]:  # noqa: C901
+    async def _parse_sse_line(
+        self,
+        line: str,
+        *,
+        allow_reasoning: bool = False,
+    ) -> AsyncIterator[StreamEvent]:
         """Parse a single SSE line and yield corresponding StreamEvent(s)."""
         if not line or not line.startswith("data: "):
             return
@@ -859,14 +879,35 @@ class LLMClient:
             yield StreamEvent(type="done")
             return
 
+        chunk = self._decode_sse_payload(payload_text)
+        if chunk is None:
+            return
+
+        usage_event = self._usage_event_from_chunk(chunk)
+        if usage_event is not None:
+            yield usage_event
+
+        async for event in self._events_from_sse_choices(
+            chunk,
+            allow_reasoning=allow_reasoning,
+        ):
+            yield event
+
+    def _decode_sse_payload(self, payload_text: str) -> dict[str, object] | None:
+        """Decode a JSON SSE payload, returning None for malformed chunks."""
         try:
             chunk = json.loads(payload_text)
         except json.JSONDecodeError:
             logger.warning("Failed to parse SSE chunk: %r", payload_text)
-            return
+            return None
+        return chunk if isinstance(chunk, dict) else None
 
+    def _usage_event_from_chunk(self, chunk: dict[str, object]) -> StreamEvent | None:
+        """Debit usage from a stream chunk and return the corresponding event."""
         if "usage" in chunk and chunk["usage"] is not None:
             raw_usage = chunk["usage"]
+            if not isinstance(raw_usage, dict):
+                return None
             usage = TokenUsage(
                 input_tokens=raw_usage.get("prompt_tokens", 0),
                 output_tokens=raw_usage.get("completion_tokens", 0),
@@ -877,66 +918,104 @@ class LLMClient:
                 usage.output_tokens,
             )
             self._usage.debit(usage)
-            yield StreamEvent(type="usage", usage=usage)
+            return StreamEvent(type="usage", usage=usage)
+        return None
 
+    async def _events_from_sse_choices(
+        self,
+        chunk: dict[str, object],
+        *,
+        allow_reasoning: bool,
+    ) -> AsyncIterator[StreamEvent]:
+        """Yield stream events for the first OpenAI-compatible choice delta."""
         choices = chunk.get("choices")
         if not choices:
             return
+        if not isinstance(choices, list):
+            return
 
         choice = choices[0]
+        if not isinstance(choice, dict):
+            return
         delta = choice.get("delta", {})
+        if not isinstance(delta, dict):
+            return
 
+        async for event in self._events_from_sse_delta(
+            delta,
+            allow_reasoning=allow_reasoning,
+        ):
+            yield event
+
+    async def _events_from_sse_delta(
+        self,
+        delta: dict[str, object],
+        *,
+        allow_reasoning: bool,
+    ) -> AsyncIterator[StreamEvent]:
+        """Yield content, reasoning, and tool-call events from a delta object."""
         if "content" in delta and delta["content"] is not None:
             # CC reference: services/api/claude.ts:2113 (text_delta content_block_delta).
-            content = delta["content"]
+            content = str(delta["content"])
             async for sub in self._pace_text_chunk(content, "content"):
                 yield sub
         elif "reasoning_content" in delta and delta["reasoning_content"] is not None:
-            # CC reference: services/api/claude.ts:2148-2161 (thinking_delta
-            # content_block_delta) — K-EXAONE emits chain-of-thought on a
-            # separate ``delta.reasoning_content`` channel. Forwarding the
-            # same StreamEvent shape on UMMAYA lets the TUI's
-            # ``AssistantThinkingMessage`` component render the reasoning
-            # inline instead of swallowing it. Log only the chunk length —
-            # never the raw content (CoT may contain user PII or sensitive
-            # reasoning about user input).
-            reasoning_text = delta["reasoning_content"]
-            logger.debug(
-                "Forwarding reasoning_content as thinking_delta (len=%d)",
-                len(reasoning_text),
-            )
-            async for sub in self._pace_text_chunk(reasoning_text, "thinking"):
+            async for sub in self._events_from_reasoning_delta(
+                str(delta["reasoning_content"]),
+                allow_reasoning=allow_reasoning,
+            ):
                 yield sub
 
         if "tool_calls" in delta and delta["tool_calls"]:
-            # CC reference: services/api/claude.ts:1997 (tool_use content_block_start)
-            # + services/api/claude.ts:2087 (input_json_delta content_block_delta).
-            # FriendliAI's OpenAI-compatible streaming buffers tool_call argument
-            # JSON across multiple deltas (matching OpenAI's incremental parser).
-            # UMMAYA mirrors CC's pattern by emitting one StreamEvent per delta;
-            # the IPC bridge (stdio.py) accumulates them into the final
-            # ToolCallFrame.
-            for tc_delta in delta["tool_calls"]:
-                func = tc_delta.get("function", {})
-                # Log only tool metadata (index/id/name + arg length).
-                # Raw `arguments` often carries user-provided location strings
-                # or other PII — never log them.
-                _args_field = func.get("arguments")
-                _args_len = len(_args_field) if isinstance(_args_field, str) else 0
-                logger.debug(
-                    "tool_call_delta idx=%s id=%s name=%r args_len=%d",
-                    tc_delta.get("index"),
-                    tc_delta.get("id"),
-                    func.get("name"),
-                    _args_len,
-                )
-                yield StreamEvent(
-                    type="tool_call_delta",
-                    tool_call_index=tc_delta.get("index"),
-                    tool_call_id=tc_delta.get("id"),
-                    function_name=func.get("name"),
-                    function_args_delta=func.get("arguments"),
-                )
+            for event in self._events_from_tool_call_deltas(delta["tool_calls"]):
+                yield event
+
+    async def _events_from_reasoning_delta(
+        self,
+        reasoning_text: str,
+        *,
+        allow_reasoning: bool,
+    ) -> AsyncIterator[StreamEvent]:
+        """Yield reasoning text only when the request opted into reasoning parsing."""
+        if not allow_reasoning:
+            logger.debug(
+                "Suppressed unexpected reasoning_content while include_reasoning=false (len=%d)",
+                len(reasoning_text),
+            )
+            return
+        logger.debug(
+            "Forwarding reasoning_content as thinking_delta (len=%d)",
+            len(reasoning_text),
+        )
+        async for sub in self._pace_text_chunk(reasoning_text, "thinking"):
+            yield sub
+
+    def _events_from_tool_call_deltas(self, tool_calls: object) -> Iterator[StreamEvent]:
+        """Yield tool-call deltas without logging raw argument content."""
+        if not isinstance(tool_calls, list):
+            return
+        for tc_delta in tool_calls:
+            if not isinstance(tc_delta, dict):
+                continue
+            func = tc_delta.get("function", {})
+            if not isinstance(func, dict):
+                func = {}
+            _args_field = func.get("arguments")
+            _args_len = len(_args_field) if isinstance(_args_field, str) else 0
+            logger.debug(
+                "tool_call_delta idx=%s id=%s name=%r args_len=%d",
+                tc_delta.get("index"),
+                tc_delta.get("id"),
+                func.get("name"),
+                _args_len,
+            )
+            yield StreamEvent(
+                type="tool_call_delta",
+                tool_call_index=tc_delta.get("index"),
+                tool_call_id=tc_delta.get("id"),
+                function_name=func.get("name"),
+                function_args_delta=func.get("arguments"),
+            )
 
     def _build_payload(
         self,
@@ -950,6 +1029,7 @@ class LLMClient:
         tools: list[ToolDefinition | dict[str, object]] | None = None,
         tool_choice: str | dict[str, object] | None = None,
         stream: bool,
+        reasoning_mode: ReasoningMode | str | None = None,
     ) -> dict[str, object]:
         """Construct the JSON payload for a chat completions request.
 
@@ -979,13 +1059,7 @@ class LLMClient:
         is not treated as normal assistant text and is never required for the
         default CLI/TUI path.
         """
-        import os  # noqa: PLC0415 — local import keeps top-level imports thin
-
-        enable_thinking = os.environ.get("UMMAYA_K_EXAONE_THINKING", "false").lower() in (
-            "true",
-            "1",
-            "yes",
-        )
+        reasoning = resolve_reasoning_policy(reasoning_mode)
 
         payload: dict[str, object] = {
             "model": self._config.model,
@@ -999,7 +1073,9 @@ class LLMClient:
             # enable_thinking=False the model emits an answer directly
             # without the <think>...</think> trace, dropping first-token
             # latency from ~60-180s to <10s for typical citizen prompts.
-            "chat_template_kwargs": {"enable_thinking": enable_thinking},
+            "chat_template_kwargs": {"enable_thinking": reasoning.enable_thinking},
+            "parse_reasoning": reasoning.parse_reasoning,
+            "include_reasoning": reasoning.include_reasoning,
         }
         if stop is not None:
             payload["stop"] = stop

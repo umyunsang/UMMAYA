@@ -111,25 +111,25 @@
   "properties": {
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: SfcYearlyInfoService/getSfcStnLstTbl.",
       "title": "Data Type",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: SfcYearlyInfoService/getSfcStnLstTbl.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: SfcYearlyInfoService/getSfcStnLstTbl.",
       "title": "Page No",
       "type": "integer"
     },
     "year": {
       "default": 2016,
-      "description": "KMA APIHub request parameter year.",
+      "description": "KMA APIHub request parameter year. Official parameter name: year. Operation: SfcYearlyInfoService/getSfcStnLstTbl.",
       "title": "Year",
       "type": "integer"
     }

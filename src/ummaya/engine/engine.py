@@ -29,6 +29,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_INTERNAL_CONTEXT_TOOL_IDS = frozenset({"find", "locate", "check", "send", "search_tools"})
+
 _LOCATION_DEPENDENT_SCHEMA_KEYS = frozenset(
     {
         "adm_cd",
@@ -54,9 +56,24 @@ def _schema_requires_location_resolution(
 ) -> bool:
     """Return True when an adapter schema needs prior locate output."""
 
-    return _contains_location_dependent_key(input_schema_json) or _contains_location_dependent_key(
+    return _contains_location_dependent_key(
         required_params
-    )
+    ) or _schema_required_fields_contain_location_key(input_schema_json)
+
+
+def _schema_required_fields_contain_location_key(value: object) -> bool:
+    """Return True when JSON Schema required fields demand locate-derived data."""
+
+    if isinstance(value, dict):
+        required = value.get("required")
+        if _contains_location_dependent_key(required):
+            return True
+        return any(
+            _schema_required_fields_contain_location_key(nested) for nested in value.values()
+        )
+    if isinstance(value, list):
+        return any(_schema_required_fields_contain_location_key(item) for item in value)
+    return False
 
 
 def _contains_location_dependent_key(value: object) -> bool:
@@ -302,7 +319,7 @@ class QueryEngine:
                 continue
             if candidate.score <= 0:
                 continue
-            if tool.is_core or tool.ministry == "UMMAYA":
+            if tool.id in _INTERNAL_CONTEXT_TOOL_IDS:
                 continue
             primitive = candidate.primitive if isinstance(candidate.primitive, str) else None
             requires_location = _schema_requires_location_resolution(
@@ -342,10 +359,13 @@ class QueryEngine:
             [
                 "<available_adapters>",
                 "Use these adapter candidates for this citizen request. "
-                "Call the function named exactly as tool_id with that adapter's "
-                "schema arguments. Do not wrap adapter calls in root primitives "
-                "such as find({tool_id, params}), locate({tool_id, params}), "
-                "check({tool_id, params}), or send({tool_id, params}). "
+                "The model-facing function name is the concrete tool_id shown "
+                "below when that function is present in tools[]. Call the "
+                "concrete adapter directly with exactly the input_schema_json "
+                "fields. Do not wrap tool_id/params inside a concrete adapter "
+                "call. The root primitives (find, locate, check, send) are "
+                "legacy compatibility wrappers only when a concrete adapter "
+                "function is not loaded. "
                 "Do not call locate just because the citizen text contains a "
                 "city/province name; treat that as the dataset/filter term. "
                 "Call locate only when the selected adapter schema requires "

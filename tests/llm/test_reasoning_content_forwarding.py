@@ -55,7 +55,73 @@ def fake_friendli_token(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_reasoning_content_forwarded_as_thinking_delta(
+async def test_default_reasoning_content_is_suppressed_when_include_reasoning_is_false(
+    fake_friendli_token: None,
+) -> None:
+    """Default balanced policy must hard-drop unexpected reasoning chunks.
+
+    Friendli's documented contract says ``include_reasoning=false`` should not
+    stream ``delta.reasoning_content``. UMMAYA still enforces the gate locally
+    so a provider-side or mocked SSE drift cannot surface raw CoT in fast /
+    balanced modes.
+    """
+    reasoning_chunks = ["raw ", "provider ", "trace"]
+
+    async def _mock_stream(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content.decode())
+        assert body["include_reasoning"] is False
+        chunks: list[bytes] = [
+            _sse_chunk(
+                {
+                    "id": "chatcmpl-test-reasoning-suppressed",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"reasoning_content": chunk},
+                            "finish_reason": None,
+                        }
+                    ],
+                }
+            )
+            for chunk in reasoning_chunks
+        ]
+        chunks.append(
+            _sse_chunk(
+                {
+                    "id": "chatcmpl-test-reasoning-suppressed",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"content": "visible answer"},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                }
+            )
+        )
+        chunks.append(_sse_done())
+        return httpx.Response(200, stream=_MockSSEByteStream(chunks))
+
+    transport = httpx.MockTransport(_mock_stream)
+    config = LLMClientConfig()  # type: ignore[call-arg]
+    client = LLMClient(config=config)
+    client._client = httpx.AsyncClient(transport=transport, base_url=str(config.base_url))
+
+    events: list[StreamEvent] = []
+    async for event in client.stream(
+        messages=[ChatMessage(role="user", content="오늘 부산 날씨")],
+        max_tokens=100,
+    ):
+        events.append(event)
+
+    assert [e for e in events if e.type == "thinking_delta"] == []
+    assert "".join(e.content or "" for e in events if e.type == "content_delta") == (
+        "visible answer"
+    )
+
+
+@pytest.mark.asyncio
+async def test_deep_reasoning_content_forwarded_as_thinking_delta(
     fake_friendli_token: None,
 ) -> None:
     """T005 scaffold: when FriendliAI emits delta.reasoning_content, LLMClient
@@ -110,6 +176,7 @@ async def test_reasoning_content_forwarded_as_thinking_delta(
     async for event in client.stream(
         messages=[ChatMessage(role="user", content="오늘 부산 날씨")],
         max_tokens=100,
+        reasoning_mode="deep",
     ):
         events.append(event)
 

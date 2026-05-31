@@ -20,6 +20,8 @@ import json
 import logging
 from typing import TYPE_CHECKING
 
+from ummaya.context.attachments import AttachmentCollector
+from ummaya.context.budget import BudgetEstimator
 from ummaya.context.compact_models import CompactionConfig, CompactionResult
 from ummaya.context.models import (
     AssembledContext,
@@ -57,6 +59,10 @@ class ContextBuilder:
         self._registry = registry
         self._compaction_config = compaction_config
         self._assembler = SystemPromptAssembler()
+        self._attachment_collector = AttachmentCollector(config=self._config)
+        self._budget_estimator = BudgetEstimator()
+        self._core_tool_defs_cache_key: tuple[str, ...] | None = None
+        self._core_tool_defs_cache: list[dict[str, object]] = []
 
         # Cached assembled ChatMessage (set on first build_system_message() call).
         self._system_message: ChatMessage | None = None
@@ -106,11 +112,7 @@ class ContextBuilder:
             ``ContextLayer(role='user', layer_name='turn_attachment', content=…)``
             or ``None`` when no attachment content exists.
         """
-        # Import here to avoid circular imports between builder and attachments.
-        from ummaya.context.attachments import AttachmentCollector  # noqa: PLC0415
-
-        collector = AttachmentCollector(config=self._config)
-        collected = collector.collect(state=state, api_health=api_health)
+        collected = self._attachment_collector.collect(state=state, api_health=api_health)
         if collected is None:
             return None
         return ContextLayer(role="user", layer_name="turn_attachment", content=collected)
@@ -161,15 +163,12 @@ class ContextBuilder:
         tool_definitions = self._build_tool_definitions(state)
 
         # --- Budget (US4) ---
-        from ummaya.context.budget import BudgetEstimator  # noqa: PLC0415
-
-        estimator = BudgetEstimator()
         assembled_no_budget = AssembledContext(
             system_layer=system_layer,
             turn_attachment=turn_attachment,
             tool_definitions=tool_definitions,
         )
-        budget = estimator.estimate(
+        budget = self._budget_estimator.estimate(
             context=assembled_no_budget,
             hard_limit=hard_limit,
             soft_limit=int(hard_limit * 0.80),
@@ -232,8 +231,15 @@ class ContextBuilder:
         if self._registry is None:
             return []
 
-        # Core prefix (deterministic, sorted by id — FR-004)
-        core_defs = self._registry.export_core_tools_openai()
+        # Core prefix (deterministic, sorted by id — FR-004).  Core tool
+        # schemas are stable across turns, so cache the expensive Pydantic JSON
+        # schema export and invalidate only when the active core id set changes.
+        core_tools = self._registry.core_tools()
+        core_cache_key = tuple(tool.id for tool in core_tools)
+        if core_cache_key != self._core_tool_defs_cache_key:
+            self._core_tool_defs_cache = [tool.to_openai_tool() for tool in core_tools]
+            self._core_tool_defs_cache_key = core_cache_key
+        core_defs = self._core_tool_defs_cache
 
         # Situational suffix (dynamic, sorted by id — FR-004)
         situational_defs: list[dict[str, object]] = []

@@ -1,5 +1,0 @@
-# Visual evidence — slash-consent-already-revoked
-# Slash command — `/consent revoke` already-revoked toast
-# Captured 2026-04-26T01:08:33.224Z via ink-testing-library render()
-
- ✻ 이미 철회됨

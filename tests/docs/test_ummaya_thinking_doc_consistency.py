@@ -57,18 +57,14 @@ _CORRECT_PATTERN = re.compile(
 
 
 def test_implementation_default_is_false() -> None:
-    """src/ummaya/llm/client.py must hard-code default 'false' for the env var."""
-    client_py = _REPO_ROOT / "src" / "ummaya" / "llm" / "client.py"
-    assert client_py.exists(), f"Expected {client_py} to exist"
+    """The resolver must keep default provider thinking disabled."""
+    from ummaya.llm.reasoning import resolve_reasoning_policy
 
-    content = client_py.read_text(encoding="utf-8")
+    policy = resolve_reasoning_policy(env={})
 
-    # The canonical implementation line:
-    #   enable_thinking = os.environ.get("UMMAYA_K_EXAONE_THINKING", "false").lower() in (...)
-    assert 'os.environ.get("UMMAYA_K_EXAONE_THINKING", "false")' in content, (
-        "client.py must use default='false' for UMMAYA_K_EXAONE_THINKING.\n"
-        f"Searched in: {client_py}"
-    )
+    assert policy.mode == "balanced"
+    assert policy.enable_thinking is False
+    assert policy.include_reasoning is False
 
 
 # ---------------------------------------------------------------------------

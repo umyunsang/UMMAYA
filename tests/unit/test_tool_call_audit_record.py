@@ -34,10 +34,11 @@ from ummaya.security.audit import MAX_CLOCK_SKEW_SECONDS, ToolCallAuditRecord
 _VALID_HASH_A = "a" * 64  # lowercase hex, 64 chars — valid SHA-256 placeholder
 _VALID_HASH_B = "b" * 64
 _VALID_HASH_C = "c" * 64
-# I4 (extended) binds timestamps to ±MAX_CLOCK_SKEW_SECONDS of UTC now; use a
-# near-now timestamp so the test suite remains green regardless of wall-clock
-# drift on the host. Truncate microseconds for stable serialization.
-_VALID_TS = datetime.now(UTC).replace(microsecond=0)
+
+
+def _valid_ts() -> datetime:
+    """Return a near-now timestamp for the audit clock-skew invariant."""
+    return datetime.now(UTC).replace(microsecond=0)
 
 
 def _minimal_record(**overrides) -> dict:
@@ -57,7 +58,7 @@ def _minimal_record(**overrides) -> dict:
         "sanitized_output_hash": None,
         "merkle_covered_hash": "output_hash",
         "merkle_leaf_id": None,
-        "timestamp": _VALID_TS,
+        "timestamp": _valid_ts(),
         "cost_tokens": 0,
         "rate_limit_bucket": "per-session",
         "public_path_marker": False,
@@ -727,7 +728,7 @@ def test_model_validate_under_5ms_p_avg():
         "sanitized_output_hash": None,
         "merkle_covered_hash": "output_hash",
         "merkle_leaf_id": None,
-        "timestamp": _VALID_TS,
+        "timestamp": _valid_ts(),
         "cost_tokens": 0,
         "rate_limit_bucket": "per-session",
         "public_path_marker": False,

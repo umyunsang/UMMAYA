@@ -115,4 +115,4 @@ Live tests are skipped by default (`uv run pytest` without `-m live`). To run th
 UMMAYA_KOROAD_API_KEY=... UMMAYA_DATA_GO_KR_API_KEY=... uv run pytest -m live -v
 ```
 
-See `docs/testing.md` for the full guide on live test markers and CI policy.
+See `docs/design/verification-fabric-v2.md` for the live-test marker and CI policy.

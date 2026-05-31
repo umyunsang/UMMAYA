@@ -188,6 +188,69 @@ _PRIMITIVE_ERROR_REASONS: Final[frozenset[str]] = frozenset(
         "verify_tool_choice_mismatch",
     }
 )
+_ROOT_PRIMITIVE_TOOL_NAMES: Final[frozenset[str]] = frozenset({"find", "locate", "check", "send"})
+_KMA_AIR_TOOL_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "kma_apihub_url_air_amos_minute",
+        "kma_apihub_url_air_metar_decoded",
+    }
+)
+_KMA_ORDINARY_WEATHER_TOOL_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "kma_current_observation",
+        "kma_ultra_short_term_forecast",
+        "kma_short_term_forecast",
+    }
+)
+_KMA_LOCATION_TOOL_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "kakao_keyword_search",
+        "kakao_address_search",
+        "kakao_coord_to_region",
+    }
+)
+_KMA_AIRPORT_PLACE_RE: Final = re.compile(
+    r"(김해|김포|김해공항|김포공항|gimhae|gimpo|rkpk|rkss|\bairport\b|공항)",
+    re.IGNORECASE,
+)
+_KMA_AIRPORT_AVIATION_RE: Final = re.compile(
+    r"(비행기|항공편|비행편|운항|이륙|착륙|결항|지연|뜰\s*만|뜨나|뜰\s*수|"
+    r"flight|take\s*off|landing|delay|cancel|metar|speci|amos|rvr|활주로|"
+    r"시정|visibility|공항기상|항공기상)",
+    re.IGNORECASE,
+)
+_SYNTHETIC_USER_CONTEXT_RE: Final = re.compile(
+    r"<available_adapters\b|</available_adapters>|"
+    r"Pick a concrete adapter from <available_adapters>|"
+    r"Prefer concrete adapter function calls",
+    re.IGNORECASE,
+)
+_TOOL_RESULT_USER_CONTEXT_RE: Final = re.compile(
+    r"^\s*(?:<tool_use_error>|AdapterNotFound:|Permission delegation required:|Error:)"
+    r"|</tool_use_error>",
+    re.IGNORECASE,
+)
+
+
+def _is_citizen_user_utterance_text(content: object) -> bool:
+    if not isinstance(content, str):
+        return False
+    text = content.strip()
+    if not text:
+        return False
+    if _SYNTHETIC_USER_CONTEXT_RE.search(text):
+        return False
+    return _TOOL_RESULT_USER_CONTEXT_RE.search(text) is None
+
+
+def _latest_citizen_user_utterance(messages: Collection[Any]) -> str:
+    for message in reversed(list(messages)):
+        if getattr(message, "role", None) != "user":
+            continue
+        content = getattr(message, "content", None)
+        if _is_citizen_user_utterance_text(content):
+            return cast(str, content)
+    return ""
 
 
 def _should_append_tui_tool_to_llm_tools(
@@ -201,6 +264,43 @@ def _should_append_tui_tool_to_llm_tools(
         return False
     _ = has_concrete_backend_tools
     return True
+
+
+def _normalize_root_primitive_adapter_envelope(
+    fname: str,
+    args_obj: dict[str, object],
+) -> dict[str, object]:
+    """Normalize root primitive envelopes before strict adapter validation."""
+    if fname not in _ROOT_PRIMITIVE_TOOL_NAMES:
+        return args_obj
+    params_raw = args_obj.get("params")
+    if not isinstance(params_raw, dict):
+        return args_obj
+    nested_tool_id = params_raw.get("tool_id")
+    if not isinstance(nested_tool_id, str) or not nested_tool_id:
+        return args_obj
+    top_level_tool_id = args_obj.get("tool_id")
+    if top_level_tool_id == fname and nested_tool_id not in _ROOT_PRIMITIVE_TOOL_NAMES:
+        normalized = dict(args_obj)
+        normalized["tool_id"] = nested_tool_id
+        normalized["params"] = {key: value for key, value in params_raw.items() if key != "tool_id"}
+        return normalized
+    if nested_tool_id == top_level_tool_id:
+        normalized = dict(args_obj)
+        normalized["params"] = {key: value for key, value in params_raw.items() if key != "tool_id"}
+        return normalized
+    return args_obj
+
+
+def _function_tool_choice(tool_name: str) -> dict[str, object]:
+    """Return OpenAI-compatible forced function-call syntax."""
+    return {"type": "function", "function": {"name": tool_name}}
+
+
+def _tool_definition_names(tool_defs: list[Any] | None) -> set[str]:
+    if tool_defs is None:
+        return set()
+    return {tool.function.name for tool in tool_defs}
 
 
 _VERIFY_QUERY_REQUIREMENTS: Final[tuple[tuple[tuple[str, ...], dict[str, str]], ...]] = (
@@ -260,6 +360,19 @@ _VERIFY_QUERY_REQUIREMENTS: Final[tuple[tuple[tuple[str, ...], dict[str, str]], 
         },
     ),
     (
+        ("소득금액증명원", "소득금액증명"),
+        {
+            "verify_tool_id": "mock_verify_module_simple_auth",
+            "allowed_tool_ids": (
+                "mock_verify_module_simple_auth,mock_verify_mobile_id,mock_verify_ganpyeon_injeung"
+            ),
+            "scope": "check:ganpyeon.identity",
+            "allowed_scopes": "check:ganpyeon.identity,check:mobile_id.identity",
+            "purpose_ko": "소득금액증명원 발급 본인확인",
+            "purpose_en": "Income certificate identity verification",
+        },
+    ),
+    (
         ("복지 급여 신청", "한부모가족", "아동양육비"),
         {
             "verify_tool_id": "mock_verify_mydata",
@@ -304,6 +417,8 @@ _LOCATION_INDEPENDENT_WORKFLOW_HINTS_KO: Final[frozenset[str]] = frozenset(
         "모바일신분증",
         "마이데이터",
         "공공마이데이터",
+        "소득금액증명원",
+        "소득금액증명",
         "과태료",
         "교통범칙금",
         "범칙금",
@@ -543,23 +658,44 @@ def _kma_observation_base_slot_hint(now_kst: datetime) -> tuple[str, str, str]:
 
 
 def _final_answer_looks_like_pending_tool_plan(text: str) -> bool:
-    """Return true when final prose says it will call tools after tools already ran."""
+    """Return true when final prose is still planning after tools already ran."""
     normalized = " ".join(text.strip().split())
     if not normalized:
         return False
     pending_markers = (
         "호출하겠습니다",
         "조회하겠습니다",
+        "조회해 보겠습니다",
         "찾아보겠습니다",
         "검색하겠습니다",
         "진행하겠습니다",
         "확인하겠습니다",
+        "확인해 보겠습니다",
         "will call",
         "i'll call",
         "i will call",
         "will look up",
     )
-    return any(marker in normalized.lower() for marker in pending_markers)
+    lowered = normalized.lower()
+    if any(marker in lowered for marker in pending_markers):
+        return True
+
+    meta_instruction_markers = (
+        "이제 응급 상황에 대한 지침을 제공해야 합니다",
+        "최종 답변은 다음과 같아야 합니다",
+        "도구 결과에서 그대로 가져와야 합니다",
+        "final answer should",
+        "the final answer should",
+        "should provide",
+        "should answer",
+    )
+    if any(marker in lowered for marker in meta_instruction_markers):
+        return True
+    return bool(
+        re.search(r"(?:답변|응답|최종 답변)[^.?!。]{0,40}해야 합니다", normalized)
+        or re.search(r"이제 [^.?!。]{0,60}(?:제공|안내|작성)해야 합니다", normalized)
+        or re.search(r"도구 결과[^.?!。]{0,60}가져와야 합니다", normalized)
+    )
 
 
 def _final_answer_looks_like_recursive_tool_message(text: str) -> bool:
@@ -675,6 +811,8 @@ def _final_answer_looks_like_tool_call_narration(text: str) -> bool:
     normalized = " ".join(text.strip().split())
     if not normalized:
         return False
+    if "<tool_call>" in normalized or "</tool_call>" in normalized:
+        return True
     head = normalized[:700]
     if "도구" not in head:
         return False
@@ -721,6 +859,174 @@ def _final_answer_looks_like_generic_retry_after_success(text: str) -> bool:
     # A source citation may be useful as a footer. It is only suspect when the
     # answer has no concrete returned values at all.
     return not bool(re.search(r"\d", normalized))
+
+
+_KMA_ANALYSIS_USER_QUERY_RE: Final = re.compile(
+    r"(분석자료|이미\s*분석|고해상도\s*격자|객관분석|AWS\s*객관|지도\s*자료|"
+    r"일기도|분석일기도|비구름|바람\s*흐름|synoptic|weather\s*chart|"
+    r"objective\s*analysis|high[-\s]?resolution|grid)",
+    re.IGNORECASE,
+)
+_KMA_ANALYSIS_MAP_USER_QUERY_RE: Final = re.compile(
+    r"(일기도|분석일기도|지도\s*자료|비구름|바람\s*흐름|synoptic|weather\s*chart)",
+    re.IGNORECASE,
+)
+_KMA_ANALYSIS_TOOL_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "kma_apihub_url_high_resolution_grid_point",
+        "kma_apihub_url_aws_objective_analysis_grid",
+        "kma_apihub_url_analysis_weather_chart_image",
+    }
+)
+_PPS_BID_USER_QUERY_RE: Final = re.compile(
+    r"(입찰|나라장터|조달청|공고|공사조회|전기공사|bid|procurement)",
+    re.IGNORECASE,
+)
+_AIRKOREA_USER_QUERY_RE: Final = re.compile(
+    r"(미세먼지|초미세먼지|대기질|대기오염|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea)",
+    re.IGNORECASE,
+)
+_TAGO_BUS_USER_QUERY_RE: Final = re.compile(
+    r"(버스|시내버스|정류장|정류소|노선|도착|언제\s*와|몇\s*분|bus|route|arrival|station)",
+    re.IGNORECASE,
+)
+_TAGO_ROUTE_NO_RE: Final = re.compile(r"(?:^|[^\d])(\d{1,4}(?:-\d)?)\s*번")
+_TAGO_TOOL_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "tago_bus_station_search",
+        "tago_bus_arrival_search",
+        "tago_bus_route_search",
+        "tago_bus_route_station_search",
+        "tago_bus_location_search",
+    }
+)
+_AIRKOREA_TOOL_ID: Final = "airkorea_ctprvn_air_quality"
+_PPS_BID_TOOL_ID: Final = "pps_bid_public_info"
+_KMA_ANALYSIS_CHART_TOOL_ID: Final = "kma_apihub_url_analysis_weather_chart_image"
+
+
+def _initial_concrete_tool_choice_for_query(
+    user_query: str,
+    available_tool_names: Collection[str],
+) -> str | None:
+    """Force direct first calls only for unambiguous single-adapter lookups."""
+    available = set(available_tool_names)
+    if (
+        _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query)
+        and _KMA_ANALYSIS_CHART_TOOL_ID in available
+    ):
+        return _KMA_ANALYSIS_CHART_TOOL_ID
+    if _KMA_AIRPORT_PLACE_RE.search(user_query) and _KMA_AIRPORT_AVIATION_RE.search(user_query):
+        if (
+            re.search(r"(김포|gimpo|rkss)", user_query, re.IGNORECASE)
+            and re.search(r"(amos|활주로|rvr|runway|매분)", user_query, re.IGNORECASE)
+            and "kma_apihub_url_air_amos_minute" in available
+        ):
+            return "kma_apihub_url_air_amos_minute"
+        if "kma_apihub_url_air_metar_decoded" in available:
+            return "kma_apihub_url_air_metar_decoded"
+    if _PPS_BID_USER_QUERY_RE.search(user_query) and _PPS_BID_TOOL_ID in available:
+        return _PPS_BID_TOOL_ID
+    if _AIRKOREA_USER_QUERY_RE.search(user_query) and _AIRKOREA_TOOL_ID in available:
+        return _AIRKOREA_TOOL_ID
+    if _TAGO_BUS_USER_QUERY_RE.search(user_query):
+        if _TAGO_ROUTE_NO_RE.search(user_query) and "tago_bus_route_search" in available:
+            return "tago_bus_route_search"
+        if "tago_bus_station_search" in available:
+            return "tago_bus_station_search"
+    return None
+
+
+def _final_answer_looks_like_kma_analysis_fabrication(text: str, user_query: str) -> bool:
+    """Detect KMA analysis answers that fill failed lookups with general knowledge."""
+    if not _KMA_ANALYSIS_USER_QUERY_RE.search(user_query):
+        return False
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+    failure_markers = (
+        "데이터가 비어",
+        "확인할 수 없",
+        "접근할 수 없",
+        "조회가 어려",
+        "직접 접근할 수 없는",
+        "전체 내용을 확인할 수 없",
+        "실패",
+    )
+    fabrication_markers = (
+        "일반적인 지식",
+        "일반적 정보",
+        "일반적으로",
+        "판단됩니다",
+        "특별한 기상 상황은 아닌",
+    )
+    return any(marker in normalized for marker in failure_markers) and any(
+        marker in normalized for marker in fabrication_markers
+    )
+
+
+def _conversation_has_kma_chart_upstream_failure(llm_messages: list[Any]) -> bool:
+    """Return True when a KMA analyzed weather-chart lookup failed upstream."""
+    for msg in reversed(llm_messages):
+        if getattr(msg, "role", None) != "tool":
+            continue
+        content = str(getattr(msg, "content", "") or "")
+        name = str(getattr(msg, "name", "") or "")
+        if (
+            "kma_apihub_url_analysis_weather_chart_image" not in content
+            and name != "kma_apihub_url_analysis_weather_chart_image"
+        ):
+            continue
+        normalized = " ".join(content.split())
+        return any(
+            marker in normalized
+            for marker in (
+                "활용신청",
+                "approval",
+                "upstream_error",
+                "403",
+                "error",
+                "failed",
+            )
+        )
+    return False
+
+
+def _final_answer_substitutes_after_kma_chart_failure(
+    text: str,
+    user_query: str,
+    llm_messages: list[Any],
+) -> bool:
+    """Detect map/chart answers that substitute other evidence after chart failure."""
+    if not _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query):
+        return False
+    if not _conversation_has_kma_chart_upstream_failure(llm_messages):
+        return False
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+    substitution_markers = (
+        "AWS 객관",
+        "고해상도",
+        "현재 관측망",
+        "관측값",
+        "기온",
+        "풍속",
+        "풍향",
+        "시정",
+        "강수량",
+        "상대습도",
+        "대안으로",
+        "일반적인",
+        "일반적",
+        "패턴상",
+        "가능성",
+        "추정",
+        "보입니다",
+        "서풍",
+        "남해안",
+    )
+    return any(marker in normalized for marker in substitution_markers)
 
 
 def _conversation_has_successful_any_primitive_result(llm_messages: list[Any]) -> bool:
@@ -1754,6 +2060,43 @@ def _latest_successful_primitive_result(
     return None
 
 
+def _latest_successful_locate_result_with_coords(
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> dict[str, object] | None:
+    """Return the most recent successful locate result that carries WGS-84 coords."""
+    if registry is not None:
+        matching_call_ids = _primitive_call_ids_for_tool(
+            llm_messages,
+            primitive="locate",
+            registry=registry,
+        )
+        for msg in reversed(llm_messages):
+            payload = _tool_result_payload_for_primitive_call(
+                msg,
+                primitive="locate",
+                matching_call_ids=matching_call_ids,
+            )
+            if payload is None or not _primitive_payload_is_success(
+                payload,
+                primitive="locate",
+            ):
+                continue
+            result = _primitive_payload_result_dict(payload)
+            if result is not None and _locate_result_coords(result) is not None:
+                return result
+
+    for msg in reversed(llm_messages):
+        payload = _tool_result_payload_for_primitive(msg, primitive="locate")
+        if payload is None or not _primitive_payload_is_success(payload, primitive="locate"):
+            continue
+        result = _primitive_payload_result_dict(payload)
+        if result is not None and _locate_result_coords(result) is not None:
+            return result
+    return None
+
+
 def _latest_successful_primitive_result_for_tool(
     llm_messages: list[Any],
     *,
@@ -1950,6 +2293,38 @@ def _region_pair_from_address_text(text: object) -> tuple[str, str] | None:
     return q0, q1
 
 
+def _sido_name_from_user_query(user_query: str) -> str | None:
+    """Extract a Korean 시도 name when citizen wording contains one."""
+
+    for full_name in _KOREAN_SIDO_ABBREVIATIONS.values():
+        if full_name in user_query:
+            return full_name
+    for short_name, full_name in _KOREAN_SIDO_ABBREVIATIONS.items():
+        pattern = re.compile(
+            rf"{re.escape(short_name)}(?:시|도|특별시|광역시|특별자치시|특별자치도)?"
+        )
+        if pattern.search(user_query):
+            return full_name
+    return None
+
+
+def _pps_current_week_window(now: datetime | None = None) -> tuple[str, str]:
+    """Return PPS YYYYMMDDHHMM bounds for the current KST week through today."""
+
+    from zoneinfo import ZoneInfo  # noqa: PLC0415
+
+    kst = ZoneInfo("Asia/Seoul")
+    kst_now = datetime.now(kst) if now is None else now.astimezone(kst)
+    week_start = (kst_now - timedelta(days=kst_now.weekday())).replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    today_end = kst_now.replace(hour=23, minute=59, second=0, microsecond=0)
+    return week_start.strftime("%Y%m%d%H%M"), today_end.strftime("%Y%m%d%H%M")
+
+
 def _locate_result_region_pair(result: dict[str, object]) -> tuple[str, str] | None:  # noqa: C901
     """Extract NMC region-mode q0/q1 from a locate result."""
     for key in ("region", "coords"):
@@ -2060,6 +2435,13 @@ def _nmc_lookup_params_with_clean_qn(
     return raw_params, params
 
 
+def _nmc_origin_needs_locate_repair(params: dict[str, object]) -> bool:
+    """Return True when region-mode origin coords lost locate precision."""
+    if params.get("origin_lat") is None and params.get("origin_lon") is None:
+        return True
+    return _is_whole_degree_pair(params.get("origin_lat"), params.get("origin_lon"))
+
+
 def _is_whole_degree_pair(lat: object, lon: object) -> bool:
     """Return True for rounded whole-degree WGS-84 coordinate pairs."""
     if isinstance(lat, bool) or isinstance(lon, bool):
@@ -2084,10 +2466,15 @@ def _normalize_reverse_geocode_args_from_prior_locate(
     was already available in the prior locate result, keep the selected adapter
     and repair only this derived argument pair.
     """
-    if fname != "locate" or args_obj.get("tool_id") not in _REVERSE_GEOCODE_TOOL_IDS:
+    wraps_root_primitive = False
+    if fname == "locate" and args_obj.get("tool_id") in _REVERSE_GEOCODE_TOOL_IDS:
+        raw_params = args_obj.get("params")
+        wraps_root_primitive = True
+    elif fname in _REVERSE_GEOCODE_TOOL_IDS:
+        raw_params = args_obj
+    else:
         return args_obj
 
-    raw_params = args_obj.get("params")
     if not isinstance(raw_params, dict):
         return args_obj
 
@@ -2108,10 +2495,43 @@ def _normalize_reverse_geocode_args_from_prior_locate(
 
     next_params = dict(raw_params)
     next_params["lat"], next_params["lon"] = coords
+    if wraps_root_primitive:
+        normalized = dict(args_obj)
+        normalized["params"] = next_params
+    else:
+        normalized = next_params
+    logger.info(
+        "locate: normalized %s rounded lat/lon from prior locate lat=%s lon=%s",
+        args_obj.get("tool_id") if wraps_root_primitive else fname,
+        coords[0],
+        coords[1],
+    )
+    return normalized
+
+
+def _normalize_reverse_geocode_args_from_locate_result(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+) -> dict[str, object]:
+    """Fill reverse-geocode lat/lon from an already observed locate result."""
+    if args_obj.get("tool_id") not in _REVERSE_GEOCODE_TOOL_IDS:
+        return args_obj
+    raw_params = args_obj.get("params")
+    if not isinstance(raw_params, dict):
+        return args_obj
+    if not _is_whole_degree_pair(raw_params.get("lat"), raw_params.get("lon")):
+        return args_obj
+
+    coords = _locate_result_coords(locate_result)
+    if coords is None:
+        return args_obj
+
+    next_params = dict(raw_params)
+    next_params["lat"], next_params["lon"] = coords
     normalized = dict(args_obj)
     normalized["params"] = next_params
     logger.info(
-        "locate: normalized %s rounded lat/lon from prior locate lat=%s lon=%s",
+        "locate: normalized cached %s rounded lat/lon from latest locate lat=%s lon=%s",
         args_obj.get("tool_id"),
         coords[0],
         coords[1],
@@ -2146,7 +2566,8 @@ def _normalize_nmc_lookup_args_from_prior_locate(
         and bool(_nonempty_str(params.get("q0")))
         and bool(_nonempty_str(params.get("q1")))
     )
-    if has_region_params and not needs_default_limit:
+    needs_origin_repair = _nmc_origin_needs_locate_repair(params)
+    if has_region_params and not needs_default_limit and not needs_origin_repair:
         if params != raw_params and isinstance(raw_params, dict):
             normalized = dict(args_obj)
             normalized["params"] = params
@@ -2159,13 +2580,24 @@ def _normalize_nmc_lookup_args_from_prior_locate(
         registry=registry,
     )
     if locate_result is None:
-        if has_region_params and needs_default_limit:
+        if has_region_params:
             normalized = dict(args_obj)
             next_params = dict(params)
-            next_params["limit"] = 5
-            normalized["params"] = next_params
-            return normalized
+            if needs_default_limit:
+                next_params["limit"] = 5
+            if next_params != raw_params and isinstance(raw_params, dict):
+                normalized["params"] = next_params
+                return normalized
         return args_obj
+    if _locate_result_coords(locate_result) is None:
+        locate_result_with_coords = _latest_successful_locate_result_with_coords(
+            llm_messages,
+            registry=registry,
+        )
+        if locate_result_with_coords is not None:
+            merged_locate_result = dict(locate_result_with_coords)
+            merged_locate_result.update(locate_result)
+            locate_result = merged_locate_result
 
     return _normalize_nmc_lookup_args_from_locate_result(args_obj, locate_result)
 
@@ -2185,10 +2617,18 @@ def _normalize_nmc_lookup_args_from_locate_result(
         and bool(_nonempty_str(params.get("q0")))
         and bool(_nonempty_str(params.get("q1")))
     )
-    if has_region_params and not needs_default_limit:
-        if params != raw_params and isinstance(raw_params, dict):
+    needs_origin_repair = _nmc_origin_needs_locate_repair(params)
+    if has_region_params:
+        origin_coords = _locate_result_coords(locate_result)
+        next_params = dict(params)
+        if needs_origin_repair and origin_coords is not None:
+            next_params["origin_lat"] = origin_coords[0]
+            next_params["origin_lon"] = origin_coords[1]
+        if needs_default_limit:
+            next_params["limit"] = 5
+        if next_params != params or (params != raw_params and isinstance(raw_params, dict)):
             normalized = dict(args_obj)
-            normalized["params"] = params
+            normalized["params"] = next_params
             return normalized
         return args_obj
 
@@ -2224,6 +2664,27 @@ def _normalize_nmc_lookup_args_from_locate_result(
         next_params.get("q1"),
         origin_coords,
     )
+    return normalized
+
+
+def _normalize_nmc_aed_args_from_locate_result(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+) -> dict[str, object]:
+    """Fill NMC AED origin coords for client-side distance sorting."""
+    raw_params = args_obj.get("params")
+    if not isinstance(raw_params, dict):
+        return args_obj
+    coords = _locate_result_coords(locate_result)
+    if coords is None:
+        return args_obj
+    if not _nmc_origin_needs_locate_repair(raw_params):
+        return args_obj
+    next_params = dict(raw_params)
+    next_params["origin_lat"] = coords[0]
+    next_params["origin_lon"] = coords[1]
+    normalized = dict(args_obj)
+    normalized["params"] = next_params
     return normalized
 
 
@@ -2384,14 +2845,37 @@ def _normalize_lookup_args_from_cached_locate_result(
     args_obj: dict[str, object],
     locate_result: dict[str, object] | None,
     *,
+    coordinate_locate_result: dict[str, object] | None = None,
     user_query: str = "",
 ) -> dict[str, object]:
     """Apply locate-derived argument repair in inbound concrete tool dispatch."""
-    if fname != "find" or locate_result is None:
+    if locate_result is None:
+        return args_obj
+    if fname == "locate":
+        return _normalize_reverse_geocode_args_from_locate_result(args_obj, locate_result)
+    if fname != "find":
         return args_obj
     tool_id = args_obj.get("tool_id")
     if tool_id == "nmc_emergency_search":
+        if (
+            _locate_result_coords(locate_result) is None
+            and coordinate_locate_result is not None
+            and _locate_result_coords(coordinate_locate_result) is not None
+        ):
+            merged_locate_result = dict(coordinate_locate_result)
+            merged_locate_result.update(locate_result)
+            locate_result = merged_locate_result
         return _normalize_nmc_lookup_args_from_locate_result(args_obj, locate_result)
+    if tool_id == "nmc_aed_site_locate":
+        if (
+            _locate_result_coords(locate_result) is None
+            and coordinate_locate_result is not None
+            and _locate_result_coords(coordinate_locate_result) is not None
+        ):
+            merged_locate_result = dict(coordinate_locate_result)
+            merged_locate_result.update(locate_result)
+            locate_result = merged_locate_result
+        return _normalize_nmc_aed_args_from_locate_result(args_obj, locate_result)
     if tool_id == "hira_hospital_search":
         return _normalize_hira_lookup_args_from_locate_result(
             args_obj,
@@ -2919,6 +3403,62 @@ def _canonicalize_lookup_tool_id_for_query(
     return normalized
 
 
+def _set_param_if_empty(
+    params: dict[str, object],
+    key: str,
+    value: object,
+) -> bool:
+    if params.get(key) in (None, ""):
+        params[key] = value
+        return True
+    return False
+
+
+def _set_param_if_changed(
+    params: dict[str, object],
+    key: str,
+    value: object,
+) -> bool:
+    if params.get(key) != value:
+        params[key] = value
+        return True
+    return False
+
+
+def _normalize_pps_bid_args_from_user_query(
+    fname: str,
+    args_obj: dict[str, object],
+    user_query: str,
+) -> dict[str, object]:
+    """Fill PPS search-condition fields that are explicit in citizen wording."""
+
+    if fname != "find" or args_obj.get("tool_id") != _PPS_BID_TOOL_ID:
+        return args_obj
+    raw_params = args_obj.get("params")
+    params: dict[str, object] = dict(raw_params) if isinstance(raw_params, dict) else {}
+    changed = not isinstance(raw_params, dict)
+
+    if re.search(r"이번\s*주", user_query):
+        start_dt, end_dt = _pps_current_week_window()
+        changed = _set_param_if_changed(params, "inqry_bgn_dt", start_dt) or changed
+        changed = _set_param_if_changed(params, "inqry_end_dt", end_dt) or changed
+
+    if re.search(r"전기\s*공사", user_query, re.IGNORECASE):
+        changed = _set_param_if_empty(params, "bid_ntce_nm", "전기공사") or changed
+        changed = _set_param_if_empty(params, "indstryty_nm", "전기공사업") or changed
+
+    region_name = _sido_name_from_user_query(user_query)
+    if region_name is not None:
+        changed = _set_param_if_empty(params, "region_name", region_name) or changed
+        changed = _set_param_if_empty(params, "prtcpt_lmt_rgn_nm", region_name) or changed
+
+    if not changed:
+        return args_obj
+    normalized = dict(args_obj)
+    normalized["params"] = params
+    return normalized
+
+
 def _normalize_lookup_args_for_query(
     fname: str,
     args_obj: dict[str, object],
@@ -2936,6 +3476,7 @@ def _normalize_lookup_args_for_query(
         user_query,
         adapter_param_names=adapter_param_names,
     )
+    args_obj = _normalize_pps_bid_args_from_user_query(fname, args_obj, user_query)
     if args_obj.get("tool_id") != "mohw_welfare_eligibility_search":
         return args_obj
     if not _query_contains_any(user_query, ("한부모가족", "한부모", "아동양육비")):
@@ -3159,9 +3700,13 @@ def _check_verify_tool_choice_prerequisite(
     purpose_ko = requirement["purpose_ko"]
     purpose_en = requirement["purpose_en"]
     if fname != "check":
+        from ummaya.tools.verify_canonical_map import resolve_tool_id  # noqa: PLC0415
+
+        canonical_verify_alias = resolve_tool_id(tool_id)
         wrong_verify_tool = (
             tool_id == "check"
             or tool_id.startswith("mock_verify_")
+            or canonical_verify_alias is not None
             or tool_id in allowed_tool_ids
             or _verify_tool_matches_requirement(
                 args_obj,
@@ -3861,6 +4406,148 @@ def _check_chain_prerequisite(  # noqa: C901
     )
 
 
+def _check_kma_analysis_tool_choice_prerequisite(
+    fname: str,
+    args_obj: dict[str, object],
+    user_query: str,
+) -> str | None:
+    """Reject cross-contaminated KMA analysis tool choices for map/chart wording."""
+    if not _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query):
+        return None
+    tool_id = fname if fname in _KMA_ANALYSIS_TOOL_IDS else args_obj.get("tool_id")
+    if not isinstance(tool_id, str):
+        params = args_obj.get("params")
+        if isinstance(params, dict):
+            nested_tool_id = params.get("tool_id")
+            tool_id = nested_tool_id if isinstance(nested_tool_id, str) else None
+    if tool_id not in _KMA_ANALYSIS_TOOL_IDS:
+        return None
+    if tool_id == "kma_apihub_url_analysis_weather_chart_image":
+        return None
+    return (
+        "KMA analysis tool-choice mismatch: the latest citizen request asks for "
+        "analyzed weather charts/map evidence such as 일기도, 지도 자료, 비구름, "
+        "or 바람 흐름. Do not carry over a prior point/grid-analysis path. "
+        "RECOVERY: call find with tool_id "
+        "kma_apihub_url_analysis_weather_chart_image for the latest query. If "
+        "APIHub returns 403 approval-required or another upstream error, report "
+        "that failure directly and do not substitute point-grid data or prior "
+        "airport observations."
+    )
+
+
+def _emitted_tool_id(fname: str, args_obj: dict[str, object]) -> str | None:
+    """Return the concrete adapter id represented by a root or direct tool call."""
+    tool_id = fname if fname not in _ROOT_PRIMITIVE_TOOL_NAMES else args_obj.get("tool_id")
+    if isinstance(tool_id, str) and tool_id:
+        return tool_id
+    params = args_obj.get("params")
+    if isinstance(params, dict):
+        nested_tool_id = params.get("tool_id")
+        if isinstance(nested_tool_id, str) and nested_tool_id:
+            return nested_tool_id
+    return None
+
+
+def _direct_public_data_target_for_query(user_query: str) -> tuple[frozenset[str], str, str] | None:
+    """Return target adapter family for public-data wording that should not use substitutes."""
+    if _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query):
+        return (
+            frozenset({_KMA_ANALYSIS_CHART_TOOL_ID}),
+            _KMA_ANALYSIS_CHART_TOOL_ID,
+            "call the KMA APIHub analyzed weather-chart adapter and do not "
+            "substitute location, AirKorea, or ordinary weather tools.",
+        )
+    if _PPS_BID_USER_QUERY_RE.search(user_query):
+        return (
+            frozenset({_PPS_BID_TOOL_ID}),
+            _PPS_BID_TOOL_ID,
+            "call the PPS/NaraJangteo bid adapter with its bid notice date fields.",
+        )
+    if _AIRKOREA_USER_QUERY_RE.search(user_query):
+        return (
+            frozenset({_AIRKOREA_TOOL_ID}),
+            _AIRKOREA_TOOL_ID,
+            "call the AirKorea city/province air-quality adapter with sido_name such as '부산'.",
+        )
+    if _TAGO_BUS_USER_QUERY_RE.search(user_query):
+        preferred = (
+            "tago_bus_route_search"
+            if _TAGO_ROUTE_NO_RE.search(user_query)
+            else "tago_bus_station_search"
+        )
+        return (
+            _TAGO_TOOL_IDS,
+            preferred,
+            "use TAGO bus schemas; for a route number, start with "
+            "tago_bus_route_search, then route_station and arrival.",
+        )
+    if _query_implies_current_weather_observation(user_query):
+        return (
+            _KMA_ORDINARY_WEATHER_TOOL_IDS | _KMA_LOCATION_TOOL_IDS,
+            "kakao_keyword_search",
+            "use a location adapter first when coordinates are missing, then "
+            "KMA current observation for rain/umbrella/current-weather values.",
+        )
+    return None
+
+
+def _check_direct_public_data_tool_choice_prerequisite(
+    fname: str,
+    args_obj: dict[str, object],
+    user_query: str,
+) -> tuple[str, str] | None:
+    """Reject concrete public-data adapters that do not match the latest citizen request."""
+    target = _direct_public_data_target_for_query(user_query)
+    if target is None:
+        return None
+    allowed_tool_ids, preferred_tool_id, hint = target
+    emitted_tool_id = _emitted_tool_id(fname, args_obj)
+    if emitted_tool_id is None or emitted_tool_id in allowed_tool_ids:
+        return None
+    return (
+        preferred_tool_id,
+        "Public-data tool-choice mismatch: the latest citizen request matches "
+        f"{preferred_tool_id}. The model emitted {emitted_tool_id} instead. "
+        f"RECOVERY: {hint}",
+    )
+
+
+def _check_kma_aviation_tool_choice_prerequisite(
+    fname: str,
+    args_obj: dict[str, object],
+    user_query: str,
+) -> str | None:
+    """Reject ordinary weather/location tools for airport aviation wording."""
+    if not (
+        _KMA_AIRPORT_PLACE_RE.search(user_query) and _KMA_AIRPORT_AVIATION_RE.search(user_query)
+    ):
+        return None
+    tool_id = _emitted_tool_id(fname, args_obj)
+    if tool_id in _KMA_AIR_TOOL_IDS:
+        return None
+    if tool_id is None:
+        return None
+    return (
+        "KMA aviation tool-choice mismatch: the latest citizen request asks for "
+        "airport METAR/AMOS aviation evidence such as flight operation, wind, "
+        "runway, RVR, or visibility. RECOVERY: call find with tool_id "
+        "kma_apihub_url_air_metar_decoded for airport METAR/시정/풍향/풍속 "
+        "evidence, or kma_apihub_url_air_amos_minute for documented AMOS "
+        "runway-minute evidence. Do not call locate or ordinary KMA current "
+        "observation before the aviation adapter."
+    )
+
+
+def _preferred_kma_aviation_tool_id(user_query: str) -> str:
+    """Return the aviation adapter that best matches the airport wording."""
+    if re.search(r"(김포|gimpo|rkss)", user_query, re.IGNORECASE) and re.search(
+        r"(amos|활주로|rvr|runway|매분)", user_query, re.IGNORECASE
+    ):
+        return "kma_apihub_url_air_amos_minute"
+    return "kma_apihub_url_air_metar_decoded"
+
+
 _CURRENT_WEATHER_KEYWORDS_KO: frozenset[str] = frozenset(
     {"날씨", "기온", "온도", "습도", "강수", "바람", "풍속"}
 )
@@ -3918,6 +4605,16 @@ _AVAILABLE_ADAPTER_FIND_LINE_RE: Final = re.compile(
     r"^\s*-\s+[A-Za-z0-9_.:-]+\s+\(primitive=find\)",
     re.MULTILINE,
 )
+_MEDICAL_COLLAPSE_RE: Final = re.compile(
+    r"(사람[이가은는 ]*쓰러|쓰러졌|쓰러져|의식[을 ]*(?:잃|없)|심정지|"
+    r"숨[을 ]*(?:안|못)|호흡[이가은는 ]*없|자동심장|심장충격|제세동|"
+    r"\bAED\b|collapsed|unconscious|cardiac arrest|not breathing)",
+    re.IGNORECASE,
+)
+_CIVIL_SAFETY_CALL_BOX_RE: Final = re.compile(
+    r"(비상벨|안심벨|비상\s*호출|긴급\s*호출|emergency\s*bell|call\s*box)",
+    re.IGNORECASE,
+)
 
 
 def _latest_available_adapters_block(llm_messages: list[Any]) -> str:
@@ -3943,6 +4640,25 @@ def _latest_available_adapters_block(llm_messages: list[Any]) -> str:
 def _available_adapters_block_has_find_candidate(block: str) -> bool:
     """Return True when retrieval surfaced a non-locate follow-up adapter."""
     return bool(block and _AVAILABLE_ADAPTER_FIND_LINE_RE.search(block))
+
+
+def _available_adapters_block_has_tool_id(block: str, tool_id: str) -> bool:
+    """Return True when the latest dynamic adapter block surfaced tool_id."""
+    if not block or not tool_id:
+        return False
+    escaped = re.escape(tool_id)
+    line_re = re.compile(rf"^\s*-\s*{escaped}(?:\s|\(|:)", re.MULTILINE)
+    yaml_re = re.compile(rf"^\s*tool_id:\s*{escaped}\s*$", re.MULTILINE)
+    return bool(line_re.search(block) or yaml_re.search(block) or f"tool_id: {tool_id}" in block)
+
+
+def _query_implies_medical_collapse_aed(user_query: str) -> bool:
+    """Return True for medical collapse/cardiac-arrest wording that needs AED data."""
+    if not user_query:
+        return False
+    if _CIVIL_SAFETY_CALL_BOX_RE.search(user_query):
+        return False
+    return _MEDICAL_COLLAPSE_RE.search(user_query) is not None
 
 
 def _query_implies_current_weather_observation(user_query: str) -> bool:
@@ -4005,6 +4721,47 @@ def _check_current_weather_terminated_without_observation(
         "ny:<latest locate KMA Y>}) using the latest locate result. Do NOT claim "
         "that live/current observation data is unavailable unless this adapter was "
         "called and returned an error."
+    )
+
+
+def _check_medical_emergency_terminated_without_aed(
+    llm_messages: list[Any],
+    user_query: str,
+    registry: Any = None,
+) -> str | None:
+    """Require AED search before final prose for collapse/cardiac-arrest wording."""
+    if not _query_implies_medical_collapse_aed(user_query):
+        return None
+    available_adapters_block = _latest_available_adapters_block(llm_messages)
+    if not _available_adapters_block_has_tool_id(
+        available_adapters_block,
+        "nmc_aed_site_locate",
+    ):
+        return None
+    if _conversation_has_primitive_call(
+        llm_messages,
+        primitive="find",
+        tool_id="nmc_aed_site_locate",
+    ):
+        return None
+    if not _conversation_has_successful_primitive(
+        llm_messages,
+        primitive="find",
+        tool_id="nmc_emergency_search",
+    ):
+        return None
+    return (
+        "Medical emergency chain incomplete: the citizen described a collapse, "
+        "unconsciousness, cardiac arrest, or AED-relevant situation. The "
+        "conversation already found emergency-room data but is about to answer "
+        "without attempting the AED adapter that was surfaced in "
+        "<available_adapters>. RECOVERY: call "
+        "nmc_aed_site_locate({q0:<region from locate or NMC context>, "
+        "q1:<district when available>, limit:5}) or the equivalent schema-valid "
+        "parameters before final prose. If the AED adapter returns no data or an "
+        "upstream error, report that result explicitly alongside 119/emergency-room "
+        "guidance. Do NOT substitute emergency-room data for AED data. Do NOT "
+        "produce a final answer this turn."
     )
 
 
@@ -4401,8 +5158,8 @@ async def run(  # noqa: C901
 
     # ---- spec-multi-turn-contamination diagnostic — optional log file
     # The TUI bridge spawns this process with `stderr: 'pipe'` and never
-    # drains the pipe, so `logger.info(...)` lines are invisible to any
-    # external observer (tmux pane, asciinema cast). When the operator
+    # drains the pipe, so `logger.info(...)` lines are invisible to the
+    # normal terminal transcript. When the operator
     # sets UMMAYA_BACKEND_LOG_FILE=<path>, attach a FileHandler at INFO
     # so the diagnostic [CHAT_REQUEST_DUMP] / [LATEST_USER_UTT] /
     # [REASONING_PREVIEW] lines persist to disk for post-hoc analysis.
@@ -4555,6 +5312,8 @@ async def run(  # noqa: C901
     _session_auth_contexts: dict[str, object] = {}
     _session_auth_session_ids: dict[str, str] = {}
     _session_latest_locate_results: dict[str, dict[str, object]] = {}
+    _session_latest_locate_results_with_coords: dict[str, dict[str, object]] = {}
+    _session_latest_user_utterances: dict[str, str] = {}
 
     # Epic #2077 T010 — single ToolRegistry + ToolExecutor instance pair
     # reused across every chat_request. Adapter registration happens lazily
@@ -4892,6 +5651,27 @@ async def run(  # noqa: C901
         candidates = filtered_candidates
         if not candidates:
             return ""
+        candidate_ids = tuple(candidate.tool_id for candidate in candidates)
+        first_candidate_id = candidate_ids[0]
+        has_amos_candidate = "kma_apihub_url_air_amos_minute" in candidate_ids
+        has_metar_candidate = "kma_apihub_url_air_metar_decoded" in candidate_ids
+        has_analysis_candidate = any(
+            candidate_id
+            in {
+                "kma_apihub_url_high_resolution_grid_point",
+                "kma_apihub_url_aws_objective_analysis_grid",
+                "kma_apihub_url_analysis_weather_chart_image",
+            }
+            for candidate_id in candidate_ids
+        )
+        is_gimpo_runway_query = bool(
+            re.search(r"(김포공항|Gimpo|RKSS)", q, re.IGNORECASE)
+            and re.search(
+                r"(AMOS|활주로|RVR|runway|시정|visibility|공항기상관측|매분)",
+                q,
+                re.IGNORECASE,
+            )
+        )
         # Build a compact, LLM-readable block.
         #
         # Spec 2521 (2026-05-02) — emit per-field schema signatures so the
@@ -4917,6 +5697,7 @@ async def run(  # noqa: C901
             lines.append(
                 f"- {c.tool_id} (primitive={primitive}) [{c.score:.2f}] — {hint or '(설명 없음)'}"
             )
+            lines.append(f"  호출: {c.tool_id}({{...schema fields...}})")
             # Render the adapter's llm_description (usage prose, ORDERING RULE,
             # prerequisites, worked examples) so the LLM sees the complete
             # "먼저 locate 호출" ordering rule.
@@ -4924,10 +5705,13 @@ async def run(  # noqa: C901
             # and K-EXAONE skips locate, producing invalid_params.
             if c.llm_description:
                 desc_text = c.llm_description.strip().replace("\n", " ")
-                # Emit at most 300 chars — enough for the ORDERING RULE and
-                # worked example without blowing the per-turn token budget.
-                if len(desc_text) > 300:
-                    desc_text = desc_text[:297] + "..."
+                # Emit enough text for adapter-specific negative routing and
+                # output-use rules. KMA METAR/AMOS descriptions carry critical
+                # "Gimhae is not AMOS" and "safe_weather only" instructions
+                # after the purpose sentence; truncating them makes the TUI
+                # path claim no METAR tool exists.
+                if len(desc_text) > 900:
+                    desc_text = desc_text[:897] + "..."
                 lines.append(f"  설명: {desc_text}")
             # Render input schema signature so the LLM sees exact field
             # names + types + required flags + (truncated) descriptions.
@@ -5036,11 +5820,54 @@ async def run(  # noqa: C901
                     )
         lines.append("")
         lines.append(
-            "규칙: 위 목록의 tool_id는 이미 model-facing concrete function name입니다. "
-            "루트 wrapper find/locate/check/send 를 호출하지 말고, 해당 tool_id 이름의 "
-            "함수를 직접 호출하세요. 인자는 schema 의 필드명 그대로 전달합니다. "
-            "동일 tool_id 를 한 turn 안에서 반복 호출하지 마세요."
+            "규칙: 위 목록의 tool_id는 concrete adapter id입니다. model-facing "
+            "함수명도 tools[]에 로드된 concrete tool_id입니다. concrete adapter "
+            "function은 schema 필드만 받으므로 tool_id/params envelope를 그 안에 "
+            "넣지 마세요. concrete function이 로드되지 않고 root primitive만 "
+            '있을 때만 legacy envelope 예: find({"tool_id":"...", "params":{...}}) '
+            "형식을 사용합니다. 동일 tool_id 를 한 turn 안에서 반복 호출하지 "
+            "마세요. 위 목록에 요청과 일치하는 adapter가 있으면 도구가 없다고 "
+            "답하지 마세요."
         )
+        if has_analysis_candidate:
+            lines.append(
+                "분석자료 특수 규칙: 위 후보에 고해상도 격자자료, AWS 객관분석, "
+                "분석일기도 이미지가 있으면 기상청이 이미 분석한 자료 도구가 있는 "
+                "것입니다. 공항 관측값/METAR/AMOS/일반 예보가 아니라 시민이 말한 "
+                "분석자료 계열 후보를 호출하세요. 지도/일기도/비구름/바람 흐름 "
+                "질의는 kma_apihub_url_analysis_weather_chart_image 를 우선 호출하고, "
+                "특정 지점 주변 값은 locate 뒤 "
+                "kma_apihub_url_high_resolution_grid_point 또는 "
+                "kma_apihub_url_aws_objective_analysis_grid 를 호출하세요. 공항/랜드마크 "
+                "주변 좌표는 kakao_keyword_search 를 kakao_address_search 보다 먼저 "
+                "사용하세요. locate 가 실패하면 다른 후보 위치 도구를 시도하고, 도구 "
+                "결과 없이 좌표를 추정하지 마세요. APIHub 승인 대기나 upstream 오류가 "
+                "나면 그 실패를 그대로 설명하고, 도구 결과 없이 지도 기반 내용을 "
+                "추정하지 마세요."
+            )
+        if has_amos_candidate and (
+            is_gimpo_runway_query or first_candidate_id == "kma_apihub_url_air_amos_minute"
+        ):
+            lines.append(
+                "AMOS 특수 규칙: kma_apihub_url_air_amos_minute 가 김포공항 "
+                "활주로/시정/RVR/매분 관측 후보이면 AMOS 공항기상관측 도구가 "
+                "있는 것입니다. 김포공항은 stn=110 을 사용하세요. 이 후보는 "
+                "좌표를 요구하지 않으므로 locate/kma_current_observation 을 먼저 "
+                '호출하지 말고 즉시 kma_apihub_url_air_amos_minute({"stn":"110",'
+                '"help":1}) 를 호출하세요. METAR 는 '
+                "보조 확인이 필요할 때만 추가로 사용하세요."
+            )
+        if has_metar_candidate and not (has_amos_candidate and is_gimpo_runway_query):
+            lines.append(
+                "METAR 특수 규칙: kma_apihub_url_air_metar_decoded 가 후보에 있으면 "
+                "공항 METAR 해독자료 조회 도구가 있는 것입니다. 김해공항/RKPK는 "
+                "decoded_records 의 station 153 Gimhae Airport / RKPK record를 "
+                "사용하고, 날씨 값은 decoded_records[].safe_weather 만 사용하세요. "
+                "raw_fields/raw_report에서 별도 값을 만들지 마세요. 이 후보는 좌표를 "
+                "요구하지 않으므로 locate/kma_current_observation 을 먼저 호출하지 "
+                '말고 즉시 kma_apihub_url_air_metar_decoded({"org":"K","help":1}) '
+                "를 호출하세요."
+            )
         listed_primitives = {str(candidate.primitive or "find") for candidate in candidates}
         if listed_primitives == {"find"}:
             lines.append(
@@ -5061,7 +5888,8 @@ async def run(  # noqa: C901
         )
         lines.append(
             "BM25 도구 발견은 백엔드 internal 기능입니다. 모델은 검색 함수를 호출하지 "
-            "않고, backend가 tools[]에 실어준 concrete function만 호출합니다."
+            "않고, backend가 tools[]에 실어준 concrete adapter function을 우선 "
+            "호출합니다."
         )
         lines.append("</available_adapters>")
         return "\n".join(lines)
@@ -5581,6 +6409,7 @@ async def run(  # noqa: C901
                     )
                     from ummaya.tools.verify_canonical_map import (  # noqa: PLC0415
                         resolve_family,
+                        resolve_tool_id,
                     )
 
                     # Spec 2297 / Issue #C1 (2026-05-04) — translate
@@ -5595,7 +6424,11 @@ async def run(  # noqa: C901
                     # Accept both ``family`` (citizen-facing tool schema) and
                     # ``family_hint`` (primitive's internal arg name) for
                     # legacy / tools-bridge compatibility.
-                    tool_id = str(args_obj.get("tool_id") or "")
+                    raw_tool_id = str(args_obj.get("tool_id") or "")
+                    canonical_tool_id = resolve_tool_id(raw_tool_id) or raw_tool_id
+                    if canonical_tool_id != raw_tool_id:
+                        args_obj = {**args_obj, "tool_id": canonical_tool_id}
+                    tool_id = canonical_tool_id
                     if tool_id:
                         registry = _ensure_tool_registry()
                         try:
@@ -5656,7 +6489,8 @@ async def run(  # noqa: C901
                             message=(
                                 "find(mode='search') 는 백엔드 internal 기능입니다 — "
                                 "직접 호출하지 마십시오. 시스템 프롬프트의 "
-                                "<available_adapters> 에서 tool_id 를 골라 fetch 호출만 사용하세요."
+                                "<available_adapters> 에서 concrete adapter function을 "
+                                "골라 schema 필드로 직접 호출하세요."
                             ),
                             retryable=False,
                         )
@@ -5813,6 +6647,8 @@ async def run(  # noqa: C901
                 locate_result = result_payload.get("result")
                 if isinstance(locate_result, dict) and locate_result.get("kind") != "error":
                     _session_latest_locate_results[session_id] = locate_result
+                    if _locate_result_coords(locate_result) is not None:
+                        _session_latest_locate_results_with_coords[session_id] = locate_result
 
             # Drain the outbound HTTP trace buffer + attach to the envelope.
             outbound_traces = consume_outbound_capture(_outbound_trace_token)
@@ -5900,6 +6736,29 @@ async def run(  # noqa: C901
         if not isinstance(frame, ChatRequestFrame):
             return
 
+        async def _emit_progress_event(
+            phase: Literal[
+                "analysis",
+                "tool_selection",
+                "tool_call",
+                "tool_result",
+                "answer_synthesis",
+            ],
+            message_ko: str,
+            message_en: str,
+            *,
+            tool_id: str | None = None,
+            call_id: str | None = None,
+        ) -> None:
+            _ = (phase, message_ko, message_en, tool_id, call_id)
+            return
+
+        await _emit_progress_event(
+            "analysis",
+            "요청을 분석하고 있습니다.",
+            "Analyzing the request.",
+        )
+
         # ---- spec-multi-turn-contamination diagnostic emit (FR-001/FR-002)
         # Increment the per-session turn counter and dump the inbound
         # ChatRequestFrame.messages tail so we can prove which user turn
@@ -5942,11 +6801,9 @@ async def run(  # noqa: C901
             except Exception:  # noqa: BLE001 — diagnostic must never raise
                 logger.exception("[CHAT_REQUEST_DUMP] failed to serialise")
 
-        latest_user_utt = ""
-        for _msg in reversed(frame.messages):
-            if _msg.role == "user" and _msg.content:
-                latest_user_utt = _msg.content
-                break
+        latest_user_utt = _latest_citizen_user_utterance(frame.messages)
+        if latest_user_utt:
+            _session_latest_user_utterances[frame.session_id] = latest_user_utt
 
         # Tool inventory — backend ToolRegistry is the single source of
         # truth. CC exposes concrete Tool objects as model-facing functions:
@@ -5971,6 +6828,11 @@ async def run(  # noqa: C901
         llm_tools: list[LLMToolDefinition] = [
             LLMToolDefinition.model_validate(raw) for raw in backend_tools_raw
         ]
+        await _emit_progress_event(
+            "tool_selection",
+            "도구 후보와 질의 맥락을 정리하고 있습니다.",
+            "Preparing tool candidates and query context.",
+        )
         has_concrete_backend_tools = bool(backend_tools_raw)
         for t in frame.tools:
             tui_name = getattr(getattr(t, "function", None), "name", None)
@@ -6073,10 +6935,9 @@ async def run(  # noqa: C901
             # calls were the source of the "● find(search:)" phantom tool-UI
             # noise that user surfaced via Layer 5 frame capture.
             try:
-                for m in reversed(frame.messages):
-                    if m.role == "user" and m.content:
-                        latest_user_utt = m.content
-                        break
+                latest_user_utt = _latest_citizen_user_utterance(frame.messages)
+                if latest_user_utt:
+                    _session_latest_user_utterances[frame.session_id] = latest_user_utt
                 # spec-multi-turn-contamination diagnostic emit — log the
                 # extracted latest user utterance BEFORE the BM25 suffix
                 # builder runs. If this string disagrees with the wire-level
@@ -6170,6 +7031,10 @@ async def run(  # noqa: C901
         verify_choice_mismatch_count = 0
         empty_final_retry_count = 0
         duplicate_nonprogress_count = 0
+        initial_concrete_tool_choice = _initial_concrete_tool_choice_for_query(
+            latest_user_utt,
+            _tool_definition_names(llm_tools),
+        )
 
         for _turn in range(_AGENTIC_LOOP_MAX_TURNS):
             message_id = str(uuid.uuid4())
@@ -6275,6 +7140,47 @@ async def run(  # noqa: C901
                 no_tools_this_turn = True
                 force_no_tools_next_turn = False
             elif (
+                initial_concrete_tool_choice is not None
+                and initial_concrete_tool_choice in _tool_definition_names(stream_tools)
+            ):
+                stream_tool_choice = _function_tool_choice(initial_concrete_tool_choice)
+                logger.warning(
+                    "_handle_chat_request: forcing initial concrete adapter %s "
+                    "for unambiguous query",
+                    initial_concrete_tool_choice,
+                )
+                initial_concrete_tool_choice = None
+            elif (
+                force_lookup_next_turn is not None
+                and force_lookup_next_turn in _tool_definition_names(stream_tools)
+            ):
+                stream_tool_choice = _function_tool_choice(force_lookup_next_turn)
+                logger.warning(
+                    "_handle_chat_request: forcing concrete find adapter %s after validation gate",
+                    force_lookup_next_turn,
+                )
+                force_lookup_next_turn = None
+            elif (
+                force_verify_next_turn is not None
+                and force_verify_next_turn in _tool_definition_names(stream_tools)
+            ):
+                stream_tool_choice = _function_tool_choice(force_verify_next_turn)
+                logger.warning(
+                    "_handle_chat_request: forcing concrete check adapter %s after validation gate",
+                    force_verify_next_turn,
+                )
+                force_verify_next_turn = None
+            elif (
+                force_submit_next_turn is not None
+                and force_submit_next_turn in _tool_definition_names(stream_tools)
+            ):
+                stream_tool_choice = _function_tool_choice(force_submit_next_turn)
+                logger.warning(
+                    "_handle_chat_request: forcing concrete send adapter %s after validation gate",
+                    force_submit_next_turn,
+                )
+                force_submit_next_turn = None
+            elif (
                 force_locate_next_turn
                 or force_verify_next_turn is not None
                 or force_lookup_next_turn is not None
@@ -6290,13 +7196,18 @@ async def run(  # noqa: C901
                     force_submit_next_turn,
                 )
             try:
+                stream_kwargs: dict[str, object] = {
+                    "messages": llm_messages,
+                    "tools": stream_tools,
+                    "temperature": frame.temperature,
+                    "top_p": frame.top_p,
+                    "max_tokens": _effective_chat_max_tokens(frame.max_tokens),
+                    "tool_choice": stream_tool_choice,
+                }
+                if frame.reasoning_mode is not None:
+                    stream_kwargs["reasoning_mode"] = frame.reasoning_mode
                 async for event in client.stream(  # type: ignore[attr-defined]
-                    messages=llm_messages,
-                    tools=stream_tools,
-                    temperature=frame.temperature,
-                    top_p=frame.top_p,
-                    max_tokens=_effective_chat_max_tokens(frame.max_tokens),
-                    tool_choice=stream_tool_choice,
+                    **stream_kwargs,
                 ):
                     event_type = getattr(event, "type", None)
                     if event_type == "content_delta":
@@ -6553,6 +7464,19 @@ async def run(  # noqa: C901
                     buffered_visible.clear()
                     continue
 
+                medical_aed_followup_msg = _check_medical_emergency_terminated_without_aed(
+                    llm_messages,
+                    latest_user_utt,
+                    registry=_ensure_tool_registry(),
+                )
+                if medical_aed_followup_msg is not None:
+                    _append_tool_routing_observation(
+                        "rejected final-answer turn — collapse emergency missing AED lookup",
+                        medical_aed_followup_msg,
+                    )
+                    buffered_visible.clear()
+                    continue
+
                 current_weather_gate_msg = _check_current_weather_terminated_without_observation(
                     llm_messages,
                     latest_user_utt,
@@ -6582,6 +7506,25 @@ async def run(  # noqa: C901
                 has_successful_tool_result = _conversation_has_successful_any_primitive_result(
                     llm_messages
                 )
+                if (
+                    merged_prose.strip()
+                    and _final_answer_looks_like_tool_call_narration(merged_prose)
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_tool_routing_observation(
+                        "rejected textual tool-call final answer",
+                        (
+                            "The previous assistant turn printed <tool_call> or JSON "
+                            "tool-call text as citizen-facing prose. Never print tool "
+                            "calls. If another lookup is required, emit a structured "
+                            "function call from the current tools[] list. If enough "
+                            "evidence is already available, write a Korean prose final "
+                            "answer only."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
                 if not merged_prose.strip() and has_successful_tool_result:
                     if empty_final_retry_count < 2:
                         empty_final_retry_count += 1
@@ -6629,6 +7572,59 @@ async def run(  # noqa: C901
                             "and the observation base time when present. Do not ask the "
                             "citizen to retry unless the successful tool_result is "
                             "insufficient for the request."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and _final_answer_looks_like_kma_analysis_fabrication(
+                        merged_prose,
+                        latest_user_utt,
+                    )
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_final_answer_observation(
+                        "rejected KMA analysis final answer filled from general knowledge",
+                        (
+                            "The citizen asked for KMA analyzed-data evidence. The "
+                            "previous assistant turn described failed, empty, or "
+                            "unparseable KMA APIHub analysis lookups, then filled the "
+                            "weather answer with general knowledge. Do not fill gaps "
+                            "from prior knowledge. If the successful tool_results do "
+                            "not contain parseable analyzed values for the request, "
+                            "answer that the KMA APIHub lookup did not provide usable "
+                            "analyzed data in this run, cite the APIHub upstream/approval "
+                            "failure when present, and avoid weather-condition claims."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and _final_answer_substitutes_after_kma_chart_failure(
+                        merged_prose,
+                        latest_user_utt,
+                        llm_messages,
+                    )
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_final_answer_observation(
+                        (
+                            "rejected KMA chart answer substituted non-chart "
+                            "evidence after upstream failure"
+                        ),
+                        (
+                            "The citizen asked for analyzed weather-chart/map evidence. "
+                            "The KMA APIHub chart lookup failed or required approval, "
+                            "and the previous assistant answer substituted point-grid, "
+                            "AWS objective-analysis, or observation values. Do not "
+                            "substitute other evidence for this chart/map request. "
+                            "Answer that the KMA APIHub analyzed chart lookup could "
+                            "not be used in this run, cite the upstream approval/error "
+                            "state, and avoid weather-condition claims."
                         ),
                     )
                     buffered_visible.clear()
@@ -6852,6 +7848,7 @@ async def run(  # noqa: C901
 
                 model_tool_name = slot["name"]
                 model_args_obj = dict(args_obj)
+                canonical_model_tool_name = model_tool_name
 
                 from ummaya.primitives import PRIMITIVE_REGISTRY  # noqa: PLC0415
 
@@ -6859,8 +7856,15 @@ async def run(  # noqa: C901
                     fname = model_tool_name
                     args_obj = dict(model_args_obj)
                 else:
+                    from ummaya.tools.verify_canonical_map import (  # noqa: PLC0415
+                        resolve_tool_id as _resolve_verify_tool_id,
+                    )
+
+                    canonical_model_tool_name = (
+                        _resolve_verify_tool_id(model_tool_name) or model_tool_name
+                    )
                     try:
-                        concrete_tool = registry.find(model_tool_name)
+                        concrete_tool = registry.find(canonical_model_tool_name)
                     except Exception:
                         await write_frame(
                             ErrorFrame(
@@ -6894,8 +7898,12 @@ async def run(  # noqa: C901
                         )
                         continue
                     fname = primitive_name
-                    args_obj = {"tool_id": model_tool_name, "params": dict(model_args_obj)}
+                    args_obj = {
+                        "tool_id": canonical_model_tool_name,
+                        "params": dict(model_args_obj),
+                    }
 
+                args_obj = _normalize_root_primitive_adapter_envelope(fname, args_obj)
                 raw_dispatch_args_obj = _copy_primitive_args(args_obj)
 
                 args_obj = _maybe_reroute_locate_admin_keyword_args(fname, args_obj)
@@ -6944,10 +7952,12 @@ async def run(  # noqa: C901
                         latest_user_utt,
                         adapter_param_names=adapter_param_names,
                     )
-                emit_tool_name = model_tool_name
+                emit_tool_name = (
+                    canonical_model_tool_name if model_tool_name != fname else model_tool_name
+                )
                 emit_args_obj = (
                     dict(cast("dict[str, object]", args_obj.get("params") or {}))
-                    if model_tool_name != fname
+                    if emit_tool_name != fname
                     else args_obj
                 )
 
@@ -6986,6 +7996,13 @@ async def run(  # noqa: C901
                     )
 
                     await _emit_buffered_visible_before_tool(message_id)
+                    await _emit_progress_event(
+                        "tool_call",
+                        "선택된 도구를 호출하고 있습니다.",
+                        "Calling the selected tool.",
+                        tool_id=emit_tool_name,
+                        call_id=call_id,
+                    )
                     await write_frame(
                         ToolCallFrame(
                             session_id=frame.session_id,
@@ -7114,6 +8131,43 @@ async def run(  # noqa: C901
                     continue_free_next_turn = True
                     continue
 
+                kma_aviation_choice_msg = _check_kma_aviation_tool_choice_prerequisite(
+                    fname,
+                    args_obj,
+                    latest_user_utt,
+                )
+                if kma_aviation_choice_msg is not None:
+                    force_lookup_next_turn = _preferred_kma_aviation_tool_id(latest_user_utt)
+                    _append_tool_routing_observation(
+                        f"rejected {fname} call_id={call_id[:12]} — KMA aviation tool mismatch",
+                        kma_aviation_choice_msg,
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected %s call_id=%s — KMA aviation tool mismatch",
+                        fname,
+                        call_id[:12],
+                    )
+                    continue
+
+                direct_public_data_choice = _check_direct_public_data_tool_choice_prerequisite(
+                    fname,
+                    args_obj,
+                    latest_user_utt,
+                )
+                if direct_public_data_choice is not None:
+                    preferred_tool_id, direct_public_data_msg = direct_public_data_choice
+                    force_lookup_next_turn = preferred_tool_id
+                    _append_tool_routing_observation(
+                        f"rejected {fname} call_id={call_id[:12]} — public-data tool mismatch",
+                        direct_public_data_msg,
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected %s call_id=%s — public-data tool mismatch",
+                        fname,
+                        call_id[:12],
+                    )
+                    continue
+
                 # Chain prerequisite gate — donga-univ-poi-bug Epic #2766.
                 # CC mirror: ``Tool.validateInput?(input, context)`` from
                 # ``.references/claude-code-sourcemap/restored-src/src/Tool.ts:489``
@@ -7132,11 +8186,9 @@ async def run(  # noqa: C901
                 # the coordinates AND no prior turn in llm_messages
                 # invoked locate, that means the LLM guessed
                 # the coordinates from prior knowledge instead of routing
-                # through the canonical resolver. Three live captures
-                # under specs/integration-verification/donga-univ-poi-bug/
-                # showed this exact pattern producing wrong-region
-                # hospital lists. Rejecting here forces the next turn
-                # through locate.
+                # through the canonical resolver. Historical live captures
+                # showed this exact pattern producing wrong-region hospital
+                # lists. Rejecting here forces the next turn through locate.
                 chain_error_msg = _check_chain_prerequisite(
                     fname,
                     args_obj,
@@ -7158,6 +8210,24 @@ async def run(  # noqa: C901
                     force_locate_next_turn = True
                     continue
 
+                kma_analysis_choice_msg = _check_kma_analysis_tool_choice_prerequisite(
+                    fname,
+                    args_obj,
+                    latest_user_utt,
+                )
+                if kma_analysis_choice_msg is not None:
+                    _append_tool_routing_observation(
+                        f"rejected {fname} call_id={call_id[:12]} — KMA analysis tool mismatch",
+                        kma_analysis_choice_msg,
+                    )
+                    logger.warning(
+                        "_handle_chat_request: rejected %s call_id=%s — KMA analysis tool mismatch",
+                        fname,
+                        call_id[:12],
+                    )
+                    continue_free_next_turn = True
+                    continue
+
                 verify_choice_gate = _check_verify_tool_choice_prerequisite(
                     fname,
                     args_obj,
@@ -7170,6 +8240,13 @@ async def run(  # noqa: C901
                     )
 
                     await _emit_buffered_visible_before_tool(message_id)
+                    await _emit_progress_event(
+                        "tool_call",
+                        "선택된 도구를 호출하고 있습니다.",
+                        "Calling the selected tool.",
+                        tool_id=emit_tool_name,
+                        call_id=call_id,
+                    )
                     await write_frame(
                         ToolCallFrame(
                             session_id=frame.session_id,
@@ -7326,6 +8403,13 @@ async def run(  # noqa: C901
                     )
 
                     await _emit_buffered_visible_before_tool(message_id)
+                    await _emit_progress_event(
+                        "tool_call",
+                        "선택된 도구를 호출하고 있습니다.",
+                        "Calling the selected tool.",
+                        tool_id=emit_tool_name,
+                        call_id=call_id,
+                    )
                     await write_frame(
                         ToolCallFrame(
                             session_id=frame.session_id,
@@ -7404,6 +8488,13 @@ async def run(  # noqa: C901
                     continue
 
                 await _emit_buffered_visible_before_tool(message_id)
+                await _emit_progress_event(
+                    "tool_call",
+                    "선택된 도구를 호출하고 있습니다.",
+                    "Calling the selected tool.",
+                    tool_id=emit_tool_name,
+                    call_id=call_id,
+                )
                 await write_frame(
                     ToolCallFrame(
                         session_id=frame.session_id,
@@ -7730,7 +8821,7 @@ async def run(  # noqa: C901
         if not fut.done():
             fut.set_result(frame)
 
-    async def _handle_tool_call(frame: IPCFrame) -> None:
+    async def _handle_tool_call(frame: IPCFrame) -> None:  # noqa: C901
         """Execute a TUI-owned Tool.call request and emit a tool_result frame.
 
         Claude Code's query loop, not the provider, owns tool execution. The
@@ -7754,8 +8845,13 @@ async def run(  # noqa: C901
         dispatch_name = frame.name
         dispatch_args = args_obj
         if dispatch_name not in PRIMITIVE_REGISTRY:
+            from ummaya.tools.verify_canonical_map import (  # noqa: PLC0415
+                resolve_tool_id as _resolve_verify_tool_id,
+            )
+
+            canonical_dispatch_name = _resolve_verify_tool_id(dispatch_name) or dispatch_name
             try:
-                concrete_tool = _ensure_tool_registry().find(dispatch_name)
+                concrete_tool = _ensure_tool_registry().find(canonical_dispatch_name)
             except Exception:
                 from ummaya.ipc.frame_schema import (  # noqa: PLC0415
                     ToolResultEnvelope,
@@ -7811,13 +8907,150 @@ async def run(  # noqa: C901
                 )
                 return
             dispatch_name = primitive_name
-            dispatch_args = {"tool_id": frame.name, "params": dict(args_obj)}
+            dispatch_args = {"tool_id": canonical_dispatch_name, "params": dict(args_obj)}
 
         dispatch_args = _normalize_lookup_args_from_cached_locate_result(
             dispatch_name,
             dispatch_args,
             _session_latest_locate_results.get(frame.session_id),
+            coordinate_locate_result=_session_latest_locate_results_with_coords.get(
+                frame.session_id
+            ),
+            user_query=_session_latest_user_utterances.get(frame.session_id, ""),
         )
+        dispatch_args = _normalize_root_primitive_adapter_envelope(dispatch_name, dispatch_args)
+        dispatch_args = _normalize_lookup_args_for_query(
+            dispatch_name,
+            dispatch_args,
+            _session_latest_user_utterances.get(frame.session_id, ""),
+        )
+
+        kma_aviation_choice_msg = _check_kma_aviation_tool_choice_prerequisite(
+            dispatch_name,
+            dispatch_args,
+            _session_latest_user_utterances.get(frame.session_id, ""),
+        )
+        if kma_aviation_choice_msg is not None:
+            from ummaya.ipc.frame_schema import (  # noqa: PLC0415
+                ToolResultEnvelope,
+                ToolResultFrame,
+            )
+
+            envelope = ToolResultEnvelope.model_validate(
+                {
+                    "kind": cast("Any", dispatch_name),
+                    "result": {
+                        "kind": "error",
+                        "reason": "kma_aviation_tool_choice_mismatch",
+                        "message": kma_aviation_choice_msg,
+                        "retryable": False,
+                    },
+                }
+            )
+            result_frame = ToolResultFrame(
+                session_id=frame.session_id,
+                correlation_id=frame.correlation_id,
+                role="backend",
+                ts=_utcnow(),
+                kind="tool_result",
+                call_id=frame.call_id,
+                envelope=envelope,
+            )
+            await write_frame(result_frame)
+            fut = _pending_calls.pop(frame.call_id, None)
+            if fut is not None and not fut.done():
+                fut.set_result(result_frame)
+            logger.warning(
+                "_handle_tool_call: rejected %s call_id=%s — KMA aviation tool mismatch",
+                dispatch_name,
+                frame.call_id[:12],
+            )
+            return
+
+        direct_public_data_choice = _check_direct_public_data_tool_choice_prerequisite(
+            dispatch_name,
+            dispatch_args,
+            _session_latest_user_utterances.get(frame.session_id, ""),
+        )
+        if direct_public_data_choice is not None:
+            from ummaya.ipc.frame_schema import (  # noqa: PLC0415
+                ToolResultEnvelope,
+                ToolResultFrame,
+            )
+
+            _preferred_tool_id, direct_public_data_msg = direct_public_data_choice
+            envelope = ToolResultEnvelope.model_validate(
+                {
+                    "kind": cast("Any", dispatch_name),
+                    "result": {
+                        "kind": "error",
+                        "reason": "public_data_tool_choice_mismatch",
+                        "message": direct_public_data_msg,
+                        "retryable": False,
+                    },
+                }
+            )
+            result_frame = ToolResultFrame(
+                session_id=frame.session_id,
+                correlation_id=frame.correlation_id,
+                role="backend",
+                ts=_utcnow(),
+                kind="tool_result",
+                call_id=frame.call_id,
+                envelope=envelope,
+            )
+            await write_frame(result_frame)
+            fut = _pending_calls.pop(frame.call_id, None)
+            if fut is not None and not fut.done():
+                fut.set_result(result_frame)
+            logger.warning(
+                "_handle_tool_call: rejected %s call_id=%s — public-data tool mismatch",
+                dispatch_name,
+                frame.call_id[:12],
+            )
+            return
+
+        kma_analysis_choice_msg = _check_kma_analysis_tool_choice_prerequisite(
+            dispatch_name,
+            dispatch_args,
+            _session_latest_user_utterances.get(frame.session_id, ""),
+        )
+        if kma_analysis_choice_msg is not None:
+            from ummaya.ipc.frame_schema import (  # noqa: PLC0415
+                ToolResultEnvelope,
+                ToolResultFrame,
+            )
+
+            envelope = ToolResultEnvelope.model_validate(
+                {
+                    "kind": cast("Any", dispatch_name),
+                    "result": {
+                        "kind": "error",
+                        "reason": "kma_analysis_tool_choice_mismatch",
+                        "message": kma_analysis_choice_msg,
+                        "retryable": False,
+                    },
+                }
+            )
+            result_frame = ToolResultFrame(
+                session_id=frame.session_id,
+                correlation_id=frame.correlation_id,
+                role="backend",
+                ts=_utcnow(),
+                kind="tool_result",
+                call_id=frame.call_id,
+                envelope=envelope,
+            )
+            await write_frame(result_frame)
+            fut = _pending_calls.pop(frame.call_id, None)
+            if fut is not None and not fut.done():
+                fut.set_result(result_frame)
+            logger.warning(
+                "_handle_tool_call: rejected %s call_id=%s — KMA analysis tool mismatch",
+                dispatch_name,
+                frame.call_id[:12],
+            )
+            return
 
         await _dispatch_primitive(
             frame.call_id,

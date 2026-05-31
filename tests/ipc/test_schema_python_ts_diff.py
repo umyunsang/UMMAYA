@@ -33,8 +33,8 @@ _COMMITTED_SCHEMA_PATH = _WORKTREE_ROOT / "tui" / "src" / "ipc" / "schema" / "fr
 
 # Expected number of frame arms (Spec 287 baseline 10 + Spec 032 additions 9
 # + Epic #1636 P5 plugin_op + Spec 1978 chat_request + Epic ε #2296 adapter_manifest_sync
-# + Epic 2 consent_revoke_request/response = 24).
-_EXPECTED_KIND_COUNT = 24
+# + Epic 2 consent_revoke_request/response + K-EXAONE progress_event = 25).
+_EXPECTED_KIND_COUNT = 25
 
 
 # ---------------------------------------------------------------------------
@@ -96,8 +96,8 @@ class TestSchemaParity:
         except json.JSONDecodeError as exc:
             pytest.fail(f"Committed schema is not valid JSON: {exc}")
 
-    def test_python_generated_schema_has_19_kinds(self) -> None:
-        """Python-side schema exposes exactly 19 discriminator kinds."""
+    def test_python_generated_schema_has_expected_kinds(self) -> None:
+        """Python-side schema exposes the expected discriminator kind count."""
         live_schema = ipc_frame_json_schema()
         kinds = _extract_kinds_from_schema(live_schema)
         assert len(kinds) == _EXPECTED_KIND_COUNT, (
@@ -105,8 +105,8 @@ class TestSchemaParity:
             f"got {len(kinds)}: {sorted(kinds)}"
         )
 
-    def test_committed_schema_has_19_kinds(self) -> None:
-        """Committed JSON schema file exposes exactly 19 discriminator kinds."""
+    def test_committed_schema_has_expected_kinds(self) -> None:
+        """Committed JSON schema file exposes the expected discriminator kind count."""
         committed_schema = json.loads(_COMMITTED_SCHEMA_PATH.read_text(encoding="utf-8"))
         kinds = _extract_kinds_from_schema(committed_schema)
         assert len(kinds) == _EXPECTED_KIND_COUNT, (
@@ -115,7 +115,7 @@ class TestSchemaParity:
         )
 
     def test_all_expected_kinds_present_in_python_schema(self) -> None:
-        """All 24 expected kind names appear in the Python-generated schema."""
+        """All expected kind names appear in the Python-generated schema."""
         expected_kinds = {
             # Spec 287 baseline
             "user_input",
@@ -147,6 +147,8 @@ class TestSchemaParity:
             # Epic 2 — consent revoke IPC round-trip (arms 22-23)
             "consent_revoke_request",
             "consent_revoke_response",
+            # K-EXAONE reasoning/progress painting
+            "progress_event",
         }
         live_schema = ipc_frame_json_schema()
         live_kinds = _extract_kinds_from_schema(live_schema)
@@ -156,7 +158,7 @@ class TestSchemaParity:
         assert not extra, f"Unexpected kinds in Python schema: {sorted(extra)}"
 
     def test_all_expected_kinds_present_in_committed_schema(self) -> None:
-        """All 24 expected kind names appear in the committed schema file."""
+        """All expected kind names appear in the committed schema file."""
         expected_kinds = {
             "user_input",
             "assistant_chunk",
@@ -186,6 +188,8 @@ class TestSchemaParity:
             # Epic 2 — consent revoke IPC round-trip
             "consent_revoke_request",
             "consent_revoke_response",
+            # K-EXAONE reasoning/progress painting
+            "progress_event",
         }
         committed_schema = json.loads(_COMMITTED_SCHEMA_PATH.read_text(encoding="utf-8"))
         committed_kinds = _extract_kinds_from_schema(committed_schema)

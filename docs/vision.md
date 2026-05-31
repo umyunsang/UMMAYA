@@ -119,6 +119,10 @@ UMMAYA adapts architectural patterns from the conversational AI agent ecosystem 
 | GitHub artifact attestations | Public | Build provenance and SBOM attestation for release wheels, sdists, npm tarballs, and release manifests. |
 | OpenTelemetry GenAI semantic conventions | Public | Agent, model, tool, event, and metric telemetry naming baseline for release-time LLMOps evidence. |
 | Langfuse / MLflow GenAI / Arize Phoenix / W&B Weave docs | Public | Open LLMOps comparison set for traces, prompt management, evaluations, datasets, and experiments in release evidence planning. |
+| Terminal-Bench 2.0 / TerminalWorld / BenchJack / SpecBench (2026) | Open research | Agent verification direction: real environment interaction, task-spec alignment, benchmark leakage defense, and terminal workflow evidence. |
+| Harbor Framework task/dataset registry | Public docs and registry | Evidence task boundary: instruction + environment + verifier, dataset-level task resolution, registry-distributed benchmark shape without leaking implementation hints. |
+| MCP tools draft specification | Public | Tool contract metadata, schema boundaries, and server-advertised capability discipline for Evidence Fabric contract checks. |
+| OpenAI agent evals and guardrails docs | Public | Dataset-driven agent evaluation, grading boundaries, and guardrail separation used as methodology input for Evidence Fabric v2. |
 
 Spec 031 records the original primitive survey; the active primitive list lives in `src/ummaya/primitives/__init__.py`.
 
@@ -427,7 +431,7 @@ Every TUI ↔ backend frame carries the same `correlation_id` the Python query l
 
 UMMAYA success means a citizen can ask for real administrative outcomes without first knowing
 the agency map. The target-state eval seed is
-[`eval/scenarios/national_ax_citizen_requests_v1.yaml`](../eval/scenarios/national_ax_citizen_requests_v1.yaml).
+[`evidence/scenarios/national_ax_citizen_requests_v1.yaml`](../evidence/scenarios/national_ax_citizen_requests_v1.yaml).
 Representative conversations:
 
 1. **Tax execution** — "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘." → Hometax data retrieval, final review, filing or official handoff, receipt evidence
@@ -478,7 +482,7 @@ UMMAYA is a foundation project (`속이 꽉찬 기초와 토대가 튼튼한 프
 
 1. **Root-cause over symptom.** Fix the architectural decision that allowed the bug, not the visible failure. Don't add `useInput` fallbacks for broken chord registries; don't `try/except`-swallow wrong contracts; don't stub over stale imports. Three failed symptom-fixes in a row → STOP and choose the root-cause path.
 2. **Reference before invention.** The CC restored-src + the catalog in `Reference materials` answer most design questions. When they don't, escalate to a deep-research pass and add the new source to the catalog in the same PR. Never ship a guess (`feedback_check_references_first`).
-3. **Foundations over surface gloss.** UMMAYA' worth is the depth of the swap (CC harness + 2 swaps, byte-identical otherwise), not how the splash screen looks. The 5-layer TUI verification chain (`docs/testing.md § TUI verification methodology`) and the integration-verification capture artefacts under `specs/integration-verification/` exist because surface tests pass while underlying registries silently break.
+3. **Foundations over surface gloss.** UMMAYA' worth is the depth of the swap (CC harness + 2 swaps, byte-identical otherwise), not how the splash screen looks. Evidence Fabric v2 (`docs/design/verification-fabric-v2.md`) is the current gate because surface tests pass while underlying registries, query-loop ordering, tool-selection contracts, and user-facing workflows can still silently break.
 4. **Fallbacks are audited and time-bound.** Any fallback merged to `main` MUST cite its root cause (`file:line`) and the follow-up Epic that retires it. The Ctrl+O `useInput` fallback (PRs #2754 / #2767, retired in Epic #2766 follow-up by promoting `app:toggleTranscript` to Tier 1) is the canonical example of the band-aid → root-cause migration this rule enforces.
 
 ## How this document evolves

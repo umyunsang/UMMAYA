@@ -110,30 +110,33 @@
   "additionalProperties": false,
   "properties": {
     "base_time": {
-      "default": "202603161500",
-      "description": "KMA APIHub request parameter baseTime.",
+      "description": "Numerical weather model base datetime, YYYYMMDDHHMM. Use a current or recent model slot; do not use stale catalog sample dates. Official parameter name: baseTime. Operation: KIMModelInfoService/getKIMRdapsUnisArea.",
+      "pattern": "^\\d{12}$",
       "title": "Base Time",
       "type": "string"
     },
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: KIMModelInfoService/getKIMRdapsUnisArea.",
       "title": "Data Type",
       "type": "string"
     },
     "data_type_cd": {
       "default": "Humi",
-      "description": "KMA APIHub request parameter dataTypeCd.",
+      "description": "KMA APIHub request parameter dataTypeCd. Official parameter name: dataTypeCd. Operation: KIMModelInfoService/getKIMRdapsUnisArea.",
       "title": "Data Type Cd",
       "type": "string"
     },
     "dong_code": {
       "default": "1111051500",
-      "description": "KMA APIHub request parameter dongCode.",
+      "description": "Administrative area code for area-scoped KMA products. Use only for Area operations, not All operations. Official parameter name: dongCode. Operation: KIMModelInfoService/getKIMRdapsUnisArea.",
       "title": "Dong Code",
       "type": "string"
     }
   },
+  "required": [
+    "base_time"
+  ],
   "title": "kma_apihub_kimmodel_info_service_get_kimrdaps_unis_area",
   "type": "object"
 }

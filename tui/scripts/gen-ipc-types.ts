@@ -3,8 +3,9 @@
  * gen-ipc-types.ts — IPC frame TypeScript type codegen
  *
  * Spawns the Python backend (via `uv run`) to extract the Pydantic v2
- * model_json_schema() for IPCFrame, then feeds that schema to
- * json-schema-to-typescript and writes tui/src/ipc/frames.generated.ts.
+ * model_json_schema() for IPCFrame, writes the committed JSON Schema contract,
+ * then feeds that schema to json-schema-to-typescript and writes
+ * tui/src/ipc/frames.generated.ts.
  *
  * Usage:
  *   bun run scripts/gen-ipc-types.ts          # generate + write
@@ -25,6 +26,7 @@ import { join } from "node:path";
 const SCRIPT_DIR = import.meta.dir;
 const TUI_ROOT = join(SCRIPT_DIR, "..");
 const OUT_FILE = join(TUI_ROOT, "src", "ipc", "frames.generated.ts");
+const OUT_SCHEMA_FILE = join(TUI_ROOT, "src", "ipc", "schema", "frame.schema.json");
 
 // ---------------------------------------------------------------------------
 // Header
@@ -48,7 +50,12 @@ const DO_NOT_EDIT_BANNER = `\
 // Step 1: extract JSON Schema from Python
 // ---------------------------------------------------------------------------
 
-async function extractSchemaFromPython(): Promise<Record<string, unknown>> {
+type ExtractedSchema = {
+  schema: Record<string, unknown>;
+  rawSchema: string;
+};
+
+async function extractSchemaFromPython(): Promise<ExtractedSchema> {
   const pySnippet = [
     "from ummaya.ipc.frame_schema import ipc_frame_json_schema",
     "import json, sys",
@@ -86,7 +93,10 @@ async function extractSchemaFromPython(): Promise<Record<string, unknown>> {
   }
 
   try {
-    return JSON.parse(stdout) as Record<string, unknown>;
+    return {
+      schema: JSON.parse(stdout) as Record<string, unknown>,
+      rawSchema: `${stdout}\n`,
+    };
   } catch (e) {
     throw new Error(`Python output was not valid JSON: ${stdout.slice(0, 500)}`);
   }
@@ -126,7 +136,8 @@ const args = process.argv.slice(2);
 const isCheck = args.includes("--check");
 
 console.log("gen-ipc-types: extracting IPCFrame JSON Schema from Python...");
-const schema = await extractSchemaFromPython();
+const { schema, rawSchema } = await extractSchemaFromPython();
+const generatedSchema = rawSchema;
 
 const discriminatorKeys = Object.keys(
   (schema as any)?.discriminator?.mapping ?? {}
@@ -139,25 +150,27 @@ const generated = await compileSchema(schema);
 if (isCheck) {
   // --check mode: compare against committed file
   let committed: string;
+  let committedSchema: string;
   try {
     committed = readFileSync(OUT_FILE, "utf-8");
+    committedSchema = readFileSync(OUT_SCHEMA_FILE, "utf-8");
   } catch {
     console.error(
-      `gen-ipc-types --check: committed file not found at ${OUT_FILE}`
+      `gen-ipc-types --check: committed file not found at ${OUT_FILE} or ${OUT_SCHEMA_FILE}`
     );
     console.error("Run: bun run gen:ipc to generate it first.");
     process.exit(1);
   }
 
-  if (generated === committed) {
-    console.log("gen-ipc-types --check: OK — generated file matches committed file.");
+  if (generated === committed && generatedSchema === committedSchema) {
+    console.log("gen-ipc-types --check: OK — generated files match committed files.");
     process.exit(0);
   } else {
     // Write temp file for diff inspection
     const tmp = join(tmpdir(), `frames.generated.ts.new`);
     writeFileSync(tmp, generated, "utf-8");
     console.error(
-      `gen-ipc-types --check: DRIFT DETECTED — committed ${OUT_FILE} differs from live schema.`
+      `gen-ipc-types --check: DRIFT DETECTED — committed IPC generated files differ from live schema.`
     );
     console.error(`  New output written to: ${tmp}`);
     console.error("  Run: bun run gen:ipc to update the committed file.");
@@ -166,7 +179,10 @@ if (isCheck) {
 } else {
   // Write mode
   mkdirSync(join(TUI_ROOT, "src", "ipc"), { recursive: true });
+  mkdirSync(join(TUI_ROOT, "src", "ipc", "schema"), { recursive: true });
+  writeFileSync(OUT_SCHEMA_FILE, generatedSchema, "utf-8");
   writeFileSync(OUT_FILE, generated, "utf-8");
+  console.log(`gen-ipc-types: written ${OUT_SCHEMA_FILE}`);
   console.log(`gen-ipc-types: written ${OUT_FILE}`);
   process.exit(0);
 }

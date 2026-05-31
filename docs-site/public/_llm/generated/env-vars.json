@@ -208,11 +208,19 @@
     "variable": "UMMAYA_PERMISSION_TIMEOUT_SECONDS"
   },
   {
+    "consumed_by": "`balanced` \\",
+    "default": "unset (`balanced`)",
+    "range": "`fast` \\",
+    "required": "No",
+    "source_doc": "`deep` \\",
+    "variable": "UMMAYA_K_EXAONE_REASONING_MODE"
+  },
+  {
     "consumed_by": "`false` (case-insensitive; `1`/`yes` also accepted)",
     "default": "`false`",
     "range": "`true` \\",
     "required": "No",
-    "source_doc": "`ummaya.llm.client._build_payload` (Epic #2077 / Spec 2521 — default `false` keeps citizen-visible answers on K-EXAONE's `delta.content` channel; set `true` only for reasoning-channel diagnostics or benchmark runs that explicitly need `reasoning_content` / `∴ Thinking`)",
+    "source_doc": "Legacy compatibility flag mapped by `ummaya.llm.reasoning.resolve_reasoning_policy` (`true` → `deep`, `false` → `fast`) when `UMMAYA_K_EXAONE_REASONING_MODE` is unset; default `false` keeps citizen-visible answers on K-EXAONE's `delta.content` channel.",
     "variable": "UMMAYA_K_EXAONE_THINKING"
   },
   {
@@ -328,7 +336,7 @@
     "variable": "UMMAYA_BACKEND_CMD_JSON"
   },
   {
-    "consumed_by": "TUI-side `tui/src/ipc/bridge.ts`; `ummaya.ipc.demo.mock_backend` is the canonical Mock-backend value used by Spec 2296 PTY + vhs smoke artefacts",
+    "consumed_by": "TUI-side `tui/src/ipc/bridge.ts`; `ummaya.ipc.demo.mock_backend` is the canonical mock-backend value for local IPC checks",
     "default": "`uv run ummaya --ipc stdio` when no JSON command or package launcher is present",
     "range": "Shell command string spawned by the TUI as the backend process",
     "required": "No",

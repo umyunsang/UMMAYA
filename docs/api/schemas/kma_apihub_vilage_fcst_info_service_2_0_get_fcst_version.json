@@ -110,36 +110,39 @@
   "additionalProperties": false,
   "properties": {
     "basedatetime": {
-      "default": "202106280800",
-      "description": "KMA APIHub request parameter basedatetime.",
+      "description": "KMA village forecast version base datetime, YYYYMMDDHHMM. Use a recent KST datetime within the current APIHub retention window. Official parameter name: basedatetime. Operation: VilageFcstInfoService_2.0/getFcstVersion.",
+      "pattern": "^\\d{12}$",
       "title": "Basedatetime",
       "type": "string"
     },
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: VilageFcstInfoService_2.0/getFcstVersion.",
       "title": "Data Type",
       "type": "string"
     },
     "ftype": {
       "default": "ODAM",
-      "description": "KMA APIHub request parameter ftype.",
+      "description": "KMA APIHub request parameter ftype. Official parameter name: ftype. Operation: VilageFcstInfoService_2.0/getFcstVersion.",
       "title": "Ftype",
       "type": "string"
     },
     "num_of_rows": {
       "default": 1000,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: VilageFcstInfoService_2.0/getFcstVersion.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: VilageFcstInfoService_2.0/getFcstVersion.",
       "title": "Page No",
       "type": "integer"
     }
   },
+  "required": [
+    "basedatetime"
+  ],
   "title": "kma_apihub_vilage_fcst_info_service_2_0_get_fcst_version",
   "type": "object"
 }

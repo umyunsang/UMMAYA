@@ -15,6 +15,7 @@ import pytest
 
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.apihub_catalog import iter_structured_operations
+from ummaya.tools.kma.apihub_url_catalog import iter_url_operations
 from ummaya.tools.register_all import register_all_tools
 from ummaya.tools.registry import ToolRegistry
 from ummaya.tools.routing_index import (
@@ -171,104 +172,109 @@ class TestInvariant4UniqueToolId:
 
 
 class TestCheck7ToolListClosure:
-    """The Python-side registered tool set matches the 70-entry registry.
+    """The Python-side registered tool set matches the active registry.
 
     Divergence from this set indicates either an unauthorized addition or
     an inadvertent removal — both are CI failures.
     """
 
-    EXPECTED_REGISTERED_TOOL_IDS: frozenset[str] = frozenset(
-        {
-            "locate",
-            "find",
-            "kakao_address_search",
-            "kakao_keyword_search",
-            "kakao_coord_to_region",
-            "juso_adm_cd_lookup",
-            "sgis_adm_cd_lookup",
-            "koroad_accident_search",
-            "koroad_accident_hazard_search",
-            "kma_weather_alert_status",
-            "kma_current_observation",
-            "kma_short_term_forecast",
-            "kma_ultra_short_term_forecast",
-            "kma_pre_warning",
-            "kma_forecast_fetch",
-            "nmc_emergency_search",
-            "hira_hospital_search",
-            "nfa_emergency_info_service",
-            "mohw_welfare_eligibility_search",
-            # Spec 2296 — Epic ε AX-infrastructure callable-channel reference
-            # mock adapters for the read surfaces of OPAQUE administrative
-            # domains. Per Constitution § II + delegation-flow-design.md § 12,
-            # these are explicitly mocked under `mock_lookup_module_*` names
-            # with the six transparency fields stamped.
-            "mock_lookup_module_hometax_simplified",
-            "mock_lookup_module_gov24_certificate",
-            # Epic η #2298 FR-021 — primitive surfaces registered via
-            # mvp_surface.py so the LLM sees them in
-            # registry.export_core_tools_openai(). Required for the
-            # citizen-OPAQUE chain (verify→lookup→submit) to be emittable.
-            "check",
-            "send",
-            # Epic ζ #2297 path B (live smoke 2026-04-30) — 15 non-core mock
-            # adapter wrappers bridged into the BM25 corpus by discovery_bridge
-            # so lookup(mode="search") surfaces verify/submit
-            # candidates alongside lookup-class adapters. is_core=False; not
-            # in the primary LLM tool list.
-            # 10 verify family wrappers
-            "mock_verify_module_modid",
-            "mock_verify_module_kec",
-            "mock_verify_module_geumyung",
-            "mock_verify_module_simple_auth",
-            "mock_verify_module_any_id_sso",
-            "mock_verify_gongdong_injeungseo",
-            "mock_verify_geumyung_injeungseo",
-            "mock_verify_ganpyeon_injeung",
-            "mock_verify_mobile_id",
-            "mock_verify_mydata",
-            # 7 submit wrappers
-            "mock_kftc_opengiro_bill_send_v1",
-            "mock_kftc_opengiro_payment_send_v1",
-            "mock_submit_module_hometax_taxreturn",
-            "mock_submit_module_gov24_minwon",
-            "mock_submit_module_public_mydata_action",
-            "mock_traffic_fine_pay_v1",
-            "mock_welfare_application_submit_v1",
-            # Spec #2797 — direct-curl verified public-data find adapters.
-            "fsc_corporate_finance_summary",
-            "airkorea_ctprvn_air_quality",
-            "ftc_large_group_status",
-            "ftc_public_ym_list",
-            "tago_bus_route_search",
-            "tago_bus_arrival_search",
-            "tago_bus_location_search",
-            "tago_bus_station_search",
-            "kepco_contract_power_usage",
-            "pps_bid_public_info",
-            "reb_real_estate_stat_table",
-            "bfc_funeral_area_fee",
-            "kcue_finance_regional_tuition",
-            "kcue_student_regional_foreign",
-            # Spec #2798 — approved public-data live expansion.
-            "moj_village_lawyer_lookup",
-            "mois_facility_safety_info_lookup",
-            "hira_medical_institution_detail",
-            "mois_emergency_call_box_lookup",
-            "djtc_subway_segment_fare_time_check",
-            "gyeryong_assistive_device_charging_place_locate",
-            "nmc_aed_site_locate",
-            "mof_ocean_water_quality_check",
-            "mfds_easy_drug_info_lookup",
-            "mpm_public_job_lookup",
-            "pps_shopping_mall_product_lookup",
-            "ksd_financial_term_lookup",
-            "mss_sme_support_notice_lookup",
-            "ccourt_publication_documents",
-            "moj_stay_person_counter",
-            "msit_business_announcement_lookup",
-        }
-    ) | frozenset(operation.tool_id for operation in iter_structured_operations())
+    EXPECTED_REGISTERED_TOOL_IDS: frozenset[str] = (
+        frozenset(
+            {
+                "locate",
+                "find",
+                "kakao_address_search",
+                "kakao_keyword_search",
+                "kakao_coord_to_region",
+                "juso_adm_cd_lookup",
+                "sgis_adm_cd_lookup",
+                "koroad_accident_search",
+                "koroad_accident_hazard_search",
+                "kma_weather_alert_status",
+                "kma_current_observation",
+                "kma_short_term_forecast",
+                "kma_ultra_short_term_forecast",
+                "kma_pre_warning",
+                "kma_forecast_fetch",
+                "nmc_emergency_search",
+                "hira_hospital_search",
+                "nfa_emergency_info_service",
+                "mohw_welfare_eligibility_search",
+                # Spec 2296 — Epic ε AX-infrastructure callable-channel reference
+                # mock adapters for the read surfaces of OPAQUE administrative
+                # domains. Per Constitution § II + delegation-flow-design.md § 12,
+                # these are explicitly mocked under `mock_lookup_module_*` names
+                # with the six transparency fields stamped.
+                "mock_lookup_module_hometax_simplified",
+                "mock_lookup_module_gov24_certificate",
+                # Epic η #2298 FR-021 — primitive surfaces registered via
+                # mvp_surface.py so the LLM sees them in
+                # registry.export_core_tools_openai(). Required for the
+                # citizen-OPAQUE chain (verify→lookup→submit) to be emittable.
+                "check",
+                "send",
+                # Epic ζ #2297 path B (live smoke 2026-04-30) — 15 non-core mock
+                # adapter wrappers bridged into the BM25 corpus by discovery_bridge
+                # so lookup(mode="search") surfaces verify/submit
+                # candidates alongside lookup-class adapters. is_core=False; not
+                # in the primary LLM tool list.
+                # 10 verify family wrappers
+                "mock_verify_module_modid",
+                "mock_verify_module_kec",
+                "mock_verify_module_geumyung",
+                "mock_verify_module_simple_auth",
+                "mock_verify_module_any_id_sso",
+                "mock_verify_gongdong_injeungseo",
+                "mock_verify_geumyung_injeungseo",
+                "mock_verify_ganpyeon_injeung",
+                "mock_verify_mobile_id",
+                "mock_verify_mydata",
+                # 7 submit wrappers
+                "mock_kftc_opengiro_bill_send_v1",
+                "mock_kftc_opengiro_payment_send_v1",
+                "mock_submit_module_hometax_taxreturn",
+                "mock_submit_module_gov24_minwon",
+                "mock_submit_module_public_mydata_action",
+                "mock_traffic_fine_pay_v1",
+                "mock_welfare_application_submit_v1",
+                # Spec #2797 — direct-curl verified public-data find adapters.
+                "fsc_corporate_finance_summary",
+                "airkorea_ctprvn_air_quality",
+                "ftc_large_group_status",
+                "ftc_public_ym_list",
+                "tago_bus_route_search",
+                "tago_bus_arrival_search",
+                "tago_bus_location_search",
+                "tago_bus_route_station_search",
+                "tago_bus_station_search",
+                "kepco_contract_power_usage",
+                "pps_bid_public_info",
+                "reb_real_estate_stat_table",
+                "bfc_funeral_area_fee",
+                "kcue_finance_regional_tuition",
+                "kcue_student_regional_foreign",
+                # Spec #2798 — approved public-data live expansion.
+                "moj_village_lawyer_lookup",
+                "mois_facility_safety_info_lookup",
+                "hira_medical_institution_detail",
+                "mois_emergency_call_box_lookup",
+                "djtc_subway_segment_fare_time_check",
+                "gyeryong_assistive_device_charging_place_locate",
+                "nmc_aed_site_locate",
+                "mof_ocean_water_quality_check",
+                "mfds_easy_drug_info_lookup",
+                "mpm_public_job_lookup",
+                "pps_shopping_mall_product_lookup",
+                "ksd_financial_term_lookup",
+                "mss_sme_support_notice_lookup",
+                "ccourt_publication_documents",
+                "moj_stay_person_counter",
+                "msit_business_announcement_lookup",
+            }
+        )
+        | frozenset(operation.tool_id for operation in iter_structured_operations())
+        | frozenset(operation.tool_id for operation in iter_url_operations())
+    )
 
     def test_registered_set_matches_expected(self, live_registry):
         """Registry tool set exactly matches the active closed set."""

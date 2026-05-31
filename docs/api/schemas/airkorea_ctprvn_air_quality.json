@@ -35,8 +35,8 @@
   "description": "Input for AirKorea city/province air quality.",
   "properties": {
     "num_of_rows": {
-      "default": 10,
-      "description": "Rows per page.",
+      "default": 100,
+      "description": "Rows per page; 100 captures all city/province stations in normal use.",
       "maximum": 100,
       "minimum": 1,
       "title": "Num Of Rows",
@@ -50,7 +50,7 @@
       "type": "integer"
     },
     "sido_name": {
-      "description": "Korean province/city name.",
+      "description": "AirKorea short province/city name, e.g. 서울, 부산, 경기.",
       "minLength": 1,
       "title": "Sido Name",
       "type": "string"

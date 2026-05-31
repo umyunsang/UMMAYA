@@ -35,7 +35,7 @@
   "description": "Input for TAGO bus location search.",
   "properties": {
     "city_code": {
-      "description": "TAGO city code.",
+      "description": "Official TAGO cityCode from the provider getCtyCodeList contract. Common metropolitan examples: Busan=21, Daegu=22, Incheon=23, Gwangju=24, Daejeon=25, Ulsan=26.",
       "minLength": 1,
       "title": "City Code",
       "type": "string"
@@ -56,7 +56,7 @@
       "type": "integer"
     },
     "route_id": {
-      "description": "TAGO route ID.",
+      "description": "Official TAGO routeId returned by tago_bus_route_search.",
       "minLength": 1,
       "title": "Route Id",
       "type": "string"

@@ -111,8 +111,8 @@ class NmcEmergencySearchInput(BaseModel):
         le=90,
         description=(
             "Coordinate-mode latitude in decimal degrees (WGS-84). Required "
-            "when mode='coordinate'. Obtain from a coordinate-producing locate adapter "
-            "such as kakao_keyword_search or kakao_address_search."
+            "when mode='coordinate'. Obtain from a prior coordinate-producing "
+            "locate result; never guess from place names."
         ),
     )
     lon: float | None = Field(
@@ -121,8 +121,8 @@ class NmcEmergencySearchInput(BaseModel):
         le=180,
         description=(
             "Coordinate-mode longitude in decimal degrees (WGS-84). Required "
-            "when mode='coordinate'. Obtain from a coordinate-producing locate adapter "
-            "such as kakao_keyword_search or kakao_address_search."
+            "when mode='coordinate'. Obtain from a prior coordinate-producing "
+            "locate result; never guess from place names."
         ),
     )
     q0: str | None = Field(
@@ -785,8 +785,10 @@ NMC_EMERGENCY_SEARCH_TOOL = GovAPITool(
             "비인증 시 auth_required."
         ),
         self_contained_decl=(
-            "ORDERING: turn1 locate(kakao_keyword_search 또는 kakao_address_search), "
-            "turn2 locate(kakao_coord_to_region), turn3 본 도구. "
+            "ORDERING: turn1 use a coordinate-producing locate adapter, "
+            "turn2 use a region-resolving locate adapter, turn3 본 도구. "
+            "If the same citizen request also mentions AED/자동심장충격기, call "
+            "nmc_aed_site_locate as a separate find adapter; ER data does not answer AED. "
             "응급실 시간은 '24시간 운영', "
             "outpatient_hours_display는 외래진료로만 설명."
         ),

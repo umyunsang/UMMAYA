@@ -118,7 +118,10 @@ def _make_mock_stream_with_retry(
         self: Any,
         payload: dict[str, object],
         _finalize: dict[str, object],
+        *,
+        allow_reasoning: bool,
     ) -> AsyncIterator[StreamEvent]:
+        del allow_reasoning
         events = extra_events or [
             StreamEvent(type="content_delta", content="Hello world."),
             StreamEvent(
@@ -360,7 +363,10 @@ async def test_stream_close_from_other_task_does_not_detach_otel_context(
         self: Any,
         payload: dict[str, object],
         _finalize: dict[str, object],
+        *,
+        allow_reasoning: bool,
     ) -> AsyncIterator[StreamEvent]:
+        del allow_reasoning
         yield StreamEvent(type="content_delta", content="partial")
         _finalize["input_tokens"] = 1
         _finalize["output_tokens"] = 1

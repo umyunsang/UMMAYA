@@ -8,6 +8,7 @@ import {
   PERMISSION_MODES,
 } from '../permissions/PermissionMode.js'
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
+import { REASONING_MODES } from '../kExaoneReasoning.js'
 import { CLAUDE_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
 import { PermissionRuleSchema } from './permissionValidation.js'
 
@@ -63,7 +64,7 @@ export const PermissionsSchema = lazySchema(() =>
             : EXTERNAL_PERMISSION_MODES,
         )
         .optional()
-        .describe('Default permission mode when Claude Code needs access'),
+        .describe('Default permission mode when UMMAYA needs access'),
       disableBypassPermissionsMode: z
         .enum(['disable'])
         .optional()
@@ -291,7 +292,7 @@ export const SettingsSchema = lazySchema(() =>
                   .describe('IdP issuer URL for OIDC discovery'),
                 clientId: z
                   .string()
-                  .describe("Claude Code's client_id registered at the IdP"),
+                  .describe("UMMAYA's client_id registered at the IdP"),
                 callbackPort: z
                   .number()
                   .int()
@@ -332,7 +333,7 @@ export const SettingsSchema = lazySchema(() =>
         ),
       env: EnvironmentVariablesSchema()
         .optional()
-        .describe('Environment variables to set for Claude Code sessions'),
+        .describe('Environment variables to set for UMMAYA sessions'),
       // Attribution for commits and PRs
       attribution: z
         .object({
@@ -709,6 +710,11 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .catch(undefined)
         .describe('Persisted effort level for supported models.'),
+      reasoningMode: z
+        .enum(REASONING_MODES)
+        .optional()
+        .catch(undefined)
+        .describe('K-EXAONE/FriendliAI reasoning policy mode.'),
       advisorModel: z
         .string()
         .optional()

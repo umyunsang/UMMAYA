@@ -4,15 +4,15 @@
 // • Empty state: CC LogoV2 원본 그대로 (부처 feed 표시 안 함)
 // • Active session 평소: CondensedLogo + tool_use(⏺ MINISTRY, primitive-colored dot)
 // • Multi-ministry swarm: PhaseIndicator + SpinnerWithVerb
-// • Mock은 UI에 노출하지 않음 — live와 동일하게 표시
+// • Mock/Handoff은 dot 색이 아니라 결과 문구와 evidence에서 명시
 // • /agents 명령: 활성 부처 에이전트 목록 (bordered notice)
 // • /plugins 명령: 설치된 플러그인 목록 (bordered notice)
 //
 // 도트 색 규약:
-//     🔵 blue    lookup    · 정보 조회
-//     🟠 orange  submit    · 민원 제출
-//     🔴 red     verify    · 본인 확인
-//     🟢 green   subscribe · 알림 구독
+//     🔵 blue    find      · 정보 조회
+//     🔷 cyan    locate    · 위치/주소 해소
+//     🔴 red     check     · 본인 확인/위임
+//     🟠 orange  send      · 제출/납부/접수
 //     🟣 purple  plugin.*  · 플러그인 네임스페이스 verb
 //
 // 신규 컴포넌트 0개 — 모두 포팅된 CC 컴포넌트 재사용.
@@ -30,9 +30,9 @@ import {
 // 부처 feed 제거. CC LogoV2 원본 2-column + 일반 Feed만.
 function EmptyState() {
   const whatsNewFeed = [
-    { glyph: '▸', primary: 'CC TUI 시각 구조 ≥90% 포트 완료', secondary: 'v0.1' },
-    { glyph: '▸', primary: 'PIPA 동의 온보딩 + 시민-안전 권한', secondary: 'v0.1' },
-    { glyph: '▸', primary: '플러그인 인프라 준비 중',            secondary: 'v0.1' },
+    { glyph: '▸', primary: 'CC 도구 루프 + TUI 구조 포트', secondary: 'current' },
+    { glyph: '▸', primary: 'find/locate/check/send 활성 표면', secondary: 'current' },
+    { glyph: '▸', primary: 'Evidence Fabric v2 검증 게이트', secondary: 'current' },
   ]
   const startTips = [
     { glyph: '▸', primary: '/help    자주 쓰는 커맨드 보기' },
@@ -72,6 +72,12 @@ function ActiveSingle() {
     h(Box, { marginTop: 1 }, h(UserMsg, { text: '오늘 서울 날씨 어때?' })),
     h(Box, { marginTop: 1 }, h(AsstLine, { text: 'assistant:' })),
     h(Box, { marginTop: 1 }, h(ToolUseBlock, {
+      primitive: 'locate',
+      ministry:  'KAKAO',
+      detail:    '서울 위치 해소',
+      result:    '행정동/좌표 해소 완료',
+    })),
+    h(Box, { marginTop: 1 }, h(ToolUseBlock, {
       primitive: 'find',
       ministry:  'KMA',
       detail:    '현재 관측 · 서울',
@@ -97,7 +103,12 @@ function ActiveSwarm() {
       text: '이사 준비 중이야. 전입신고·자동차 주소변경·건보 주소변경 다 해야해',
     })),
     h(Box, { marginTop: 1 }, h(AsstLine, {
-      text: 'assistant: 3개 부처 협력이 필요합니다.',
+      text: 'assistant: 보호된 제출 전 check로 위임 범위를 먼저 확인합니다.',
+    })),
+    h(Box, { marginTop: 1 }, h(ToolUseBlock, {
+      primitive: 'check', ministry: 'AUTH',
+      detail:    '주소변경 위임 범위 확인',
+      result:    'scope: send:gov24.minwon, send:nhis.address-update',
     })),
     h(Box, { marginTop: 1 }, h(ToolUseBlock, {
       primitive: 'find', ministry: 'MOIS',
@@ -113,6 +124,11 @@ function ActiveSwarm() {
       primitive: 'find', ministry: 'NHIS',
       detail:    '건보 주소변경',
       result:    '전입신고 데이터 자동 연계 (별도 절차 불요)',
+    })),
+    h(Box, { marginTop: 1 }, h(ToolUseBlock, {
+      primitive: 'send', ministry: 'MOIS',
+      detail:    '전입신고 제출 준비',
+      result:    '최종 확인 대기 · 제출 전 시민 승인 필요',
     })),
     h(Box, { marginTop: 1 }, h(Spinner, { verb: '3개 부처 응답 취합 중...' })),
     h(Box, { marginTop: 2 }, h(PromptBand)),
@@ -134,32 +150,32 @@ function AgentsCommand() {
         color: C.brand, width: 70,
       },
         h(Box, null,
-          h(Text, { color: C.lookupDot, bold: true }, '⏺ KOROAD '),
+          h(Text, { color: C.findDot, bold: true }, '⏺ KOROAD '),
           h(Text, null, '· 도로교통공단'),
           h(Text, { color: C.dim, dimColor: true }, '      사고 · 위험구간 조회'),
         ),
         h(Box, null,
-          h(Text, { color: C.lookupDot, bold: true }, '⏺ KMA    '),
+          h(Text, { color: C.findDot, bold: true }, '⏺ KMA    '),
           h(Text, null, '· 기상청'),
           h(Text, { color: C.dim, dimColor: true }, '            날씨 · 예보 · 특보'),
         ),
         h(Box, null,
-          h(Text, { color: C.lookupDot, bold: true }, '⏺ HIRA   '),
+          h(Text, { color: C.findDot, bold: true }, '⏺ HIRA   '),
           h(Text, null, '· 건강보험심사평가원'),
           h(Text, { color: C.dim, dimColor: true }, '     병원 검색 · 진료비'),
         ),
         h(Box, null,
-          h(Text, { color: C.lookupDot, bold: true }, '⏺ NMC    '),
+          h(Text, { color: C.findDot, bold: true }, '⏺ NMC    '),
           h(Text, null, '· 국립중앙의료원'),
           h(Text, { color: C.dim, dimColor: true }, '        응급 · 병상'),
         ),
         h(Box, null,
-          h(Text, { color: C.lookupDot, bold: true }, '⏺ NFA    '),
+          h(Text, { color: C.findDot, bold: true }, '⏺ NFA    '),
           h(Text, null, '· 소방청'),
           h(Text, { color: C.dim, dimColor: true }, '            119 · 응급 출동'),
         ),
         h(Box, null,
-          h(Text, { color: C.lookupDot, bold: true }, '⏺ MOHW   '),
+          h(Text, { color: C.findDot, bold: true }, '⏺ MOHW   '),
           h(Text, null, '· 보건복지부'),
           h(Text, { color: C.dim, dimColor: true }, '         복지 자격 · 신청'),
         ),
@@ -210,9 +226,9 @@ function PluginsCommand() {
 function App() {
   return h(Box, { flexDirection: 'column' },
     h(Text, { bold: true, color: C.brand },
-      'Proposal IV · 최종 (2026-04-24 요구사항 반영)'),
+      'Proposal IV · KSC 2026 refresh (2026-05-29)'),
     h(Text, { color: C.subtle },
-      '도트 색: 🔵lookup · 🟠submit · 🔴verify · 🟢subscribe · 🟣plugin  ·  Mock UI 노출 안 함'),
+      '도트 색: 🔵find · 🔷locate · 🔴check · 🟠send · 🟣plugin  ·  Mock/Handoff은 결과 문구로 명시'),
     h(Divider, { label: 'State 1 · Empty · CC 간결 (부처 feed 제거)' }),
     h(EmptyState),
     h(Divider, { label: 'State 2 · Active · 단일 부처 (⏺ KMA blue)' }),

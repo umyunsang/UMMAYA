@@ -424,6 +424,11 @@ async def _dispatch_root_primitive(
             error=f"{primitive} cannot target itself.",
             error_type="validation",
         )
+    params = _normalize_root_primitive_adapter_params(
+        primitive=primitive,
+        target_tool_id=target_tool_id,
+        params=params,
+    )
 
     request_id = tc.id or f"{primitive}-call"
     if primitive == "find":
@@ -450,6 +455,21 @@ async def _dispatch_root_primitive(
             error_type="execution",
         )
     return ToolResult(tool_id=primitive, success=True, data=data)
+
+
+def _normalize_root_primitive_adapter_params(
+    *,
+    primitive: str,
+    target_tool_id: str,
+    params: dict[str, object],
+) -> dict[str, object]:
+    """Remove wrapper metadata accidentally duplicated inside adapter params."""
+    nested_tool_id = params.get("tool_id")
+    if nested_tool_id == target_tool_id:
+        return {key: value for key, value in params.items() if key != "tool_id"}
+    if target_tool_id == primitive and isinstance(nested_tool_id, str):
+        return {key: value for key, value in params.items() if key != "tool_id"}
+    return params
 
 
 async def _dispatch_concrete_adapter(

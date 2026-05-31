@@ -74,6 +74,9 @@ export function applySettingsChange(
     const prevEffort = prev.settings.effortLevel
     const newEffort = newSettings.effortLevel
     const effortChanged = prevEffort !== newEffort
+    const prevReasoningMode = prev.settings.reasoningMode
+    const newReasoningMode = newSettings.reasoningMode
+    const reasoningModeChanged = prevReasoningMode !== newReasoningMode
 
     return {
       ...prev,
@@ -87,6 +90,7 @@ export function applySettingsChange(
       ...(effortChanged && newEffort !== undefined
         ? { effortValue: newEffort }
         : {}),
+      ...(reasoningModeChanged ? { reasoningMode: newReasoningMode } : {}),
     }
   })
 }

@@ -1,9 +1,0 @@
-# Visual evidence — primitive-lookup-search
-# Lookup primitive — search-mode candidate list (CollectionList)
-# Captured 2026-04-26T01:08:33.250Z via ink-testing-library render()
-
-   1. koroad_accident_search 교통사고 잦은 곳
-   2. koroad_accident_hazard_search 교통사고 위험구간
-   3. kma_weather_alert_status 기상 특보
-   4. kma_short_term_forecast 단기 예보
-   5. hira_hospital_search 병의원 검색

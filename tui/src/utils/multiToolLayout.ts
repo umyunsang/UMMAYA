@@ -88,3 +88,16 @@ export function getStreamingThinkingInsertIndex(renderableMessages: readonly Lay
   }
   return renderableMessages.length
 }
+
+export function insertStreamingThinkingLayoutMessage<T extends LayoutMessageLike>(
+  renderableMessages: readonly T[],
+  thinking: string | null | undefined,
+): Array<T | StreamingThinkingLayoutMessage> {
+  if (!thinking) return [...renderableMessages]
+  const insertIndex = getStreamingThinkingInsertIndex(renderableMessages)
+  return [
+    ...renderableMessages.slice(0, insertIndex),
+    createStreamingThinkingLayoutMessage(thinking),
+    ...renderableMessages.slice(insertIndex),
+  ]
+}

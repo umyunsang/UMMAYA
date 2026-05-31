@@ -1,7 +1,0 @@
-
- ✻ 플러그인 브라우저
-
-   플러그인이 없습니다 · No plugins installed
-
- Space 활성 토글 · i 상세 · r 제거 · a 스토어
- Esc · 닫기 (dismiss)

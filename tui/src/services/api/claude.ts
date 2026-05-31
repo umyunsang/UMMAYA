@@ -128,6 +128,7 @@ import { feature } from 'bun:bundle'
 // aliases (ClientOptions, APIError, APIConnectionTimeoutError, APIUserAbortError
 // all re-exported by sdk-compat.ts as structural stubs).
 import type { ClientOptions } from '../../sdk-compat.js'
+import type { ReasoningMode } from '../../utils/kExaoneReasoning.js'
 import {
   APIConnectionTimeoutError,
   APIError,
@@ -216,8 +217,11 @@ import {
   TOOL_SEARCH_TOOL_NAME,
 } from '../../tools/ToolSearchTool/prompt.js'
 import {
+  getAdapterToolByName,
   selectTopKAdapterToolNamesForQuery,
 } from '../../tools/AdapterTool/AdapterTool.js'
+import { isNonSyntheticUserText } from '../../tools/_shared/citizenUserText.js'
+import { shouldSuppressUmmayaToolCallsForAnswerSynthesis } from '../../tools/_shared/toolChoiceRepair.js'
 import { count } from '../../utils/array.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
@@ -722,6 +726,7 @@ export type Options = {
   skipCacheWrite?: boolean
   temperatureOverride?: number
   effortValue?: EffortValue
+  reasoningMode?: ReasoningMode
   mcpTools: Tools
   hasPendingMcpServers?: boolean
   queryTracking?: QueryChainTracking
@@ -832,7 +837,7 @@ function latestUserTextForToolRetrieval(messages: Message[]): string {
     if (message?.type !== 'user') continue
     const content = message.message?.content
     if (typeof content === 'string') {
-      if (content.trim().length > 0) return content
+      if (isNonSyntheticUserText(content)) return content
       continue
     }
     if (Array.isArray(content)) {
@@ -843,7 +848,7 @@ function latestUserTextForToolRetrieval(messages: Message[]): string {
         )
         .map(block => block.text)
         .join('')
-      if (text.trim().length > 0) return text
+      if (isNonSyntheticUserText(text)) return text
     }
   }
   return ''
@@ -1182,10 +1187,36 @@ async function* queryModel(
     'query',
   )
 
-  // Precompute once — isDeferredTool does 2 GrowthBook lookups per call
+  const turnLocalAdapterToolNames = new Set(
+    selectTopKAdapterToolNamesForQuery(
+      latestUserTextForToolRetrieval(messages),
+    ),
+  )
+  if (options.toolChoice?.type === 'tool') {
+    turnLocalAdapterToolNames.add(options.toolChoice.name)
+  }
+  if (turnLocalAdapterToolNames.size > 0) {
+    logForDebugging(
+      `UMMAYA turn-local adapter schemas: ${[...turnLocalAdapterToolNames].join(', ')}`,
+    )
+  }
+  const requestTools =
+    turnLocalAdapterToolNames.size === 0
+      ? tools
+      : [
+          ...tools,
+          ...[...turnLocalAdapterToolNames]
+            .filter(toolName => !tools.some(tool => tool.name === toolName))
+            .map(toolName => getAdapterToolByName(toolName))
+            .filter((tool): tool is NonNullable<typeof tool> => Boolean(tool)),
+        ]
+
+  // Precompute once — isDeferredTool does 2 GrowthBook lookups per call.
+  // Include turn-local synced adapters even if the long-lived TUI tool pool
+  // was assembled before the latest backend manifest frame arrived.
   const deferredToolNames = new Set<string>()
   if (useToolSearch) {
-    for (const t of tools) {
+    for (const t of requestTools) {
       if (isDeferredTool(t)) deferredToolNames.add(t.name)
     }
   }
@@ -1203,29 +1234,25 @@ async function* queryModel(
     )
     useToolSearch = false
   }
-
-  const turnLocalAdapterToolNames = new Set(
-    selectTopKAdapterToolNamesForQuery(
-      latestUserTextForToolRetrieval(messages),
-    ),
-  )
-  if (turnLocalAdapterToolNames.size > 0) {
-    logForDebugging(
-      `UMMAYA turn-local adapter schemas: ${[...turnLocalAdapterToolNames].join(', ')}`,
-    )
+  const suppressUmmayaToolCalls =
+    shouldSuppressUmmayaToolCallsForAnswerSynthesis({ messages, tools: requestTools })
+  if (suppressUmmayaToolCalls) {
+    logForDebugging('UMMAYA suppressing tool schemas for answer synthesis')
   }
 
   // Filter out ToolSearchTool if tool search is not enabled for this model
   // ToolSearchTool returns tool_reference blocks which unsupported models can't handle
   let filteredTools: Tools
 
-  if (useToolSearch) {
+  if (suppressUmmayaToolCalls) {
+    filteredTools = []
+  } else if (useToolSearch) {
     // Dynamic tool loading: Only include deferred tools that have been discovered
     // via tool_reference blocks in the message history. This eliminates the need
     // to predeclare all deferred tools upfront and removes limits on tool quantity.
     const discoveredToolNames = extractDiscoveredToolNames(messages)
 
-    filteredTools = tools.filter(tool => {
+    filteredTools = requestTools.filter(tool => {
       // 0.2.1 exposed the lightweight root primitives together with concrete
       // adapter schemas. Keep that surface so K-EXAONE preserves CC-style
       // prose→tool→prose loop painting, while still limiting concrete adapter
@@ -1239,7 +1266,7 @@ async function* queryModel(
       return discoveredToolNames.has(tool.name)
     })
   } else {
-    filteredTools = tools.filter(t => {
+    filteredTools = requestTools.filter(t => {
       if (toolMatchesName(t, TOOL_SEARCH_TOOL_NAME)) return false
       // Keep non-deferred root primitives even when concrete top-k adapter
       // schemas are available; this matches the released 0.2.1 loop surface.
@@ -1802,6 +1829,9 @@ async function* queryModel(
         output_config: outputConfig,
       }),
       ...(speed !== undefined && { speed }),
+      ...(options.reasoningMode !== undefined && {
+        reasoning_mode: options.reasoningMode,
+      }),
     }
   }
 
@@ -2345,7 +2375,7 @@ async function* queryModel(
                 max_tokens: maxOutputTokens,
               })
               yield createAssistantAPIErrorMessage({
-                content: `${API_ERROR_MESSAGE_PREFIX}: Claude's response exceeded the ${
+                content: `${API_ERROR_MESSAGE_PREFIX}: Ummaya's response exceeded the ${
                   maxOutputTokens
                 } output token maximum. To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.`,
                 apiError: 'max_output_tokens',

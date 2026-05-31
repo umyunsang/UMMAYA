@@ -14,6 +14,10 @@ import {
   isBridgeSafeCommand,
   type LocalJSXCommandContext,
 } from '../../commands.js'
+import {
+  isReasoningStatusQuestion,
+  showCurrentReasoning,
+} from '../../commands/reasoning/reasoning.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { SetToolJSXFn, ToolUseContext } from '../../Tool.js'
@@ -490,6 +494,28 @@ async function processUserInputBase(
       canUseTool,
     )
     return addImageMetadataMessage(slashResult, imageMetadataTexts)
+  }
+
+  if (
+    mode === 'prompt' &&
+    inputString !== null &&
+    !effectiveSkipSlash
+  ) {
+    if (isReasoningStatusQuestion(preExpansionInput ?? inputString)) {
+      const { message } = showCurrentReasoning(
+        context.getAppState().reasoningMode,
+      )
+      return {
+        messages: [
+          createUserMessage({ content: inputString, uuid }),
+          createCommandInputMessage(
+            `<local-command-stdout>${message}</local-command-stdout>`,
+          ),
+        ],
+        shouldQuery: false,
+        resultText: message,
+      }
+    }
   }
 
   // For slash commands, attachments will be extracted within getMessagesForSlashCommand

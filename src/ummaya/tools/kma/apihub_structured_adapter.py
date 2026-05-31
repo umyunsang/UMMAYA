@@ -75,6 +75,9 @@ _DYNAMIC_TIME_PARAMS = frozenset(
         "toTmFc",
         "dateTime",
         "tm",
+        "time",
+        "tmFc",
+        "fctm",
         "baseTime",
         # VilageFcstInfoService_2.0 uses snake_case official parameter names.
         "base_date",
@@ -118,14 +121,43 @@ _PARAM_DESCRIPTIONS: dict[str, str] = {
         "KST/UTC-aligned observation; APIHub returns an error outside the "
         "current 1 day window."
     ),
+    "time": (
+        "KMA product time. For WthrChartInfoService analysis charts this is "
+        "YYYYMMDD; direct probes currently return resultCode=99 for the "
+        "documented sample and current dates, so the chart operations stay "
+        "cataloged but not active."
+    ),
+    "tmFc": "KMA forecast or bulletin announcement time, usually YYYYMMDDHHMM.",
+    "fctm": "KMA aviation forecast announcement time in UTC, YYYYMMDDHHMM.",
     "stnId": (
         "KMA/APIHub station identifier for the GTS world-weather operation. "
         "Required by the official GTS APIHub schema; obtain it from the GTS "
         "station-information source or the citizen's station identifier."
     ),
     "icao": (
-        "ICAO airport/station code for aviation METAR data, for example RKSI. "
-        "Do not pass a Korean place name here."
+        "ICAO airport/station code for aviation METAR data. Official APIHub "
+        "examples include RKSI Incheon, RKSS Gimpo, RKPC Jeju, RKPK Gimhae, "
+        "RKNY Yangyang, RKNW Wonju, RKTU Cheongju, RKTN Daegu, RKTH Pohang, "
+        "RKJJ Gwangju, RKJB Muan, RKJY Yeosu, RKPU Ulsan, RKPS Sacheon, and "
+        "RKJK Gunsan. Do not pass a Korean place name here."
+    ),
+    "icaoCode": (
+        "ICAO airport code for aviation forecast/weather products. Use RKSS "
+        "for Gimpo and RKPK for Gimhae when the official operation supports "
+        "those airports."
+    ),
+    "airPortCd": "ICAO airport code for airport weather information products.",
+    "code": (
+        "Official KMA analysis-chart code. Keep the APIHub sample value unless "
+        "the citizen names a chart code."
+    ),
+    "code1": (
+        "Official KMA auxiliary-chart primary code. Keep the APIHub sample value "
+        "unless the citizen names a chart code."
+    ),
+    "code2": (
+        "Official KMA auxiliary-chart secondary code. Keep the APIHub sample "
+        "value unless the citizen names a chart code."
     ),
     "baseTime": (
         "Numerical weather model base datetime, YYYYMMDDHHMM. Use a current "
@@ -150,6 +182,9 @@ _FIELD_PATTERNS: dict[str, str] = {
     "toTmFc": r"^\d{8}$",
     "dateTime": r"^\d{12}$",
     "tm": r"^\d{12}$",
+    "time": r"^\d{8,12}$",
+    "tmFc": r"^\d{12}$",
+    "fctm": r"^\d{12}$",
     "baseTime": r"^\d{12}$",
     "base_date": r"^\d{8}$",
     "base_time": r"^\d{4}$",
@@ -191,10 +226,32 @@ _CATEGORY_GUIDANCE: dict[int, tuple[str, str]] = {
 _OPERATION_GUIDANCE: dict[str, tuple[str, str, str]] = {
     "AmmIwxxmService/getMetar": (
         "Fetch a METAR aviation weather report for one ICAO airport/station code.",
-        "Choose this for airport aviation weather or METAR requests. Do not use "
-        "it for neighborhood weather by Korean address; resolve location then "
-        "use the KMA forecast/observation adapters instead.",
-        "METAR aviation airport ICAO RKSI 항공기상 공항 실황",
+        "This structured IWXXM endpoint is cataloged but not active after "
+        "direct 2026-05-26 probes returned resultCode=01 / APPLICATION_ERROR. "
+        "Use the approved non-structured KMA METAR decoded-data URL operation "
+        "for current METAR decoded text, and use ICAO RKSS for Gimpo or RKPK "
+        "for Gimhae when an aviation operation requires ICAO. Do not use it "
+        "for neighborhood weather by Korean address; resolve location then use "
+        "the KMA forecast/observation adapters instead.",
+        "METAR SPECI aviation airport ICAO RKSI RKSS RKPK 김포공항 김해공항 항공기상 공항 실황",
+    ),
+    "WthrChartInfoService/getAuxillaryChart": (
+        "Fetch an official KMA analyzed auxiliary weather chart through the "
+        "structured chart service.",
+        "Use this only for analyzed synoptic/auxiliary chart requests, not for "
+        "live airport weather. Direct 2026-05-26 probes returned resultCode=99 "
+        "for the official request shape, so the operation is cataloged but not "
+        "registered as an active callable tool.",
+        "분석일기도 보조일기도 WthrChart auxiliary chart synoptic analysis resultCode 99",
+    ),
+    "WthrChartInfoService/getSurfaceChart": (
+        "Fetch an official KMA analyzed surface weather chart through the "
+        "structured chart service.",
+        "Use this only for analyzed surface-chart requests, not for live airport "
+        "weather. Direct 2026-05-26 probes returned resultCode=99 for the "
+        "official request shape, so the operation is cataloged but not "
+        "registered as an active callable tool.",
+        "분석일기도 지상일기도 WthrChart surface chart synoptic analysis resultCode 99",
     ),
     "CloudSatlitInfoService/getGk2aappsAll": (
         "Fetch GK2A APP satellite product data for the whole satellite coverage area.",
@@ -250,6 +307,29 @@ def _operation_guidance(operation: KmaApiHubOperation) -> tuple[str, str, str]:
     specific = _OPERATION_GUIDANCE.get(operation.operation_id)
     if specific is not None:
         return specific
+    if operation.availability == "approval_pending":
+        return (
+            "Official KMA APIHub structured OpenAPI operation that is present in "
+            "the 2026-05-26 catalog sweep but not yet enabled in UMMAYA's active "
+            "tool surface.",
+            "Do not choose this for live citizen answers until APIHub utilization "
+            "approval is confirmed and a direct curl probe proves the endpoint "
+            "returns a normal KMA response.",
+            "KMA APIHub approval pending official OpenAPI cataloged not active",
+        )
+    if operation.category_seq == 14:
+        return (
+            "Historical aviation surface-observation climate/reference data from "
+            "KMA annual or monthly aviation weather publications.",
+            "This is not live airport weather. Do not choose this for live airport "
+            "weather, flight conditions, "
+            "METAR/SPECI, or AMOS minute observations. Choose "
+            "AmmIwxxmService/getMetar for airport METAR/SPECI, and use the "
+            "KMA APIHub AMOS URL operation when the request names AMOS and the "
+            "airport is in the official AMOS station list.",
+            "항공 지상기상연보 항공 월보 지점일람표 historical aviation climate "
+            "station list yearly monthly",
+        )
     if operation.service == "NwpModelInfoService":
         return (
             "Legacy KMA NWP model grid-data lookup. Live APIHub probes currently "

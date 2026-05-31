@@ -717,6 +717,7 @@ const MessagesImpl = ({
         thinking: streamingThinking.thinking
       }} addMargin={false} isTranscriptMode={true} verbose={verbose} hideInTranscript={false} />
         </Box>}
+
     </>;
 };
 

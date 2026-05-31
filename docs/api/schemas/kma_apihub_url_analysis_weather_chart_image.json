@@ -1,0 +1,131 @@
+{
+  "$defs": {
+    "KmaApiHubUrlOutput": {
+      "additionalProperties": false,
+      "description": "Normalized output from one KMA APIHub non-structured URL operation.",
+      "properties": {
+        "approval_state": {
+          "enum": [
+            "approved",
+            "approval_pending"
+          ],
+          "title": "Approval State",
+          "type": "string"
+        },
+        "content_type": {
+          "title": "Content Type",
+          "type": "string"
+        },
+        "endpoint_path": {
+          "title": "Endpoint Path",
+          "type": "string"
+        },
+        "line_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Count"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "raw_format": {
+          "enum": [
+            "text",
+            "json",
+            "image",
+            "binary"
+          ],
+          "title": "Raw Format",
+          "type": "string"
+        },
+        "raw_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Text"
+        },
+        "status_code": {
+          "title": "Status Code",
+          "type": "integer"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "operation_id",
+        "endpoint_path",
+        "approval_state",
+        "content_type",
+        "raw_format",
+        "status_code"
+      ],
+      "title": "KmaApiHubUrlOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kma_apihub_url_analysis_weather_chart_image.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "anal_time": {
+      "description": "KMA analyzed weather-chart time in UTC, YYYYMMDDHHMM. Include minutes; do not pass a 10-digit KST hour. For now/today requests, use the latest completed official UTC analysis slot before the citizen's local time. Official parameter name: analTime. Operation: analysis_weather_chart_image.",
+      "pattern": "^\\d{12}$",
+      "title": "Anal Time",
+      "type": "string"
+    },
+    "group_name": {
+      "default": "925_default",
+      "description": "KMA APIHub URL request parameter groupName. Official parameter name: groupName. Operation: analysis_weather_chart_image.",
+      "title": "Group Name",
+      "type": "string"
+    },
+    "image_type": {
+      "default": "png",
+      "description": "KMA APIHub URL request parameter imageType. Official parameter name: imageType. Operation: analysis_weather_chart_image.",
+      "title": "Image Type",
+      "type": "string"
+    },
+    "is_typ": {
+      "default": "false",
+      "description": "KMA APIHub URL request parameter isTyp. Official parameter name: isTyp. Operation: analysis_weather_chart_image.",
+      "title": "Is Typ",
+      "type": "string"
+    },
+    "meta": {
+      "default": 1,
+      "description": "KMA APIHub URL request parameter meta. Official parameter name: meta. Operation: analysis_weather_chart_image.",
+      "title": "Meta",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "anal_time"
+  ],
+  "title": "kma_apihub_url_analysis_weather_chart_image",
+  "type": "object"
+}

@@ -11,6 +11,11 @@ Public API
     Return the ``family_hint`` string for the given check tool_id, or ``None``
     if the tool_id is not recognised.
 
+``resolve_tool_id(identifier)``  → ``str | None``
+    Return the canonical ``mock_verify_*`` tool_id when *identifier* is either a
+    canonical check tool_id or an internal family_hint alias such as
+    ``mobile_id`` / ``simple_auth_module``.
+
 ``get_canonical_map()``  → ``Mapping[str, str]``
     Return the full frozen ``{tool_id: family_hint}`` mapping.
 
@@ -97,6 +102,22 @@ def resolve_family(tool_id: str) -> str | None:
     (``lru_cache``). Subsequent calls return the cached mapping.
     """
     return _load_map().get(tool_id)
+
+
+def resolve_tool_id(identifier: str) -> str | None:
+    """Return the canonical check tool_id for *identifier*.
+
+    This is the runtime guard for model-facing alias drift.  The manifest can
+    include internal verify-family entries for backward compatibility, but
+    adapter dispatch is owned by canonical ``mock_verify_*`` tool ids.
+    """
+    mapping = _load_map()
+    if identifier in mapping:
+        return identifier
+    for tool_id, family in mapping.items():
+        if family == identifier:
+            return tool_id
+    return None
 
 
 def get_canonical_map() -> Mapping[str, str]:

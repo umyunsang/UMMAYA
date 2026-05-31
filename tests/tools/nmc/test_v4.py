@@ -625,8 +625,8 @@ class TestNmcDescriptionV4:
         REQUIRES lat/lon coordinates that the citizen never types directly.
         Asserting self-containment encouraged the description to lie to the
         LLM, which then refused to call resolve_location and surfaced the
-        "no resolve_location available" hallucination (frame
-        ``specs/integration-verification/donga-univ-poi-bug/``, 2026-05-04).
+        "no resolve_location available" hallucination observed in historical
+        live-location debugging on 2026-05-04.
 
         The corrected assertion: the description MUST reference
         ``locate`` and an ordering signal so K-EXAONE has

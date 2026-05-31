@@ -227,7 +227,7 @@ def _adapter_frontmatter() -> list[dict[str, Any]]:
 
 
 def _workflow_cards() -> list[dict[str, Any]]:
-    path = REPO_ROOT / "eval" / "scenarios" / "national_ax_citizen_requests_v1.yaml"
+    path = REPO_ROOT / "evidence" / "scenarios" / "national_ax_citizen_requests_v1.yaml"
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     scenarios = payload.get("scenarios", [])
     cards: list[dict[str, Any]] = []

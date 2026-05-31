@@ -66,6 +66,7 @@ export type UmmayaMessageStreamParams = {
   tools?: UmmayaToolDefinition[]
   max_tokens: number
   temperature?: number
+  reasoning_mode?: import('../utils/kExaoneReasoning.js').ReasoningMode
   metadata?: Record<string, string>
 }
 
@@ -121,10 +122,24 @@ export type UmmayaThinkingDelta = {
   thinking: string
 }
 
+export type UmmayaProgressDelta = {
+  type: 'progress_event'
+  phase: 'analysis' | 'tool_selection' | 'tool_call' | 'tool_result' | 'answer_synthesis'
+  message_ko: string
+  message_en: string
+  safe_to_persist: boolean
+  tool_id?: string | null
+  call_id?: string | null
+}
+
 export type UmmayaContentBlockDelta = {
   type: 'content_block_delta'
   index: number
-  delta: UmmayaTextDelta | UmmayaInputJsonDelta | UmmayaThinkingDelta
+  delta:
+    | UmmayaTextDelta
+    | UmmayaInputJsonDelta
+    | UmmayaThinkingDelta
+    | UmmayaProgressDelta
 }
 
 export type UmmayaContentBlockStop = {

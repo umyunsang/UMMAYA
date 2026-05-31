@@ -30,6 +30,7 @@ from ummaya.tools.envelope import make_error_envelope, normalize
 from ummaya.tools.errors import (
     EnvelopeNormalizationError,
     LookupErrorReason,
+    ToolExecutionError,
     ToolNotFoundError,
     UmmayaToolError,
 )
@@ -79,6 +80,11 @@ def _classify_adapter_exception(exc: Exception) -> tuple[LookupErrorReason, bool
     if isinstance(exc, Layer3GateViolation):
         # Programming error: stub handler was reached despite auth-gate — never retry.
         return (LookupErrorReason.upstream_unavailable, False)
+    if isinstance(exc, ToolExecutionError) and isinstance(exc.cause, httpx.HTTPStatusError):
+        status_code = exc.cause.response.status_code
+        if status_code in {400, 401, 403, 404}:
+            return (LookupErrorReason.upstream_unavailable, False)
+        return (LookupErrorReason.upstream_unavailable, True)
     if isinstance(exc, LiveAdapterProxyConfigurationError):
         return (LookupErrorReason.upstream_unavailable, False)
     if isinstance(exc, (ValueError, TypeError, KMADomainError)):
@@ -117,6 +123,19 @@ def _adapter_validation_recovery_hint(tool_id: str) -> str:
             " locate result; do NOT round to whole degrees. For 응급실/야간 응급실,"
             " prefer nmc_emergency_search when authenticated, or a location POI"
             " search when no authenticated NMC session is present."
+        )
+    if tool_id == "nmc_aed_site_locate":
+        return (
+            " REGION FILTER ONLY: this AED adapter uses official NMC Q0/Q1"
+            " region filters, not ER-search mode. If you have"
+            " a place name, call kakao_keyword_search({query:'<장소명>'}), then"
+            " kakao_coord_to_region({lat:<lat>, lon:<lon>}). Re-invoke this"
+            " tool as nmc_aed_site_locate({q0:region.region_1depth_name,"
+            " q1:region.region_2depth_name, page_no:1, num_of_rows:10,"
+            " origin_lat:<original place lat>, origin_lon:<original place lon>})."
+            " origin_lat/origin_lon are optional client-side distance-sort fields;"
+            " copy them from the coordinate-producing locate result when available."
+            " Do NOT pass mode, lat/lon, or ER-only fields."
         )
     if tool_id in {"kakao_coord_to_region", "sgis_adm_cd_lookup"}:
         return (
@@ -311,8 +330,9 @@ class ToolExecutor:
                 reason=reason,
                 message=(
                     f"Adapter '{tool_id}' raised {type(exc).__name__}: {str(exc)[:240]}. "
-                    "Do NOT fabricate a response from prior knowledge; use another "
-                    "appropriate adapter or explain that the lookup failed."
+                    "Do NOT fabricate a response from prior knowledge; explain that "
+                    "the lookup failed, cite the official agency channel, and ask "
+                    "before trying a different adapter."
                 ),
                 request_id=request_id,
                 elapsed_ms=_elapsed(),
@@ -480,20 +500,20 @@ class ToolExecutor:
             recovery_hint = _adapter_validation_recovery_hint(tool_id)
             if not recovery_hint and tool_id == "nmc_emergency_search":
                 recovery_hint = (
-                    " LOCATE FIRST: call locate with a locate adapter from"
+                    " LOCATE FIRST: call a concrete locate adapter from"
                     " <available_adapters>. For a named place use"
-                    " locate({tool_id:'kakao_keyword_search', params:{query:'<지역명>'}}),"
-                    " then call locate({tool_id:'kakao_coord_to_region',"
-                    " params:{lat:<lat>, lon:<lon>}}). Re-invoke this tool with"
-                    " params {mode:'region', q0:region.region_1depth_name,"
+                    " kakao_keyword_search({query:'<지역명>'}), then call"
+                    " kakao_coord_to_region({lat:<lat>, lon:<lon>}). Re-invoke"
+                    " this tool as nmc_emergency_search({mode:'region',"
+                    " q0:region.region_1depth_name,"
                     " q1:region.region_2depth_name, origin_lat:<lat>, origin_lon:<lon>,"
-                    " limit:<N>}. Copy decimal WGS-84 coordinates exactly from locate;"
+                    " limit:<N>}). Copy decimal WGS-84 coordinates exactly from locate;"
                     " do NOT round, guess coordinates, or set QN unless the citizen"
                     " gave a specific institution name."
                 )
             elif not recovery_hint and need_resolve:
                 recovery_hint = (
-                    " LOCATE FIRST: call locate with the appropriate locate adapter"
+                    " LOCATE FIRST: call the appropriate concrete locate adapter"
                     " from <available_adapters> to obtain the missing coordinates /"
                     " admin code, then re-invoke this tool with the returned values."
                     " Do NOT guess coordinates or codes from prior knowledge."
@@ -566,8 +586,8 @@ class ToolExecutor:
                     f"Adapter '{tool_id}' raised an exception during upstream call. "
                     f"Detail: {_exc_summary}. "
                     "Do NOT fabricate a response from prior knowledge — tell the citizen "
-                    "the lookup failed, cite the official agency channel, and offer to "
-                    "retry or try a different tool."
+                    "the lookup failed, cite the official agency channel, and ask "
+                    "before retrying or trying a different tool."
                 ),
                 request_id=request_id,
                 elapsed_ms=_elapsed(),
@@ -637,7 +657,7 @@ class ToolExecutor:
                     f"expected envelope schema. Detail: {_exc_detail}. "
                     "Do NOT fabricate a response from prior knowledge — tell the citizen "
                     "the data could not be parsed, cite the official agency channel, and "
-                    "offer to retry or try a different tool."
+                    "ask before retrying or trying a different tool."
                 ),
                 request_id=request_id,
                 elapsed_ms=_elapsed(),

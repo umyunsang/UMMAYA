@@ -2973,6 +2973,7 @@ export function handleMessageFromStream(
         }))
       }
     }
+
     // Clear streaming text NOW so the render can switch displayedMessages
     // from deferredMessages to messages in the same batch, making the
     // transition from streaming text → final message atomic (no gap, no duplication).

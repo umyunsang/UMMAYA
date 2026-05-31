@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from ummaya.tools.verified_data_go_kr._models import VerifiedAdapterSpec
 
 _LAST_VERIFIED = datetime(2026, 5, 16, tzinfo=UTC)
+_LAST_VERIFIED_2026_05_28 = datetime(2026, 5, 28, tzinfo=UTC)
 _DATA_GO_KR_KEY = "UMMAYA_DATA_GO_KR_API_KEY"
 
 
@@ -67,9 +68,14 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         policy_url=_data_go_policy("15073861"),
         policy_text="공공데이터포털 인증키 기반 한국환경공단 에어코리아 대기오염정보 조회 OpenAPI.",
         last_verified=_LAST_VERIFIED,
-        search_hint="15073861 AirKorea 에어코리아 대기오염 시도별 대기질 미세먼지 find",
+        search_hint=(
+            "15073861 AirKorea 에어코리아 대기오염 시도별 대기질 미세먼지 "
+            "sidoName 서울 부산 경기 find"
+        ),
         llm_description=(
-            "시도명(sido_name)으로 에어코리아 시도별 실시간 측정소 대기질 공개 데이터를 조회한다."
+            "짧은 시도명(sido_name: 서울, 부산, 경기 등)으로 에어코리아 시도별 "
+            "실시간 측정소 대기질 공개 데이터를 조회한다. 부산광역시처럼 긴 행정명은 "
+            "AirKorea 계약상 부산으로 줄여 호출한다."
         ),
         trigger_examples=["서울 대기질 측정소 데이터 조회해줘"],
     ),
@@ -148,7 +154,9 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         last_verified=_LAST_VERIFIED,
         search_hint="15098529 TAGO 버스노선 cityCode routeNo bus route find",
         llm_description=(
-            "도시코드(city_code)와 노선번호(route_no)로 TAGO 버스노선 공개 데이터를 조회한다."
+            "Search official TAGO bus route data by city_code and citizen-visible "
+            "route_no. Use this before tago_bus_location_search when route_id is "
+            "unknown."
         ),
     ),
     VerifiedAdapterSpec(
@@ -172,9 +180,44 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         policy_url=_data_go_policy("15098530"),
         policy_text="공공데이터포털 인증키 기반 국토교통부 TAGO 버스도착정보 조회 OpenAPI.",
         last_verified=_LAST_VERIFIED,
-        search_hint="15098530 TAGO 버스도착 정류소 nodeId arrival bus find",
+        search_hint="15098530 TAGO 버스도착 정류소 nodeId routeno routeid arrival bus find",
         llm_description=(
-            "도시코드(city_code)와 정류소 ID(node_id)로 TAGO 버스도착 예정 정보를 조회한다."
+            "Search official TAGO bus-arrival predictions by city_code and node_id. "
+            "If the citizen gives a stop name such as 부산역 instead of node_id, call "
+            "tago_bus_station_search first and reuse its nodeid. If the citizen names "
+            "a route such as 1001, pass route_no as an optional client-side filter "
+            "against the returned TAGO routeno field; use route_id from "
+            "tago_bus_route_search when the route number is ambiguous."
+        ),
+    ),
+    VerifiedAdapterSpec(
+        dataset_id="15098529",
+        tool_id="tago_bus_route_station_search",
+        module_name="tago_bus_route_station",
+        name_ko="국토교통부 TAGO 노선별 경유정류소 조회",
+        ministry="MOLIT",
+        category=["transport", "bus", "public-data"],
+        endpoint="https://apis.data.go.kr/1613000/BusRouteInfoInqireService/getRouteAcctoThrghSttnList",
+        env_var=_DATA_GO_KR_KEY,
+        auth_query_param="serviceKey",
+        response_format="xml",
+        query_param_map={
+            "city_code": "cityCode",
+            "route_id": "routeId",
+            "page_no": "pageNo",
+            "num_of_rows": "numOfRows",
+        },
+        evidence_path="docs/api/data-go-kr-candidate-docs/15098529/probes/live-2026-05-28/tago-bus-route-station.body.xml",
+        policy_url=_data_go_policy("15098529"),
+        policy_text="공공데이터포털 인증키 기반 국토교통부 TAGO 버스노선정보 조회 OpenAPI.",
+        last_verified=_LAST_VERIFIED_2026_05_28,
+        search_hint=("15098529 TAGO 노선별 경유정류소 routeId nodenm nodeid nodeord bus stop find"),
+        llm_description=(
+            "Search the official TAGO route-station list by city_code and route_id. "
+            "For a citizen query that combines a route number and place, call "
+            "tago_bus_route_search to get route_id, then call this tool with node_nm "
+            "as a client-side filter against returned nodenm values. Use the matching "
+            "nodeid with tago_bus_arrival_search and include route_no or route_id."
         ),
     ),
     VerifiedAdapterSpec(
@@ -199,7 +242,10 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         policy_text="공공데이터포털 인증키 기반 국토교통부 TAGO 버스위치정보 조회 OpenAPI.",
         last_verified=_LAST_VERIFIED,
         search_hint="15098533 TAGO 버스위치 routeId bus location find",
-        llm_description="도시코드(city_code)와 노선 ID(route_id)로 TAGO 버스 위치 정보를 조회한다.",
+        llm_description=(
+            "Search official TAGO bus-location data by city_code and route_id. "
+            "Use tago_bus_route_search first when the citizen gives only a route number."
+        ),
     ),
     VerifiedAdapterSpec(
         dataset_id="15098534",
@@ -225,8 +271,9 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         last_verified=_LAST_VERIFIED,
         search_hint="15098534 TAGO 버스정류소 nodeNm nodeNo station find",
         llm_description=(
-            "도시코드(city_code), 정류소명(node_nm), "
-            "정류소번호(node_no)로 TAGO 정류소 정보를 조회한다."
+            "Search official TAGO bus-stop data by city_code, stop-name fragment "
+            "(node_nm), or stop number (node_no). For bus-arrival questions with a "
+            "named place or stop, call this before tago_bus_arrival_search to obtain nodeid."
         ),
     ),
     VerifiedAdapterSpec(
@@ -264,27 +311,51 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         name_ko="조달청 나라장터 입찰공고 조회",
         ministry="PPS",
         category=["procurement", "bid", "public-data"],
-        endpoint="https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoServc",
+        endpoint="https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoCnstwkPPSSrch",
         env_var=_DATA_GO_KR_KEY,
         auth_query_param="serviceKey",
         response_format="json",
         query_param_map={
-            "inqry_div": "inqryDiv",
-            "bid_ntce_no": "bidNtceNo",
             "page_no": "pageNo",
             "num_of_rows": "numOfRows",
+            "inqry_div": "inqryDiv",
+            "inqry_bgn_dt": "inqryBgnDt",
+            "inqry_end_dt": "inqryEndDt",
+            "bid_ntce_nm": "bidNtceNm",
+            "ntce_instt_nm": "ntceInsttNm",
+            "dminstt_nm": "dminsttNm",
+            "prtcpt_lmt_rgn_nm": "prtcptLmtRgnNm",
+            "indstryty_nm": "indstrytyNm",
         },
         static_query_params={"type": "json"},
-        evidence_path="docs/api/data-go-kr-candidate-docs/15129394/probes/live-2026-05-16/pps-bid-service.body.json",
+        evidence_path="docs/api/data-go-kr-candidate-docs/15129394/probes/live-2026-05-27/pps-bid-construction-search.body.json",
         policy_url=_data_go_policy("15129394"),
         policy_text="공공데이터포털 인증키 기반 조달청 나라장터 입찰공고정보 조회 OpenAPI.",
         last_verified=_LAST_VERIFIED,
-        search_hint="15129394 조달청 나라장터 입찰공고 bid public info find",
-        llm_description=(
-            "조회구분 inqry_div='2'와 필수 입찰공고번호(bid_ntce_no)로 "
-            "나라장터 입찰공고 공개 데이터를 조회한다. 등록일시/변경일시 "
-            "목록 검색은 이 adapter가 아니라 별도 PPS operation으로 감싸야 한다."
+        search_hint=(
+            "15129394 조달청 나라장터 입찰공고 검색조건 공사조회 전기공사 부산시 "
+            "공고게시일시 개찰일시 inqryBgnDt inqryEndDt bidNtceNm ntceInsttNm "
+            "dminsttNm prtcptLmtRgnNm cnstrtsiteRgnNm region_name indstrytyNm "
+            "bid public procurement construction find"
         ),
+        llm_description=(
+            "Wraps official PPS operation getBidPblancListInfoCnstwkPPSSrch, "
+            "the construction-bid search-condition endpoint. Use it for ordinary "
+            "citizen list searches such as '이번 주 부산시 전기공사 입찰'. "
+            "Fill inqry_bgn_dt and inqry_end_dt as YYYYMMDDHHMM. Use inqry_div='1' "
+            "for posted-this-week questions and '2' for bid-opening-date questions. "
+            "Keep each upstream call within a 31-day-or-smaller date window; split "
+            "broader citizen ranges across multiple calls instead of sending one "
+            "over-broad request. "
+            "Use bid_ntce_nm for notice keywords such as 전기공사, prtcpt_lmt_rgn_nm "
+            "for official participation-limit region restrictions such as 부산광역시, "
+            "region_name for UMMAYA client-side filtering against documented PPS "
+            "response fields such as cnstrtsiteRgnNm/ntceInsttNm/dminsttNm, and "
+            "indstryty_nm for license/industry names such as 전기공사업. Do not "
+            "invent notice-number detail inputs for list-search questions; this "
+            "adapter no longer exposes the bid-notice-number detail path."
+        ),
+        trigger_examples=["이번 주 부산시 전기공사 입찰 올라온 거 있어?"],
     ),
     VerifiedAdapterSpec(
         dataset_id="15134761",
@@ -450,11 +521,14 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         ),
         last_verified=_LAST_VERIFIED,
         search_hint=(
-            "15001699 HIRA 의료기관 상세정보 응급실 주차 진료시간 ykiho hospital detail find"
+            "15001699 HIRA 의료기관 상세정보 병원 상세 진료과 진료과목 응급실 "
+            "주차 진료시간 ykiho hospital detail specialty find"
         ),
         llm_description=(
             "암호화 요양기호(ykiho)로 의료기관 세부정보와 "
-            "응급실/주차/진료시간 공개 데이터를 조회한다."
+            "응급실/주차/진료시간/진료과목 공개 데이터를 조회한다. "
+            "일반 병원명·지역 검색에는 hira_hospital_search를 먼저 쓰고, "
+            "상세정보나 진료과목 확인에는 이 어댑터를 이어서 쓴다."
         ),
     ),
     VerifiedAdapterSpec(
@@ -478,9 +552,13 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         policy_url=_data_go_policy("15155046"),
         policy_text="공공데이터포털 인증키 기반 행정안전부 안전비상벨 위치정보 조회 OpenAPI.",
         last_verified=_LAST_VERIFIED,
-        search_hint="15155046 행안부 안전비상벨 위치 경찰연계 방범 emergency call box find",
+        search_hint=(
+            "15155046 행안부 안전비상벨 비상벨 긴급신고함 위치 경찰연계 "
+            "방범 emergency call box safety bell find"
+        ),
         llm_description=(
-            "도로명주소 조각으로 안전비상벨 설치 위치와 관리기관 공개 데이터를 조회한다."
+            "도로명주소 조각으로 안전비상벨·비상벨·긴급신고함 설치 위치와 "
+            "관리기관 공개 데이터를 조회한다."
         ),
     ),
     VerifiedAdapterSpec(
@@ -525,10 +603,12 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
         policy_text="공공데이터포털 인증키 기반 계룡시 장애인 전동보장구 충전 장소 조회 OpenAPI.",
         last_verified=_LAST_VERIFIED,
         search_hint=(
-            "15096040 계룡시 전동휠체어 전동보장구 충전 장소 실내 accessibility charger find"
+            "15096040 계룡시 전동휠체어 전동보장구 보장구 충전소 충전 장소 "
+            "장애인 실내 accessibility charger find"
         ),
         llm_description=(
-            "계룡시 장애인 전동보장구 충전 장소, 위치, 이용 가능 시간 공개 데이터를 조회한다."
+            "계룡시 장애인 전동보장구·전동휠체어 충전소/충전 장소, "
+            "위치, 이용 가능 시간 공개 데이터를 조회한다."
         ),
     ),
     VerifiedAdapterSpec(
@@ -554,9 +634,19 @@ VERIFIED_DATA_GO_KR_ADAPTERS: tuple[VerifiedAdapterSpec, ...] = (
             "공공데이터포털 인증키 기반 국립중앙의료원 전국 자동심장충격기 정보 조회 OpenAPI."
         ),
         last_verified=_LAST_VERIFIED,
-        search_hint="15000652 국립중앙의료원 AED 자동심장충격기 자동제세동기 위치 locate find",
+        search_hint=(
+            "15000652 국립중앙의료원 AED 자동심장충격기 자동제세동기 "
+            "응급실 주변 시도 시군구 q0 q1 find"
+        ),
         llm_description=(
-            "시도(q0)와 시군구(q1)로 전국 AED 설치 위치와 이용 가능 시간 공개 데이터를 조회한다."
+            "시도(q0)와 시군구(q1)로 전국 AED 설치 위치와 이용 가능 시간 공개 데이터를 "
+            "조회한다. 시민이 '응급실이나 AED', '응급실/AED', '자동심장충격기'를 같이 "
+            "묻는 경우 nmc_emergency_search 결과만으로 AED를 답하지 말고, 이 find "
+            "어댑터를 별도 호출한다. q0/q1은 좌표가 아니라 공식 지역 필터다. "
+            "origin_lat/origin_lon은 업스트림 파라미터가 아니라 응답 WGS84 좌표를 "
+            "거리순으로 정렬하기 위한 선택 필드다. 예: "
+            "부산역 근처는 locate 후 부산광역시/동구 또는 중구 지역 필터로 본 도구를 "
+            "추가 조회한다."
         ),
     ),
     VerifiedAdapterSpec(

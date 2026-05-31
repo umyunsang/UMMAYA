@@ -44,8 +44,8 @@ def test_representative_tools_follow_primitive_agency_service_adapter_tree() -> 
         "kma_current_observation": (
             "find/kma/vilage_fcst_info_service_2_0/kma_current_observation"
         ),
-        "kma_apihub_amm_iwxxm_service_get_metar": (
-            "find/kma/amm_iwxxm_service/kma_apihub_amm_iwxxm_service_get_metar"
+        "kma_apihub_url_air_metar_decoded": (
+            "find/kma/url_air_metar_decoded/kma_apihub_url_air_metar_decoded"
         ),
         "tago_bus_route_search": "find/molit/tago_bus_route/tago_bus_route_search",
         "kakao_address_search": "locate/ummaya/kakao_local/kakao_address_search",

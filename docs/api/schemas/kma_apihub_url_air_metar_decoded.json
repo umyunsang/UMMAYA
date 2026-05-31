@@ -1,0 +1,124 @@
+{
+  "$defs": {
+    "KmaApiHubUrlOutput": {
+      "additionalProperties": false,
+      "description": "Normalized output from one KMA APIHub non-structured URL operation.",
+      "properties": {
+        "approval_state": {
+          "enum": [
+            "approved",
+            "approval_pending"
+          ],
+          "title": "Approval State",
+          "type": "string"
+        },
+        "content_type": {
+          "title": "Content Type",
+          "type": "string"
+        },
+        "endpoint_path": {
+          "title": "Endpoint Path",
+          "type": "string"
+        },
+        "line_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Count"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "raw_format": {
+          "enum": [
+            "text",
+            "json",
+            "image",
+            "binary"
+          ],
+          "title": "Raw Format",
+          "type": "string"
+        },
+        "raw_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Text"
+        },
+        "status_code": {
+          "title": "Status Code",
+          "type": "integer"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "operation_id",
+        "endpoint_path",
+        "approval_state",
+        "content_type",
+        "raw_format",
+        "status_code"
+      ],
+      "title": "KmaApiHubUrlOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kma_apihub_url_air_metar_decoded.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "help": {
+      "default": 1,
+      "description": "Set 1 to include KMA field-help lines in the raw text; set 0 for compact decoded records. Official parameter name: help. Operation: air_metar_decoded.",
+      "title": "Help",
+      "type": "integer"
+    },
+    "org": {
+      "default": "K",
+      "description": "METAR issuing organization. Use K for the official KMA decoded-data product unless the citizen names another official source. The normalized summary annotates known KMA airport station numbers such as 153 Gimhae/RKPK. Official parameter name: org. Operation: air_metar_decoded.",
+      "title": "Org",
+      "type": "string"
+    },
+    "tm": {
+      "anyOf": [
+        {
+          "pattern": "^\\d{12}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "METAR decoded-data lookup time in UTC, YYYYMMDDHHMM. Omit it to request the latest upstream slot. Official parameter name: tm. Operation: air_metar_decoded.",
+      "title": "Tm"
+    }
+  },
+  "title": "kma_apihub_url_air_metar_decoded",
+  "type": "object"
+}

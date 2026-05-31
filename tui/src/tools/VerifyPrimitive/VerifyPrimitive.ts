@@ -37,6 +37,11 @@ import {
 } from '../_shared/compactPrimitiveResult.js'
 import { getOrCreateUmmayaBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
+import {
+  isRootPrimitiveToolId,
+  normalizeRootPrimitiveAdapterEnvelope,
+  rootPrimitiveSelfTargetMessage,
+} from '../_shared/rootPrimitiveInput.js'
 
 // ---------------------------------------------------------------------------
 // UMMAYA citation extension — augments context at runtime for permission UI.
@@ -52,15 +57,18 @@ type ContextWithCitation = ToolUseContext & {
 // ---------------------------------------------------------------------------
 
 const inputSchema = lazySchema(() =>
-  z.strictObject({
-    tool_id: z
-      .string()
-      .min(1)
-      .describe('Auth adapter identifier, e.g. "gongdong_injeungseo", "mobile_id"'),
-    params: z
-      .record(z.string(), z.unknown())
-      .describe('Adapter-defined credential parameter body'),
-  }),
+  z.preprocess(
+    value => normalizeRootPrimitiveAdapterEnvelope(CHECK_TOOL_NAME, value),
+    z.strictObject({
+      tool_id: z
+        .string()
+        .min(1)
+        .describe('Auth adapter identifier, e.g. "mock_verify_mobile_id"'),
+      params: z
+        .record(z.string(), z.unknown())
+        .describe('Adapter-defined credential parameter body'),
+    }),
+  ),
 )
 type InputSchema = ReturnType<typeof inputSchema>
 
@@ -275,6 +283,14 @@ export const VerifyPrimitive = buildTool({
   ) {
     // Epic ε #2296 T013 — two-tier resolution (FR-017 / FR-018 / FR-019 / FR-020).
     // Spec 2521 (2026-05-01) — citation-missing branch added (1002).
+
+    if (isRootPrimitiveToolId(input.tool_id)) {
+      return {
+        result: false as const,
+        message: rootPrimitiveSelfTargetMessage(input.tool_id, 'check'),
+        errorCode: PrimitiveErrorCode.AdapterNotFound,
+      }
+    }
 
     // Tier 1 — synced backend manifest (FR-017).
     if (isManifestSynced()) {

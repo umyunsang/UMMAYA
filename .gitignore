@@ -69,6 +69,7 @@ logs/
 *.log
 *.sqlite
 *.db
+weekly-activity-log-*.md
 
 # Research (keep structure, ignore large outputs)
 research/experiments/results/*.csv
@@ -93,6 +94,8 @@ htmlcov/
 
 # Local agent runtime state
 .codex/
+.codex-work/
+.evidence/
 .agents/skills/ummaya-reference-first/
 .agents/
 .claude/

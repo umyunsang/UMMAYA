@@ -111,47 +111,50 @@
   "properties": {
     "comp_type": {
       "default": "CPP",
-      "description": "KMA APIHub request parameter compType.",
+      "description": "KMA APIHub request parameter compType. Official parameter name: compType. Operation: WthrRadarInfoService/getCompCappiQcdArea.",
       "title": "Comp Type",
       "type": "string"
     },
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: WthrRadarInfoService/getCompCappiQcdArea.",
       "title": "Data Type",
       "type": "string"
     },
     "data_type_cd": {
       "default": "CZ",
-      "description": "KMA APIHub request parameter dataTypeCd.",
+      "description": "KMA APIHub request parameter dataTypeCd. Official parameter name: dataTypeCd. Operation: WthrRadarInfoService/getCompCappiQcdArea.",
       "title": "Data Type Cd",
       "type": "string"
     },
     "date_time": {
-      "default": "201911120300",
-      "description": "KMA APIHub request parameter dateTime.",
+      "description": "KMA satellite/radar observation datetime, YYYYMMDDHHMM. Use a recent KST observation; APIHub returns an error outside the current 2 days window for these satellite products. Official parameter name: dateTime. Operation: WthrRadarInfoService/getCompCappiQcdArea.",
+      "pattern": "^\\d{12}$",
       "title": "Date Time",
       "type": "string"
     },
     "dong_code": {
       "default": "1100000000",
-      "description": "KMA APIHub request parameter dongCode.",
+      "description": "Administrative area code for area-scoped KMA products. Use only for Area operations, not All operations. Official parameter name: dongCode. Operation: WthrRadarInfoService/getCompCappiQcdArea.",
       "title": "Dong Code",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: WthrRadarInfoService/getCompCappiQcdArea.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: WthrRadarInfoService/getCompCappiQcdArea.",
       "title": "Page No",
       "type": "integer"
     }
   },
+  "required": [
+    "date_time"
+  ],
   "title": "kma_apihub_wthr_radar_info_service_get_comp_cappi_qcd_area",
   "type": "object"
 }

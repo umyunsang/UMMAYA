@@ -34,9 +34,10 @@
   "additionalProperties": false,
   "description": "Input for PPS bid public information.",
   "properties": {
-    "bid_ntce_no": {
+    "bid_ntce_nm": {
       "anyOf": [
         {
+          "maxLength": 1000,
           "type": "string"
         },
         {
@@ -44,14 +45,72 @@
         }
       ],
       "default": null,
-      "description": "Bid notice number.",
-      "title": "Bid Ntce No"
+      "description": "Official PPS bidNtceNm notice-name keyword. Partial names are allowed; use this for citizen keywords such as 전기공사.",
+      "title": "Bid Ntce Nm"
+    },
+    "dminstt_nm": {
+      "anyOf": [
+        {
+          "maxLength": 400,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Official PPS dminsttNm demand agency name filter. Partial agency names are allowed.",
+      "title": "Dminstt Nm"
+    },
+    "indstryty_nm": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Official PPS indstrytyNm industry/license name. Use 전기공사업 for electrical-construction qualification searches when requested.",
+      "title": "Indstryty Nm"
+    },
+    "inqry_bgn_dt": {
+      "description": "Official PPS inqryBgnDt search start datetime in YYYYMMDDHHMM. Required when inqry_div is '1' or '2'. Keep each PPS request window within 31 days.",
+      "pattern": "^\\d{12}$",
+      "title": "Inqry Bgn Dt",
+      "type": "string"
     },
     "inqry_div": {
-      "description": "PPS inquiry division.",
-      "minLength": 1,
+      "default": "1",
+      "description": "Official PPS inqryDiv. Use '1' for bid notice publication datetime (pblancDate) searches such as 'this week posted notices'; use '2' for bid opening datetime (opengDt) searches.",
+      "enum": [
+        "1",
+        "2"
+      ],
       "title": "Inqry Div",
       "type": "string"
+    },
+    "inqry_end_dt": {
+      "description": "Official PPS inqryEndDt search end datetime in YYYYMMDDHHMM. Required when inqry_div is '1' or '2'. Keep each PPS request window within 31 days.",
+      "pattern": "^\\d{12}$",
+      "title": "Inqry End Dt",
+      "type": "string"
+    },
+    "ntce_instt_nm": {
+      "anyOf": [
+        {
+          "maxLength": 400,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Official PPS ntceInsttNm public notice agency name filter. Partial agency names are allowed.",
+      "title": "Ntce Instt Nm"
     },
     "num_of_rows": {
       "default": 10,
@@ -67,10 +126,39 @@
       "minimum": 1,
       "title": "Page No",
       "type": "integer"
+    },
+    "prtcpt_lmt_rgn_nm": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Official PPS prtcptLmtRgnNm participation-limit region name. For Busan-region notices use 부산광역시 when the citizen says 부산시.",
+      "title": "Prtcpt Lmt Rgn Nm"
+    },
+    "region_name": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "UMMAYA client-side region relevance filter copied from citizen wording. This is not sent to PPS upstream; after the official response, UMMAYA keeps rows whose documented region/agency fields such as cnstrtsiteRgnNm, prtcptLmtRgnNm, ntceInsttNm, or dminsttNm match this value.",
+      "title": "Region Name"
     }
   },
   "required": [
-    "inqry_div"
+    "inqry_bgn_dt",
+    "inqry_end_dt"
   ],
   "title": "pps_bid_public_info",
   "type": "object"

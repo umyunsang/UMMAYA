@@ -28,6 +28,11 @@ import {
 } from '../../services/api/adapterManifest.js'
 import { FIND_TOOL_NAME, DESCRIPTION, FIND_TOOL_PROMPT } from './prompt.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import { validateKmaAviationToolChoice } from '../_shared/kmaAviationGuard.js'
+import { validateKmaAnalysisToolChoice } from '../_shared/kmaAnalysisGuard.js'
+import { validateNmcAedToolChoice } from '../_shared/nmcAedGuard.js'
+import { validateProtectedCheckToolChoice } from '../_shared/protectedCheckGuard.js'
+import { validateDirectPublicDataToolChoice } from '../_shared/directPublicDataGuard.js'
 import {
   renderVerboseInputJson,
   renderVerboseOutputJson,
@@ -38,6 +43,11 @@ import {
 } from '../_shared/compactPrimitiveResult.js'
 import { getOrCreateUmmayaBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
+import {
+  isRootPrimitiveToolId,
+  normalizeRootPrimitiveAdapterEnvelope,
+  rootPrimitiveSelfTargetMessage,
+} from '../_shared/rootPrimitiveInput.js'
 
 // ---------------------------------------------------------------------------
 // UMMAYA citation extension — attaches resolved citation to the context so the
@@ -47,8 +57,6 @@ import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.j
 type ContextWithCitation = ToolUseContext & {
   ummayaCitations?: AdapterCitation[]
 }
-
-const ROOT_PRIMITIVE_TOOL_IDS = new Set(['find', 'locate', 'check', 'send'])
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object'
@@ -531,19 +539,22 @@ function buildFindResultRows(output: Output): React.ReactNode[] {
 // ---------------------------------------------------------------------------
 
 const inputSchema = lazySchema(() =>
-  z.object({
-    tool_id: z
-      .string()
-      .min(1)
-      .describe(
-        'Concrete adapter identifier picked from <available_adapters>. ' +
-          'This is not the function name. Never use "find", "locate", "check", or "send". ' +
-          'Examples: "kma_forecast_fetch", "hira_hospital_search".',
-      ),
-    params: z
-      .record(z.string(), z.unknown())
-      .describe('Adapter-defined Pydantic-validated parameter body'),
-  }),
+  z.preprocess(
+    value => normalizeRootPrimitiveAdapterEnvelope(FIND_TOOL_NAME, value),
+    z.object({
+      tool_id: z
+        .string()
+        .min(1)
+        .describe(
+          'Concrete adapter identifier picked from <available_adapters>. ' +
+            'This is not the function name. Never use "find", "locate", "check", or "send". ' +
+            'Examples: "kma_forecast_fetch", "hira_hospital_search".',
+        ),
+      params: z
+        .record(z.string(), z.unknown())
+        .describe('Adapter-defined Pydantic-validated parameter body'),
+    }),
+  ),
 )
 type InputSchema = ReturnType<typeof inputSchema>
 
@@ -678,13 +689,28 @@ export const LookupPrimitive = buildTool({
     // policy URL) is enforced at the primitive surface, not just at the
     // permission gauntlet.
 
-    if (ROOT_PRIMITIVE_TOOL_IDS.has(input.tool_id)) {
+    if (isRootPrimitiveToolId(input.tool_id)) {
       return {
         result: false,
-        message: `Root primitive '${input.tool_id}' is not an adapter tool_id. Pick a concrete adapter from <available_adapters>.`,
+        message: rootPrimitiveSelfTargetMessage(input.tool_id, 'find'),
         errorCode: PrimitiveErrorCode.AdapterNotFound,
       }
     }
+
+    const protectedChoice = validateProtectedCheckToolChoice(input.tool_id, context)
+    if (protectedChoice) return protectedChoice
+    const directPublicDataChoice = validateDirectPublicDataToolChoice(
+      input.tool_id,
+      context,
+      input.params,
+    )
+    if (directPublicDataChoice) return directPublicDataChoice
+    const kmaAviationChoice = validateKmaAviationToolChoice(input.tool_id, context)
+    if (kmaAviationChoice) return kmaAviationChoice
+    const kmaAnalysisChoice = validateKmaAnalysisToolChoice(input.tool_id, context)
+    if (kmaAnalysisChoice) return kmaAnalysisChoice
+    const nmcAedChoice = validateNmcAedToolChoice(input.tool_id, context)
+    if (nmcAedChoice) return nmcAedChoice
 
     // Tier 1 — synced backend manifest (FR-017).
     if (isManifestSynced()) {

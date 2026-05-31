@@ -41,12 +41,13 @@ def test_b1_total_tool_count_includes_mocks(
 ) -> None:
     """Path B-1: bridge registers active non-core mock adapters into main registry.
 
-    Expected total: 148 after active KMA APIHub structured adapter expansion.
+    Expected total: 153 after active KMA APIHub structured, URL adapter, and
+    TAGO route-station expansion.
     """
     r, _ = loaded_registry
     total = len(r.all_tools())
-    assert total == 148, (
-        f"Expected 148 total tools after discovery_bridge runs; got {total}. "
+    assert total == 153, (
+        f"Expected 153 total tools after discovery_bridge runs; got {total}. "
         f"Verify the bridge registered the active mock adapters."
     )
 
@@ -231,6 +232,23 @@ def test_b1_identity_verify_descriptions_contain_canonical_scopes(
     assert ganpyeon.llm_description is not None
     assert "check:ganpyeon.identity" in ganpyeon.llm_description
     assert "admin_service scopes" in ganpyeon.llm_description
+
+
+def test_b1_verify_descriptions_warn_against_family_ids_as_tool_ids(
+    loaded_registry: tuple[ToolRegistry, ToolExecutor],
+) -> None:
+    """Family labels may appear in scopes, but LLM tool_id must stay canonical."""
+
+    r, _ = loaded_registry
+    simple_auth = r.lookup("mock_verify_module_simple_auth")
+    mobile = r.lookup("mock_verify_mobile_id")
+
+    assert simple_auth.llm_description is not None
+    assert "Do not set tool_id to 'simple_auth_module'" in simple_auth.llm_description
+    assert "mock_verify_module_simple_auth" in simple_auth.llm_description
+    assert mobile.llm_description is not None
+    assert "Do not set tool_id to 'mobile_id'" in mobile.llm_description
+    assert "mock_verify_mobile_id" in mobile.llm_description
 
 
 def test_b2_hometax_taxreturn_schema_fields_have_descriptions(

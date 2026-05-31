@@ -2,9 +2,12 @@
 """Locate primitive adapters.
 
 Each provider endpoint is exposed as a separate ``GovAPITool`` bound to the
-``locate`` primitive. The root ``locate`` tool stays a thin envelope:
+``locate`` primitive. The model-facing path is the concrete adapter function:
 
-    locate({"tool_id": "<adapter>", "params": {...}})
+    kakao_keyword_search({"query": "<place>"})
+
+The root ``locate({"tool_id": "<adapter>", "params": {...}})`` tool stays as
+a thin envelope for legacy transcripts and compatibility paths.
 
 This keeps provider semantics in adapter descriptions and schemas instead of
 pre-processing citizen queries inside the primitive dispatcher.
@@ -426,7 +429,7 @@ KAKAO_ADDRESS_SEARCH_TOOL = GovAPITool(
         "search for bare Korean admin-area wording like '부산 다대1동', '사하구 하단동', "
         "or any query ending in 동/읍/면/구 without a named POI. Returns a bundle containing "
         "address, coordinates, KMA nx/ny when in domain, and Kakao b_code when present. "
-        "Call as locate({tool_id:'kakao_address_search', params:{query:'...'}})."
+        "Call as kakao_address_search({query:'...'})."
     ),
     search_hint=(
         "locate 위치 주소 도로명 지번 행정동 법정동 동 읍 면 구 좌표 geocode kakao address "
@@ -454,8 +457,7 @@ KAKAO_KEYWORD_SEARCH_TOOL = GovAPITool(
         "or '강남역'. Do not use for bare administrative districts like '부산 다대1동'; "
         "use kakao_address_search for those. Returns POI name/category, WGS-84 "
         "lat/lon, and KMA nx/ny when in domain. If a downstream adapter needs q0/q1 "
-        "region names, follow with locate({tool_id:'kakao_coord_to_region', "
-        "params:{lat:<lat>, lon:<lon>}})."
+        "region names, follow with kakao_coord_to_region({lat:<lat>, lon:<lon>})."
     ),
     search_hint=(
         "locate 위치 장소 키워드 POI 랜드마크 캠퍼스 역 병원 좌표 kakao keyword "
@@ -481,7 +483,7 @@ KAKAO_COORD_TO_REGION_TOOL = GovAPITool(
         "Locate adapter for Kakao coord2regioncode. Use after a coordinate-producing "
         "locate adapter when a downstream public API needs region_1depth_name/q0, "
         "region_2depth_name/q1, or a 10-digit legal/admin code. "
-        "Call as locate({tool_id:'kakao_coord_to_region', params:{lat:<lat>, lon:<lon>}})."
+        "Call as kakao_coord_to_region({lat:<lat>, lon:<lon>})."
     ),
     search_hint=("locate 지역 시도 시군구 행정동 법정동 q0 q1 coord2region reverse geocode kakao"),
     policy=_provider_policy("Kakao", "https://www.kakao.com/policy/privacy"),

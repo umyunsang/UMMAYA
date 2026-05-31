@@ -19,7 +19,7 @@ import time
 from datetime import UTC, datetime
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ummaya.engine.config import QueryEngineConfig
 from ummaya.engine.events import StopReason
@@ -60,6 +60,10 @@ class _PrimitiveTargetOutput(BaseModel):
     total_count: int
 
 
+class _StrictPrimitiveTargetInput(_PrimitiveTargetInput):
+    model_config = ConfigDict(extra="forbid")
+
+
 def _read_only_policy() -> AdapterRealDomainPolicy:
     return AdapterRealDomainPolicy(
         real_classification_url="https://www.data.go.kr/policy/privacyPolicy.do",
@@ -83,6 +87,11 @@ def _primitive_target_tool(tool_id: str, *, primitive: str) -> GovAPITool:
         policy=_read_only_policy(),
         primitive=primitive,
     )
+
+
+def _strict_primitive_target_tool(tool_id: str, *, primitive: str) -> GovAPITool:
+    tool = _primitive_target_tool(tool_id, primitive=primitive)
+    return tool.model_copy(update={"input_schema": _StrictPrimitiveTargetInput})
 
 
 # ---------------------------------------------------------------------------
@@ -227,6 +236,42 @@ class TestDispatchToolCallsRootPrimitives:
         assert results[0].data is not None
         assert results[0].data["kind"] == "collection"
         json.dumps(results[0].data)
+
+    @pytest.mark.asyncio
+    async def test_locate_root_primitive_strips_nested_adapter_tool_id(self) -> None:
+        registry = ToolRegistry()
+        register_mvp_surface(registry)
+        registry.register(_strict_primitive_target_tool("kakao_keyword_search", primitive="locate"))
+        executor = ToolExecutor(registry)
+        captured: dict[str, object] = {}
+
+        async def _adapter(inp: _StrictPrimitiveTargetInput) -> dict[str, object]:
+            captured.update(inp.model_dump(exclude_none=True))
+            return {
+                "kind": "collection",
+                "items": [{"record": {"query": inp.query, "lat": 35.18, "lon": 129.07}}],
+                "total_count": 1,
+            }
+
+        executor.register_adapter("kakao_keyword_search", _adapter)
+        results = await dispatch_tool_calls(
+            [
+                _tc(
+                    "call_locate",
+                    "locate",
+                    (
+                        '{"tool_id":"kakao_keyword_search",'
+                        '"params":{"query":"김포공항","tool_id":"kakao_keyword_search"}}'
+                    ),
+                )
+            ],
+            registry,
+            executor,
+        )
+
+        assert len(results) == 1
+        assert results[0].success is True
+        assert captured == {"query": "김포공항", "page_no": 1}
 
 
 class TestDispatchToolCallsTwoSafe:

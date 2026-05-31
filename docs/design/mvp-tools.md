@@ -415,9 +415,9 @@ LookupFetchOutput = Annotated[
 
 #### 5.5.1 Retrieval quality gate (recall evaluation)
 
-To prevent the BM25 retriever from silently degrading as adapters are added, `/speckit-plan` Phase 0 ships a curated evaluation set and a CI test.
+To prevent the BM25 retriever from silently degrading as adapters are added, retrieval behavior is now checked through Evidence Fabric v2 and focused deterministic retrieval tests. The old standalone labeled-query eval files were retired with the pre-v2 verification pipeline.
 
-- **Eval set**: 30 Korean natural-language queries, each labeled with its correct `adapter_id`. Stored at `eval/retrieval_queries.yaml`, curated manually during Phase 0. 30 is the minimum that yields a usable 95% CI on `recall@5` (±15%p); 10 is noise, 100 is out of scope for a student project.
+- **Dataset**: citizen-facing scenarios live at `evidence/scenarios/national_ax_citizen_requests_v1.yaml` and must not expose adapter IDs, fixture IDs, or expected tool IDs to the model-visible prompt.
 - **Metrics** (both reported):
   - `recall@5` — correct adapter present in top-5 candidates (primary gate).
   - `recall@1` — correct adapter is the first candidate (upper-bound on LLM tool-selection burden).
@@ -429,7 +429,7 @@ To prevent the BM25 retriever from silently degrading as adapters are added, `/s
   | Warn | 60% ≤ `recall@5` < 80% | reinforce `search_hint` bilingual terms, re-test |
   | Fail | < 60% | escalate to embedding-based retrieval (fallback tracked in §8.2) |
 
-- **Test hook**: `tests/retrieval/test_recall.py` runs on every CI build. Adding a new adapter requires adding at least one eval query referencing it.
+- **Test hook**: `tests/tools/test_bm25_retrieval.py` covers deterministic BM25 behavior. Evidence Fabric rejects model-visible implementation leakage and records scenario coverage in `.evidence/run.json`.
 - **Evidence basis**: 80% target = Kruczek/MCP-Bench midpoint for BM25 at <100-tool scale. 60% fail threshold = Anthropic's 64% at 4K scale; anything worse at our smaller scale indicates a structural retrieval problem, not a scale problem.
 
 ### 5.6 Invocation (the `fetch` backend)
@@ -632,7 +632,7 @@ This preserves the architectural shape for KSC 2026 evaluation while keeping sco
 1. ~~**Korean tokenizer choice**~~ **Resolved (2026-04-16)**: `kiwipiepy>=0.17` (MIT, pure Python). mecab-ko rejected due to CI system-install friction under `uv`. 2024-2025 benchmarks show F1 parity on morpheme segmentation.
 2. ~~**Default `top_k` for `lookup.search`**~~ **Resolved (2026-04-16)**: `min(5, len(registry))` with env override `UMMAYA_LOOKUP_TOPK` clamped to `[1, 20]`. Adaptive floor handles MVP's 4-adapter phase; ceiling prevents context explosion at scale.
 3. ~~**Seed adapter count**: 3 vs 5~~ **Resolved (2026-04-16)**: 4 adapters selected — KOROAD + KMA + HIRA + NMC. Justification in §5.8: covers both canonical shapes (`collection`+`timeseries`) and all four spatial-input flavors (code-pair, LCC grid, coord+radius, coord-only).
-4. ~~**Tool-Search recall gate**~~ **Resolved (2026-04-16)**: 30-query eval set at `eval/retrieval_queries.yaml`, measured `recall@5` and `recall@1`. Gates: pass ≥ 80% / warn [60%, 80%) / fail < 60%. Detail in §5.5.1.
+4. ~~**Tool-Search recall gate**~~ **Replaced (2026-05-26)**: standalone labeled-query eval files were removed. Evidence Fabric v2 now owns scenario-level verification while focused BM25 unit tests keep deterministic retrieval invariants.
 5. ~~**`resolve_location.want=all` token cost**~~ **Resolved (2026-04-16)**: default is `coords_and_admcd` (bundle with 2 slots). `all` is opt-in only. Adapter-specific variants (KMA LCC grid, KOROAD sido/gugun) are derived inside their adapters from `coords`/`adm_cd` — not exposed as first-class `want` values.
 
 ## 10. Compliance against project rules

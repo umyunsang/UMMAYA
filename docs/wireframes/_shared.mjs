@@ -31,20 +31,20 @@ export const C = {
   kma: '#a78bfa',
   hira: '#34d399',
   nmc: '#fbbf24',
-  // Primitive ⏺ dot colors — encode the verb being performed
-  lookupDot:    '#60a5fa',  // blue   · information pulling
-  submitDot:    '#fb923c',  // orange · outbound writes
-  verifyDot:    '#f87171',  // red    · identity gates
-  subscribeDot: '#34d399',  // green  · passive streams
-  pluginDot:    '#a78bfa',  // purple · plugin namespace
+  // Primitive ⏺ dot colors — encode the active root verb being performed
+  findDot:   '#60a5fa',  // blue   · information pulling
+  locateDot: '#7dd3fc',  // cyan   · address/place resolution
+  checkDot:  '#f87171',  // red    · identity/delegation gates
+  sendDot:   '#fb923c',  // orange · outbound writes
+  pluginDot: '#a78bfa',  // purple · plugin namespace
 }
 
 // Primitive → dot color lookup
 export const PRIMITIVE_DOT = {
-  find: C.lookupDot,
-  send: C.submitDot,
-  check: C.verifyDot,
-  subscribe: C.subscribeDot,
+  find: C.findDot,
+  locate: C.locateDot,
+  check: C.checkDot,
+  send: C.sendDot,
   plugin: C.pluginDot,
 }
 
@@ -74,7 +74,7 @@ export function WelcomeV2Block() {
   return h(Box, { flexDirection: 'column', width: 60 },
     h(Box, null,
       h(Text, { bold: true, color: C.brand }, 'Welcome to UMMAYA '),
-      h(Text, { dimColor: true }, 'v0.1-alpha')
+      h(Text, { dimColor: true }, 'KSC 2026')
     ),
     h(Text, { color: C.dim }, '…'.repeat(58)),
     h(Text, null, '                                                          '),
@@ -155,11 +155,12 @@ export function Spinner({ verb }) {
 // Tool-use block — new convention (2026-04-24):
 //   - Primitive name is NOT shown as text. Dot color encodes it.
 //   - Ministry code (English abbreviation) is the adapter label.
-//   - Live/Mock is NOT shown — UI treats all adapters as behaving identically.
+//   - Live/Mock/Handoff is not encoded in the dot. Result copy and evidence
+//     disclose authority boundaries.
 //
 // Dot color → primitive:
-//     blue   (lookup)  ·  orange (submit)  ·  red (verify)
-//     purple (plugin-namespaced verb). Subscribe was deferred until UMMAYA has
+//     blue (find) · cyan (locate) · red (check) · orange (send)
+//     purple (plugin-namespaced verb). Subscribe is deferred until UMMAYA owns
 //     an app/push-notification runtime.
 export function ToolUseBlock({ primitive = 'find', ministry, result, detail }) {
   const dot = PRIMITIVE_DOT[primitive] ?? C.ring

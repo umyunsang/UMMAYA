@@ -13,7 +13,7 @@ Scope: user-facing documentation content redesign, not runtime behavior
   - `docs/plugins/README.md`
   - `docs/configuration.md`
   - `docs/observability.md`
-  - `eval/scenarios/national_ax_citizen_requests_v1.yaml`
+  - `evidence/scenarios/national_ax_citizen_requests_v1.yaml`
 - Claude Code reference:
   - Official docs index: <https://code.claude.com/docs/llms.txt>
   - Official docs pages sampled: overview, quickstart, common workflows, how Claude Code works, permissions, troubleshooting
@@ -37,9 +37,9 @@ The repository already has strong material:
 - `docs/plugins/`: strong contributor guide
 - `docs/configuration.md`: environment registry
 - `docs/observability.md`: local Langfuse/OTEL guide
-- `docs/testing.md`: rigorous verification methodology
+- `docs/design/verification-fabric-v2.md`: rigorous verification methodology
 - `docs/scenarios/`: opaque-system narratives
-- `eval/scenarios/`: target-state citizen demand dataset
+- `evidence/scenarios/`: target-state citizen demand dataset
 
 The missing layer is the user documentation experience:
 
@@ -273,7 +273,7 @@ Each workflow card should include:
 Source inputs:
 
 - README prompt table
-- `eval/scenarios/national_ax_citizen_requests_v1.yaml`
+- `evidence/scenarios/national_ax_citizen_requests_v1.yaml`
 - `docs/api/README.md`
 - `docs/scenarios/`
 
@@ -340,7 +340,7 @@ Each recipe:
 
 Source inputs:
 
-- `eval/scenarios/`
+- `evidence/scenarios/`
 - `docs/api/`
 - `docs/scenarios/`
 - TUI smoke artifacts after implementation changes
@@ -397,7 +397,7 @@ Source inputs:
 
 - `docs/configuration.md`
 - `docs/observability.md`
-- `docs/testing.md`
+- `docs/design/verification-fabric-v2.md`
 - TUI and packaging specs
 
 ### National AX Coverage / Coverage Map
@@ -437,7 +437,7 @@ Source inputs:
 - `docs/api/README.md`
 - `docs/scenarios/`
 - `docs/mock/`
-- `eval/scenarios/national_ax_citizen_requests_v1.yaml`
+- `evidence/scenarios/national_ax_citizen_requests_v1.yaml`
 
 ### National AX Coverage / Live, Mock, And Handoff
 
@@ -556,10 +556,10 @@ citizen failure or trace
 
 Source inputs:
 
-- `docs/research/codex-llm-quality-setup.md`
+- `docs/design/verification-fabric-v2.md`
 - `docs/observability.md`
 - `prompts/manifest.yaml`
-- `eval/scenarios/`
+- `evidence/scenarios/`
 - `specs/026-cicd-prompt-registry/`
 
 ### Reference / LLM-Readable Docs
@@ -747,9 +747,9 @@ Expected behavior:
 | `docs/plugins/` | Source for Plugin System docs |
 | `docs/configuration.md` | Source for Configuration and Env Vars reference |
 | `docs/observability.md` | Source for Observability and LLMOps |
-| `docs/testing.md` | Source for Testing and TUI verification |
+| `docs/design/verification-fabric-v2.md` | Source for Testing and TUI verification |
 | `docs/release-*`, `docs/packaging.md` | Source for Release and Packaging |
-| `eval/scenarios/` | Source for Citizen Workflow examples and docs Q&A eval |
+| `evidence/scenarios/` | Source for Citizen Workflow examples and docs Q&A eval |
 | `prompts/manifest.yaml` | Source for LLMOps and prompt registry docs |
 
 ## Deep Research Findings For The Docs Site
@@ -959,7 +959,7 @@ UMMAYA already has enough structured source material to automate much of the doc
 | Env var reference | source env reads + `docs/configuration.md` | Existing `scripts/audit-env-registry.py` |
 | Plugin catalog docs | plugin manifests and catalog index | Existing `scripts/regenerate_catalog.py` pattern |
 | Prompt registry page | `prompts/manifest.yaml` | New docs generator |
-| Citizen workflow cards | `eval/scenarios/national_ax_citizen_requests_v1.yaml` | New docs generator |
+| Citizen workflow cards | `evidence/scenarios/national_ax_citizen_requests_v1.yaml` | New docs generator |
 | CLI reference | `ummaya --help`, slash commands, package metadata | New snapshot generator |
 | TUI keyboard shortcuts | TUI keybinding registry | New TypeScript generator |
 | Changelog/release evidence | release manifests, GitHub Releases | New release-docs sync |
@@ -979,7 +979,7 @@ pull_request:
     - "src/ummaya/tools/**"
     - "src/ummaya/primitives/**"
     - "prompts/**"
-    - "eval/scenarios/**"
+    - "evidence/scenarios/**"
     - "tui/src/keybindings/**"
     - "package.json"
     - "pyproject.toml"
@@ -1192,7 +1192,7 @@ Prohibited LLM output:
 ### Phase 2: LLM-Readable Docs Pipeline
 
 - Generate `llms.txt`, `llms-full.txt`, and `docs/_llm/index.json`.
-- Add docs Q&A eval using `eval/scenarios/` plus hand-authored support questions.
+- Add docs Q&A eval using `evidence/scenarios/` plus hand-authored support questions.
 - Store docs scorecards under `specs/<feature>/docs-scorecard.yaml`.
 
 ### Phase 3: Product Docs Site

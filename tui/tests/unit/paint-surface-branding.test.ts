@@ -8,7 +8,9 @@ const ROOT = join(import.meta.dir, '../..')
 
 const paintSurfaceFiles = [
   'src/services/tips/tipRegistry.ts',
+  'src/components/Spinner.tsx',
   'src/components/skills/SkillsMenu.tsx',
+  'src/components/design-system/LoadingState.tsx',
   'src/projectOnboardingState.ts',
   'src/components/permissions/PermissionRequest.tsx',
   'src/components/permissions/PermissionPrompt.tsx',
@@ -66,6 +68,7 @@ const paintSurfaceFiles = [
   'src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx',
   'src/components/messages/UserToolResultMessage/RejectedPlanMessage.tsx',
   'src/components/tasks/RemoteSessionDetailDialog.tsx',
+  'src/screens/REPL.tsx',
   'src/bridge/bridgeMain.ts',
   'src/bridge/bridgeApi.ts',
   'src/bridge/bridgePointer.ts',
@@ -78,16 +81,25 @@ const paintSurfaceFiles = [
   'src/coordinator/coordinatorMode.ts',
   'src/commands.ts',
   'src/commands/chrome/chrome.tsx',
+  'src/commands/copy/index.ts',
+  'src/commands/cost/cost.ts',
   'src/commands/fast/fast.tsx',
   'src/commands/feedback/index.ts',
   'src/commands/ide/ide.tsx',
+  'src/commands/init.ts',
+  'src/commands/init-verifiers.ts',
   'src/commands/install.tsx',
+  'src/commands/install-github-app/install-github-app.tsx',
+  'src/commands/install-github-app/setupGitHubActions.ts',
   'src/commands/install-github-app/index.ts',
   'src/commands/install-slack-app/index.ts',
   'src/commands/logout/index.ts',
   'src/commands/memory/memory.tsx',
+  'src/commands/mcp/addCommand.ts',
+  'src/commands/mcp/xaaIdpCommand.ts',
   'src/commands/model/model.tsx',
   'src/commands/plugin/DiscoverPlugins.tsx',
+  'src/commands/plugin/ManageMarketplaces.tsx',
   'src/commands/plugin/PluginTrustWarning.tsx',
   'src/commands/privacy-settings/privacy-settings.tsx',
   'src/commands/remote-setup/remote-setup.tsx',
@@ -104,6 +116,10 @@ const paintSurfaceFiles = [
   'src/commands/ultraplan.tsx',
   'src/commands/voice/voice.ts',
   'src/commands/passes/index.ts',
+  'src/commands/insights.ts',
+  'src/cli/update.ts',
+  'src/cli/handlers/auth.ts',
+  'src/cli/handlers/mcp.tsx',
   'src/hooks/useChromeExtensionNotification.tsx',
   'src/hooks/notifs/useCanSwitchToExistingSubscription.tsx',
   'src/hooks/useDiffInIDE.ts',
@@ -147,7 +163,11 @@ const paintSurfaceFiles = [
   'src/utils/teleport/api.ts',
   'src/utils/teleport/environments.ts',
   'src/utils/teleport.tsx',
+  'src/utils/attachments.ts',
+  'src/utils/stats.ts',
+  'src/utils/settings/types.ts',
   'src/utils/windowsPaths.ts',
+  'src/skills/bundled/stuck.ts',
 ]
 
 const bannedVisibleCopy = [
@@ -159,6 +179,13 @@ const bannedVisibleCopy = [
   'What should Claude do instead?',
   'tell Claude what to do differently',
   'while Claude works',
+  "interrupting Claude's current work",
+  "Claude's current work",
+  'Claude is waiting for your input',
+  'How well did Claude use its memory',
+  "Copy Claude's last response",
+  'can only be invoked by Claude',
+  'Ask Claude to use',
   'Claude wants to fetch content',
   'Claude requested permissions',
   'Claude wants to search the web',
@@ -167,6 +194,37 @@ const bannedVisibleCopy = [
   'Help improve Claude',
   'How is Claude doing this session',
   'Sign out from your Anthropic account',
+  'Successfully logged out from your Anthropic account',
+  'Claude is managed by',
+  'Claude is up to date',
+  'Another Claude process',
+  'Claude Code is up to date',
+  'next time you start Claude Code',
+  'Add an MCP server to Claude Code',
+  'Claude Code will automatically update this',
+  'power your Claude Code usage',
+  'A Claude workflow file',
+  'Claude PR Assistant workflow',
+  'Claude Code Review workflow',
+  'Claude Code installation completed successfully',
+  'Claude Code installation failed',
+  'Installing Claude Code native build',
+  'Claude Code successfully installed',
+  'currently installing Claude',
+  "Claude Code's client_id",
+  'future instances of Claude Code',
+  'Claude Chrome Extension',
+  'Claude Code year in review animation',
+  'Claude Code Insights',
+  'How You Use Claude Code',
+  'Paste into Claude Code',
+  "Claude's Capabilities",
+  'Analyze this Claude Code usage data',
+  'Analyze this Claude Code session',
+  'Summarize this portion of a Claude Code session',
+  'winget upgrade Anthropic.ClaudeCode',
+  'brew upgrade claude-code',
+  'apk upgrade claude-code',
   'Claude is now exploring',
   'User approved Claude',
   'sent to Claude',
@@ -233,14 +291,17 @@ describe('UMMAYA paint surface branding', () => {
   })
 
   it('keeps the spinner tip source migrated while preserving the CC tip pipeline', () => {
-    const source = readFileSync(
+    const registrySource = readFileSync(
       join(ROOT, 'src/services/tips/tipRegistry.ts'),
       'utf8',
     )
+    const spinnerSource = readFileSync(join(ROOT, 'src/components/Spinner.tsx'), 'utf8')
 
-    expect(source).toContain(
+    expect(registrySource).toContain(
       'Create UMMAYA skills in your project or user skill directory',
     )
-    expect(source).not.toContain('.claude/skills/')
+    expect(registrySource).not.toContain('.claude/skills/')
+    expect(spinnerSource).toContain("interrupting UMMAYA's current work")
+    expect(spinnerSource).not.toContain("interrupting Claude's current work")
   })
 })

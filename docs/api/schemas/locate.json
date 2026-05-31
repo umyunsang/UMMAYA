@@ -17,7 +17,7 @@
       "type": "object"
     },
     "tool_id": {
-      "description": "Locate adapter id from <available_adapters>, e.g. 'kakao_keyword_search', 'kakao_address_search', 'kakao_coord_to_region', 'juso_adm_cd_lookup', or 'sgis_adm_cd_lookup'.",
+      "description": "Concrete locate adapter id from <available_adapters>; this is not the root function name. Never set tool_id to 'locate', 'find', 'check', or 'send'. Examples: 'kakao_keyword_search', 'kakao_address_search', 'kakao_coord_to_region', 'juso_adm_cd_lookup', or 'sgis_adm_cd_lookup'.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Tool Id",
       "type": "string"

@@ -1,0 +1,48 @@
+name: Evidence Fabric
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/evidence.yml"
+      - "evidence/**"
+      - "src/ummaya/evidence/**"
+      - "tests/evidence/**"
+      - "tests/ci/**"
+      - "prompts/**"
+      - "src/ummaya/engine/**"
+      - "src/ummaya/ipc/**"
+      - "src/ummaya/llm/**"
+      - "src/ummaya/tools/**"
+      - "tui/src/**"
+      - "docs/design/verification-fabric-v2.md"
+  push:
+    branches: [main]
+
+concurrency:
+  group: evidence-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  evidence:
+    name: Evidence Fabric v2
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OTEL_SDK_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv sync --frozen --all-extras --dev
+      - name: Run evidence tests
+        run: uv run pytest tests/evidence tests/ci -q
+      - name: Emit run evidence
+        run: uv run python -m ummaya.evidence --source-ref "$GITHUB_SHA" --out .evidence/run.json
+      - name: Upload run evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: run-evidence
+          path: .evidence/run.json

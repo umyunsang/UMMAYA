@@ -1,0 +1,22 @@
+{
+  "method": "GET",
+  "url": "https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoCnstwkPPSSrch",
+  "query": {
+    "serviceKey": "<redacted:UMMAYA_DATA_GO_KR_API_KEY>",
+    "type": "json",
+    "inqryDiv": "1",
+    "inqryBgnDt": "202507010000",
+    "inqryEndDt": "202507012359",
+    "numOfRows": "1",
+    "pageNo": "1",
+    "bidNtceNm": "공사"
+  },
+  "observed": {
+    "date": "2026-05-27",
+    "http_status": 200,
+    "resultCode": "00",
+    "resultMsg": "정상",
+    "totalCount": 382,
+    "firstBidNtceNo": "R25BK00932003"
+  }
+}

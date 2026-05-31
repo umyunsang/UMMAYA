@@ -24,6 +24,7 @@ import type {
   IPCFrame,
   UserInputFrame,
   AssistantChunkFrame,
+  ProgressEventFrame,
   ToolCallFrame,
   ToolResultFrame,
   CoordinatorPhaseFrame,
@@ -50,6 +51,7 @@ import type {
 export type { AdapterManifestSyncFrame }
 // Re-export consent revoke types.
 export type { ConsentRevokeRequestFrame, ConsentRevokeResponseFrame }
+export type { ProgressEventFrame }
 
 // ---------------------------------------------------------------------------
 // Zod schemas (belt-and-braces atop generated TypeScript types)
@@ -113,6 +115,10 @@ const ChatRequestFrameSchema = BaseFrame.extend({
   max_tokens: z.number().int().min(1).max(32000).default(8192),
   temperature: z.number().min(0).max(2).default(1.0),
   top_p: z.number().min(0).max(1).default(0.95),
+  reasoning_mode: z
+    .enum(['fast', 'balanced', 'deep', 'diagnostic', 'auto'])
+    .nullable()
+    .optional(),
 })
 
 const AssistantChunkFrameSchema = BaseFrame.extend({
@@ -126,6 +132,22 @@ const AssistantChunkFrameSchema = BaseFrame.extend({
   delta: z.string().default(''),
   thinking: z.string().default(''),
   done: z.boolean(),
+})
+
+const ProgressEventFrameSchema = BaseFrame.extend({
+  kind: z.literal('progress_event'),
+  phase: z.enum([
+    'analysis',
+    'tool_selection',
+    'tool_call',
+    'tool_result',
+    'answer_synthesis',
+  ]),
+  message_ko: z.string().min(1),
+  message_en: z.string().min(1),
+  safe_to_persist: z.boolean().default(true),
+  tool_id: z.string().nullable().optional(),
+  call_id: z.string().nullable().optional(),
 })
 
 const ToolCallFrameSchema = BaseFrame.extend({
@@ -337,6 +359,7 @@ export const IPCFrameSchema = z.discriminatedUnion('kind', [
   // Spec 287 baseline (10)
   UserInputFrameSchema,
   AssistantChunkFrameSchema,
+  ProgressEventFrameSchema,
   ToolCallFrameSchema,
   ToolResultFrameSchema,
   CoordinatorPhaseFrameSchema,
@@ -375,6 +398,9 @@ export function isUserInput(f: IPCFrame): f is UserInputFrame {
 }
 export function isAssistantChunk(f: IPCFrame): f is AssistantChunkFrame {
   return f.kind === 'assistant_chunk'
+}
+export function isProgressEvent(f: IPCFrame): f is ProgressEventFrame {
+  return f.kind === 'progress_event'
 }
 export function isToolCall(f: IPCFrame): f is ToolCallFrame {
   return f.kind === 'tool_call'

@@ -230,8 +230,8 @@ def test_entry_tool_id_invalid_format() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_ipc_frame_union_has_exactly_24_arms() -> None:
-    """IPCFrame discriminated union must have exactly 24 arms.
+def test_ipc_frame_union_has_exactly_25_arms() -> None:
+    """IPCFrame discriminated union must have exactly 25 arms.
 
     Arm counts by spec:
     - Spec 287 baseline: 10 arms (user_input .. error)
@@ -239,8 +239,9 @@ def test_ipc_frame_union_has_exactly_24_arms() -> None:
     - Epic #1636 P5: plugin_op (1 arm)
     - Spec 1978 ADR-0001: chat_request (1 arm)
     - Epic ε #2296: adapter_manifest_sync (1 arm)
-    - Spec 2767 consent revoke: consent_revoke_request + consent_revoke_response (2 arms) ← NEW
-    Total: 24
+    - Spec 2767 consent revoke: consent_revoke_request + consent_revoke_response (2 arms)
+    - K-EXAONE reasoning/progress painting: progress_event (1 arm)
+    Total: 25
 
     This is a regression guard — any Epic that accidentally extends an existing
     arm or skips adding the new arm will fail this test.
@@ -250,7 +251,7 @@ def test_ipc_frame_union_has_exactly_24_arms() -> None:
     # annotated_args[0] is the Union type (the frame arms).
     union_type = annotated_args[0]
     arms = get_args(union_type)
-    assert len(arms) == 24, (
-        f"Expected 24 IPCFrame arms, got {len(arms)}. "
+    assert len(arms) == 25, (
+        f"Expected 25 IPCFrame arms, got {len(arms)}. "
         "Did an Epic accidentally add or remove an arm?"
     )

@@ -1153,9 +1153,10 @@ async def test_render_order_preamble_prose_emitted_before_tool_call(
 ) -> None:
     """When the LLM emits prose then a tool call in one turn, keep that order.
 
-    UMMAYA mirrors Claude Code's visible loop: the assistant paints a short
-    progress sentence, then the tool invocation paints, then the next turn can
-    paint prose derived from the tool result.
+    UMMAYA mirrors Claude Code's visible loop: the assistant can stream a
+    natural preamble, then the tool invocation renders, then the next turn can
+    stream prose derived from the tool result. Backend-only waiting/progress
+    frames must not be emitted.
     """
     frame = _make_chat_request(tools=[])
 
@@ -1167,6 +1168,7 @@ async def test_render_order_preamble_prose_emitted_before_tool_call(
     )
 
     emitted = buf.as_frames()
+    assert not any(f.get("kind") == "progress_event" for f in emitted)
 
     # Find indices of the first visible preamble and first tool_call frame.
     tool_call_idx: int | None = None

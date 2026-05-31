@@ -1,3 +1,0 @@
-$ bun run src/entrypoints/cli.tsx
-tool_registry: 15 entries verified (5 primitives) in 0ms
- 온보딩 로딩 중…

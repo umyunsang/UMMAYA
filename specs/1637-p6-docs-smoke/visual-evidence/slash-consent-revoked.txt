@@ -1,5 +1,0 @@
-# Visual evidence — slash-consent-revoked
-# Slash command — `/consent revoke` receipt-revoked toast
-# Captured 2026-04-26T01:08:33.223Z via ink-testing-library render()
-
- ✻ 철회 완료 rcpt-01943af2

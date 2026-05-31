@@ -111,35 +111,39 @@
   "properties": {
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: EqkInfoService/getEqkMsg.",
       "title": "Data Type",
       "type": "string"
     },
     "from_tm_fc": {
-      "default": "20171101",
-      "description": "KMA APIHub request parameter fromTmFc.",
+      "description": "Earthquake/volcano bulletin announcement start date, YYYYMMDD. Use a recent KST date; APIHub returns an error for ranges outside the current 3 days window. Official parameter name: fromTmFc. Operation: EqkInfoService/getEqkMsg.",
+      "pattern": "^\\d{8}$",
       "title": "From Tm Fc",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: EqkInfoService/getEqkMsg.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: EqkInfoService/getEqkMsg.",
       "title": "Page No",
       "type": "integer"
     },
     "to_tm_fc": {
-      "default": "20171129",
-      "description": "KMA APIHub request parameter toTmFc.",
+      "description": "Earthquake/volcano bulletin announcement end date, YYYYMMDD. Keep the range within the current 3 days window and do not use stale catalog sample dates. Official parameter name: toTmFc. Operation: EqkInfoService/getEqkMsg.",
+      "pattern": "^\\d{8}$",
       "title": "To Tm Fc",
       "type": "string"
     }
   },
+  "required": [
+    "from_tm_fc",
+    "to_tm_fc"
+  ],
   "title": "kma_apihub_eqk_info_service_get_eqk_msg",
   "type": "object"
 }

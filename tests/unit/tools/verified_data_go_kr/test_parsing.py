@@ -122,3 +122,24 @@ def test_non_success_result_code_raises(response_format: ResponseFormat) -> None
 
     assert exc_info.value.upstream_code == "30"
     assert "SERVICE KEY ERROR" in exc_info.value.upstream_message
+
+
+def test_parse_pps_response_error_envelope_raises() -> None:
+    """PPS can return an nkoneps ResponseError envelope instead of response.header."""
+
+    payload = b"""
+    {
+      "nkoneps.com.response.ResponseError": {
+        "header": {
+          "resultCode": "07",
+          "resultMsg": "input range exceeded"
+        }
+      }
+    }
+    """
+
+    with pytest.raises(VerifiedUpstreamError) as exc_info:
+        parse_verified_payload(payload, response_format="json")
+
+    assert exc_info.value.upstream_code == "07"
+    assert "input range exceeded" in exc_info.value.upstream_message

@@ -1,21 +1,0 @@
-$ bun run src/entrypoints/cli.tsx
-tool_registry: 14 entries verified (4 primitives) in 0ms
-  ▛███▜ UMMAYA v0.1.0-alpha+1978
-▗▟█████████▙▖ K-EXAONE with high effort · API Usage Billing
-  ▘ ▘ ▘ ▘ ~/UMMAYA/tui
-
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-❯  
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- ? for shortcuts ● high · /effort
-  [>0q    /help                  
-/help — 명령 목록을 4개 그룹으로 묶어 표시합니다
-      /help                                      Show help and available commands                    /wandb-primary                             Comprehensive primary skill for agents working with Weights & Biases. Covers both the W&B SDK (training runs, metrics, artifacts, sw…
- /debug Enable debug logging for this session and help diagnose issues (bundled)
-/help — 명령 목록을 4개 그룹으로 묶어 표시합니다
-              ! for bash mode         double tap esc to clear input      ctrl + _ to undo   for commands          shift + tab to auto-accept ed ts   ctrl + z to suspend                                                                                                    @ for file paths        ctrl + o for verbose output        ctrl + v o pa te  mages                                   & for background        ctrl + t to toggle tasks alt + p to switch model
- /btw for side question shift + ⏎ for newline alt + o to toggle fast mode
- ctrl + s to stash prompt
- ctrl + g to edit in $EDITOR
- /keybindings to customize
-  

@@ -23,7 +23,7 @@ fixtures and never call live public APIs.
 | `15098533` | `tago_bus_location_search` | 국토교통부 TAGO 버스위치 조회 | `find` | `UMMAYA_DATA_GO_KR_API_KEY` | `15098533/probes/live-2026-05-16/tago-bus-location.body.xml` |
 | `15098534` | `tago_bus_station_search` | 국토교통부 TAGO 버스정류소 조회 | `find` | `UMMAYA_DATA_GO_KR_API_KEY` | `15098534/probes/live-2026-05-16/tago-bus-station.body.xml` |
 | `15101360` | `kepco_contract_power_usage` | 한국전력 계약종별 전력사용량 조회 | `find` | `UMMAYA_KEPCO_POWER_DATA_API_KEY` | `15101360/probes/live-2026-05-16/kepco-contract-type.body.json` |
-| `15129394` | `pps_bid_public_info` | 조달청 나라장터 입찰공고 조회 | `find` | `UMMAYA_DATA_GO_KR_API_KEY` | `15129394/probes/live-2026-05-16/pps-bid-service.body.json` |
+| `15129394` | `pps_bid_public_info` | 조달청 나라장터 입찰공고 조회 | `find` | `UMMAYA_DATA_GO_KR_API_KEY` | `15129394/probes/live-2026-05-27/pps-bid-construction-search.body.json` |
 | `15134761` | `reb_real_estate_stat_table` | 한국부동산원 부동산 통계표 조회 | `find` | `UMMAYA_REB_REAL_ESTATE_STATS_API_KEY` | `15134761/probes/live-2026-05-16/reb-stat-table.body.json` |
 | `15157485` | `bfc_funeral_area_fee` | 부산시설공단 장례식장 시설사용료 조회 | `find` | `UMMAYA_DATA_GO_KR_API_KEY` | `15157485/probes/live-2026-05-16/funeral-area-list.body.json` |
 | `15158680` | `kcue_finance_regional_tuition` | 대학알리미 지역별 등록금 현황 조회 | `find` | `UMMAYA_DATA_GO_KR_API_KEY` | `15158680/probes/live-2026-05-16/finance-regional-tuition.body.xml` |

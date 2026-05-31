@@ -20,7 +20,12 @@ from typing import Any
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
-from ummaya.ipc.frame_schema import IPCFrame, ipc_frame_json_schema
+from ummaya.ipc.frame_schema import (
+    ChatRequestFrame,
+    IPCFrame,
+    ProgressEventFrame,
+    ipc_frame_json_schema,
+)
 
 
 def _compute_manifest_hash_for_test() -> str:
@@ -108,6 +113,19 @@ _MINIMAL_EXAMPLES: dict[str, dict[str, Any]] = {
         "message_id": "01HNMJ2Z000000000000000001",
         "delta": "안녕",
         "done": False,
+    },
+    "progress_event": {
+        "kind": "progress_event",
+        "version": "1.0",
+        "session_id": _SESSION_ID,
+        "correlation_id": _CORR_ID,
+        "role": "backend",
+        "frame_seq": 2,
+        "ts": _TS,
+        "phase": "tool_selection",
+        "message_ko": "도구 후보를 정리하고 있습니다.",
+        "message_en": "Selecting tool candidates.",
+        "safe_to_persist": True,
     },
     "tool_call": {
         "kind": "tool_call",
@@ -382,6 +400,42 @@ _MINIMAL_EXAMPLES: dict[str, dict[str, Any]] = {
         "record_hash": "a" * 64,
     },
 }
+
+
+def test_chat_request_accepts_reasoning_mode() -> None:
+    """ChatRequestFrame carries the TUI's K-EXAONE reasoning policy to backend."""
+    frame = ChatRequestFrame(
+        kind="chat_request",
+        version="1.0",
+        session_id=_SESSION_ID,
+        correlation_id=_CORR_ID,
+        role="tui",
+        frame_seq=0,
+        ts=_TS,
+        messages=[{"role": "user", "content": "안녕하세요"}],
+        reasoning_mode="deep",
+    )
+
+    assert frame.reasoning_mode == "deep"
+
+
+def test_progress_event_is_backend_only_and_safe_by_default() -> None:
+    """progress_event is the deterministic, safe query-loop painting channel."""
+    frame = ProgressEventFrame(
+        kind="progress_event",
+        version="1.0",
+        session_id=_SESSION_ID,
+        correlation_id=_CORR_ID,
+        role="backend",
+        frame_seq=0,
+        ts=_TS,
+        phase="analysis",
+        message_ko="요청을 분석하고 있습니다.",
+        message_en="Analyzing the request.",
+    )
+
+    assert frame.safe_to_persist is True
+
 
 _EXPECTED_ARMS = frozenset(_MINIMAL_EXAMPLES.keys())
 _ADAPTER: TypeAdapter[Any] = TypeAdapter(IPCFrame)

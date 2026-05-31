@@ -161,7 +161,8 @@ This is not a separate safety pitch. It is part of how `check` and `send` work: 
 UMMAYA currently uses `LGAI-EXAONE/K-EXAONE-236B-A23B` through FriendliAI Serverless for LLM responses.
 
 - Model: [K-EXAONE-236B-A23B](https://huggingface.co/LGAI-EXAONE/K-EXAONE-236B-A23B)
-- Thinking channel: `UMMAYA_K_EXAONE_THINKING` default `false`; set it to `true` only for reasoning-channel diagnostics or benchmark runs.
+- Reasoning mode: `/reasoning` or `UMMAYA_K_EXAONE_REASONING_MODE` selects `fast`, `balanced`, `deep`, `diagnostic`, or `auto`.
+- Thinking channel: `UMMAYA_K_EXAONE_THINKING` default `false` remains as a legacy compatibility flag; set `/reasoning deep` or `UMMAYA_K_EXAONE_REASONING_MODE=deep` for reasoning-channel diagnostics or benchmark runs.
 - Model license: [K-EXAONE AI Model License Agreement](https://huggingface.co/LGAI-EXAONE/K-EXAONE-236B-A23B/blob/main/LICENSE)
 - Project license: [Apache License 2.0](LICENSE)
 

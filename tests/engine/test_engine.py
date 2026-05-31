@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pytest
 from pydantic import BaseModel
@@ -26,6 +27,10 @@ from ummaya.engine.config import QueryEngineConfig
 from ummaya.engine.engine import QueryEngine
 from ummaya.engine.events import QueryEvent, StopReason
 from ummaya.engine.models import QueryContext, SessionBudget
+from ummaya.ipc.stdio import (
+    _check_kma_analysis_tool_choice_prerequisite,
+    _final_answer_substitutes_after_kma_chart_failure,
+)
 
 # LLMClient must be imported (not just under TYPE_CHECKING) so that
 # QueryContext.model_rebuild() can resolve the forward reference and accept
@@ -196,10 +201,11 @@ def test_available_adapters_context_includes_retrieved_adapter() -> None:
     assert message.role == "system"
     assert "<available_adapters>" in (message.content or "")
     assert "bfc_funeral_area_fee" in (message.content or "")
-    assert "Call the function named exactly as tool_id" in (message.content or "")
+    assert "The model-facing function name is the concrete tool_id" in (message.content or "")
     assert "Do not call locate just because" in (message.content or "")
-    assert "call_hint: bfc_funeral_area_fee(" in (message.content or "")
-    assert "call_hint: find(" not in (message.content or "")
+    assert "call_hint: bfc_funeral_area_fee({...})" in (message.content or "")
+    assert 'find({"tool_id":"bfc_funeral_area_fee"' not in (message.content or "")
+    assert "Do not call the concrete tool_id as a function name" not in (message.content or "")
 
 
 @pytest.mark.asyncio
@@ -304,6 +310,539 @@ def test_available_adapters_context_constrains_aed_region_filters_to_find() -> N
     assert "kakao_keyword_search" not in content
     assert "nmc_aed_site_locate" in turn_tool_ids
     assert "kakao_keyword_search" not in turn_tool_ids
+
+
+def test_available_adapters_context_emergency_or_aed_keeps_aed_near_er() -> None:
+    """When the citizen explicitly asks for AED, expose it next to emergency search."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "부산역 근처에서 사람이 쓰러졌어. 제일 가까운 응급실이나 AED 어디로 가야 해?"
+    )
+
+    assert message is not None
+    assert "nmc_emergency_search" in turn_tool_ids[:2]
+    assert "nmc_aed_site_locate" in turn_tool_ids[:2]
+
+
+def test_available_adapters_context_implicit_collapse_exposes_er_and_aed() -> None:
+    """Ordinary collapse wording must expose emergency-room and AED adapters."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"
+    )
+
+    assert message is not None
+    assert "kakao_keyword_search" in turn_tool_ids[:3]
+    assert "nmc_emergency_search" in turn_tool_ids[:4]
+    assert "nmc_aed_site_locate" in turn_tool_ids[:4]
+    assert "kma_current_observation" not in turn_tool_ids
+
+
+def test_available_adapters_context_unconscious_walk_is_not_weather() -> None:
+    """Emergency wording with 산책 must not be classified as ordinary walk weather."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "해운대에서 산책 중인데 사람이 의식을 잃은 것 같아. "
+        "근처 응급실이나 심장충격기 있는 곳 알려줘"
+    )
+
+    assert message is not None
+    assert "nmc_emergency_search" in turn_tool_ids[:4]
+    assert "nmc_aed_site_locate" in turn_tool_ids[:4]
+    assert "kma_current_observation" not in turn_tool_ids
+    assert "kma_short_term_forecast" not in turn_tool_ids
+
+
+def test_available_adapters_context_chart_query_excludes_amos() -> None:
+    """Analyzed weather-chart turns must not expose airport AMOS as a candidate."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "분석일기도 지상일기도를 WthrChartInfoService/getSurfaceChart로 오늘 20260526 "
+        "code=24 조건으로 조회해줘"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids == ("kma_apihub_url_analysis_weather_chart_image",)
+    assert "kma_apihub_url_analysis_weather_chart_image" in content
+    assert "kma_apihub_url_air_amos_minute" not in content
+
+
+def test_available_adapters_context_gimhae_aviation_excludes_unsupported_amos() -> None:
+    """Gimhae aviation turns should expose METAR, not unsupported AMOS."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "김해공항 AMOS 매분자료로 현재 시정 RVR 바람 기압을 확인해줘. "
+        "김해가 AMOS 지원 대상이 아니면 METAR 해독자료로 대체해줘"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "kma_apihub_url_air_metar_decoded"
+    assert "kma_apihub_url_air_metar_decoded" in turn_tool_ids
+    assert "kma_apihub_url_air_amos_minute" not in turn_tool_ids
+    assert "kakao_keyword_search" not in turn_tool_ids
+    assert "kakao_address_search" not in turn_tool_ids
+    assert "kma_current_observation" not in turn_tool_ids
+    assert "kma_apihub_url_air_metar_decoded" in content
+    assert "kma_apihub_url_air_amos_minute" not in content
+    assert "kakao_keyword_search" not in content
+    assert "kma_current_observation" not in content
+
+
+def test_available_adapters_context_natural_flight_query_prefers_metar() -> None:
+    """Natural airport flight wording should expose METAR before ordinary weather."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "오늘 저녁에 김해공항에서 서울 가는 비행기 예약했는데 날씨 어때? 비행기 뜰만한가?"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "kma_apihub_url_air_metar_decoded"
+    assert "kma_apihub_url_air_metar_decoded" in turn_tool_ids
+    assert "kma_apihub_url_air_amos_minute" not in turn_tool_ids
+    assert "kakao_keyword_search" not in turn_tool_ids
+    assert "kma_current_observation" not in turn_tool_ids
+    assert "kma_apihub_url_air_metar_decoded" in content
+    assert "kakao_keyword_search" not in content
+    assert "kma_current_observation" not in content
+
+
+def test_available_adapters_context_mixed_gimhae_gimpo_query_prefers_metar() -> None:
+    """김해→김포 ordinary flight turns should not be treated as a Gimpo AMOS-only ask."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "오늘 밤 김해에서 김포 가는데 비행기 뜰만해? 바람이랑 시정도 봐줘"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "kma_apihub_url_air_metar_decoded"
+    assert "kma_apihub_url_air_metar_decoded" in turn_tool_ids
+    assert "gyeryong_assistive_device_charging_place_locate" not in turn_tool_ids
+    assert "kakao_keyword_search" not in turn_tool_ids
+    assert "kma_current_observation" not in turn_tool_ids
+    assert "kma_apihub_url_air_metar_decoded" in content
+    assert "gyeryong_assistive_device_charging_place_locate" not in content
+
+
+def test_available_adapters_context_gimpo_runway_query_prefers_amos() -> None:
+    """Gimpo runway-area wording should expose AMOS before decoded METAR."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "김포공항에서 제주 가는 밤 비행기인데 활주로 쪽 바람이랑 시정 괜찮아? 지연될 정도야?"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "kma_apihub_url_air_amos_minute"
+    assert "kma_apihub_url_air_amos_minute" in turn_tool_ids
+    assert "kma_apihub_url_air_metar_decoded" in turn_tool_ids
+    assert "kma_apihub_url_air_amos_minute" in content
+    assert "kma_current_observation" not in turn_tool_ids
+
+
+def test_available_adapters_context_pps_bid_search_exposes_search_contract() -> None:
+    """PPS bid-list wording should expose search-date fields, not bid-number detail lookup."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "이번 주 부산시 전기공사 입찰 올라온 거 있어?"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "pps_bid_public_info"
+    assert "pps_bid_public_info" in turn_tool_ids
+    assert "kakao_address_search" not in turn_tool_ids
+    assert "getBidPblancListInfoCnstwkPPSSrch" in content
+    assert "inqry_bgn_dt" in content
+    assert "inqry_end_dt" in content
+    assert "bid_ntce_nm" in content
+    assert "bid_ntce_no" not in content
+
+
+def test_available_adapters_context_natural_kcue_finance_excludes_locate() -> None:
+    """Natural official university tuition wording should expose KCUE finance first."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "대학 등록금이 지역별로 얼마나 차이 나는지 공식 자료로 보고 싶어"
+    )
+
+    assert message is not None
+    assert turn_tool_ids[:2] == (
+        "kcue_finance_regional_tuition",
+        "kcue_student_regional_foreign",
+    )
+
+
+def test_available_adapters_context_natural_kcue_foreign_students_excludes_locate() -> None:
+    """Natural official foreign-student wording should expose KCUE student data first."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "지역별 외국인 유학생 현황을 대학 공식 공개자료로 확인해줘"
+    )
+
+    assert message is not None
+    assert turn_tool_ids[:2] == (
+        "kcue_student_regional_foreign",
+        "kcue_finance_regional_tuition",
+    )
+
+
+def test_available_adapters_context_natural_weather_flow_uses_analysis_data() -> None:
+    """Natural nationwide weather-flow wording should expose KMA analysis data."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "오늘 전국 날씨 흐름이 어떤지 공식 기상자료로 확인해줘"
+    )
+
+    assert message is not None
+    assert turn_tool_ids[0] == "kma_apihub_url_analysis_weather_chart_image"
+    assert "kma_current_observation" not in turn_tool_ids
+
+
+def test_available_adapters_context_lifestyle_weather_keeps_kma_and_location() -> None:
+    """Ordinary rain/umbrella wording should expose KMA weather + locate, not unrelated APIs."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "퇴근하고 해운대 산책 갈 건데 지금 비 와? 우산 챙겨야 해?"
+    )
+
+    assert message is not None
+    assert "kakao_keyword_search" in turn_tool_ids[:3]
+    assert "kma_current_observation" in turn_tool_ids[:4]
+    assert any(
+        tool_id in turn_tool_ids
+        for tool_id in ("kma_ultra_short_term_forecast", "kma_short_term_forecast")
+    )
+    assert "bfc_funeral_area_fee" not in turn_tool_ids
+
+    message, forecast_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "내일 아침 부산 사상구 비 예보랑 기온 알려줘"
+    )
+    assert message is not None
+    assert "kma_short_term_forecast" in forecast_tool_ids
+    assert "bfc_funeral_area_fee" not in forecast_tool_ids
+
+
+def test_available_adapters_context_safety_location_queries_keep_domain_tool() -> None:
+    """Ordinary safety-location wording should not be swallowed by generic locate."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "가까운 비상벨이나 긴급신고함 위치 알려줘"
+    )
+
+    assert message is not None
+    assert "mois_emergency_call_box_lookup" in turn_tool_ids[:3]
+
+
+def test_available_adapters_context_emergency_bell_is_not_medical_emergency() -> None:
+    """Emergency-call-box wording should not be captured by medical collapse routing."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "해운대 해수욕장 근처에 위급할 때 누를 수 있는 비상벨 있어?"
+    )
+
+    assert message is not None
+    assert turn_tool_ids[0] == "mois_emergency_call_box_lookup"
+    assert "nmc_emergency_search" not in turn_tool_ids[:3]
+
+
+def test_available_adapters_context_assistive_charger_keeps_domain_tool() -> None:
+    """Assistive-device charger wording should expose the dedicated charger adapter."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "계룡시 전동보장구 충전소 어디 있어?"
+    )
+
+    assert message is not None
+    assert "gyeryong_assistive_device_charging_place_locate" in turn_tool_ids[:3]
+
+
+def test_available_adapters_context_hospital_detail_keeps_detail_tool() -> None:
+    """Hospital detail wording should expose HIRA detail alongside general search."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "해운대 근처 병원 상세정보랑 진료과 확인해줘"
+    )
+
+    assert message is not None
+    assert "hira_hospital_search" in turn_tool_ids
+    assert "hira_medical_institution_detail" in turn_tool_ids
+
+
+def test_available_adapters_context_analysis_point_exposes_high_resolution() -> None:
+    """Analysis-data wording should expose KMA analyzed grid tools, not only forecasts."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "김해공항 주변은 기상청이 이미 분석한 자료로 보면 비나 바람 상태 괜찮아?"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert "kma_apihub_url_high_resolution_grid_point" in turn_tool_ids
+    assert "kma_apihub_url_aws_objective_analysis_grid" in turn_tool_ids
+    assert "kma_apihub_url_high_resolution_grid_point" in content
+    assert "kma_short_term_forecast" not in turn_tool_ids[:3]
+
+
+def test_available_adapters_context_analysis_map_exposes_chart_tool() -> None:
+    """Map/chart analysis wording should expose the analyzed chart URL adapter."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "공항 관측값 말고 기상청에서 이미 분석한 일기도나 지도 자료 기준으로 "
+        "오늘 저녁 남부 쪽 비구름이랑 바람 흐름은 어때?"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "kma_apihub_url_analysis_weather_chart_image"
+    assert "kma_apihub_url_analysis_weather_chart_image" in content
+    assert "kakao_keyword_search" not in turn_tool_ids
+    assert "kma_apihub_url_air_amos_minute" not in turn_tool_ids
+    assert "kma_apihub_url_air_metar_decoded" not in turn_tool_ids
+
+
+def test_kma_analysis_map_gate_rejects_grid_substitution() -> None:
+    """Map/chart requests must not fall back to point-grid analysis tools."""
+
+    query = (
+        "공항 관측값 말고 기상청에서 이미 분석한 일기도나 지도 자료 기준으로 "
+        "오늘 저녁 남부 쪽 비구름이랑 바람 흐름은 어때?"
+    )
+
+    assert _check_kma_analysis_tool_choice_prerequisite(
+        "find",
+        {"tool_id": "kma_apihub_url_aws_objective_analysis_grid", "params": {"obs": "TA"}},
+        query,
+    )
+    assert _check_kma_analysis_tool_choice_prerequisite(
+        "kma_apihub_url_high_resolution_grid_point",
+        {"lat": 35.1, "lon": 129.0},
+        query,
+    )
+    assert (
+        _check_kma_analysis_tool_choice_prerequisite(
+            "find",
+            {
+                "tool_id": "kma_apihub_url_analysis_weather_chart_image",
+                "params": {"anal_time": "2026052618"},
+            },
+            query,
+        )
+        is None
+    )
+
+
+def test_kma_analysis_final_gate_rejects_chart_failure_substitution() -> None:
+    """Chart approval failures should not be replaced with grid or observation claims."""
+
+    query = (
+        "공항 관측값 말고 기상청에서 이미 분석한 일기도나 지도 자료 기준으로 "
+        "오늘 저녁 남부 쪽 비구름이랑 바람 흐름은 어때?"
+    )
+    llm_messages = [
+        SimpleNamespace(
+            role="tool",
+            name="kma_apihub_url_analysis_weather_chart_image",
+            content=(
+                '{"tool_id":"kma_apihub_url_analysis_weather_chart_image",'
+                '"result":{"kind":"error","message":"활용신청이 필요한 API 입니다","status":403}}'
+            ),
+        )
+    ]
+
+    assert _final_answer_substitutes_after_kma_chart_failure(
+        "분석일기도 API는 활용신청이 필요합니다. 대안으로 AWS 객관분석 값을 보면 "
+        "기온은 22.5도, 풍속은 4.7m/s입니다.",
+        query,
+        llm_messages,
+    )
+    assert _final_answer_substitutes_after_kma_chart_failure(
+        "기상청 APIHub 분석일기도 조회는 활용신청이 필요한 상태입니다. "
+        "다만 일반적인 남부 지역 패턴상 비구름은 남해안 쪽에 걸치고 "
+        "서풍 계열 바람 흐름이 이어질 가능성이 있어 보입니다.",
+        query,
+        llm_messages,
+    )
+    assert not _final_answer_substitutes_after_kma_chart_failure(
+        "기상청 APIHub 분석일기도 조회가 활용신청 필요 상태로 실패해, "
+        "이번 실행에서는 지도 기준 비구름이나 바람 흐름을 확인할 수 없습니다.",
+        query,
+        llm_messages,
+    )
 
 
 # ---------------------------------------------------------------------------

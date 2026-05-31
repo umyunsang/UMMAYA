@@ -24,6 +24,10 @@ import { installStreamJsonStdoutGuard } from 'src/utils/streamJsonStdoutGuard.js
 import type { ToolPermissionContext } from 'src/Tool.js'
 import type { ThinkingConfig } from 'src/utils/thinking.js'
 import { assembleToolPool, filterToolsByDenyRules } from 'src/tools.js'
+import {
+  stripTextToolCallBlocks,
+  textContainsToolCall,
+} from 'src/tools/_shared/textToolCallGuard.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { uniq } from 'src/utils/array.js'
 import { mergeAndFilterTools } from 'src/utils/toolPool.js'
@@ -872,6 +876,52 @@ export async function runHeadless(
       ? createStreamlinedTransformer()
       : null
 
+  const sanitizeOutputMessage = <T extends SDKMessage>(message: T): T => {
+    if (message.type === 'assistant') {
+      let changed = false
+      const content = message.message.content.map(block => {
+        if (
+          block.type !== 'text' ||
+          typeof block.text !== 'string' ||
+          !textContainsToolCall(block.text)
+        ) {
+          return block
+        }
+        changed = true
+        const stripped = stripTextToolCallBlocks(block.text)
+        return {
+          ...block,
+          text:
+            stripped ||
+            '도구 호출을 텍스트로 출력하지 않고, 현재까지 확인된 결과만 기준으로 답변을 마무리합니다.',
+        }
+      })
+      if (changed) {
+        return {
+          ...message,
+          message: {
+            ...message.message,
+            content,
+          },
+        }
+      }
+    }
+    if (
+      message.type === 'result' &&
+      typeof message.result === 'string' &&
+      textContainsToolCall(message.result)
+    ) {
+      const stripped = stripTextToolCallBlocks(message.result)
+      return {
+        ...message,
+        result:
+          stripped ||
+          '도구 호출을 텍스트로 출력하지 않고, 현재까지 확인된 결과만 기준으로 답변을 마무리합니다.',
+      }
+    }
+    return message
+  }
+
   headlessProfilerCheckpoint('before_runHeadlessStreaming')
   for await (const message of runHeadlessStreaming(
     structuredIO,
@@ -887,14 +937,15 @@ export async function runHeadless(
     options,
     turnInterruptionState,
   )) {
+    const outputMessage = sanitizeOutputMessage(message)
     if (transformToStreamlined) {
       // Streamlined mode: transform messages and stream immediately
-      const transformed = transformToStreamlined(message)
+      const transformed = transformToStreamlined(outputMessage)
       if (transformed) {
         await structuredIO.write(transformed)
       }
     } else if (options.outputFormat === 'stream-json' && options.verbose) {
-      await structuredIO.write(message)
+      await structuredIO.write(outputMessage)
     }
     // Should not be getting control messages or stream events in non-stream mode.
     // Also filter out streamlined types since they're only produced by the transformer.
@@ -902,27 +953,27 @@ export async function runHeadless(
     // (session_state_changed(idle) and any late task_notification drain after
     // result in the finally block).
     if (
-      message.type !== 'control_response' &&
-      message.type !== 'control_request' &&
-      message.type !== 'control_cancel_request' &&
+      outputMessage.type !== 'control_response' &&
+      outputMessage.type !== 'control_request' &&
+      outputMessage.type !== 'control_cancel_request' &&
       !(
-        message.type === 'system' &&
-        (message.subtype === 'session_state_changed' ||
-          message.subtype === 'task_notification' ||
-          message.subtype === 'task_started' ||
-          message.subtype === 'task_progress' ||
-          message.subtype === 'post_turn_summary')
+        outputMessage.type === 'system' &&
+        (outputMessage.subtype === 'session_state_changed' ||
+          outputMessage.subtype === 'task_notification' ||
+          outputMessage.subtype === 'task_started' ||
+          outputMessage.subtype === 'task_progress' ||
+          outputMessage.subtype === 'post_turn_summary')
       ) &&
-      message.type !== 'stream_event' &&
-      message.type !== 'keep_alive' &&
-      message.type !== 'streamlined_text' &&
-      message.type !== 'streamlined_tool_use_summary' &&
-      message.type !== 'prompt_suggestion'
+      outputMessage.type !== 'stream_event' &&
+      outputMessage.type !== 'keep_alive' &&
+      outputMessage.type !== 'streamlined_text' &&
+      outputMessage.type !== 'streamlined_tool_use_summary' &&
+      outputMessage.type !== 'prompt_suggestion'
     ) {
       if (needsFullArray) {
-        messages.push(message)
+        messages.push(outputMessage)
       }
-      lastMessage = message
+      lastMessage = outputMessage
     }
   }
 

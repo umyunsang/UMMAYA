@@ -1,0 +1,158 @@
+{
+  "$defs": {
+    "KmaApiHubUrlOutput": {
+      "additionalProperties": false,
+      "description": "Normalized output from one KMA APIHub non-structured URL operation.",
+      "properties": {
+        "approval_state": {
+          "enum": [
+            "approved",
+            "approval_pending"
+          ],
+          "title": "Approval State",
+          "type": "string"
+        },
+        "content_type": {
+          "title": "Content Type",
+          "type": "string"
+        },
+        "endpoint_path": {
+          "title": "Endpoint Path",
+          "type": "string"
+        },
+        "line_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Count"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "raw_format": {
+          "enum": [
+            "text",
+            "json",
+            "image",
+            "binary"
+          ],
+          "title": "Raw Format",
+          "type": "string"
+        },
+        "raw_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Text"
+        },
+        "status_code": {
+          "title": "Status Code",
+          "type": "integer"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "operation_id",
+        "endpoint_path",
+        "approval_state",
+        "content_type",
+        "raw_format",
+        "status_code"
+      ],
+      "title": "KmaApiHubUrlOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kma_apihub_url_high_resolution_grid_point.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "help": {
+      "default": 1,
+      "description": "KMA APIHub URL request parameter help. Official parameter name: help. Operation: high_resolution_grid_point.",
+      "title": "Help",
+      "type": "integer"
+    },
+    "itv": {
+      "default": 10,
+      "description": "KMA APIHub URL request parameter itv. Official parameter name: itv. Operation: high_resolution_grid_point.",
+      "title": "Itv",
+      "type": "integer"
+    },
+    "lat": {
+      "description": "WGS-84 latitude for the point lookup. Official parameter name: lat. Operation: high_resolution_grid_point.",
+      "title": "Lat",
+      "type": "number"
+    },
+    "lon": {
+      "description": "WGS-84 longitude for the point lookup. Official parameter name: lon. Operation: high_resolution_grid_point.",
+      "title": "Lon",
+      "type": "number"
+    },
+    "obs": {
+      "default": "ta,td,hm,ws_10m,wd_10m,vs,rn_60m",
+      "description": "Comma-separated high-resolution grid elements, for example ta,td,hm,ws_10m,wd_10m,vs,rn_60m. Official parameter name: obs. Operation: high_resolution_grid_point.",
+      "title": "Obs",
+      "type": "string"
+    },
+    "tm1": {
+      "anyOf": [
+        {
+          "pattern": "^\\d{12}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Start time in KST, YYYYMMDDHHMM. Omit it to request the latest upstream slot. Official parameter name: tm1. Operation: high_resolution_grid_point.",
+      "title": "Tm1"
+    },
+    "tm2": {
+      "anyOf": [
+        {
+          "pattern": "^\\d{12}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "End time in KST, YYYYMMDDHHMM. Official maximum range is 60 minutes. Official parameter name: tm2. Operation: high_resolution_grid_point.",
+      "title": "Tm2"
+    }
+  },
+  "required": [
+    "lon",
+    "lat"
+  ],
+  "title": "kma_apihub_url_high_resolution_grid_point",
+  "type": "object"
+}

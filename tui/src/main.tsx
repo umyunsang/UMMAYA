@@ -23,6 +23,7 @@ import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
 import { getInitialFastModeSetting, isFastModeEnabled, prefetchFastModeStatus, resolveFastModeStatusFromCache } from './utils/fastMode.js';
+import { getInitialReasoningModeSetting } from './utils/kExaoneReasoning.js';
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
 import { createSystemMessage } from './utils/systemMessageFactories.js';
 import { createUserMessage } from './utils/userMessageFactories.js';
@@ -1774,6 +1775,7 @@ async function run(): Promise<CommanderCommand> {
         },
         toolPermissionContext,
         effortValue: parseEffortValue(options.effort) ?? getInitialEffortSetting(),
+        reasoningMode: getInitialReasoningModeSetting(),
         ...(isFastModeEnabled() && {
           fastMode: getInitialFastModeSetting(effectiveModel ?? null)
         }),
@@ -2105,6 +2107,7 @@ async function run(): Promise<CommanderCommand> {
         })
       } : null,
       effortValue: parseEffortValue(options.effort) ?? getInitialEffortSetting(),
+      reasoningMode: getInitialReasoningModeSetting(),
       activeOverlays: new Set<string>(),
       fastMode: getInitialFastModeSetting(resolvedInitialModel),
       ...(isAdvisorEnabled() && advisorModel && {

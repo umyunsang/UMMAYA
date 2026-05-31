@@ -15,14 +15,20 @@ from ummaya.tools.verified_data_go_kr._factory import (
 )
 from ummaya.tools.verified_data_go_kr._manifest import require_spec
 
+_TAGO_CITY_CODE_DESCRIPTION = (
+    "Official TAGO cityCode from the provider getCtyCodeList contract. "
+    "Common metropolitan examples: Busan=21, Daegu=22, Incheon=23, "
+    "Gwangju=24, Daejeon=25, Ulsan=26."
+)
+
 
 class TagoBusRouteInput(BaseModel):
     """Input for TAGO bus route search."""
 
     model_config = ConfigDict(extra="forbid")
 
-    city_code: str = Field(..., min_length=1, description="TAGO city code.")
-    route_no: str = Field(..., min_length=1, description="Bus route number.")
+    city_code: str = Field(..., min_length=1, description=_TAGO_CITY_CODE_DESCRIPTION)
+    route_no: str = Field(..., min_length=1, description="Bus route number visible to citizens.")
     page_no: int = Field(default=1, ge=1, description="Page number.")
     num_of_rows: int = Field(default=10, ge=1, le=100, description="Rows per page.")
 

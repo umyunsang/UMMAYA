@@ -13,6 +13,7 @@ export type IPCFrame =
   | UserInputFrame
   | ChatRequestFrame
   | AssistantChunkFrame
+  | ProgressEventFrame
   | ToolCallFrame
   | ToolResultFrame
   | CoordinatorPhaseFrame
@@ -189,6 +190,10 @@ export type Temperature = number;
  */
 export type TopP = number;
 /**
+ * K-EXAONE/FriendliAI reasoning policy for this assistant turn.
+ */
+export type ReasoningMode = ('fast' | 'balanced' | 'deep' | 'diagnostic' | 'auto') | null;
+/**
  * Opaque session identifier.
  */
 export type SessionId2 = string;
@@ -267,15 +272,36 @@ export type TransactionId4 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind3 = 'tool_call';
+export type Kind3 = 'progress_event';
 /**
- * ULID correlating this call to its subsequent tool_result.
+ * Safe query-loop phase represented by this event.
  */
-export type CallId = string;
+export type Phase =
+  | 'analysis'
+  | 'tool_selection'
+  | 'tool_call'
+  | 'tool_result'
+  | 'answer_synthesis';
 /**
- * Concrete tool name selected by the model; root primitive names remain valid for legacy transcripts.
+ * Korean progress text for the TUI.
  */
-export type Name3 = string;
+export type MessageKo = string;
+/**
+ * English fallback progress text.
+ */
+export type MessageEn = string;
+/**
+ * True because this channel never carries raw provider chain-of-thought.
+ */
+export type SafeToPersist = boolean;
+/**
+ * Concrete adapter/tool id when this event is tied to one.
+ */
+export type ToolId = string | null;
+/**
+ * Tool call id when this event is tied to a specific invocation.
+ */
+export type CallId = string | null;
 /**
  * Opaque session identifier.
  */
@@ -307,15 +333,15 @@ export type TransactionId5 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind4 = 'tool_result';
+export type Kind4 = 'tool_call';
 /**
- * ULID correlating this result to its originating tool_call.
+ * ULID correlating this call to its subsequent tool_result.
  */
 export type CallId1 = string;
 /**
- * Primitive kind discriminator per Spec 031.
+ * Concrete tool name selected by the model; root primitive names remain valid for legacy transcripts.
  */
-export type Kind5 = 'find' | 'locate' | 'send' | 'check';
+export type Name3 = string;
 /**
  * Opaque session identifier.
  */
@@ -347,11 +373,15 @@ export type TransactionId6 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind6 = 'coordinator_phase';
+export type Kind5 = 'tool_result';
 /**
- * Current coordinator phase.
+ * ULID correlating this result to its originating tool_call.
  */
-export type Phase = 'Research' | 'Synthesis' | 'Implementation' | 'Verification';
+export type CallId2 = string;
+/**
+ * Primitive kind discriminator per Spec 031.
+ */
+export type Kind6 = 'find' | 'locate' | 'send' | 'check';
 /**
  * Opaque session identifier.
  */
@@ -383,23 +413,11 @@ export type TransactionId7 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind7 = 'worker_status';
+export type Kind7 = 'coordinator_phase';
 /**
- * Unique worker identifier.
+ * Current coordinator phase.
  */
-export type WorkerId = string;
-/**
- * Specialist label (e.g., transport-specialist, health-specialist).
- */
-export type RoleId = string;
-/**
- * Primitive currently being invoked by this worker.
- */
-export type CurrentPrimitive = 'find' | 'locate' | 'send' | 'check';
-/**
- * Worker execution status.
- */
-export type Status = 'idle' | 'running' | 'waiting_permission' | 'error';
+export type Phase1 = 'Research' | 'Synthesis' | 'Implementation' | 'Verification';
 /**
  * Opaque session identifier.
  */
@@ -431,35 +449,23 @@ export type TransactionId8 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind8 = 'permission_request';
+export type Kind8 = 'worker_status';
 /**
- * ULID; round-trips in the matching permission_response frame.
+ * Unique worker identifier.
  */
-export type RequestId = string;
+export type WorkerId = string;
 /**
- * Worker requesting permission.
+ * Specialist label (e.g., transport-specialist, health-specialist).
  */
-export type WorkerId1 = string;
+export type RoleId = string;
 /**
- * The primitive the worker wants to invoke.
+ * Primitive currently being invoked by this worker.
  */
-export type PrimitiveKind = 'find' | 'locate' | 'send' | 'check';
+export type CurrentPrimitive = 'find' | 'locate' | 'send' | 'check';
 /**
- * Korean-language description shown to the citizen.
+ * Worker execution status.
  */
-export type DescriptionKo = string;
-/**
- * English-language description shown alongside the Korean one.
- */
-export type DescriptionEn = string;
-/**
- * Risk classification of the requested operation.
- */
-export type RiskLevel = 'low' | 'medium' | 'high';
-/**
- * Fully-qualified adapter id (e.g. `mock_verify_mobile_id`). Falls back to worker_id || primitive_kind in the TUI when None. None for legacy callers that have not yet been updated.
- */
-export type ToolId = string | null;
+export type Status = 'idle' | 'running' | 'waiting_permission' | 'error';
 /**
  * Opaque session identifier.
  */
@@ -491,25 +497,33 @@ export type TransactionId9 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind9 = 'permission_response';
+export type Kind9 = 'permission_request';
 /**
- * ULID matching the originating permission_request.request_id.
+ * ULID; round-trips in the matching permission_response frame.
  */
-export type RequestId1 = string;
+export type RequestId = string;
 /**
- * Citizen's permission decision.
+ * Worker requesting permission.
  */
-export type Decision = 'granted' | 'allow_once' | 'allow_session' | 'denied' | 'deny';
+export type WorkerId1 = string;
 /**
- * Consent receipt UUID written to ~/.ummaya/memdir/user/consent/<id>.json on granted decisions. None on deny / timeout.
+ * The primitive the worker wants to invoke.
  */
-export type ReceiptId = string | null;
+export type PrimitiveKind = 'find' | 'locate' | 'send' | 'check';
 /**
- * The primitive that was authorised. The TUI feeds this into `aalToLayer(primitive, isIrreversible)` to recompute the gauntlet layer (1=green / 2=orange / 3=red) for the receipt row. None on deny / timeout / legacy backends.
+ * Korean-language description shown to the citizen.
  */
-export type PrimitiveKind1 = ('find' | 'locate' | 'send' | 'check') | null;
+export type DescriptionKo = string;
 /**
- * The fully-qualified adapter id (e.g. `mock_verify_mobile_id`, `mock_submit_welfare_grant`) the citizen authorised. The TUI uses this to render the human-readable Korean adapter name in /consent list and the modal title. None for non-adapter primitives (rare) or legacy backends.
+ * English-language description shown alongside the Korean one.
+ */
+export type DescriptionEn = string;
+/**
+ * Risk classification of the requested operation.
+ */
+export type RiskLevel = 'low' | 'medium' | 'high';
+/**
+ * Fully-qualified adapter id (e.g. `mock_verify_mobile_id`). Falls back to worker_id || primitive_kind in the TUI when None. None for legacy callers that have not yet been updated.
  */
 export type ToolId1 = string | null;
 /**
@@ -543,11 +557,27 @@ export type TransactionId10 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind10 = 'session_event';
+export type Kind10 = 'permission_response';
 /**
- * Session lifecycle event type.
+ * ULID matching the originating permission_request.request_id.
  */
-export type Event = 'save' | 'load' | 'list' | 'resume' | 'new' | 'exit';
+export type RequestId1 = string;
+/**
+ * Citizen's permission decision.
+ */
+export type Decision = 'granted' | 'allow_once' | 'allow_session' | 'denied' | 'deny';
+/**
+ * Consent receipt UUID written to ~/.ummaya/memdir/user/consent/<id>.json on granted decisions. None on deny / timeout.
+ */
+export type ReceiptId = string | null;
+/**
+ * The primitive that was authorised. The TUI feeds this into `aalToLayer(primitive, isIrreversible)` to recompute the gauntlet layer (1=green / 2=orange / 3=red) for the receipt row. None on deny / timeout / legacy backends.
+ */
+export type PrimitiveKind1 = ('find' | 'locate' | 'send' | 'check') | null;
+/**
+ * The fully-qualified adapter id (e.g. `mock_verify_mobile_id`, `mock_submit_welfare_grant`) the citizen authorised. The TUI uses this to render the human-readable Korean adapter name in /consent list and the modal title. None for non-adapter primitives (rare) or legacy backends.
+ */
+export type ToolId2 = string | null;
 /**
  * Opaque session identifier.
  */
@@ -579,15 +609,11 @@ export type TransactionId11 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind11 = 'error';
+export type Kind11 = 'session_event';
 /**
- * Machine-readable error code (e.g., 'backend_crash', 'protocol_mismatch').
+ * Session lifecycle event type.
  */
-export type Code = string;
-/**
- * Human-readable short message. MUST NOT contain UMMAYA_*-prefixed env var values (FR-004 redaction rule).
- */
-export type Message = string;
+export type Event = 'save' | 'load' | 'list' | 'resume' | 'new' | 'exit';
 /**
  * Opaque session identifier.
  */
@@ -619,15 +645,15 @@ export type TransactionId12 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind12 = 'payload_start';
+export type Kind12 = 'error';
 /**
- * Payload MIME type.
+ * Machine-readable error code (e.g., 'backend_crash', 'protocol_mismatch').
  */
-export type ContentType = 'text/markdown' | 'application/json' | 'text/plain';
+export type Code = string;
 /**
- * Optional size hint for HUD progress bars.
+ * Human-readable short message. MUST NOT contain UMMAYA_*-prefixed env var values (FR-004 redaction rule).
  */
-export type EstimatedBytes = number | null;
+export type Message = string;
 /**
  * Opaque session identifier.
  */
@@ -659,15 +685,15 @@ export type TransactionId13 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind13 = 'payload_delta';
+export type Kind13 = 'payload_start';
 /**
- * Monotonic within the payload (first delta = 0).
+ * Payload MIME type.
  */
-export type DeltaSeq = number;
+export type ContentType = 'text/markdown' | 'application/json' | 'text/plain';
 /**
- * UTF-8 text. If content-type is application/json, this is a JSON-encoded fragment string.
+ * Optional size hint for HUD progress bars.
  */
-export type Payload1 = string;
+export type EstimatedBytes = number | null;
 /**
  * Opaque session identifier.
  */
@@ -699,15 +725,15 @@ export type TransactionId14 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind14 = 'payload_end';
+export type Kind14 = 'payload_delta';
 /**
- * Total number of payload_delta frames emitted.
+ * Monotonic within the payload (first delta = 0).
  */
-export type DeltaCount = number;
+export type DeltaSeq = number;
 /**
- * Terminal disposition.
+ * UTF-8 text. If content-type is application/json, this is a JSON-encoded fragment string.
  */
-export type Status1 = 'ok' | 'aborted';
+export type Payload1 = string;
 /**
  * Opaque session identifier.
  */
@@ -739,35 +765,15 @@ export type TransactionId15 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind15 = 'backpressure';
+export type Kind15 = 'payload_end';
 /**
- * Reader action. pause=stop emitting; resume=clear; throttle=slow down.
+ * Total number of payload_delta frames emitted.
  */
-export type Signal = 'pause' | 'resume' | 'throttle';
+export type DeltaCount = number;
 /**
- * Origin of the signal.
+ * Terminal disposition.
  */
-export type Source = 'tui_reader' | 'backend_writer' | 'upstream_429';
-/**
- * Current outbound queue size.
- */
-export type QueueDepth = number;
-/**
- * High-water mark threshold in effect (default 64).
- */
-export type Hwm = number;
-/**
- * For throttle sourced from upstream_429; reflects Retry-After. ge=0.
- */
-export type RetryAfterMs = number | null;
-/**
- * Korean HUD copy (civic-facing). Must be non-empty (FR-015).
- */
-export type HudCopyKo = string;
-/**
- * English HUD copy (dev-facing). Must be non-empty (FR-015).
- */
-export type HudCopyEn = string;
+export type Status1 = 'ok' | 'aborted';
 /**
  * Opaque session identifier.
  */
@@ -799,19 +805,35 @@ export type TransactionId16 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind16 = 'resume_request';
+export type Kind16 = 'backpressure';
 /**
- * Last correlation_id the TUI successfully applied. None if no prior frame.
+ * Reader action. pause=stop emitting; resume=clear; throttle=slow down.
  */
-export type LastSeenCorrelationId = string | null;
+export type Signal = 'pause' | 'resume' | 'throttle';
 /**
- * Last frame_seq applied. None if none.
+ * Origin of the signal.
  */
-export type LastSeenFrameSeq = number | null;
+export type Source = 'tui_reader' | 'backend_writer' | 'upstream_429';
 /**
- * TUI-local session token for authenticity binding.
+ * Current outbound queue size.
  */
-export type TuiSessionToken = string;
+export type QueueDepth = number;
+/**
+ * High-water mark threshold in effect (default 64).
+ */
+export type Hwm = number;
+/**
+ * For throttle sourced from upstream_429; reflects Retry-After. ge=0.
+ */
+export type RetryAfterMs = number | null;
+/**
+ * Korean HUD copy (civic-facing). Must be non-empty (FR-015).
+ */
+export type HudCopyKo = string;
+/**
+ * English HUD copy (dev-facing). Must be non-empty (FR-015).
+ */
+export type HudCopyEn = string;
 /**
  * Opaque session identifier.
  */
@@ -843,23 +865,19 @@ export type TransactionId17 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind17 = 'resume_response';
+export type Kind17 = 'resume_request';
 /**
- * Inclusive lower bound of frames that will be replayed.
+ * Last correlation_id the TUI successfully applied. None if no prior frame.
  */
-export type ResumedFromFrameSeq = number;
+export type LastSeenCorrelationId = string | null;
 /**
- * Total frames the backend will replay. Bounded by ring buffer size.
+ * Last frame_seq applied. None if none.
  */
-export type ReplayCount = number;
+export type LastSeenFrameSeq = number | null;
 /**
- * Backend-assigned session id the TUI should use going forward.
+ * TUI-local session token for authenticity binding.
  */
-export type ServerSessionId = string;
-/**
- * Negotiated heartbeat cadence (default 30000).
- */
-export type HeartbeatIntervalMs = number;
+export type TuiSessionToken = string;
 /**
  * Opaque session identifier.
  */
@@ -891,20 +909,23 @@ export type TransactionId18 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind18 = 'resume_rejected';
+export type Kind18 = 'resume_response';
 /**
- * Machine-readable reason code.
+ * Inclusive lower bound of frames that will be replayed.
  */
-export type Reason =
-  | 'ring_evicted'
-  | 'session_unknown'
-  | 'token_mismatch'
-  | 'protocol_incompatible'
-  | 'session_expired';
+export type ResumedFromFrameSeq = number;
 /**
- * Human-readable Korean/English detail for HUD.
+ * Total frames the backend will replay. Bounded by ring buffer size.
  */
-export type Detail = string;
+export type ReplayCount = number;
+/**
+ * Backend-assigned session id the TUI should use going forward.
+ */
+export type ServerSessionId = string;
+/**
+ * Negotiated heartbeat cadence (default 30000).
+ */
+export type HeartbeatIntervalMs = number;
 /**
  * Opaque session identifier.
  */
@@ -936,15 +957,20 @@ export type TransactionId19 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind19 = 'heartbeat';
+export type Kind19 = 'resume_rejected';
 /**
- * ping from sender, pong from receiver.
+ * Machine-readable reason code.
  */
-export type Direction = 'ping' | 'pong';
+export type Reason =
+  | 'ring_evicted'
+  | 'session_unknown'
+  | 'token_mismatch'
+  | 'protocol_incompatible'
+  | 'session_expired';
 /**
- * Sender's current outbound frame_seq high-water.
+ * Human-readable Korean/English detail for HUD.
  */
-export type PeerFrameSeq = number;
+export type Detail = string;
 /**
  * Opaque session identifier.
  */
@@ -976,27 +1002,15 @@ export type TransactionId20 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind20 = 'notification_push';
+export type Kind20 = 'heartbeat';
 /**
- * Notification channel handle.
+ * ping from sender, pong from receiver.
  */
-export type SubscriptionId = string;
+export type Direction = 'ping' | 'pong';
 /**
- * e.g., disaster_alert_cbs_push, gov_newsroom_push.
+ * Sender's current outbound frame_seq high-water.
  */
-export type AdapterId = string;
-/**
- * RSS guid or CBS event hash for duplicate suppression.
- */
-export type EventGuid = string;
-/**
- * Inline payload MIME.
- */
-export type PayloadContentType = 'text/plain' | 'application/json';
-/**
- * Inline notification content (Korean for civic users).
- */
-export type Payload2 = string;
+export type PeerFrameSeq = number;
 /**
  * Opaque session identifier.
  */
@@ -1028,7 +1042,59 @@ export type TransactionId21 = string | null;
 /**
  * Frame discriminator.
  */
-export type Kind21 = 'plugin_op';
+export type Kind21 = 'notification_push';
+/**
+ * Notification channel handle.
+ */
+export type SubscriptionId = string;
+/**
+ * e.g., disaster_alert_cbs_push, gov_newsroom_push.
+ */
+export type AdapterId = string;
+/**
+ * RSS guid or CBS event hash for duplicate suppression.
+ */
+export type EventGuid = string;
+/**
+ * Inline payload MIME.
+ */
+export type PayloadContentType = 'text/plain' | 'application/json';
+/**
+ * Inline notification content (Korean for civic users).
+ */
+export type Payload2 = string;
+/**
+ * Opaque session identifier.
+ */
+export type SessionId21 = string;
+/**
+ * UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)
+ */
+export type CorrelationId21 = string;
+/**
+ * ISO-8601 UTC timestamp with sub-ms precision.
+ */
+export type Ts21 = string;
+/**
+ * Envelope version. Hard-fail on mismatch (E1, FR-001).
+ */
+export type Version21 = '1.0';
+/**
+ * Origin role. Validated against kind<->role allow-list (E3, FR-004).
+ */
+export type Role22 = 'tui' | 'backend' | 'tool' | 'llm' | 'notification';
+/**
+ * Per-session monotonic sequence number (ge=0). Gap detection uses this.
+ */
+export type FrameSeq21 = number;
+/**
+ * UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).
+ */
+export type TransactionId22 = string | null;
+/**
+ * Frame discriminator.
+ */
+export type Kind22 = 'plugin_op';
 /**
  * Operation phase. ``request`` = TUI initiates install/uninstall/list; ``progress`` = backend reports phase tick; ``complete`` = backend reports terminal outcome.
  */
@@ -1088,35 +1154,35 @@ export type WasIdempotentNoop = boolean | null;
 /**
  * Opaque session identifier.
  */
-export type SessionId21 = string;
+export type SessionId22 = string;
 /**
  * UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)
  */
-export type CorrelationId21 = string;
+export type CorrelationId22 = string;
 /**
  * ISO-8601 UTC timestamp with sub-ms precision.
  */
-export type Ts21 = string;
+export type Ts22 = string;
 /**
  * Envelope version. Hard-fail on mismatch (E1, FR-001).
  */
-export type Version21 = '1.0';
+export type Version22 = '1.0';
 /**
  * Origin role. Validated against kind<->role allow-list (E3, FR-004).
  */
-export type Role22 = 'tui' | 'backend' | 'tool' | 'llm' | 'notification';
+export type Role23 = 'tui' | 'backend' | 'tool' | 'llm' | 'notification';
 /**
  * Per-session monotonic sequence number (ge=0). Gap detection uses this.
  */
-export type FrameSeq21 = number;
+export type FrameSeq22 = number;
 /**
  * UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).
  */
-export type TransactionId22 = string | null;
+export type TransactionId23 = string | null;
 /**
  * Frame discriminator — 21st arm of IPCFrame.
  */
-export type Kind22 = 'adapter_manifest_sync';
+export type Kind23 = 'adapter_manifest_sync';
 /**
  * Full registry snapshot. Non-empty (I1); no duplicate tool_id (I2).
  *
@@ -1126,7 +1192,7 @@ export type Entries = [AdapterManifestEntry, ...AdapterManifestEntry[]];
 /**
  * Globally unique adapter id within the registry, e.g. 'nmc_emergency_search'. Lowercase snake-case; validated by I7.
  */
-export type ToolId2 = string;
+export type ToolId3 = string;
 /**
  * Human-readable display name; bilingual permitted.
  */
@@ -1162,54 +1228,6 @@ export type EmitterPid = number;
 /**
  * Opaque session identifier.
  */
-export type SessionId22 = string;
-/**
- * UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)
- */
-export type CorrelationId22 = string;
-/**
- * ISO-8601 UTC timestamp with sub-ms precision.
- */
-export type Ts22 = string;
-/**
- * Envelope version. Hard-fail on mismatch (E1, FR-001).
- */
-export type Version22 = '1.0';
-/**
- * Origin role. Validated against kind<->role allow-list (E3, FR-004).
- */
-export type Role23 = 'tui' | 'backend' | 'tool' | 'llm' | 'notification';
-/**
- * Per-session monotonic sequence number (ge=0). Gap detection uses this.
- */
-export type FrameSeq22 = number;
-/**
- * UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).
- */
-export type TransactionId23 = string | null;
-/**
- * Frame discriminator — arm 22 of IPCFrame.
- */
-export type Kind23 = 'consent_revoke_request';
-/**
- * UUIDv4 round-trip correlation ID; matched in consent_revoke_response.
- */
-export type RequestId2 = string;
-/**
- * Target receipt identifier (rcpt-<id>). Must match an existing receipt file at ~/.ummaya/memdir/user/consent/<receipt_id>.json.
- */
-export type ReceiptId2 = string;
-/**
- * Revocation scope. 'once' revokes only this receipt; 'session-all' revokes all receipts in the current session.
- */
-export type Scope = 'once' | 'session-all';
-/**
- * Optional citizen-provided reason logged to the ledger (PIPA §36 citation).
- */
-export type Reason1 = string | null;
-/**
- * Opaque session identifier.
- */
 export type SessionId23 = string;
 /**
  * UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)
@@ -1236,9 +1254,57 @@ export type FrameSeq23 = number;
  */
 export type TransactionId24 = string | null;
 /**
+ * Frame discriminator — arm 22 of IPCFrame.
+ */
+export type Kind24 = 'consent_revoke_request';
+/**
+ * UUIDv4 round-trip correlation ID; matched in consent_revoke_response.
+ */
+export type RequestId2 = string;
+/**
+ * Target receipt identifier (rcpt-<id>). Must match an existing receipt file at ~/.ummaya/memdir/user/consent/<receipt_id>.json.
+ */
+export type ReceiptId2 = string;
+/**
+ * Revocation scope. 'once' revokes only this receipt; 'session-all' revokes all receipts in the current session.
+ */
+export type Scope = 'once' | 'session-all';
+/**
+ * Optional citizen-provided reason logged to the ledger (PIPA §36 citation).
+ */
+export type Reason1 = string | null;
+/**
+ * Opaque session identifier.
+ */
+export type SessionId24 = string;
+/**
+ * UUIDv7 string for new emissions; ULID accepted for back-compat. Non-empty; emitter SHOULD use UUIDv7. (E5)
+ */
+export type CorrelationId24 = string;
+/**
+ * ISO-8601 UTC timestamp with sub-ms precision.
+ */
+export type Ts24 = string;
+/**
+ * Envelope version. Hard-fail on mismatch (E1, FR-001).
+ */
+export type Version24 = '1.0';
+/**
+ * Origin role. Validated against kind<->role allow-list (E3, FR-004).
+ */
+export type Role25 = 'tui' | 'backend' | 'tool' | 'llm' | 'notification';
+/**
+ * Per-session monotonic sequence number (ge=0). Gap detection uses this.
+ */
+export type FrameSeq24 = number;
+/**
+ * UUIDv7. Populated for idempotent state-change frames (irreversible tools). None for streaming chunks. (FR-026) Non-empty when present (parity with codec.ts ``z.string().min(1).nullable().optional()`` — Spec 2642 § US3).
+ */
+export type TransactionId25 = string | null;
+/**
  * Frame discriminator — arm 23 of IPCFrame.
  */
-export type Kind24 = 'consent_revoke_response';
+export type Kind25 = 'consent_revoke_response';
 /**
  * Mirrors consent_revoke_request.request_id for round-trip correlation.
  */
@@ -1312,6 +1378,7 @@ export interface ChatRequestFrame {
   max_tokens?: MaxTokens;
   temperature?: Temperature;
   top_p?: TopP;
+  reasoning_mode?: ReasoningMode;
 }
 /**
  * One conversation-history entry carried by ``ChatRequestFrame.messages``.
@@ -1409,9 +1476,14 @@ export interface AssistantChunkFrame {
   done: Done;
 }
 /**
- * backend -> TUI (display only): a tool invocation decision by the model.
+ * backend -> TUI: deterministic query-loop progress.
+ *
+ * This is intentionally separate from ``AssistantChunkFrame.thinking``.
+ * ``progress_event`` carries safe harness state such as analysis, tool
+ * selection, tool dispatch/result, and answer synthesis. Provider reasoning
+ * remains on the gated ``thinking_delta`` channel.
  */
-export interface ToolCallFrame {
+export interface ProgressEventFrame {
   session_id: SessionId3;
   correlation_id: CorrelationId3;
   ts: Ts3;
@@ -1424,20 +1496,17 @@ export interface ToolCallFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind3;
-  call_id: CallId;
-  name: Name3;
-  arguments: Arguments1;
+  phase: Phase;
+  message_ko: MessageKo;
+  message_en: MessageEn;
+  safe_to_persist?: SafeToPersist;
+  tool_id?: ToolId;
+  call_id?: CallId;
 }
 /**
- * Tool-specific arguments. Concrete adapter calls carry adapter schema fields directly.
+ * backend -> TUI (display only): a tool invocation decision by the model.
  */
-export interface Arguments1 {
-  [k: string]: any;
-}
-/**
- * backend -> TUI (render): the output of a tool invocation.
- */
-export interface ToolResultFrame {
+export interface ToolCallFrame {
   session_id: SessionId4;
   correlation_id: CorrelationId4;
   ts: Ts4;
@@ -1451,19 +1520,19 @@ export interface ToolResultFrame {
   trailer?: FrameTrailer | null;
   kind?: Kind4;
   call_id: CallId1;
-  envelope: ToolResultEnvelope;
+  name: Name3;
+  arguments: Arguments1;
 }
 /**
- * Active primitive discriminated union. Unknown kind falls to UnrecognizedPayload.
+ * Tool-specific arguments. Concrete adapter calls carry adapter schema fields directly.
  */
-export interface ToolResultEnvelope {
-  kind: Kind5;
+export interface Arguments1 {
   [k: string]: any;
 }
 /**
- * backend -> TUI: Spec 027 coordinator phase update.
+ * backend -> TUI (render): the output of a tool invocation.
  */
-export interface CoordinatorPhaseFrame {
+export interface ToolResultFrame {
   session_id: SessionId5;
   correlation_id: CorrelationId5;
   ts: Ts5;
@@ -1475,13 +1544,21 @@ export interface CoordinatorPhaseFrame {
    * Completion/validation metadata. Populated on terminal frames. (FR-006)
    */
   trailer?: FrameTrailer | null;
-  kind?: Kind6;
-  phase: Phase;
+  kind?: Kind5;
+  call_id: CallId2;
+  envelope: ToolResultEnvelope;
 }
 /**
- * backend -> TUI: per-worker status row update from Spec 027 swarm.
+ * Active primitive discriminated union. Unknown kind falls to UnrecognizedPayload.
  */
-export interface WorkerStatusFrame {
+export interface ToolResultEnvelope {
+  kind: Kind6;
+  [k: string]: any;
+}
+/**
+ * backend -> TUI: Spec 027 coordinator phase update.
+ */
+export interface CoordinatorPhaseFrame {
   session_id: SessionId6;
   correlation_id: CorrelationId6;
   ts: Ts6;
@@ -1494,15 +1571,12 @@ export interface WorkerStatusFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind7;
-  worker_id: WorkerId;
-  role_id: RoleId;
-  current_primitive: CurrentPrimitive;
-  status: Status;
+  phase: Phase1;
 }
 /**
- * backend -> TUI: a worker raises a permission request.
+ * backend -> TUI: per-worker status row update from Spec 027 swarm.
  */
-export interface PermissionRequestFrame {
+export interface WorkerStatusFrame {
   session_id: SessionId7;
   correlation_id: CorrelationId7;
   ts: Ts7;
@@ -1515,18 +1589,15 @@ export interface PermissionRequestFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind8;
-  request_id: RequestId;
-  worker_id: WorkerId1;
-  primitive_kind: PrimitiveKind;
-  description_ko: DescriptionKo;
-  description_en: DescriptionEn;
-  risk_level: RiskLevel;
-  tool_id?: ToolId;
+  worker_id: WorkerId;
+  role_id: RoleId;
+  current_primitive: CurrentPrimitive;
+  status: Status;
 }
 /**
- * TUI -> backend: citizen's decision on a permission_request.
+ * backend -> TUI: a worker raises a permission request.
  */
-export interface PermissionResponseFrame {
+export interface PermissionRequestFrame {
   session_id: SessionId8;
   correlation_id: CorrelationId8;
   ts: Ts8;
@@ -1539,16 +1610,18 @@ export interface PermissionResponseFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind9;
-  request_id: RequestId1;
-  decision: Decision;
-  receipt_id?: ReceiptId;
-  primitive_kind?: PrimitiveKind1;
+  request_id: RequestId;
+  worker_id: WorkerId1;
+  primitive_kind: PrimitiveKind;
+  description_ko: DescriptionKo;
+  description_en: DescriptionEn;
+  risk_level: RiskLevel;
   tool_id?: ToolId1;
 }
 /**
- * Bidirectional: session lifecycle events.
+ * TUI -> backend: citizen's decision on a permission_request.
  */
-export interface SessionEventFrame {
+export interface PermissionResponseFrame {
   session_id: SessionId9;
   correlation_id: CorrelationId9;
   ts: Ts9;
@@ -1561,6 +1634,28 @@ export interface SessionEventFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind10;
+  request_id: RequestId1;
+  decision: Decision;
+  receipt_id?: ReceiptId;
+  primitive_kind?: PrimitiveKind1;
+  tool_id?: ToolId2;
+}
+/**
+ * Bidirectional: session lifecycle events.
+ */
+export interface SessionEventFrame {
+  session_id: SessionId10;
+  correlation_id: CorrelationId10;
+  ts: Ts10;
+  version?: Version10;
+  role: Role11;
+  frame_seq?: FrameSeq10;
+  transaction_id?: TransactionId11;
+  /**
+   * Completion/validation metadata. Populated on terminal frames. (FR-006)
+   */
+  trailer?: FrameTrailer | null;
+  kind?: Kind11;
   event: Event;
   payload: Payload;
 }
@@ -1574,18 +1669,18 @@ export interface Payload {
  * backend -> TUI: a backend error surfaced to the TUI for rendering.
  */
 export interface ErrorFrame {
-  session_id: SessionId10;
-  correlation_id: CorrelationId10;
-  ts: Ts10;
-  version?: Version10;
-  role: Role11;
-  frame_seq?: FrameSeq10;
-  transaction_id?: TransactionId11;
+  session_id: SessionId11;
+  correlation_id: CorrelationId11;
+  ts: Ts11;
+  version?: Version11;
+  role: Role12;
+  frame_seq?: FrameSeq11;
+  transaction_id?: TransactionId12;
   /**
    * Completion/validation metadata. Populated on terminal frames. (FR-006)
    */
   trailer?: FrameTrailer | null;
-  kind?: Kind11;
+  kind?: Kind12;
   code: Code;
   message: Message;
   details: Details;
@@ -1603,27 +1698,6 @@ export interface Details {
  * role allow-list: backend, tool, llm.
  */
 export interface PayloadStartFrame {
-  session_id: SessionId11;
-  correlation_id: CorrelationId11;
-  ts: Ts11;
-  version?: Version11;
-  role: Role12;
-  frame_seq?: FrameSeq11;
-  transaction_id?: TransactionId12;
-  /**
-   * Completion/validation metadata. Populated on terminal frames. (FR-006)
-   */
-  trailer?: FrameTrailer | null;
-  kind?: Kind12;
-  content_type: ContentType;
-  estimated_bytes?: EstimatedBytes;
-}
-/**
- * One chunk of a streamed payload.
- *
- * role allow-list: backend, tool, llm.
- */
-export interface PayloadDeltaFrame {
   session_id: SessionId12;
   correlation_id: CorrelationId12;
   ts: Ts12;
@@ -1636,16 +1710,15 @@ export interface PayloadDeltaFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind13;
-  delta_seq: DeltaSeq;
-  payload: Payload1;
+  content_type: ContentType;
+  estimated_bytes?: EstimatedBytes;
 }
 /**
- * Terminates a streamed payload.
+ * One chunk of a streamed payload.
  *
- * MUST carry a trailer with final=True.
  * role allow-list: backend, tool, llm.
  */
-export interface PayloadEndFrame {
+export interface PayloadDeltaFrame {
   session_id: SessionId13;
   correlation_id: CorrelationId13;
   ts: Ts13;
@@ -1658,16 +1731,16 @@ export interface PayloadEndFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind14;
-  delta_count: DeltaCount;
-  status: Status1;
+  delta_seq: DeltaSeq;
+  payload: Payload1;
 }
 /**
- * Emitted when outgoing queue crosses HWM or a 429 condition is detected.
+ * Terminates a streamed payload.
  *
- * role allow-list: tui (tui_reader), backend (backend_writer, upstream_429).
- * FR-012, FR-015: hud_copy_ko/en MUST be non-empty (min_length=1).
+ * MUST carry a trailer with final=True.
+ * role allow-list: backend, tool, llm.
  */
-export interface BackpressureSignalFrame {
+export interface PayloadEndFrame {
   session_id: SessionId14;
   correlation_id: CorrelationId14;
   ts: Ts14;
@@ -1680,6 +1753,28 @@ export interface BackpressureSignalFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind15;
+  delta_count: DeltaCount;
+  status: Status1;
+}
+/**
+ * Emitted when outgoing queue crosses HWM or a 429 condition is detected.
+ *
+ * role allow-list: tui (tui_reader), backend (backend_writer, upstream_429).
+ * FR-012, FR-015: hud_copy_ko/en MUST be non-empty (min_length=1).
+ */
+export interface BackpressureSignalFrame {
+  session_id: SessionId15;
+  correlation_id: CorrelationId15;
+  ts: Ts15;
+  version?: Version15;
+  role: Role16;
+  frame_seq?: FrameSeq15;
+  transaction_id?: TransactionId16;
+  /**
+   * Completion/validation metadata. Populated on terminal frames. (FR-006)
+   */
+  trailer?: FrameTrailer | null;
+  kind?: Kind16;
   signal: Signal;
   source: Source;
   queue_depth: QueueDepth;
@@ -1694,30 +1789,6 @@ export interface BackpressureSignalFrame {
  * role allow-list: tui.
  */
 export interface ResumeRequestFrame {
-  session_id: SessionId15;
-  correlation_id: CorrelationId15;
-  ts: Ts15;
-  version?: Version15;
-  role: Role16;
-  frame_seq?: FrameSeq15;
-  transaction_id?: TransactionId16;
-  /**
-   * Completion/validation metadata. Populated on terminal frames. (FR-006)
-   */
-  trailer?: FrameTrailer | null;
-  kind?: Kind16;
-  last_seen_correlation_id?: LastSeenCorrelationId;
-  last_seen_frame_seq?: LastSeenFrameSeq;
-  tui_session_token: TuiSessionToken;
-}
-/**
- * Backend accepts the resume.
- *
- * Must be followed by replay of frames with frame_seq > last_seen_frame_seq.
- * Trailer with final=True MUST be set (E6).
- * role allow-list: backend.
- */
-export interface ResumeResponseFrame {
   session_id: SessionId16;
   correlation_id: CorrelationId16;
   ts: Ts16;
@@ -1730,18 +1801,18 @@ export interface ResumeResponseFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind17;
-  resumed_from_frame_seq: ResumedFromFrameSeq;
-  replay_count: ReplayCount;
-  server_session_id: ServerSessionId;
-  heartbeat_interval_ms: HeartbeatIntervalMs;
+  last_seen_correlation_id?: LastSeenCorrelationId;
+  last_seen_frame_seq?: LastSeenFrameSeq;
+  tui_session_token: TuiSessionToken;
 }
 /**
- * Backend cannot honor the resume request.
+ * Backend accepts the resume.
  *
+ * Must be followed by replay of frames with frame_seq > last_seen_frame_seq.
  * Trailer with final=True MUST be set (E6).
  * role allow-list: backend.
  */
-export interface ResumeRejectedFrame {
+export interface ResumeResponseFrame {
   session_id: SessionId17;
   correlation_id: CorrelationId17;
   ts: Ts17;
@@ -1754,17 +1825,18 @@ export interface ResumeRejectedFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind18;
-  reason: Reason;
-  detail: Detail;
+  resumed_from_frame_seq: ResumedFromFrameSeq;
+  replay_count: ReplayCount;
+  server_session_id: ServerSessionId;
+  heartbeat_interval_ms: HeartbeatIntervalMs;
 }
 /**
- * Emitted every 30 s (default) by both sides to prove liveness.
+ * Backend cannot honor the resume request.
  *
- * Note: Heartbeat frames do NOT increment frame_seq — they use a dedicated
- * counter. This keeps ring-buffer economy tight.
- * role allow-list: tui, backend.
+ * Trailer with final=True MUST be set (E6).
+ * role allow-list: backend.
  */
-export interface HeartbeatFrame {
+export interface ResumeRejectedFrame {
   session_id: SessionId18;
   correlation_id: CorrelationId18;
   ts: Ts18;
@@ -1777,6 +1849,29 @@ export interface HeartbeatFrame {
    */
   trailer?: FrameTrailer | null;
   kind?: Kind19;
+  reason: Reason;
+  detail: Detail;
+}
+/**
+ * Emitted every 30 s (default) by both sides to prove liveness.
+ *
+ * Note: Heartbeat frames do NOT increment frame_seq — they use a dedicated
+ * counter. This keeps ring-buffer economy tight.
+ * role allow-list: tui, backend.
+ */
+export interface HeartbeatFrame {
+  session_id: SessionId19;
+  correlation_id: CorrelationId19;
+  ts: Ts19;
+  version?: Version19;
+  role: Role20;
+  frame_seq?: FrameSeq19;
+  transaction_id?: TransactionId20;
+  /**
+   * Completion/validation metadata. Populated on terminal frames. (FR-006)
+   */
+  trailer?: FrameTrailer | null;
+  kind?: Kind20;
   direction: Direction;
   peer_frame_seq: PeerFrameSeq;
 }
@@ -1798,18 +1893,18 @@ export interface HeartbeatFrame {
  * UMMAYA swap-2 add-on, not a CC-divergence regression).
  */
 export interface NotificationPushFrame {
-  session_id: SessionId19;
-  correlation_id: CorrelationId19;
-  ts: Ts19;
-  version?: Version19;
-  role: Role20;
-  frame_seq?: FrameSeq19;
-  transaction_id?: TransactionId20;
+  session_id: SessionId20;
+  correlation_id: CorrelationId20;
+  ts: Ts20;
+  version?: Version20;
+  role: Role21;
+  frame_seq?: FrameSeq20;
+  transaction_id?: TransactionId21;
   /**
    * Completion/validation metadata. Populated on terminal frames. (FR-006)
    */
   trailer?: FrameTrailer | null;
-  kind?: Kind20;
+  kind?: Kind21;
   subscription_id: SubscriptionId;
   adapter_id: AdapterId;
   event_guid: EventGuid;
@@ -1840,18 +1935,18 @@ export interface NotificationPushFrame {
  * role allow-list: tui (request), backend (progress / complete).
  */
 export interface PluginOpFrame {
-  session_id: SessionId20;
-  correlation_id: CorrelationId20;
-  ts: Ts20;
-  version?: Version20;
-  role: Role21;
-  frame_seq?: FrameSeq20;
-  transaction_id?: TransactionId21;
+  session_id: SessionId21;
+  correlation_id: CorrelationId21;
+  ts: Ts21;
+  version?: Version21;
+  role: Role22;
+  frame_seq?: FrameSeq21;
+  transaction_id?: TransactionId22;
   /**
    * Completion/validation metadata. Populated on terminal frames. (FR-006)
    */
   trailer?: FrameTrailer | null;
-  kind?: Kind21;
+  kind?: Kind22;
   op: Op;
   request_op?: RequestOp;
   name?: Name4;
@@ -1883,18 +1978,18 @@ export interface PluginOpFrame {
  * Constitution § II + Spec 1634 boot-validation pattern.
  */
 export interface AdapterManifestSyncFrame {
-  session_id: SessionId21;
-  correlation_id: CorrelationId21;
-  ts: Ts21;
-  version?: Version21;
-  role: Role22;
-  frame_seq?: FrameSeq21;
-  transaction_id?: TransactionId22;
+  session_id: SessionId22;
+  correlation_id: CorrelationId22;
+  ts: Ts22;
+  version?: Version22;
+  role: Role23;
+  frame_seq?: FrameSeq22;
+  transaction_id?: TransactionId23;
   /**
    * Completion/validation metadata. Populated on terminal frames. (FR-006)
    */
   trailer?: FrameTrailer | null;
-  kind?: Kind22;
+  kind?: Kind23;
   entries: Entries;
   manifest_hash: ManifestHash;
   emitter_pid: EmitterPid;
@@ -1911,7 +2006,7 @@ export interface AdapterManifestSyncFrame {
  * - ``tool_id`` matches ``^[a-z][a-z0-9_]*$`` (I7).
  */
 export interface AdapterManifestEntry {
-  tool_id: ToolId2;
+  tool_id: ToolId3;
   name: Name5;
   primitive: Primitive;
   policy_authority_url?: PolicyAuthorityUrl;
@@ -1950,18 +2045,18 @@ export interface OutputSchemaJson {
  * role allow-list: tui.
  */
 export interface ConsentRevokeRequestFrame {
-  session_id: SessionId22;
-  correlation_id: CorrelationId22;
-  ts: Ts22;
-  version?: Version22;
-  role: Role23;
-  frame_seq?: FrameSeq22;
-  transaction_id?: TransactionId23;
+  session_id: SessionId23;
+  correlation_id: CorrelationId23;
+  ts: Ts23;
+  version?: Version23;
+  role: Role24;
+  frame_seq?: FrameSeq23;
+  transaction_id?: TransactionId24;
   /**
    * Completion/validation metadata. Populated on terminal frames. (FR-006)
    */
   trailer?: FrameTrailer | null;
-  kind?: Kind23;
+  kind?: Kind24;
   request_id: RequestId2;
   receipt_id: ReceiptId2;
   scope: Scope;
@@ -1985,18 +2080,18 @@ export interface ConsentRevokeRequestFrame {
  * role allow-list: backend.
  */
 export interface ConsentRevokeResponseFrame {
-  session_id: SessionId23;
-  correlation_id: CorrelationId23;
-  ts: Ts23;
-  version?: Version23;
-  role: Role24;
-  frame_seq?: FrameSeq23;
-  transaction_id?: TransactionId24;
+  session_id: SessionId24;
+  correlation_id: CorrelationId24;
+  ts: Ts24;
+  version?: Version24;
+  role: Role25;
+  frame_seq?: FrameSeq24;
+  transaction_id?: TransactionId25;
   /**
    * Completion/validation metadata. Populated on terminal frames. (FR-006)
    */
   trailer?: FrameTrailer | null;
-  kind?: Kind24;
+  kind?: Kind25;
   request_id: RequestId3;
   ok: Ok;
   revoked_at?: RevokedAt;

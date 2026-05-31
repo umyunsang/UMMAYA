@@ -259,12 +259,12 @@ def test_ndjson_emit_parse_roundtrip(frame: IPCFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 2: Schema has all 22 discriminator values
+# Test 2: Schema has all discriminator values
 # ---------------------------------------------------------------------------
 
 
-def test_schema_has_all_21_kinds() -> None:
-    """ipc_frame_json_schema() must enumerate all 22 kind values (Epic ε #2296 adds adapter_manifest_sync)."""  # noqa: E501
+def test_schema_has_all_kinds() -> None:
+    """ipc_frame_json_schema() must enumerate all current IPC kind values."""
     schema = ipc_frame_json_schema()
 
     expected_kinds = {
@@ -296,6 +296,8 @@ def test_schema_has_all_21_kinds() -> None:
         # Spec 2767 consent revoke
         "consent_revoke_request",
         "consent_revoke_response",
+        # K-EXAONE reasoning/progress painting
+        "progress_event",
     }
 
     # Pydantic generates a oneOf + discriminator schema

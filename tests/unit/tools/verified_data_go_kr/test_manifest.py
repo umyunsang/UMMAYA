@@ -54,6 +54,7 @@ EXPECTED_TOOL_IDS = frozenset(
         "ftc_large_group_status",
         "ftc_public_ym_list",
         "tago_bus_route_search",
+        "tago_bus_route_station_search",
         "tago_bus_arrival_search",
         "tago_bus_location_search",
         "tago_bus_station_search",

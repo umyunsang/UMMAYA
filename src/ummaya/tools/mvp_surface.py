@@ -71,8 +71,8 @@ class _LookupInputForLLM(BaseModel):
     2. The LLM-visible ``find`` tool is fetch-only: pick a ``tool_id``
        from the injected suffix, supply ``params``, get a typed result.
     3. ``LookupSearchInput`` / ``LookupSearchResults`` survive as
-       internal API consumed by the auto-inject path + the eval harness
-       (``ummaya.eval.retrieval``); they are NOT exposed to the LLM.
+       internal API consumed by the auto-inject path and deterministic
+       retrieval tests; they are NOT exposed to the LLM.
     """
 
     model_config = ConfigDict(extra="forbid")

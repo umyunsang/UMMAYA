@@ -111,41 +111,44 @@
   "properties": {
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: WthrSatlitInfoService/getGk2aNrAll.",
       "title": "Data Type",
       "type": "string"
     },
     "date_time": {
-      "default": "201911120300",
-      "description": "KMA APIHub request parameter dateTime.",
+      "description": "KMA satellite/radar observation datetime, YYYYMMDDHHMM. Use a recent KST observation; APIHub returns an error outside the current 2 days window for these satellite products. Official parameter name: dateTime. Operation: WthrSatlitInfoService/getGk2aNrAll.",
+      "pattern": "^\\d{12}$",
       "title": "Date Time",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: WthrSatlitInfoService/getGk2aNrAll.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: WthrSatlitInfoService/getGk2aNrAll.",
       "title": "Page No",
       "type": "integer"
     },
     "unit_type": {
       "default": "R",
-      "description": "KMA APIHub request parameter unitType.",
+      "description": "KMA APIHub request parameter unitType. Official parameter name: unitType. Operation: WthrSatlitInfoService/getGk2aNrAll.",
       "title": "Unit Type",
       "type": "string"
     },
     "wave_type": {
       "default": "013",
-      "description": "KMA APIHub request parameter waveType.",
+      "description": "KMA APIHub request parameter waveType. Official parameter name: waveType. Operation: WthrSatlitInfoService/getGk2aNrAll.",
       "title": "Wave Type",
       "type": "string"
     }
   },
+  "required": [
+    "date_time"
+  ],
   "title": "kma_apihub_wthr_satlit_info_service_get_gk2a_nr_all",
   "type": "object"
 }

@@ -37,6 +37,11 @@ import {
 } from '../_shared/compactPrimitiveResult.js'
 import { getOrCreateUmmayaBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
+import {
+  isRootPrimitiveToolId,
+  normalizeRootPrimitiveAdapterEnvelope,
+  rootPrimitiveSelfTargetMessage,
+} from '../_shared/rootPrimitiveInput.js'
 
 // ---------------------------------------------------------------------------
 // UMMAYA citation extension — augments context at runtime for permission UI.
@@ -52,15 +57,18 @@ type ContextWithCitation = ToolUseContext & {
 // ---------------------------------------------------------------------------
 
 const inputSchema = lazySchema(() =>
-  z.strictObject({
-    tool_id: z
-      .string()
-      .min(1)
-      .describe('Registered adapter identifier (obtain via find mode=search)'),
-    params: z
-      .record(z.string(), z.unknown())
-      .describe('Adapter-defined Pydantic-validated parameter body'),
-  }),
+  z.preprocess(
+    value => normalizeRootPrimitiveAdapterEnvelope(SEND_TOOL_NAME, value),
+    z.strictObject({
+      tool_id: z
+        .string()
+        .min(1)
+        .describe('Registered send adapter identifier from <available_adapters>'),
+      params: z
+        .record(z.string(), z.unknown())
+        .describe('Adapter-defined Pydantic-validated parameter body'),
+    }),
+  ),
 )
 type InputSchema = ReturnType<typeof inputSchema>
 
@@ -284,6 +292,14 @@ export const SubmitPrimitive = buildTool({
     // Spec 2521 (2026-05-01) — citation-missing branch added so the
     // 1002 contract (Spec 024 invariant: every adapter cites the agency
     // policy URL) is enforced at the primitive surface.
+
+    if (isRootPrimitiveToolId(input.tool_id)) {
+      return {
+        result: false as const,
+        message: rootPrimitiveSelfTargetMessage(input.tool_id, 'send'),
+        errorCode: PrimitiveErrorCode.AdapterNotFound,
+      }
+    }
 
     // Tier 1 — synced backend manifest (FR-017).
     if (isManifestSynced()) {

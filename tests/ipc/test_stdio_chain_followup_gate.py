@@ -24,16 +24,21 @@ fabricated values; verifying ``lastFrame()`` never caught it).
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from ummaya.ipc.stdio import (
     _available_adapters_block_has_find_candidate,
     _build_verify_session_context,
     _check_chain_prerequisite,
     _check_current_weather_terminated_without_observation,
+    _check_direct_public_data_tool_choice_prerequisite,
     _check_duplicate_submit_prerequisite,
+    _check_kma_aviation_tool_choice_prerequisite,
     _check_location_terminated_without_resolve,
+    _check_medical_emergency_terminated_without_aed,
     _check_resolve_terminated_without_followup,
     _check_sensitive_lookup_auth_prerequisite,
     _check_sensitive_lookup_terminated_without_lookup,
@@ -47,10 +52,13 @@ from ummaya.ipc.stdio import (
     _final_answer_looks_like_generic_retry_after_success,
     _final_answer_looks_like_incomplete_sentence,
     _final_answer_looks_like_mismatched_kma_forecast_hour_label,
+    _final_answer_looks_like_pending_tool_plan,
     _final_answer_looks_like_recursive_tool_message,
     _final_answer_looks_like_tool_call_narration,
     _final_answer_looks_like_unclosed_markdown,
     _final_answer_missing_current_weather_observation_values,
+    _initial_concrete_tool_choice_for_query,
+    _latest_citizen_user_utterance,
     _location_independent_resolve_redirect_for_query,
     _maybe_reroute_locate_admin_keyword_args,
     _maybe_reroute_locate_poi_address_args,
@@ -59,10 +67,13 @@ from ummaya.ipc.stdio import (
     _normalize_lookup_args_for_query,
     _normalize_lookup_args_from_cached_locate_result,
     _normalize_nmc_lookup_args_from_prior_locate,
+    _normalize_pps_bid_args_from_user_query,
     _normalize_reverse_geocode_args_from_prior_locate,
+    _normalize_root_primitive_adapter_envelope,
     _normalize_submit_args_for_query,
     _normalize_verify_args_for_query,
     _normalize_verify_tool_id_for_query,
+    _pps_current_week_window,
     _query_implies_current_weather_observation,
     _query_implies_location_resolution,
     _sensitive_lookup_verify_redirect_for_query,
@@ -268,6 +279,23 @@ def test_generic_retry_final_answer_after_success_is_rejected() -> None:
     )
 
 
+def test_meta_instruction_final_answer_after_success_is_rejected() -> None:
+    """A final answer must not expose self-instructions after successful tools."""
+    assert _final_answer_looks_like_pending_tool_plan(
+        "AED 검색 결과를 얻었습니다. 이제 응급 상황에 대한 지침을 제공해야 합니다. "
+        "최종 답변은 다음과 같아야 합니다: 119에 즉시 전화하세요."
+    )
+    assert _final_answer_looks_like_pending_tool_plan(
+        "각 시설의 정확한 주소, 연락처, 거리 정보는 도구 결과에서 그대로 가져와야 합니다."
+    )
+    assert _final_answer_looks_like_pending_tool_plan(
+        "부산광역시의 미세먼지 정보를 확인해 보겠습니다."
+    )
+    assert not _final_answer_looks_like_pending_tool_plan(
+        "119에 즉시 전화하고, 부산여객터미널 2층 갱웨이 AED를 가져오도록 주변 사람에게 요청하세요."
+    )
+
+
 def test_current_weather_final_answer_must_include_kma_values() -> None:
     """Successful KMA current observation must be reflected in final prose."""
     messages = [
@@ -356,8 +384,126 @@ def _msg_available_adapters(*, find: bool = True) -> LLMChatMessage:
     )
 
 
+def _msg_emergency_available_adapters(*, aed: bool = True) -> LLMChatMessage:
+    lines = [
+        '<available_adapters query="부산역 근처에 사람이 쓰러졌어">',
+        "- nmc_emergency_search (primitive=find) [21.50] — 응급실 검색",
+    ]
+    if aed:
+        lines.append("- nmc_aed_site_locate (primitive=find) [20.80] — AED 위치 검색")
+    lines.append("</available_adapters>")
+    return LLMChatMessage(role="system", content="\n".join(lines))
+
+
 def _auth_with_scope(scope: str) -> SimpleNamespace:
     return SimpleNamespace(delegation_context=SimpleNamespace(token=SimpleNamespace(scope=scope)))
+
+
+def test_medical_collapse_requires_aed_after_successful_er_lookup() -> None:
+    """Collapse wording needs AED search as well as emergency-room search."""
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"),
+        _msg_emergency_available_adapters(aed=True),
+        _msg_assistant_tool_call(
+            "nmc_emergency_search",
+            {"mode": "region", "q0": "부산광역시", "q1": "동구", "limit": 5},
+        ),
+        _msg_tool_result(
+            "nmc_emergency_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "collection",
+                    "items": [{"name": "봉생기념병원", "distance_m": 910}],
+                },
+            },
+        ),
+    ]
+
+    msg = _check_medical_emergency_terminated_without_aed(
+        msgs,
+        "부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?",
+    )
+
+    assert msg is not None
+    assert "nmc_aed_site_locate" in msg
+    assert "Do NOT produce a final answer" in msg
+
+
+def test_medical_collapse_aed_gate_passes_after_aed_attempt() -> None:
+    """Once AED was attempted, final prose may report its result or failure."""
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"),
+        _msg_emergency_available_adapters(aed=True),
+        _msg_assistant_tool_call(
+            "nmc_emergency_search",
+            {"mode": "region", "q0": "부산광역시", "q1": "동구", "limit": 5},
+        ),
+        _msg_tool_result(
+            "nmc_emergency_search",
+            {"ok": True, "result": {"kind": "collection", "items": [{"name": "응급실"}]}},
+        ),
+        _msg_assistant_tool_call(
+            "nmc_aed_site_locate",
+            {"q0": "부산광역시", "q1": "동구", "limit": 5},
+        ),
+    ]
+
+    assert (
+        _check_medical_emergency_terminated_without_aed(
+            msgs,
+            "부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?",
+        )
+        is None
+    )
+
+
+def test_medical_collapse_aed_gate_ignores_non_collapse_emergency_call_box() -> None:
+    """Civil-safety call-box wording must not be converted into AED routing."""
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산역 근처 비상벨이나 안심벨 어디 있어?"),
+        _msg_emergency_available_adapters(aed=True),
+        _msg_assistant_tool_call(
+            "nmc_emergency_search",
+            {"mode": "region", "q0": "부산광역시", "q1": "동구", "limit": 5},
+        ),
+        _msg_tool_result(
+            "nmc_emergency_search",
+            {"ok": True, "result": {"kind": "collection", "items": [{"name": "응급실"}]}},
+        ),
+    ]
+
+    assert (
+        _check_medical_emergency_terminated_without_aed(
+            msgs,
+            "부산역 근처 비상벨이나 안심벨 어디 있어?",
+        )
+        is None
+    )
+
+
+def test_medical_collapse_aed_gate_waits_for_aed_adapter_surface() -> None:
+    """The gate is driven by the model-facing adapter surface, not a static route."""
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"),
+        _msg_emergency_available_adapters(aed=False),
+        _msg_assistant_tool_call(
+            "nmc_emergency_search",
+            {"mode": "region", "q0": "부산광역시", "q1": "동구", "limit": 5},
+        ),
+        _msg_tool_result(
+            "nmc_emergency_search",
+            {"ok": True, "result": {"kind": "collection", "items": [{"name": "응급실"}]}},
+        ),
+    ]
+
+    assert (
+        _check_medical_emergency_terminated_without_aed(
+            msgs,
+            "부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?",
+        )
+        is None
+    )
 
 
 def _hometax_lookup_args() -> dict[str, object]:
@@ -804,6 +950,185 @@ def test_hometax_lookup_detail_word_does_not_imply_location() -> None:
     assert not _query_implies_location_resolution(query)
     redirect = _location_independent_resolve_redirect_for_query("locate", query)
     assert redirect == {"primitive": "check", "tool_id": "mock_verify_module_modid"}
+
+
+def test_root_primitive_envelope_strips_duplicate_nested_tool_id() -> None:
+    """Backend stdio dispatch mirrors the TUI root primitive normalizer."""
+    normalized = _normalize_root_primitive_adapter_envelope(
+        "locate",
+        {
+            "tool_id": "kakao_keyword_search",
+            "params": {"tool_id": "kakao_keyword_search", "query": "김포공항"},
+        },
+    )
+
+    assert normalized == {
+        "tool_id": "kakao_keyword_search",
+        "params": {"query": "김포공항"},
+    }
+
+
+def test_airport_aviation_query_rejects_locate_substitution() -> None:
+    """Flight/visibility wording should force KMA aviation adapters first."""
+    msg = _check_kma_aviation_tool_choice_prerequisite(
+        "locate",
+        {"tool_id": "kakao_keyword_search", "params": {"query": "김해공항"}},
+        "오늘 밤 김해에서 김포 가는데 비행기 뜰만해? 바람이랑 시정도 봐줘",
+    )
+
+    assert msg is not None
+    assert "kma_apihub_url_air_metar_decoded" in msg
+    assert "ordinary KMA current observation" in msg
+
+
+def test_latest_citizen_user_utterance_skips_available_adapters_suffix() -> None:
+    """Dynamic adapter context must not become the latest citizen utterance."""
+    citizen_text = "부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"
+    latest = _latest_citizen_user_utterance(
+        [
+            SimpleNamespace(role="user", content=citizen_text),
+            SimpleNamespace(
+                role="user",
+                content=(
+                    '<available_adapters query="부산역 근처에 사람이 쓰러졌어">'
+                    "kma_apihub_url_air_metar_decoded METAR 김해공항 김포공항 시정"
+                    "</available_adapters>"
+                ),
+            ),
+        ]
+    )
+
+    assert latest == citizen_text
+    assert (
+        _check_kma_aviation_tool_choice_prerequisite(
+            "locate",
+            {"tool_id": "kakao_keyword_search", "params": {"query": "부산역"}},
+            latest,
+        )
+        is None
+    )
+
+
+def test_initial_concrete_tool_choice_for_unambiguous_public_data_queries() -> None:
+    available = {
+        "find",
+        "locate",
+        "pps_bid_public_info",
+        "airkorea_ctprvn_air_quality",
+        "kma_apihub_url_analysis_weather_chart_image",
+        "kma_apihub_url_air_metar_decoded",
+        "tago_bus_route_search",
+    }
+
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "이번 주 부산시 전기공사 입찰 올라온 거 있어?",
+            available,
+        )
+        == "pps_bid_public_info"
+    )
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "지금 부산 중구 미세먼지 괜찮아? 마스크 써야 해?",
+            available,
+        )
+        == "airkorea_ctprvn_air_quality"
+    )
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "오늘 오후 전국 비구름 흐름이 어떤지 공식 기상도나 위성 자료 기준으로 설명해줘",
+            available,
+        )
+        == "kma_apihub_url_analysis_weather_chart_image"
+    )
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "오늘 밤 김해에서 김포 가는데 비행기 뜰만해? 바람이랑 시정도 봐줘",
+            available,
+        )
+        == "kma_apihub_url_air_metar_decoded"
+    )
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "부산역에서 1001번 버스 곧 와?",
+            available,
+        )
+        == "tago_bus_route_search"
+    )
+
+
+def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "airkorea_ctprvn_air_quality",
+        {"sido_name": "부산"},
+        "부산역에서 1001번 버스 곧 와?",
+    ) or (None, "")
+    assert preferred == "tago_bus_route_search"
+    assert "Public-data tool-choice mismatch" in message
+    assert "airkorea_ctprvn_air_quality" in message
+
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "airkorea_ctprvn_air_quality",
+        {"sido_name": "부산"},
+        "퇴근하고 해운대 산책 갈 건데 지금 비 와? 우산 챙겨야 해?",
+    ) or (None, "")
+    assert preferred == "kakao_keyword_search"
+    assert "KMA current observation" in message
+
+    assert (
+        _check_direct_public_data_tool_choice_prerequisite(
+            "airkorea_ctprvn_air_quality",
+            {"sido_name": "부산"},
+            "부산 중구 미세먼지 지금 어때? 마스크 써야 해?",
+        )
+        is None
+    )
+
+
+def test_pps_bid_args_fill_region_and_keyword_from_citizen_query() -> None:
+    normalized = _normalize_pps_bid_args_from_user_query(
+        "find",
+        {
+            "tool_id": "pps_bid_public_info",
+            "params": {
+                "inqry_bgn_dt": "202605250000",
+                "inqry_end_dt": "202605292359",
+            },
+        },
+        "이번 주 부산시 전기공사 입찰 올라온 거 있어?",
+    )
+
+    assert normalized["params"]["bid_ntce_nm"] == "전기공사"
+    assert normalized["params"]["region_name"] == "부산광역시"
+    assert normalized["params"]["prtcpt_lmt_rgn_nm"] == "부산광역시"
+    assert normalized["params"]["indstryty_nm"] == "전기공사업"
+    assert normalized["params"]["inqry_bgn_dt"] == _pps_current_week_window()[0]
+    assert normalized["params"]["inqry_end_dt"] == _pps_current_week_window()[1]
+
+
+def test_pps_current_week_window_uses_kst_monday_to_today() -> None:
+    start, end = _pps_current_week_window(
+        datetime(2026, 5, 29, 1, 39, tzinfo=ZoneInfo("Asia/Seoul"))
+    )
+
+    assert start == "202605250000"
+    assert end == "202605292359"
+
+
+def test_kma_aviation_tool_choice_rejects_unrelated_concrete_adapters() -> None:
+    message = _check_kma_aviation_tool_choice_prerequisite(
+        "airkorea_ctprvn_air_quality",
+        {"sido_name": "경남"},
+        "오늘 밤 김해에서 김포 가는데 비행기 뜰만해? 바람이랑 시정도 봐줘",
+    )
+    assert message is not None
+    assert "KMA aviation tool-choice mismatch" in message
+
+
+def test_tool_call_text_is_never_valid_final_answer_after_tool_result() -> None:
+    assert _final_answer_looks_like_tool_call_narration(
+        '<tool_call>{"name":"find_weather_kma","arguments":{"station_id":"109"}}</tool_call>'
+    )
 
 
 def test_location_query_does_not_suppress_resolve_location() -> None:
@@ -1472,6 +1797,20 @@ def test_mobile_id_query_rejects_identity_lookup_alias_scopes() -> None:
     assert msg["verify_tool_id"] == "mock_verify_mobile_id"
     assert msg["scope"] == "check:mobile_id.identity"
     assert "check:mobile_id.identity" in msg["message"]
+
+
+def test_income_certificate_query_rejects_find_alias_identity_tool() -> None:
+    """Protected certificate issuance must recover fake find aliases to check."""
+    msg = _check_verify_tool_choice_prerequisite(
+        "find",
+        {"tool_id": "mobile_id", "params": {}},
+        "소득금액증명원 오늘 바로 필요해",
+    )
+
+    assert msg is not None
+    assert msg["verify_tool_id"] == "mock_verify_module_simple_auth"
+    assert "mock_verify_module_simple_auth" in msg["message"]
+    assert "Do NOT call check adapters through find" in msg["message"]
 
 
 def test_mobile_id_query_allows_canonical_identity_scope() -> None:
@@ -2493,6 +2832,47 @@ def test_reverse_geocode_args_reuse_exact_prior_concrete_locate_coords() -> None
     }
 
 
+def test_reverse_geocode_direct_call_reuses_exact_prior_concrete_locate_coords() -> None:
+    """Concrete reverse-geocode calls must also repair rounded lat/lon arguments."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id in {"kakao_address_search", "kakao_coord_to_region"}:
+                return SimpleNamespace(primitive="locate")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산 사하구 다대1동 근처 야간 응급실"),
+        _msg_assistant_tool_call("kakao_address_search", {"query": "부산 사하구 다대1동"}),
+        _msg_tool_result(
+            "kakao_address_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "bundle",
+                    "coords": {
+                        "kind": "coords",
+                        "lat": 35.0591517638253,
+                        "lon": 128.971316010861,
+                    },
+                },
+            },
+        ),
+    ]
+
+    normalized = _normalize_reverse_geocode_args_from_prior_locate(
+        "kakao_coord_to_region",
+        {"lat": 35, "lon": 128},
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized == {
+        "lat": 35.0591517638253,
+        "lon": 128.971316010861,
+    }
+
+
 def test_hira_lookup_args_are_derived_from_prior_concrete_locate_result() -> None:
     """HIRA needs exact xPos/yPos, but the model often calls it with empty params."""
 
@@ -2599,6 +2979,103 @@ def test_cached_locate_result_normalizes_inbound_concrete_nmc_call() -> None:
     }
 
 
+def test_cached_locate_result_normalizes_inbound_nmc_after_reverse_geocode() -> None:
+    """Inbound dispatch must preserve the original POI origin after region lookup."""
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "region",
+                "q0": "부산광역시",
+                "q1": "동구",
+                "limit": 5,
+            },
+        },
+        {
+            "kind": "region",
+            "region_1depth_name": "부산광역시",
+            "region_2depth_name": "동구",
+            "x": 129.03358644975884,
+            "y": 35.12133551971654,
+        },
+        coordinate_locate_result={
+            "kind": "poi",
+            "name": "부산역",
+            "lat": 35.11520340622514,
+            "lon": 129.04154985192403,
+            "address_name": "부산 동구 초량동 1187-1",
+        },
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "동구",
+        "origin_lat": 35.11520340622514,
+        "origin_lon": 129.04154985192403,
+        "limit": 5,
+    }
+
+
+def test_cached_locate_result_normalizes_inbound_aed_after_reverse_geocode() -> None:
+    """AED dispatch should get origin coords for official-coordinate distance sorting."""
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {
+            "tool_id": "nmc_aed_site_locate",
+            "params": {
+                "q0": "부산광역시",
+                "q1": "동구",
+                "page_no": 1,
+                "num_of_rows": 10,
+            },
+        },
+        {
+            "kind": "region",
+            "region_1depth_name": "부산광역시",
+            "region_2depth_name": "동구",
+            "x": 129.03358644975884,
+            "y": 35.12133551971654,
+        },
+        coordinate_locate_result={
+            "kind": "poi",
+            "name": "부산역",
+            "lat": 35.11520340622514,
+            "lon": 129.04154985192403,
+            "address_name": "부산 동구 초량동 1187-1",
+        },
+    )
+
+    assert normalized["params"] == {
+        "q0": "부산광역시",
+        "q1": "동구",
+        "page_no": 1,
+        "num_of_rows": 10,
+        "origin_lat": 35.11520340622514,
+        "origin_lon": 129.04154985192403,
+    }
+
+
+def test_cached_locate_result_normalizes_inbound_concrete_reverse_geocode_call() -> None:
+    """TUI Tool.call dispatch must repair rounded reverse-geocode coordinates."""
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "locate",
+        {"tool_id": "kakao_coord_to_region", "params": {"lat": 35, "lon": 129}},
+        {
+            "kind": "poi",
+            "name": "부산역",
+            "lat": 35.11520340622514,
+            "lon": 129.04154985192403,
+        },
+    )
+
+    assert normalized["params"] == {
+        "lat": 35.11520340622514,
+        "lon": 129.04154985192403,
+    }
+
+
 def test_koroad_lookup_args_are_derived_from_prior_concrete_locate_result() -> None:
     """Traffic-risk searches need the locate adm_cd copied into KOROAD params."""
 
@@ -2673,6 +3150,200 @@ def test_nmc_lookup_args_keep_region_and_default_limit() -> None:
         "q0": "부산광역시",
         "q1": "사하구",
         "limit": 5,
+    }
+
+
+def test_nmc_lookup_args_repair_rounded_origin_when_region_is_present() -> None:
+    """Region-mode NMC params still need exact locate-derived origin coords."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "kakao_keyword_search":
+                return SimpleNamespace(primitive="locate")
+            if tool_id == "nmc_emergency_search":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"),
+        _msg_assistant_tool_call("kakao_keyword_search", {"query": "부산역"}),
+        _msg_tool_result(
+            "kakao_keyword_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "부산역",
+                    "lat": 35.11520340622514,
+                    "lon": 129.04154985192403,
+                    "address_name": "부산 동구 초량동 1187-1",
+                },
+            },
+        ),
+    ]
+
+    normalized = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "region",
+                "q0": "부산광역시",
+                "q1": "동구",
+                "origin_lat": 35,
+                "origin_lon": 129,
+                "limit": 5,
+            },
+        },
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "동구",
+        "origin_lat": 35.11520340622514,
+        "origin_lon": 129.04154985192403,
+        "limit": 5,
+    }
+
+
+def test_nmc_lookup_args_repair_rounded_origin_after_reverse_geocode() -> None:
+    """Latest region result supplies q0/q1; earlier POI still supplies origin coords."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id in {"kakao_keyword_search", "kakao_coord_to_region"}:
+                return SimpleNamespace(primitive="locate")
+            if tool_id == "nmc_emergency_search":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"),
+        _msg_assistant_tool_call("kakao_keyword_search", {"query": "부산역"}),
+        _msg_tool_result(
+            "kakao_keyword_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "부산역",
+                    "lat": 35.11520340622514,
+                    "lon": 129.04154985192403,
+                    "address_name": "부산 동구 초량동 1187-1",
+                },
+            },
+        ),
+        _msg_assistant_tool_call("kakao_coord_to_region", {"lat": 35, "lon": 129}),
+        _msg_tool_result(
+            "kakao_coord_to_region",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "region",
+                    "region_1depth_name": "부산광역시",
+                    "region_2depth_name": "동구",
+                    "x": 129.03358644975884,
+                    "y": 35.12133551971654,
+                },
+            },
+        ),
+    ]
+
+    normalized = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "region",
+                "q0": "부산광역시",
+                "q1": "동구",
+                "origin_lat": 35,
+                "origin_lon": 129,
+                "limit": 10,
+            },
+        },
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "동구",
+        "origin_lat": 35.11520340622514,
+        "origin_lon": 129.04154985192403,
+        "limit": 10,
+    }
+
+
+def test_nmc_lookup_args_fill_missing_origin_after_reverse_geocode() -> None:
+    """Region-mode NMC calls should keep distance sorting when origin coords exist."""
+
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id in {"kakao_keyword_search", "kakao_coord_to_region"}:
+                return SimpleNamespace(primitive="locate")
+            if tool_id == "nmc_emergency_search":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="부산역 근처에 사람이 쓰러졌어. 지금 어디로 가야 해?"),
+        _msg_assistant_tool_call("kakao_keyword_search", {"query": "부산역"}),
+        _msg_tool_result(
+            "kakao_keyword_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "부산역",
+                    "lat": 35.11520340622514,
+                    "lon": 129.04154985192403,
+                    "address_name": "부산 동구 초량동 1187-1",
+                },
+            },
+        ),
+        _msg_assistant_tool_call("kakao_coord_to_region", {"lat": 35, "lon": 129}),
+        _msg_tool_result(
+            "kakao_coord_to_region",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "region",
+                    "region_1depth_name": "부산광역시",
+                    "region_2depth_name": "동구",
+                    "x": 129.03358644975884,
+                    "y": 35.12133551971654,
+                },
+            },
+        ),
+    ]
+
+    normalized = _normalize_nmc_lookup_args_from_prior_locate(
+        "find",
+        {
+            "tool_id": "nmc_emergency_search",
+            "params": {
+                "mode": "region",
+                "q0": "부산광역시",
+                "q1": "동구",
+                "limit": 10,
+            },
+        },
+        msgs,
+        registry=Registry(),
+    )
+
+    assert normalized["params"] == {
+        "mode": "region",
+        "q0": "부산광역시",
+        "q1": "동구",
+        "origin_lat": 35.11520340622514,
+        "origin_lon": 129.04154985192403,
+        "limit": 10,
     }
 
 

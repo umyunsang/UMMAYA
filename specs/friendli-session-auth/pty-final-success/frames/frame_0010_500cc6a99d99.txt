@@ -1,24 +1,0 @@
-$ bun run src/entrypoints/cli.tsx
-FriendliAI API key not configured yet. Start UMMAYA and run /login before sending a request.
-tool_registry: 14 entries verified (4 primitives) in 0ms
-╭─── UMMAYA v0.1.0-alpha ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ │ Recent activity │
-│ Welcome back! │ 42m ago 테스트 │
-│ │ 5h ago 다대1동 소방서 최근 구급활동 통계 1건만 조회해줘 │
-│ │ 11h ago 부산 사하구에서 운전 중 자주 사고 나는 도로 구간과 오늘 비 예보를 같이 확인해줘 │
-│   ▛███▜ │ /resume for more │
-│ ▗▟█████████▙▖ │ ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── │
-│   ▘ ▘ ▘ ▘ │ What's new │
-│ │ Added `CLAUDE_CODE_SESSION_ID` environment variable to the Bash tool subprocess environment, matching the `session_id` pass… │
-│ │ Added `CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1` env var to opt out of the fullscreen alternate-screen renderer and keep the … │
-│ K-EXAONE with high effort · API Usage Billing │ Added a "Pasting…" footer hint while a Ctrl+V image paste is being read from the clipboard │
-│ ~/UMMAYA/tui │ /release-notes for more │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-❯ 
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- Not logged in · Run /login
-  statusline skipped · restart to fix
- Not logged in · Run /login
-  [>0q    /login

@@ -35,6 +35,10 @@ import type { DenialTrackingState } from '../utils/permissions/denialTracking.js
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
 import type { SettingsJson } from '../utils/settings/types.js'
+import {
+  getInitialReasoningModeSetting,
+  type ReasoningMode,
+} from '../utils/kExaoneReasoning.js'
 import { shouldEnableThinkingByDefault } from '../utils/thinking.js'
 import type { Store } from './store.js'
 
@@ -425,6 +429,8 @@ export type AppState = DeepImmutable<{
   advisorModel?: string
   // Effort value
   effortValue?: EffortValue
+  // K-EXAONE/FriendliAI reasoning payload policy.
+  reasoningMode?: ReasoningMode
   // Set synchronously in launchUltraplan before the detached flow starts.
   // Prevents duplicate launches during the ~5s window before
   // ultraplanSessionUrl is set by teleportToRemote. Cleared by launchDetached
@@ -563,6 +569,7 @@ export function getDefaultAppState(): AppState {
     authVersion: 0,
     initialMessage: null,
     effortValue: undefined,
+    reasoningMode: getInitialReasoningModeSetting(),
     activeOverlays: new Set<string>(),
     fastMode: false,
   }

@@ -50,7 +50,7 @@ This docs rewrite uses the following reference logic:
 - `docs/vision.md`: canonical UMMAYA purpose, national-infrastructure AX scope, Claude Code harness migration.
 - `docs/requirements/ummaya-migration-tree.md`: L1 pillars, active primitives, tool system, permission gauntlet, UI requirements.
 - `docs/api/README.md`: current live/mock adapter evidence.
-- `eval/scenarios/national_ax_citizen_requests_v1.yaml`: target-state citizen demand across domains.
+- `evidence/scenarios/national_ax_citizen_requests_v1.yaml`: target-state citizen demand across domains.
 - `docs-site/src/data/generated/adapters.json`: generated adapter data.
 - `docs-site/src/data/generated/workflows.json`: generated scenario/workflow data.
 - Creative-writing RAG: 3C, POWER, MECE, Hi Five, five-part structure.

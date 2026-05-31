@@ -9,7 +9,7 @@
 - `tui/src/stubs/bun-bundle.ts:5` (`feature('FORK_SUBAGENT')` permanent stub returning `false`).
 - `tui/src/tools/AgentTool/forkSubagent.ts` (CC's subagent fork — distinct feature, NOT what UMMAYA wants).
 - `tui/src/commands/catalog.ts` (UI L2 autocomplete SSOT, Spec 1635).
-- `specs/integration-verification/scripts/scn-S10-session-lifecycle.sh:13–15` (S10 capture: `/fork` keystrokes that motivated this decision).
+- Historical S10 session-lifecycle capture (the old integration-verification artifact set has been retired by Evidence Fabric v2).
 
 ## Context — what `/fork` means in two different lineages
 

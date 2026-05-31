@@ -111,25 +111,25 @@
   "properties": {
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: VilageFcstMsgService/getLandFcst.",
       "title": "Data Type",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: VilageFcstMsgService/getLandFcst.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: VilageFcstMsgService/getLandFcst.",
       "title": "Page No",
       "type": "integer"
     },
     "reg_id": {
       "default": "11A00101",
-      "description": "KMA APIHub request parameter regId.",
+      "description": "KMA APIHub request parameter regId. Official parameter name: regId. Operation: VilageFcstMsgService/getLandFcst.",
       "title": "Reg Id",
       "type": "string"
     }

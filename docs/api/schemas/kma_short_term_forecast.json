@@ -104,14 +104,14 @@
       "type": "integer"
     },
     "nx": {
-      "description": "KMA 격자 X 좌표 (1-149). locate adapter 결과의 coords.nx 를 그대로 전달. 예: 서울 종로구=60, 부산 사하구=96.",
+      "description": "KMA 격자 X 좌표 (1-149). locate adapter 결과의 coords.nx 를 그대로 전달. Do not substitute a memorized city example.",
       "maximum": 149,
       "minimum": 1,
       "title": "Nx",
       "type": "integer"
     },
     "ny": {
-      "description": "KMA 격자 Y 좌표 (1-253). nx 와 함께 locate 으로 받음. 예: 서울 종로구=127, 부산 사하구=73.",
+      "description": "KMA 격자 Y 좌표 (1-253). nx 와 함께 locate 으로 받음. Do not substitute a memorized city example.",
       "maximum": 253,
       "minimum": 1,
       "title": "Ny",

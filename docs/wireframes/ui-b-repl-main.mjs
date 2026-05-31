@@ -88,7 +88,7 @@ function B3_MarkdownRich() {
     ),
     h(Text, { color: C.dim, dimColor: true }, '  · 출처: '),
     h(Box, { marginLeft: 2 },
-      h(Text, { color: C.ring, underline: true }, 'https://data.go.kr/kma/forecast'),
+      h(Text, { color: C.ring, underline: true }, 'KMA API Hub · current observation'),
     ),
     h(Text, { color: C.dim, dimColor: true }, '  · 원문 문서: '),
     h(Box, { marginLeft: 2 },
@@ -133,7 +133,7 @@ function B4_ToolError() {
     h(Box, { marginLeft: 2 },
       h(Text, { color: C.subtle }, '   → '),
       h(Text, { color: C.red }, 'HTTP 503'),
-      h(Text, null, ' · 대체 Mock 어댑터 사용 중'),
+      h(Text, null, ' · official handoff 또는 cached public result만 허용'),
     ),
   )
 }

@@ -111,25 +111,25 @@
   "properties": {
     "data_type": {
       "default": "XML",
-      "description": "KMA APIHub request parameter dataType.",
+      "description": "Response format requested from KMA APIHub. XML is the official sample/default; JSON may be used only when the operation supports it. Official parameter name: dataType. Operation: AmmIwxxmService/getMetar.",
       "title": "Data Type",
       "type": "string"
     },
     "icao": {
       "default": "RKSI",
-      "description": "KMA APIHub request parameter icao.",
+      "description": "ICAO airport/station code for aviation METAR data. Official APIHub examples include RKSI Incheon, RKSS Gimpo, RKPC Jeju, RKPK Gimhae, RKNY Yangyang, RKNW Wonju, RKTU Cheongju, RKTN Daegu, RKTH Pohang, RKJJ Gwangju, RKJB Muan, RKJY Yeosu, RKPU Ulsan, RKPS Sacheon, and RKJK Gunsan. Do not pass a Korean place name here. Official parameter name: icao. Operation: AmmIwxxmService/getMetar.",
       "title": "Icao",
       "type": "string"
     },
     "num_of_rows": {
       "default": 10,
-      "description": "KMA APIHub request parameter numOfRows.",
+      "description": "Number of rows to return. Use the default unless more rows are needed. Official parameter name: numOfRows. Operation: AmmIwxxmService/getMetar.",
       "title": "Num Of Rows",
       "type": "integer"
     },
     "page_no": {
       "default": 1,
-      "description": "KMA APIHub request parameter pageNo.",
+      "description": "Page number, 1-based. Use the default unless the citizen asks for another page. Official parameter name: pageNo. Operation: AmmIwxxmService/getMetar.",
       "title": "Page No",
       "type": "integer"
     }

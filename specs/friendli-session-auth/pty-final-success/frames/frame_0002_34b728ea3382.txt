@@ -1,3 +1,0 @@
-$ bun run src/entrypoints/cli.tsx
-FriendliAI API key not configured yet. Start UMMAYA and run /login before sending a request.
-tool_registry: 14 entries verified (4 primitives) in 0ms

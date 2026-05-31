@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// UI-A · Onboarding L2 드릴다운 · 5 decision points
+// UI-A · Historical onboarding L2 proposal · 5 decision points
+// Current docs/vision.md keeps UMMAYA setup aligned with the Claude Code runtime
+// path; this file is retained as a comparison sketch, not an active product gate.
 //   A.1 각 단계 UI 레이아웃 (preflight / theme / pipa-consent / ministry / terminal)
 //   A.2 스킵 가능성 · 재실행
 //   A.3 다국어 지원
@@ -28,8 +30,8 @@ function Step1_Preflight() {
     h(Box, { marginTop: 1, flexDirection: 'column' },
       h(Text, null, '  ✓ Node / Bun 런타임 확인'),
       h(Text, null, '  ✓ 터미널 UTF-8 지원'),
-      h(Text, null, '  ✓ FRIENDLI_API_KEY · ~/.ummaya/.env'),
-      h(Text, null, '  ⚠ UMMAYA_DATA_GO_KR_KEY (선택) — 없으면 Mock 모드'),
+      h(Text, null, '  ✓ UMMAYA_FRIENDLI_TOKEN · ~/.ummaya session login'),
+      h(Text, null, '  ⚠ UMMAYA_DATA_GO_KR_API_KEY (선택) — live public API canary only'),
     ),
     h(Box, { marginTop: 1 },
       h(Text, { color: C.brand, bold: true }, '[Enter] '),
@@ -65,8 +67,8 @@ function Step3_PIPA() {
         h(Text, null, '수탁 처리합니다. 처리 정보:'),
         h(Box, { marginTop: 1 },
           h(Text, null, '  · 질의 원문 (세션 종료 시 자동 삭제 옵션)'),
-          h(Text, null, '  · 위치/주소 (resolve_location 모드 요청 시만)'),
-          h(Text, null, '  · 부처 제출 서식 (submit primitive 호출 시)'),
+          h(Text, null, '  · 위치/주소 (`locate` 필요 시만)'),
+          h(Text, null, '  · 제출/납부 payload (`send` 호출 시)'),
         ),
       )
     ),
@@ -88,9 +90,9 @@ function Step4_Ministry() {
     { code: 'MOHW',   label: '보건복지부',      on: false },
   ]
   return h(Box, { flexDirection: 'column' },
-    h(StepHeader, { n: 3, total: 5, label: '4. 부처 범위 · Ministry Scope' }),
+    h(StepHeader, { n: 3, total: 5, label: '4. 기관 범위 · Agency Scope' }),
     h(Box, { marginTop: 1, flexDirection: 'column', marginLeft: 2 },
-      h(Text, { color: C.subtle }, '공공 API 호출을 허용할 부처:'),
+      h(Text, { color: C.subtle }, '호출 가능한 기관/공공채널 범위:'),
       ...ministries.map(m => h(Box, { key: m.code },
         h(Text, null, `  ${m.on ? '[✓]' : '[ ]'} `),
         h(Text, { bold: m.on }, m.code.padEnd(8)),
@@ -162,7 +164,7 @@ function ConsentRevoke() {
       label: '⚠ PIPA 동의 철회', color: C.red, width: 70,
     },
       h(Text, null, '현재 세션의 모든 권한 영수증이 무효화됩니다.'),
-      h(Text, null, '진행 중인 submit/verify 작업은 즉시 중단.'),
+      h(Text, null, '진행 중인 send/check 작업은 즉시 중단.'),
       h(Text, null, '저장된 대화 기록은 별도 설정에 따라 보존 또는 삭제.'),
       h(Box, { marginTop: 1 },
         h(Text, null, '  [ ] 모든 대화 기록도 즉시 삭제'),
@@ -184,13 +186,13 @@ function Section({ title, children }) {
 
 function App() {
   return h(Box, { flexDirection: 'column' },
-    h(Text, { bold: true, color: C.brand }, 'UI-A · Onboarding L2'),
-    h(Text, { color: C.subtle }, '5-step 플로우 · 다국어 · 접근성 · 동의 철회'),
+    h(Text, { bold: true, color: C.brand }, 'UI-A · Historical Onboarding L2'),
+    h(Text, { color: C.subtle }, '현재 제품 게이트 아님 · 5-step 비교 스케치'),
 
     h(Section, { title: 'A.1.1 · Preflight' }, h(Step1_Preflight)),
     h(Section, { title: 'A.1.2 · Theme' }, h(Step2_Theme)),
     h(Section, { title: 'A.1.3 · PIPA Consent' }, h(Step3_PIPA)),
-    h(Section, { title: 'A.1.4 · Ministry Scope' }, h(Step4_Ministry)),
+    h(Section, { title: 'A.1.4 · Agency Scope' }, h(Step4_Ministry)),
     h(Section, { title: 'A.1.5 · Terminal Setup' }, h(Step5_Terminal)),
 
     h(Section, { title: 'A.2 · 스킵 · 재실행' }, h(ReRun)),

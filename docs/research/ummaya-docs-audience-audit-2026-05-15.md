@@ -43,7 +43,7 @@ Audited local sources:
 - `docs/api/README.md`
 - `docs-site/src/data/generated/adapters.json`
 - `docs-site/src/data/generated/workflows.json`
-- `eval/scenarios/national_ax_citizen_requests_v1.yaml`
+- `evidence/scenarios/national_ax_citizen_requests_v1.yaml`
 
 External reference checked:
 
@@ -84,7 +84,7 @@ Generated source material that is underused:
 - `workflows.json`: 24 target-state citizen workflows across tax, civil affairs, payments, utilities, identity, welfare, healthcare, housing, mobility, business, labor, education, and safety.
 - `adapters.json`: 21 current adapter entries.
 - `docs/api/README.md`: 12 live `find` adapters, 5 live `locate` providers, 2 mock `send` entries, 6 mock `check` entries.
-- `eval/scenarios/national_ax_citizen_requests_v1.yaml`: rich Korean citizen prompts and permission requirements.
+- `evidence/scenarios/national_ax_citizen_requests_v1.yaml`: rich Korean citizen prompts and permission requirements.
 
 ## Main Finding
 
@@ -541,7 +541,7 @@ Priority 1:
 Priority 2:
 
 - `start/what-you-can-ask.md`
-- expanded workflow pages from `workflows.json` and `eval/scenarios/national_ax_citizen_requests_v1.yaml`
+- expanded workflow pages from `workflows.json` and `evidence/scenarios/national_ax_citizen_requests_v1.yaml`
 - `coverage/coverage-map.md`
 
 Priority 3:

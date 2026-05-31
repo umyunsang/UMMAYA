@@ -26,6 +26,11 @@ import {
 } from '../../sdk-compat.js'
 import { assertFriendliApiKeyForUse } from '../../utils/auth.js'
 import { getUserAgent } from '../../utils/http.js'
+import {
+  providerReasoningPayload,
+  resolveKExaoneReasoningPolicy,
+  type ReasoningMode,
+} from '../../utils/kExaoneReasoning.js'
 import { UMMAYA_K_EXAONE_MODEL } from '../../utils/model/constants.js'
 
 export const CLIENT_REQUEST_ID_HEADER = 'x-client-request-id'
@@ -39,6 +44,11 @@ type RequestOptions = {
   signal?: AbortSignal
   timeout?: number
   headers?: Record<string, string>
+}
+
+type FriendliMessageStreamParams = BetaMessageStreamParams & {
+  stream?: boolean
+  reasoning_mode?: ReasoningMode
 }
 
 type FriendliClientArgs = {
@@ -130,7 +140,7 @@ class FriendliMessagesCompatClient {
   readonly beta: {
     messages: {
       create: (
-        params: BetaMessageStreamParams & { stream?: boolean },
+        params: FriendliMessageStreamParams,
         options?: RequestOptions,
       ) => unknown
     }
@@ -159,7 +169,7 @@ class FriendliMessagesCompatClient {
   }
 
   private async streamWithResponse(
-    params: BetaMessageStreamParams & { stream?: boolean },
+    params: FriendliMessageStreamParams,
     options?: RequestOptions,
   ): Promise<{
     data: Stream<BetaRawMessageStreamEvent>
@@ -188,7 +198,7 @@ class FriendliMessagesCompatClient {
   }
 
   private async complete(
-    params: BetaMessageStreamParams,
+    params: FriendliMessageStreamParams,
     options?: RequestOptions,
   ): Promise<BetaMessage> {
     const response = await this.fetchChatCompletion(
@@ -279,6 +289,9 @@ class FriendliMessagesCompatClient {
     const toolStates = new Map<number, ToolStreamState>()
     let finalUsage: BetaUsage | undefined
     let stopReason: BetaMessage['stop_reason'] = 'end_turn'
+    const allowReasoning = resolveKExaoneReasoningPolicy({
+      explicitSessionMode: params.reasoning_mode,
+    }).includeReasoning
 
     const ensureMessageStart = function* () {
       if (messageStarted) return
@@ -301,6 +314,12 @@ class FriendliMessagesCompatClient {
     const ensureTextBlock = function* () {
       yield* ensureMessageStart()
       if (textBlockIndex === undefined) {
+        if (
+          thinkingBlockIndex !== undefined &&
+          openedBlocks.has(thinkingBlockIndex)
+        ) {
+          yield* closeNonToolBlocks()
+        }
         textBlockIndex = nextBlockIndex++
         openedBlocks.add(textBlockIndex)
         yield {
@@ -314,6 +333,9 @@ class FriendliMessagesCompatClient {
     const ensureThinkingBlock = function* () {
       yield* ensureMessageStart()
       if (thinkingBlockIndex === undefined) {
+        if (textBlockIndex !== undefined && openedBlocks.has(textBlockIndex)) {
+          yield* closeNonToolBlocks()
+        }
         thinkingBlockIndex = nextBlockIndex++
         openedBlocks.add(thinkingBlockIndex)
         yield {
@@ -385,7 +407,7 @@ class FriendliMessagesCompatClient {
 
         for (const choice of chunk.choices ?? []) {
           const delta = choice.delta ?? {}
-          if (delta.reasoning_content) {
+          if (delta.reasoning_content && allowReasoning) {
             yield* ensureThinkingBlock()
             yield {
               type: 'content_block_delta' as const,
@@ -454,17 +476,20 @@ class FriendliMessagesCompatClient {
 }
 
 function buildOpenAIPayload(
-  params: BetaMessageStreamParams & { stream?: boolean },
+  params: FriendliMessageStreamParams,
 ): Record<string, unknown> {
   const messages = convertMessages(params.messages, params.system)
   const tools = convertTools(params.tools)
+  const reasoning = providerReasoningPayload(
+    resolveKExaoneReasoningPolicy({
+      explicitSessionMode: params.reasoning_mode,
+    }),
+  )
   const payload: Record<string, unknown> = {
     model: params.model || UMMAYA_K_EXAONE_MODEL,
     messages,
     max_tokens: params.max_tokens,
-    chat_template_kwargs: {
-      enable_thinking: isTruthy(process.env.UMMAYA_K_EXAONE_THINKING),
-    },
+    ...reasoning,
     ...(params.temperature !== undefined ? { temperature: params.temperature } : {}),
     ...(tools.length > 0
       ? {
@@ -739,8 +764,4 @@ function resolveFetch(fetchOverride: unknown): FetchLike {
 
 function trimSlash(value: string): string {
   return value.replace(/\/+$/, '')
-}
-
-function isTruthy(value: string | undefined): boolean {
-  return value === '1' || value?.toLowerCase() === 'true' || value?.toLowerCase() === 'yes'
 }

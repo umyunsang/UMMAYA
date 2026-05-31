@@ -2,7 +2,7 @@
 """T035 — Registry count breakdown assertion (SC-003).
 
 Boots the registry and asserts the active count breakdown from spec.md SC-003:
-  - Main ToolRegistry: 148 entries
+  - Main ToolRegistry: 153 entries
   - ummaya.primitives.verify._VERIFY_ADAPTERS: 10 families
   - ummaya.primitives.submit._ADAPTER_REGISTRY: 7 families
 
@@ -16,7 +16,7 @@ do NOT silently adjust the expected values.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Main ToolRegistry count — 148 total
+# Main ToolRegistry count — 153 total
 # ---------------------------------------------------------------------------
 # Epic η #2298 — extended from 16 to 18 by adding `check` / `send`
 # to mvp_surface as `is_core=True` GovAPITool entries (FR-021).
@@ -45,15 +45,21 @@ from __future__ import annotations
 # approved live public-data adapters from the 2026-05-16 direct evidence batch.
 # Spec #2799 — extended from 68 to 70 by registering two fixture-backed KFTC
 # OpenGiro send adapters.
-# Spec #2800 — extended from 70 to 148 by registering 78 active KMA APIHub
-# structured typ02/openApi adapters generated from the 2026-05-24 agency
-# catalog evidence. Three unstable GTS operations and four retired UM
-# NwpModelInfoService operations remain in the catalog but are not exposed as
-# callable tools.
-_EXPECTED_MAIN_REGISTRY_COUNT = 148
+# Spec #2800 — extended from 70 to 147 by registering 77 active KMA APIHub
+# structured typ02/openApi adapters generated from the 2026-05-24 agency catalog
+# evidence. Three unstable GTS operations, four retired UM NwpModelInfoService
+# operations, and the failing structured IWXXM METAR operation remain cataloged
+# but are not exposed as callable tools.
+# KMA APIHub URL expansion — extended from 147 to 152 by registering five
+# official non-structured URL operations, including METAR decoded text, AMOS
+# minute observations, point/grid analysis data, and analyzed weather-chart
+# imagery.
+# TAGO route-station expansion — extended from 152 to 153 by registering the
+# official route-passing-stop endpoint from TAGO dataset 15098529.
+_EXPECTED_MAIN_REGISTRY_COUNT = 153
 
 _EXPECTED_MAIN_REGISTRY_BREAKDOWN = {
-    "live_adapters": 120,  # 42 existing Live + 78 active KMA APIHub structured adapters
+    "live_adapters": 125,  # 43 existing Live + 77 structured KMA + 5 KMA URL adapters
     "mvp_surface": 4,  # find + locate + check + send (main-verb surface)
     "locate_adapters": 5,  # kakao/juso/provider-specific locate adapters
     "lookup_mocks": 2,  # mock_lookup_module_hometax_simplified + mock_lookup_module_gov24_certificate  # noqa: E501
@@ -78,6 +84,7 @@ _EXPECTED_LIVE_TOOL_IDS = frozenset(
         "ftc_large_group_status",
         "ftc_public_ym_list",
         "tago_bus_route_search",
+        "tago_bus_route_station_search",
         "tago_bus_arrival_search",
         "tago_bus_location_search",
         "tago_bus_station_search",
@@ -117,7 +124,7 @@ _EXPECTED_LOOKUP_MOCK_IDS = frozenset(
 
 
 def test_main_registry_total_count() -> None:
-    """Main ToolRegistry must have exactly 148 entries after register_all_tools()."""
+    """Main ToolRegistry must have exactly 153 entries after register_all_tools()."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -136,7 +143,7 @@ def test_main_registry_total_count() -> None:
 
 
 def test_main_registry_live_tool_ids_present() -> None:
-    """All 42 expected Live tool IDs must be registered in the main ToolRegistry."""
+    """All expected Live tool IDs must be registered in the main ToolRegistry."""
     import ummaya.tools.mock  # noqa: F401 — trigger side-effect registration
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.register_all import register_all_tools
@@ -358,9 +365,10 @@ def test_all_active_surface_counts_match_canonical() -> None:
         # Locate-provider adapters add five first-class registry entries.
         # Spec #2798 adds sixteen approved live data.go.kr adapters, bringing
         # the main ToolRegistry from 52 to 68.
-        # Spec #2800 adds 78 active KMA APIHub structured typ02/openApi wrappers,
-        # bringing the main ToolRegistry from 70 to 148.
-        "main_registry": 148,
+        # Spec #2800 adds 77 active KMA APIHub structured typ02/openApi wrappers,
+        # and KMA APIHub URL expansion adds five non-structured URL wrappers.
+        # The TAGO route-station endpoint brings the main ToolRegistry to 153.
+        "main_registry": 153,
         "verify_families": 10,
         "submit_adapters": 7,
     }

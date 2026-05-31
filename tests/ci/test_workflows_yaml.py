@@ -1,25 +1,15 @@
 # tests/ci/test_workflows_yaml.py
 #
-# CI Workflow YAML validation tests — T023 (FR-D01, FR-D06, FR-F01..F05)
+# CI Workflow YAML validation tests.
 #
 # YAML 1.1 QUIRK: PyYAML's safe_load interprets the bare `on:` key in GitHub
 # Actions workflow files as the Python boolean True (because `on` is a YAML 1.1
 # boolean literal).  Access workflow triggers via workflow[True], NOT workflow["on"].
 # A helper _get_triggers() handles both True and the string "on" for robustness.
 #
-# SPEC REFERENCES:
-#   FR-D01  shadow-eval triggers on prompts/** path filter
-#   FR-D06  shadow-eval eval job has timeout-minutes: 15
-#   FR-F01  ci.yml preserves existing jobs and coverage gate
-#   FR-F02  ci.yml adds docker-build job with path filters
-#   FR-F04  release-manifest triggers only on push.tags v*.*.*
-#
-# EXPECTED STATE when this test was authored (T023 phase — RED):
-#   .github/workflows/shadow-eval.yml        — NOT YET CREATED (T037)
-#   .github/workflows/release-manifest.yml   — NOT YET CREATED (T038)
-#   .github/workflows/ci.yml                 — EXISTS, but docker-build job ABSENT (T039)
-#
-# These tests are intentionally RED until T037, T038, T039 complete.
+# Evidence Fabric v2 supersedes the previous split verification workflows.
+# This file now checks that the new evidence gate exists while
+# preserving release and core CI workflow checks.
 
 from __future__ import annotations
 
@@ -37,7 +27,7 @@ _WORKFLOWS_DIR = _REPO_ROOT / ".github" / "workflows"
 # ---------------------------------------------------------------------------
 # File paths under test
 # ---------------------------------------------------------------------------
-_SHADOW_EVAL_YML = _WORKFLOWS_DIR / "shadow-eval.yml"
+_EVIDENCE_YML = _WORKFLOWS_DIR / "evidence.yml"
 _RELEASE_MANIFEST_YML = _WORKFLOWS_DIR / "release-manifest.yml"
 _CI_YML = _WORKFLOWS_DIR / "ci.yml"
 
@@ -64,40 +54,35 @@ def _get_triggers(wf: dict) -> dict:
     return wf.get(True) or wf.get("on") or {}
 
 
-# ---------------------------------------------------------------------------
-# T023a — FR-D01
-# shadow-eval.yml triggers on prompts/** path filter
-# ---------------------------------------------------------------------------
-
-
-class TestShadowEvalWorkflow:
-    def test_shadow_eval_triggers_on_prompts_path(self):
-        """T023a (FR-D01): shadow-eval must trigger when prompts/** changes."""
-        wf = _load_workflow(_SHADOW_EVAL_YML)
+class TestEvidenceWorkflow:
+    def test_evidence_workflow_triggers_on_verification_surfaces(self):
+        wf = _load_workflow(_EVIDENCE_YML)
         triggers = _get_triggers(wf)
 
         pr_trigger = triggers.get("pull_request", {})
         paths = pr_trigger.get("paths", [])
 
-        assert "prompts/**" in paths, (
-            f"Expected 'prompts/**' in shadow-eval.yml on.pull_request.paths, got: {paths}"
-        )
+        assert "evidence/**" in paths  # Covers evidence/registry.yaml and evidence/tasks/**.
+        assert "src/ummaya/evidence/**" in paths
+        assert "tests/evidence/**" in paths
+        assert "prompts/**" in paths
 
-    def test_shadow_eval_has_15min_timeout(self):
-        """T023b (FR-D06): at least one job in shadow-eval.yml must have timeout-minutes: 15."""
-        wf = _load_workflow(_SHADOW_EVAL_YML)
+    def test_evidence_workflow_runs_evidence_module(self):
+        wf = _load_workflow(_EVIDENCE_YML)
         jobs: dict = wf.get("jobs", {})
 
-        assert jobs, "shadow-eval.yml has no jobs defined"
+        assert jobs, "evidence.yml has no jobs defined"
+        commands: list[str] = []
+        for job in jobs.values():
+            if not isinstance(job, dict):
+                continue
+            for step in job.get("steps", []):
+                if isinstance(step, dict) and isinstance(step.get("run"), str):
+                    commands.append(step["run"])
 
-        found = any(
-            job.get("timeout-minutes") == 15 for job in jobs.values() if isinstance(job, dict)
-        )
-        assert found, (
-            f"No job in shadow-eval.yml has timeout-minutes: 15.  "
-            f"Job timeouts found: "
-            f"{[j.get('timeout-minutes') for j in jobs.values() if isinstance(j, dict)]}"
-        )
+        joined = "\n".join(commands)
+        assert "uv run python -m ummaya.evidence" in joined
+        assert "uv run pytest tests/evidence tests/ci" in joined
 
 
 # ---------------------------------------------------------------------------

@@ -24,7 +24,7 @@
         }
       ],
       "default": null,
-      "description": "Coordinate-mode latitude in decimal degrees (WGS-84). Required when mode='coordinate'. Obtain from a coordinate-producing locate adapter such as kakao_keyword_search or kakao_address_search.",
+      "description": "Coordinate-mode latitude in decimal degrees (WGS-84). Required when mode='coordinate'. Obtain from a prior coordinate-producing locate result; never guess from place names.",
       "title": "Lat"
     },
     "limit": {
@@ -47,7 +47,7 @@
         }
       ],
       "default": null,
-      "description": "Coordinate-mode longitude in decimal degrees (WGS-84). Required when mode='coordinate'. Obtain from a coordinate-producing locate adapter such as kakao_keyword_search or kakao_address_search.",
+      "description": "Coordinate-mode longitude in decimal degrees (WGS-84). Required when mode='coordinate'. Obtain from a prior coordinate-producing locate result; never guess from place names.",
       "title": "Lon"
     },
     "mode": {
@@ -123,7 +123,6 @@
       "anyOf": [
         {
           "maxLength": 80,
-          "minLength": 1,
           "type": "string"
         },
         {

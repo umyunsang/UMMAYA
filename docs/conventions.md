@@ -171,7 +171,7 @@ Runtime prompts live under `prompts/` and are addressed by a SHA-256-integrity m
 Every prompt change follows this loop:
 1. Edit or add a file under `prompts/` (e.g., `prompts/system_v2.md`).
 2. Regenerate `prompts/manifest.yaml` via `uv run python -m ummaya.context.prompt_loader --regenerate-manifest`.
-3. Open the PR — the `shadow-eval` workflow fires automatically on any PR touching `prompts/**` and emits twin `deployment.environment=main` / `deployment.environment=shadow` OTEL span batches for diff review.
+3. Open the PR — the Evidence Fabric workflow fires automatically on any PR touching `prompts/**`, validates the scenario contract, and emits a typed `.evidence/run.json` artifact for review.
 4. The `lint` lane validates `prompts/manifest.yaml` against `specs/026-cicd-prompt-registry/contracts/prompts-manifest.schema.json`; schema drift fails the PR.
 
 Fail-closed rules at boot (enforced by `PromptLoader`):

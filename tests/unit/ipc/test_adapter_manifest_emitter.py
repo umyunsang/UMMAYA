@@ -340,6 +340,16 @@ def test_full_runtime_manifest_exports_model_facing_tool_metadata() -> None:
     by_id = {entry.tool_id: entry for entry in entries}
 
     assert "cityCode" in _property_description(by_id["tago_bus_route_search"], "city_code")
+    assert "Busan=21" in _property_description(by_id["tago_bus_route_search"], "city_code")
+    arrival_description = str(by_id["tago_bus_arrival_search"].llm_description)
+    assert "tago_bus_station_search first" in arrival_description
+    assert "route_no" in arrival_description
+    assert "routeno" in _property_description(by_id["tago_bus_arrival_search"], "route_no")
+    assert "routeid" in _property_description(by_id["tago_bus_arrival_search"], "route_id")
+    route_station_description = str(by_id["tago_bus_route_station_search"].llm_description)
+    assert "route_id" in route_station_description
+    assert "node_nm" in route_station_description
+    assert "nodenm" in _property_description(by_id["tago_bus_route_station_search"], "node_nm")
     assert "sidoName" in _property_description(by_id["airkorea_ctprvn_air_quality"], "sido_name")
     assert "cntrCd" in _property_description(by_id["kepco_contract_power_usage"], "cntr_cd")
     assert "presentnYear" in _property_description(by_id["ftc_large_group_status"], "presentn_year")

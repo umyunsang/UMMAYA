@@ -19,8 +19,7 @@ business logic. Reference: PyKakao 1.x ``Local`` class
 endpoints as six methods on a single facade — the industry-standard
 Korean wrapper for this API. UMMAYA originally shipped only
 ``search_address`` (Spec 022); ``search_keyword`` is added here to close
-the POI-coverage gap captured in
-``specs/integration-verification/donga-univ-poi-bug/``.
+the POI-coverage gap captured during historical live-location debugging.
 
 Authentication: REST API key via ``Authorization: KakaoAK {key}`` header.
 Key source: ``UMMAYA_KAKAO_API_KEY`` environment variable.

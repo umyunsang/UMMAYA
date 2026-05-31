@@ -99,9 +99,9 @@ function Splash({ pose, palette }) {
     h(Box, { flexDirection: 'column' },
       h(Text, null,
         h(Text, { bold: true }, 'UMMAYA '),
-        h(Text, { color: C.subtle }, 'v0.1-alpha'),
+        h(Text, { color: C.subtle }, 'KSC 2026'),
       ),
-      h(Text, { color: C.subtle }, 'Unified Multi-Ministry Agent'),
+      h(Text, { color: C.subtle }, 'National AX citizen-agent harness'),
       h(Text, { color: C.dim, dimColor: true }, '~/UMMAYA/tui'),
     ),
   )

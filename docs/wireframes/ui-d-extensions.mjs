@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// UI-D · Ministry Agent L2 확장 · 2 decision points
+// UI-D · Agency/worker visibility L2 extension · 2 decision points
 //   D.1 /agents 상세 정보 (SLA · 마지막 호출 시각 · 건강)
 //   D.2 swarm 활성 임계치 정의
 //
@@ -15,11 +15,11 @@ import { h, Box, Text, C, Divider, BorderedNotice,
 
 function AgentsDetailed() {
   const rows = [
-    { code: 'KOROAD', dot: C.lookupDot, status: 'live',    last: '2m',   health: 'OK',       avg: '320ms' },
-    { code: 'KMA',    dot: C.lookupDot, status: 'live',    last: '10s',  health: 'OK',       avg: '140ms' },
-    { code: 'HIRA',   dot: C.lookupDot, status: 'live',    last: '1m',   health: 'OK',       avg: '210ms' },
-    { code: 'NMC',    dot: '#fbbf24',   status: 'mock',    last: '—',    health: '데모 데이터',  avg: '—' },
-    { code: 'NFA',    dot: '#fbbf24',   status: 'mock',    last: '—',    health: '권한 신청 중', avg: '—' },
+    { code: 'KOROAD', dot: C.findDot, status: 'live',    last: '2m',   health: 'OK',       avg: '320ms' },
+    { code: 'KMA',    dot: C.findDot, status: 'live',    last: '10s',  health: 'OK',       avg: '140ms' },
+    { code: 'HIRA',   dot: C.findDot, status: 'live',    last: '1m',   health: 'OK',       avg: '210ms' },
+    { code: 'NMC',    dot: '#fbbf24',   status: 'shape',   last: '—',    health: '계약 미검증',  avg: '—' },
+    { code: 'NFA',    dot: '#fbbf24',   status: 'handoff', last: '—',    health: '공식 경로 안내', avg: '—' },
     { code: 'MOHW',   dot: C.dim,       status: 'offline', last: '5m',   health: '인증 실패',    avg: 'ERR' },
   ]
   return h(BorderedNotice, {
@@ -36,7 +36,7 @@ function AgentsDetailed() {
       h(Text, null, r.last.padEnd(10)),
       h(Text, null, r.avg.padEnd(10)),
       h(Text, { color: r.status === 'live' ? '#34d399'
-              : r.status === 'mock' ? '#fbbf24' : C.red }, r.health),
+              : r.status === 'shape' || r.status === 'handoff' ? '#fbbf24' : C.red }, r.health),
     )),
     h(Box, { marginTop: 1 },
       h(Text, { color: C.dim, dimColor: true },
@@ -49,15 +49,15 @@ function AgentsSimple() {
     label: '◆ /agents · 간단 리스트 (기본)', color: C.brand, width: 60,
   },
     h(Text, null,
-      h(Text, { color: C.lookupDot, bold: true }, '  ⏺ KOROAD  '),
+      h(Text, { color: C.findDot, bold: true }, '  ⏺ KOROAD  '),
       h(Text, null, '도로교통공단'),
     ),
     h(Text, null,
-      h(Text, { color: C.lookupDot, bold: true }, '  ⏺ KMA     '),
+      h(Text, { color: C.findDot, bold: true }, '  ⏺ KMA     '),
       h(Text, null, '기상청'),
     ),
     h(Text, null,
-      h(Text, { color: C.lookupDot, bold: true }, '  ⏺ HIRA    '),
+      h(Text, { color: C.findDot, bold: true }, '  ⏺ HIRA    '),
       h(Text, null, '건강보험심사평가원'),
     ),
     h(Box, { marginTop: 1 },
@@ -85,7 +85,7 @@ function SwarmThresholds() {
       h(Text, { color: C.subtle }, '  옵션 C · LLM 판단 기반 (동적)')),
     h(Box, { marginLeft: 4 },
       h(Text, null, '· 첫 응답에서 LLM이 "복잡" 태그 방출 → swarm 활성'),
-      h(Text, null, '· 복잡도 신호: 부처≥3, submit 필요, L3 verify 필요, 등'),
+      h(Text, null, '· 복잡도 신호: 기관≥3, send 필요, check 필요, 등'),
     ),
     h(Box, { marginTop: 2 },
       h(Text, { color: C.brand },
@@ -105,7 +105,7 @@ function SwarmActiveExample() {
       text: '이사 준비 중이야. 전입신고·자동차·건보 주소변경 다 해야해',
     })),
     h(Box, { marginTop: 1 }, h(AsstLine, {
-      text: 'assistant: 3개 부처 worker 분기 · Coordinator가 순서 조율',
+      text: 'assistant: check 이후 3개 기관 worker 분기 · Coordinator가 순서 조율',
     })),
   )
 }
@@ -119,7 +119,7 @@ function Section({ title, children }) {
 
 function App() {
   return h(Box, { flexDirection: 'column' },
-    h(Text, { bold: true, color: C.brand }, 'UI-D · Ministry Agent L2 확장'),
+    h(Text, { bold: true, color: C.brand }, 'UI-D · Agency/Worker Visibility L2'),
     h(Text, { color: C.subtle },
       '5 states는 proposal-iv.mjs로 확정 · 여기선 D.1/D.2 세부 결정만'),
 

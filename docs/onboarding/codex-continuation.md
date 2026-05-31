@@ -36,11 +36,10 @@ Expected Codex state:
 Tracked setup surfaces:
 
 - This document contains the runnable setup and handoff checklist.
-- `docs/research/codex-llm-quality-setup.md` contains the deeper LLM quality-gate proposal.
 - `docs/vision.md`, `docs/requirements/ummaya-migration-tree.md`, `docs/conventions.md`,
-  and `docs/testing.md` contain the shared engineering contract.
+  and `docs/design/verification-fabric-v2.md` contain the shared engineering contract.
 - `prompts/manifest.yaml` and `prompts/*.md` are production prompt assets and stay versioned.
-- `eval/scenarios/national_ax_citizen_requests_v1.yaml` is the target-state citizen-demand
+- `evidence/scenarios/national_ax_citizen_requests_v1.yaml` is the target-state citizen-demand
   dataset for national infrastructure AX work.
 
 Ignored local LLMOps surfaces:
@@ -132,7 +131,7 @@ bun install --frozen-lockfile
 ```
 
 Use `--all-extras --dev`, not only `--dev`; the optional dev extra contains TUI replay tooling
-such as `pyte`, and CI also uses the all-extras shape.
+and CI uses the same all-extras shape.
 
 Operator-managed live-adapter secrets for real local execution:
 
@@ -204,12 +203,22 @@ For TUI changes:
 cd tui
 bun run typecheck
 bun run test
-bun run tui:smoke
 ```
 
-Any PR touching `tui/src/**` must also follow the five-layer interactive verification in
-`AGENTS.md` and `docs/testing.md`, including PTY capture, vhs GIF plus text/ascii output,
-PNG keyframes, and per-frame text snapshots under `specs/<feature>/`.
+For evidence changes, prompt changes, tool-selection behavior, query-loop rendering,
+or adapter-routing behavior:
+
+```bash
+uv run pytest tests/evidence tests/ci -q
+uv run python -m ummaya.evidence \
+  --source-ref local \
+  --dataset-ref ummaya/national-ax-core@local \
+  --out .evidence/run.json
+```
+
+Interactive TUI proof is still required when the implementation touches the
+query-loop render path, but the artifact is attached to the Evidence Fabric run
+instead of the retired five-layer TUI-only harness.
 
 ## Current Handoff Facts
 
@@ -232,10 +241,6 @@ Known documentation/config drift to resolve in a small follow-up PR:
   explicitly about reasoning-channel benchmarks.
 - `docs/configuration.md` lists `UMMAYA_LLM_SESSION_BUDGET` default as `100000`, while
   `src/ummaya/llm/config.py` defaults to `1_000_000`.
-- `docs/testing.md` fixture recording still mentions the stale
-  `UMMAYA_DATA_GO_KR_KEY` name; canonical config uses `UMMAYA_DATA_GO_KR_API_KEY`.
-- `tui/package.json` declares Bun `<1.3.0`, while `.github/workflows/tui-smoke.yml` pins
-  Bun `1.3.12`.
 - `.specify/memory/constitution.md` says PRs close Task issues, while `AGENTS.md` says PRs
   close only the Epic. `AGENTS.md` wins for this repository.
 
@@ -258,15 +263,15 @@ a runtime provider migration.
 
 ## LLM Quality Management Recommendations
 
-UMMAYA already has the right skeleton: Spec Kit, prompt manifests, OTEL spans, Langfuse local
-stack, fixture-backed adapters, and strict TUI verification. The next quality step is to connect
-them into a release gate.
+UMMAYA already has the right skeleton: Spec Kit, prompt manifests, OTEL spans, fixture-backed
+adapters, and scenario-level evidence. The active quality step is Evidence Fabric v2, which
+connects them into one release gate.
 
-Deep-dive setup proposal: `docs/research/codex-llm-quality-setup.md`.
+Deep-dive setup: `docs/design/verification-fabric-v2.md`.
 
 Recommended additions:
 
-1. Treat `eval/scenarios/national_ax_citizen_requests_v1.yaml` as the target-state citizen
+1. Treat `evidence/scenarios/national_ax_citizen_requests_v1.yaml` as the target-state citizen
    demand set for national administrative infrastructure AX.
 2. Keep that dataset independent of current adapter IDs and fixtures; map scenarios to live,
    mock, handoff, or future-blocked channels only in the implementation scorecard.

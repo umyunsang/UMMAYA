@@ -1,0 +1,14 @@
+# Harbor-style local task registry for UMMAYA Evidence Fabric.
+#
+# This registry is deterministic and local-only. It resolves task directories
+# for CI evidence runs but does not download packages, run containers, or call
+# live public-service channels.
+version: 1
+registry_id: ummaya/evidence-task-registry
+datasets:
+  - ref: ummaya/national-ax-core@local
+    dataset_id: national_ax_citizen_requests_v1
+    description: Core national-infrastructure citizen-demand scenarios.
+    scenario_path: evidence/scenarios/national_ax_citizen_requests_v1.yaml
+    task_paths:
+      - evidence/tasks/national-ax-core

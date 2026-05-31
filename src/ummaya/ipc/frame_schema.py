@@ -56,6 +56,7 @@ _ROLE_KIND_ALLOW_LIST: dict[str, frozenset[str]] = {
     # Spec 1978 ADR-0001 — tools-aware chat request from TUI
     "chat_request": frozenset({"tui"}),
     "assistant_chunk": frozenset({"backend", "llm"}),
+    "progress_event": frozenset({"backend"}),
     "tool_call": frozenset({"backend", "tool"}),
     "tool_result": frozenset({"backend", "tool"}),
     "coordinator_phase": frozenset({"backend"}),
@@ -385,6 +386,10 @@ class ChatRequestFrame(_BaseFrame):
         le=1.0,
         description="Nucleus sampling threshold.",
     )
+    reasoning_mode: Literal["fast", "balanced", "deep", "diagnostic", "auto"] | None = Field(
+        default=None,
+        description="K-EXAONE/FriendliAI reasoning policy for this assistant turn.",
+    )
 
     @model_validator(mode="after")
     def _v_tool_message_integrity(self) -> ChatRequestFrame:
@@ -447,6 +452,46 @@ class AssistantChunkFrame(_BaseFrame):
         ),
     )
     done: bool = Field(description="True if this is the terminal chunk for this message_id.")
+
+
+# ---------------------------------------------------------------------------
+# Arm: progress_event  (UMMAYA query-loop painting — deterministic and safe)
+# ---------------------------------------------------------------------------
+
+
+class ProgressEventFrame(_BaseFrame):
+    """backend -> TUI: deterministic query-loop progress.
+
+    This is intentionally separate from ``AssistantChunkFrame.thinking``.
+    ``progress_event`` carries safe harness state such as analysis, tool
+    selection, tool dispatch/result, and answer synthesis. Provider reasoning
+    remains on the gated ``thinking_delta`` channel.
+    """
+
+    kind: Literal["progress_event"] = Field(
+        default="progress_event", description="Frame discriminator."
+    )
+    phase: Literal[
+        "analysis",
+        "tool_selection",
+        "tool_call",
+        "tool_result",
+        "answer_synthesis",
+    ] = Field(description="Safe query-loop phase represented by this event.")
+    message_ko: str = Field(min_length=1, description="Korean progress text for the TUI.")
+    message_en: str = Field(min_length=1, description="English fallback progress text.")
+    safe_to_persist: bool = Field(
+        default=True,
+        description="True because this channel never carries raw provider chain-of-thought.",
+    )
+    tool_id: str | None = Field(
+        default=None,
+        description="Concrete adapter/tool id when this event is tied to one.",
+    )
+    call_id: str | None = Field(
+        default=None,
+        description="Tool call id when this event is tied to a specific invocation.",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1436,6 +1481,7 @@ IPCFrame = Annotated[
     UserInputFrame
     | ChatRequestFrame
     | AssistantChunkFrame
+    | ProgressEventFrame
     | ToolCallFrame
     | ToolResultFrame
     | CoordinatorPhaseFrame
@@ -1505,6 +1551,7 @@ __all__ = [
     "ToolDefinition",
     "ToolDefinitionFunction",
     "AssistantChunkFrame",
+    "ProgressEventFrame",
     "ToolCallFrame",
     "ToolResultFrame",
     "ToolResultEnvelope",

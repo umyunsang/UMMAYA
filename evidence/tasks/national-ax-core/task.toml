@@ -1,0 +1,51 @@
+schema_version = "1.1"
+source = "local"
+
+[task]
+name = "ummaya/national-ax-core"
+description = "Validate the core UMMAYA national AX citizen-demand scenario dataset."
+authors = [{ name = "UMMAYA maintainers" }]
+keywords = ["citizen-ax", "national-infrastructure", "evidence-fabric"]
+
+[metadata]
+dataset_id = "national_ax_citizen_requests_v1"
+category = "citizen_ax"
+required_domains = [
+  "tax",
+  "civil_affairs",
+  "payments",
+  "utilities",
+  "identity",
+  "welfare",
+  "healthcare",
+  "housing",
+  "mobility",
+  "business",
+  "labor",
+  "education",
+  "safety",
+  "immigration",
+  "legal",
+  "personal_data",
+]
+
+[verifier]
+timeout_sec = 120.0
+environment_mode = "shared"
+checks = [
+  "dataset-schema",
+  "task-registry",
+  "coverage-domains",
+  "trace-join-keys",
+  "reward-hack-surface",
+]
+
+[agent]
+timeout_sec = 120.0
+user = "agent"
+
+[environment]
+os = "linux"
+allow_internet = false
+cpus = 1
+memory_mb = 2048

@@ -8,7 +8,7 @@ import React from 'react'
 import { z } from 'zod/v4'
 import { Text } from '../../ink.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import { buildTool, type ToolDef, type ToolUseContext } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {
   LOCATE_TOOL_NAME,
@@ -16,6 +16,8 @@ import {
   LOCATE_TOOL_PROMPT,
 } from './prompt.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import { validateKmaAviationToolChoice } from '../_shared/kmaAviationGuard.js'
+import { validateDirectPublicDataToolChoice } from '../_shared/directPublicDataGuard.js'
 import {
   renderVerboseInputJson,
   renderVerboseOutputJson,
@@ -26,22 +28,29 @@ import {
 } from '../_shared/compactPrimitiveResult.js'
 import { getOrCreateUmmayaBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
-
-const ROOT_PRIMITIVE_TOOL_IDS = new Set(['find', 'locate', 'check', 'send'])
+import {
+  isRootPrimitiveToolId,
+  normalizeRootPrimitiveAdapterEnvelope,
+  rootPrimitiveSelfTargetMessage,
+} from '../_shared/rootPrimitiveInput.js'
+import { repairLocateQueryParamsFromConversation } from '../_shared/locationInputRepair.js'
 
 const inputSchema = lazySchema(() =>
-  z.strictObject({
-    tool_id: z
-      .string()
-      .min(1)
-      .describe(
-        'Concrete locate adapter identifier from <available_adapters>. ' +
-          'This is not the function name. Never use "locate", "find", "check", or "send".',
-      ),
-    params: z
-      .record(z.string(), z.unknown())
-      .describe('Adapter-defined Pydantic-validated parameter body.'),
-  }),
+  z.preprocess(
+    value => normalizeRootPrimitiveAdapterEnvelope(LOCATE_TOOL_NAME, value),
+    z.strictObject({
+      tool_id: z
+        .string()
+        .min(1)
+        .describe(
+          'Concrete locate adapter identifier from <available_adapters>. ' +
+            'This is not the function name. Never use "locate", "find", "check", or "send".',
+        ),
+      params: z
+        .record(z.string(), z.unknown())
+        .describe('Adapter-defined Pydantic-validated parameter body.'),
+    }),
+  ),
 )
 type InputSchema = ReturnType<typeof inputSchema>
 
@@ -260,14 +269,22 @@ export const ResolveLocationPrimitive = buildTool({
 
   isMcp: false,
 
-  async validateInput(input: z.infer<InputSchema>) {
-    if (ROOT_PRIMITIVE_TOOL_IDS.has(input.tool_id)) {
+  async validateInput(input: z.infer<InputSchema>, context: ToolUseContext) {
+    if (isRootPrimitiveToolId(input.tool_id)) {
       return {
         result: false as const,
-        message: `Root primitive '${input.tool_id}' is not a locate adapter tool_id. Pick a concrete locate adapter from <available_adapters>.`,
+        message: rootPrimitiveSelfTargetMessage(input.tool_id, 'locate'),
         errorCode: 1,
       }
     }
+    const kmaAviationChoice = validateKmaAviationToolChoice(input.tool_id, context)
+    if (kmaAviationChoice) return kmaAviationChoice
+    const directPublicDataChoice = validateDirectPublicDataToolChoice(
+      input.tool_id,
+      context,
+      input.params,
+    )
+    if (directPublicDataChoice) return directPublicDataChoice
     return { result: true as const }
   },
 
@@ -307,9 +324,13 @@ export const ResolveLocationPrimitive = buildTool({
   },
 
   async call(input, context) {
+    const repairedInput = repairLocateQueryParamsFromConversation(
+      input as Record<string, unknown>,
+      context.messages,
+    )
     return dispatchPrimitive<Output>({
       primitive: 'locate',
-      args: input as Record<string, unknown>,
+      args: repairedInput,
       context,
       registry: getOrCreatePendingCallRegistry(),
       bridge: getOrCreateUmmayaBridge(),

@@ -42,6 +42,36 @@
       "title": "Num Of Rows",
       "type": "integer"
     },
+    "origin_lat": {
+      "anyOf": [
+        {
+          "maximum": 90,
+          "minimum": -90,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional original query latitude for client-side distance sorting. Not sent to the upstream NMC AED API.",
+      "title": "Origin Lat"
+    },
+    "origin_lon": {
+      "anyOf": [
+        {
+          "maximum": 180,
+          "minimum": -180,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional original query longitude for client-side distance sorting. Not sent to the upstream NMC AED API.",
+      "title": "Origin Lon"
+    },
     "page_no": {
       "default": 1,
       "description": "Page number.",

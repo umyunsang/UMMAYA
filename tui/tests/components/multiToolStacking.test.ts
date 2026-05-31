@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   createStreamingThinkingLayoutMessage,
   getStreamingThinkingInsertIndex,
+  insertStreamingThinkingLayoutMessage,
   isSameAssistantToolStack,
   isStreamingThinkingLayoutMessage,
 } from '../../src/utils/multiToolLayout.js'
@@ -72,6 +73,19 @@ describe('multi-tool layout helpers', () => {
     expect(isStreamingThinkingLayoutMessage(row)).toBe(true)
     expect(row.type).toBe('system')
     expect(row.subtype).toBe('thinking')
+  })
+
+  test('inserts streaming thinking before the first tool row in the current turn', () => {
+    const messages = [user, toolUse('tool-1', 'assistant-message-1'), toolResult('tool-1')]
+
+    const withThinking = insertStreamingThinkingLayoutMessage(messages, 'reasoning preview')
+
+    expect(withThinking).toHaveLength(4)
+    expect(withThinking[0]).toBe(user)
+    expect(isStreamingThinkingLayoutMessage(withThinking[1])).toBe(true)
+    expect(withThinking[1]?.thinking).toBe('reasoning preview')
+    expect(withThinking[2]).toBe(messages[1])
+    expect(withThinking[3]).toBe(messages[2])
   })
 
   test('keeps tool_result visible when the matching tool_use is still streaming', () => {

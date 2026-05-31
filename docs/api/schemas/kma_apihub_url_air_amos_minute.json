@@ -1,0 +1,132 @@
+{
+  "$defs": {
+    "KmaApiHubUrlOutput": {
+      "additionalProperties": false,
+      "description": "Normalized output from one KMA APIHub non-structured URL operation.",
+      "properties": {
+        "approval_state": {
+          "enum": [
+            "approved",
+            "approval_pending"
+          ],
+          "title": "Approval State",
+          "type": "string"
+        },
+        "content_type": {
+          "title": "Content Type",
+          "type": "string"
+        },
+        "endpoint_path": {
+          "title": "Endpoint Path",
+          "type": "string"
+        },
+        "line_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Count"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "raw_format": {
+          "enum": [
+            "text",
+            "json",
+            "image",
+            "binary"
+          ],
+          "title": "Raw Format",
+          "type": "string"
+        },
+        "raw_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Text"
+        },
+        "status_code": {
+          "title": "Status Code",
+          "type": "integer"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "operation_id",
+        "endpoint_path",
+        "approval_state",
+        "content_type",
+        "raw_format",
+        "status_code"
+      ],
+      "title": "KmaApiHubUrlOutput",
+      "type": "object"
+    }
+  },
+  "$id": "https://ummaya.example/api/schemas/kma_apihub_url_air_amos_minute.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "dtm": {
+      "default": 60,
+      "description": "Lookback window in minutes including tm. Official maximum is 60 minutes. Official parameter name: dtm. Operation: air_amos_minute.",
+      "title": "Dtm",
+      "type": "integer"
+    },
+    "help": {
+      "default": 1,
+      "description": "KMA APIHub URL request parameter help. Official parameter name: help. Operation: air_amos_minute.",
+      "title": "Help",
+      "type": "integer"
+    },
+    "stn": {
+      "description": "Official AMOS station number. The APIHub page lists 110 Gimpo, 113 Incheon, 182 Jeju, 163 Muan, 151 Ulsan, 167 Yeosu, and 92 Yangyang. Gimhae is not listed for this AMOS endpoint; use METAR RKPK for Gimhae airport aviation weather. Official parameter name: stn. Operation: air_amos_minute.",
+      "title": "Stn",
+      "type": "string"
+    },
+    "tm": {
+      "anyOf": [
+        {
+          "pattern": "^\\d{12}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "AMOS lookup time in KST, YYYYMMDDHHMM. Omit it to request the latest upstream slot. Official parameter name: tm. Operation: air_amos_minute.",
+      "title": "Tm"
+    }
+  },
+  "required": [
+    "stn"
+  ],
+  "title": "kma_apihub_url_air_amos_minute",
+  "type": "object"
+}

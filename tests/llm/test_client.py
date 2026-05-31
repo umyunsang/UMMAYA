@@ -756,6 +756,8 @@ async def test_complete_default_payload_parameters(
     )
     assert payload.get("max_tokens") == 1024, f"max_tokens={payload.get('max_tokens')!r}"
     assert payload.get("chat_template_kwargs") == {"enable_thinking": False}
+    assert payload.get("parse_reasoning") is True
+    assert payload.get("include_reasoning") is False
 
 
 @respx.mock
@@ -809,6 +811,33 @@ async def test_k_exaone_thinking_env_opt_in(
         await client.complete([ChatMessage(role="user", content="hi")])
 
     assert captured[0].get("chat_template_kwargs") == {"enable_thinking": True}
+    assert captured[0].get("parse_reasoning") is True
+    assert captured[0].get("include_reasoning") is True
+
+
+@respx.mock
+async def test_k_exaone_reasoning_mode_deep_payload(
+    _clean_env: None,
+) -> None:
+    """Explicit reasoning_mode=deep enables provider thinking and reasoning parsing."""
+    captured: list[dict] = []
+
+    def _capture(request: httpx.Request) -> httpx.Response:
+        captured.append(json.loads(request.content))
+        return httpx.Response(200, json=_SUCCESS_RESPONSE)
+
+    respx.post(CHAT_COMPLETIONS_URL).mock(side_effect=_capture)
+
+    config = LLMClientConfig()
+    async with LLMClient(config) as client:
+        await client.complete(
+            [ChatMessage(role="user", content="hi")],
+            reasoning_mode="deep",
+        )
+
+    assert captured[0].get("chat_template_kwargs") == {"enable_thinking": True}
+    assert captured[0].get("parse_reasoning") is True
+    assert captured[0].get("include_reasoning") is True
 
 
 @respx.mock
@@ -841,3 +870,5 @@ async def test_stream_default_payload_parameters(
     assert payload.get("presence_penalty") == 0.0
     assert payload.get("max_tokens") == 1024
     assert payload.get("chat_template_kwargs") == {"enable_thinking": False}
+    assert payload.get("parse_reasoning") is True
+    assert payload.get("include_reasoning") is False

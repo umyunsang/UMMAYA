@@ -1,6 +1,6 @@
 {
   "name": "ummaya",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,7 +11,6 @@
     "gen:ipc": "bun run scripts/gen-ipc-types.ts",
     "gen:pipa-hash": "bun run scripts/gen-pipa-hash.ts",
     "diff:upstream": "bun run scripts/diff-upstream.ts",
-    "tui:smoke": "bun run scripts/tui-smoke.ts",
     "test:soak": "bun test --timeout 600000 tests/soak",
     "test": "bun test --max-concurrency=1 tests/entrypoints tests/hooks tests/i18n tests/ink tests/ipc tests/memdir tests/permissions tests/primitive tests/store tests/theme tests/unit",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",

@@ -35,7 +35,7 @@
   "description": "Input for TAGO bus station search.",
   "properties": {
     "city_code": {
-      "description": "TAGO city code.",
+      "description": "Official TAGO cityCode from the provider getCtyCodeList contract. Common metropolitan examples: Busan=21, Daegu=22, Incheon=23, Gwangju=24, Daejeon=25, Ulsan=26.",
       "minLength": 1,
       "title": "City Code",
       "type": "string"
@@ -50,7 +50,7 @@
         }
       ],
       "default": null,
-      "description": "Bus station name.",
+      "description": "Bus stop name fragment, for example 부산역 when the citizen asks near Busan Station.",
       "title": "Node Nm"
     },
     "node_no": {
@@ -63,7 +63,7 @@
         }
       ],
       "default": null,
-      "description": "Bus station number.",
+      "description": "Bus stop number printed at the stop.",
       "title": "Node No"
     },
     "num_of_rows": {

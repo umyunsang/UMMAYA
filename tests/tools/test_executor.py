@@ -13,6 +13,7 @@ from ummaya.tools.kma.forecast_fetch import KMA_FORECAST_FETCH_TOOL
 from ummaya.tools.kma.kma_current_observation import KMA_CURRENT_OBSERVATION_TOOL
 from ummaya.tools.location_adapters import KAKAO_COORD_TO_REGION_TOOL
 from ummaya.tools.registry import ToolRegistry
+from ummaya.tools.verified_data_go_kr.nmc_aed_site import TOOL as NMC_AED_SITE_TOOL
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -170,6 +171,31 @@ async def test_invoke_hira_hospital_search_validation_rejects_rounded_coords():
     assert result.reason.value == "invalid_params"
     assert "do NOT round" in result.message
     assert "xPos:<exact lon>" in result.message
+
+
+@pytest.mark.asyncio
+async def test_invoke_nmc_aed_validation_names_region_filter_recovery():
+    """AED validation should steer the model to q0/q1, not ER coordinate fields."""
+    registry = ToolRegistry()
+    registry.register(NMC_AED_SITE_TOOL)
+    executor = ToolExecutor(registry)
+
+    async def _never_called(_validated_input):
+        raise AssertionError("validation should fail before adapter execution")
+
+    executor.register_adapter("nmc_aed_site_locate", _never_called)
+
+    result = await executor.invoke(
+        "nmc_aed_site_locate",
+        {"mode": "region", "origin_lat": 35.1, "origin_lon": 129.0, "limit": 5},
+        request_id="test-request",
+    )
+
+    assert result.kind == "error"
+    assert result.reason.value == "invalid_params"
+    assert "REGION FILTER ONLY" in result.message
+    assert "q0:region.region_1depth_name" in result.message
+    assert "Do NOT pass mode" in result.message
 
 
 @pytest.mark.asyncio

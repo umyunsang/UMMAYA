@@ -13,9 +13,9 @@ import { h, Box, Text, C, Divider, BorderedNotice,
          CondensedLogo, PromptBand, PromptFooter } from './_shared.mjs'
 
 // Layer palette
-const L1 = { color: '#34d399', glyph: '⓵', label: '조회 · Layer 1', desc: '개인정보 미포함 · 자동 승인' }
-const L2 = { color: '#fb923c', glyph: '⓶', label: '제출 · Layer 2', desc: '가역 처리 · 사용자 확인 필요' }
-const L3 = { color: '#f87171', glyph: '⓷', label: '인증 · Layer 3', desc: '비가역/민감 · 강화 동의 필요' }
+const L1 = { color: '#34d399', glyph: '⓵', label: 'find/locate · Layer 1', desc: '공개/저위험 조회 · 자동 승인' }
+const L2 = { color: '#f87171', glyph: '⓶', label: 'check · Layer 2', desc: '본인확인/위임 · 명시 동의' }
+const L3 = { color: '#fb923c', glyph: '⓷', label: 'send · Layer 3', desc: '제출/납부/접수 · 최종 확인' }
 
 // ── C.1 · Layer 색·글리프 규약 ─────────────────────────────────────────
 function LayerBadge({ L }) {
@@ -38,11 +38,11 @@ function PermissionModal({ L }) {
     ),
     h(Box, { marginTop: 1 },
       h(Text, { color: C.dim }, '요청: '),
-      h(Text, null, 'MOIS 전입신고 접수 · gov24_jeonib_sinko_submit'),
+      h(Text, null, 'AUTH 주소변경 위임 확인 · mock_verify_module_simple_auth'),
     ),
     h(Box, null,
       h(Text, { color: C.dim }, '정보: '),
-      h(Text, null, '이름·주소·세대주 관계 (PIPA §17 처리위탁)'),
+      h(Text, null, '목적·범위·세션 ID (PIPA §17 처리위탁)'),
     ),
     h(Box, { marginTop: 1, flexDirection: 'row', justifyContent: 'space-between' },
       h(Text, null,
@@ -63,10 +63,10 @@ function PermissionModal({ L }) {
 // ── C.3 · /consent 명령 결과 (권한 이력) ═══════════════════════════════
 function ConsentHistory() {
   const rows = [
-    { t: '14:02:31', layer: L1, adapter: 'KMA.lookup', action: '자동' },
-    { t: '14:05:12', layer: L2, adapter: 'MOIS.submit', action: '허용' },
-    { t: '14:07:55', layer: L3, adapter: 'MOHW.verify', action: '거부' },
-    { t: '14:12:08', layer: L2, adapter: 'MOIS.submit', action: '허용' },
+    { t: '14:02:31', layer: L1, adapter: 'KMA.find', action: '자동' },
+    { t: '14:05:12', layer: L2, adapter: 'AUTH.check', action: '허용' },
+    { t: '14:07:55', layer: L3, adapter: 'GOV24.send', action: '거부' },
+    { t: '14:12:08', layer: L3, adapter: 'GOV24.send', action: '허용' },
   ]
   return h(BorderedNotice, {
     label: '◆ 동의 이력 · 현재 세션', color: C.brand, width: 70,
@@ -95,7 +95,7 @@ function RevokeFlow() {
       h(BorderedNotice, {
         label: '⚠ 동의 철회 · 이 영수증에 묶인 작업 중단', color: C.red, width: 70,
       },
-        h(Text, null, '어댑터: MOIS.submit · 전입신고 접수'),
+        h(Text, null, '어댑터: GOVERNMENT24.send · 전입신고 접수'),
         h(Text, null, '시각: 2026-04-24 14:05:12'),
         h(Box, { marginTop: 1 },
           h(Text, { color: C.brand, bold: true }, '[Y] '),
@@ -130,13 +130,13 @@ function ModeSwitch() {
     ),
     h(Box, { marginTop: 1 },
       h(Text, { color: C.dim, dimColor: true },
-        '  현재: accept edits · Layer 2 자동 승인, Layer 3은 여전히 확인 필요'),
+        '  현재: accept edits · find/locate 자동, check/send는 여전히 확인 필요'),
     ),
     h(Box, { marginTop: 1 },
       h(BorderedNotice, {
         label: '⚠ bypassPermissions 전환 확인', color: C.red, width: 60,
       },
-        h(Text, null, '모든 Layer 권한 건너뜀 · 위험 가능'),
+        h(Text, null, '개발자 편의 모드여도 PIPA/신원/send 게이트는 우회 불가'),
         h(Box, { marginTop: 1 },
           h(Text, { color: C.brand, bold: true }, '[Y] '),
           h(Text, null, '확정   '),
@@ -158,7 +158,7 @@ function Section({ title, children }) {
 function App() {
   return h(Box, { flexDirection: 'column' },
     h(Text, { bold: true, color: C.brand }, 'UI-C · Permission Gauntlet L2'),
-    h(Text, { color: C.subtle }, 'Layer 1/2/3 시민-안전 게이트 + PIPA 수탁자 영수증'),
+    h(Text, { color: C.subtle }, 'find/locate · check · send 시민-안전 게이트 + PIPA 수탁자 영수증'),
 
     h(Section, { title: 'C.1 · Layer 1/2/3 색·글리프 규약' },
       h(Box, { flexDirection: 'column' },
@@ -168,7 +168,7 @@ function App() {
       )
     ),
 
-    h(Section, { title: 'C.2 · Permission Modal (Layer 2 예시)' },
+    h(Section, { title: 'C.2 · Permission Modal (check 예시)' },
       h(PermissionModal, { L: L2 })
     ),
 

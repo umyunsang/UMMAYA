@@ -259,4 +259,194 @@ describe('FriendliAI CC provider shim', () => {
       { role: 'tool', tool_call_id: 'call_1', content: 'observation ok' },
     ])
   })
+
+  test('sends explicit K-EXAONE reasoning parsing payload by default', async () => {
+    let requestBody: Record<string, unknown> | undefined
+    const fetchOverride = async (_input: string | URL | Request, init?: RequestInit) => {
+      requestBody = JSON.parse(String(init?.body))
+      return new Response(
+        JSON.stringify({
+          id: 'chatcmpl_reasoning_default',
+          model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+          choices: [{ message: { content: 'done' }, finish_reason: 'stop' }],
+          usage: { prompt_tokens: 3, completion_tokens: 1 },
+        }),
+        { status: 200 },
+      )
+    }
+
+    const client = (await getAnthropicClient({
+      apiKey: 'friendli-token',
+      maxRetries: 0,
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      fetchOverride,
+    })) as {
+      beta: {
+        messages: { create: (params: Record<string, unknown>) => Promise<unknown> }
+      }
+    }
+
+    await client.beta.messages.create({
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      max_tokens: 128,
+      messages: [{ role: 'user', content: 'hi' }],
+    })
+
+    expect(requestBody).toMatchObject({
+      chat_template_kwargs: { enable_thinking: false },
+      parse_reasoning: true,
+      include_reasoning: false,
+    })
+  })
+
+  test('maps explicit deep reasoning mode to FriendliAI thinking payload', async () => {
+    let requestBody: Record<string, unknown> | undefined
+    const fetchOverride = async (_input: string | URL | Request, init?: RequestInit) => {
+      requestBody = JSON.parse(String(init?.body))
+      return new Response(
+        JSON.stringify({
+          id: 'chatcmpl_reasoning_deep',
+          model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+          choices: [{ message: { content: 'done' }, finish_reason: 'stop' }],
+          usage: { prompt_tokens: 3, completion_tokens: 1 },
+        }),
+        { status: 200 },
+      )
+    }
+
+    const client = (await getAnthropicClient({
+      apiKey: 'friendli-token',
+      maxRetries: 0,
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      fetchOverride,
+    })) as {
+      beta: {
+        messages: { create: (params: Record<string, unknown>) => Promise<unknown> }
+      }
+    }
+
+    await client.beta.messages.create({
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      max_tokens: 128,
+      messages: [{ role: 'user', content: 'hi' }],
+      reasoning_mode: 'deep',
+    })
+
+    expect(requestBody).toMatchObject({
+      chat_template_kwargs: { enable_thinking: true },
+      parse_reasoning: true,
+      include_reasoning: true,
+    })
+  })
+
+  test('suppresses unexpected reasoning_content in default streaming mode', async () => {
+    const fetchOverride = async () =>
+      new Response(
+        [
+          'data: {"id":"chatcmpl_reasoning_suppressed","model":"LGAI-EXAONE/K-EXAONE-236B-A23B","choices":[{"delta":{"reasoning_content":"raw trace"}}]}',
+          'data: {"choices":[{"delta":{"content":"visible answer"},"finish_reason":"stop"}]}',
+          'data: [DONE]',
+          '',
+        ].join('\n\n'),
+        { status: 200 },
+      )
+
+    const client = (await getAnthropicClient({
+      apiKey: 'friendli-token',
+      maxRetries: 0,
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      fetchOverride,
+    })) as {
+      beta: {
+        messages: {
+          create: (
+            params: Record<string, unknown>,
+          ) => {
+            withResponse: () => Promise<{
+              data: AsyncIterable<{
+                type: string
+                delta?: { type: string; thinking?: string; text?: string }
+              }>
+            }>
+          }
+        }
+      }
+    }
+
+    const events: Array<{ type: string; delta?: { type: string; thinking?: string; text?: string } }> = []
+    const result = await client.beta.messages
+      .create({
+        model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+        max_tokens: 128,
+        messages: [{ role: 'user', content: 'hi' }],
+        stream: true,
+      })
+      .withResponse()
+    for await (const event of result.data) {
+      events.push(event)
+    }
+
+    expect(events.some(event =>
+      event.type === 'content_block_delta' &&
+      event.delta?.type === 'thinking_delta'
+    )).toBe(false)
+    expect(events.find(event =>
+      event.type === 'content_block_delta' &&
+      event.delta?.type === 'text_delta'
+    )?.delta?.text).toBe('visible answer')
+  })
+
+  test('forwards reasoning_content in explicit deep streaming mode', async () => {
+    const fetchOverride = async () =>
+      new Response(
+        [
+          'data: {"id":"chatcmpl_reasoning_deep_stream","model":"LGAI-EXAONE/K-EXAONE-236B-A23B","choices":[{"delta":{"reasoning_content":"deep trace"}}]}',
+          'data: {"choices":[{"delta":{"content":"visible answer"},"finish_reason":"stop"}]}',
+          'data: [DONE]',
+          '',
+        ].join('\n\n'),
+        { status: 200 },
+      )
+
+    const client = (await getAnthropicClient({
+      apiKey: 'friendli-token',
+      maxRetries: 0,
+      model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+      fetchOverride,
+    })) as {
+      beta: {
+        messages: {
+          create: (
+            params: Record<string, unknown>,
+          ) => {
+            withResponse: () => Promise<{
+              data: AsyncIterable<{
+                type: string
+                delta?: { type: string; thinking?: string; text?: string }
+              }>
+            }>
+          }
+        }
+      }
+    }
+
+    const events: Array<{ type: string; delta?: { type: string; thinking?: string; text?: string } }> = []
+    const result = await client.beta.messages
+      .create({
+        model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+        max_tokens: 128,
+        messages: [{ role: 'user', content: 'hi' }],
+        reasoning_mode: 'deep',
+        stream: true,
+      })
+      .withResponse()
+    for await (const event of result.data) {
+      events.push(event)
+    }
+
+    expect(events.find(event =>
+      event.type === 'content_block_delta' &&
+      event.delta?.type === 'thinking_delta'
+    )?.delta?.thinking).toBe('deep trace')
+  })
 })

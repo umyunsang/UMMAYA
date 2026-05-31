@@ -21,7 +21,11 @@ from __future__ import annotations
 
 import pytest
 
-from ummaya.tools.verify_canonical_map import get_canonical_map, resolve_family
+from ummaya.tools.verify_canonical_map import (
+    get_canonical_map,
+    resolve_family,
+    resolve_tool_id,
+)
 
 # ---------------------------------------------------------------------------
 # Canonical expected mapping (per data-model.md § 2)
@@ -96,6 +100,13 @@ def test_resolve_family_returns_none_for_empty_string() -> None:
     """``resolve_family`` MUST return ``None`` for an empty string."""
     result = resolve_family("")
     assert result is None
+
+
+def test_resolve_tool_id_accepts_family_aliases_for_runtime_recovery() -> None:
+    """Internal family aliases are normalized to canonical mock_verify tool ids."""
+    assert resolve_tool_id("mobile_id") == "mock_verify_mobile_id"
+    assert resolve_tool_id("simple_auth_module") == "mock_verify_module_simple_auth"
+    assert resolve_tool_id("mock_verify_mobile_id") == "mock_verify_mobile_id"
 
 
 def test_get_canonical_map_is_read_only() -> None:

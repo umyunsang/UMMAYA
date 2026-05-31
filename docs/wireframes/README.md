@@ -1,58 +1,81 @@
 # UMMAYA UI Wireframes
 
-Interactive wireframe previews rendered via Ink — 터미널에서 직접 비교 가능.
+Interactive Ink wireframe previews for the KSC 2026 story and TUI design
+handoff. Refreshed 2026-05-29 KST.
 
-## 파일 구성
+The active UI thesis is the same as the product thesis: keep Claude Code's
+terminal harness behavior first, then apply UMMAYA's Korean public-service
+wording, permission/authority boundaries, and `find/locate/check/send` tool
+surface.
 
-| File | 목적 | 상태 |
+## File Inventory
+
+| File | Purpose | Current use |
 |---|---|---|
-| `_shared.mjs` | CC-style primitives (Box · Text · CondensedLogo · Feed · Notice · ToolUseBlock 등) | — |
-| `proposal-iv.mjs` | UI-D wireframe 확정 · 5 states | ✅ 확정 |
-| `ummaya-mascot-proposal.mjs` | UMMAYA 터미널 마스코트 · 홈 시그널 팔레트 | ✅ 확정 |
-| **`ui-b-repl-main.mjs`** | UI-B · REPL Main L2 (streaming / scroll / markdown / errors / context / autocomplete) | 제안 중 |
-| **`ui-c-permission.mjs`** | UI-C · Permission Gauntlet L2 (Layer 1/2/3 · receipt · history · revoke · mode switch) | 제안 중 |
-| **`ui-e-auxiliary.mjs`** | UI-E · 보조 surface L2 (Help · Config · Plugin · Export · History) | 제안 중 |
-| **`ui-a-onboarding.mjs`** | UI-A · Onboarding L2 (5 steps · i18n · a11y · revoke) | 제안 중 |
-| **`ui-d-extensions.mjs`** | UI-D · Ministry Agent L2 확장 (D.1 /agents 상세 · D.2 swarm 임계치) | 제안 중 |
+| `_shared.mjs` | Shared CC-style primitives: Box, Text, condensed logo, notices, prompt band, tool-use block | Active wireframe support |
+| `proposal-iv.mjs` | Main KSC demo surface: empty state, public lookup, cross-agency planning, `/agents`, `/plugins` | Current presentation baseline |
+| `ummaya-mascot-proposal.mjs` | Terminal mascot and home-call brand signal | Current brand reference |
+| `ui-b-repl-main.mjs` | REPL main details: streaming, scroll, markdown, errors, context, autocomplete | Needs parity check before product work |
+| `ui-c-permission.mjs` | Permission Gauntlet: Layer 1/2/3, receipt, history, revoke, mode switch | Needs `check/send` wording refresh before product work |
+| `ui-e-auxiliary.mjs` | Help, config, plugin browser, export, history | Needs runtime parity check before product work |
+| `ui-d-extensions.mjs` | Agent panel and swarm threshold exploration | Historical L2 proposal; current work should verify backend emit path first |
+| `ui-a-onboarding.mjs` | Earlier 5-step onboarding proposal | Historical proposal; current `docs/vision.md` keeps setup aligned with the Claude Code runtime path |
 
 ## Run
 
 ```bash
 cd tui
 
-# 확정된 wireframe
-bun ../docs/wireframes/proposal-iv.mjs       # UI 5 states
-bun ../docs/wireframes/ummaya-mascot-proposal.mjs  # UMMAYA 마스코트
+# Main presentation surface
+bun ../docs/wireframes/proposal-iv.mjs
+bun ../docs/wireframes/ummaya-mascot-proposal.mjs
 
-# L2 드릴다운 (선택 대기)
-bun ../docs/wireframes/ui-b-repl-main.mjs    # REPL Main
-bun ../docs/wireframes/ui-c-permission.mjs   # Permission
-bun ../docs/wireframes/ui-e-auxiliary.mjs    # Aux surface
-bun ../docs/wireframes/ui-a-onboarding.mjs   # Onboarding
-bun ../docs/wireframes/ui-d-extensions.mjs   # Ministry agent D.1/D.2
+# Drilldowns
+bun ../docs/wireframes/ui-b-repl-main.mjs
+bun ../docs/wireframes/ui-c-permission.mjs
+bun ../docs/wireframes/ui-e-auxiliary.mjs
+bun ../docs/wireframes/ui-d-extensions.mjs
+bun ../docs/wireframes/ui-a-onboarding.mjs
 ```
 
-## UI 요구사항 트리 (L2 결정 포인트)
+## Active Design Rules
 
-```
-UI-ROOT
-├── UI-A Onboarding       · A.1 (5-step 레이아웃) · A.2 재실행 · A.3 i18n · A.4 a11y · A.5 revoke
-├── UI-B REPL Main        · B.1 streaming · B.2 scroll · B.3 markdown · B.4 errors · B.5 context · B.6 autocomplete
-├── UI-C Permission       · C.1 Layer 색 · C.2 modal · C.3 history · C.4 revoke · C.5 mode switch
-├── UI-D Ministry Agent   · (proposal-iv 확정) · D.1 /agents 상세 · D.2 swarm 임계치
-└── UI-E 보조 surface      · E.1 Help · E.2 Config · E.3 Plugin · E.4 Export · E.5 History
-```
+- Use ported Claude Code visual primitives first. New UI component shapes need a
+  concrete product reason.
+- Korean is primary. English is allowed for agency codes, model names, and
+  developer-facing command names.
+- The active primitive roots are `find`, `locate`, `check`, and `send`.
+- `subscribe` is deferred until UMMAYA owns an app/push delivery runtime.
+- Dot color encodes the primitive family, not the agency:
+  - blue: `find`
+  - cyan: `locate`
+  - red: `check`
+  - orange: `send`
+  - purple: plugin namespace
+- Mock and handoff boundaries must be disclosed in result copy or evidence. Do
+  not rely on dot color to make authority claims.
+- Protected flows should show `check` before `send`; public location/data flows
+  should show `locate` before concrete `find` when location is needed.
+- Any future product implementation must compare against
+  `.references/claude-code-sourcemap/restored-src/` before inventing a new TUI
+  path.
 
-## Design rules (전체 공통)
+## KSC Presentation Use
 
-- **0 new component classes** — CC-ported primitives만 사용
-- CC 시각 언어: round rule · dim hint · bordered notice · 3×9 마스코트 footprint
-- 한국어 primary · 영어 보조 (ministry code 약어만)
-- Mock UI 노출 안 함 (live와 동일 시각 처리)
-- Root 4 primitive 예약어 (`lookup` · `submit` · `verify` · `subscribe`)
+Use `proposal-iv.mjs` as the thumbnail test for the talk:
 
-## See also
+1. Empty state should communicate "UMMAYA is a CC-style terminal harness."
+2. Public lookup should show `find` or `locate -> find`, not generic RAG.
+3. Protected execution should show `check -> send` with receipt/handoff wording.
+4. `/agents` should be framed as coordination visibility, not proof that every
+   agency integration is Live.
+5. `/plugins` should show contributor extensibility without implying official
+   endorsement.
 
-- `docs/vision.md` (아키텍처 Layer 정의)
-- `CLAUDE.md § Architecture pillars`
-- `.references/claude-code-sourcemap/restored-src/src/components/LogoV2/` (CC 원본)
+## See Also
+
+- `docs/vision.md`
+- `docs/requirements/ummaya-migration-tree.md`
+- `docs/onboarding/five-primitive-harness.md`
+- `docs/design/verification-fabric-v2.md`
+- `.references/claude-code-sourcemap/restored-src/src/components/`

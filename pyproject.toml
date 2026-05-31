@@ -1,6 +1,6 @@
 [project]
 name = "ummaya"
-version = "0.2.3"
+version = "0.2.4"
 description = "Conversational multi-agent platform for Korean public APIs"
 readme = "README.md"
 license = "Apache-2.0"
@@ -87,11 +87,6 @@ dev = [
     "pip-audit>=2.10.0",
     "vulture>=2.16",
     "pip-licenses>=5.0",
-    # Spec 2521 — TUI Layer 5 (asciinema cast → per-frame text snapshot).
-    # Dev-only: replays asciicast v2/v3 byte streams through a real VT-100
-    # emulator so LLM agents can grep deterministic cell-grid text frames
-    # instead of OCR'ing PNG keyframes. See AGENTS.md § TUI verification.
-    "pyte>=0.8.2",
 ]
 # spec 026 FR-C09 — Langfuse Prompt Management is an OPT-IN integration.
 # It must never be a core runtime dependency (AGENTS.md hard rule: no new
@@ -314,7 +309,7 @@ min_confidence = 80
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.2.3"
+version = "0.2.4"
 tag_format = "v$version"
 
 # PyTorch CPU-only wheel for Docker image size discipline (SC-1: ≤ 2 GB).

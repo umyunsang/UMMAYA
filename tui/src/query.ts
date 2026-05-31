@@ -99,6 +99,38 @@ import { runTools } from './services/tools/toolOrchestration.js'
 import { applyToolResultBudget } from './utils/toolResultStorage.js'
 import { recordContentReplacement } from './utils/sessionStorage.js'
 import { handleStopHooks } from './query/stopHooks.js'
+import {
+  buildNmcAedCompletionPromptIfNeeded,
+  buildNmcAedFollowupPromptIfNeeded,
+} from './tools/_shared/nmcAedGuard.js'
+import {
+  buildKmaAnalysisCompletionPromptIfNeeded,
+  buildKmaAnalysisFinalAnswerRepairPromptIfNeeded,
+  buildKmaAnalysisMissingToolPromptIfNeeded,
+  shouldWithholdKmaAnalysisToolCallText,
+} from './tools/_shared/kmaAnalysisGuard.js'
+import {
+  buildProtectedCheckCompletionPromptIfNeeded,
+  buildProtectedCheckFinalAnswerRepairPromptIfNeeded,
+  shouldWithholdProtectedCheckToolCallText,
+} from './tools/_shared/protectedCheckGuard.js'
+import {
+  buildAirKoreaCompletionPromptIfNeeded,
+  buildAirKoreaFinalAnswerRepairPromptIfNeeded,
+  buildGenericPendingFinalAnswerRepairPromptIfNeeded,
+  buildTagoBusCompletionPromptIfNeeded,
+  buildTagoBusFinalAnswerRepairPromptIfNeeded,
+  buildTagoBusFollowupPromptIfNeeded,
+  selectUmmayaToolChoiceOverride,
+  shouldWithholdAirKoreaFinalAnswer,
+  shouldWithholdGenericPendingFinalAnswer,
+  shouldWithholdTagoBusFinalAnswer,
+} from './tools/_shared/toolChoiceRepair.js'
+import {
+  buildTextToolCallFinalAnswerRepairPromptIfNeeded,
+  shouldWithholdTextToolCallFinalAnswer,
+} from './tools/_shared/textToolCallGuard.js'
+import { getAdapterToolByName } from './tools/AdapterTool/AdapterTool.js'
 import { buildQueryConfig } from './query/config.js'
 import { productionDeps, type QueryDeps } from './query/deps.js'
 import { ensureUmmayaAdapterManifest } from './ipc/bridgeSingleton.js'
@@ -679,6 +711,15 @@ async function* queryLoop(
         try {
           let streamingFallbackOccured = false
           queryCheckpoint('query_api_streaming_start')
+          const toolChoiceOverride = selectUmmayaToolChoiceOverride({
+            messages: messagesForQuery,
+            tools: toolUseContext.options.tools,
+          })
+          if (toolChoiceOverride) {
+            logForDebugging(
+              `UMMAYA tool-choice override: ${toolChoiceOverride.name}`,
+            )
+          }
           for await (const message of deps.callModel({
             messages: prependUserContext(messagesForQuery, userContext),
             systemPrompt: fullSystemPrompt,
@@ -694,7 +735,7 @@ async function* queryLoop(
               ...(config.gates.fastModeEnabled && {
                 fastMode: appState.fastMode,
               }),
-              toolChoice: undefined,
+              toolChoice: toolChoiceOverride,
               isNonInteractiveSession:
                 toolUseContext.options.isNonInteractiveSession,
               fallbackModel,
@@ -715,6 +756,7 @@ async function* queryLoop(
               ),
               queryTracking,
               effortValue: appState.effortValue,
+              reasoningMode: appState.reasoningMode,
               advisorModel: appState.advisorModel,
               skipCacheWrite,
               agentId: toolUseContext.agentId,
@@ -820,6 +862,11 @@ async function* queryLoop(
             // tree-shaking constraint), so the collapse check is nested
             // rather than composed.
             let withheld = false
+            const assistantHasToolUse =
+              message.type === 'assistant' &&
+              message.message.content.some(
+                content => content.type === 'tool_use',
+              )
             if (feature('CONTEXT_COLLAPSE')) {
               if (
                 contextCollapse?.isWithheldPromptTooLong(
@@ -842,6 +889,73 @@ async function* queryLoop(
             }
             if (isWithheldMaxOutputTokens(message)) {
               withheld = true
+            }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              shouldWithholdKmaAnalysisToolCallText({
+                messages: messagesForQuery,
+                candidate: message,
+              })
+            ) {
+              withheld = true
+            }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              shouldWithholdProtectedCheckToolCallText({
+                messages: messagesForQuery,
+                candidate: message,
+              })
+            ) {
+              withheld = true
+            }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              shouldWithholdTagoBusFinalAnswer({
+                messages: messagesForQuery,
+                candidate: message,
+              })
+            ) {
+              withheld = true
+            }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              shouldWithholdAirKoreaFinalAnswer({
+                messages: messagesForQuery,
+                candidate: message,
+              })
+            ) {
+              withheld = true
+            }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              shouldWithholdGenericPendingFinalAnswer({
+                messages: messagesForQuery,
+                candidate: message,
+              })
+            ) {
+              withheld = true
+            }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              shouldWithholdTextToolCallFinalAnswer({
+                messages: messagesForQuery,
+                candidate: message,
+              })
+            ) {
+              withheld = true
+            }
+            // Claude Code streams native tool_use blocks as visible assistant
+            // commits before tool execution. UMMAYA recovery/repair guards may
+            // withhold prose, but they must never hide the structured tool_use
+            // message that anchors the following tool_result.
+            if (assistantHasToolUse) {
+              withheld = false
             }
             if (!withheld) {
               yield yieldMessage
@@ -1287,6 +1401,220 @@ async function* queryLoop(
         return { reason: 'completed' }
       }
 
+      const kmaAnalysisMissingToolPrompt =
+        buildKmaAnalysisMissingToolPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages],
+        })
+      if (kmaAnalysisMissingToolPrompt) {
+        const kmaAnalysisChartTool = getAdapterToolByName(
+          'kma_apihub_url_analysis_weather_chart_image',
+        )
+        let nextToolUseContext = toolUseContext
+        if (
+          kmaAnalysisChartTool &&
+          !toolUseContext.options.tools.some(
+            tool => tool.name === kmaAnalysisChartTool.name,
+          )
+        ) {
+          nextToolUseContext = {
+            ...toolUseContext,
+            options: {
+              ...toolUseContext.options,
+              tools: [...toolUseContext.options.tools, kmaAnalysisChartTool],
+            },
+          }
+        }
+        const next: State = {
+          messages: [
+            ...messagesForQuery,
+            ...assistantMessages,
+            createUserMessage({
+              content: kmaAnalysisMissingToolPrompt,
+              isMeta: true,
+            }),
+          ],
+          toolUseContext: nextToolUseContext,
+          autoCompactTracking: tracking,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact,
+          maxOutputTokensOverride: undefined,
+          pendingToolUseSummary: undefined,
+          stopHookActive: true,
+          turnCount,
+          transition: { reason: 'stop_hook_blocking' },
+        }
+        state = next
+        continue
+      }
+
+      const kmaAnalysisFinalAnswerRepairPrompt =
+        buildKmaAnalysisFinalAnswerRepairPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages],
+        })
+      if (kmaAnalysisFinalAnswerRepairPrompt) {
+        const next: State = {
+          messages: [
+            ...messagesForQuery,
+            ...assistantMessages,
+            createUserMessage({
+              content: kmaAnalysisFinalAnswerRepairPrompt,
+              isMeta: true,
+            }),
+          ],
+          toolUseContext,
+          autoCompactTracking: tracking,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact,
+          maxOutputTokensOverride: undefined,
+          pendingToolUseSummary: undefined,
+          stopHookActive: true,
+          turnCount,
+          transition: { reason: 'stop_hook_blocking' },
+        }
+        state = next
+        continue
+      }
+
+      const protectedCheckFinalAnswerRepairPrompt =
+        buildProtectedCheckFinalAnswerRepairPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages],
+        })
+      if (protectedCheckFinalAnswerRepairPrompt) {
+        const next: State = {
+          messages: [
+            ...messagesForQuery,
+            ...assistantMessages,
+            createUserMessage({
+              content: protectedCheckFinalAnswerRepairPrompt,
+              isMeta: true,
+            }),
+          ],
+          toolUseContext,
+          autoCompactTracking: tracking,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact,
+          maxOutputTokensOverride: undefined,
+          pendingToolUseSummary: undefined,
+          stopHookActive: true,
+          turnCount,
+          transition: { reason: 'stop_hook_blocking' },
+        }
+        state = next
+        continue
+      }
+
+      const airKoreaFinalAnswerRepairPrompt =
+        buildAirKoreaFinalAnswerRepairPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages],
+        })
+      if (airKoreaFinalAnswerRepairPrompt) {
+        const next: State = {
+          messages: [
+            ...messagesForQuery,
+            ...assistantMessages,
+            createUserMessage({
+              content: airKoreaFinalAnswerRepairPrompt,
+              isMeta: true,
+            }),
+          ],
+          toolUseContext,
+          autoCompactTracking: tracking,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact,
+          maxOutputTokensOverride: undefined,
+          pendingToolUseSummary: undefined,
+          stopHookActive: true,
+          turnCount,
+          transition: { reason: 'stop_hook_blocking' },
+        }
+        state = next
+        continue
+      }
+
+      const tagoBusFinalAnswerRepairPrompt =
+        buildTagoBusFinalAnswerRepairPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages],
+        })
+      if (tagoBusFinalAnswerRepairPrompt) {
+        const next: State = {
+          messages: [
+            ...messagesForQuery,
+            ...assistantMessages,
+            createUserMessage({
+              content: tagoBusFinalAnswerRepairPrompt,
+              isMeta: true,
+            }),
+          ],
+          toolUseContext,
+          autoCompactTracking: tracking,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact,
+          maxOutputTokensOverride: undefined,
+          pendingToolUseSummary: undefined,
+          stopHookActive: true,
+          turnCount,
+          transition: { reason: 'stop_hook_blocking' },
+        }
+        state = next
+        continue
+      }
+
+      const textToolCallFinalAnswerRepairPrompt =
+        buildTextToolCallFinalAnswerRepairPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages],
+        })
+      if (textToolCallFinalAnswerRepairPrompt) {
+        const next: State = {
+          messages: [
+            ...messagesForQuery,
+            ...assistantMessages,
+            createUserMessage({
+              content: textToolCallFinalAnswerRepairPrompt,
+              isMeta: true,
+            }),
+          ],
+          toolUseContext,
+          autoCompactTracking: tracking,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact,
+          maxOutputTokensOverride: undefined,
+          pendingToolUseSummary: undefined,
+          stopHookActive: true,
+          turnCount,
+          transition: { reason: 'stop_hook_blocking' },
+        }
+        state = next
+        continue
+      }
+
+      const genericPendingFinalAnswerRepairPrompt =
+        buildGenericPendingFinalAnswerRepairPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages],
+        })
+      if (genericPendingFinalAnswerRepairPrompt) {
+        const next: State = {
+          messages: [
+            ...messagesForQuery,
+            ...assistantMessages,
+            createUserMessage({
+              content: genericPendingFinalAnswerRepairPrompt,
+              isMeta: true,
+            }),
+          ],
+          toolUseContext,
+          autoCompactTracking: tracking,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact,
+          maxOutputTokensOverride: undefined,
+          pendingToolUseSummary: undefined,
+          stopHookActive: true,
+          turnCount,
+          transition: { reason: 'stop_hook_blocking' },
+        }
+        state = next
+        continue
+      }
+
       const stopHookResult = yield* handleStopHooks(
         messagesForQuery,
         assistantMessages,
@@ -1384,7 +1712,6 @@ async function* queryLoop(
     let updatedToolUseContext = toolUseContext
 
     queryCheckpoint('query_tool_execution_start')
-
 
     if (streamingToolExecutor) {
       logEvent('tengu_streaming_tool_execution_used', {
@@ -1689,6 +2016,144 @@ async function* queryLoop(
             ...updatedToolUseContext.options,
             tools: refreshedTools,
           },
+        }
+      }
+    }
+
+    const nmcAedMessages = [...messagesForQuery, ...assistantMessages, ...toolResults]
+    const nmcAedTool = getAdapterToolByName('nmc_aed_site_locate')
+    const nmcRegionTool = getAdapterToolByName('kakao_coord_to_region')
+    const nmcAedAvailableToolNames = new Set(
+      updatedToolUseContext.options.tools.map(tool => tool.name),
+    )
+    if (nmcAedTool) {
+      nmcAedAvailableToolNames.add(nmcAedTool.name)
+    }
+    if (nmcRegionTool) {
+      nmcAedAvailableToolNames.add(nmcRegionTool.name)
+    }
+    const missingNmcHelperTools = [nmcAedTool, nmcRegionTool].filter(
+      (tool): tool is NonNullable<ReturnType<typeof getAdapterToolByName>> =>
+        Boolean(tool) &&
+        !updatedToolUseContext.options.tools.some(existing => existing.name === tool.name),
+    )
+    if (missingNmcHelperTools.length > 0) {
+      updatedToolUseContext = {
+        ...updatedToolUseContext,
+        options: {
+          ...updatedToolUseContext.options,
+          tools: [...updatedToolUseContext.options.tools, ...missingNmcHelperTools],
+        },
+      }
+    }
+    const nmcAedFollowupPrompt = buildNmcAedFollowupPromptIfNeeded({
+      messages: nmcAedMessages,
+      availableToolNames: nmcAedAvailableToolNames,
+    })
+    if (nmcAedFollowupPrompt) {
+      toolResults.push(
+        createUserMessage({
+          content: nmcAedFollowupPrompt,
+          isMeta: true,
+        }),
+      )
+    } else {
+      const tagoBusMessages = [...messagesForQuery, ...assistantMessages, ...toolResults]
+      const tagoBusTools = [
+        getAdapterToolByName('tago_bus_route_search'),
+        getAdapterToolByName('tago_bus_route_station_search'),
+        getAdapterToolByName('tago_bus_arrival_search'),
+      ].filter(
+        (tool): tool is NonNullable<ReturnType<typeof getAdapterToolByName>> =>
+          Boolean(tool),
+      )
+      const tagoBusAvailableToolNames = new Set(
+        updatedToolUseContext.options.tools.map(tool => tool.name),
+      )
+      for (const tool of tagoBusTools) {
+        tagoBusAvailableToolNames.add(tool.name)
+      }
+      const tagoBusFollowupPrompt = buildTagoBusFollowupPromptIfNeeded({
+        messages: tagoBusMessages,
+        availableToolNames: tagoBusAvailableToolNames,
+      })
+      if (tagoBusFollowupPrompt) {
+        const existingToolNames = new Set(
+          updatedToolUseContext.options.tools.map(tool => tool.name),
+        )
+        const missingTagoBusTools = tagoBusTools.filter(
+          tool => !existingToolNames.has(tool.name),
+        )
+        if (missingTagoBusTools.length > 0) {
+          updatedToolUseContext = {
+            ...updatedToolUseContext,
+            options: {
+              ...updatedToolUseContext.options,
+              tools: [...updatedToolUseContext.options.tools, ...missingTagoBusTools],
+            },
+          }
+        }
+        toolResults.push(
+          createUserMessage({
+            content: tagoBusFollowupPrompt,
+            isMeta: true,
+          }),
+        )
+      } else {
+        const nmcAedCompletionPrompt = buildNmcAedCompletionPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
+        })
+        if (nmcAedCompletionPrompt) {
+          toolResults.push(
+            createUserMessage({
+              content: nmcAedCompletionPrompt,
+              isMeta: true,
+            }),
+          )
+        }
+        const tagoBusCompletionPrompt = buildTagoBusCompletionPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
+        })
+        if (tagoBusCompletionPrompt) {
+          toolResults.push(
+            createUserMessage({
+              content: tagoBusCompletionPrompt,
+              isMeta: true,
+            }),
+          )
+        }
+        const protectedCheckCompletionPrompt = buildProtectedCheckCompletionPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
+        })
+        if (protectedCheckCompletionPrompt) {
+          toolResults.push(
+            createUserMessage({
+              content: protectedCheckCompletionPrompt,
+              isMeta: true,
+            }),
+          )
+        }
+        const kmaAnalysisCompletionPrompt = buildKmaAnalysisCompletionPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
+        })
+        if (kmaAnalysisCompletionPrompt) {
+          toolResults.push(
+            createUserMessage({
+              content: kmaAnalysisCompletionPrompt,
+              isMeta: true,
+            }),
+          )
+        }
+        const airKoreaCompletionPrompt = buildAirKoreaCompletionPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
+        })
+        if (airKoreaCompletionPrompt) {
+          toolResults.push(
+            createUserMessage({
+              content: airKoreaCompletionPrompt,
+              isMeta: true,
+            }),
+          )
         }
       }
     }

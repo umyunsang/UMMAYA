@@ -8,7 +8,7 @@
   "$id": "https://ummaya.example/api/schemas/find.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "LLM-visible find input — fetch-only ``{tool_id, params}`` envelope.\n\nSpec 2521 (2026-05-01): the previous ``_LookupInput`` (RootModel union of\nLookupSearchInput | LookupFetchInput) exposed BM25 adapter discovery as\na callable mode. That mis-modeled an *internal backend mechanism* as a\nuser-visible tool: the LLM kept emitting ``find(mode='search')`` calls\nafter each answer turn, painting a redundant `● find(search:)` block\nin the citizen transcript and burning agentic-loop budget.\n\nThe corrected design (per user directive 2026-05-01):\n\n1. BM25 search is a backend-internal *function*, not a tool. The\n   backend runs it automatically against every citizen utterance and\n   injects the top-K candidates into the system prompt's\n   ``<available_adapters>`` dynamic suffix (see ``stdio.py``).\n2. The LLM-visible ``find`` tool is fetch-only: pick a ``tool_id``\n   from the injected suffix, supply ``params``, get a typed result.\n3. ``LookupSearchInput`` / ``LookupSearchResults`` survive as\n   internal API consumed by the auto-inject path + the eval harness\n   (``ummaya.eval.retrieval``); they are NOT exposed to the LLM.",
+  "description": "LLM-visible find input — fetch-only ``{tool_id, params}`` envelope.\n\nSpec 2521 (2026-05-01): the previous ``_LookupInput`` (RootModel union of\nLookupSearchInput | LookupFetchInput) exposed BM25 adapter discovery as\na callable mode. That mis-modeled an *internal backend mechanism* as a\nuser-visible tool: the LLM kept emitting ``find(mode='search')`` calls\nafter each answer turn, painting a redundant `● find(search:)` block\nin the citizen transcript and burning agentic-loop budget.\n\nThe corrected design (per user directive 2026-05-01):\n\n1. BM25 search is a backend-internal *function*, not a tool. The\n   backend runs it automatically against every citizen utterance and\n   injects the top-K candidates into the system prompt's\n   ``<available_adapters>`` dynamic suffix (see ``stdio.py``).\n2. The LLM-visible ``find`` tool is fetch-only: pick a ``tool_id``\n   from the injected suffix, supply ``params``, get a typed result.\n3. ``LookupSearchInput`` / ``LookupSearchResults`` survive as\n   internal API consumed by the auto-inject path and deterministic\n   retrieval tests; they are NOT exposed to the LLM.",
   "properties": {
     "page": {
       "anyOf": [
@@ -31,7 +31,7 @@
       "type": "object"
     },
     "tool_id": {
-      "description": "Adapter identifier picked from the dynamically-injected <available_adapters> block. Must come from the candidate list — never guess.",
+      "description": "Concrete adapter identifier picked from the dynamically-injected <available_adapters> block. This is not the root function name; never set tool_id to 'find', 'locate', 'check', or 'send'. Must come from the candidate list — never guess.",
       "pattern": "^([a-z][a-z0-9_]*|plugin\\.[a-z][a-z0-9_]*\\.(find|send|check|locate))$",
       "title": "Tool Id",
       "type": "string"

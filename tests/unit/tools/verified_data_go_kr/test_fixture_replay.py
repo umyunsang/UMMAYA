@@ -43,6 +43,11 @@ FIXTURE_CASES = {
         "15098529/probes/live-2026-05-16/tago-bus-route.body.xml",
         "routeid",
     ),
+    "tago_bus_route_station_search": (
+        {"city_code": "21", "route_id": "BSB5201001000", "page_no": 1, "num_of_rows": 100},
+        "15098529/probes/live-2026-05-28/tago-bus-route-station.body.xml",
+        "nodeid",
+    ),
     "tago_bus_arrival_search": (
         {"city_code": "25", "node_id": "DJB8001793", "page_no": 1, "num_of_rows": 10},
         "15098530/probes/live-2026-05-16/tago-bus-arrival.body.xml",
@@ -76,8 +81,15 @@ FIXTURE_CASES = {
         "powerUsage",
     ),
     "pps_bid_public_info": (
-        {"inqry_div": "2", "bid_ntce_no": "R25BK00934017", "page_no": 1, "num_of_rows": 10},
-        "15129394/probes/live-2026-05-16/pps-bid-service.body.json",
+        {
+            "inqry_div": "1",
+            "inqry_bgn_dt": "202507010000",
+            "inqry_end_dt": "202507012359",
+            "bid_ntce_nm": "전기공사",
+            "page_no": 1,
+            "num_of_rows": 10,
+        },
+        "15129394/probes/live-2026-05-27/pps-bid-construction-search.body.json",
         "bidNtceNo",
     ),
     "reb_real_estate_stat_table": (
@@ -209,6 +221,54 @@ async def test_adapter_handle_replays_live_probe_fixture(spec: object) -> None:
     if expected_field is not None:
         assert raw["items"]
         assert expected_field in raw["items"][0]["record"]
+
+
+@pytest.mark.asyncio
+async def test_tago_bus_arrival_accepts_route_no_as_response_filter() -> None:
+    module = module_for_tool_id("tago_bus_arrival_search")
+    fixture_body = (
+        FIXTURES / "15098530/probes/live-2026-05-16-direct-check/tago-bus-arrival.body"
+    ).read_bytes()
+
+    validated_input = module.INPUT_SCHEMA.model_validate(
+        {
+            "city_code": "25",
+            "node_id": "DJB8001793",
+            "route_no": "301",
+            "page_no": 1,
+            "num_of_rows": 5,
+        }
+    )
+    raw = await module.handle(validated_input, fixture_body=fixture_body)
+
+    assert raw["kind"] == "collection"
+    assert raw["total_count"] == 1
+    assert raw["items"][0]["record"]["routeno"] == "301"
+    assert raw["items"][0]["record"]["routeid"] == "DJB30300054"
+
+
+@pytest.mark.asyncio
+async def test_tago_bus_route_station_accepts_node_name_as_response_filter() -> None:
+    module = module_for_tool_id("tago_bus_route_station_search")
+    fixture_body = (
+        FIXTURES / "15098529/probes/live-2026-05-28/tago-bus-route-station.body.xml"
+    ).read_bytes()
+
+    validated_input = module.INPUT_SCHEMA.model_validate(
+        {
+            "city_code": "21",
+            "route_id": "BSB5201001000",
+            "node_nm": "부산역",
+            "page_no": 1,
+            "num_of_rows": 100,
+        }
+    )
+    raw = await module.handle(validated_input, fixture_body=fixture_body)
+
+    assert raw["kind"] == "collection"
+    assert raw["total_count"] == 2
+    node_ids = {item["record"]["nodeid"] for item in raw["items"]}
+    assert node_ids == {"BSB509950000", "BSB509960000"}
 
 
 def test_kepco_input_accepts_official_wire_param_aliases() -> None:

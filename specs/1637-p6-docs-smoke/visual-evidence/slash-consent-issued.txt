@@ -1,5 +1,0 @@
-# Visual evidence — slash-consent-issued
-# Slash command — `/consent` receipt-issued toast
-# Captured 2026-04-26T01:08:33.222Z via ink-testing-library render()
-
- ✻ 발급됨 rcpt-01943af2

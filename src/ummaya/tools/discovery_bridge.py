@@ -138,7 +138,11 @@ _VERIFY_FAMILIES: list[dict[str, Any]] = [
             "네이버인증",
             "토스인증",
             "정부24",
+            "홈택스",
+            "국세청",
             "민원",
+            "증명원",
+            "소득금액증명원",
             "주민등록등본",
             "발급",
         ],
@@ -149,12 +153,20 @@ _VERIFY_FAMILIES: list[dict[str, Any]] = [
             "Naver",
             "Toss",
             "gov24",
+            "hometax",
+            "national tax service",
             "civil petition",
+            "income certificate",
             "resident registration certificate",
             "issuance",
         ],
         "endpoint": "https://api.gateway.ummaya.gov.kr/v1/verify/simple",
         "policy_authority": "https://www.kftc.or.kr/",
+        "scope_rules": (
+            "Scope rule: simple-auth module verification uses the canonical "
+            "check tool_id 'mock_verify_module_simple_auth'. Do not set tool_id "
+            "to 'simple_auth_module'; that string is only the internal family_hint."
+        ),
     },
     {
         "tool_id": "mock_verify_module_any_id_sso",
@@ -221,7 +233,9 @@ _VERIFY_FAMILIES: list[dict[str, Any]] = [
         "scope_rules": (
             "Scope rule: mobile ID identity verification uses exactly scope_list "
             "['check:mobile_id.identity']; do not invent find:identity.info "
-            "or find:identity.verify scopes."
+            "or find:identity.verify scopes. Use the canonical check tool_id "
+            "'mock_verify_mobile_id'. Do not set tool_id to 'mobile_id'; that "
+            "string is only the internal family_hint."
         ),
     },
     {
@@ -304,6 +318,8 @@ def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
         output_schema=_OpaqueOutput,
         llm_description=(
             "Use only through the core check primitive: "
+            f"check({{tool_id: '{entry['tool_id']}', params: {{...}}}}). "
+            "Canonical action-scope form: "
             f"check(tool_id='{entry['tool_id']}', params={{...}}). "
             "Do not call this adapter through find.\n\n"
             f"{scope_clause}"

@@ -55,8 +55,11 @@ export async function* queryModelWithStreaming(params: {
   const persistThinking = process.env.UMMAYA_PERSIST_THINKING === '1'
   let accumulatedThinking = ''
   let messageStartEmitted = false
-  let textBlockStarted = false
+  let nextContentBlockIndex = 0
+  let textBlockIndex: number | null = null
   let textBlockStopped = false
+  let thinkingBlockIndex: number | null = null
+  let thinkingBlockStopped = false
   const pendingContentBlocks: Array<{
     type: 'tool_use'
     id: string
@@ -119,16 +122,17 @@ export async function* queryModelWithStreaming(params: {
         }
         messageStartEmitted = true
       }
-      if (!textBlockStarted) {
+      if (thinkingText.length > 0 && thinkingBlockIndex === null) {
         yield {
           type: 'stream_event' as const,
           event: {
             type: 'content_block_start' as const,
-            index: 0,
-            content_block: { type: 'text' as const, text: '' },
+            index: nextContentBlockIndex,
+            content_block: { type: 'thinking' as const, thinking: '' },
           },
         }
-        textBlockStarted = true
+        thinkingBlockIndex = nextContentBlockIndex
+        nextContentBlockIndex += 1
       }
 
       if (thinkingText.length > 0) {
@@ -139,7 +143,7 @@ export async function* queryModelWithStreaming(params: {
           type: 'stream_event' as const,
           event: {
             type: 'content_block_delta' as const,
-            index: 0,
+            index: thinkingBlockIndex ?? 0,
             delta: { type: 'thinking_delta' as const, thinking: thinkingText },
           },
         }
@@ -147,21 +151,50 @@ export async function* queryModelWithStreaming(params: {
 
       accumulated += deltaText
       if (deltaText.length > 0) {
+        if (thinkingBlockIndex !== null && !thinkingBlockStopped) {
+          yield {
+            type: 'stream_event' as const,
+            event: {
+              type: 'content_block_stop' as const,
+              index: thinkingBlockIndex,
+            },
+          }
+          thinkingBlockStopped = true
+        }
+        if (textBlockIndex === null) {
+          yield {
+            type: 'stream_event' as const,
+            event: {
+              type: 'content_block_start' as const,
+              index: nextContentBlockIndex,
+              content_block: { type: 'text' as const, text: '' },
+            },
+          }
+          textBlockIndex = nextContentBlockIndex
+          nextContentBlockIndex += 1
+        }
         yield {
           type: 'stream_event' as const,
           event: {
             type: 'content_block_delta' as const,
-            index: 0,
+            index: textBlockIndex,
             delta: { type: 'text_delta' as const, text: deltaText },
           },
         }
       }
 
       if (frameAny.done) {
-        if (textBlockStarted && !textBlockStopped) {
+        if (thinkingBlockIndex !== null && !thinkingBlockStopped) {
           yield {
             type: 'stream_event' as const,
-            event: { type: 'content_block_stop' as const, index: 0 },
+            event: { type: 'content_block_stop' as const, index: thinkingBlockIndex },
+          }
+          thinkingBlockStopped = true
+        }
+        if (textBlockIndex !== null && !textBlockStopped) {
+          yield {
+            type: 'stream_event' as const,
+            event: { type: 'content_block_stop' as const, index: textBlockIndex },
           }
           textBlockStopped = true
         }
@@ -217,10 +250,17 @@ export async function* queryModelWithStreaming(params: {
         }
         messageStartEmitted = true
       }
-      if (textBlockStarted && !textBlockStopped) {
+      if (thinkingBlockIndex !== null && !thinkingBlockStopped) {
         yield {
           type: 'stream_event' as const,
-          event: { type: 'content_block_stop' as const, index: 0 },
+          event: { type: 'content_block_stop' as const, index: thinkingBlockIndex },
+        }
+        thinkingBlockStopped = true
+      }
+      if (textBlockIndex !== null && !textBlockStopped) {
+        yield {
+          type: 'stream_event' as const,
+          event: { type: 'content_block_stop' as const, index: textBlockIndex },
         }
         textBlockStopped = true
       }
@@ -232,7 +272,8 @@ export async function* queryModelWithStreaming(params: {
       }
 
       pendingContentBlocks.push(toolUseBlock)
-      const toolBlockIndex = textBlockStarted ? 1 : 0
+      const toolBlockIndex = nextContentBlockIndex
+      nextContentBlockIndex += 1
 
       yield {
         type: 'stream_event' as const,
@@ -271,10 +312,17 @@ export async function* queryModelWithStreaming(params: {
     } else if (frameAny.kind === 'error') {
       const reason = frameAny.message ?? 'UMMAYA backend error'
       yield createAssistantMessage({ content: `[UMMAYA backend error] ${reason}` })
-      if (textBlockStarted && !textBlockStopped) {
+      if (thinkingBlockIndex !== null && !thinkingBlockStopped) {
         yield {
           type: 'stream_event' as const,
-          event: { type: 'content_block_stop' as const, index: 0 },
+          event: { type: 'content_block_stop' as const, index: thinkingBlockIndex },
+        }
+        thinkingBlockStopped = true
+      }
+      if (textBlockIndex !== null && !textBlockStopped) {
+        yield {
+          type: 'stream_event' as const,
+          event: { type: 'content_block_stop' as const, index: textBlockIndex },
         }
         textBlockStopped = true
       }
@@ -299,10 +347,16 @@ export async function* queryModelWithStreaming(params: {
     })
   }
   if (messageStartEmitted) {
-    if (textBlockStarted && !textBlockStopped) {
+    if (thinkingBlockIndex !== null && !thinkingBlockStopped) {
       yield {
         type: 'stream_event' as const,
-        event: { type: 'content_block_stop' as const, index: 0 },
+        event: { type: 'content_block_stop' as const, index: thinkingBlockIndex },
+      }
+    }
+    if (textBlockIndex !== null && !textBlockStopped) {
+      yield {
+        type: 'stream_event' as const,
+        event: { type: 'content_block_stop' as const, index: textBlockIndex },
       }
     }
     yield {
