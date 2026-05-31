@@ -70,10 +70,14 @@ class DocumentEngineRegistry:
 
 def build_default_document_engine_registry() -> DocumentEngineRegistry:
     """Build the default promoted-engine registry for local document tools."""
+    from ummaya.tools.documents.formats.hwpx import (  # noqa: PLC0415
+        HwpXPackageTextEngine,
+    )
     from ummaya.tools.documents.formats.ooxml import (  # noqa: PLC0415
         PythonDocxInspectionEngine,
     )
 
     registry = DocumentEngineRegistry()
+    registry.register(HwpXPackageTextEngine())
     registry.register(PythonDocxInspectionEngine())
     return registry

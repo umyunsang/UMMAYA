@@ -47,6 +47,7 @@ _BASELINE_DEPS: frozenset[str] = frozenset(
         "sentence_transformers",
         "numpy",
         "torch",
+        "python-docx",
         "PyYAML",
         "pyyaml",
         # torch/numpy are always present as sentence-transformers deps

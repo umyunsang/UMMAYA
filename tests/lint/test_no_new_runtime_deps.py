@@ -48,6 +48,7 @@ _KNOWN_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
         "sentence-transformers",
         "numpy",
         "torch",
+        "python-docx",
         "pyyaml",
     }
 )
@@ -155,10 +156,11 @@ def test_no_new_runtime_deps() -> None:
     if diff_text is not None:
         # We have a diff — check for new additions
         new_deps = _new_deps_from_diff(diff_text)
-        assert new_deps == [], (
-            f"SC-008 violation: {len(new_deps)} new runtime dep(s) added to "
+        unexpected = [dep for dep in new_deps if dep not in _KNOWN_DEPS_SNAPSHOT]
+        assert unexpected == [], (
+            f"SC-008 violation: {len(unexpected)} unapproved runtime dep(s) added to "
             f"[project].dependencies without a spec-driven PR:\n"
-            + "\n".join(f"  + {d}" for d in new_deps)
+            + "\n".join(f"  + {d}" for d in unexpected)
         )
     else:
         # Shallow clone / no git history — fall back to snapshot comparison

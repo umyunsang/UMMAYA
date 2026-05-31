@@ -25,3 +25,20 @@ def test_python_docx_read_profile_is_promoted_for_default_runtime() -> None:
     assert docx_read.promoted is True
     assert docx_read.license_gate_passed is True
     assert docx_read.dependency_gate_passed is True
+
+
+def test_hwpx_package_text_profile_is_promoted_for_default_runtime() -> None:
+    profiles = load_candidate_profiles(_FIXTURE_ROOT / "candidate_profiles.yaml")
+
+    run = evaluate_candidate_profiles(profiles)
+
+    hwpx_write = next(
+        decision
+        for decision in run.decisions
+        if decision.format == "hwpx"
+        and decision.engine_id == "hwpx-package-text"
+        and decision.operation == "write"
+    )
+    assert hwpx_write.promoted is True
+    assert hwpx_write.license_gate_passed is True
+    assert hwpx_write.dependency_gate_passed is True

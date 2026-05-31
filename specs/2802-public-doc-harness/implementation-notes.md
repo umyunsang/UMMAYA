@@ -28,7 +28,9 @@ behavior is delegated to promoted engines behind `DocumentEngineRegistry`.
 7. Evaluation loop: candidate profile scorecards, dependency/license gates,
    promotion/deferral persistence, and documented rejected alternatives.
 8. Runtime promotion: default local runtime now registers read-only DOCX
-   inspection through `python-docx` after fixture-backed read promotion.
+   inspection through `python-docx` after fixture-backed read promotion, plus
+   bounded HWPX text-node read/write through `hwpx-package-text` for local
+   public-form smoke tests.
 
 ## Parallel Development Record
 
@@ -69,12 +71,14 @@ hard gates plus read/extract evidence.
 
 ## Current Limitations
 
+- HWPX default write support is intentionally bounded to text-node replacement
+  in existing package structure. It does not claim full style/layout/render
+  fidelity and must be reread after mutation before external handoff.
 - DOCX write/style/render fidelity is not promoted yet. The default
   `python-docx` engine is read-only and extracts top-level paragraphs, tables,
   and core properties; nested tables and revision-mark content remain an
   explicit warning boundary.
-- HWP binary write remains blocked. HWPX is the primary Korean editable target
-  once a candidate engine passes the promotion gate.
+- HWP binary write remains blocked.
 - Tool execution is local only. `document_save` writes an export artifact for
   review or handoff; it does not submit to Government24, Hometax, or another
   agency channel.

@@ -89,7 +89,10 @@ def apply_document_patch(
             f"No mutation-capable engine is registered for {working_artifact.format.value}.",
         )
 
-    payload = engine.apply_patch(Path(working_artifact.source_path), patch)
+    try:
+        payload = engine.apply_patch(Path(working_artifact.source_path), patch)
+    except ValueError as exc:
+        return _blocked(working_artifact, BlockedReason.validation_failed, str(exc))
     derivative = store.write_derivative(
         working_artifact,
         artifact_id=artifact_id,

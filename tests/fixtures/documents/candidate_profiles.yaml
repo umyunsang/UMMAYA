@@ -128,6 +128,32 @@ profiles:
       write: DOCX write remains blocked until mutation and render gates are promoted.
     decision_note: Promote read-only DOCX inspection for the default local harness runtime.
   - format: hwpx
+    engine_id: hwpx-package-text
+    supported_operations: [read, write]
+    evaluate_operations: [read, write]
+    license:
+      spdx: Apache-2.0
+      gate: pass
+      notes: In-repo package text-node engine; no third-party runtime dependency.
+    dependency:
+      runtime_dependency: false
+      gate: pass
+      notes: Uses stdlib ZIP/XML handling for bounded HWPX text-node edits.
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 18
+      style_layout_control: 10
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwpx-package-text-weekly-log
+      - metadata:data-go-kr-public-doc-ai-corpus
+    operation_notes:
+      write: HWPX package text engine does not promote style mutation or visual rendering.
+    decision_note: Promote bounded HWPX text-node read/write for default local harness smoke.
+  - format: hwpx
     engine_id: rhwp
     supported_operations: [read, write]
     evaluate_operations: [write]

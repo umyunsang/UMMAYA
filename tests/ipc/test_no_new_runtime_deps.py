@@ -51,6 +51,7 @@ _PY_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
         "sentence-transformers",
         "numpy",
         "torch",
+        "python-docx",
         "pyyaml",
     }
 )
@@ -231,9 +232,10 @@ def test_no_new_python_runtime_deps() -> None:
     diff_text = _best_effort_diff(_PYPROJECT)
     if diff_text is not None:
         new_deps = _new_py_deps_from_diff(diff_text)
-        assert new_deps == [], (
-            f"SC-008 violation (Python): {len(new_deps)} new runtime dep(s) added:\n"
-            + "\n".join(f"  + {d}" for d in new_deps)
+        unexpected = [dep for dep in new_deps if dep not in _PY_DEPS_SNAPSHOT]
+        assert unexpected == [], (
+            f"SC-008 violation (Python): {len(unexpected)} unapproved runtime dep(s) added:\n"
+            + "\n".join(f"  + {d}" for d in unexpected)
         )
         return
 

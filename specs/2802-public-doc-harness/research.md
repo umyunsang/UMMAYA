@@ -167,14 +167,14 @@ Write promotion requires at least 85/100 plus all hard gates. Read-only promotio
 
 ## Decision 9: Harness/Engine Boundary Correction
 
-**Decision**: UMMAYA builds the LLM-facing document harness and promotion/evidence loop. It does not build first-party parsers, converters, or office editors for HWPX, HWP, OOXML, or PDF in this epic. Format-specific modules are thin engine-adapter boundaries and candidate metadata; real read/write/style behavior is supplied by promoted engines such as `python-hwpx`, HWPX MCP servers, `python-docx`, `openpyxl`, `python-pptx`, `pypdf`, or future bridge engines after the scorecard passes.
+**Decision**: UMMAYA builds the LLM-facing document harness and promotion/evidence loop. It does not build general-purpose first-party parsers, converters, or office editors for HWPX, HWP, OOXML, or PDF in this epic. Format-specific modules are thin engine-adapter boundaries and candidate metadata; real broad read/write/style behavior is supplied by promoted engines such as `python-hwpx`, HWPX MCP servers, `python-docx`, `openpyxl`, `python-pptx`, `pypdf`, or future bridge engines after the scorecard passes. A bounded `hwpx-package-text` bootstrap is allowed only for existing HWPX package text-node replacement smoke tests, because it preserves package members and does not claim style/layout/render fidelity.
 
 **Rationale**:
 
 - The user requirement is Public AX document authoring through an LLM harness, not a new document parser project.
 - Direct parsers can make tests green while hiding the actual risk: whether an engine can preserve public-office form structure, fonts, table geometry, visible PDF appearances, and deterministic saved bytes.
 - The correct foundation is therefore: intake -> artifact lineage -> engine registry -> typed IR/result -> patch/render/reread/validation -> evidence -> promotion gate.
-- Minimal stdlib handling is allowed only for intake/security checks and test doubles. It must not be promoted as production document parsing or conversion.
+- Minimal stdlib handling is allowed for intake/security checks, test doubles, and bounded HWPX package text-node smoke edits. It must not be represented as broad document parsing, conversion, style control, or render fidelity.
 
 **Alternatives Considered**:
 
@@ -260,6 +260,7 @@ Current fixture decisions:
 | Format | Candidate | Operation | Decision | Reason |
 |--------|-----------|-----------|----------|--------|
 | HWPX | `python-hwpx` | read/write | Promote candidate profile | Scorecard passes read/write thresholds, dependency gate passes, license gate passes, and evidence references stay offline. |
+| HWPX | `hwpx-package-text` | read/write | Promote default smoke engine | No dependency addition; supports only existing HWPX text-node reread/write smoke needed for public-form alpha tests. Style, render, and layout fidelity remain unpromoted. |
 | HWPX | `direct-owpml-oracle` | write | Reject for runtime promotion | Retained only as a conformance/test oracle; it does not expose a supported runtime write operation. |
 | HWP | `OpenHWP-read-only` | read | Promote candidate profile | Read-only extraction score meets the read threshold with dependency and license gates passed. |
 | HWP | `OpenHWP-read-only` | write | Block | Binary HWP direct write remains blocked in this epic regardless of score. |

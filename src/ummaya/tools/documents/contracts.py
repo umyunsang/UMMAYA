@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+from importlib import resources
 from pathlib import Path
 from typing import Literal, cast
 
@@ -72,10 +73,28 @@ class DocumentToolContractCatalog(BaseModel):
 
 def load_contract_schema(path: Path = CONTRACT_SCHEMA_PATH) -> dict[str, object]:
     """Load the checked-in JSON Schema document."""
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw = json.loads(_read_contract_schema_text(path))
     if not isinstance(raw, dict):
         raise ValueError(f"Contract schema must be an object: {path}")
     return cast(dict[str, object], raw)
+
+
+def _read_contract_schema_text(path: Path) -> str:
+    """Read the document contract schema from source tree or wheel resource."""
+    if path.is_file():
+        return path.read_text(encoding="utf-8")
+
+    try:
+        bundled = resources.files("ummaya._canonical").joinpath("document-tools.schema.json")
+        with resources.as_file(bundled) as resource_path:
+            if Path(resource_path).is_file():
+                return Path(resource_path).read_text(encoding="utf-8")
+    except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+        pass
+
+    raise FileNotFoundError(
+        f"Document tool contract schema not found in source tree or bundled wheel resource: {path}"
+    )
 
 
 def load_document_tool_contracts(path: Path = CONTRACT_SCHEMA_PATH) -> DocumentToolContractCatalog:
