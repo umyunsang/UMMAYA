@@ -18,6 +18,8 @@ from ummaya.tools.documents.intake import (
 )
 from ummaya.tools.documents.models import PROMOTED_RUNTIME_DOCUMENT_FORMATS, KnownDocumentFormat
 
+_ZIP_TIMESTAMP = (2020, 1, 1, 0, 0, 0)
+
 
 def _value(value: object) -> object:
     return getattr(value, "value", value)
@@ -33,7 +35,9 @@ def _zip_bytes(entries: Mapping[str, bytes]) -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as package:
         for name, payload in entries.items():
-            package.writestr(name, payload)
+            info = zipfile.ZipInfo(name, _ZIP_TIMESTAMP)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            package.writestr(info, payload)
     return buffer.getvalue()
 
 
@@ -127,7 +131,7 @@ def _tar_bytes() -> bytes:
 
 def _gzip_bytes() -> bytes:
     buffer = io.BytesIO()
-    with gzip.GzipFile(fileobj=buffer, mode="wb") as package:
+    with gzip.GzipFile(fileobj=buffer, mode="wb", mtime=0) as package:
         package.write(b"public")
     return buffer.getvalue()
 
