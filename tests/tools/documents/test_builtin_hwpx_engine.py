@@ -63,6 +63,36 @@ def test_default_runtime_inspects_hwpx_with_package_text_engine(tmp_path: Path) 
     assert result.extraction.fields[0].path == "/hwpx/text[1]"
 
 
+def test_default_runtime_treats_hwpx_package_with_hwp_extension_as_editable_hwpx(
+    tmp_path: Path,
+) -> None:
+    source = _write_hwpx_empty_value_table_fixture(tmp_path / "official-form.hwp")
+    runtime = DocumentToolRuntime(
+        session_id="hwpx-package-hwp-extension",
+        artifact_root=tmp_path / "store",
+    )
+
+    inspect_result = runtime.inspect(
+        DocumentInspectRequest(
+            correlation_id="hwpx-package-hwp-extension",
+            document=DocumentLocator(path=str(source), expected_format=DocumentFormat.hwp),
+        )
+    )
+
+    assert inspect_result.status is ToolResultStatus.ok
+    assert inspect_result.artifact_refs
+
+    copy_result = runtime.copy_for_edit(
+        DocumentCopyForEditRequest(
+            correlation_id="hwpx-package-hwp-extension",
+            document=DocumentLocator(artifact_id=inspect_result.artifact_refs[0]),
+        )
+    )
+
+    assert copy_result.status is ToolResultStatus.ok
+    assert copy_result.artifact_refs[-1].startswith("working-")
+
+
 def test_default_runtime_extracts_hwpx_style_map_and_text_style_refs(
     tmp_path: Path,
 ) -> None:

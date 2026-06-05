@@ -878,7 +878,7 @@ _KMA_ANALYSIS_MAP_USER_QUERY_RE: Final = re.compile(
     re.IGNORECASE,
 )
 _DOCUMENT_WRITE_REQUEST_RE: Final = re.compile(
-    r"(작성|수정|편집|채우|입력|변경|저장|write|edit|fill|apply|save)",
+    r"(작성|수정|편집|채우|채워|입력|변경|저장|write|edit|fill|apply|save)",
     re.IGNORECASE,
 )
 _DOCUMENT_SAVE_REQUEST_RE: Final = re.compile(

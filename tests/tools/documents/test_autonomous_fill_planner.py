@@ -187,6 +187,91 @@ def test_autonomous_fill_planner_blocks_slots_matched_by_protected_ranges() -> N
     assert plan.slots[0].candidate_value is None
 
 
+def test_document_ir_infers_blank_public_form_table_cells_as_slots() -> None:
+    extraction = DocumentExtraction(
+        artifact_id="artifact-public-table",
+        fields=[
+            FormField(
+                field_id="label-business-name",
+                label="상호(단체명)",
+                path="/hwpx/text[21]",
+                field_type="text",
+                required=False,
+                current_value="상호(단체명)",
+                source_confidence=Decimal("1"),
+            ),
+            FormField(
+                field_id="label-business-phone",
+                label="사업장 전화번호",
+                path="/hwpx/text[25]",
+                field_type="text",
+                required=False,
+                current_value="(사업장 전화번호)",
+                source_confidence=Decimal("1"),
+            ),
+        ],
+        tables=[
+            TableBlock(
+                block_id="table-001",
+                source_path="Contents/section0.xml#table[1]",
+                cells=[
+                    TableCell(
+                        row_index=0,
+                        column_index=0,
+                        text="상호(단체명)",
+                        source_path="Contents/section0.xml#table[1]/r1c1",
+                        field_path="/hwpx/text[21]",
+                    ),
+                    TableCell(
+                        row_index=0,
+                        column_index=1,
+                        text="",
+                        source_path="Contents/section0.xml#table[1]/r1c2",
+                    ),
+                    TableCell(
+                        row_index=0,
+                        column_index=2,
+                        text="(사업장 전화번호)",
+                        source_path="Contents/section0.xml#table[1]/r1c3",
+                        field_path="/hwpx/text[25]",
+                    ),
+                    TableCell(
+                        row_index=0,
+                        column_index=3,
+                        text="",
+                        source_path="Contents/section0.xml#table[1]/r1c4",
+                    ),
+                ],
+            )
+        ],
+    )
+
+    document_ir = DocumentIR.from_extraction(
+        artifact_id="artifact-public-table",
+        document_format=DocumentFormat.hwpx,
+        extraction=extraction,
+        engine_id="hwpx-package-text",
+    )
+
+    slots_by_path = {slot.source_anchor.format_path: slot for slot in document_ir.form_slots}
+    assert slots_by_path["Contents/section0.xml#table[1]/r1c2"].label == "상호(단체명)"
+    assert slots_by_path["Contents/section0.xml#table[1]/r1c2"].current_value == ""
+    assert slots_by_path["Contents/section0.xml#table[1]/r1c4"].label == "사업장 전화번호"
+    assert slots_by_path["Contents/section0.xml#table[1]/r1c4"].protected is True
+
+    from ummaya.tools.documents.planner import plan_autonomous_fill
+
+    plan = plan_autonomous_fill(
+        document_ir,
+        instruction="문서 내용을 파악하고 내용에 맞게 알아서 채워줘.",
+    )
+
+    planned_values = {slot.label: slot.candidate_value for slot in plan.slots}
+    assert planned_values["상호(단체명)"] == "공공AX 테스트"
+    blocked_labels = {slot.label for slot in plan.slots if slot.slot_id in plan.blocked_slot_ids}
+    assert "사업장 전화번호" in blocked_labels
+
+
 def test_autonomous_fill_planner_ignores_unrequested_protected_ranges_for_explicit_field() -> None:
     from ummaya.tools.documents.planner import plan_autonomous_fill
 

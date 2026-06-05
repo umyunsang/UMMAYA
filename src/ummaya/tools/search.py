@@ -151,7 +151,7 @@ _DOCUMENT_INTENT_RE = re.compile(
     re.IGNORECASE,
 )
 _DOCUMENT_WRITE_INTENT_RE = re.compile(
-    r"(작성|수정|편집|채우|입력|변경|저장|write|edit|fill|apply|save)",
+    r"(작성|수정|편집|채우|채워|입력|변경|저장|write|edit|fill|apply|save)",
     re.IGNORECASE,
 )
 _DOCUMENT_LOCAL_HINT_RE = re.compile(

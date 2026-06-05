@@ -334,7 +334,20 @@ class DocumentToolRuntime:
                     document_ir,
                     instruction=request.instruction,
                 )
-                if autonomous_plan.requires_human_review:
+                candidate_patches = _fill_patches_from_autonomous_plan(autonomous_plan)
+                missing_required_slot_ids = _missing_required_unfilled_slot_ids(autonomous_plan)
+                if missing_required_slot_ids:
+                    return needs_input_document_tool_result(
+                        tool_id="document",
+                        correlation_id=request.correlation_id,
+                        artifact_refs=(source.artifact_id,),
+                        message=(
+                            "Document autonomous fill cannot proceed while required "
+                            "slot(s) lack safe candidate values: "
+                            f"{', '.join(missing_required_slot_ids)}."
+                        ),
+                    )
+                if autonomous_plan.requires_human_review and not candidate_patches:
                     return needs_input_document_tool_result(
                         tool_id="document",
                         correlation_id=request.correlation_id,
@@ -345,7 +358,6 @@ class DocumentToolRuntime:
                             f"{', '.join(autonomous_plan.blocked_slot_ids)}."
                         ),
                     )
-                candidate_patches = _fill_patches_from_autonomous_plan(autonomous_plan)
                 if not candidate_style_patches:
                     candidate_style_patches = _style_patches_from_autonomous_plan(autonomous_plan)
                 if autonomous_plan.save_intent is not None:
@@ -449,13 +461,17 @@ class DocumentToolRuntime:
         render_artifact_refs = _unique_artifact_refs(
             [source.artifact_id, working_artifact_id, *render_result.artifact_refs]
         )
+        text_summary = "Document edit completed with automatic compact diff review evidence."
+        if autonomous_plan is not None and autonomous_plan.blocked_slot_ids:
+            text_summary = (
+                f"{text_summary} Human review is still required for skipped "
+                f"slot(s): {', '.join(autonomous_plan.blocked_slot_ids)}."
+            )
         result = render_result.model_copy(
             update={
                 "tool_id": "document",
                 "artifact_refs": render_artifact_refs,
-                "text_summary": (
-                    "Document edit completed with automatic compact diff review evidence."
-                ),
+                "text_summary": text_summary,
             }
         )
 
@@ -562,11 +578,11 @@ class DocumentToolRuntime:
                 blocked_reason=result.blocked_reason,
             )
 
-        document_format = request.document.expected_format
-        if document_format is None:
-            try:
-                document_format = _format_from_extraction_or_suffix(result.extraction, source_path)
-            except ValueError:
+        try:
+            document_format = _format_from_extraction_or_suffix(result.extraction, source_path)
+        except ValueError:
+            fallback_format = request.document.expected_format
+            if fallback_format is None:
                 return DocumentToolResult(
                     tool_id="document_inspect",
                     correlation_id=request.correlation_id,
@@ -576,6 +592,7 @@ class DocumentToolRuntime:
                     findings=result.findings,
                     text_summary=result.text_summary,
                 )
+            document_format = fallback_format
         artifact_id = _source_artifact_id(request.correlation_id)
         source_artifact = self._source_artifact_for_inspected_path(
             artifact_id=artifact_id,
@@ -1821,6 +1838,18 @@ def _style_patches_from_autonomous_plan(
     )
 
 
+def _missing_required_unfilled_slot_ids(plan: AutonomousFillPlan) -> tuple[str, ...]:
+    blocked_slot_ids = set(plan.blocked_slot_ids)
+    return tuple(
+        slot.slot_id
+        for slot in plan.slots
+        if slot.slot_id in blocked_slot_ids
+        and slot.required
+        and not slot.protected
+        and slot.candidate_value is None
+    )
+
+
 def _fill_patch(
     request: DocumentApplyFillRequest,
     working: DocumentArtifact,
@@ -2327,6 +2356,8 @@ def _validated_local_export_destination(
         )
     expected_suffix = f".{document_format.value}"
     allowed_suffixes = {expected_suffix}
+    if document_format in {DocumentFormat.hwpx, DocumentFormat.owpml}:
+        allowed_suffixes.update({".hwpx", ".owpml"})
     if allow_pdfa_alias and document_format is DocumentFormat.pdf:
         allowed_suffixes.add(".pdfa")
     if destination.suffix.lower() not in allowed_suffixes:

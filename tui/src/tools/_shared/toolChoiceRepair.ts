@@ -73,7 +73,9 @@ const DOCUMENT_ARTIFACT_ID_RE =
 const DOCUMENT_INTENT_RE =
   /(문서|공문서|양식|서식|파일|작성|저장|렌더|미리보기|변경사항|\bdiff\b|\bcompact\b|\bdocument\b|\bfile\b|\bform\b|\brender\b|\bsave\b|\bwrite\b)/iu
 const DOCUMENT_WRITE_RE =
-  /(작성|수정|편집|채우|입력|변경|저장|write|edit|fill|apply|save)/iu
+  /(작성|수정|편집|채우|채워|입력|변경|저장|write|edit|fill|apply|save)/iu
+const DOCUMENT_READ_ONLY_RE =
+  /(읽기\s*전용|수정\s*없이|변경\s*없이|저장\s*없이|열람만|확인만|inspect|extract|read\s*only)/iu
 const DOCUMENT_REVIEW_RE =
   /(diff|compact|변경사항|렌더|미리보기|render|viewport|page)/iu
 const DOCUMENT_DIFF_ONLY_FINAL_RE =
@@ -333,9 +335,11 @@ function forcedDocumentInputFromExplicitPath(
   userText: string,
 ): Record<string, unknown> | undefined {
   if (!isDocumentHarnessQuery(userText)) return undefined
-  const wantsWrite = DOCUMENT_WRITE_RE.test(userText)
+  const wantsWrite =
+    DOCUMENT_WRITE_RE.test(userText) && !DOCUMENT_READ_ONLY_RE.test(userText)
   const wantsReview = DOCUMENT_REVIEW_RE.test(userText)
-  if (!wantsWrite && !wantsReview) return undefined
+  const wantsReadOnly = DOCUMENT_READ_ONLY_RE.test(userText)
+  if (!wantsWrite && !wantsReview && !wantsReadOnly) return undefined
 
   const paths = explicitDocumentPathRefs(userText)
   const source = paths[0]
@@ -652,9 +656,11 @@ function selectDocumentWorkflowTargetToolName(
   messages: readonly unknown[],
 ): string | undefined {
   if (!isDocumentHarnessQuery(userText)) return undefined
-  const wantsWrite = DOCUMENT_WRITE_RE.test(userText)
+  const wantsWrite =
+    DOCUMENT_WRITE_RE.test(userText) && !DOCUMENT_READ_ONLY_RE.test(userText)
   const wantsReview = DOCUMENT_REVIEW_RE.test(userText)
-  if (!wantsWrite && !wantsReview) return undefined
+  const wantsReadOnly = DOCUMENT_READ_ONLY_RE.test(userText)
+  if (!wantsWrite && !wantsReview && !wantsReadOnly) return undefined
   const latestUserIndex = latestUserMessageIndex(messages)
   const hasDocumentForLatestRequest = hasTerminalDocumentPrimitiveToolResultAfter(
     messages,
@@ -687,6 +693,49 @@ export interface ForcedUmmayaToolUse {
   input: Record<string, unknown>
 }
 
+export function repairUmmayaExplicitDocumentToolUseFromUserQuery({
+  toolName,
+  input,
+  messages,
+  tools,
+}: {
+  toolName: string
+  input: Record<string, unknown>
+  messages: readonly Message[]
+  tools: Tools
+}): ForcedUmmayaToolUse | undefined {
+  const available = availableToolNamesFromTools(tools)
+  if (!isAvailableOrSyncedAdapter(available, DOCUMENT_TOOL_NAME)) return undefined
+
+  const userText = latestUserText(messages)
+  if (!hasExplicitDocumentLocator(userText)) return undefined
+
+  const forced = forcedDocumentInputFromExplicitPath(userText)
+  if (!forced) return undefined
+  if (toolName === DOCUMENT_TOOL_NAME) {
+    const forcedOperation = typeof forced.operation === 'string'
+      ? forced.operation
+      : undefined
+    const operation = typeof input.operation === 'string'
+      ? input.operation
+      : undefined
+    const hasExplicitMutationPayload =
+      Array.isArray(input.patches) ||
+      Array.isArray(input.styles) ||
+      typeof input.destination_path === 'string'
+    if (forcedOperation === operation || (
+      forcedOperation !== 'inspect' &&
+      hasExplicitMutationPayload
+    )) {
+      return undefined
+    }
+  }
+  return {
+    name: DOCUMENT_TOOL_NAME,
+    input: forced,
+  }
+}
+
 export function backfillUmmayaObservableToolInputFromUserQuery({
   toolName,
   input,
@@ -702,7 +751,7 @@ export function backfillUmmayaObservableToolInputFromUserQuery({
 
   const userText = latestUserText(messages)
   if (!isDocumentHarnessQuery(userText)) return
-  if (!DOCUMENT_WRITE_RE.test(userText)) return
+  if (!DOCUMENT_WRITE_RE.test(userText) || DOCUMENT_READ_ONLY_RE.test(userText)) return
   if (!hasExplicitDocumentLocator(userText)) return
 
   input.__ummaya_display_operation = 'fill'

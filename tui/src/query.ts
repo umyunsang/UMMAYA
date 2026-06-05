@@ -124,6 +124,7 @@ import {
   buildTagoBusCompletionPromptIfNeeded,
   buildTagoBusFinalAnswerRepairPromptIfNeeded,
   buildTagoBusFollowupPromptIfNeeded,
+  repairUmmayaExplicitDocumentToolUseFromUserQuery,
   selectUmmayaClientForcedToolUse,
   selectUmmayaToolChoiceOverride,
   shouldWithholdAirKoreaFinalAnswer,
@@ -818,8 +819,10 @@ async function* queryLoop(
             // assistantMessages.push below — it flows back to the API and
             // mutating it would break prompt caching (byte mismatch).
             let yieldMessage: typeof message = message
+            let commitMessage: typeof message = message
             if (message.type === 'assistant') {
               let clonedContent: typeof message.message.content | undefined
+              let hasToolUseReplacement = false
               for (let i = 0; i < message.message.content.length; i++) {
                 const block = message.message.content[i]!
                 if (
@@ -832,6 +835,25 @@ async function* queryLoop(
                     block.name,
                   )
                   const inputCopy = { ...(block.input as Record<string, unknown>) }
+                  const repairedToolUse = repairUmmayaExplicitDocumentToolUseFromUserQuery({
+                    toolName: block.name,
+                    input: inputCopy,
+                    messages: messagesForQuery,
+                    tools: toolUseContext.options.tools,
+                  })
+                  if (repairedToolUse) {
+                    clonedContent ??= [...message.message.content]
+                    clonedContent[i] = {
+                      ...block,
+                      name: repairedToolUse.name,
+                      input: repairedToolUse.input,
+                    }
+                    hasToolUseReplacement = true
+                    logForDebugging(
+                      `UMMAYA repaired explicit document tool_use ${block.name} -> ${repairedToolUse.name}`,
+                    )
+                    continue
+                  }
                   if (tool?.backfillObservableInput) {
                     tool.backfillObservableInput(inputCopy)
                   }
@@ -857,9 +879,13 @@ async function* queryLoop(
                 }
               }
               if (clonedContent) {
-                yieldMessage = {
+                const clonedMessage = {
                   ...message,
                   message: { ...message.message, content: clonedContent },
+                }
+                yieldMessage = clonedMessage
+                if (hasToolUseReplacement) {
+                  commitMessage = clonedMessage
                 }
               }
             }
@@ -876,8 +902,8 @@ async function* queryLoop(
             // rather than composed.
             let withheld = false
             const assistantHasToolUse =
-              message.type === 'assistant' &&
-              message.message.content.some(
+              commitMessage.type === 'assistant' &&
+              commitMessage.message.content.some(
                 content => content.type === 'tool_use',
               )
             if (feature('CONTEXT_COLLAPSE')) {
@@ -983,10 +1009,10 @@ async function* queryLoop(
             if (!withheld) {
               yield yieldMessage
             }
-            if (message.type === 'assistant') {
-              assistantMessages.push(message)
+            if (commitMessage.type === 'assistant') {
+              assistantMessages.push(commitMessage)
 
-              const msgToolUseBlocks = message.message.content.filter(
+              const msgToolUseBlocks = commitMessage.message.content.filter(
                 content => content.type === 'tool_use',
               ) as ToolUseBlock[]
               if (msgToolUseBlocks.length > 0) {
@@ -999,7 +1025,7 @@ async function* queryLoop(
                 !toolUseContext.abortController.signal.aborted
               ) {
                 for (const toolBlock of msgToolUseBlocks) {
-                  streamingToolExecutor.addTool(toolBlock, message)
+                  streamingToolExecutor.addTool(toolBlock, commitMessage)
                 }
               }
             }

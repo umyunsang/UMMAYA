@@ -159,6 +159,66 @@ class IdentityDocxEngine(FlowDocxEngine):
         )
 
 
+class WeeklyWithSignatureDocxEngine(FlowDocxEngine):
+    engine_id = "weekly-signature-docx-engine"
+
+    def inspect(self, path: Path, *, artifact_id: str) -> DocumentExtraction:
+        return DocumentExtraction(
+            artifact_id=artifact_id,
+            fields=[
+                FormField(
+                    field_id="week_label",
+                    label="주차",
+                    path="/word/document.xml/field[week_label]",
+                    field_type="text",
+                    required=True,
+                    current_value="13주차",
+                    source_confidence=Decimal("1"),
+                ),
+                FormField(
+                    field_id="consent_signature",
+                    label="서명",
+                    path="/word/document.xml/field[consent_signature]",
+                    field_type="signature",
+                    required=True,
+                    current_value=None,
+                    source_confidence=Decimal("1"),
+                ),
+            ],
+            metadata={"engine_id": self.engine_id},
+        )
+
+
+class WeeklyWithMissingRequiredDocxEngine(FlowDocxEngine):
+    engine_id = "weekly-missing-required-docx-engine"
+
+    def inspect(self, path: Path, *, artifact_id: str) -> DocumentExtraction:
+        return DocumentExtraction(
+            artifact_id=artifact_id,
+            fields=[
+                FormField(
+                    field_id="week_label",
+                    label="주차",
+                    path="/word/document.xml/field[week_label]",
+                    field_type="text",
+                    required=True,
+                    current_value="13주차",
+                    source_confidence=Decimal("1"),
+                ),
+                FormField(
+                    field_id="business_registration_number",
+                    label="사업자등록번호",
+                    path="/word/document.xml/field[business_registration_number]",
+                    field_type="text",
+                    required=True,
+                    current_value=None,
+                    source_confidence=Decimal("1"),
+                ),
+            ],
+            metadata={"engine_id": self.engine_id},
+        )
+
+
 @pytest.mark.asyncio
 async def test_document_primitive_applies_fill_and_returns_rendered_diff(
     tmp_path: Path,
@@ -370,6 +430,71 @@ def test_document_primitive_blocks_protected_plan_before_working_copy(
     assert result.status is ToolResultStatus.needs_input
     assert "resident_registration_number" in result.text_summary
     assert not any(ref.startswith("working-") for ref in result.artifact_refs)
+    assert not any(ref.startswith("derivative-") for ref in result.artifact_refs)
+
+
+def test_document_primitive_applies_safe_autonomous_slots_when_protected_slots_need_review(
+    tmp_path: Path,
+) -> None:
+    from ummaya.tools.documents.registry import DocumentToolRuntime
+
+    source = tmp_path / "weekly-signature-form.docx"
+    _write_minimal_docx(source)
+    engine_registry = DocumentEngineRegistry()
+    engine_registry.register(WeeklyWithSignatureDocxEngine())
+    runtime = DocumentToolRuntime(
+        session_id="session-doc-partial-protected-plan",
+        artifact_root=tmp_path / "artifacts",
+        engine_registry=engine_registry,
+        baseline_catalog=_baseline_catalog(),
+    )
+
+    result = runtime.document(
+        DocumentPrimitiveRequest(
+            correlation_id="corr-partial-protected-plan",
+            document=DocumentLocator(path=str(source), expected_format=DocumentFormat.docx),
+            operation="fill",
+            instruction="문서 내용을 파악하고 내용에 맞게 알아서 채워줘.",
+        )
+    )
+
+    assert result.status is ToolResultStatus.ok
+    assert result.diff is not None
+    assert [(change.display_label, change.after_value) for change in result.diff.changes] == [
+        ("주차", "14주차")
+    ]
+    assert "consent_signature" in result.text_summary
+    assert any(ref.startswith("working-") for ref in result.artifact_refs)
+    assert any(ref.startswith("derivative-") for ref in result.artifact_refs)
+
+
+def test_document_primitive_blocks_partial_plan_with_missing_required_slots(
+    tmp_path: Path,
+) -> None:
+    from ummaya.tools.documents.registry import DocumentToolRuntime
+
+    source = tmp_path / "weekly-business-form.docx"
+    _write_minimal_docx(source)
+    engine_registry = DocumentEngineRegistry()
+    engine_registry.register(WeeklyWithMissingRequiredDocxEngine())
+    runtime = DocumentToolRuntime(
+        session_id="session-doc-missing-required-plan",
+        artifact_root=tmp_path / "artifacts",
+        engine_registry=engine_registry,
+        baseline_catalog=_baseline_catalog(),
+    )
+
+    result = runtime.document(
+        DocumentPrimitiveRequest(
+            correlation_id="corr-missing-required-plan",
+            document=DocumentLocator(path=str(source), expected_format=DocumentFormat.docx),
+            operation="fill",
+            instruction="문서 내용을 파악하고 내용에 맞게 알아서 채워줘.",
+        )
+    )
+
+    assert result.status is ToolResultStatus.needs_input
+    assert "business_registration_number" in result.text_summary
     assert not any(ref.startswith("derivative-") for ref in result.artifact_refs)
 
 

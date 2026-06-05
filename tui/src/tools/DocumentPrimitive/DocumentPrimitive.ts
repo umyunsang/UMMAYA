@@ -57,7 +57,7 @@ const inputSchema = lazySchema(() =>
     .passthrough(),
 )
 type InputSchema = ReturnType<typeof inputSchema>
-type Input = z.infer<InputSchema>
+export type Input = z.infer<InputSchema>
 
 const outputSchema = lazySchema(() =>
   z.discriminatedUnion('ok', [
@@ -81,7 +81,9 @@ type OutputSchema = ReturnType<typeof outputSchema>
 export type Output = z.infer<OutputSchema>
 
 const WRITE_INTENT_RE =
-  /(작성|수정|편집|채우|입력|변경|저장|보정|서식|글꼴|글자색|배경색|정렬|굵게|write|edit|fill|apply|save|style|format|bold)/iu
+  /(작성|수정|편집|채우|채워|입력|변경|저장|보정|서식|글꼴|글자색|배경색|정렬|굵게|write|edit|fill|apply|save|style|format|bold)/iu
+const READ_ONLY_INTENT_RE =
+  /(읽기\s*전용|수정\s*없이|변경\s*없이|저장\s*없이|열람만|확인만|inspect|extract|read\s*only)/iu
 
 function hasWriteIntent(input: Input): boolean {
   return hasWriteIntentFromText(input, undefined)
@@ -91,11 +93,54 @@ function hasWriteIntentFromText(input: Input, userText: string | undefined): boo
   if (typeof input.destination_path === 'string') return true
   if (Array.isArray(input.patches) && input.patches.length > 0) return true
   if (Array.isArray(input.styles) && input.styles.length > 0) return true
+  if (hasReadOnlyIntentFromText(input, userText)) return false
   return WRITE_INTENT_RE.test(input.instruction ?? '') ||
     (userText !== undefined && WRITE_INTENT_RE.test(userText))
 }
 
+function hasReadOnlyIntentFromText(input: Input, userText: string | undefined): boolean {
+  return READ_ONLY_INTENT_RE.test(input.instruction ?? '') ||
+    (userText !== undefined && READ_ONLY_INTENT_RE.test(userText))
+}
+
+function hasPatchOrStylePayload(input: Input): boolean {
+  return (Array.isArray(input.patches) && input.patches.length > 0) ||
+    (Array.isArray(input.styles) && input.styles.length > 0)
+}
+
+function hasExplicitWritePayload(input: Input): boolean {
+  return hasPatchOrStylePayload(input)
+}
+
+export function normalizeDocumentPrimitiveInputForDispatch(
+  input: Input,
+  userText: string | undefined,
+): Record<string, unknown> {
+  const args: Record<string, unknown> = {
+    ...(input as Record<string, unknown>),
+    operation: operationOf(input, userText),
+  }
+  if (userText === undefined || hasPatchOrStylePayload(input)) {
+    return args
+  }
+
+  const instruction = typeof input.instruction === 'string'
+    ? input.instruction.trim()
+    : ''
+  if (instruction.includes(userText)) {
+    return args
+  }
+  args.instruction = instruction
+    ? `${instruction}\n\nOriginal user request:\n${userText}`
+    : userText
+  return args
+}
+
 function operationOf(input: Input, userText?: string): string {
+  const operation = typeof input.operation === 'string' ? input.operation : 'fill'
+  if (hasReadOnlyIntentFromText(input, userText) && !hasExplicitWritePayload(input)) {
+    return operation === 'extract' ? 'extract' : 'inspect'
+  }
   const displayOperation =
     typeof (input as Record<string, unknown>).__ummaya_display_operation === 'string'
       ? String((input as Record<string, unknown>).__ummaya_display_operation)
@@ -107,7 +152,6 @@ function operationOf(input: Input, userText?: string): string {
   ) {
     return displayOperation
   }
-  const operation = typeof input.operation === 'string' ? input.operation : 'fill'
   if (
     (operation === 'inspect' || operation === 'extract') &&
     hasWriteIntentFromText(input, userText)
@@ -299,10 +343,10 @@ export const DocumentPrimitive = buildTool({
   },
 
   async call(input, context) {
-    const args = {
-      ...(input as Record<string, unknown>),
-      operation: operationOf(input as Input, latestUserTextFromContext(context)),
-    }
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      input as Input,
+      latestUserTextFromContext(context),
+    )
     const result = await dispatchPrimitive<Output>({
       primitive: 'document',
       args,

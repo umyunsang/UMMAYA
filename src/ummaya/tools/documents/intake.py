@@ -486,7 +486,11 @@ def inspect_document_intake(
             sha256=sha256,
         )
 
-    if declared_mime is not None and declared_mime not in _MIME_BY_FORMAT[detected_format]:
+    if declared_mime is not None and not _declared_mime_matches_formats(
+        declared_mime=declared_mime,
+        known_format=known_format,
+        detected_format=detected_format,
+    ):
         return _blocked_result(
             path=path,
             detected_format=detected_format,
@@ -651,9 +655,26 @@ def _known_format_matches_detected(
     known_format: str,
     detected_format: str,
 ) -> bool:
+    if known_format == "hwp" and detected_format in {"hwpx", "owpml"}:
+        return True
     return known_format == detected_format or (
         _runtime_format_for_known_format(known_format) == detected_format
     )
+
+
+def _declared_mime_matches_formats(
+    *,
+    declared_mime: str,
+    known_format: str,
+    detected_format: str,
+) -> bool:
+    allowed_mimes = set(_MIME_BY_FORMAT[detected_format])
+    if _known_format_matches_detected(
+        known_format=known_format,
+        detected_format=detected_format,
+    ):
+        allowed_mimes.update(_MIME_BY_FORMAT.get(known_format, frozenset()))
+    return declared_mime in allowed_mimes
 
 
 def _loads_json(payload: str) -> bool:

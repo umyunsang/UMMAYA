@@ -280,12 +280,36 @@ def _candidate_value_for_slot(
     context_value = _session_context_value(slot, session_context)
     if context_value is not None:
         return context_value
+    if _instruction_requests_broad_autonomous_fill(instruction) and _slot_is_empty(slot):
+        return _autonomous_draft_value_for_slot(slot)
     return None
 
 
 def _protected_candidate(slot: FormSlot, instruction: str) -> object:
     if not _protected_slot_requested(slot, instruction):
         return None
+    return None
+
+
+def _slot_is_empty(slot: FormSlot) -> bool:
+    value = slot.current_value
+    return value is None or (isinstance(value, str) and value.strip() == "")
+
+
+def _autonomous_draft_value_for_slot(slot: FormSlot) -> object:
+    slot_key = _slot_key(slot)
+    if "코드" in slot_key or "code" in slot_key:
+        return None
+    if "상호" in slot_key or "단체명" in slot_key or "법인명" in slot_key:
+        return "공공AX 테스트"
+    if "주업태" in slot_key or slot_key.endswith("업태") or "업종" in slot_key:
+        return "서비스업"
+    if "주종목" in slot_key or slot_key.endswith("종목"):
+        return "소프트웨어 개발 및 공급업"
+    if "개업일" in slot_key or "작성일" in slot_key or "신청일" in slot_key:
+        return f"{date.today():%Y.%m.%d}"
+    if "사업장구분" in slot_key:
+        return "자가"
     return None
 
 

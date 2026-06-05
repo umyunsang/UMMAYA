@@ -1081,40 +1081,85 @@ def _table_slots_from_label_value_pairs(
         rows.setdefault(cell.row_index, []).append(cell)
     for row_index, row_cells in sorted(rows.items()):
         ordered_cells = sorted(row_cells, key=lambda cell: cell.column_index)
-        field_slots_added = False
-        for value_cell in ordered_cells:
-            if value_cell.field_path is None:
-                continue
-            label_cell = _nearest_left_table_label_cell(ordered_cells, value_cell)
-            if label_cell is None:
-                continue
-            slots.append(
-                _table_slot_from_label_value_cell(
-                    label_cell.text.strip(),
-                    value_cell,
-                    table_index=table_index,
-                    row_index=row_index,
-                    engine_id=engine_id,
-                )
+        paired_slots = _table_slots_from_left_label_cells(
+            ordered_cells,
+            table_index=table_index,
+            row_index=row_index,
+            engine_id=engine_id,
+            blank_cells_only=False,
+        )
+        paired_slots.extend(
+            _table_slots_from_left_label_cells(
+                ordered_cells,
+                table_index=table_index,
+                row_index=row_index,
+                engine_id=engine_id,
+                blank_cells_only=True,
             )
-            field_slots_added = True
-        if field_slots_added:
+        )
+        if paired_slots:
+            slots.extend(paired_slots)
             continue
-        for label_cell, value_cell in zip(ordered_cells, ordered_cells[1:], strict=False):
-            label = label_cell.text.strip()
-            if not _meaningful_table_slot_label(label):
-                continue
-            slots.append(
-                _table_slot_from_label_value_cell(
-                    label,
-                    value_cell,
-                    table_index=table_index,
-                    row_index=row_index,
-                    engine_id=engine_id,
-                )
-            )
-            break
+        adjacent_slot = _adjacent_table_slot_from_label_value_cells(
+            ordered_cells,
+            table_index=table_index,
+            row_index=row_index,
+            engine_id=engine_id,
+        )
+        if adjacent_slot is not None:
+            slots.append(adjacent_slot)
     return slots
+
+
+def _table_slots_from_left_label_cells(
+    ordered_cells: list[TableCell],
+    *,
+    table_index: int,
+    row_index: int,
+    engine_id: str,
+    blank_cells_only: bool,
+) -> list[FormSlot]:
+    slots: list[FormSlot] = []
+    for value_cell in ordered_cells:
+        if blank_cells_only:
+            if value_cell.text.strip() or value_cell.field_path is not None:
+                continue
+        elif value_cell.field_path is None:
+            continue
+        label_cell = _nearest_left_table_label_cell(ordered_cells, value_cell)
+        if label_cell is None:
+            continue
+        slots.append(
+            _table_slot_from_label_value_cell(
+                label_cell.text.strip(),
+                value_cell,
+                table_index=table_index,
+                row_index=row_index,
+                engine_id=engine_id,
+            )
+        )
+    return slots
+
+
+def _adjacent_table_slot_from_label_value_cells(
+    ordered_cells: list[TableCell],
+    *,
+    table_index: int,
+    row_index: int,
+    engine_id: str,
+) -> FormSlot | None:
+    for label_cell, value_cell in zip(ordered_cells, ordered_cells[1:], strict=False):
+        label = label_cell.text.strip()
+        if not _meaningful_table_slot_label(label):
+            continue
+        return _table_slot_from_label_value_cell(
+            label,
+            value_cell,
+            table_index=table_index,
+            row_index=row_index,
+            engine_id=engine_id,
+        )
+    return None
 
 
 def _nearest_left_table_label_cell(
@@ -1143,13 +1188,14 @@ def _table_slot_from_label_value_cell(
     row_index: int,
     engine_id: str,
 ) -> FormSlot:
+    cleaned_label = _clean_table_slot_label(label)
     value_path = value_cell.field_path or value_cell.source_path
     return FormSlot(
         slot_id=_form_slot_id_for_label(
-            label,
+            cleaned_label,
             fallback=f"table_{table_index + 1}_{row_index + 1}_{value_cell.column_index + 1}",
         ),
-        label=label,
+        label=cleaned_label,
         field_type="text",
         required=False,
         source_anchor=_source_anchor_for_path(
@@ -1161,6 +1207,15 @@ def _table_slot_from_label_value_cell(
         current_value=value_cell.text,
         confidence=Decimal("0.85"),
     )
+
+
+def _clean_table_slot_label(label: str) -> str:
+    cleaned = label.strip()
+    wrappers = (("(", ")"), ("[", "]"), ("（", "）"))
+    for opening, closing in wrappers:
+        if cleaned.startswith(opening) and cleaned.endswith(closing):
+            return cleaned[1:-1].strip()
+    return cleaned
 
 
 def _source_anchor_for_path(

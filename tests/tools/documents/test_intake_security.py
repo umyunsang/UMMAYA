@@ -92,6 +92,18 @@ def _hwpx_bytes() -> bytes:
     )
 
 
+def _owpml_hwp_bytes() -> bytes:
+    return _zip_bytes(
+        {
+            "mimetype": b"application/owpml",
+            "Contents/section0.xml": b"<section/>",
+            "Contents/header.xml": b"<header/>",
+            "version.xml": b"<version/>",
+            "META-INF/manifest.xml": b"<manifest/>",
+        }
+    )
+
+
 def _xlsx_bytes() -> bytes:
     return _zip_bytes({"xl/workbook.xml": b"<workbook/>"})
 
@@ -378,6 +390,37 @@ def test_blocks_extension_and_signature_mismatch(tmp_path: Path) -> None:
     _assert_blocked(result, "signature_mismatch")
     assert _value(result.known_format) == "docx"
     assert _value(result.format_family) == "ooxml"
+
+
+def test_accepts_official_hwp_extension_when_payload_is_hwpx_package(
+    tmp_path: Path,
+) -> None:
+    source = _write(tmp_path / "official-form.hwp", _owpml_hwp_bytes())
+
+    result = inspect_document_intake(source, expected_format="hwp")
+
+    assert _value(result.status) == "ok"
+    assert _value(result.known_format) == "hwp"
+    assert _value(result.detected_format) == "hwpx"
+    assert _value(result.format_family) == "hwp"
+    assert result.blocked_reason is None
+
+
+def test_accepts_hwp_mime_when_hwp_extension_wraps_hwpx_package(
+    tmp_path: Path,
+) -> None:
+    source = _write(tmp_path / "official-form.hwp", _owpml_hwp_bytes())
+
+    result = inspect_document_intake(
+        source,
+        expected_format="hwp",
+        declared_mime_type="application/x-hwp",
+    )
+
+    assert _value(result.status) == "ok"
+    assert _value(result.known_format) == "hwp"
+    assert _value(result.detected_format) == "hwpx"
+    assert result.blocked_reason is None
 
 
 def test_blocks_declared_mime_mismatch_instead_of_trusting_it(tmp_path: Path) -> None:

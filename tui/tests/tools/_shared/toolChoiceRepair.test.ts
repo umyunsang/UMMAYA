@@ -8,6 +8,7 @@ import type { Message } from '../../../src/types/message.js'
 import {
   backfillUmmayaObservableToolInputFromUserQuery,
   buildDocumentCompletionPromptIfNeeded,
+  repairUmmayaExplicitDocumentToolUseFromUserQuery,
   selectUmmayaToolChoiceOverride,
   selectUmmayaClientForcedToolUse,
   shouldCompleteAfterSuccessfulDocumentRender,
@@ -188,6 +189,108 @@ describe('document harness tool-choice repair', () => {
         instruction: prompt,
         destination_path:
           '/tmp/ummaya-g011-live-tui/tui-exports/g011-seoul-culture-application-plan.docx',
+      },
+    })
+  })
+
+  test('repairs non-document tool calls when the latest user turn has an explicit document path', () => {
+    const prompt =
+      '공식 국세청 사업자등록신청서 파일을 내용에 맞게 알아서 채워줘. 원본은 건드리지 말고 검토 가능한 복사본으로 만들어줘: /Users/example/nts_business_registration_individual.hwpx'
+
+    expect(
+      repairUmmayaExplicitDocumentToolUseFromUserQuery({
+        toolName: 'tago_bus_station_search',
+        input: {
+          city_code: '21',
+          node_nm: '/Users/example/nts_business_registration_individual.hwpx',
+        },
+        messages: [user(prompt)],
+        tools: documentTools,
+      }),
+    ).toEqual({
+      name: 'document',
+      input: {
+        correlation_id: expect.stringMatching(/^client-forced-document-[a-f0-9]{8}$/),
+        document: {
+          path: '/Users/example/nts_business_registration_individual.hwpx',
+          expected_format: 'hwpx',
+        },
+        operation: 'fill',
+        instruction: prompt,
+      },
+    })
+  })
+
+  test('keeps explicit read-only document requests on inspect without display fill backfill', () => {
+    const prompt =
+      '수정 없이 열람만 해줘. 양식의 문서 제목과 작성해야 할 항목명만 알려줘: /Users/example/nts_business_registration_individual.hwpx'
+    const input: Record<string, unknown> = {
+      correlation_id: 'read-only-document',
+      document: {
+        path: '/Users/example/nts_business_registration_individual.hwpx',
+        expected_format: 'hwpx',
+      },
+      operation: 'inspect',
+      instruction: '문서 제목과 작성해야 할 항목명만 추출해주세요.',
+    }
+
+    expect(selectUmmayaToolChoiceOverride({
+      messages: [user(prompt)],
+      tools: documentTools,
+    })).toEqual({ type: 'tool', name: 'document' })
+    expect(selectUmmayaClientForcedToolUse({
+      messages: [user(prompt)],
+      tools: documentTools,
+    })?.input.operation).toBe('inspect')
+
+    backfillUmmayaObservableToolInputFromUserQuery({
+      toolName: 'document',
+      input,
+      messages: [user(prompt)],
+    })
+
+    expect(input.__ummaya_display_operation).toBeUndefined()
+  })
+
+  test('keeps write requests as fill when the user asks to be told the saved path', () => {
+    const prompt =
+      '이 양식을 채워줘. 저장 경로만 알려줘: /Users/example/nts_business_registration_individual.hwpx'
+
+    expect(selectUmmayaClientForcedToolUse({
+      messages: [user(prompt)],
+      tools: documentTools,
+    })?.input.operation).toBe('fill')
+  })
+
+  test('repairs provider document fill calls back to inspect for explicit read-only requests', () => {
+    const prompt =
+      '수정 없이 열람만 해줘. 이 공식 국세청 사업자등록신청서 파일의 문서 제목과 작성해야 할 항목명만 알려줘: /Users/example/nts_business_registration_individual.hwp'
+
+    expect(
+      repairUmmayaExplicitDocumentToolUseFromUserQuery({
+        toolName: 'document',
+        input: {
+          correlation_id: 'provider-readonly-misfire',
+          document: {
+            path: '/Users/example/nts_business_registration_individual.hwp',
+            expected_format: 'hwp',
+          },
+          operation: 'fill',
+          instruction: prompt,
+        },
+        messages: [user(prompt)],
+        tools: documentTools,
+      }),
+    ).toEqual({
+      name: 'document',
+      input: {
+        correlation_id: expect.stringMatching(/^client-forced-document-[a-f0-9]{8}$/),
+        document: {
+          path: '/Users/example/nts_business_registration_individual.hwp',
+          expected_format: 'hwp',
+        },
+        operation: 'inspect',
+        instruction: prompt,
       },
     })
   })
