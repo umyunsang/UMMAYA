@@ -19,11 +19,19 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from ummaya.evidence.document_viewer_ux import DocumentViewerUxArtifact
-from ummaya.evidence.models import EvidenceGate, RouteTraceRecord, RunEvidence
+from ummaya.evidence.models import (
+    EvidenceGate,
+    RouteAdapterFamily,
+    RouteArgumentFeasibility,
+    RouteFailureRecovery,
+    RouteSelectionAssertion,
+    RouteTraceRecord,
+    RunEvidence,
+)
 from ummaya.evidence.task_registry import EvidenceDatasetRef, load_task_registry
 from ummaya.tools.documents.models import KnownDocumentFormat
 from ummaya.tools.routing.decision_types import RouteStopReason
-from ummaya.tools.routing.schema import sha256
+from ummaya.tools.routing.schema import sha256, unique
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_SCENARIO_PATH = _REPO_ROOT / "evidence/scenarios/national_ax_citizen_requests_v1.yaml"
@@ -32,11 +40,50 @@ _DEFAULT_DATASET_REF = "ummaya/national-ax-core@local"
 _BANNED_MODEL_VISIBLE_KEYS = frozenset(
     {
         "adapter_id",
+        "adapter_ids",
+        "adapter_family",
+        "expected_adapter_id",
         "tool_id",
+        "tool_ids",
         "expected_tool_id",
+        "expected_tool_ids",
+        "expected_adapter_family",
+        "expected_route_trace",
+        "route_trace",
+        "route_selection_assertion",
+        "route_selection_assertions",
+        "route_adapter_family",
+        "selected_adapter_family",
+        "selected_adapter_id",
+        "selected_tool",
+        "selected_tool_id",
+        "selected_tool_ids",
+        "selected_tools",
         "fixture_refs",
         "fixture_ref",
         "current_adapter_id",
+        "assertion_events",
+        "assertion_kind",
+        "argument_feasibility",
+        "clarification_expected",
+        "clarification_reason",
+        "correlation_id",
+        "coverage_tags",
+        "evidence_events",
+        "expected_domain",
+        "expected_primitives",
+        "failure_recovery",
+        "manifest_hash",
+        "prompt_manifest_hash",
+        "query_hash",
+        "route_source",
+        "selected_domain",
+        "selected_primitives",
+        "status",
+        "stop_reason",
+        "tool_catalog_hash",
+        "trace_id",
+        "trace_kind",
     }
 )
 _REQUIRED_DOMAINS = frozenset(
@@ -57,6 +104,7 @@ _REQUIRED_DOMAINS = frozenset(
         "immigration",
         "legal",
         "personal_data",
+        "public_data",
     }
 )
 
@@ -93,8 +141,13 @@ class Scenario(BaseModel):
     priority: str = "P2"
     lifecycle_domain: str
     request_ko: str
+    request_en: str | None = None
+    agencies_or_infrastructure: tuple[str, ...] = Field(default_factory=tuple)
+    citizen_intent_verbs: tuple[str, ...] = Field(default_factory=tuple)
     expected_ax_chain: tuple[ExpectedStep, ...]
     permission_requirements: PermissionRequirements
+    expected_system_behavior: tuple[str, ...] = Field(default_factory=tuple)
+    evaluation_focus: tuple[str, ...] = Field(default_factory=tuple)
 
 
 class ScenarioDataset(BaseModel):
@@ -104,6 +157,9 @@ class ScenarioDataset(BaseModel):
 
     version: int
     dataset_id: str
+    source_basis: str | None = None
+    target_system: str | None = None
+    allowed_primitives: tuple[str, ...] = Field(default_factory=tuple)
     coverage_domains: tuple[str, ...]
     scenarios: tuple[Scenario, ...]
 
@@ -177,8 +233,8 @@ def _build_gates(dataset: ScenarioDataset) -> tuple[EvidenceGate, ...]:
         _gate(
             "contract",
             "pass",
-            "dataset is versioned, typed, and free of model-visible implementation keys",
-            ("dataset-schema", "task-registry", "no-adapter-leakage"),
+            "dataset is versioned, typed, and free of model-visible route-cheat keys",
+            ("dataset-schema", "task-registry", "no-adapter-leakage", "no-route-cheat-keys"),
         ),
         _gate(
             "scenario",
@@ -189,14 +245,15 @@ def _build_gates(dataset: ScenarioDataset) -> tuple[EvidenceGate, ...]:
         _gate(
             "observability",
             "pass",
-            "RunEvidence carries trace join keys for OTEL/Langfuse correlation",
-            ("trace-join-keys",),
+            "RunEvidence carries route traces, route-selection assertions, and join keys",
+            ("trace-join-keys", "route-selection-assertions"),
         ),
         _gate(
             "adversarial",
             "pass",
-            "adapter IDs, fixture references, and expected tool IDs are rejected before scoring",
-            ("reward-hack-surface", "hidden-implementation-leakage"),
+            "adapter IDs, fixture references, expected tool IDs, and route assertion "
+            "cheats are rejected before scoring",
+            ("reward-hack-surface", "hidden-implementation-leakage", "route-assertion-cheats"),
         ),
         _gate(
             "ux",
@@ -215,25 +272,35 @@ def _build_gates(dataset: ScenarioDataset) -> tuple[EvidenceGate, ...]:
 
 def _route_trace_records(dataset: ScenarioDataset) -> tuple[RouteTraceRecord, ...]:
     records: list[RouteTraceRecord] = []
+    prompt_manifest_hash = _prompt_manifest_hash(dataset)
+    tool_catalog_hash = _tool_catalog_hash(dataset)
     for scenario in dataset.scenarios:
         selected_primitives = tuple(step.primitive for step in scenario.expected_ax_chain)
-        stop_reason: RouteStopReason = (
-            "permission_required"
-            if scenario.permission_requirements.user_confirmations
-            else "answerable"
-        )
+        stop_reason = _stop_reason_for_scenario(scenario)
+        trace_id = f"route-{scenario.id.lower()}"
+        correlation_id = _correlation_id(trace_id)
         records.append(
             RouteTraceRecord(
+                trace_kind="scenario_route",
+                route_source="expected_route_contract",
                 scenario_id=scenario.id,
-                trace_id=f"route-{scenario.id.lower()}",
+                trace_id=trace_id,
+                correlation_id=correlation_id,
                 query_hash=sha256(scenario.request_ko),
                 manifest_hash=sha256(
                     {
+                        "correlation_id": correlation_id,
                         "scenario_id": scenario.id,
+                        "selected_domain": scenario.lifecycle_domain,
                         "selected_primitives": selected_primitives,
                         "stop_reason": stop_reason,
+                        "trace_kind": "scenario_route",
+                        "route_source": "expected_route_contract",
                     }
                 ),
+                prompt_manifest_hash=prompt_manifest_hash,
+                tool_catalog_hash=tool_catalog_hash,
+                selected_domain=scenario.lifecycle_domain,
                 selected_primitives=selected_primitives,
                 clarification_reason=None,
                 stop_reason=stop_reason,
@@ -243,7 +310,271 @@ def _route_trace_records(dataset: ScenarioDataset) -> tuple[RouteTraceRecord, ..
                 ),
             )
         )
+    records.extend(_negative_control_route_records(prompt_manifest_hash, tool_catalog_hash))
     return tuple(records)
+
+
+def _route_selection_assertions(
+    dataset: ScenarioDataset,
+    records: Sequence[RouteTraceRecord],
+) -> tuple[RouteSelectionAssertion, ...]:
+    scenarios_by_id = {scenario.id: scenario for scenario in dataset.scenarios}
+    assertions: list[RouteSelectionAssertion] = []
+    for record in records:
+        if record.trace_kind == "negative_control":
+            assertions.append(_negative_control_assertion(record))
+            continue
+        scenario = scenarios_by_id[record.scenario_id]
+        expected_primitives = tuple(step.primitive for step in scenario.expected_ax_chain)
+        status: Literal["pass", "fail"] = (
+            "pass"
+            if scenario.lifecycle_domain == record.selected_domain
+            and expected_primitives == record.selected_primitives
+            and not record.selected_tools
+            else "fail"
+        )
+        assertions.append(
+            RouteSelectionAssertion(
+                assertion_kind="scenario_route",
+                route_source=record.route_source,
+                status=status,
+                scenario_id=scenario.id,
+                trace_id=record.trace_id,
+                correlation_id=record.correlation_id,
+                prompt_manifest_hash=record.prompt_manifest_hash,
+                tool_catalog_hash=record.tool_catalog_hash,
+                expected_domain=scenario.lifecycle_domain,
+                selected_domain=record.selected_domain,
+                expected_primitives=expected_primitives,
+                selected_primitives=record.selected_primitives,
+                adapter_family=_adapter_family_for_scenario(scenario, record.selected_primitives),
+                argument_feasibility=_argument_feasibility_for_scenario(scenario),
+                clarification_expected=record.stop_reason == "needs_input",
+                clarification_reason=record.clarification_reason,
+                stop_reason=record.stop_reason,
+                failure_recovery=_failure_recovery_for_stop_reason(record.stop_reason),
+                coverage_tags=_coverage_tags_for_scenario(scenario, record.selected_primitives),
+                selected_tool_ids=(),
+                assertion_events=(
+                    "route_assertion:domain_match",
+                    "route_assertion:primitive_match",
+                    "route_assertion:no_internal_tool_id",
+                ),
+            )
+        )
+    return tuple(assertions)
+
+
+def _negative_control_route_records(
+    prompt_manifest_hash: str,
+    tool_catalog_hash: str,
+) -> tuple[RouteTraceRecord, ...]:
+    controls: tuple[tuple[str, str, RouteStopReason, str], ...] = (
+        (
+            "NEG-DIRECT-ANSWER-001",
+            "Explain the difference between a public notice and a civil petition "
+            "without taking action.",
+            "answerable",
+            "negative_control:direct_answer",
+        ),
+        (
+            "NEG-NO-ADAPTER-001",
+            "Change a closed internal agency review score that has no public callable channel.",
+            "blocked_no_adapter",
+            "negative_control:no_adapter",
+        ),
+    )
+    records: list[RouteTraceRecord] = []
+    for scenario_id, query, stop_reason, event in controls:
+        trace_id = f"route-{scenario_id.lower()}"
+        correlation_id = _correlation_id(trace_id)
+        records.append(
+            RouteTraceRecord(
+                trace_kind="negative_control",
+                route_source="expected_route_contract",
+                scenario_id=scenario_id,
+                trace_id=trace_id,
+                correlation_id=correlation_id,
+                query_hash=sha256(query),
+                manifest_hash=sha256(
+                    {
+                        "correlation_id": correlation_id,
+                        "scenario_id": scenario_id,
+                        "selected_domain": "general_information",
+                        "selected_primitives": (),
+                        "stop_reason": stop_reason,
+                        "trace_kind": "negative_control",
+                        "route_source": "expected_route_contract",
+                    }
+                ),
+                prompt_manifest_hash=prompt_manifest_hash,
+                tool_catalog_hash=tool_catalog_hash,
+                selected_domain="general_information",
+                selected_primitives=(),
+                selected_tools=(),
+                clarification_reason=None,
+                stop_reason=stop_reason,
+                evidence_events=(event, f"route_stop:{stop_reason}"),
+            )
+        )
+    return tuple(records)
+
+
+def _negative_control_assertion(record: RouteTraceRecord) -> RouteSelectionAssertion:
+    return RouteSelectionAssertion(
+        assertion_kind="negative_control",
+        route_source=record.route_source,
+        status="pass",
+        scenario_id=record.scenario_id,
+        trace_id=record.trace_id,
+        correlation_id=record.correlation_id,
+        prompt_manifest_hash=record.prompt_manifest_hash,
+        tool_catalog_hash=record.tool_catalog_hash,
+        expected_domain="general_information",
+        selected_domain="general_information",
+        expected_primitives=(),
+        selected_primitives=(),
+        adapter_family="no_tool",
+        argument_feasibility="sufficient"
+        if record.stop_reason == "answerable"
+        else "blocked",
+        clarification_expected=False,
+        clarification_reason=None,
+        stop_reason=record.stop_reason,
+        failure_recovery=_failure_recovery_for_stop_reason(record.stop_reason),
+        coverage_tags=("negative_control",),
+        selected_tool_ids=(),
+        assertion_events=(
+            "route_assertion:negative_control",
+            "route_assertion:no_internal_tool_id",
+        ),
+    )
+
+
+def _stop_reason_for_scenario(scenario: Scenario) -> RouteStopReason:
+    return (
+        "permission_required"
+        if scenario.permission_requirements.user_confirmations
+        else "answerable"
+    )
+
+
+def _argument_feasibility_for_scenario(scenario: Scenario) -> RouteArgumentFeasibility:
+    if not scenario.request_ko.strip() or not scenario.expected_ax_chain:
+        return "blocked"
+    return "sufficient"
+
+
+def _failure_recovery_for_stop_reason(stop_reason: RouteStopReason) -> RouteFailureRecovery:
+    if stop_reason == "permission_required":
+        return "permission_gate"
+    if stop_reason == "needs_input":
+        return "clarification"
+    if stop_reason == "handoff_required":
+        return "handoff"
+    if stop_reason.startswith("blocked_") or stop_reason in {
+        "max_turns",
+        "repeated_tool_mismatch",
+        "no_new_evidence",
+        "runtime_tool_failure_unrecovered",
+    }:
+        return "blocked"
+    return "not_required"
+
+
+def _adapter_family_for_scenario(
+    scenario: Scenario,
+    selected_primitives: Sequence[str],
+) -> RouteAdapterFamily:
+    text = _scenario_text(scenario)
+    if "procurement" in text or "bid" in text or "나라장터" in text:
+        return "procurement_channel"
+    if scenario.lifecycle_domain == "public_data" or "public data" in text or "공공데이터" in text:
+        return "public_data_channel"
+    if "aed" in text or "defibrillator" in text or "automated external" in text:
+        return "safety_channel"
+    if "aviation" in text or "airport" in text or "flight" in text or "weather" in text:
+        return "weather_channel"
+    if scenario.lifecycle_domain == "safety":
+        return "safety_channel"
+    if "resolve_location" in selected_primitives:
+        return "location_channel"
+    return "public_service_channel"
+
+
+def _coverage_tags_for_scenario(
+    scenario: Scenario,
+    selected_primitives: Sequence[str],
+) -> tuple[str, ...]:
+    text = _scenario_text(scenario)
+    tags = [f"domain:{scenario.lifecycle_domain}"]
+    if "document" in text:
+        tags.append("document_harness")
+    if "aviation" in text or "airport" in text or "flight" in text:
+        tags.append("aviation_weather")
+    if "aed" in text or "defibrillator" in text or "automated external" in text:
+        tags.append("aed_safety")
+    if "procurement" in text or "bid" in text or "나라장터" in text:
+        tags.append("procurement")
+    if scenario.lifecycle_domain == "public_data" or "public data" in text or "공공데이터" in text:
+        tags.append("public_data_search")
+    if "resolve_location" in selected_primitives:
+        tags.append("location")
+    if {"verify", "submit", "subscribe"} & set(selected_primitives):
+        tags.append("side_effecting_government_request")
+    return tuple(unique(tags))
+
+
+def _scenario_text(scenario: Scenario) -> str:
+    parts = [
+        scenario.lifecycle_domain,
+        scenario.request_ko,
+        scenario.request_en or "",
+        *scenario.agencies_or_infrastructure,
+        *scenario.citizen_intent_verbs,
+        *scenario.expected_system_behavior,
+        *scenario.evaluation_focus,
+        *(step.primitive for step in scenario.expected_ax_chain),
+        *(step.purpose for step in scenario.expected_ax_chain),
+    ]
+    return " ".join(parts).lower()
+
+
+def _prompt_manifest_hash(dataset: ScenarioDataset) -> str:
+    return sha256(
+        {
+            "allowed_primitives": dataset.allowed_primitives,
+            "dataset_id": dataset.dataset_id,
+            "source_basis": dataset.source_basis,
+            "target_system": dataset.target_system,
+            "version": dataset.version,
+        }
+    )
+
+
+def _tool_catalog_hash(dataset: ScenarioDataset) -> str:
+    return sha256(
+        {
+            "adapter_families": tuple(
+                sorted(
+                    {
+                        _adapter_family_for_scenario(
+                            scenario,
+                            tuple(step.primitive for step in scenario.expected_ax_chain),
+                        )
+                        for scenario in dataset.scenarios
+                    }
+                )
+            ),
+            "coverage_domains": dataset.coverage_domains,
+            "dataset_id": dataset.dataset_id,
+            "scenario_count": len(dataset.scenarios),
+        }
+    )
+
+
+def _correlation_id(trace_id: str) -> str:
+    return f"corr-route-{sha256(trace_id)[:16]}"
 
 
 def _resolve_repo_path(path: Path) -> Path:
@@ -290,6 +621,7 @@ def run_dataset(
         task_registry_path=task_registry_path,
         dataset_ref=dataset_ref,
     )
+    route_trace_records = _route_trace_records(dataset)
     return RunEvidence(
         source_ref=source_ref,
         dataset_id=dataset.dataset_id,
@@ -299,7 +631,8 @@ def run_dataset(
         task_ids=tuple(task.task_id for task in task_dataset.tasks) if task_dataset else (),
         scenario_count=len(dataset.scenarios),
         scenario_ids=tuple(scenario.id for scenario in dataset.scenarios),
-        route_trace_records=_route_trace_records(dataset),
+        route_trace_records=route_trace_records,
+        route_selection_assertions=_route_selection_assertions(dataset, route_trace_records),
         gates=_build_gates(dataset),
     )
 

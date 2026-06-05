@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
@@ -19,8 +20,11 @@ def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
     assert evidence.scenario_count > 0
     assert evidence.scenario_ids
     assert evidence.route_trace_records
+    assert evidence.route_selection_assertions
     assert all(
-        record.scenario_id in evidence.scenario_ids for record in evidence.route_trace_records
+        record.scenario_id in evidence.scenario_ids
+        for record in evidence.route_trace_records
+        if record.trace_kind == "scenario_route"
     )
     assert all(
         record.stop_reason in RouteStopReason.__args__
@@ -30,6 +34,66 @@ def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
         record.stop_reason == "permission_required"
         for record in evidence.route_trace_records
     )
+    scenario_assertions = [
+        assertion
+        for assertion in evidence.route_selection_assertions
+        if assertion.assertion_kind == "scenario_route"
+    ]
+    negative_assertions = [
+        assertion
+        for assertion in evidence.route_selection_assertions
+        if assertion.assertion_kind == "negative_control"
+    ]
+    assert len(scenario_assertions) == evidence.scenario_count
+    assert {assertion.scenario_id for assertion in scenario_assertions} == set(
+        evidence.scenario_ids
+    )
+    assert {assertion.selected_domain for assertion in scenario_assertions} >= {
+        "tax",
+        "civil_affairs",
+        "mobility",
+        "business",
+        "safety",
+        "personal_data",
+        "public_data",
+    }
+    assert {assertion.adapter_family for assertion in scenario_assertions} >= {
+        "public_service_channel",
+        "location_channel",
+        "weather_channel",
+        "safety_channel",
+        "procurement_channel",
+        "public_data_channel",
+    }
+    assert any("document_harness" in assertion.coverage_tags for assertion in scenario_assertions)
+    assert any("aviation_weather" in assertion.coverage_tags for assertion in scenario_assertions)
+    assert any("aed_safety" in assertion.coverage_tags for assertion in scenario_assertions)
+    assert any("procurement" in assertion.coverage_tags for assertion in scenario_assertions)
+    assert any("public_data_search" in assertion.coverage_tags for assertion in scenario_assertions)
+    assert any(
+        "side_effecting_government_request" in assertion.coverage_tags
+        for assertion in scenario_assertions
+    )
+    assert all(
+        assertion.route_source == "expected_route_contract"
+        for assertion in scenario_assertions
+    )
+    assert negative_assertions
+    assert all(assertion.adapter_family == "no_tool" for assertion in negative_assertions)
+    assert all(assertion.status == "pass" for assertion in evidence.route_selection_assertions)
+    trace_by_id = {record.trace_id: record for record in evidence.route_trace_records}
+    hash_pattern = re.compile(r"^[0-9a-f]{64}$")
+    for assertion in evidence.route_selection_assertions:
+        trace = trace_by_id[assertion.trace_id]
+        assert assertion.correlation_id == trace.correlation_id
+        assert assertion.route_source == trace.route_source
+        assert assertion.prompt_manifest_hash == trace.prompt_manifest_hash
+        assert assertion.tool_catalog_hash == trace.tool_catalog_hash
+        assert hash_pattern.fullmatch(trace.query_hash)
+        assert hash_pattern.fullmatch(trace.manifest_hash)
+        assert hash_pattern.fullmatch(trace.prompt_manifest_hash)
+        assert hash_pattern.fullmatch(trace.tool_catalog_hash)
+        assert not assertion.selected_tool_ids
     assert {gate.name for gate in evidence.gates} == {
         "contract",
         "scenario",
@@ -45,6 +109,9 @@ def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
     assert decoded["schema_version"] == "evidence.v2"
     assert decoded["route_trace_records"][0]["stop_reason"] in RouteStopReason.__args__
     assert "clarification_reason" in decoded["route_trace_records"][0]
+    assert decoded["route_trace_records"][0]["correlation_id"].startswith("corr-route-")
+    assert decoded["route_trace_records"][0]["route_source"] == "expected_route_contract"
+    assert decoded["route_selection_assertions"][0]["status"] == "pass"
     assert decoded["task_registry_id"] == "ummaya/evidence-task-registry"
     assert decoded["dataset_ref"] == "ummaya/national-ax-core@local"
     assert decoded["task_count"] == 1
@@ -78,6 +145,90 @@ scenarios:
 
     with pytest.raises(EvidenceContractError, match="tool_id"):
         run_dataset(scenario_path=scenario_path, source_ref="test")
+
+
+def test_evidence_runner_rejects_route_assertion_cheat_keys(tmp_path: Path) -> None:
+    import pytest
+
+    from ummaya.evidence.runner import EvidenceContractError, run_dataset
+
+    scenario_path = tmp_path / "bad-route-assertion.yaml"
+    scenario_path.write_text(
+        "version: 1\n"
+        "dataset_id: bad\n"
+        "coverage_domains: [tax]\n"
+        "scenarios:\n"
+        "  - id: TAX-001\n"
+        "    lifecycle_domain: tax\n"
+        "    request_ko: \"세금 신고해줘.\"\n"
+        "    adapter_family: hometax_internal\n"
+        "    selected_tools:\n"
+        "        - hometax_vat_submit\n"
+        "    expected_ax_chain:\n"
+        "      - primitive: verify\n"
+        "        purpose: identity\n"
+        "    permission_requirements:\n"
+        "      identity_assurance: high\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(EvidenceContractError, match="adapter_family"):
+        run_dataset(scenario_path=scenario_path, source_ref="test")
+
+
+def test_evidence_runner_rejects_selected_route_state_keys(tmp_path: Path) -> None:
+    import pytest
+
+    from ummaya.evidence.runner import EvidenceContractError, run_dataset
+
+    scenario_path = tmp_path / "bad-selected-route-state.yaml"
+    scenario_path.write_text(
+        "version: 1\n"
+        "dataset_id: bad\n"
+        "coverage_domains: [tax]\n"
+        "scenarios:\n"
+        "  - id: TAX-001\n"
+        "    lifecycle_domain: tax\n"
+        "    request_ko: \"세금 신고해줘.\"\n"
+        "    selected_domain: tax\n"
+        "    selected_primitives: [verify, submit]\n"
+        "    stop_reason: permission_required\n"
+        "    failure_recovery: permission_gate\n"
+        "    route_source: route_decision\n"
+        "    expected_ax_chain:\n"
+        "      - primitive: verify\n"
+        "        purpose: identity\n"
+        "    permission_requirements:\n"
+        "      identity_assurance: high\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(EvidenceContractError, match="selected_domain"):
+        run_dataset(scenario_path=scenario_path, source_ref="test")
+
+
+def test_route_selection_assertion_marks_divergent_route_trace_failed() -> None:
+    from ummaya.evidence.runner import (
+        _parse_dataset,
+        _route_selection_assertions,
+        _route_trace_records,
+    )
+
+    dataset = _parse_dataset(Path("evidence/scenarios/national_ax_citizen_requests_v1.yaml"))
+    original = _route_trace_records(dataset)[0]
+    divergent = original.model_copy(
+        update={
+            "route_source": "route_decision",
+            "selected_domain": "wrong_domain",
+            "selected_primitives": ("lookup",),
+        }
+    )
+
+    assertion = _route_selection_assertions(dataset, (divergent,))[0]
+
+    assert assertion.route_source == "route_decision"
+    assert assertion.status == "fail"
+    assert assertion.expected_domain != assertion.selected_domain
 
 
 def test_default_task_registry_resolves_harbor_style_dataset() -> None:
