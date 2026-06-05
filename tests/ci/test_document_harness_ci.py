@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urlsplit
 
+from tests.conftest import _marker_selected
+
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _SCAN_TARGETS = (
@@ -15,8 +17,10 @@ _SCAN_TARGETS = (
     _REPO_ROOT / "evidence" / "scenarios" / "document_harness_v1.yaml",
     _REPO_ROOT / "tests" / "tools" / "documents",
     _REPO_ROOT / "tests" / "evidence",
+    _REPO_ROOT / "tui" / "scripts" / "dump-document-diff-frames.tsx",
 )
-_TEXT_SUFFIXES = {".json", ".md", ".py", ".toml", ".yaml", ".yml"}
+_CI_WORKFLOW = _REPO_ROOT / ".github" / "workflows" / "ci.yml"
+_TEXT_SUFFIXES = {".json", ".md", ".py", ".toml", ".ts", ".tsx", ".yaml", ".yml"}
 
 _REFERENCE_URL_DOCS: frozenset[Path] = frozenset(
     {
@@ -65,6 +69,37 @@ def test_document_harness_ci_fixtures_never_reference_live_public_endpoints() ->
     ]
 
     assert findings == [], _format_findings(findings)
+
+
+def test_main_ci_backend_pytest_deselects_live_marker() -> None:
+    workflow = _CI_WORKFLOW.read_text(encoding="utf-8")
+    pytest_runs = [
+        line.strip()
+        for line in workflow.splitlines()
+        if "uv run pytest" in line and "tests/evidence tests/ci" not in line
+    ]
+
+    assert pytest_runs, "No backend pytest invocation found in .github/workflows/ci.yml."
+    assert any('-m "not live"' in line or "-m 'not live'" in line for line in pytest_runs), (
+        "The main CI backend pytest invocation must explicitly deselect live public-API tests."
+    )
+
+    live_selected = [
+        line
+        for line in pytest_runs
+        if re.search(r"-m\s+['\"]?live(?:['\"]|\s|$)", line) and "not live" not in line
+    ]
+    assert live_selected == [], (
+        "CI must not explicitly select the live marker for backend pytest runs: "
+        + ", ".join(live_selected)
+    )
+
+
+def test_live_marker_expression_does_not_treat_not_live_as_selection() -> None:
+    assert _marker_selected("live", "not live") is False
+    assert _marker_selected("live_embedder", "not live_embedder") is False
+    assert _marker_selected("live", "live") is True
+    assert _marker_selected("live", "live or live_embedder") is True
 
 
 def _iter_scan_files() -> list[Path]:

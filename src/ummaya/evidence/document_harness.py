@@ -13,9 +13,10 @@ from pathlib import Path
 from typing import Literal, cast
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from ummaya.evidence.models import RunEvidence
+from ummaya.tools.documents.models import DocumentFormatFamily, KnownDocumentFormat
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_DOCUMENT_SCENARIO_PATH = _REPO_ROOT / "evidence/scenarios/document_harness_v1.yaml"
@@ -27,6 +28,57 @@ DocumentHarnessReadiness = Literal[
     "unsupported",
 ]
 DocumentHarnessFormat = Literal["hwpx", "docx", "xlsx", "pdf", "pptx"]
+DocumentHarnessLifecycleStage = Literal[
+    "intake",
+    "classification",
+    "capability",
+    "adapter_selection",
+    "permission",
+    "mutation",
+    "render",
+    "reread",
+    "validation",
+    "diff",
+    "tui_frame",
+]
+DocumentHarnessLifecycleStatus = Literal[
+    "pass",
+    "blocked",
+    "needs_input",
+    "unsupported",
+    "ready_for_review",
+]
+DocumentHarnessBetaDomain = Literal[
+    "weekly_log",
+    "contest_proposal",
+    "consent",
+    "pledge",
+    "spreadsheet",
+    "pdf_form",
+    "presentation",
+    "public_data_csv_json",
+    "static_pdf",
+    "scanned_image",
+    "archive_bundle",
+]
+DocumentHarnessBetaOutcome = Literal[
+    "ready_for_review",
+    "read_only",
+    "blocked",
+    "needs_input",
+    "unsupported",
+]
+DocumentHarnessNegativeTrigger = Literal[
+    "missing_file",
+    "ambiguous_file_candidates",
+    "unsupported_known_format",
+    "blocked_hwp_write",
+    "static_pdf_fill",
+    "macro_active_content",
+    "path_traversal",
+    "oversized_archive",
+    "external_link",
+]
 
 
 class DocumentHarnessEvidenceError(ValueError):
@@ -36,7 +88,7 @@ class DocumentHarnessEvidenceError(ValueError):
 class DocumentEvidenceRecord(BaseModel):
     """Joinable evidence record for one generated document derivative."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     record_id: str
     scenario_id: str
@@ -60,6 +112,60 @@ class DocumentHarnessEvidenceEnvelope(BaseModel):
 
     run_evidence: RunEvidence
     document_evidence_records: tuple[DocumentEvidenceRecord, ...]
+
+
+class DocumentLifecycleEvidenceRecord(BaseModel):
+    """Join-only evidence for one document workflow stage."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    record_id: str
+    scenario_id: str
+    correlation_id: str
+    stage: DocumentHarnessLifecycleStage
+    status: DocumentHarnessLifecycleStatus
+    known_format: KnownDocumentFormat
+    format_family: DocumentFormatFamily
+    adapter_id: str | None = None
+    artifact_id: str | None = None
+    artifact_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    document_diff_id: str | None = None
+    frame_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    evidence_ref: str
+
+    @model_validator(mode="after")
+    def _tui_frame_requires_frame_hash(self) -> DocumentLifecycleEvidenceRecord:
+        if self.stage == "tui_frame" and self.frame_hash is None:
+            raise ValueError("tui_frame lifecycle evidence requires frame_hash")
+        return self
+
+
+class DocumentBetaCase(BaseModel):
+    """Representative beta scenario for one Public AX document domain."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    case_id: str
+    domain: DocumentHarnessBetaDomain
+    known_format: KnownDocumentFormat
+    format_family: DocumentFormatFamily
+    expected_outcome: DocumentHarnessBetaOutcome
+    expected_operation: str
+    fixture_id: str | None = None
+    evidence_ref: str
+
+
+class DocumentNegativeCase(BaseModel):
+    """Negative beta scenario that must fail closed."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    case_id: str
+    trigger: DocumentHarnessNegativeTrigger
+    expected_status: Literal["blocked", "needs_input"]
+    expected_reason: str
+    derivative_save: Literal["forbidden"]
+    evidence_ref: str
 
 
 class DocumentHarnessAcceptanceGates(BaseModel):
@@ -104,20 +210,12 @@ class DocumentHarnessScenario(BaseModel):
     source_basis: Literal["public_ax_document_harness_spec"]
     target_system: str
     network_policy: Literal["offline_only"]
-    required_sequence: tuple[
-        Literal[
-            "document_inspect",
-            "document_form_schema",
-            "document_copy_for_edit",
-            "document_apply_fill",
-            "document_render",
-            "document_validate_public_form",
-            "document_save",
-        ],
-        ...,
-    ]
+    required_sequence: tuple[Literal["document"], ...]
     acceptance_gates: DocumentHarnessAcceptanceGates
     fixtures: tuple[DocumentHarnessFixture, ...] = Field(min_length=1)
+    lifecycle_records: tuple[DocumentLifecycleEvidenceRecord, ...] = Field(min_length=1)
+    beta_cases: tuple[DocumentBetaCase, ...] = Field(min_length=1)
+    negative_cases: tuple[DocumentNegativeCase, ...] = Field(min_length=1)
 
 
 def load_document_harness_scenario(
@@ -167,6 +265,30 @@ def records_from_scenario(
         )
         for fixture in scenario.fixtures
     )
+
+
+def lifecycle_records_from_scenario(
+    scenario: DocumentHarnessScenario,
+) -> tuple[DocumentLifecycleEvidenceRecord, ...]:
+    """Return workflow lifecycle records from scenario metadata."""
+
+    return scenario.lifecycle_records
+
+
+def beta_cases_from_scenario(
+    scenario: DocumentHarnessScenario,
+) -> tuple[DocumentBetaCase, ...]:
+    """Return beta-matrix cases from scenario metadata."""
+
+    return scenario.beta_cases
+
+
+def negative_cases_from_scenario(
+    scenario: DocumentHarnessScenario,
+) -> tuple[DocumentNegativeCase, ...]:
+    """Return fail-closed beta-matrix cases from scenario metadata."""
+
+    return scenario.negative_cases
 
 
 def _load_yaml_mapping(path: Path) -> Mapping[str, object]:
