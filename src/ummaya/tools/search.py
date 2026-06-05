@@ -15,7 +15,6 @@ Public API (for external callers):
 from __future__ import annotations
 
 import logging
-import re
 from typing import TYPE_CHECKING
 
 from ummaya.tools.bm25_index import BM25Index
@@ -26,6 +25,7 @@ from ummaya.tools.models import (
     SearchToolsOutput,
     ToolSearchResult,
 )
+from ummaya.tools.routing.intent import ToolSelectionIntent, extract_tool_selection_intent
 
 if TYPE_CHECKING:
     from ummaya.tools.registry import ToolRegistry
@@ -33,141 +33,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-_POI_LOCATION_RE = re.compile(
-    r"(근처|주변|인근|가까운|역|터미널|공항|캠퍼스|대학교|대학|해수욕장|시장|공원|랜드마크)"
-)
-_ADMIN_LOCATION_RE = re.compile(
-    r"(?:[가-힣]{2,}(?:시|군|구|동|읍|면)\b|[가-힣0-9]{2,}(?<!으)(?:로|길)\b)"
-)
-_EMERGENCY_RE = re.compile(r"(응급|응급실|응급의료|\bemergency\b|\ber\b)", re.IGNORECASE)
-_IMPLICIT_EMERGENCY_RE = re.compile(
-    r"(사람이\s*(?:쓰러|쓰러졌|쓰러져)|의식(?:을)?\s*(?:잃|없)|"
-    r"갑자기\s*쓰러|쓰러진\s*사람|위급|심정지|호흡(?:이)?\s*없|"
-    r"collapsed|unconscious|cardiac\s*arrest)",
-    re.IGNORECASE,
-)
-_AED_RE = re.compile(r"(\bAED\b|자동심장충격기|자동제세동기|제세동기)", re.IGNORECASE)
-_TRAFFIC_HAZARD_RE = re.compile(
-    r"(교통사고|사고\s*위험|사고다발|위험\s*(?:구간|도로|지점)|어린이보호구역|보호구역|"
-    r"도로\s*구간|accident|hazard|hotspot)",
-    re.IGNORECASE,
-)
-_TRAFFIC_HAZARD_SPECIFIC_RE = re.compile(
-    r"(사고\s*위험|위험\s*(?:구간|도로|지점)|어린이보호구역|보호구역|스쿨존|"
-    r"도로\s*구간|행정동코드|adm_cd|hazard|hotspot)",
-    re.IGNORECASE,
-)
-_KMA_ANALYSIS_CHART_RE = re.compile(
-    r"(분석일기도|지상일기도|보조일기도|WthrChartInfoService|getSurfaceChart|"
-    r"getAuxillaryChart|synoptic\s+chart)",
-    re.IGNORECASE,
-)
-_KMA_GIMHAE_AIRPORT_RE = re.compile(r"(김해(?:공항)?|Gimhae|RKPK)", re.IGNORECASE)
-_KMA_GIMPO_AIRPORT_RE = re.compile(r"(김포(?:공항)?|Gimpo|RKSS)", re.IGNORECASE)
-_KMA_AIRPORT_NAME_RE = re.compile(
-    r"(공항|\bairport\b|\bRK[A-Z]{2}\b|station\s*\d{2,3})",
-    re.IGNORECASE,
-)
-_KMA_AIRPORT_AVIATION_RE = re.compile(
-    r"(AMOS|METAR|SPECI|RVR|항공기상|공항기상|활주로|runway|aviation|"
-    r"비행기|항공편|비행편|이륙|착륙|결항|지연|운항|뜰\s*만|뜨나|뜰\s*수|"
-    r"flight|take\s*off|landing|delay|cancel)",
-    re.IGNORECASE,
-)
-_KMA_EXPLICIT_METAR_RE = re.compile(r"(\bMETAR\b|\bSPECI\b|해독자료)", re.IGNORECASE)
-_KMA_RUNWAY_AREA_RE = re.compile(
-    r"(AMOS|활주로|RVR|runway|시정|visibility|공항기상관측|매분)",
-    re.IGNORECASE,
-)
-_KMA_ANALYSIS_DATA_RE = re.compile(
-    r"(분석자료|이미\s*분석|고해상도\s*격자|객관분석|AWS\s*객관|지도\s*자료|"
-    r"일기도|분석일기도|비구름|바람\s*흐름|날씨\s*흐름|공식\s*기상자료|전국\s*날씨|"
-    r"synoptic|weather\s*chart|"
-    r"objective\s*analysis|high[-\s]?resolution|grid)",
-    re.IGNORECASE,
-)
-_KMA_LIFESTYLE_WEATHER_RE = re.compile(
-    r"(날씨|현재\s*기상|실황|관측|예보|기온|습도|풍속|지금\s*비|"
-    r"비\s*(?:와|오|올|내리)|우산|강수|소나기|산책|퇴근|"
-    r"current\s+weather|forecast|rain|umbrella|precipitation|temperature)",
-    re.IGNORECASE,
-)
-_HIRA_MEDICAL_DETAIL_RE = re.compile(
-    r"((병원|의료기관|의원).*(상세|진료과|진료과목|진료시간|주차)|"
-    r"(상세|진료시간|주차|응급실).*(병원|의료기관|의원)|ykiho|detail)",
-    re.IGNORECASE,
-)
-_MOIS_EMERGENCY_CALL_BOX_RE = re.compile(
-    r"(안전\s*비상벨|비상벨|긴급\s*신고함|긴급신고함|방범벨|"
-    r"emergency\s+call\s+box)",
-    re.IGNORECASE,
-)
-_GYERYONG_ASSISTIVE_CHARGER_RE = re.compile(
-    r"((전동보장구|전동\s*휠체어|보장구|장애인).*(충전|충전소|충전장소)|"
-    r"(충전|충전소|충전장소).*(전동보장구|전동\s*휠체어|보장구|장애인)|"
-    r"계룡시?.*(충전소|충전\s*장소))",
-    re.IGNORECASE,
-)
-_MOF_OCEAN_WATER_QUALITY_RE = re.compile(
-    r"(해양\s*수질|해양수질|수질\s*자동\s*측정|용존산소|\bpH\b|"
-    r"water\s+quality|ocean\s+water)",
-    re.IGNORECASE,
-)
-_PPS_SHOPPING_RE = re.compile(
-    r"(종합\s*쇼핑몰|쇼핑몰|계약\s*물품|물품\s*조회|shopping\s*mall)",
-    re.IGNORECASE,
-)
-_PPS_BID_RE = re.compile(
-    r"(입찰|나라장터|조달청|\bbid\b|procurement|tender)",
-    re.IGNORECASE,
-)
-_KCUE_ACADEMY_INFO_RE = re.compile(
-    r"(대학알리미|대학정보공시|학교구분코드|schl[_\s-]?div[_\s-]?cd|KCUE)",
-    re.IGNORECASE,
-)
-_KCUE_REGIONAL_FINANCE_RE = re.compile(
-    r"(지역별\s*(등록금|재정)|등록금\s*(현황|지역별)?|tuition|finance)",
-    re.IGNORECASE,
-)
-_KCUE_REGIONAL_FOREIGN_STUDENT_RE = re.compile(
-    r"(외국인\s*유학생|유학생\s*현황|foreign\s+student|international\s+student)",
-    re.IGNORECASE,
-)
 _KCUE_TOOL_IDS = frozenset(
     {
         "kcue_finance_regional_tuition",
         "kcue_student_regional_foreign",
     }
 )
-_DOCUMENT_PATH_RE = re.compile(
-    r"(?:^|[\s:'\"(])(?:~|/|[A-Za-z]:\\|\.{1,2}/)?[^\s:'\"]*"
-    r"\.(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b",
-    re.IGNORECASE,
-)
-_DOCUMENT_FORMAT_RE = re.compile(r"\b(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b", re.IGNORECASE)
-_DOCUMENT_INTENT_RE = re.compile(
-    r"(문서|공문서|양식|서식|파일|작성|저장|렌더|미리보기|변경사항|"
-    r"\bdiff\b|\bcompact\b|\bdocument\b|\bfile\b|\bform\b|\brender\b|\bsave\b|\bwrite\b)",
-    re.IGNORECASE,
-)
-_DOCUMENT_WRITE_INTENT_RE = re.compile(
-    r"(작성|수정|편집|채우|채워|입력|변경|저장|write|edit|fill|apply|save)",
-    re.IGNORECASE,
-)
-_DOCUMENT_LOCAL_HINT_RE = re.compile(
-    r"(다운로드|downloads?|폴더|파일|양식|서식|활동일지|신청서|등본|증명서)",
-    re.IGNORECASE,
-)
 _DOCUMENT_TOOL_IDS = frozenset({"document"})
-_KMA_ANALYSIS_MAP_RE = re.compile(
-    r"(일기도|분석일기도|지도\s*자료|비구름|바람\s*흐름|날씨\s*흐름|전국\s*날씨|"
-    r"synoptic|weather\s*chart)",
-    re.IGNORECASE,
-)
-_KMA_ANALYSIS_POINT_RE = re.compile(
-    r"(주변|근처|특정지점|좌표|위도|경도|\blat\b|\blon\b|공항\s*주변)",
-    re.IGNORECASE,
-)
 _KMA_URL_AIR_TOOL_IDS = frozenset(
     {
         "kma_apihub_url_air_amos_minute",
@@ -201,56 +73,31 @@ _LOCATION_TOOL_IDS = frozenset(
 
 
 def _is_kma_analysis_point_query(query: str, *, is_analysis_map_query: bool) -> bool:
-    return bool(_KMA_ANALYSIS_POINT_RE.search(query)) and not is_analysis_map_query
+    return (
+        extract_tool_selection_intent(query).has_public_data_ref("kma_analysis_point")
+        and not is_analysis_map_query
+    )
 
 
 def _is_airport_aviation_query(query: str) -> bool:
-    return bool(
-        (
-            _KMA_AIRPORT_NAME_RE.search(query)
-            or _KMA_GIMHAE_AIRPORT_RE.search(query)
-            or _KMA_GIMPO_AIRPORT_RE.search(query)
-        )
-        and _KMA_AIRPORT_AVIATION_RE.search(query)
-    )
+    return extract_tool_selection_intent(query).has_public_data_ref("kma_airport_aviation")
 
 
 def _is_lifestyle_weather_query(query: str, *, is_airport_aviation_query: bool) -> bool:
-    return bool(
-        _KMA_LIFESTYLE_WEATHER_RE.search(query)
-        and not is_airport_aviation_query
-        and not _is_emergency_chain_query(query)
-        and not _KMA_ANALYSIS_DATA_RE.search(query)
-        and not _TRAFFIC_HAZARD_RE.search(query)
-        and not _MOF_OCEAN_WATER_QUALITY_RE.search(query)
-    )
+    del is_airport_aviation_query
+    return extract_tool_selection_intent(query).has_public_data_ref("kma_lifestyle_weather")
 
 
 def _is_pps_bid_query(query: str) -> bool:
-    return bool(_PPS_BID_RE.search(query) and not _PPS_SHOPPING_RE.search(query))
+    return extract_tool_selection_intent(query).has_public_data_ref("pps_bid")
 
 
 def _is_kcue_regional_query(query: str) -> bool:
-    has_kcue_anchor = bool(_KCUE_ACADEMY_INFO_RE.search(query)) or (
-        bool(re.search(r"대학(?!병원)", query)) and "공식" in query
-    )
-    if not has_kcue_anchor:
-        return False
-    return bool(
-        _KCUE_REGIONAL_FINANCE_RE.search(query) or _KCUE_REGIONAL_FOREIGN_STUDENT_RE.search(query)
-    )
+    return extract_tool_selection_intent(query).has_public_data_ref("kcue_regional")
 
 
 def _is_document_harness_query(query: str) -> bool:
-    return bool(
-        _DOCUMENT_PATH_RE.search(query)
-        or (_DOCUMENT_FORMAT_RE.search(query) and _DOCUMENT_INTENT_RE.search(query))
-        or (
-            _DOCUMENT_INTENT_RE.search(query)
-            and _DOCUMENT_WRITE_INTENT_RE.search(query)
-            and _DOCUMENT_LOCAL_HINT_RE.search(query)
-        )
-    )
+    return extract_tool_selection_intent(query).has_document_ref("document_harness")
 
 
 def is_document_harness_query(query: str) -> bool:
@@ -259,9 +106,7 @@ def is_document_harness_query(query: str) -> bool:
 
 
 def _is_emergency_chain_query(query: str) -> bool:
-    if _MOIS_EMERGENCY_CALL_BOX_RE.search(query):
-        return False
-    return bool(_IMPLICIT_EMERGENCY_RE.search(query) or _EMERGENCY_RE.search(query))
+    return extract_tool_selection_intent(query).has_public_data_ref("emergency_medical")
 
 
 def _filter_kma_analysis_scores(
@@ -316,7 +161,7 @@ def _kma_lifestyle_weather_additions() -> list[str]:
     ]
 
 
-def _airport_aviation_additions(query: str) -> list[str]:
+def _airport_aviation_additions(intent: ToolSelectionIntent) -> list[str]:
     additions = [
         "METAR",
         "SPECI",
@@ -333,7 +178,9 @@ def _airport_aviation_additions(query: str) -> list[str]:
         "wind",
         "visibility",
     ]
-    if _KMA_GIMPO_AIRPORT_RE.search(query) and _KMA_RUNWAY_AREA_RE.search(query):
+    if intent.has_public_data_ref("kma_gimpo_airport") and intent.has_public_data_ref(
+        "kma_runway_area"
+    ):
         additions.extend(["AMOS", "공항기상관측", "매분자료", "활주로", "김포공항", "stn110"])
     return additions
 
@@ -370,8 +217,8 @@ def _traffic_hazard_additions() -> list[str]:
     ]
 
 
-def _emergency_chain_additions(query: str) -> list[str]:
-    if not _is_emergency_chain_query(query):
+def _emergency_chain_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("emergency_medical"):
         return []
     additions = [
         "응급실",
@@ -384,14 +231,14 @@ def _emergency_chain_additions(query: str) -> list[str]:
         "emergency",
         "hospital",
     ]
-    if _POI_LOCATION_RE.search(query):
+    if intent.has_location_ref("poi"):
         additions.extend(["장소", "키워드", "POI", "랜드마크", "역", "keyword"])
     return additions
 
 
-def _public_safety_location_additions(query: str) -> list[str]:
+def _public_safety_location_additions(intent: ToolSelectionIntent) -> list[str]:
     additions: list[str] = []
-    if _MOIS_EMERGENCY_CALL_BOX_RE.search(query):
+    if intent.has_public_data_ref("mois_emergency_call_box"):
         additions.extend(
             [
                 "안전비상벨",
@@ -405,7 +252,7 @@ def _public_safety_location_additions(query: str) -> list[str]:
                 "box",
             ]
         )
-    if _GYERYONG_ASSISTIVE_CHARGER_RE.search(query):
+    if intent.has_public_data_ref("gyeryong_assistive_charger"):
         additions.extend(
             [
                 "계룡시",
@@ -421,8 +268,8 @@ def _public_safety_location_additions(query: str) -> list[str]:
     return additions
 
 
-def _ocean_water_quality_additions(query: str) -> list[str]:
-    if not _MOF_OCEAN_WATER_QUALITY_RE.search(query):
+def _ocean_water_quality_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("mof_ocean_water_quality"):
         return []
     return [
         "해양수산부",
@@ -437,8 +284,8 @@ def _ocean_water_quality_additions(query: str) -> list[str]:
     ]
 
 
-def _pps_bid_additions(query: str) -> list[str]:
-    if not _is_pps_bid_query(query):
+def _pps_bid_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("pps_bid"):
         return []
     return [
         "조달청",
@@ -454,8 +301,8 @@ def _pps_bid_additions(query: str) -> list[str]:
     ]
 
 
-def _kcue_regional_additions(query: str) -> list[str]:
-    if not _is_kcue_regional_query(query):
+def _kcue_regional_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("kcue_regional"):
         return []
     additions = [
         "한국대학교육협의회",
@@ -466,15 +313,15 @@ def _kcue_regional_additions(query: str) -> list[str]:
         "지역별통계",
         "KCUE",
     ]
-    if _KCUE_REGIONAL_FINANCE_RE.search(query):
+    if intent.has_public_data_ref("kcue_regional_finance"):
         additions.extend(["재정현황", "등록금", "FinancesService", "regional tuition"])
-    if _KCUE_REGIONAL_FOREIGN_STUDENT_RE.search(query):
+    if intent.has_public_data_ref("kcue_regional_foreign_student"):
         additions.extend(["학생현황", "외국인유학생", "regional foreign student"])
     return additions
 
 
-def _health_detail_additions(query: str) -> list[str]:
-    if not _HIRA_MEDICAL_DETAIL_RE.search(query):
+def _health_detail_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("hira_medical_detail"):
         return []
     return [
         "의료기관",
@@ -490,8 +337,8 @@ def _health_detail_additions(query: str) -> list[str]:
     ]
 
 
-def _document_harness_additions(query: str) -> list[str]:
-    if not _is_document_harness_query(query):
+def _document_harness_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_document_ref("document_harness"):
         return []
     return [
         "document",
@@ -530,12 +377,12 @@ def _filter_kma_lifestyle_weather_scores(
 
 
 def _filter_public_safety_location_scores(
-    query: str, scored: list[tuple[str, float]]
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
     boosts = {}
-    if _MOIS_EMERGENCY_CALL_BOX_RE.search(query):
+    if intent.has_public_data_ref("mois_emergency_call_box"):
         boosts["mois_emergency_call_box_lookup"] = 1000.0
-    if _GYERYONG_ASSISTIVE_CHARGER_RE.search(query):
+    if intent.has_public_data_ref("gyeryong_assistive_charger"):
         boosts["gyeryong_assistive_device_charging_place_locate"] = 1000.0
     if not boosts:
         return scored
@@ -543,9 +390,9 @@ def _filter_public_safety_location_scores(
 
 
 def _filter_emergency_chain_scores(
-    query: str, scored: list[tuple[str, float]]
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
-    if not _is_emergency_chain_query(query):
+    if not intent.has_public_data_ref("emergency_medical"):
         return scored
     emergency_tool_ids = {
         "nmc_emergency_search",
@@ -556,7 +403,7 @@ def _filter_emergency_chain_scores(
     allowed_tool_ids = emergency_tool_ids | _LOCATION_TOOL_IDS
     if any(tool_id in emergency_tool_ids for tool_id, _ in scored):
         scored = [(tool_id, score) for tool_id, score in scored if tool_id in allowed_tool_ids]
-    implicit_collapse = bool(_IMPLICIT_EMERGENCY_RE.search(query))
+    implicit_collapse = intent.has_public_data_ref("implicit_emergency")
     boosts = {
         "nmc_emergency_search": 1200.0,
         "nmc_aed_site_locate": 1150.0 if implicit_collapse else 950.0,
@@ -572,9 +419,9 @@ def _filter_emergency_chain_scores(
 
 
 def _filter_ocean_water_quality_scores(
-    query: str, scored: list[tuple[str, float]]
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
-    if not _MOF_OCEAN_WATER_QUALITY_RE.search(query):
+    if not intent.has_public_data_ref("mof_ocean_water_quality"):
         return scored
     return [
         (
@@ -585,8 +432,10 @@ def _filter_ocean_water_quality_scores(
     ]
 
 
-def _filter_pps_bid_scores(query: str, scored: list[tuple[str, float]]) -> list[tuple[str, float]]:
-    if not _is_pps_bid_query(query):
+def _filter_pps_bid_scores(
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    if not intent.has_public_data_ref("pps_bid"):
         return scored
     has_pps_bid = any(tool_id == "pps_bid_public_info" for tool_id, _ in scored)
     if not has_pps_bid:
@@ -597,16 +446,16 @@ def _filter_pps_bid_scores(query: str, scored: list[tuple[str, float]]) -> list[
 
 
 def _filter_kcue_regional_scores(
-    query: str, scored: list[tuple[str, float]]
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
-    if not _is_kcue_regional_query(query):
+    if not intent.has_public_data_ref("kcue_regional"):
         return scored
     has_kcue = any(tool_id in _KCUE_TOOL_IDS for tool_id, _ in scored)
     if not has_kcue:
         return scored
 
-    prefer_finance = bool(_KCUE_REGIONAL_FINANCE_RE.search(query))
-    prefer_foreign_student = bool(_KCUE_REGIONAL_FOREIGN_STUDENT_RE.search(query))
+    prefer_finance = intent.has_public_data_ref("kcue_regional_finance")
+    prefer_foreign_student = intent.has_public_data_ref("kcue_regional_foreign_student")
     boosts = {
         "kcue_finance_regional_tuition": 1000.0 if prefer_finance else 700.0,
         "kcue_student_regional_foreign": 1000.0 if prefer_foreign_student else 700.0,
@@ -617,9 +466,9 @@ def _filter_kcue_regional_scores(
 
 
 def _filter_health_detail_scores(
-    query: str, scored: list[tuple[str, float]]
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
-    if not _HIRA_MEDICAL_DETAIL_RE.search(query):
+    if not intent.has_public_data_ref("hira_medical_detail"):
         return scored
     return [
         (
@@ -631,10 +480,10 @@ def _filter_health_detail_scores(
 
 
 def _filter_document_harness_scores(
-    query: str,
+    intent: ToolSelectionIntent,
     scored: list[tuple[str, float]],
 ) -> list[tuple[str, float]]:
-    if not _is_document_harness_query(query):
+    if not intent.has_document_ref("document_harness"):
         return scored
     if not any(tool_id in _DOCUMENT_TOOL_IDS for tool_id, _score in scored):
         return scored
@@ -647,13 +496,13 @@ def _filter_document_harness_scores(
 
 
 def _filter_initial_special_scores(
-    query: str, scored: list[tuple[str, float]]
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
-    if _TRAFFIC_HAZARD_SPECIFIC_RE.search(query):
+    if intent.has_public_data_ref("traffic_hazard_specific"):
         scored = [
             (tool_id, score) for tool_id, score in scored if tool_id != "koroad_accident_search"
         ]
-    if _KMA_ANALYSIS_CHART_RE.search(query):
+    if intent.has_public_data_ref("kma_analysis_chart"):
         return [
             (tool_id, score)
             for tool_id, score in scored
@@ -663,18 +512,18 @@ def _filter_initial_special_scores(
 
 
 def _filter_kma_aviation_scores(
-    query: str, scored: list[tuple[str, float]], *, is_airport_aviation_query: bool
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]], *, is_airport_aviation_query: bool
 ) -> list[tuple[str, float]]:
-    if _KMA_GIMHAE_AIRPORT_RE.search(query) and _KMA_AIRPORT_AVIATION_RE.search(query):
+    if intent.has_public_data_ref("kma_gimhae_airport") and is_airport_aviation_query:
         scored = [
             (tool_id, score)
             for tool_id, score in scored
             if tool_id != "kma_apihub_url_air_amos_minute"
         ]
     if (
-        _KMA_GIMPO_AIRPORT_RE.search(query)
-        and _KMA_RUNWAY_AREA_RE.search(query)
-        and _KMA_AIRPORT_AVIATION_RE.search(query)
+        intent.has_public_data_ref("kma_gimpo_airport")
+        and intent.has_public_data_ref("kma_runway_area")
+        and is_airport_aviation_query
     ):
         scored = [
             (tool_id, score + 500.0 if tool_id == "kma_apihub_url_air_amos_minute" else score)
@@ -686,7 +535,7 @@ def _filter_kma_aviation_scores(
     has_air_url_candidate = any(tool_id in _KMA_URL_AIR_TOOL_IDS for tool_id, _ in scored)
     if not has_air_url_candidate:
         return scored
-    if _KMA_EXPLICIT_METAR_RE.search(query):
+    if intent.has_public_data_ref("kma_explicit_metar"):
         blocked_tool_ids = (
             _LOCATION_TOOL_IDS | _KMA_LIFESTYLE_WEATHER_TOOL_IDS | {"kma_forecast_fetch"}
         )
@@ -694,9 +543,9 @@ def _filter_kma_aviation_scores(
     else:
         scored = [(tool_id, score) for tool_id, score in scored if tool_id in _KMA_URL_AIR_TOOL_IDS]
     prefer_amos = bool(
-        _KMA_GIMPO_AIRPORT_RE.search(query)
-        and _KMA_RUNWAY_AREA_RE.search(query)
-        and not _KMA_GIMHAE_AIRPORT_RE.search(query)
+        intent.has_public_data_ref("kma_gimpo_airport")
+        and intent.has_public_data_ref("kma_runway_area")
+        and not intent.has_public_data_ref("kma_gimhae_airport")
     )
     return [
         (
@@ -714,8 +563,10 @@ def _filter_kma_aviation_scores(
     ]
 
 
-def _boost_aed_scores(query: str, scored: list[tuple[str, float]]) -> list[tuple[str, float]]:
-    if not _AED_RE.search(query):
+def _boost_aed_scores(
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    if not intent.has_public_data_ref("aed"):
         return scored
     return [
         (
@@ -723,7 +574,7 @@ def _boost_aed_scores(query: str, scored: list[tuple[str, float]]) -> list[tuple
             score + 900.0
             if tool_id == "nmc_aed_site_locate"
             else score + 700.0
-            if tool_id == "nmc_emergency_search" and _EMERGENCY_RE.search(query)
+            if tool_id == "nmc_emergency_search" and intent.has_public_data_ref("emergency_medical")
             else score,
         )
         for tool_id, score in scored
@@ -740,30 +591,35 @@ def _expand_query_for_adapter_retrieval(query: str) -> str:
     adapter contract unchanged while letting the concrete locate adapter stay
     visible to the model.
     """
+    intent: ToolSelectionIntent = extract_tool_selection_intent(query)
+    return _expand_query_for_intent(query, intent)
+
+
+def _expand_query_for_intent(query: str, intent: ToolSelectionIntent) -> str:
     additions: list[str] = []
-    is_airport_aviation_query = _is_airport_aviation_query(query)
+    is_airport_aviation_query = intent.has_public_data_ref("kma_airport_aviation")
     if is_airport_aviation_query:
-        additions.extend(_airport_aviation_additions(query))
-    if _KMA_ANALYSIS_DATA_RE.search(query):
+        additions.extend(_airport_aviation_additions(intent))
+    if intent.has_public_data_ref("kma_analysis_data"):
         additions.extend(_kma_analysis_data_additions())
-    if _is_lifestyle_weather_query(query, is_airport_aviation_query=is_airport_aviation_query):
+    if intent.has_public_data_ref("kma_lifestyle_weather"):
         additions.extend(_kma_lifestyle_weather_additions())
-    if _POI_LOCATION_RE.search(query) and not is_airport_aviation_query:
+    if intent.has_location_ref("poi") and not is_airport_aviation_query:
         additions.extend(["장소", "키워드", "POI", "랜드마크", "역", "keyword"])
-    if _ADMIN_LOCATION_RE.search(query):
+    if intent.has_location_ref("admin"):
         additions.extend(["주소", "행정동", "법정동", "도로명", "지번", "address"])
-    if _EMERGENCY_RE.search(query):
+    if intent.has_public_data_ref("emergency_medical"):
         additions.extend(["응급실", "응급의료", "NMC", "emergency"])
-    if _AED_RE.search(query):
+    if intent.has_public_data_ref("aed"):
         additions.extend(["AED", "자동심장충격기", "자동제세동기", "국립중앙의료원"])
-    additions.extend(_emergency_chain_additions(query))
-    additions.extend(_pps_bid_additions(query))
-    additions.extend(_kcue_regional_additions(query))
-    additions.extend(_ocean_water_quality_additions(query))
-    additions.extend(_health_detail_additions(query))
-    additions.extend(_document_harness_additions(query))
-    additions.extend(_public_safety_location_additions(query))
-    if _TRAFFIC_HAZARD_RE.search(query):
+    additions.extend(_emergency_chain_additions(intent))
+    additions.extend(_pps_bid_additions(intent))
+    additions.extend(_kcue_regional_additions(intent))
+    additions.extend(_ocean_water_quality_additions(intent))
+    additions.extend(_health_detail_additions(intent))
+    additions.extend(_document_harness_additions(intent))
+    additions.extend(_public_safety_location_additions(intent))
+    if intent.has_public_data_ref("traffic_hazard"):
         additions.extend(_traffic_hazard_additions())
     if not additions:
         return query
@@ -771,43 +627,40 @@ def _expand_query_for_adapter_retrieval(query: str) -> str:
 
 
 def _filter_special_case_scores(
-    query: str, scored: list[tuple[str, float]]
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
     """Apply deterministic domain disambiguation after backend scoring."""
-    is_airport_aviation_query = _is_airport_aviation_query(query)
-    is_analysis_query = bool(_KMA_ANALYSIS_DATA_RE.search(query))
-    is_analysis_map_query = bool(_KMA_ANALYSIS_MAP_RE.search(query))
-    is_analysis_point_query = _is_kma_analysis_point_query(
-        query, is_analysis_map_query=is_analysis_map_query
+    is_airport_aviation_query = intent.has_public_data_ref("kma_airport_aviation")
+    is_analysis_query = intent.has_public_data_ref("kma_analysis_data")
+    is_analysis_map_query = intent.has_public_data_ref("kma_analysis_map")
+    is_analysis_point_query = (
+        intent.has_public_data_ref("kma_analysis_point") and not is_analysis_map_query
     )
-    is_lifestyle_weather_query = _is_lifestyle_weather_query(
-        query, is_airport_aviation_query=is_airport_aviation_query
-    )
-    scored = _filter_initial_special_scores(query, scored)
+    is_lifestyle_weather_query = intent.has_public_data_ref("kma_lifestyle_weather")
+    scored = _filter_initial_special_scores(intent, scored)
     if is_analysis_query:
         scored = _filter_kma_analysis_scores(
             scored,
             is_analysis_map_query=is_analysis_map_query,
             is_analysis_point_query=is_analysis_point_query,
-            prefer_poi_location=bool(_POI_LOCATION_RE.search(query)),
+            prefer_poi_location=intent.has_location_ref("poi"),
         )
     if is_lifestyle_weather_query:
         scored = _filter_kma_lifestyle_weather_scores(scored)
-    scored = _filter_document_harness_scores(query, scored)
-    scored = _filter_emergency_chain_scores(query, scored)
-    scored = _filter_pps_bid_scores(query, scored)
-    scored = _filter_kcue_regional_scores(query, scored)
-    scored = _filter_health_detail_scores(query, scored)
-    scored = _filter_public_safety_location_scores(query, scored)
-    scored = _filter_ocean_water_quality_scores(query, scored)
+    scored = _filter_document_harness_scores(intent, scored)
+    scored = _filter_emergency_chain_scores(intent, scored)
+    scored = _filter_pps_bid_scores(intent, scored)
+    scored = _filter_kcue_regional_scores(intent, scored)
+    scored = _filter_health_detail_scores(intent, scored)
+    scored = _filter_public_safety_location_scores(intent, scored)
+    scored = _filter_ocean_water_quality_scores(intent, scored)
     scored = _filter_kma_aviation_scores(
-        query, scored, is_airport_aviation_query=is_airport_aviation_query
+        intent, scored, is_airport_aviation_query=is_airport_aviation_query
     )
-    scored = _boost_aed_scores(query, scored)
+    scored = _boost_aed_scores(intent, scored)
 
-    query_lower = query.lower()
     return [
-        (tool_id, score + 1000.0 if tool_id.lower() in query_lower else score)
+        (tool_id, score + 1000.0 if tool_id in intent.explicit_tool_ids else score)
         for tool_id, score in scored
     ]
 
@@ -850,9 +703,11 @@ def search(
     if registry_size == 0:
         return []
 
+    intent = extract_tool_selection_intent(query, known_tool_ids=registry._tools.keys())
+    expanded_query = _expand_query_for_intent(query, intent)
     retriever = registry._retriever
     try:
-        scored = retriever.score(_expand_query_for_adapter_retrieval(query))
+        scored = retriever.score(expanded_query)
     except Exception as exc:
         # FR-002 fail-open: a mid-session retriever failure (dense OOM,
         # tokenizer crash, encoder corruption) must not surface as a 5xx
@@ -876,7 +731,7 @@ def search(
             )
             return []
         try:
-            scored = bm25_companion.score(_expand_query_for_adapter_retrieval(query))
+            scored = bm25_companion.score(expanded_query)
         except Exception as bm25_exc:
             logger.warning(
                 "search: BM25 companion also failed (%s: %s) — returning empty ranking",
@@ -885,7 +740,7 @@ def search(
             )
             return []
 
-    scored = _filter_special_case_scores(query, scored)
+    scored = _filter_special_case_scores(intent, scored)
 
     # Enforce the deterministic tie-break once, here. Backend-internal
     # orderings are not trusted (HybridBackend returns unordered union).
