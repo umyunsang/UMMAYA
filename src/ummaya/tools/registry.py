@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from enum import StrEnum
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
@@ -31,6 +31,9 @@ from ummaya.tools.retrieval.dense_backend import DenseBackendLoadError
 from ummaya.tools.search import search_tools
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from ummaya.tools.routing.cards import AdapterCard
 
 
 # ---------------------------------------------------------------------------
@@ -387,6 +390,11 @@ class ToolRegistry:
     def situational_tools(self) -> list[GovAPITool]:
         """Return non-core, active tools."""
         return [t for tid, t in self._tools.items() if not t.is_core and tid not in self._inactive]
+
+    def adapter_cards(self) -> list[AdapterCard]:
+        from ummaya.tools.routing.cards import build_adapter_cards
+
+        return list(build_adapter_cards(self.all_tools()))
 
     def export_core_tools_openai(self) -> list[dict[str, object]]:
         """Export core tools as OpenAI function-calling definitions.

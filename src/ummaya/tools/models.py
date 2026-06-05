@@ -31,6 +31,8 @@ _AUTH_TYPE_LEVEL_MAPPING: Final[dict[str, frozenset[str]]] = {
     "oauth": frozenset({"AAL1", "AAL2", "AAL3"}),
 }
 
+MockFidelityGrade = Literal["OPENAPI", "OOS", "HARNESS_ONLY", "unknown", "not_applicable"]
+
 # Spec 1634 (P3 Tool System Wiring) — closed ministry / institution enum.
 # Typed replacement for the former free-form ``provider: str`` field. New
 # institutions are added by enum extension (small dedicated PR, ADR not
@@ -214,6 +216,8 @@ class GovAPITool(BaseModel):
     """Runtime source. ``live`` = adapter calls the real public API.
     ``mock`` = adapter returns recorded fixture or shape-compatible synthetic.
     Distinct from ``AdapterRegistration.source_mode`` (mirror fidelity axis)."""
+
+    mock_fidelity_grade: MockFidelityGrade = "not_applicable"
 
     # Spec 031 T032 dual-axis fields — None during pre-v1.2 compatibility window FR-028
     primitive: Literal["find", "locate", "send", "check", "document"] | None = None
