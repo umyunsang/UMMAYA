@@ -17,6 +17,9 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 _DOCKERFILE_PATH = Path(__file__).resolve().parents[2] / "docker" / "Dockerfile"
+_DOCKERIGNORE_PATH = Path(__file__).resolve().parents[2] / ".dockerignore"
+_PUBLIC_DOC_CONTRACT_DIR = "specs/2802-public-doc-harness/contracts/"
+_PUBLIC_DOC_CONTRACT = "specs/2802-public-doc-harness/contracts/document-tools.schema.json"
 
 
 def _read_dockerfile() -> str:
@@ -25,6 +28,11 @@ def _read_dockerfile() -> str:
     Raises FileNotFoundError (RED) until T035 creates the file.
     """
     return _DOCKERFILE_PATH.read_text(encoding="utf-8")
+
+
+def _read_dockerignore() -> str:
+    """Return the full text of .dockerignore."""
+    return _DOCKERIGNORE_PATH.read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -162,4 +170,22 @@ def test_dockerfile_pins_uv_version() -> None:
     assert semver_pattern.search(text) is not None, (
         "Dockerfile must reference a pinned uv image matching "
         "'ghcr.io/astral-sh/uv:<MAJOR>.<MINOR>.<PATCH>'"
+    )
+
+
+def test_docker_context_keeps_public_doc_contract_schema() -> None:
+    """Asserts Docker builds can see the canonical document harness schema.
+
+    ``specs/`` is excluded from the Docker build context by default, but
+    hatchling must read this force-included contract file while building the
+    project wheel. Keep the carve-out narrow so the image context stays small.
+    """
+    dockerfile_text = _read_dockerfile()
+    dockerignore_text = _read_dockerignore()
+
+    assert _PUBLIC_DOC_CONTRACT_DIR in dockerfile_text, (
+        "Dockerfile must copy the public document harness contract before uv installs the project"
+    )
+    assert f"!{_PUBLIC_DOC_CONTRACT}" in dockerignore_text, (
+        ".dockerignore must explicitly unignore the public document harness contract schema"
     )

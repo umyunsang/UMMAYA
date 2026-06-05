@@ -93,6 +93,7 @@ htmlcov/
 .references/
 
 # Local agent runtime state
+.omo/
 .codex/
 .codex-work/
 .evidence/

@@ -134,8 +134,14 @@ export function validatePermissionRule(rule: string): {
     return { valid: false, error: 'Tool name cannot be empty' }
   }
 
-  // Check tool name starts with uppercase (standard tools)
-  if (parsed.toolName[0] !== parsed.toolName[0]?.toUpperCase()) {
+  // Check tool name starts with uppercase (Claude Code standard tools).
+  // UMMAYA's sanctioned tool-surface swap exposes lowercase primitive and
+  // adapter names such as `document` and `workspace_glob`; those are valid
+  // first-class tools, not malformed CC tool names.
+  if (
+    parsed.toolName[0] !== parsed.toolName[0]?.toUpperCase() &&
+    !isUmmayaLowercaseToolName(parsed.toolName)
+  ) {
     return {
       valid: false,
       error: 'Tool names must start with uppercase',
@@ -236,6 +242,12 @@ export function validatePermissionRule(rule: string): {
   }
 
   return { valid: true }
+}
+
+function isUmmayaLowercaseToolName(toolName: string): boolean {
+  return /^(?:document(?:_[a-z0-9]+)*|workspace_[a-z0-9_]+|lookup|resolve_location|submit|verify|find|locate|send|check)$/u.test(
+    toolName,
+  )
 }
 
 /**

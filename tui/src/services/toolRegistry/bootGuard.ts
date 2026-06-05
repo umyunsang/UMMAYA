@@ -2,7 +2,7 @@
 // Epic γ #2294 · T004 · ToolRegistry boot guard.
 //
 // Walks every active registered UMMAYA primitive (find / locate /
-// send / check) at process boot and asserts that
+// send / check / document) at process boot and asserts that
 // each one exposes the full `Tool<>` 10-member surface from
 // `tui/src/Tool.ts` (byte-identical to CC `Tool.ts`). Fails closed with a
 // Korean diagnostic if any member is missing.
@@ -22,7 +22,7 @@
 
 import type { Tool } from '../../Tool.js'
 
-const PRIMITIVE_NAMES = ['find', 'locate', 'send', 'check'] as const
+const PRIMITIVE_NAMES = ['find', 'locate', 'send', 'check', 'document'] as const
 export type PrimitiveName = (typeof PRIMITIVE_NAMES)[number]
 
 const REQUIRED_MEMBERS = [
@@ -58,8 +58,8 @@ export type BootResult =
  * structured `BootResult`. Caller decides whether to `process.exit(1)` or
  * throw — the guard itself has no side effects beyond reading the registry.
  *
- * Performance: O(P × M) where P = number of active primitives (4) and M = required
- * member count (9) — bounded at 36 property reads. Wall-clock budget on a
+ * Performance: O(P × M) where P = number of active primitives (5) and M = required
+ * member count (10) — bounded at 50 property reads. Wall-clock budget on a
  * developer laptop: ≤ 200 ms (Spec SC-002).
  */
 export function verifyBootRegistry(registry: readonly Tool[]): BootResult {
@@ -82,7 +82,7 @@ export function verifyBootRegistry(registry: readonly Tool[]): BootResult {
       diagnostic:
         `[UMMAYA][bootGuard] 활성 primitive 중 일부가 ToolRegistry에 등록되지 않았습니다. ` +
         `누락: ${missingNames.join(', ')}.\n` +
-        `UMMAYA는 활성 primitive(find/locate/send/check) 모두 등록되어야 부팅을 허용합니다.\n` +
+        `UMMAYA는 활성 primitive(find/locate/send/check/document) 모두 등록되어야 부팅을 허용합니다.\n` +
         `참조: specs/2294-5-primitive-align/contracts/registry-boot-guard.md`,
     }
   }

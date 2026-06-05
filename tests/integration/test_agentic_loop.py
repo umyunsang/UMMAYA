@@ -380,6 +380,480 @@ class _ProseThenToolLLMClient(_BaseFakeLLMClient):
         yield StreamEvent(type="done")
 
 
+class _DocumentOverclaimThenGroundedAnswerLLMClient(_BaseFakeLLMClient):
+    """LLM that first overclaims a document edit, then follows repair guidance."""
+
+    recorded_calls: list[dict[str, Any]] = []
+    _class_turn: int = 0
+
+    async def stream(
+        self,
+        messages: list[Any],
+        *,
+        tools: list[Any] | None = None,
+        tool_choice: Any = None,
+        temperature: float = 1.0,
+        top_p: float = 0.95,
+        presence_penalty: float = 0.0,
+        max_tokens: int = 1024,
+        stop: Any = None,
+    ) -> AsyncIterator[StreamEvent]:
+        type(self)._class_turn += 1
+        turn = type(self)._class_turn
+        type(self).recorded_calls.append({"messages": messages, "tools": tools})
+
+        if turn == 1:
+            yield StreamEvent(
+                type="content_delta",
+                content=(
+                    "문서를 성공적으로 처리했습니다.\n\n"
+                    "활동 내용\n- UMMAYA Phase 10 개발 활동 진행\n"
+                    "주요 성과\n- 문서 변경사항 시각적 비교 기능 구현 완료"
+                ),
+            )
+            yield StreamEvent(type="done")
+            return
+
+        yield StreamEvent(
+            type="content_delta",
+            content=(
+                "실제 문서 변경사항은 두 필드입니다: 주차는 13 주차에서 "
+                "14주차로, 활동기간은 2026.06.01 ~ 2026.06.07에서 "
+                "2026.06.08~2026.06.14로 변경되었습니다."
+            ),
+        )
+        yield StreamEvent(type="done")
+
+
+def test_document_final_answer_overclaim_detector_rejects_future_workflow_text() -> None:
+    """Observed TUI alpha text must be rejected when it adds future workflow claims."""
+    from ummaya.ipc.stdio import _final_answer_overclaims_document_edit
+
+    tool_result_payload = {
+        "tool_id": "document",
+        "status": "ok",
+        "diff": {
+            "changes": [
+                {
+                    "target_path": "/hwpx/text[2]",
+                    "before_value": "13 주차",
+                    "after_value": "14주차",
+                },
+                {
+                    "target_path": "/hwpx/text[12]",
+                    "before_value": "2026.06.01 ~ 2026.06.07",
+                    "after_value": "2026.06.08~2026.06.14",
+                },
+            ],
+        },
+    }
+    llm_messages: list[dict[str, object]] = [
+        {
+            "role": "tool",
+            "name": "document_apply_fill",
+            "content": json.dumps(tool_result_payload, ensure_ascii=False),
+        }
+    ]
+
+    assert _final_answer_overclaims_document_edit(
+        (
+            "문서가 성공적으로 수정되었습니다. 변경된 내용은 두 가지입니다. "
+            "이제 문서를 활동일지로 작성하여 최종 changes in the TUI에 "
+            "표시하겠습니다. 변경된 부분을 확인하실 수 있습니다."
+        ),
+        llm_messages,
+    )
+
+
+def test_document_final_answer_overclaim_detector_rejects_save_artifact_claims() -> None:
+    """Final document answers may not claim save/artifact work absent from diff changes."""
+    from ummaya.ipc.stdio import _final_answer_overclaims_document_edit
+
+    tool_result_payload = {
+        "kind": "document",
+        "result": {
+            "tool_id": "document",
+            "status": "ok",
+            "diff": {
+                "changes": [
+                    {
+                        "change_id": "change-001",
+                        "target_path": "/hwpx/text[2]",
+                        "before_value": "13 주차",
+                        "after_value": "14주차",
+                    },
+                    {
+                        "change_id": "change-002",
+                        "target_path": "/hwpx/text[12]",
+                        "before_value": "2026.06.01 ~ 2026.06.07",
+                        "after_value": "2026.06.08~2026.06.14",
+                    },
+                ],
+            },
+            "workflow_steps": [
+                {"step_id": "save", "label": "Save", "status": "pending"},
+            ],
+        },
+    }
+    llm_messages: list[dict[str, object]] = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "call-document-fill",
+                    "content": json.dumps(tool_result_payload, ensure_ascii=False),
+                }
+            ],
+        }
+    ]
+
+    assert _final_answer_overclaims_document_edit(
+        (
+            "문서가 성공적으로 업데이트되었습니다. "
+            "1. 주차: 13 주차 → 14주차\n"
+            "2. 활동 기간: 2026.06.01 ~ 2026.06.07 → 2026.06.08~2026.06.14\n"
+            "렌더링 아티팩트도 생성되었습니다. 문서는 성공적으로 저장되었습니다."
+        ),
+        llm_messages,
+    )
+
+
+def test_document_final_answer_overclaim_detector_rejects_visual_status_prose() -> None:
+    """Final document answers should stay to actual changed values when requested."""
+    from ummaya.ipc.stdio import _final_answer_overclaims_document_edit
+
+    tool_result_payload = {
+        "kind": "document",
+        "result": {
+            "tool_id": "document",
+            "status": "ok",
+            "diff": {
+                "changes": [
+                    {
+                        "change_id": "change-001",
+                        "target_path": "/hwpx/text[2]",
+                        "before_value": "13 주차",
+                        "after_value": "14주차",
+                    },
+                    {
+                        "change_id": "change-002",
+                        "target_path": "/hwpx/text[12]",
+                        "before_value": "2026.06.01 ~ 2026.06.07",
+                        "after_value": "2026.06.08~2026.06.14",
+                    },
+                ],
+            },
+        },
+    }
+    llm_messages: list[dict[str, object]] = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "call-document-fill",
+                    "content": json.dumps(tool_result_payload, ensure_ascii=False),
+                }
+            ],
+        }
+    ]
+
+    assert _final_answer_overclaims_document_edit(
+        (
+            "문서가 성공적으로 업데이트되었습니다.\n\n"
+            "변경된 부분:\n"
+            '1. 주차 기간 수정: "13 주차" → "14주차"로 변경\n'
+            '2. 활동 기간 수정: "2026.06.01 ~ 2026.06.07" → '
+            '"2026.06.08~2026.06.14"로 변경\n\n'
+            "문서 상태: 문서가 정상적으로 업데이트되었으며, 변경된 내용을 "
+            "확인할 수 있는 시각적 차이(diff)가 제공되었습니다. 변경 사항은 "
+            "문서 내에서 자동으로 검토되어 다음 주차 활동일지로 적절히 "
+            "수정되었습니다."
+        ),
+        llm_messages,
+    )
+
+
+def test_document_diff_only_final_answer_formats_observed_changes() -> None:
+    """Explicit diff-only requests get a final answer from diff.changes only."""
+    from ummaya.ipc.stdio import _document_diff_only_final_answer
+
+    tool_result_payload = {
+        "kind": "document",
+        "ok": True,
+        "result": {
+            "tool_id": "document",
+            "status": "ok",
+            "diff": {
+                "changes": [
+                    {
+                        "target_path": "/hwpx/text[2]",
+                        "before_value": "13 주차 ",
+                        "after_value": "14주차",
+                    },
+                    {
+                        "target_path": "/hwpx/text[12]",
+                        "before_value": "2026.06.01 ~ 2026.06.07",
+                        "after_value": "2026.06.08~2026.06.14",
+                    },
+                ],
+            },
+        },
+    }
+    llm_messages: list[dict[str, object]] = [
+        {
+            "role": "tool",
+            "name": "document",
+            "tool_call_id": "call-document-fill",
+            "content": json.dumps(tool_result_payload, ensure_ascii=False),
+        }
+    ]
+
+    assert _document_diff_only_final_answer(
+        "수정 후 최종적으로 실제로 바뀐 내용만 답변해줘.",
+        llm_messages,
+    ) == (
+        "실제 변경된 내용:\n"
+        "- /hwpx/text[2]: 13 주차  -> 14주차\n"
+        "- /hwpx/text[12]: 2026.06.01 ~ 2026.06.07 -> 2026.06.08~2026.06.14"
+    )
+
+
+def test_document_diff_only_final_answer_prefers_display_label() -> None:
+    """Document final answers should use user-readable labels when available."""
+    from ummaya.ipc.stdio import _document_diff_only_final_answer
+
+    tool_result_payload = {
+        "kind": "document",
+        "ok": True,
+        "result": {
+            "tool_id": "document",
+            "status": "ok",
+            "diff": {
+                "changes": [
+                    {
+                        "target_path": "Contents/section0.xml#table[1]/r4c2",
+                        "display_label": "접수번호",
+                        "before_value": "",
+                        "after_value": "UMMAYA-2026-0005",
+                    }
+                ],
+            },
+        },
+    }
+    llm_messages: list[dict[str, object]] = [
+        {
+            "role": "tool",
+            "name": "document",
+            "tool_call_id": "call-document-fill",
+            "content": json.dumps(tool_result_payload, ensure_ascii=False),
+        }
+    ]
+
+    assert (
+        _document_diff_only_final_answer(
+            "수정 후 변경된 부분만 바로 확인할 수 있게 보여줘.",
+            llm_messages,
+        )
+        == "실제 변경된 내용:\n- 접수번호:  -> UMMAYA-2026-0005"
+    )
+
+
+def test_document_final_answer_rejects_native_path_when_display_label_exists() -> None:
+    """Final answers should not expose native XML paths when a label is available."""
+    from ummaya.ipc.stdio import _final_answer_overclaims_document_edit
+
+    tool_result_payload = {
+        "kind": "document",
+        "ok": True,
+        "result": {
+            "tool_id": "document",
+            "status": "ok",
+            "diff": {
+                "changes": [
+                    {
+                        "target_path": "Contents/section0.xml#table[1]/r4c2",
+                        "display_label": "접수번호",
+                        "before_value": "",
+                        "after_value": "UMMAYA-2026-0006",
+                    }
+                ],
+            },
+        },
+    }
+    llm_messages: list[dict[str, object]] = [
+        {
+            "role": "tool",
+            "name": "document",
+            "tool_call_id": "call-document-fill",
+            "content": json.dumps(tool_result_payload, ensure_ascii=False),
+        }
+    ]
+
+    assert _final_answer_overclaims_document_edit(
+        "실제 변경된 내용:\n- Contents/section0.xml#table[1]/r4c2:  -> UMMAYA-2026-0006",
+        llm_messages,
+    )
+    assert not _final_answer_overclaims_document_edit(
+        "실제 변경된 내용:\n- 접수번호:  -> UMMAYA-2026-0006",
+        llm_messages,
+    )
+
+
+def test_document_write_gate_rejects_inspect_only_document_result() -> None:
+    """Write/review requests need a diff result, not only document inspection."""
+    from ummaya.ipc.stdio import _check_document_workflow_terminated_without_required_tool
+
+    llm_messages: list[dict[str, object]] = [
+        {
+            "role": "user",
+            "content": ("다운로드 폴더의 주간활동일지를 다음 주차로 작성하고 변경사항을 보여줘."),
+        },
+        {
+            "role": "tool",
+            "name": "document",
+            "content": json.dumps(
+                {
+                    "kind": "document",
+                    "result": {
+                        "tool_id": "document",
+                        "status": "ok",
+                        "text_summary": (
+                            "Document inspection completed through the document primitive."
+                        ),
+                    },
+                },
+                ensure_ascii=False,
+            ),
+        },
+    ]
+
+    gate = _check_document_workflow_terminated_without_required_tool(
+        llm_messages,
+        "다운로드 폴더의 주간활동일지를 다음 주차로 작성하고 변경사항을 보여줘.",
+    )
+
+    assert gate is not None
+    assert gate["tool_id"] == "document"
+
+
+def test_document_write_gate_rejects_extract_only_cc_tool_result() -> None:
+    """CC-style user/tool_result extraction cannot satisfy an edit request."""
+    from ummaya.ipc.stdio import _check_document_workflow_terminated_without_required_tool
+
+    query = (
+        "다운로드 폴더에 있는 ummaya-autonomous-alpha.hwpx 문서내용을 파악하고 알아서 "
+        "다음 주차 활동일지로 작성해줘. 수정 후 변경된 부분을 바로 확인할 수 있게 보여줘."
+    )
+    llm_messages: list[dict[str, object]] = [
+        {"role": "user", "content": query},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "call-document-extract-only",
+                    "content": json.dumps(
+                        {
+                            "ok": True,
+                            "result": {
+                                "tool_id": "document",
+                                "correlation_id": "ummaya-autonomous-alpha-doc",
+                                "status": "ok",
+                                "artifact_refs": ["source-ummaya-autonomous-alpha-doc"],
+                                "extraction": {
+                                    "artifact_id": "document-intake-b6ac058e5514",
+                                    "paragraphs": [
+                                        {
+                                            "block_id": "hwpx-text-002",
+                                            "text": "13 주차 ",
+                                        },
+                                        {
+                                            "block_id": "hwpx-text-012",
+                                            "text": "2026.06.01 ~ 2026.06.07",
+                                        },
+                                    ],
+                                },
+                                "diff": None,
+                                "render_artifacts": [],
+                                "workflow_steps": [],
+                                "text_summary": (
+                                    "Document inspection completed through the document primitive."
+                                ),
+                            },
+                        },
+                        ensure_ascii=False,
+                    ),
+                }
+            ],
+        },
+    ]
+
+    gate = _check_document_workflow_terminated_without_required_tool(
+        llm_messages,
+        query,
+    )
+
+    assert gate is not None
+    assert gate["tool_id"] == "document"
+
+
+def test_document_write_gate_accepts_diff_cc_tool_result() -> None:
+    """A CC-style user/tool_result with real diff changes completes the request."""
+    from ummaya.ipc.stdio import _check_document_workflow_terminated_without_required_tool
+
+    query = "다운로드 폴더의 주간활동일지를 다음 주차로 작성하고 변경사항을 보여줘."
+    llm_messages: list[dict[str, object]] = [
+        {"role": "user", "content": query},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "call-document-fill",
+                    "content": json.dumps(
+                        {
+                            "ok": True,
+                            "result": {
+                                "tool_id": "document",
+                                "status": "ok",
+                                "artifact_refs": [
+                                    "source-document-fill",
+                                    "working-document-fill",
+                                    "derivative-document-fill",
+                                    "render-document-fill-001",
+                                ],
+                                "diff": {
+                                    "changes": [
+                                        {
+                                            "target_path": "/hwpx/text[2]",
+                                            "before_value": "13 주차",
+                                            "after_value": "14주차",
+                                        }
+                                    ]
+                                },
+                                "text_summary": (
+                                    "Document edit completed with automatic compact "
+                                    "diff review evidence."
+                                ),
+                            },
+                        },
+                        ensure_ascii=False,
+                    ),
+                }
+            ],
+        },
+    ]
+
+    gate = _check_document_workflow_terminated_without_required_tool(
+        llm_messages,
+        query,
+    )
+
+    assert gate is None
+
+
 # ---------------------------------------------------------------------------
 # Scenario (a) test
 # ---------------------------------------------------------------------------
@@ -518,6 +992,117 @@ async def test_visible_prose_before_tool_call_is_emitted(
     assert not [
         f for f in emitted if f.get("kind") == "assistant_chunk" and f.get("done") is True
     ], "chat_request must still stop at tool_use without a terminal done chunk"
+
+
+@pytest.mark.asyncio
+async def test_document_final_answer_is_repaired_when_it_overclaims_diff(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Document final answers must stay grounded in the observed diff only."""
+    call_id = f"call-doc-{uuid.uuid4().hex[:12]}"
+    tool_result_payload = {
+        "kind": "document",
+        "result": {
+            "tool_id": "document",
+            "correlation_id": "corr-document-final-grounding",
+            "status": "ok",
+            "text_summary": "Document edit completed with automatic compact diff review evidence.",
+            "diff": {
+                "diff_id": "diff-document-final-grounding",
+                "source_artifact_id": "working-document-final-grounding",
+                "derivative_artifact_id": "derivative-document-final-grounding",
+                "changes": [
+                    {
+                        "change_id": "change-week",
+                        "operation_id": "fill-week",
+                        "change_type": "field",
+                        "target_path": "/hwpx/text[2]",
+                        "before_value": "13 주차",
+                        "after_value": "14주차",
+                    },
+                    {
+                        "change_id": "change-period",
+                        "operation_id": "fill-period",
+                        "change_type": "field",
+                        "target_path": "/hwpx/text[12]",
+                        "before_value": "2026.06.01 ~ 2026.06.07",
+                        "after_value": "2026.06.08~2026.06.14",
+                    },
+                ],
+            },
+        },
+    }
+    frame = _make_chat_request(
+        prompt="다운로드 폴더의 주간활동일지를 다음 주차로 작성하고 변경사항을 보여줘.",
+        tools=[],
+    )
+    frame = frame.model_copy(
+        update={
+            "messages": [
+                IPCChatMessage(
+                    role="user",
+                    content=(
+                        "다운로드 폴더의 주간활동일지를 다음 주차로 작성하고 변경사항을 보여줘."
+                    ),
+                ),
+                IPCChatMessage(
+                    role="assistant",
+                    content="문서를 확인하고 수정하겠습니다.",
+                    tool_calls=[
+                        {
+                            "id": call_id,
+                            "type": "function",
+                            "function": {
+                                "name": "document",
+                                "arguments": json.dumps(
+                                    {
+                                        "tool_id": "document",
+                                        "document": {
+                                            "path": "/fixtures/document-alpha/weekly.hwpx"
+                                        },
+                                        "operation": "fill",
+                                        "instruction": "다음 주차로 작성",
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                            },
+                        }
+                    ],
+                ),
+                IPCChatMessage(
+                    role="tool",
+                    name="document",
+                    tool_call_id=call_id,
+                    content=json.dumps(tool_result_payload, ensure_ascii=False),
+                ),
+            ]
+        }
+    )
+
+    buf, fake_cls = await _run_with_frame(
+        frame,
+        _DocumentOverclaimThenGroundedAnswerLLMClient,
+        monkeypatch=monkeypatch,
+        env_overrides={
+            "UMMAYA_TOOL_RESULT_TIMEOUT_SECONDS": "10",
+            "UMMAYA_AGENTIC_LOOP_MAX_TURNS": "8",
+        },
+    )
+
+    emitted = buf.as_frames()
+    visible_text = "\n".join(
+        str(frame.get("delta", "")) for frame in emitted if frame.get("kind") == "assistant_chunk"
+    )
+    assert "UMMAYA Phase 10 개발 활동" not in visible_text
+    assert "문서 변경사항 시각적 비교 기능 구현 완료" not in visible_text
+    assert "실제 문서 변경사항은 두 필드" in visible_text
+    assert "14주차" in visible_text
+    assert "2026.06.08~2026.06.14" in visible_text
+    assert len(fake_cls.recorded_calls) >= 2
+    repair_messages = fake_cls.recorded_calls[-1]["messages"]
+    repair_text = "\n".join(str(getattr(msg, "content", "")) for msg in repair_messages)
+    assert "Use only the observed tool_result data" in repair_text
+    assert "Document diff changes are the only approved edit claims" in repair_text
 
 
 # ---------------------------------------------------------------------------

@@ -47,6 +47,7 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY src/ ./src/
 COPY prompts/ ./prompts/
 COPY docs/plugins/security-review.md ./docs/plugins/security-review.md
+COPY specs/2802-public-doc-harness/contracts/ ./specs/2802-public-doc-harness/contracts/
 COPY tests/fixtures/plugin_validation/ ./tests/fixtures/plugin_validation/
 RUN uv sync --frozen --no-dev
 
@@ -68,6 +69,7 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application source and prompt files.
 COPY src/ /app/src/
 COPY prompts/ /app/prompts/
+COPY specs/2802-public-doc-harness/contracts/ /app/specs/2802-public-doc-harness/contracts/
 
 # Activate the venv and expose the project package on PYTHONPATH.
 ENV PATH=/app/.venv/bin:$PATH \

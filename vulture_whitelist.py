@@ -12,3 +12,6 @@ version  # noqa: F821
 
 # InMemoryHistory.store_string override — base class uses string before calling super
 string  # noqa: F821
+
+position  # noqa: F821
+pretty  # noqa: F821

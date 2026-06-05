@@ -2,7 +2,7 @@
 // Epic γ #2294 · T020 — ToolRegistry boot guard tests.
 //
 // Covers 3 of the 4 cases from contracts/registry-boot-guard.md § Test plan:
-//   Case 1: Full active-primitive registry boot — ok === true, primitives = 4, durationMs ≤ 200.
+//   Case 1: Full active-primitive registry boot — ok === true, primitives = 5, durationMs ≤ 200.
 //   Case 2: Synthetic registry with a primitive missing renderToolResultMessage — ok === false.
 //   Case 3: Synthetic registry where one tool has isMcp: undefined — ok === false.
 //   Case 4: Citation enforcement is inside validateInput (Spec 2294 R-3), NOT in the boot guard.
@@ -57,20 +57,21 @@ function fakePrimitive(name: string, overrides: Partial<Record<string, unknown>>
 // ---------------------------------------------------------------------------
 
 describe('verifyBootRegistry — full active-primitive registry (Case 1)', () => {
-  test('passes with ok === true, 4 primitives, durationMs ≤ 200', () => {
+  test('passes with ok === true, 5 primitives, durationMs ≤ 200', () => {
     const registry: readonly Tool[] = [
       LookupPrimitive,
       ResolveLocationPrimitive,
       fakePrimitive('send'),
       fakePrimitive('check'),
+      fakePrimitive('document'),
     ]
     const result = verifyBootRegistry(registry)
 
     expect(result.ok).toBe(true)
     if (!result.ok) return // narrow type
 
-    expect(result.primitives).toBe(4)
-    expect(result.entries).toBe(4)
+    expect(result.primitives).toBe(5)
+    expect(result.entries).toBe(5)
     // SC-002: wall-clock budget on developer laptop
     expect(result.durationMs).toBeLessThanOrEqual(200)
   })
@@ -109,6 +110,7 @@ describe('verifyBootRegistry — missing renderToolResultMessage (Case 2)', () =
       fakePrimitive('locate'),
       fakePrimitive('send'),
       fakePrimitive('check'),
+      fakePrimitive('document'),
     ]
 
     const result = verifyBootRegistry(registry)
@@ -140,6 +142,7 @@ describe('verifyBootRegistry — missing mapToolResultToToolResultBlockParam', (
       brokenLocate,
       fakePrimitive('send'),
       fakePrimitive('check'),
+      fakePrimitive('document'),
     ]
 
     const result = verifyBootRegistry(registry)
@@ -166,6 +169,7 @@ describe('verifyBootRegistry — isMcp undefined (Case 3)', () => {
       fakePrimitive('locate'),
       brokenSubmit,
       fakePrimitive('check'),
+      fakePrimitive('document'),
     ]
 
     const result = verifyBootRegistry(registry)
@@ -189,6 +193,7 @@ describe('verifyBootRegistry — missing reserved primitive (Case 4 / Codex P2)'
       fakePrimitive('find'),
       fakePrimitive('locate'),
       fakePrimitive('send'),
+      fakePrimitive('document'),
       // 'check' deliberately omitted
     ]
 
@@ -216,6 +221,7 @@ describe('verifyBootRegistry — missing reserved primitive (Case 4 / Codex P2)'
       'locate',
       'send',
       'check',
+      'document',
     ])
   })
 })

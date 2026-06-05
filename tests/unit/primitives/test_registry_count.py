@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-"""T081 — Unit test: exactly 4 primitives are registered on the main surface.
+"""T081 — Unit test: exactly 5 primitives are registered on the main surface.
 
-SC-001 (spec.md): The public primitive surface MUST expose exactly these four
-names: lookup, resolve_location, submit, verify.
+SC-001 (spec.md): The public primitive surface MUST expose the core four
+public-service primitives plus the document authoring primitive.
 
 No more, no fewer.
 """
@@ -11,14 +11,14 @@ from __future__ import annotations
 
 import ummaya.primitives as primitives_module
 
-_EXPECTED_PRIMITIVES: frozenset[str] = frozenset({"find", "locate", "send", "check"})
+_EXPECTED_PRIMITIVES: frozenset[str] = frozenset({"find", "locate", "send", "check", "document"})
 
 
-def test_primitive_count_is_four() -> None:
-    """Assert exactly 4 names are exported via __all__."""
+def test_primitive_count_is_five() -> None:
+    """Assert exactly 5 names are exported via __all__."""
     exported = frozenset(primitives_module.__all__)
-    assert len(exported) == 4, (
-        f"SC-001: expected exactly 4 primitives, got {len(exported)}: {sorted(exported)}"
+    assert len(exported) == 5, (
+        f"SC-001: expected exactly 5 primitives, got {len(exported)}: {sorted(exported)}"
     )
 
 

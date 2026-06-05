@@ -22,17 +22,23 @@ specs/
 docs/
 .specify/
 
-# Spec 1636 P5 carve-out — pyproject.toml [tool.hatch.build.targets.wheel.force-include]
-# bundles two files into the wheel that hatchling resolves at build time
+# Spec-driven force-include carve-outs — pyproject.toml
+# [tool.hatch.build.targets.wheel.force-include] bundles canonical files
+# into the wheel that hatchling resolves at build time
 # (it fails with FileNotFoundError if absent from the build context):
 #   - docs/plugins/security-review.md → ummaya/_canonical/security-review.md
 #   - tests/fixtures/plugin_validation/checklist_manifest.yaml → ummaya/_canonical/...
-# Negate the broad excludes above for these two leaves so they ship as
-# wheel resources and Q9 OTEL emit / ummaya-plugin-validate work in
-# production wheels. Total carve-out ≈ 40 KB; preserves the SC-1 ≤ 2 GB
-# image budget.
+#   - specs/2802-public-doc-harness/contracts/document-tools.schema.json
+#     → ummaya/_canonical/document-tools.schema.json
+# Negate the broad excludes above for these leaves so they ship as wheel
+# resources in production images. Total carve-out is small; preserves the
+# SC-1 ≤ 2 GB image budget.
 !docs/plugins/
 !docs/plugins/security-review.md
+!specs/
+!specs/2802-public-doc-harness/
+!specs/2802-public-doc-harness/contracts/
+!specs/2802-public-doc-harness/contracts/document-tools.schema.json
 !tests/fixtures/
 !tests/fixtures/plugin_validation/
 !tests/fixtures/plugin_validation/checklist_manifest.yaml

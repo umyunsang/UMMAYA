@@ -3,6 +3,19 @@ import { isInBundledMode } from '../../utils/bundledMode.js'
 
 export type SharpInstance = {
   metadata(): Promise<{ width: number; height: number; format: string }>
+  extract(options: {
+    left: number
+    top: number
+    width: number
+    height: number
+  }): SharpInstance
+  composite(
+    images: Array<{
+      input: Buffer
+      left?: number
+      top?: number
+    }>,
+  ): SharpInstance
   resize(
     width: number,
     height: number,

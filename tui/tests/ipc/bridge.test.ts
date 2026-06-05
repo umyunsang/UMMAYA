@@ -147,4 +147,51 @@ describe('bridge: FIFO frame ordering (FR-005)', () => {
 
     await bridge.close()
   })
+
+  test('distinct tool_result frames with default frame_seq=0 are not replay-deduped', async () => {
+    const script = `
+function writeFrame(frame) {
+  process.stdout.write(JSON.stringify(frame) + '\\n')
+}
+function toolResult(callId, correlationId) {
+  return {
+    kind: 'tool_result',
+    version: '1.0',
+    role: 'backend',
+    session_id: 'test-default-seq-tool-results',
+    correlation_id: correlationId,
+    ts: new Date().toISOString(),
+    frame_seq: 0,
+    transaction_id: null,
+    trailer: null,
+    call_id: callId,
+    envelope: { kind: 'send', result: { ok: true } },
+  }
+}
+writeFrame(toolResult('call-1', 'corr-1'))
+writeFrame(toolResult('call-2', 'corr-2'))
+setTimeout(() => process.exit(0), 5000)
+`
+    const bridge = createBridge({
+      cmd: [process.execPath, '-e', script],
+      sessionId: 'test-default-seq-tool-results',
+      maxReconnectAttempts: 0,
+    })
+
+    const callIds: string[] = []
+    const timeout = new Promise<void>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout waiting for tool_result frames')), 3000),
+    )
+    const collect = async () => {
+      for await (const frame of bridge.frames()) {
+        if (frame.kind !== 'tool_result') continue
+        callIds.push(String(frame.call_id))
+        if (callIds.length >= 2) break
+      }
+    }
+
+    await Promise.race([collect(), timeout])
+    expect(callIds).toEqual(['call-1', 'call-2'])
+    await bridge.close()
+  })
 })

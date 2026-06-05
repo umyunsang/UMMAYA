@@ -339,13 +339,19 @@ export function createBridge(opts: BridgeOptions = {}): IPCBridge {
   let _tuiSessionToken: string | null = opts.tuiSessionToken ?? null
   let _lastSeenCorrelationId: string | null = null
   let _lastSeenFrameSeq: number | null = null
-  // Bounded ring of applied (session_id, frame_seq) keys for replay-dedup.
-  // Cap mirrors the backend SessionRingBuffer size (Spec 032: 256 frames);
-  // oldest entries are evicted via FIFO replacement so the Set cannot grow
-  // unbounded across long sessions.
+  // Bounded rings for replay de-duplication.
+  //
+  // `applied_frame_seqs` remains the public debug surface expected by the
+  // resume tests. The actual skip decision uses a fuller frame identity below:
+  // some TUI-owned tool_call result paths are not ring-stamped by the backend
+  // yet and legally arrive with the default frame_seq=0. Dropping by
+  // session:frame_seq alone loses distinct tool_result frames in ordinary
+  // runtime, which is worse than replay duplication.
   const _APPLIED_FRAME_SEQS_CAP = 256
   const _appliedFrameSeqs = new Set<string>()
   const _appliedFrameSeqsOrder: string[] = []
+  const _appliedFrameIdentities = new Set<string>()
+  const _appliedFrameIdentitiesOrder: string[] = []
 
   // ------------------------------------------------------------------
   // Spawn first process
@@ -432,6 +438,40 @@ export function createBridge(opts: BridgeOptions = {}): IPCBridge {
       _log('INFO', `Emitted ResumeRequestFrame last_seen_frame_seq=${_lastSeenFrameSeq}`)
     } catch (e: unknown) {
       _log('WARN', `Failed to write ResumeRequestFrame: ${e}`)
+    }
+  }
+
+  function _frameReplayIdentity(frame: IPCFrame): string | null {
+    if (frame.frame_seq == null) return null
+    const sessionKey = frame.session_id ?? _sessionId
+    if (!sessionKey) return null
+    return [
+      sessionKey,
+      frame.frame_seq,
+      frame.kind,
+      frame.correlation_id ?? '',
+      frame.transaction_id ?? '',
+    ].join(':')
+  }
+
+  function _rememberAppliedFrameIdentity(identity: string): void {
+    _appliedFrameIdentities.add(identity)
+    _appliedFrameIdentitiesOrder.push(identity)
+    if (_appliedFrameIdentitiesOrder.length > _APPLIED_FRAME_SEQS_CAP) {
+      const evicted = _appliedFrameIdentitiesOrder.shift()
+      if (evicted !== undefined) _appliedFrameIdentities.delete(evicted)
+    }
+  }
+
+  function _rememberAppliedFrameSeq(frame: IPCFrame): void {
+    if (!_sessionId || frame.frame_seq == null) return
+    const key = `${frame.session_id ?? _sessionId}:${frame.frame_seq}`
+    if (_appliedFrameSeqs.has(key)) return
+    _appliedFrameSeqs.add(key)
+    _appliedFrameSeqsOrder.push(key)
+    if (_appliedFrameSeqsOrder.length > _APPLIED_FRAME_SEQS_CAP) {
+      const evicted = _appliedFrameSeqsOrder.shift()
+      if (evicted !== undefined) _appliedFrameSeqs.delete(evicted)
     }
   }
 
@@ -536,22 +576,21 @@ export function createBridge(opts: BridgeOptions = {}): IPCBridge {
                 _lastSeenCorrelationId = frame.correlation_id
               }
 
-              // De-duplicate replayed frames (applied_frame_seqs set)
-              if (_sessionId && frame.frame_seq != null) {
-                const key = `${frame.session_id ?? _sessionId}:${frame.frame_seq}`
-                if (_appliedFrameSeqs.has(key)) {
+              // De-duplicate replayed frames by full frame identity. Do not
+              // use session:frame_seq as the skip key: TUI-owned tool_result
+              // frames can currently share the default frame_seq=0 while still
+              // being separate, valid results.
+              const replayIdentity = _frameReplayIdentity(frame)
+              if (replayIdentity !== null) {
+                if (_appliedFrameIdentities.has(replayIdentity)) {
                   _log(
                     'DEBUG',
-                    `Skipping duplicate replay frame session=${frame.session_id} frame_seq=${frame.frame_seq}`,
+                    `Skipping duplicate replay frame identity=${replayIdentity}`,
                   )
                   continue
                 }
-                _appliedFrameSeqs.add(key)
-                _appliedFrameSeqsOrder.push(key)
-                if (_appliedFrameSeqsOrder.length > _APPLIED_FRAME_SEQS_CAP) {
-                  const evicted = _appliedFrameSeqsOrder.shift()
-                  if (evicted !== undefined) _appliedFrameSeqs.delete(evicted)
-                }
+                _rememberAppliedFrameIdentity(replayIdentity)
+                _rememberAppliedFrameSeq(frame)
               }
 
               _log('DEBUG', `recv kind=${frame.kind} session=${frame.session_id}`)

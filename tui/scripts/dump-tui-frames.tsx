@@ -21,8 +21,6 @@ import { Box, Text } from '../src/ink.js'
 
 import { ThemeProvider } from '../src/theme/provider'
 import { WelcomeV2 } from '../src/components/LogoV2/WelcomeV2'
-import { PIPAConsentStep } from '../src/components/onboarding/PIPAConsentStep'
-import { MinistryScopeStep } from '../src/components/onboarding/MinistryScopeStep'
 import { ErrorEnvelope } from '../src/components/messages/ErrorEnvelope'
 import { PluginBrowser } from '../src/components/plugins/PluginBrowser'
 import type { PluginEntry } from '../src/components/plugins/PluginBrowser'
@@ -31,11 +29,7 @@ import { DetailView } from '../src/components/primitive/DetailView'
 import { TimeseriesTable } from '../src/components/primitive/TimeseriesTable'
 import { SubmitReceipt } from '../src/components/primitive/SubmitReceipt'
 import { AuthContextCard } from '../src/components/primitive/AuthContextCard'
-import { EventStream } from '../src/components/primitive/EventStream'
-import { ThemeStep } from '../src/components/onboarding/ThemeStep'
-import { TerminalSetupStep } from '../src/components/onboarding/TerminalSetupStep'
-import { ReceiptToast } from '../src/components/permissions/ReceiptToast'
-import { PdfInlineViewer } from '../src/components/messages/PdfInlineViewer'
+import { ConsentListView } from '../src/components/consent/ConsentListView'
 
 const OUT_DIR = join(
   import.meta.dir,
@@ -65,89 +59,28 @@ const SURFACES: readonly Surface[] = [
     element: withTheme(<WelcomeV2 />),
   },
   {
-    slug: 'onboarding-2-theme',
-    description: 'Onboarding step 2 — theme selector (UFO mascot + 3 options)',
+    slug: 'slash-consent-list-empty',
+    description: 'Slash command — `/consent` empty receipt list',
     element: withTheme(
-      <ThemeStep
-        onAdvance={() => {}}
-        onExit={() => {}}
-        locale="ko"
-      />,
+      <ConsentListView receipts={[]} onExit={() => {}} />,
     ),
   },
   {
-    slug: 'onboarding-5-terminal',
-    description: 'Onboarding step 5 — terminal setup (4 accessibility toggles)',
+    slug: 'slash-consent-list-populated',
+    description: 'Slash command — `/consent` populated receipt list',
     element: withTheme(
-      <TerminalSetupStep
-        onAdvance={() => {}}
-        onExit={() => {}}
-      />,
-    ),
-  },
-  {
-    slug: 'slash-consent-issued',
-    description: 'Slash command — `/consent` receipt-issued toast',
-    element: withTheme(
-      <ReceiptToast variant="issued" receiptId="rcpt-01943af2" />,
-    ),
-  },
-  {
-    slug: 'slash-consent-revoked',
-    description: 'Slash command — `/consent revoke` receipt-revoked toast',
-    element: withTheme(
-      <ReceiptToast variant="revoked" receiptId="rcpt-01943af2" />,
-    ),
-  },
-  {
-    slug: 'slash-consent-already-revoked',
-    description: 'Slash command — `/consent revoke` already-revoked toast',
-    element: withTheme(
-      <ReceiptToast variant="already_revoked" receiptId="rcpt-01943af2" />,
-    ),
-  },
-  {
-    slug: 'pdf-inline-render',
-    description: 'PDF inline-render path — Tier C fallback (no graphics, no opener)',
-    element: withTheme(
-      <PdfInlineViewer pdfPath="/tmp/ummaya-export-2026-04-26.pdf" />,
-    ),
-  },
-  {
-    slug: 'onboarding-3-pipa',
-    description: 'Onboarding step 3 — PIPA consent prompt',
-    element: withTheme(
-      <PIPAConsentStep
-        sessionId="smoke-session"
-        consentVersion="v1"
-        ministries={[
-          { code: 'koroad', name: '도로교통공단' },
-          { code: 'kma', name: '기상청' },
-          { code: 'hira', name: '건강보험심사평가원' },
+      <ConsentListView
+        receipts={[
+          {
+            receipt_id: 'rcpt-01943af2',
+            layer: 2,
+            tool_name: 'gov24_application_submit',
+            decision: 'allow_once',
+            decided_at: '2026-04-26T09:14:32.000Z',
+            session_id: 'smoke-session',
+            revoked_at: null,
+          },
         ]}
-        aalGate="AAL2"
-        writeRecord={() => {}}
-        onAdvance={() => {}}
-        onExit={() => {}}
-      />,
-    ),
-  },
-  {
-    slug: 'onboarding-4-ministry',
-    description: 'Onboarding step 4 — ministry-scope acknowledgement',
-    element: withTheme(
-      <MinistryScopeStep
-        sessionId="smoke-session"
-        scopeVersion="v1"
-        ministries={[
-          { code: 'koroad', name: '도로교통공단' },
-          { code: 'kma', name: '기상청' },
-          { code: 'hira', name: '건강보험심사평가원' },
-          { code: 'nfa119', name: '소방청 119' },
-          { code: 'mohw', name: '보건복지부' },
-        ]}
-        writeRecord={() => {}}
-        onAdvance={() => {}}
         onExit={() => {}}
       />,
     ),
@@ -184,10 +117,10 @@ const SURFACES: readonly Surface[] = [
           } satisfies PluginEntry,
         ]}
         onToggle={() => {}}
-        onShowDetail={() => {}}
+        onDetail={() => {}}
         onRemove={() => {}}
-        onOpenMarketplace={() => {}}
-        onClose={() => {}}
+        onMarketplace={() => {}}
+        onDismiss={() => {}}
       />,
     ),
   },
@@ -283,37 +216,6 @@ const SURFACES: readonly Surface[] = [
           korea_tier: '금융인증서',
           nist_aal_hint: 'AAL2',
           identity_label: '홍길동 (1985년생)',
-        }}
-      />,
-    ),
-  },
-  {
-    slug: 'primitive-subscribe-stream',
-    description: 'Subscribe primitive — disaster CBS event stream (EventStream)',
-    element: withTheme(
-      <EventStream
-        payload={{
-          kind: 'subscribe',
-          tool_id: 'mock_cbs_disaster_v1',
-          modality: 'cbs',
-          closed: false,
-          events: [
-            {
-              id: 'cbs-2026-04-26-001',
-              ts: '2026-04-26T08:42:11+09:00',
-              body: '[행안부] 2026-04-26 08:42 서울특별시 호우 주의보 발효. 저지대·하수도 침수 주의.',
-            },
-            {
-              id: 'cbs-2026-04-26-002',
-              ts: '2026-04-26T09:01:55+09:00',
-              body: '[행안부] 2026-04-26 09:01 경기도 강풍 주의보 추가 발효. 노약자 외출 자제.',
-            },
-            {
-              id: 'cbs-2026-04-26-003',
-              ts: '2026-04-26T09:18:03+09:00',
-              body: '[기상청] 2026-04-26 09:18 인천 옹진군 풍랑 주의보 해제.',
-            },
-          ],
         }}
       />,
     ),

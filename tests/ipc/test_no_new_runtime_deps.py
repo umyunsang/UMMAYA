@@ -26,6 +26,7 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _PYPROJECT = _REPO_ROOT / "pyproject.toml"
+_ROOT_PACKAGE_JSON = _REPO_ROOT / "package.json"
 _TUI_PACKAGE_JSON = _REPO_ROOT / "tui" / "package.json"
 
 # ---------------------------------------------------------------------------
@@ -51,7 +52,19 @@ _PY_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
         "sentence-transformers",
         "numpy",
         "torch",
+        "python-docx",
         "pyyaml",
+        # Spec 2802 Public AX document harness promoted bounded
+        # OOXML/PDF engines, Korean PDF appearance streams, and read-only
+        # legacy HWP inspection.
+        "defusedxml",
+        "fonttools",
+        "openpyxl",
+        "pypdf",
+        "pypdfium2",
+        "python-pptx",
+        "unhwp",
+        "odfdo",
     }
 )
 
@@ -146,6 +159,29 @@ _TUI_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
     }
 )
 
+_ROOT_NPM_SPEC_2802_ADDITIONS: Final[frozenset[str]] = frozenset(
+    {
+        # Spec 2802 document harness: local Rust/WASM HWPX render evidence
+        # bridge. No external egress; used behind the document primitive.
+        "@rhwp/core",
+        # Spec 2802 HWP bridge: local CLI candidate for HWP-to-HWPX conversion.
+        # Direct HWP binary authoring remains blocked.
+        "@ssabrojs/hwpxjs",
+    }
+)
+_ROOT_NPM_ONLY_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
+    {
+        *_ROOT_NPM_SPEC_2802_ADDITIONS,
+        # Root launcher dependency already present before the Spec 2802
+        # document-harness runtime additions.
+        "picomatch",
+    }
+)
+
+_ROOT_NPM_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
+    _TUI_DEPS_SNAPSHOT | _ROOT_NPM_ONLY_DEPS_SNAPSHOT
+)
+
 # ---------------------------------------------------------------------------
 # Regex helpers
 # ---------------------------------------------------------------------------
@@ -231,9 +267,10 @@ def test_no_new_python_runtime_deps() -> None:
     diff_text = _best_effort_diff(_PYPROJECT)
     if diff_text is not None:
         new_deps = _new_py_deps_from_diff(diff_text)
-        assert new_deps == [], (
-            f"SC-008 violation (Python): {len(new_deps)} new runtime dep(s) added:\n"
-            + "\n".join(f"  + {d}" for d in new_deps)
+        unexpected = [dep for dep in new_deps if dep not in _PY_DEPS_SNAPSHOT]
+        assert unexpected == [], (
+            f"SC-008 violation (Python): {len(unexpected)} unapproved runtime dep(s) added:\n"
+            + "\n".join(f"  + {d}" for d in unexpected)
         )
         return
 
@@ -274,10 +311,18 @@ def _new_tui_deps_from_diff(diff_text: str) -> list[str]:
     return new_deps
 
 
-def _current_tui_deps() -> frozenset[str]:
-    payload = json.loads(_TUI_PACKAGE_JSON.read_text(encoding="utf-8"))
+def _current_npm_deps(package_json_path: Path) -> frozenset[str]:
+    payload = json.loads(package_json_path.read_text(encoding="utf-8"))
     deps = payload.get("dependencies", {})
     return frozenset(deps.keys())
+
+
+def _current_tui_deps() -> frozenset[str]:
+    return _current_npm_deps(_TUI_PACKAGE_JSON)
+
+
+def _current_root_npm_deps() -> frozenset[str]:
+    return _current_npm_deps(_ROOT_PACKAGE_JSON)
 
 
 def test_no_new_tui_runtime_deps() -> None:
@@ -301,5 +346,30 @@ def test_no_new_tui_runtime_deps() -> None:
     if missing:
         pytest.skip(
             f"TUI snapshot drift: {len(missing)} expected dep(s) not found — "
+            + ", ".join(sorted(missing))
+        )
+
+
+def test_no_new_root_npm_runtime_deps() -> None:
+    diff_text = _best_effort_diff(_ROOT_PACKAGE_JSON)
+    if diff_text is not None:
+        new_deps = _new_tui_deps_from_diff(diff_text)
+        unexpected = [dep for dep in new_deps if dep not in _ROOT_NPM_SPEC_2802_ADDITIONS]
+        assert unexpected == [], (
+            f"SC-008 violation (root npm): {len(unexpected)} unapproved runtime dep(s) added:\n"
+            + "\n".join(f"  + {d}" for d in unexpected)
+        )
+        return
+
+    current = _current_root_npm_deps()
+    extra = current - _ROOT_NPM_DEPS_SNAPSHOT
+    assert extra == frozenset(), (
+        f"SC-008 violation (root npm snapshot): {len(extra)} unknown dep(s):\n"
+        + "\n".join(f"  + {d}" for d in sorted(extra))
+    )
+    missing = _ROOT_NPM_DEPS_SNAPSHOT - current
+    if missing:
+        pytest.skip(
+            f"Root npm snapshot drift: {len(missing)} expected dep(s) not found — "
             + ", ".join(sorted(missing))
         )

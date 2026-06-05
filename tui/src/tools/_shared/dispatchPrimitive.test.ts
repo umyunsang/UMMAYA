@@ -20,6 +20,7 @@ import type { ToolUseContext } from '../../Tool.js'
 function fakeContext(toolUseId = 'test-tool-use-id'): ToolUseContext {
   return {
     toolUseId,
+    messages: [],
     options: {
       sessionId: 'test-session',
       commands: [],
@@ -142,9 +143,66 @@ describe('dispatchPrimitive — CC register-and-await dispatch', () => {
     expect(result.data.result).toEqual({ kind: 'record' })
   })
 
+  test('adds current user query to document IPC calls without exposing it to other primitives', async () => {
+    const sentFrames: unknown[] = []
+    const toolUseId = 'document-use-cc-1'
+    const userQuery =
+      '/tmp/weekly.hwpx 문서 내용을 파악해서 다음 주차 활동일지로 알아서 작성하고, 저장은 /tmp/weekly-auto.hwpx 로 해줘.'
+    const context = {
+      ...fakeContext(toolUseId),
+      messages: [
+        {
+          type: 'user',
+          message: { role: 'user', content: userQuery },
+        },
+      ],
+    } as unknown as ToolUseContext
+    const args = {
+      correlation_id: 'corr-document',
+      document: { path: '/tmp/weekly.hwpx', expected_format: 'hwpx' },
+      operation: 'extract',
+      instruction: '문서 내용을 구조적으로 추출하세요.',
+    }
+
+    const promise = dispatchPrimitive({
+      primitive: 'document',
+      args,
+      context,
+      registry,
+      bridge: fakeBridge((frame) => sentFrames.push(frame)),
+    }) as unknown as Promise<{ data: { ok: boolean; result?: unknown } }>
+
+    await Promise.resolve()
+    expect(sentFrames[0]).toMatchObject({
+      role: 'tool',
+      kind: 'tool_call',
+      call_id: toolUseId,
+      name: 'document',
+      arguments: {
+        ...args,
+        __ummaya_user_query: userQuery,
+      },
+    })
+    expect(args).not.toHaveProperty('__ummaya_user_query')
+
+    registry.resolve(toolUseId, {
+      session_id: 'test-session',
+      correlation_id: 'test-corr',
+      ts: '2026-05-24T00:00:00Z',
+      role: 'backend',
+      kind: 'tool_result',
+      call_id: toolUseId,
+      envelope: { kind: 'document', result: { status: 'ok' } },
+    } as unknown as Parameters<typeof registry.resolve>[1])
+
+    const result = await promise
+    expect(result.data.ok).toBe(true)
+  })
+
   test('missing toolUseId fails closed instead of dispatching an unmatchable call', async () => {
     let sent = false
     const ctx = {
+      messages: [],
       options: {
         sessionId: 'test-session',
         commands: [],
@@ -201,7 +259,7 @@ describe('dispatchPrimitive — [H1] inner-payload error classification', () => 
   // the pending call's promise mid-flight. We bypass the IPC bridge entirely
   // — only the unwrap path under test matters here.
   async function dispatchAndInjectFrame(
-    primitive: 'find' | 'locate' | 'check' | 'send',
+    primitive: 'find' | 'locate' | 'check' | 'send' | 'document',
     envelope: Record<string, unknown>,
     toolUseId = `${primitive}-h1-1`,
   ): Promise<{ data: { ok: boolean; result?: unknown; error?: { kind: string; message: string } } }> {

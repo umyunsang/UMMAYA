@@ -158,7 +158,7 @@ const ToolCallFrameSchema = BaseFrame.extend({
 })
 
 const ToolResultEnvelopeSchema = z.object({
-  kind: z.enum(['find', 'locate', 'send', 'check']),
+  kind: z.enum(['find', 'locate', 'send', 'check', 'document']),
 }).passthrough()
 
 const ToolResultFrameSchema = BaseFrame.extend({
@@ -176,7 +176,7 @@ const WorkerStatusFrameSchema = BaseFrame.extend({
   kind: z.literal('worker_status'),
   worker_id: z.string(),
   role_id: z.string(),
-  current_primitive: z.enum(['find', 'locate', 'send', 'check']),
+  current_primitive: z.enum(['find', 'locate', 'send', 'check', 'document']),
   status: z.enum(['idle', 'running', 'waiting_permission', 'error']),
 })
 
@@ -184,7 +184,7 @@ const PermissionRequestFrameSchema = BaseFrame.extend({
   kind: z.literal('permission_request'),
   request_id: z.string(),
   worker_id: z.string(),
-  primitive_kind: z.enum(['find', 'locate', 'send', 'check']),
+  primitive_kind: z.enum(['find', 'locate', 'send', 'check', 'document']),
   description_ko: z.string(),
   description_en: z.string(),
   risk_level: z.enum(['low', 'medium', 'high']),

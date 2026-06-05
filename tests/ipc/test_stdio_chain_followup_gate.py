@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -35,6 +36,7 @@ from ummaya.ipc.stdio import (
     _check_chain_prerequisite,
     _check_current_weather_terminated_without_observation,
     _check_direct_public_data_tool_choice_prerequisite,
+    _check_document_workflow_terminated_without_required_tool,
     _check_duplicate_submit_prerequisite,
     _check_kma_aviation_tool_choice_prerequisite,
     _check_location_terminated_without_resolve,
@@ -62,6 +64,7 @@ from ummaya.ipc.stdio import (
     _location_independent_resolve_redirect_for_query,
     _maybe_reroute_locate_admin_keyword_args,
     _maybe_reroute_locate_poi_address_args,
+    _normalize_document_root_call_for_user_intent,
     _normalize_hira_lookup_args_from_prior_locate,
     _normalize_koroad_lookup_args_from_prior_locate,
     _normalize_lookup_args_for_query,
@@ -1054,6 +1057,266 @@ def test_initial_concrete_tool_choice_for_unambiguous_public_data_queries() -> N
             available,
         )
         == "tago_bus_route_search"
+    )
+
+
+def test_initial_concrete_tool_choice_for_local_document_path_intake() -> None:
+    available = {
+        "find",
+        "locate",
+        "document",
+    }
+
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "이 HWPX 문서를 13주차로 작성하고 compact diff로 변경사항을 보여줘: "
+            "/Users/example/Downloads/주간활동일지(학과_팀명).hwpx",
+            available,
+        )
+        == "document"
+    )
+
+
+def test_initial_concrete_tool_choice_for_explicit_document_artifact_render() -> None:
+    available = {
+        "find",
+        "locate",
+        "document",
+    }
+
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "현재 세션 artifact derivative-public-doc-13th-weekly-log를 "
+            "document_render로 렌더링해서 compact diff를 보여줘.",
+            available,
+        )
+        == "document"
+    )
+
+
+def test_document_workflow_final_answer_gate_requires_single_document_primitive_result() -> None:
+    query = (
+        "이 HWPX 문서를 13주차로 작성하고 compact diff로 변경사항을 보여줘: "
+        "/Users/example/Downloads/주간활동일지(학과_팀명).hwpx"
+    )
+
+    assert _check_document_workflow_terminated_without_required_tool([], query) == {
+        "tool_id": "document",
+        "message": (
+            "Document workflow request has no successful document primitive result "
+            "for the latest user turn. Do NOT answer from intended edits or "
+            "fabricate compact diff text. Call document once with the document "
+            "locator, requested operation, instruction, and any inferred patches; "
+            "the runtime will inspect, copy, mutate, render, and return the "
+            "automatic compact diff."
+        ),
+    }
+
+    legacy_extracted = [
+        _msg_tool_result("document_extract", {"tool_id": "document_extract", "status": "ok"})
+    ]
+    assert _check_document_workflow_terminated_without_required_tool(
+        legacy_extracted,
+        "",
+        candidate_final_answer=(
+            "HWPX 문서를 13주차로 작성하고 compact diff를 보여드리려면 수동 수정이 필요합니다."
+        ),
+    ) == {
+        "tool_id": "document",
+        "message": (
+            "Document workflow request has no successful document primitive result "
+            "for the latest user turn. Do NOT answer from intended edits or "
+            "fabricate compact diff text. Call document once with the document "
+            "locator, requested operation, instruction, and any inferred patches; "
+            "the runtime will inspect, copy, mutate, render, and return the "
+            "automatic compact diff."
+        ),
+    }
+
+    documented = [
+        _msg_tool_result(
+            "document",
+            {
+                "tool_id": "document",
+                "status": "ok",
+                "diff": {
+                    "changes": [{"path": "/hwpx/text[1]", "before": "12 주차", "after": "13주차"}]
+                },
+                "render_artifacts": [{"id": "render-13", "page_index": 0}],
+            },
+        )
+    ]
+    assert _check_document_workflow_terminated_without_required_tool(documented, query) is None
+
+    inspect_only = [
+        _msg_tool_result(
+            "document",
+            {
+                "tool_id": "document",
+                "status": "ok",
+                "artifact_refs": ["source-weekly"],
+                "extraction": {"paragraphs": [{"text": "12 주차"}]},
+                "diff": None,
+                "render_artifacts": [],
+                "saved_exports": [],
+                "text_summary": "Document inspection completed through the document primitive.",
+            },
+        )
+    ]
+    assert _check_document_workflow_terminated_without_required_tool(inspect_only, query) == {
+        "tool_id": "document",
+        "message": (
+            "Document workflow request has no successful document primitive result "
+            "for the latest user turn. Do NOT answer from intended edits or "
+            "fabricate compact diff text. Call document once with the document "
+            "locator, requested operation, instruction, and any inferred patches; "
+            "the runtime will inspect, copy, mutate, render, and return the "
+            "automatic compact diff."
+        ),
+    }
+
+
+def test_document_root_call_normalizes_extract_for_write_save_intent() -> None:
+    query = (
+        "패키징 전 알파 테스트야. /tmp/fixtures/weekly.hwpx 문서 내용을 파악해서 "
+        "다음 주차 활동일지로 알아서 작성하고, 저장은 /tmp/exports/weekly-auto.hwpx 로 해줘. "
+        "수정 후 변경된 부분만 바로 확인할 수 있게 보여줘."
+    )
+    args = {
+        "tool_id": "document",
+        "params": {
+            "correlation_id": "weekly_activity_log_analysis",
+            "document": {"path": "/tmp/fixtures/weekly.hwpx"},  # noqa: S108 - fixture-like transcript path
+            "operation": "extract",
+            "instruction": "현재 주차 활동일지 문서 내용을 파악해주세요.",
+        },
+    }
+
+    normalized = _normalize_document_root_call_for_user_intent("document", args, query)
+
+    assert normalized is not args
+    assert normalized["tool_id"] == "document"
+    assert normalized["params"]["operation"] == "save"
+    assert normalized["params"]["instruction"] == query
+
+
+def test_document_root_call_uses_internal_user_query_for_direct_tui_payload(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "weekly.hwpx"
+    destination = tmp_path / "weekly-auto.hwpx"
+    source.write_bytes(b"fixture")
+    args = {
+        "tool_id": "document",
+        "params": {
+            "correlation_id": "weekly_activity_log_analysis",
+            "document": {"path": str(tmp_path / "truncated" / "weekly.hwpx")},
+            "operation": "extract",
+            "instruction": "문서 내용을 구조적으로 추출하고 다음 주차 작성 정보를 파악하세요.",
+            "__ummaya_user_query": (
+                f"{source} 문서 내용을 파악해서 다음 주차 활동일지로 알아서 작성하고, "
+                f"저장은 {destination} 로 해줘."
+            ),
+        },
+    }
+
+    normalized = _normalize_document_root_call_for_user_intent("document", args, "")
+
+    assert normalized is not args
+    assert normalized["params"]["operation"] == "save"
+    assert normalized["params"]["instruction"].endswith(f"저장은 {destination} 로 해줘.")
+    assert normalized["params"]["document"]["path"] == str(source)
+    assert "__ummaya_user_query" not in normalized["params"]
+
+
+def test_document_root_call_uses_internal_user_query_for_write_payload_instruction(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "civil-form.docx"
+    destination = tmp_path / "civil-form-date-auto.docx"
+    source.write_bytes(b"fixture")
+    args = {
+        "tool_id": "document",
+        "params": {
+            "correlation_id": "docx-date",
+            "document": {"path": str(source), "expected_format": "docx"},
+            "operation": "fill",
+            "instruction": "문서 구조를 확인하고 작성일 필드를 갱신하세요.",
+            "__ummaya_user_query": (
+                f"{source} 문서 내용을 파악해서 작성일: 2026-06-04 로 갱신하고, "
+                f"저장은 {destination} 로 해줘."
+            ),
+        },
+    }
+
+    normalized = _normalize_document_root_call_for_user_intent("document", args, "")
+
+    assert normalized["params"]["operation"] == "save"
+    assert normalized["params"]["instruction"].endswith(f"저장은 {destination} 로 해줘.")
+    assert "__ummaya_user_query" not in normalized["params"]
+
+
+def test_document_root_call_keeps_extract_for_read_only_intent() -> None:
+    query = "/tmp/fixtures/weekly.hwpx 문서 내용을 요약해줘."  # noqa: S108 - fixture-like transcript path
+    args = {
+        "tool_id": "document",
+        "params": {
+            "document": {"path": "/tmp/fixtures/weekly.hwpx"},  # noqa: S108 - fixture-like transcript path
+            "operation": "extract",
+            "instruction": "문서 내용을 추출해주세요.",
+        },
+    }
+
+    assert _normalize_document_root_call_for_user_intent("document", args, query) == args
+
+
+def test_document_workflow_gate_requires_fresh_render_after_latest_user_request() -> None:
+    previous_query = (
+        "현재 세션 artifact derivative-public-doc-13th-weekly-log를 document_render로 "
+        "렌더링해서 compact diff를 보여줘."
+    )
+    latest_query = (
+        "현재 세션 artifact derivative-public-doc-13th-weekly-log를 document_render로 "
+        "렌더링해서 compact diff를 보여줘. 텍스트 요약 말고 Minimap / Before viewport / "
+        "After viewport / Changes 구조와 빨간/초록 변경 박스가 TUI 화면에 직접 붙게 보여줘."
+    )
+    prior_render_before_latest_user = [
+        LLMChatMessage(role="user", content=previous_query),
+        _msg_tool_result(
+            "document_render",
+            {"tool_id": "document_render", "status": "ok"},
+        ),
+        LLMChatMessage(role="user", content=latest_query),
+    ]
+
+    assert _check_document_workflow_terminated_without_required_tool(
+        prior_render_before_latest_user,
+        latest_query,
+    ) == {
+        "tool_id": "document",
+        "message": (
+            "Document workflow request has no successful document primitive result "
+            "for the latest user turn. Do NOT answer from intended edits or "
+            "fabricate compact diff text. Call document once with the document "
+            "locator, requested operation, instruction, and any inferred patches; "
+            "the runtime will inspect, copy, mutate, render, and return the "
+            "automatic compact diff."
+        ),
+    }
+
+    latest_rendered = [
+        LLMChatMessage(role="user", content=latest_query),
+        _msg_tool_result(
+            "document_render",
+            {"tool_id": "document_render", "status": "ok"},
+        ),
+    ]
+    assert (
+        _check_document_workflow_terminated_without_required_tool(
+            latest_rendered,
+            latest_query,
+        )
+        is None
     )
 
 

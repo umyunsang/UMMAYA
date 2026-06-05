@@ -6,9 +6,9 @@
 //      so AssistantToolUseMessage's `<Text>({rendered})</Text>` wrapper
 //      shows ``● lookup({\n  "tool_id": ..., "params": {...}\n})``.
 //   2. renderVerboseOutputJson surfaces the envelope JSON
-//      ("응답 envelope:") AND, when traces are present at either the
+//      ("Response envelope:") AND, when traces are present at either the
 //      top level or inside ``result``, renders the cyan
-//      "외부 API 요청 #N — METHOD URL-SUMMARY → STATUS (Nms)" section
+//      "Outbound API request #N — METHOD URL-SUMMARY → STATUS (Nms)" section
 //      with request/response body blocks. The full URL remains in the
 //      envelope JSON; the heading is bounded to avoid terminal corruption.
 
@@ -70,7 +70,7 @@ describe('renderVerboseOutputJson', () => {
     })
     const { lastFrame } = render(<>{ui}</>)
     const out = lastFrame() ?? ''
-    expect(out).toContain('응답 envelope')
+    expect(out).toContain('Response envelope')
     expect(out).toContain('"ok": true')
     expect(out).toContain('"kind": "timeseries"')
   })
@@ -93,11 +93,11 @@ describe('renderVerboseOutputJson', () => {
     })
     const { lastFrame } = render(<>{ui}</>)
     const out = lastFrame() ?? ''
-    expect(out).toContain('외부 API 요청 #1')
+    expect(out).toContain('Outbound API request #1')
     expect(out).toContain('GET https://apis.data.go.kr/getVilageFcst?serviceKey')
     expect(out).toContain('→ 200')
     expect(out).toContain('842ms')
-    expect(out).toContain('응답 body')
+    expect(out).toContain('Response body')
     expect(out).toContain('"resultCode": "00"')
   })
 
@@ -121,11 +121,11 @@ describe('renderVerboseOutputJson', () => {
     })
     const { lastFrame } = render(<>{ui}</>)
     const out = lastFrame() ?? ''
-    expect(out).toContain('외부 API 요청 #1')
+    expect(out).toContain('Outbound API request #1')
     expect(out).toContain('POST https://example.kr/submit')
     expect(out).toContain('→ 202')
     expect(out).toContain('117ms')
-    expect(out).toContain('요청 body')
+    expect(out).toContain('Request body')
     expect(out).toContain('"홍길동"')
     expect(out).toContain('"received": true')
   })
@@ -142,16 +142,16 @@ describe('renderVerboseOutputJson', () => {
     })
     const { lastFrame } = render(<>{ui}</>)
     const out = lastFrame() ?? ''
-    expect(out).toContain('외부 API 요청 #1')
-    expect(out).toContain('외부 API 요청 #2')
-    expect(out).toContain('외부 API 요청 #3')
+    expect(out).toContain('Outbound API request #1')
+    expect(out).toContain('Outbound API request #2')
+    expect(out).toContain('Outbound API request #3')
   })
 
   it('renders only the envelope when no traces present', () => {
     const ui = renderVerboseOutputJson({ ok: true, result: { kind: 'record' } })
     const { lastFrame } = render(<>{ui}</>)
     const out = lastFrame() ?? ''
-    expect(out).toContain('응답 envelope')
-    expect(out).not.toContain('외부 API 요청')
+    expect(out).toContain('Response envelope')
+    expect(out).not.toContain('Outbound API request')
   })
 })

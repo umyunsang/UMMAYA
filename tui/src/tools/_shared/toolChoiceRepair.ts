@@ -11,6 +11,7 @@ import {
   KMA_ANALYSIS_CHART_TOOL_NAME,
 } from './kmaAnalysisGuard.js'
 import { isNonSyntheticUserMessageText } from './citizenUserText.js'
+import { TOOL_SEARCH_TOOL_NAME } from '../ToolSearchTool/constants.js'
 
 const KMA_AIR_TOOLS = [
   'kma_apihub_url_air_metar_decoded',
@@ -25,6 +26,11 @@ const TAGO_ROUTE_STATION_TOOL_NAME = 'tago_bus_route_station_search'
 const TAGO_ARRIVAL_TOOL_NAME = 'tago_bus_arrival_search'
 const PPS_BID_TOOL_NAME = 'pps_bid_public_info'
 const AIRKOREA_TOOL_NAME = 'airkorea_ctprvn_air_quality'
+const DOCUMENT_TOOL_NAME = 'document'
+const DOCUMENT_RENDER_TOOL_NAME = 'document_render'
+const DOCUMENT_TOOL_LOAD_QUERY = 'select:document'
+const WORKSPACE_GLOB_TOOL_NAME = 'workspace_glob'
+const LEGACY_GLOB_TOOL_NAME = 'Glob'
 const PROTECTED_CHECK_TOOLS = [
   'mock_verify_module_simple_auth',
   'mock_verify_ganpyeon_injeung',
@@ -57,6 +63,27 @@ const TAGO_PLACE_RE = /([가-힣A-Za-z0-9().·\s]+?)(?:에서|근처|앞|인근)
 const PPS_BID_RE = /(입찰|나라장터|조달청|공고|공사조회|전기공사|bid|procurement)/iu
 const AIRKOREA_RE =
   /(미세먼지|초미세먼지|대기질|대기오염|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea)/iu
+const DOCUMENT_PATH_RE =
+  /(?:^|[\s:'"(])(?:~|\/|[A-Za-z]:\\|\.{1,2}\/)?[^\s:'"]*\.(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b/iu
+const DOCUMENT_EXPLICIT_PATH_SCAN_RE =
+  /(?:^|[\s:'"(])((?:~|\/|[A-Za-z]:\\|\.{1,2}\/)[^\s:'"]+\.(hwpx|hwp|docx|pdf|xlsx|pptx))\b/giu
+const DOCUMENT_FORMAT_RE = /\b(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b/iu
+const DOCUMENT_ARTIFACT_ID_RE =
+  /(?:^|[\s"'`(])(?:artifact_id|artifact\s*id|artifact|아티팩트)?\s*((?:source|working|derivative|render|export|viewport)-[A-Za-z0-9][A-Za-z0-9_.-]{0,127})(?=$|[^A-Za-z0-9_.-])/iu
+const DOCUMENT_INTENT_RE =
+  /(문서|공문서|양식|서식|파일|작성|저장|렌더|미리보기|변경사항|\bdiff\b|\bcompact\b|\bdocument\b|\bfile\b|\bform\b|\brender\b|\bsave\b|\bwrite\b)/iu
+const DOCUMENT_WRITE_RE =
+  /(작성|수정|편집|채우|채워|입력|변경|저장|write|edit|fill|apply|save)/iu
+const DOCUMENT_READ_ONLY_RE =
+  /(읽기\s*전용|수정\s*없이|변경\s*없이|저장\s*없이|열람만|확인만|inspect|extract|read\s*only)/iu
+const DOCUMENT_REVIEW_RE =
+  /(diff|compact|변경사항|렌더|미리보기|render|viewport|page)/iu
+const DOCUMENT_DIFF_ONLY_FINAL_RE =
+  /(실제(?:로)?\s*바뀐\s*내용만|바뀐\s*내용만|변경된\s*부분만|변경사항만|actual\s+changed\s+content\s+only|only\s+changed)/iu
+const DOCUMENT_DIFF_AND_SAVE_ONLY_FINAL_RE =
+  /(실제(?:로)?\s*바뀐\s*내용\s*(?:과|및|랑|하고)\s*저장\s*(?:위치|경로)만|변경(?:된)?\s*(?:내용|부분|사항).{0,24}저장\s*(?:위치|경로)만|changed.{0,24}(?:save|saved).{0,24}(?:location|path).{0,24}only)/iu
+const DOCUMENT_LOCAL_HINT_RE =
+  /(다운로드|downloads?|폴더|파일|양식|서식|활동일지|신청서|등본|증명서)/iu
 const PUBLIC_DATA_MISMATCH_CALL_RE =
   /Public-data tool-choice mismatch:[\s\S]*?\bCall\s+([a-z][a-z0-9_]*)\s+/iu
 const TAGO_BUS_COMPLETION_PROMPT =
@@ -75,6 +102,16 @@ const GENERIC_PENDING_FINAL_RE =
   /(답변을?\s*제공하겠습니다|제공하겠습니다|확인해\s*보겠습니다|확인하겠습니다|조회하겠습니다|찾아보겠습니다|검색해\s*보겠습니다|검색하겠습니다|최종\s*답변은|final answer should|will\s+(?:answer|provide|check|search|look\s+up))/iu
 const GENERIC_PENDING_FINAL_REPAIR_PROMPT =
   'Final answer repair: successful tool_result evidence already exists, but the previous assistant message was still a plan or promise to answer later. Write the final Korean answer now from the actual tool_result values only. Do not say 제공하겠습니다, 확인하겠습니다, 조회하겠습니다, 찾아보겠습니다, 검색해 보겠습니다, or describe what you will answer next.'
+const DOCUMENT_COMPLETION_PROMPT_MARKER = 'Document primitive result complete'
+const DOCUMENT_COMPLETION_PROMPT =
+  `${DOCUMENT_COMPLETION_PROMPT_MARKER}: the document tool_result for the latest citizen request is already visible in the TUI. Do not call another document, workspace, render, or tool-search tool in this turn. Answer in Korean only. Write the final Korean answer now from the actual tool_result only. Keep it to one or two short sentences: state whether the document was updated, blocked, failed, or needs explicit input; when the status is needs_input or the path is missing, ask the user to provide an exact existing file path or make an explicit selection; mention only changed field labels/values or required selection that are present in the visible diff; include the saved path only when the tool_result reports one. Do not invent units, parenthetical labels, workflow steps, style claims, or extra facts. Do not say an image, screenshot, viewport, render artifact, browser view, viewer, or visual artifact was generated. The inline TUI diff above is the user-visible proof.`
+
+type DocumentFormat = 'hwpx' | 'hwp' | 'docx' | 'pdf' | 'xlsx' | 'pptx'
+
+interface DocumentPathRef {
+  path: string
+  expectedFormat: DocumentFormat
+}
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null
@@ -98,6 +135,21 @@ function messageContent(message: unknown): unknown {
   return messageRecord(message)?.content ?? asRecord(message)?.content
 }
 
+function assistantPreludeTextFromContent(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return ''
+  return content
+    .map(block => {
+      if (typeof block === 'string') return block
+      if (typeof block !== 'object' || block === null) return ''
+      const record = block as Record<string, unknown>
+      if (typeof record.text === 'string') return record.text
+      return typeof record.thinking === 'string' ? record.thinking : ''
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
 function latestUserText(messages: readonly unknown[]): string {
   for (let idx = messages.length - 1; idx >= 0; idx -= 1) {
     const message = messages[idx]
@@ -106,6 +158,16 @@ function latestUserText(messages: readonly unknown[]): string {
     if (isNonSyntheticUserMessageText(message, text)) return text
   }
   return ''
+}
+
+function latestUserMessageIndex(messages: readonly unknown[]): number {
+  for (let idx = messages.length - 1; idx >= 0; idx -= 1) {
+    const message = messages[idx]
+    if (messageRole(message) !== 'user') continue
+    const text = textFromContent(messageContent(message))
+    if (isNonSyntheticUserMessageText(message, text)) return idx
+  }
+  return -1
 }
 
 function toolUseNames(messages: readonly unknown[]): Set<string> {
@@ -174,6 +236,12 @@ function hasGenericPendingFinalRepairPrompt(messages: readonly unknown[]): boole
   return messages.some(message => textFromContent(messageContent(message)).includes('Final answer repair: successful tool_result'))
 }
 
+function hasDocumentCompletionPrompt(messages: readonly unknown[]): boolean {
+  return messages.some(message =>
+    textFromContent(messageContent(message)).includes(DOCUMENT_COMPLETION_PROMPT_MARKER),
+  )
+}
+
 function hasToolResult(messages: readonly unknown[]): boolean {
   return messages.some(message => {
     const content = messageContent(message)
@@ -207,6 +275,575 @@ function toolResultTextsFor(
     }
   }
   return texts
+}
+
+function isDocumentHarnessQuery(text: string): boolean {
+  return DOCUMENT_PATH_RE.test(text) ||
+    ((DOCUMENT_FORMAT_RE.test(text) || DOCUMENT_ARTIFACT_ID_RE.test(text)) &&
+      DOCUMENT_INTENT_RE.test(text)) ||
+    (DOCUMENT_INTENT_RE.test(text) &&
+      DOCUMENT_WRITE_RE.test(text) &&
+      DOCUMENT_LOCAL_HINT_RE.test(text))
+}
+
+function hasExplicitDocumentLocator(text: string): boolean {
+  return DOCUMENT_PATH_RE.test(text) || DOCUMENT_ARTIFACT_ID_RE.test(text)
+}
+
+function shouldExploreDocumentPathWithGlob(
+  userText: string,
+  messages: readonly unknown[],
+): boolean {
+  if (!isDocumentHarnessQuery(userText)) return false
+  if (hasExplicitDocumentLocator(userText)) return false
+  if (!DOCUMENT_LOCAL_HINT_RE.test(userText)) return false
+  const latestUserIndex = latestUserMessageIndex(messages)
+  for (let index = Math.max(0, latestUserIndex + 1); index < messages.length; index += 1) {
+    const content = messageContent(messages[index])
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      const record = asRecord(block)
+      if (record?.type !== 'tool_use') continue
+      if (
+        record.name === WORKSPACE_GLOB_TOOL_NAME ||
+        record.name === LEGACY_GLOB_TOOL_NAME
+      ) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
+function explicitDocumentPathRefs(userText: string): DocumentPathRef[] {
+  return [...userText.matchAll(DOCUMENT_EXPLICIT_PATH_SCAN_RE)].map(match => ({
+    path: match[1]!,
+    expectedFormat: match[2]!.toLowerCase() as DocumentFormat,
+  }))
+}
+
+function stableDocumentCorrelationId(userText: string): string {
+  let hash = 0x811c9dc5
+  for (let index = 0; index < userText.length; index += 1) {
+    hash ^= userText.charCodeAt(index)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return `client-forced-document-${(hash >>> 0).toString(16).padStart(8, '0')}`
+}
+
+function forcedDocumentInputFromExplicitPath(
+  userText: string,
+): Record<string, unknown> | undefined {
+  if (!isDocumentHarnessQuery(userText)) return undefined
+  const wantsWrite =
+    DOCUMENT_WRITE_RE.test(userText) && !DOCUMENT_READ_ONLY_RE.test(userText)
+  const wantsReview = DOCUMENT_REVIEW_RE.test(userText)
+  const wantsReadOnly = DOCUMENT_READ_ONLY_RE.test(userText)
+  if (!wantsWrite && !wantsReview && !wantsReadOnly) return undefined
+
+  const paths = explicitDocumentPathRefs(userText)
+  const source = paths[0]
+  if (!source) return undefined
+
+  const input: Record<string, unknown> = {
+    correlation_id: stableDocumentCorrelationId(userText),
+    document: {
+      path: source.path,
+      expected_format: source.expectedFormat,
+    },
+    operation: wantsWrite ? 'fill' : 'inspect',
+    instruction: userText,
+  }
+  const destination = paths.find(candidate => candidate.path !== source.path)
+  if (destination && wantsWrite) {
+    input.destination_path = destination.path
+  }
+  return input
+}
+
+function workspaceGlobToolName(available: ReadonlySet<string>): string | undefined {
+  if (available.has(WORKSPACE_GLOB_TOOL_NAME)) return WORKSPACE_GLOB_TOOL_NAME
+  if (available.has(LEGACY_GLOB_TOOL_NAME)) return LEGACY_GLOB_TOOL_NAME
+  return undefined
+}
+
+function isSuccessfulDocumentToolPayload(
+  value: unknown,
+  toolNames: ReadonlySet<string>,
+): boolean {
+  if (Array.isArray(value)) {
+    return value.some(item => isSuccessfulDocumentToolPayload(item, toolNames))
+  }
+  const record = asRecord(value)
+  if (!record) return false
+  const toolId = typeof record.tool_id === 'string' ? record.tool_id : undefined
+  if (toolId !== undefined && toolNames.has(toolId)) {
+    const status = typeof record.status === 'string' ? record.status.toLowerCase() : 'ok'
+    const okFlag = typeof record.ok === 'boolean' ? record.ok : true
+    const hasError =
+      record.kind === 'error' ||
+      typeof record.error === 'string' ||
+      asRecord(record.error) !== undefined
+    return (
+      okFlag &&
+      !hasError &&
+      ['ok', 'succeeded', 'completed', 'ready'].includes(status)
+    )
+  }
+  return Object.values(record).some(item =>
+    isSuccessfulDocumentToolPayload(item, toolNames),
+  )
+}
+
+function hasSuccessfulDocumentToolResultAfter(
+  messages: readonly unknown[],
+  toolNames: ReadonlySet<string>,
+  afterIndex: number,
+): boolean {
+  for (let index = Math.max(0, afterIndex + 1); index < messages.length; index += 1) {
+    const message = messages[index]
+    const content = messageContent(message)
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      const record = asRecord(block)
+      if (record?.type !== 'tool_result') continue
+      if (record.is_error === true) continue
+      if (typeof record.content !== 'string') continue
+      const parsed = parseJsonRecord(record.content)
+      if (isSuccessfulDocumentToolPayload(parsed, toolNames)) return true
+    }
+  }
+  return false
+}
+
+function isTerminalDocumentToolPayload(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(isTerminalDocumentToolPayload)
+  }
+  const record = asRecord(value)
+  if (!record) return false
+  const toolId = typeof record.tool_id === 'string' ? record.tool_id : undefined
+  if (toolId === DOCUMENT_TOOL_NAME) {
+    const status = typeof record.status === 'string' ? record.status.toLowerCase() : 'ok'
+    return status === 'ok' || status === 'blocked' || status === 'failed' || status === 'needs_input'
+  }
+  if (toolId !== undefined && toolId.startsWith('document_')) {
+    const status = typeof record.status === 'string' ? record.status.toLowerCase() : 'ok'
+    if (status === 'blocked' || status === 'failed' || status === 'needs_input') {
+      return true
+    }
+    return toolId === DOCUMENT_RENDER_TOOL_NAME && status === 'ok'
+  }
+  return Object.values(record).some(isTerminalDocumentToolPayload)
+}
+
+function hasTerminalDocumentToolResultAfter(
+  messages: readonly unknown[],
+  afterIndex: number,
+): boolean {
+  for (let index = Math.max(0, afterIndex + 1); index < messages.length; index += 1) {
+    const content = messageContent(messages[index])
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      const record = asRecord(block)
+      if (record?.type !== 'tool_result') continue
+      if (typeof record.content !== 'string') continue
+      const parsed = parseJsonRecord(record.content)
+      if (isTerminalDocumentToolPayload(parsed)) return true
+    }
+  }
+  return false
+}
+
+function hasTerminalDocumentPrimitiveToolResultAfter(
+  messages: readonly unknown[],
+  afterIndex: number,
+): boolean {
+  for (let index = Math.max(0, afterIndex + 1); index < messages.length; index += 1) {
+    const content = messageContent(messages[index])
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      const record = asRecord(block)
+      if (record?.type !== 'tool_result') continue
+      if (typeof record.content !== 'string') continue
+      const parsed = parseJsonRecord(record.content)
+      if (isTerminalDocumentPrimitivePayload(parsed)) return true
+    }
+  }
+  return false
+}
+
+function isTerminalDocumentPrimitivePayload(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(isTerminalDocumentPrimitivePayload)
+  }
+  const record = asRecord(value)
+  if (!record) return false
+  const toolId = typeof record.tool_id === 'string' ? record.tool_id : undefined
+  if (toolId === DOCUMENT_TOOL_NAME) {
+    const status = typeof record.status === 'string' ? record.status.toLowerCase() : 'ok'
+    return status === 'ok' || status === 'blocked' || status === 'failed' || status === 'needs_input'
+  }
+  return Object.values(record).some(isTerminalDocumentPrimitivePayload)
+}
+
+function isDocumentAnswerSynthesisPayload(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(isDocumentAnswerSynthesisPayload)
+  }
+  const record = asRecord(value)
+  if (!record) return false
+  const toolId = typeof record.tool_id === 'string' ? record.tool_id : undefined
+  if (toolId === DOCUMENT_TOOL_NAME) {
+    const status = typeof record.status === 'string' ? record.status.toLowerCase() : 'ok'
+    return status === 'ok' || status === 'blocked' || status === 'failed' || status === 'needs_input'
+  }
+  if (toolId === DOCUMENT_RENDER_TOOL_NAME) {
+    const status = typeof record.status === 'string' ? record.status.toLowerCase() : 'ok'
+    return status === 'ok'
+  }
+  return Object.values(record).some(isDocumentAnswerSynthesisPayload)
+}
+
+function latestDocumentResultPayloadAfter(
+  messages: readonly unknown[],
+  afterIndex: number,
+): Record<string, unknown> | undefined {
+  for (let index = messages.length - 1; index >= Math.max(0, afterIndex + 1); index -= 1) {
+    const content = messageContent(messages[index])
+    if (!Array.isArray(content)) continue
+    for (let blockIndex = content.length - 1; blockIndex >= 0; blockIndex -= 1) {
+      const record = asRecord(content[blockIndex])
+      if (record?.type !== 'tool_result') continue
+      if (typeof record.content !== 'string') continue
+      const parsed = parseJsonRecord(record.content)
+      const payload = findDocumentResultPayload(parsed)
+      if (payload !== undefined) return payload
+    }
+  }
+  return undefined
+}
+
+function findDocumentResultPayload(value: unknown): Record<string, unknown> | undefined {
+  if (Array.isArray(value)) {
+    for (let index = value.length - 1; index >= 0; index -= 1) {
+      const payload = findDocumentResultPayload(value[index])
+      if (payload !== undefined) return payload
+    }
+    return undefined
+  }
+  const record = asRecord(value)
+  if (!record) return undefined
+  const toolId = typeof record.tool_id === 'string' ? record.tool_id : undefined
+  if (toolId === DOCUMENT_TOOL_NAME || toolId === DOCUMENT_RENDER_TOOL_NAME) {
+    return record
+  }
+  for (const nested of Object.values(record).reverse()) {
+    const payload = findDocumentResultPayload(nested)
+    if (payload !== undefined) return payload
+  }
+  return undefined
+}
+
+function documentDiffOnlyCompletionPrompt(
+  userText: string,
+  messages: readonly unknown[],
+): string | undefined {
+  const result = latestDocumentResultPayloadAfter(
+    messages,
+    latestUserMessageIndex(messages),
+  )
+  if (DOCUMENT_DIFF_AND_SAVE_ONLY_FINAL_RE.test(userText)) {
+    return documentDiffAndSaveOnlyCompletionPrompt(result)
+  }
+  if (!DOCUMENT_DIFF_ONLY_FINAL_RE.test(userText)) return undefined
+  return documentDiffOnlyCompletionPromptFromResult(result)
+}
+
+function documentDiffOnlyCompletionPromptFromResult(
+  result: Record<string, unknown> | undefined,
+): string | undefined {
+  const diff = asRecord(result?.diff)
+  const changes = Array.isArray(diff?.changes) ? diff.changes : []
+  const lines = changes
+    .map(change => {
+      const record = asRecord(change)
+      if (!record) return undefined
+      const targetPath = String(record.target_path ?? 'document')
+      const beforeValue = String(record.before_value ?? '')
+      const afterValue = String(record.after_value ?? '')
+      return `- ${targetPath}: ${beforeValue} -> ${afterValue}`
+    })
+    .filter((line): line is string => line !== undefined)
+  if (lines.length === 0) return undefined
+  return [
+    `${DOCUMENT_COMPLETION_PROMPT_MARKER}: the document tool_result for the latest citizen request is already visible in the TUI.`,
+    'The citizen explicitly requested only the actually changed content.',
+    'Reply in Korean with exactly these lines and nothing else:',
+    '실제 변경된 내용:',
+    ...lines,
+    'Do not add document status, save/render/browser/artifact/viewer details, workflow summaries, visual diff explanations, or any extra sentence.',
+  ].join('\n')
+}
+
+function documentDiffAndSaveOnlyCompletionPrompt(
+  result: Record<string, unknown> | undefined,
+): string | undefined {
+  const diff = asRecord(result?.diff)
+  const changes = Array.isArray(diff?.changes) ? diff.changes : []
+  const changeLines = changes
+    .map(change => {
+      const record = asRecord(change)
+      if (!record) return undefined
+      const targetPath = String(record.target_path ?? 'document')
+      const beforeValue = String(record.before_value ?? '')
+      const afterValue = String(record.after_value ?? '')
+      return `- ${targetPath}: ${beforeValue} -> ${afterValue}`
+    })
+    .filter((line): line is string => line !== undefined)
+  if (changeLines.length === 0) return undefined
+
+  const savedExports = Array.isArray(result?.saved_exports)
+    ? result.saved_exports
+    : []
+  const saveLines = savedExports
+    .map(savedExport => {
+      const record = asRecord(savedExport)
+      const localPath = record?.local_path
+      return typeof localPath === 'string' && localPath.trim()
+        ? `- ${localPath}`
+        : undefined
+    })
+    .filter((line): line is string => line !== undefined)
+  const lines = [
+    `${DOCUMENT_COMPLETION_PROMPT_MARKER}: the document tool_result for the latest citizen request is already visible in the TUI.`,
+    'The citizen explicitly requested only the actually changed content and save location.',
+    'Reply in Korean with exactly these lines and nothing else:',
+    '실제 변경된 내용:',
+    ...changeLines,
+  ]
+  if (saveLines.length > 0) {
+    lines.push('저장 위치:', ...saveLines)
+  } else {
+    lines.push('Do not mention 저장 위치 or any saved path because saved_exports is absent.')
+  }
+  lines.push(
+    'Do not add document status, render/browser/artifact/viewer details, workflow summaries, visual diff explanations, or any extra sentence.',
+  )
+  return lines.join('\n')
+}
+
+function hasDocumentAnswerSynthesisResultAfter(
+  messages: readonly unknown[],
+  afterIndex: number,
+): boolean {
+  for (let index = Math.max(0, afterIndex + 1); index < messages.length; index += 1) {
+    const content = messageContent(messages[index])
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      const record = asRecord(block)
+      if (record?.type !== 'tool_result') continue
+      if (typeof record.content !== 'string') continue
+      const parsed = parseJsonRecord(record.content)
+      if (isDocumentAnswerSynthesisPayload(parsed)) return true
+    }
+  }
+  return false
+}
+
+function selectDocumentWorkflowTargetToolName(
+  userText: string,
+  messages: readonly unknown[],
+): string | undefined {
+  if (!isDocumentHarnessQuery(userText)) return undefined
+  const wantsWrite =
+    DOCUMENT_WRITE_RE.test(userText) && !DOCUMENT_READ_ONLY_RE.test(userText)
+  const wantsReview = DOCUMENT_REVIEW_RE.test(userText)
+  const wantsReadOnly = DOCUMENT_READ_ONLY_RE.test(userText)
+  if (!wantsWrite && !wantsReview && !wantsReadOnly) return undefined
+  const latestUserIndex = latestUserMessageIndex(messages)
+  const hasDocumentForLatestRequest = hasTerminalDocumentPrimitiveToolResultAfter(
+    messages,
+    latestUserIndex,
+  )
+
+  return hasDocumentForLatestRequest ? undefined : DOCUMENT_TOOL_NAME
+}
+
+function selectDocumentWorkflowToolChoice(
+  userText: string,
+  available: Set<string>,
+  messages: readonly unknown[],
+): string | undefined {
+  const globToolName = workspaceGlobToolName(available)
+  if (
+    globToolName !== undefined &&
+    shouldExploreDocumentPathWithGlob(userText, messages)
+  ) {
+    return globToolName
+  }
+  const target = selectDocumentWorkflowTargetToolName(userText, messages)
+  if (target === undefined) return undefined
+  if (isAvailableOrSyncedAdapter(available, target)) return target
+  return available.has(TOOL_SEARCH_TOOL_NAME) ? TOOL_SEARCH_TOOL_NAME : undefined
+}
+
+export interface ForcedUmmayaToolUse {
+  name: string
+  input: Record<string, unknown>
+}
+
+export function repairUmmayaExplicitDocumentToolUseFromUserQuery({
+  toolName,
+  input,
+  messages,
+  tools,
+}: {
+  toolName: string
+  input: Record<string, unknown>
+  messages: readonly Message[]
+  tools: Tools
+}): ForcedUmmayaToolUse | undefined {
+  const available = availableToolNamesFromTools(tools)
+  if (!isAvailableOrSyncedAdapter(available, DOCUMENT_TOOL_NAME)) return undefined
+
+  const userText = latestUserText(messages)
+  if (!hasExplicitDocumentLocator(userText)) return undefined
+
+  const forced = forcedDocumentInputFromExplicitPath(userText)
+  if (!forced) return undefined
+  if (toolName === DOCUMENT_TOOL_NAME) {
+    const forcedOperation = typeof forced.operation === 'string'
+      ? forced.operation
+      : undefined
+    const operation = typeof input.operation === 'string'
+      ? input.operation
+      : undefined
+    const hasExplicitMutationPayload =
+      Array.isArray(input.patches) ||
+      Array.isArray(input.styles) ||
+      typeof input.destination_path === 'string'
+    if (forcedOperation === operation || (
+      forcedOperation !== 'inspect' &&
+      hasExplicitMutationPayload
+    )) {
+      return undefined
+    }
+  }
+  return {
+    name: DOCUMENT_TOOL_NAME,
+    input: forced,
+  }
+}
+
+export function backfillUmmayaObservableToolInputFromUserQuery({
+  toolName,
+  input,
+  messages,
+}: {
+  toolName: string
+  input: Record<string, unknown>
+  messages: readonly Message[]
+}): void {
+  if (toolName !== DOCUMENT_TOOL_NAME) return
+  const operation = typeof input.operation === 'string' ? input.operation : undefined
+  if (operation !== 'inspect' && operation !== 'extract') return
+
+  const userText = latestUserText(messages)
+  if (!isDocumentHarnessQuery(userText)) return
+  if (!DOCUMENT_WRITE_RE.test(userText) || DOCUMENT_READ_ONLY_RE.test(userText)) return
+  if (!hasExplicitDocumentLocator(userText)) return
+
+  input.__ummaya_display_operation = 'fill'
+}
+
+export function selectUmmayaClientForcedToolUse({
+  messages,
+  tools,
+}: {
+  messages: readonly Message[]
+  tools: Tools
+}): ForcedUmmayaToolUse | undefined {
+  const available = availableToolNamesFromTools(tools)
+  const userText = latestUserText(messages)
+  const documentToolName = selectDocumentWorkflowTargetToolName(
+    userText,
+    messages,
+  )
+  if (
+    documentToolName !== undefined &&
+    !isAvailableOrSyncedAdapter(available, documentToolName) &&
+    available.has(TOOL_SEARCH_TOOL_NAME)
+  ) {
+    return {
+      name: TOOL_SEARCH_TOOL_NAME,
+      input: {
+        query: DOCUMENT_TOOL_LOAD_QUERY,
+        max_results: 1,
+      },
+    }
+  }
+  if (
+    documentToolName !== undefined &&
+    isAvailableOrSyncedAdapter(available, documentToolName)
+  ) {
+    const input = forcedDocumentInputFromExplicitPath(userText)
+    if (input) {
+      return {
+        name: DOCUMENT_TOOL_NAME,
+        input,
+      }
+    }
+  }
+  return undefined
+}
+
+export function shouldCompleteAfterSuccessfulDocumentRender({
+  messages,
+}: {
+  messages: readonly Message[]
+}): boolean {
+  const userText = latestUserText(messages)
+  if (!isDocumentHarnessQuery(userText)) return false
+  if (!DOCUMENT_REVIEW_RE.test(userText)) return false
+  if (!DOCUMENT_ARTIFACT_ID_RE.test(userText)) return false
+  const latestUserIndex = latestUserMessageIndex(messages)
+  return hasSuccessfulDocumentToolResultAfter(
+    messages,
+    new Set([DOCUMENT_TOOL_NAME, DOCUMENT_RENDER_TOOL_NAME]),
+    latestUserIndex,
+  )
+}
+
+export function shouldCompleteAfterTerminalDocumentToolResult({
+  messages,
+}: {
+  messages: readonly Message[]
+}): boolean {
+  const userText = latestUserText(messages)
+  if (!isDocumentHarnessQuery(userText)) return false
+  return hasDocumentAnswerSynthesisResultAfter(
+    messages,
+    latestUserMessageIndex(messages),
+  )
+}
+
+export function buildDocumentCompletionPromptIfNeeded({
+  messages,
+}: {
+  messages: readonly Message[]
+}): string | undefined {
+  const userText = latestUserText(messages)
+  if (!isDocumentHarnessQuery(userText)) return undefined
+  if (hasDocumentCompletionPrompt(messages)) return undefined
+  if (!hasTerminalDocumentToolResultAfter(
+    messages,
+    latestUserMessageIndex(messages),
+  )) return undefined
+  return (
+    documentDiffOnlyCompletionPrompt(userText, messages) ??
+    DOCUMENT_COMPLETION_PROMPT
+  )
 }
 
 function toolUseById(messages: readonly unknown[]): Map<string, string> {
@@ -721,6 +1358,12 @@ export function shouldSuppressUmmayaToolCallsForAnswerSynthesis({
   ) {
     return true
   }
+  if (
+    isDocumentHarnessQuery(userText) &&
+    hasDocumentAnswerSynthesisResultAfter(messages, latestUserMessageIndex(messages))
+  ) {
+    return true
+  }
   if (!isAirportAviationQuery(userText)) return false
 
   const requiredTools = requiredKmaAviationTools(userText, available)
@@ -758,6 +1401,15 @@ export function selectUmmayaToolChoiceOverride({
     })
   ) {
     return undefined
+  }
+
+  const documentToolName = selectDocumentWorkflowToolChoice(
+    userText,
+    available,
+    messages,
+  )
+  if (documentToolName) {
+    return { type: 'tool', name: documentToolName }
   }
 
   if (

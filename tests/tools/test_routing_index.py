@@ -140,7 +140,7 @@ class TestInvariant1PrimitiveDeclared:
 
     def test_valid_primitive_does_not_raise(self):
         """Each supported primitive value is accepted without error."""
-        primitives = ["find", "locate", "send", "check"]
+        primitives = ["find", "locate", "send", "check", "document"]
         for prim in primitives:
             tool = _make_tool(id=f"tool_{prim}", primitive=prim)
             idx = build_routing_index([tool])

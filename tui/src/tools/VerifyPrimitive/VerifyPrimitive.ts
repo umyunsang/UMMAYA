@@ -388,7 +388,8 @@ export const VerifyPrimitive = buildTool({
   async checkPermissions(_input) {
     return {
       behavior: 'ask' as const,
-      message: 'Permission delegation required: send identity information to the auth provider. Continue?',
+      message:
+        '권한 위임 필요: 인증 제공자에게 신원 정보를 전달합니다. 계속할까요? / Permission delegation required: send identity information to the auth provider.',
     }
   },
 

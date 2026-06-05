@@ -1,0 +1,355 @@
+version: 1
+run_id: public_doc_candidate_profiles_v1
+created_at: "2026-06-01"
+source_policy: offline_fixtures_only
+live_network_allowed: false
+profiles:
+  - format: hwpx
+    engine_id: python-hwpx
+    supported_operations: [read, write, style, validate]
+    evaluate_operations: [read, write]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: Permissive candidate license recorded for promotion review.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Python-native candidate; dependency still remains behind the harness gate.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 18
+      style_layout_control: 14
+      deterministic_round_trip: 13
+      public_form_validation: 10
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwpx-public-form-baseline
+      - metadata:data-go-kr-public-doc-ai-corpus
+    decision_note: Promote for HWPX derivative writes behind the harness.
+  - format: hwpx
+    engine_id: direct-owpml-oracle
+    supported_operations: [read, validate]
+    evaluate_operations: [write]
+    license:
+      spdx: internal-test-oracle
+      gate: pass
+      notes: Direct XML assertions are allowed only as tests.
+    dependency:
+      runtime_dependency: false
+      gate: pass
+      notes: No runtime dependency; used as an oracle.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 0
+      style_layout_control: 15
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwpx-owpml-oracle
+    decision_note: Retain as a test oracle only, not a runtime engine.
+  - format: hwp
+    engine_id: pyhwp-read-only
+    supported_operations: [read]
+    evaluate_operations: [read, write]
+    license:
+      spdx: AGPL-3.0-only
+      gate: fail
+      notes: AGPL candidate retained for comparative read evidence only.
+    dependency:
+      runtime_dependency: false
+      gate: pass
+      notes: No runtime addition in this slice.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 0
+      style_layout_control: 10
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwp-read-only-baseline
+    operation_notes:
+      write: Binary HWP direct write remains blocked in this epic.
+    decision_note: Keep as read-only comparative HWP extraction evidence.
+  - format: hwp
+    engine_id: OpenHWP-read-only
+    supported_operations: [read]
+    evaluate_operations: [read, write]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: OpenHWP upstream is MIT; HWP 5.0 read is supported while direct HWP write is not.
+    dependency:
+      runtime_dependency: true
+      gate: defer
+      notes: Runtime bridge is deferred until ADR-011, package lock, local-only execution, fixture, render, and reread gates pass.
+      requires_adr: true
+      adr_ref: docs/adr/ADR-011-hwp-conversion-bridge.md
+      permission_boundary: document_primitive_only
+      local_only_execution: true
+      package_ref: crate:openhwp/hwp+ir
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 0
+      style_layout_control: 10
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwp-read-only-baseline
+      - adr:docs/adr/ADR-011-hwp-conversion-bridge.md
+      - upstream:openhwp-hwp-ir-2026-06
+    operation_notes:
+      write: Binary HWP direct write remains blocked in this epic.
+    decision_note: Defer HWP read runtime bridge until ADR-011 dependency, permission, local-only, fixture, render, and reread gates pass.
+  - format: hwp
+    engine_id: unhwp-read-only
+    supported_operations: [read]
+    evaluate_operations: [read]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: MIT Rust extractor for HWP/HWPX to Markdown, text, JSON, metadata, tables, and assets.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Promoted as the local-only read runtime after real public AX HWP fixture extraction evidence passed.
+      requires_adr: true
+      adr_ref: docs/adr/ADR-011-hwp-conversion-bridge.md
+      permission_boundary: document_primitive_only
+      local_only_execution: true
+      package_ref: pypi:unhwp>=0.5.0,<0.6
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 0
+      style_layout_control: 12
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwp-read-only-baseline
+      - upstream:iyulab-unhwp-2026-05
+      - test:tests/tools/documents/test_builtin_hwp_adapter.py::test_default_runtime_inspects_public_ax_hwp_with_unhwp_read_engine
+      - adr:docs/adr/ADR-011-hwp-conversion-bridge.md
+    decision_note: Promote read-only HWP inspection through unhwp; direct HWP write and HWP-to-HWPX authoring remain blocked until conversion gates pass.
+  - format: hwp
+    engine_id: HwpForge-hwp5-to-hwpx
+    supported_operations: [read, convert]
+    evaluate_operations: [convert]
+    license:
+      spdx: MIT OR Apache-2.0
+      gate: pass
+      notes: Dual-license HWPX/MCP ecosystem package; conversion remains HWP-to-HWPX derivative only.
+    dependency:
+      runtime_dependency: true
+      gate: defer
+      notes: Runtime bridge is deferred until ADR-011, Git/Cargo package lock, local-only execution, fixture, render, and reread gates pass. The conversion command is in the HwpForge CLI crate, not the npm MCP package.
+      requires_adr: true
+      adr_ref: docs/adr/ADR-011-hwp-conversion-bridge.md
+      permission_boundary: document_primitive_only
+      local_only_execution: true
+      package_ref: git:https://github.com/ai-screams/HwpForge.git#v0.6.0:crates/hwpforge-bindings-cli
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 18
+      style_layout_control: 14
+      deterministic_round_trip: 13
+      public_form_validation: 14
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwp-to-hwpx-derivative-lineage
+      - upstream:hwpforge-cli-v0.6.0-convert-hwp5
+      - upstream:hwpforge-mcp-0.5.2-no-hwp5-tool
+      - adr:docs/adr/ADR-011-hwp-conversion-bridge.md
+      - upstream:openhwp-hwp-ir-2026-06
+    decision_note: Defer HWP-to-HWPX runtime bridge until the HwpForge CLI crate or another local converter is pinned, built, and passes ADR-011 dependency, permission, local-only, render, and reread gates.
+  - format: docx
+    engine_id: python-docx
+    supported_operations: [read, write, style, render]
+    evaluate_operations: [read, write]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: Permissive license recorded from PyPI metadata for default DOCX runtime.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Core runtime dependency for bounded DOCX inspection and mutation.
+    scorecard:
+      extraction_fidelity: 20
+      write_fidelity: 18
+      style_layout_control: 12
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:docx-default-runtime-inspection
+      - metadata:data-go-kr-public-doc-ai-corpus
+    operation_notes:
+      read: Promote DOCX inspection for the default local harness runtime.
+      write: Promote bounded paragraph, run, table-cell, core-metadata, and style-preserving DOCX writes.
+    decision_note: Promote bounded DOCX inspection and mutation behind the OOXML adapter.
+  - format: xlsx
+    engine_id: openpyxl
+    supported_operations: [read, write, style, render]
+    evaluate_operations: [read, write]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: Permissive license recorded from PyPI metadata for default XLSX runtime.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Core runtime dependency for bounded cell, style, merged-cell, and print-area preserving XLSX work.
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 19
+      style_layout_control: 14
+      deterministic_round_trip: 15
+      public_form_validation: 13
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:xlsx-openpyxl-cell-style-merged-formula-print-area
+      - metadata:data-go-kr-public-doc-ai-corpus
+    operation_notes:
+      write: Promote bounded XLSX cell and cell-style writes; formulas are preserved but never evaluated.
+    decision_note: Promote bounded XLSX cell/style mutation through openpyxl behind the adapter.
+  - format: pptx
+    engine_id: python-pptx
+    supported_operations: [read, write, style, render]
+    evaluate_operations: [read, write]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: Permissive license recorded from PyPI metadata for default PPTX runtime.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Core runtime dependency for bounded placeholder, text-frame, table, image-inspection, and metadata PPTX work.
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 18
+      style_layout_control: 13
+      deterministic_round_trip: 15
+      public_form_validation: 14
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:pptx-python-pptx-placeholder-table-image-metadata
+      - metadata:data-go-kr-public-doc-ai-corpus
+    operation_notes:
+      write: Promote bounded PPTX placeholder, text-frame, table-cell, and metadata writes; media, animation, and master rewrites stay blocked.
+    decision_note: Promote bounded PPTX mutation through python-pptx behind the adapter.
+  - format: pdf
+    engine_id: pypdf-acroform
+    supported_operations: [read, write, render]
+    evaluate_operations: [read, write]
+    license:
+      spdx: BSD-3-Clause
+      gate: pass
+      notes: Permissive license recorded from PyPI metadata for AcroForm field inspection and fill.
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: Core runtime dependency for PDF AcroForm field read/write; visible page evidence is rendered through pypdfium2.
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 18
+      style_layout_control: 8
+      deterministic_round_trip: 15
+      public_form_validation: 14
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:pdf-pypdf-acroform-visible-reread
+      - metadata:iso-32000-2-pdf-acroform
+    operation_notes:
+      write: Promote AcroForm field fills only; static, scanned, XFA, encrypted, and signed PDFs stay blocked with typed reasons.
+      render: Use pypdfium2 page PNG evidence to verify visible appearance after fill.
+    decision_note: Promote PDF AcroForm mutation through pypdf with pypdfium2 render verification behind the adapter.
+  - format: hwpx
+    engine_id: hwpx-package-text
+    supported_operations: [read, write]
+    evaluate_operations: [read, write]
+    license:
+      spdx: Apache-2.0
+      gate: pass
+      notes: In-repo package text-node engine; no third-party runtime dependency.
+    dependency:
+      runtime_dependency: false
+      gate: pass
+      notes: Uses stdlib ZIP/XML handling for bounded HWPX text-node edits.
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 18
+      style_layout_control: 10
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:hwpx-package-text-weekly-log
+      - metadata:data-go-kr-public-doc-ai-corpus
+    operation_notes:
+      write: HWPX package text engine does not promote style mutation or visual rendering.
+    decision_note: Promote bounded HWPX text-node read/write for default local harness smoke.
+  - format: hwpx
+    engine_id: rhwp
+    supported_operations: [read, render]
+    evaluate_operations: [write]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: RHWP upstream is permissive, but write promotion is not adopted in this slice.
+    dependency:
+      runtime_dependency: true
+      gate: fail
+      notes: Full RHWP write/export adoption remains deferred pending field-safe mutation evidence.
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 8
+      style_layout_control: 15
+      deterministic_round_trip: 10
+      public_form_validation: 12
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:rhwp-comparative-hwpx
+    operation_notes:
+      write: RHWP write/export remains deferred until field-safe public-form mutation evidence is complete.
+    decision_note: Defer RHWP write/export adoption; only render is promoted through the Node/WASM bridge.
+  - format: hwpx
+    engine_id: rhwp-node-wasm
+    supported_operations: [render]
+    evaluate_operations: [render]
+    license:
+      spdx: MIT
+      gate: pass
+      notes: '@rhwp/core 0.7.13 is MIT and published as a local Rust/WASM parser-renderer.'
+    dependency:
+      runtime_dependency: true
+      gate: pass
+      notes: User approved Rust/WASM runtime adoption; bridge runs locally through Node with no network egress.
+    scorecard:
+      extraction_fidelity: 18
+      write_fidelity: 0
+      style_layout_control: 15
+      deterministic_round_trip: 15
+      public_form_validation: 15
+      security_privacy: 10
+      license_maintenance_tool_usability: 5
+    evidence_refs:
+      - fixture:rhwp-comparative-hwpx
+    operation_notes:
+      render: Promoted for page-level SVG evidence; write/export remains a separate gate.
+    decision_note: Promote HWPX visual render through the RHWP Node/WASM bridge.

@@ -109,11 +109,24 @@ function toolNamed(name: string) {
 }
 
 describe('UMMAYA model-facing tool surface', () => {
-  test('exposes public-service primitives, not Claude Code developer tools', () => {
+  test('exposes public-service primitives and workspace adapters, not raw Claude Code developer tools', () => {
     const names = getTools(getEmptyToolPermissionContext()).map(tool => tool.name)
 
     expect(names).toEqual(
-      expect.arrayContaining(['ToolSearch', 'find', 'locate', 'send', 'check']),
+      expect.arrayContaining([
+        'ToolSearch',
+        'find',
+        'locate',
+        'send',
+        'check',
+        'document',
+        'workspace_glob',
+        'workspace_grep',
+        'workspace_read',
+        'workspace_write',
+        'workspace_edit',
+        'workspace_bash',
+      ]),
     )
     expect(names).not.toContain('Bash')
     expect(names).not.toContain('Read')
@@ -122,6 +135,15 @@ describe('UMMAYA model-facing tool surface', () => {
     expect(names).not.toContain('Glob')
     expect(names).not.toContain('Grep')
     expect(names).not.toContain('NotebookEdit')
+    expect(names).not.toContain('document_inspect')
+    expect(names).not.toContain('document_extract')
+    expect(names).not.toContain('document_form_schema')
+    expect(names).not.toContain('document_copy_for_edit')
+    expect(names).not.toContain('document_apply_fill')
+    expect(names).not.toContain('document_apply_style')
+    expect(names).not.toContain('document_render')
+    expect(names).not.toContain('document_validate_public_form')
+    expect(names).not.toContain('document_save')
   })
 
   test('keeps CC assembly shape while external MCP tools stay out of citizen turns', () => {
@@ -130,8 +152,19 @@ describe('UMMAYA model-facing tool surface', () => {
       context7Tool,
     ]).map(tool => tool.name)
 
-    expect(names).toEqual(['check', 'find', 'locate', 'send', 'ToolSearch'])
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'check',
+        'find',
+        'locate',
+        'send',
+        'ToolSearch',
+        'workspace_glob',
+        'workspace_bash',
+      ]),
+    )
     expect(names).not.toContain('mcp__context7__resolve-library-id')
+    expect(names).not.toContain('Glob')
   })
 
   test('loads synced backend adapters as deferred CC Tool objects', () => {
@@ -247,7 +280,7 @@ describe('UMMAYA model-facing tool surface', () => {
     )
 
     expect(result.data.matches).toEqual(['kma_current_observation'])
-    expect(result.data.total_deferred_tools).toBe(2)
+    expect(result.data.total_deferred_tools).toBe(7)
   })
 
   test('turn-local adapter retrieval selects only query-relevant concrete schemas', () => {

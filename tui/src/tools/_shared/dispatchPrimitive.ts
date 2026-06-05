@@ -49,7 +49,7 @@ function _resolveTimeoutMs(override?: number): number {
 // ---------------------------------------------------------------------------
 
 export interface DispatchPrimitiveOpts {
-  primitive: 'find' | 'locate' | 'check' | 'send'
+  primitive: 'find' | 'locate' | 'check' | 'send' | 'document'
   /** Concrete model-facing tool name. Defaults to the primitive for legacy root calls. */
   toolName?: string
   /** Forwarded verbatim into tool_call frame arguments (FR-009). */
@@ -78,7 +78,7 @@ export function _resetCheckpointState(): void {
 }
 
 function _maybeEmitCheckpoint(
-  primitive: 'find' | 'locate' | 'check' | 'send',
+  primitive: 'find' | 'locate' | 'check' | 'send' | 'document',
   frame: ToolResultFrame,
 ): void {
   if (process.env['UMMAYA_SMOKE_CHECKPOINTS'] !== 'true') return
@@ -102,6 +102,45 @@ function _maybeEmitCheckpoint(
     }
   } catch {
     // Ignore serialization errors
+  }
+}
+
+function latestUserTextFromContext(context: ToolUseContext): string | undefined {
+  const messages = context.messages ?? []
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index] as Record<string, unknown> | undefined
+    if (!message || message['type'] !== 'user') continue
+    const sdkMessage = message['message'] as Record<string, unknown> | undefined
+    if (!sdkMessage || sdkMessage['role'] !== 'user') continue
+    const content = sdkMessage['content']
+    if (typeof content === 'string' && content.trim() !== '') {
+      return content
+    }
+    if (!Array.isArray(content)) continue
+    const text = content
+      .map(block => {
+        if (!block || typeof block !== 'object') return ''
+        const item = block as Record<string, unknown>
+        if (item['type'] !== 'text') return ''
+        return typeof item['text'] === 'string' ? item['text'] : ''
+      })
+      .filter(Boolean)
+      .join('\n')
+      .trim()
+    if (text !== '') return text
+  }
+  return undefined
+}
+
+function argumentsForPrimitive(
+  opts: DispatchPrimitiveOpts,
+): Record<string, unknown> {
+  if (opts.primitive !== 'document') return opts.args
+  const userQuery = latestUserTextFromContext(opts.context)
+  if (!userQuery) return opts.args
+  return {
+    ...opts.args,
+    __ummaya_user_query: userQuery,
   }
 }
 
@@ -198,7 +237,7 @@ export async function dispatchPrimitive<O = unknown>(
         kind: 'tool_call',
         call_id: toolUseId,
         name: toolName,
-        arguments: opts.args,
+        arguments: argumentsForPrimitive(opts),
       }
 
       const sent = opts.bridge.send(toolCallFrame)

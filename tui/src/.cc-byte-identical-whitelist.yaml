@@ -377,3 +377,259 @@ entries:
     cause: W13
     spec_ref: "Epic #2639 D1 (TeleportResumeWrapper DROP)"
     notes: "launchTeleportResumeWrapper export removed; underlying TeleportResumeWrapper.tsx is in NEVER-PORT registry (tui/src/components/.never-port.md row 7)."
+  - path: tui/src/components/AutoModeOptInDialog.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "Visible opt-in copy and brand surface align with UMMAYA while preserving CC dialog semantics."
+  - path: tui/src/components/BypassPermissionsModeDialog.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "Permission-bypass warning copy is UMMAYA-branded without changing the underlying approval contract."
+  - path: tui/src/components/ClaudeInChromeOnboarding.tsx
+    cause: W2,W7
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Claude 1P browser onboarding surface is rewritten or inert for the UMMAYA public-service client."
+  - path: tui/src/components/ClaudeMdExternalIncludesDialog.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "External include warning copy uses UMMAYA terms while preserving CC trust semantics."
+  - path: tui/src/components/CostThresholdDialog.tsx
+    cause: W7,W14
+    spec_ref: "#1633; docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Claude billing threshold language is removed or neutralized for the single-provider UMMAYA harness."
+  - path: tui/src/components/DesktopHandoff.tsx
+    cause: W7,W13
+    spec_ref: "#1633; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Anthropic desktop handoff surface is retained only where needed for unreachable compatibility."
+  - path: tui/src/components/DesktopUpsell/DesktopUpsellStartup.tsx
+    cause: W7,W13
+    spec_ref: "#1633; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Claude desktop upsell is removed from the UMMAYA runtime surface."
+  - path: tui/src/components/Feedback.tsx
+    cause: W7,W13
+    spec_ref: "#1633; tui/src/components/.never-port.md"
+    notes: "Anthropic feedback endpoint surface is never-port for UMMAYA."
+  - path: tui/src/components/FeedbackSurvey/FeedbackSurveyView.tsx
+    cause: W7,W13
+    spec_ref: "#1633; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Anthropic survey copy and endpoint behavior are removed from the citizen harness."
+  - path: tui/src/components/FeedbackSurvey/TranscriptSharePrompt.tsx
+    cause: W7,W13
+    spec_ref: "#1633; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Transcript-sharing prompt no longer routes to Anthropic 1P survey infrastructure."
+  - path: tui/src/components/HelpV2/General.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "Help text is UMMAYA-branded and adjusted for public-service workflows."
+  - path: tui/src/components/InterruptedByUser.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Interruption wording follows the UMMAYA TUI copy audit without changing control flow."
+  - path: tui/src/components/LogSelector.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Log selection labels are UMMAYA-facing while preserving the CC selector behavior."
+  - path: tui/src/components/LogoV2/ChannelsNotice.tsx
+    cause: W2,W7
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § 마스코트 · 브랜딩 확정; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Claude channels notice is replaced by UMMAYA channel language."
+  - path: tui/src/components/LogoV2/GuestPassesUpsell.tsx
+    cause: W7,W13
+    spec_ref: "tui/src/components/.never-port.md; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Guest-pass upsell is an Anthropic 1P business surface and is never-port for UMMAYA."
+  - path: tui/src/components/MCPServerDesktopImportDialog.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "Desktop import copy is UMMAYA-facing while retaining MCP import semantics."
+  - path: tui/src/components/MCPServerDialogCopy.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "MCP server dialog copy is adjusted for UMMAYA terminology."
+  - path: tui/src/components/ManagedSettingsSecurityDialog/ManagedSettingsSecurityDialog.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Managed-settings security text is UMMAYA-branded without changing policy enforcement."
+  - path: tui/src/components/ModelPicker.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Model picker reflects the fixed K-EXAONE provider surface instead of Claude model selection."
+  - path: tui/src/components/OutputStylePicker.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Output-style picker copy follows the UMMAYA TUI copy audit."
+  - path: tui/src/components/PackageManagerAutoUpdater.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Package-manager updater visible copy uses UMMAYA package identity."
+  - path: tui/src/components/Passes/Passes.tsx
+    cause: W7,W13
+    spec_ref: "tui/src/components/.never-port.md; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Claude subscription pass UI is never-port for the UMMAYA public-service harness."
+  - path: tui/src/components/RemoteCallout.tsx
+    cause: W7,W13
+    spec_ref: "#1633; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Anthropic remote-session callout is kept only as an unreachable compatibility surface."
+  - path: tui/src/components/Settings/Config.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Settings configuration copy uses UMMAYA terms while preserving setting keys."
+  - path: tui/src/components/Stats.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Stats display text follows UMMAYA terminology without altering metrics aggregation."
+  - path: tui/src/components/TeleportError.tsx
+    cause: W7,W13
+    spec_ref: "#1633; #1978 T011"
+    notes: "Teleport error surface remains stubbed after Anthropic teleport module deletion."
+  - path: tui/src/components/TeleportRepoMismatchDialog.tsx
+    cause: W7,W13
+    spec_ref: "#1633; #1978 T011"
+    notes: "Teleport repository mismatch dialog is retained only for compile compatibility."
+  - path: tui/src/components/ThemePicker.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Theme picker text and defaults follow UMMAYA TUI audit output."
+  - path: tui/src/components/ThinkingToggle.tsx
+    cause: W2,W9
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § L1-A; #2521"
+    notes: "Thinking toggle reflects K-EXAONE reasoning behavior rather than Claude thinking copy."
+  - path: tui/src/components/WorkflowMultiselectDialog.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Workflow selector copy follows UMMAYA workflow terminology."
+  - path: tui/src/components/agents/AgentDetail.tsx
+    cause: W14,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; .github/workflows/tui-boot-smoke.yml"
+    notes: "Agent detail surface uses UMMAYA copy with stable runtime imports."
+  - path: tui/src/components/agents/AgentsList.tsx
+    cause: W14,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; .github/workflows/tui-boot-smoke.yml"
+    notes: "Agent list surface uses UMMAYA copy with stable runtime imports."
+  - path: tui/src/components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Agent wizard confirmation copy follows UMMAYA terminology."
+  - path: tui/src/components/agents/new-agent-creation/wizard-steps/DescriptionStep.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Agent wizard description copy follows UMMAYA terminology."
+  - path: tui/src/components/agents/new-agent-creation/wizard-steps/MethodStep.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Agent wizard method copy follows UMMAYA terminology."
+  - path: tui/src/components/design-system/LoadingState.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Loading state copy and layout are adjusted by the UMMAYA TUI audit."
+  - path: tui/src/components/grove/Grove.tsx
+    cause: W7,W13
+    spec_ref: "tui/src/components/.never-port.md; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Anthropic Grove surface is never-port for UMMAYA."
+  - path: tui/src/components/hooks/HooksConfigMenu.tsx
+    cause: W14,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; .github/workflows/tui-boot-smoke.yml"
+    notes: "Hooks config menu copy and imports are adjusted for the UMMAYA runtime."
+  - path: tui/src/components/hooks/SelectEventMode.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Hook event selector copy follows UMMAYA terminology."
+  - path: tui/src/components/hooks/SelectHookMode.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Hook selector copy follows UMMAYA terminology."
+  - path: tui/src/components/hooks/SelectMatcherMode.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Hook matcher selector copy follows UMMAYA terminology."
+  - path: tui/src/components/hooks/ViewHookMode.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Hook view mode copy follows UMMAYA terminology."
+  - path: tui/src/components/mcp/ElicitationDialog.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "MCP elicitation dialog copy is adjusted for UMMAYA."
+  - path: tui/src/components/mcp/MCPListPanel.tsx
+    cause: W14,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; .github/workflows/tui-boot-smoke.yml"
+    notes: "MCP list panel copy and imports are stabilized for the UMMAYA runtime."
+  - path: tui/src/components/mcp/MCPSettings.tsx
+    cause: W14,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; .github/workflows/tui-boot-smoke.yml"
+    notes: "MCP settings copy and imports are stabilized for the UMMAYA runtime."
+  - path: tui/src/components/mcp/McpParsingWarnings.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "MCP warning copy follows UMMAYA terminology."
+  - path: tui/src/components/messages/UserToolResultMessage/RejectedPlanMessage.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Rejected-plan message copy follows the UMMAYA terminal audit."
+  - path: tui/src/components/permissions/BashPermissionRequest/bashToolUseOptions.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Bash permission option copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/ComputerUseApproval/ComputerUseApproval.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Computer-use approval copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Plan-mode permission copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/FilePermissionDialog/permissionOptions.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "File permission option copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/PermissionPrompt.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Permission prompt copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/PowerShellPermissionRequest/powershellToolUseOptions.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "PowerShell permission option copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/SandboxPermissionRequest.tsx
+    cause: W11,W14
+    spec_ref: "specs/cc-migration-audit/scope-S3-components-screens.md § 5.2; docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Sandbox permission surface removes Anthropic runtime hints and uses UMMAYA permission wording."
+  - path: tui/src/components/permissions/SkillPermissionRequest/SkillPermissionRequest.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Skill permission copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/WebFetchPermissionRequest/WebFetchPermissionRequest.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Web fetch permission copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/rules/AddPermissionRules.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Permission-rule authoring copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/rules/AddWorkspaceDirectory.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Workspace-directory permission copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/rules/PermissionRuleList.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Permission-rule list copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/permissions/rules/RemoveWorkspaceDirectory.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Workspace-directory removal copy follows UMMAYA permission UX wording."
+  - path: tui/src/components/sandbox/SandboxOverridesTab.tsx
+    cause: W11,W14
+    spec_ref: "specs/cc-migration-audit/scope-S3-components-screens.md § 5.2; docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Sandbox override copy removes Anthropic runtime assumptions."
+  - path: tui/src/components/sandbox/SandboxSettings.tsx
+    cause: W11,W14
+    spec_ref: "specs/cc-migration-audit/scope-S3-components-screens.md § 5.2; docs/requirements/ummaya-migration-tree.md § UI L2"
+    notes: "Sandbox settings copy removes Anthropic runtime assumptions."
+  - path: tui/src/components/skills/SkillsMenu.tsx
+    cause: W14,W15
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; .github/workflows/tui-boot-smoke.yml"
+    notes: "Skills menu copy and imports are stabilized for the UMMAYA runtime."
+  - path: tui/src/screens/Doctor.tsx
+    cause: W2,W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "Doctor screen output is UMMAYA-branded while preserving diagnostic flow."

@@ -164,6 +164,14 @@ def register_all_tools(registry: ToolRegistry, executor: ToolExecutor) -> Routin
     reg_mock_hometax_simplified(registry, executor)  # T028 — Hometax simplified data
     reg_mock_gov24_cert(registry, executor)  # T029 — Gov24 certificate lookup
 
+    # Spec #2802 — Public AX document harness. These local tools expose
+    # inspect/extract/form-schema/copy/fill/style/render/validate/save through
+    # the existing ToolRegistry and permission gate; no external agency channel
+    # is called at registration time.
+    from ummaya.tools.documents.registry import register_document_tools
+
+    register_document_tools(registry, executor)
+
     # Epic ζ #2297 path B (live smoke 2026-04-30 follow-up) — bridge per-primitive
     # registries (verify/submit) into the main ToolRegistry's BM25 corpus
     # so `lookup(mode="search", query="…")` can surface verify/submit

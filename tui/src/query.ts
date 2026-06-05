@@ -45,6 +45,7 @@ import {
 import { logAntError, logForDebugging } from './utils/debug.js'
 import {
   createUserMessage,
+  createAssistantMessage,
   createUserInterruptionMessage,
   normalizeMessagesForAPI,
   createSystemMessage,
@@ -115,12 +116,16 @@ import {
   shouldWithholdProtectedCheckToolCallText,
 } from './tools/_shared/protectedCheckGuard.js'
 import {
+  backfillUmmayaObservableToolInputFromUserQuery,
+  buildDocumentCompletionPromptIfNeeded,
   buildAirKoreaCompletionPromptIfNeeded,
   buildAirKoreaFinalAnswerRepairPromptIfNeeded,
   buildGenericPendingFinalAnswerRepairPromptIfNeeded,
   buildTagoBusCompletionPromptIfNeeded,
   buildTagoBusFinalAnswerRepairPromptIfNeeded,
   buildTagoBusFollowupPromptIfNeeded,
+  repairUmmayaExplicitDocumentToolUseFromUserQuery,
+  selectUmmayaClientForcedToolUse,
   selectUmmayaToolChoiceOverride,
   shouldWithholdAirKoreaFinalAnswer,
   shouldWithholdGenericPendingFinalAnswer,
@@ -209,6 +214,10 @@ function isWithheldMaxOutputTokens(
   msg: Message | StreamEvent | undefined,
 ): msg is AssistantMessage {
   return msg?.type === 'assistant' && msg.apiError === 'max_output_tokens'
+}
+
+function forcedToolUseId(uuid: string): string {
+  return `call_ummaya_${uuid.replace(/[^A-Za-z0-9]/gu, '').slice(0, 24)}`
 }
 
 export type QueryParams = {
@@ -810,8 +819,10 @@ async function* queryLoop(
             // assistantMessages.push below — it flows back to the API and
             // mutating it would break prompt caching (byte mismatch).
             let yieldMessage: typeof message = message
+            let commitMessage: typeof message = message
             if (message.type === 'assistant') {
               let clonedContent: typeof message.message.content | undefined
+              let hasToolUseReplacement = false
               for (let i = 0; i < message.message.content.length; i++) {
                 const block = message.message.content[i]!
                 if (
@@ -823,30 +834,58 @@ async function* queryLoop(
                     toolUseContext.options.tools,
                     block.name,
                   )
-                  if (tool?.backfillObservableInput) {
-                    const originalInput = block.input as Record<string, unknown>
-                    const inputCopy = { ...originalInput }
-                    tool.backfillObservableInput(inputCopy)
-                    // Only yield a clone when backfill ADDED fields; skip if
-                    // it only OVERWROTE existing ones (e.g. file tools
-                    // expanding file_path). Overwrites change the serialized
-                    // transcript and break VCR fixture hashes on resume,
-                    // while adding nothing the SDK stream needs — hooks get
-                    // the expanded path via toolExecution.ts separately.
-                    const addedFields = Object.keys(inputCopy).some(
-                      k => !(k in originalInput),
-                    )
-                    if (addedFields) {
-                      clonedContent ??= [...message.message.content]
-                      clonedContent[i] = { ...block, input: inputCopy }
+                  const inputCopy = { ...(block.input as Record<string, unknown>) }
+                  const repairedToolUse = repairUmmayaExplicitDocumentToolUseFromUserQuery({
+                    toolName: block.name,
+                    input: inputCopy,
+                    messages: messagesForQuery,
+                    tools: toolUseContext.options.tools,
+                  })
+                  if (repairedToolUse) {
+                    clonedContent ??= [...message.message.content]
+                    clonedContent[i] = {
+                      ...block,
+                      name: repairedToolUse.name,
+                      input: repairedToolUse.input,
                     }
+                    hasToolUseReplacement = true
+                    logForDebugging(
+                      `UMMAYA repaired explicit document tool_use ${block.name} -> ${repairedToolUse.name}`,
+                    )
+                    continue
+                  }
+                  if (tool?.backfillObservableInput) {
+                    tool.backfillObservableInput(inputCopy)
+                  }
+                  backfillUmmayaObservableToolInputFromUserQuery({
+                    toolName: block.name,
+                    input: inputCopy,
+                    messages: messagesForQuery,
+                  })
+                  // Only yield a clone when backfill ADDED fields; skip if
+                  // it only OVERWROTE existing ones (e.g. file tools
+                  // expanding file_path). Overwrites change the serialized
+                  // transcript and break VCR fixture hashes on resume,
+                  // while adding nothing the SDK stream needs — hooks get
+                  // the expanded path via toolExecution.ts separately.
+                  const originalInput = block.input as Record<string, unknown>
+                  const addedFields = Object.keys(inputCopy).some(
+                    k => !(k in originalInput),
+                  )
+                  if (addedFields) {
+                    clonedContent ??= [...message.message.content]
+                    clonedContent[i] = { ...block, input: inputCopy }
                   }
                 }
               }
               if (clonedContent) {
-                yieldMessage = {
+                const clonedMessage = {
                   ...message,
                   message: { ...message.message, content: clonedContent },
+                }
+                yieldMessage = clonedMessage
+                if (hasToolUseReplacement) {
+                  commitMessage = clonedMessage
                 }
               }
             }
@@ -863,8 +902,8 @@ async function* queryLoop(
             // rather than composed.
             let withheld = false
             const assistantHasToolUse =
-              message.type === 'assistant' &&
-              message.message.content.some(
+              commitMessage.type === 'assistant' &&
+              commitMessage.message.content.some(
                 content => content.type === 'tool_use',
               )
             if (feature('CONTEXT_COLLAPSE')) {
@@ -950,6 +989,16 @@ async function* queryLoop(
             ) {
               withheld = true
             }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              selectUmmayaClientForcedToolUse({
+                messages: messagesForQuery,
+                tools: toolUseContext.options.tools,
+              }) !== undefined
+            ) {
+              withheld = true
+            }
             // Claude Code streams native tool_use blocks as visible assistant
             // commits before tool execution. UMMAYA recovery/repair guards may
             // withhold prose, but they must never hide the structured tool_use
@@ -960,10 +1009,10 @@ async function* queryLoop(
             if (!withheld) {
               yield yieldMessage
             }
-            if (message.type === 'assistant') {
-              assistantMessages.push(message)
+            if (commitMessage.type === 'assistant') {
+              assistantMessages.push(commitMessage)
 
-              const msgToolUseBlocks = message.message.content.filter(
+              const msgToolUseBlocks = commitMessage.message.content.filter(
                 content => content.type === 'tool_use',
               ) as ToolUseBlock[]
               if (msgToolUseBlocks.length > 0) {
@@ -976,7 +1025,7 @@ async function* queryLoop(
                 !toolUseContext.abortController.signal.aborted
               ) {
                 for (const toolBlock of msgToolUseBlocks) {
-                  streamingToolExecutor.addTool(toolBlock, message)
+                  streamingToolExecutor.addTool(toolBlock, commitMessage)
                 }
               }
             }
@@ -1193,6 +1242,49 @@ async function* queryLoop(
       const summary = await pendingToolUseSummary
       if (summary) {
         yield summary
+      }
+    }
+
+    if (!needsFollowUp) {
+      const forcedToolUse = selectUmmayaClientForcedToolUse({
+        messages: [...messagesForQuery, ...assistantMessages],
+        tools: toolUseContext.options.tools,
+      })
+      if (forcedToolUse) {
+        const forcedTool = getAdapterToolByName(forcedToolUse.name)
+        if (
+          forcedTool &&
+          !toolUseContext.options.tools.some(tool => tool.name === forcedTool.name)
+        ) {
+          toolUseContext = {
+            ...toolUseContext,
+            options: {
+              ...toolUseContext.options,
+              tools: [...toolUseContext.options.tools, forcedTool],
+            },
+          }
+        }
+        const forcedToolUseBlock = {
+          type: 'tool_use' as const,
+          id: forcedToolUseId(deps.uuid()),
+          name: forcedToolUse.name,
+          input: forcedToolUse.input,
+        } as ToolUseBlock
+        const forcedAssistantMessage = createAssistantMessage({
+          content: [forcedToolUseBlock] as Parameters<
+            typeof createAssistantMessage
+          >[0]['content'],
+          isVirtual: true,
+        })
+        logForDebugging(
+          `UMMAYA client-forced tool_use after provider ignored tool_choice: ${forcedToolUse.name}`,
+        )
+        yield forcedAssistantMessage
+        assistantMessages.length = 0
+        toolUseBlocks.length = 0
+        assistantMessages.push(forcedAssistantMessage)
+        toolUseBlocks.push(forcedToolUseBlock)
+        needsFollowUp = true
       }
     }
 
@@ -2151,6 +2243,17 @@ async function* queryLoop(
           toolResults.push(
             createUserMessage({
               content: airKoreaCompletionPrompt,
+              isMeta: true,
+            }),
+          )
+        }
+        const documentCompletionPrompt = buildDocumentCompletionPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
+        })
+        if (documentCompletionPrompt) {
+          toolResults.push(
+            createUserMessage({
+              content: documentCompletionPrompt,
               isMeta: true,
             }),
           )

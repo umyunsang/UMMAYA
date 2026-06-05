@@ -12,6 +12,8 @@ depending on the source-tree layout:
 * ``checklist_manifest.yaml`` — 50-row plugin validation checklist.
   Loaded by :mod:`ummaya.plugins.checks.framework` and the
   ``ummaya-plugin-validate`` CLI.
+* ``document-tools.schema.json`` — Public AX document harness tool
+  contract. Loaded by :mod:`ummaya.tools.documents.contracts`.
 
 The mapping is in pyproject.toml under
 ``[tool.hatch.build.targets.wheel.force-include]``.

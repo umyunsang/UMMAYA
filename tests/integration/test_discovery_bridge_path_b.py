@@ -41,13 +41,13 @@ def test_b1_total_tool_count_includes_mocks(
 ) -> None:
     """Path B-1: bridge registers active non-core mock adapters into main registry.
 
-    Expected total: 153 after active KMA APIHub structured, URL adapter, and
-    TAGO route-station expansion.
+    Expected total: 154 after active KMA APIHub structured, URL adapter, TAGO
+    route-station expansion, and the single Public AX document primitive.
     """
     r, _ = loaded_registry
     total = len(r.all_tools())
-    assert total == 153, (
-        f"Expected 153 total tools after discovery_bridge runs; got {total}. "
+    assert total == 154, (
+        f"Expected 154 total tools after discovery_bridge runs; got {total}. "
         f"Verify the bridge registered the active mock adapters."
     )
 

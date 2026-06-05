@@ -22,12 +22,21 @@ from ummaya.llm.errors import (
     LLMResponseError,
 )
 from ummaya.llm.models import ChatMessage, FunctionSchema, ToolDefinition
+from ummaya.tools.documents.tool_defs import build_document_tool_definitions
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 CHAT_COMPLETIONS_URL = "https://api.friendli.ai/serverless/v1/chat/completions"
+
+
+def _contains_json_key(value: object, key: str) -> bool:
+    if isinstance(value, dict):
+        return key in value or any(_contains_json_key(item, key) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_json_key(item, key) for item in value)
+    return False
 
 
 @pytest.fixture
@@ -258,6 +267,41 @@ async def test_complete_with_tools(
     assert tc.function.name == "get_weather"
     assert tc.function.arguments == '{"city": "Seoul"}'
     assert response.finish_reason == "tool_calls"
+
+
+def test_serialize_tool_definition_inlines_local_json_schema_refs() -> None:
+    """Provider payload must not expose Pydantic-local $defs/$ref schemas."""
+    document_tool = next(
+        tool for tool in build_document_tool_definitions() if tool.id == "document"
+    )
+    raw_tool = document_tool.to_openai_tool()
+    raw_parameters = raw_tool["function"]["parameters"]  # type: ignore[index]
+    assert isinstance(raw_parameters, dict)
+    assert _contains_json_key(raw_parameters, "$defs")
+    assert _contains_json_key(raw_parameters, "$ref")
+
+    provider_tool = LLMClient._serialize_tool_definition(raw_tool)
+    provider_parameters = provider_tool["function"]["parameters"]  # type: ignore[index]
+    assert isinstance(provider_parameters, dict)
+    assert not _contains_json_key(provider_parameters, "$defs")
+    assert not _contains_json_key(provider_parameters, "$ref")
+
+    document_parameter = provider_parameters["properties"]["document"]  # type: ignore[index]
+    assert isinstance(document_parameter, dict)
+    assert document_parameter["type"] == "object"
+    assert "hwpx" in json.dumps(document_parameter)
+
+
+def test_document_tool_description_forbids_pre_check_file_absence_claims() -> None:
+    """The model-facing document primitive must not prime false local-file absence claims."""
+    document_tool = next(
+        tool for tool in build_document_tool_definitions() if tool.id == "document"
+    )
+    raw_tool = document_tool.to_openai_tool()
+    description = raw_tool["function"]["description"]  # type: ignore[index]
+    assert isinstance(description, str)
+    assert "claim that a local/Downloads file is missing before this tool checks it" in description
+    assert "checking the document location and contents first" in description
 
 
 @respx.mock

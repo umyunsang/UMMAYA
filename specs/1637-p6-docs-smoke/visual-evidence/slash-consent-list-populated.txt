@@ -1,0 +1,13 @@
+# Visual evidence — slash-consent-list-populated
+# Slash command — `/consent` populated receipt list
+# Captured 2026-06-01T08:18:49.570Z via ink-testing-library render()
+
+
+ ✻ UMMAYA · 권한 영수증 / Consent receipts
+
+   receipt_id          layer tool                    decision              decided_at
+   rcpt-01943af2       ⓶ L2  gov24_application_submitallow_once            2026-04-26 09:14:32
+
+
+ 총 1건 · 1 receipts
+ Esc · 닫기 (dismiss)

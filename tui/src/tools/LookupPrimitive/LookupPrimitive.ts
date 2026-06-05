@@ -28,6 +28,11 @@ import {
 } from '../../services/api/adapterManifest.js'
 import { FIND_TOOL_NAME, DESCRIPTION, FIND_TOOL_PROMPT } from './prompt.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
+import {
+  applyDocumentVisualRenderGateToOutput,
+  isDocumentVisualRenderFailedOutput,
+  renderDocumentToolResultIfPresent,
+} from '../_shared/documentToolResultRender.js'
 import { validateKmaAviationToolChoice } from '../_shared/kmaAviationGuard.js'
 import { validateKmaAnalysisToolChoice } from '../_shared/kmaAnalysisGuard.js'
 import { validateNmcAedToolChoice } from '../_shared/nmcAedGuard.js'
@@ -631,22 +636,24 @@ export const LookupPrimitive = buildTool({
   },
 
   mapToolResultToToolResultBlockParam(output, toolUseID) {
+    const gatedOutput = applyDocumentVisualRenderGateToOutput(output)
     // Spec 2521 (2026-05-02) — strip ``outbound_traces`` from the
     // LLM-facing content. The trace is UI-only (verbose render);
     // shipping raw HTTP bodies back into the next turn would bloat
     // K-EXAONE's context with KMA/data.go.kr response payloads.
     const llmContent =
-      typeof output === 'object' && output !== null
+      typeof gatedOutput === 'object' && gatedOutput !== null
         ? Object.fromEntries(
-            Object.entries(output as Record<string, unknown>).filter(
+            Object.entries(gatedOutput as Record<string, unknown>).filter(
               ([k]) => k !== 'outbound_traces',
             ),
           )
-        : output
+        : gatedOutput
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
       content: JSON.stringify(llmContent),
+      ...(isDocumentVisualRenderFailedOutput(gatedOutput) ? { is_error: true } : {}),
     }
   },
 
@@ -787,11 +794,16 @@ export const LookupPrimitive = buildTool({
     _progress: unknown,
     options: { verbose: boolean; isTranscriptMode?: boolean } = { verbose: false },
   ): React.ReactNode {
+    const gatedOutput = applyDocumentVisualRenderGateToOutput(output) as Output
+    const documentResult = renderDocumentToolResultIfPresent(gatedOutput, options)
+    if (documentResult !== null) {
+      return documentResult
+    }
     // Spec 2521 (2026-05-01 evening) — Ctrl+O expand / transcript mode
     // surfaces the full envelope JSON the backend returned. Mirrors
     // CC BashTool/UI.tsx:renderToolResultMessage(verbose).
     if (options.verbose || options.isTranscriptMode) {
-      return renderVerboseOutputJson(output)
+      return renderVerboseOutputJson(gatedOutput)
     }
     // UMMAYA hotfix #2519 (CC-original migration, 2026-04-30):
     //
@@ -802,8 +814,8 @@ export const LookupPrimitive = buildTool({
     // its own `kind` field. The CC pattern wraps each branch in
     // <MessageResponse> so the "  ⎿  " gutter glyph prefixes every row
     // (tui/src/components/MessageResponse.tsx:22).
-    if (!output.ok) {
-      const message = extractErrorMessage(output.error.message)
+    if (!gatedOutput.ok) {
+      const message = extractErrorMessage(gatedOutput.error.message)
       return React.createElement(
         MessageResponse,
         null,
@@ -815,7 +827,7 @@ export const LookupPrimitive = buildTool({
       )
     }
 
-    const result = output.result as Record<string, unknown>
+    const result = gatedOutput.result as Record<string, unknown>
 
     // search mode (LookupSearchResult, models.py:820):
     //   { kind: "search", candidates: [AdapterCandidate], total_registry_size, effective_top_k, reason }
@@ -872,12 +884,16 @@ export const LookupPrimitive = buildTool({
    * validateInput has already resolved the adapter and populated ummayaCitations on the context.
    */
   async call(input, context) {
-    return dispatchPrimitive<Output>({
+    const result = await dispatchPrimitive<Output>({
       primitive: 'find',
       args: input as Record<string, unknown>,
       context,
       registry: getOrCreatePendingCallRegistry(),
       bridge: getOrCreateUmmayaBridge(),
     })
+    return {
+      ...result,
+      data: applyDocumentVisualRenderGateToOutput(result.data) as Output,
+    }
   },
 } satisfies ToolDef<InputSchema, Output>)

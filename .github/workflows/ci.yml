@@ -71,12 +71,18 @@ jobs:
         python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "npm"
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
           python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen --all-extras --dev
+      - name: Install Node/WASM document-render dependencies
+        run: npm ci --ignore-scripts --legacy-peer-deps
       - name: Secrets audit (block long-lived tokens in workflows)
         run: ./scripts/audit-secrets.sh
       - name: Fetch secrets from Infisical (OIDC federation)

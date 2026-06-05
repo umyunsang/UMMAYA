@@ -16,6 +16,8 @@
 import React from 'react';
 import { describe, expect, it } from 'bun:test';
 import { render } from 'ink-testing-library';
+import { PassThrough, Writable } from 'stream';
+import { render as renderInk } from '../../../src/ink';
 import { ThemeProvider } from '../../../src/theme/provider';
 import {
   ConsentListView,
@@ -46,6 +48,45 @@ function makeReceipt(
 
 function tick(ms = 20): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type TestStdin = PassThrough & {
+  isTTY: true;
+  isRaw: boolean;
+  setRawMode: (mode: boolean) => void;
+  ref: () => TestStdin;
+  unref: () => TestStdin;
+};
+
+type TestStdout = Writable & {
+  isTTY: true;
+  columns: number;
+  rows: number;
+  output: string;
+};
+
+function makeLocalInkStreams(): { stdin: TestStdin; stdout: TestStdout } {
+  const stdin = new PassThrough() as TestStdin;
+  stdin.isTTY = true;
+  stdin.isRaw = false;
+  stdin.setRawMode = (mode: boolean) => {
+    stdin.isRaw = mode;
+  };
+  stdin.ref = () => stdin;
+  stdin.unref = () => stdin;
+
+  const stdout = new Writable({
+    write(chunk, _encoding, callback) {
+      stdout.output += chunk.toString();
+      callback();
+    },
+  }) as TestStdout;
+  stdout.isTTY = true;
+  stdout.columns = 100;
+  stdout.rows = 32;
+  stdout.output = '';
+
+  return { stdin, stdout };
 }
 
 // ---------------------------------------------------------------------------
@@ -140,17 +181,32 @@ describe('ConsentListView — non-empty receipts', () => {
 describe('ConsentListView — Esc dismisses', () => {
   it('invokes onExit when the citizen presses Escape', async () => {
     let exited = false;
-    const { stdin } = render(
+    const streams = makeLocalInkStreams();
+    const instance = await renderInk(
       <ThemeProvider>
         <ConsentListView receipts={[]} onExit={() => { exited = true; }} />
       </ThemeProvider>,
+      {
+        stdin: streams.stdin,
+        stdout: streams.stdout,
+        stderr: streams.stdout,
+        exitOnCtrlC: false,
+        patchConsole: false,
+      },
     );
-    // Drain initial render.
-    await tick();
-    // Raw ESC byte — same as a real PTY keystroke.
-    stdin.write('');
-    await tick();
-    expect(exited).toBe(true);
+    try {
+      // Drain initial render.
+      await tick();
+      // Raw ESC byte — same as a real PTY keystroke.
+      streams.stdin.write('');
+      // Bare ESC is buffered briefly by the Ink input parser to disambiguate
+      // arrow-key escape sequences; the runtime timeout is 50 ms.
+      await tick(100);
+      expect(exited).toBe(true);
+    } finally {
+      instance.unmount();
+      instance.cleanup();
+    }
   });
 });
 

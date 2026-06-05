@@ -28,6 +28,11 @@ import {
 } from '../../services/api/adapterManifest.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
 import {
+  applyDocumentVisualRenderGateToOutput,
+  isDocumentVisualRenderFailedOutput,
+  renderDocumentToolResultIfPresent,
+} from '../_shared/documentToolResultRender.js'
+import {
   renderVerboseInputJson,
   renderVerboseOutputJson,
 } from '../_shared/verboseRender.js'
@@ -63,7 +68,7 @@ const inputSchema = lazySchema(() =>
       tool_id: z
         .string()
         .min(1)
-        .describe('Registered send adapter identifier from <available_adapters>'),
+        .describe('Registered adapter identifier for a send adapter from <available_adapters>'),
       params: z
         .record(z.string(), z.unknown())
         .describe('Adapter-defined Pydantic-validated parameter body'),
@@ -253,19 +258,21 @@ export const SubmitPrimitive = buildTool({
   },
 
   mapToolResultToToolResultBlockParam(output, toolUseID) {
+    const gatedOutput = applyDocumentVisualRenderGateToOutput(output)
     // Spec 2521 (2026-05-02) — outbound_traces is UI-only (see Lookup).
     const llmContent =
-      typeof output === 'object' && output !== null
+      typeof gatedOutput === 'object' && gatedOutput !== null
         ? Object.fromEntries(
-            Object.entries(output as Record<string, unknown>).filter(
+            Object.entries(gatedOutput as Record<string, unknown>).filter(
               ([k]) => k !== 'outbound_traces',
             ),
           )
-        : output
+        : gatedOutput
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
       content: JSON.stringify(llmContent),
+      ...(isDocumentVisualRenderFailedOutput(gatedOutput) ? { is_error: true } : {}),
     }
   },
 
@@ -368,11 +375,16 @@ export const SubmitPrimitive = buildTool({
     _progress: unknown,
     options: { verbose: boolean; isTranscriptMode?: boolean } = { verbose: false },
   ) {
+    const gatedOutput = applyDocumentVisualRenderGateToOutput(output) as Output
+    const documentResult = renderDocumentToolResultIfPresent(gatedOutput, options)
+    if (documentResult !== null) {
+      return documentResult
+    }
     // Spec 2521 (2026-05-01 evening) — verbose / transcript mode surface
     // the full envelope JSON. CC BashTool/UI.tsx:renderToolResultMessage
     // pattern.
     if (options.verbose || options.isTranscriptMode) {
-      return renderVerboseOutputJson(output)
+      return renderVerboseOutputJson(gatedOutput)
     }
     // NOTE: This file is `.ts` (not `.tsx`); Bun runtime cannot parse JSX in
     // `.ts`. Use `React.createElement` for parity with the other 3 primitives.
@@ -381,11 +393,11 @@ export const SubmitPrimitive = buildTool({
     // rewrite, output.result is the actual send primitive output
     // (transaction_id / ministry / status / agency_handoff_url) unwrapped
     // from ToolResultEnvelope.result.
-    if (output.ok) {
-      return renderCompactPrimitiveResult(buildSubmitSuccessRows(output))
+    if (gatedOutput.ok) {
+      return renderCompactPrimitiveResult(buildSubmitSuccessRows(gatedOutput))
     }
 
-    return renderCompactPrimitiveResult(buildSubmitErrorRows(output))
+    return renderCompactPrimitiveResult(buildSubmitErrorRows(gatedOutput))
   },
 
   isResultTruncated(output: Output): boolean {
@@ -405,7 +417,8 @@ export const SubmitPrimitive = buildTool({
   async checkPermissions(_input) {
     return {
       behavior: 'ask' as const,
-      message: 'Permission delegation required: send a submission request to the agency. Continue?',
+      message:
+        '권한 위임 필요: 제출 요청을 기관에 전송합니다. 계속할까요? / Permission delegation required: send a submission request to the agency.',
     }
   },
 
@@ -413,12 +426,16 @@ export const SubmitPrimitive = buildTool({
    * Dispatch send call via real IPC bridge (T011 — stub replaced).
    */
   async call(input, context) {
-    return dispatchPrimitive<Output>({
+    const result = await dispatchPrimitive<Output>({
       primitive: 'send',
       args: input as Record<string, unknown>,
       context,
       registry: getOrCreatePendingCallRegistry(),
       bridge: getOrCreateUmmayaBridge(),
     })
+    return {
+      ...result,
+      data: applyDocumentVisualRenderGateToOutput(result.data) as Output,
+    }
   },
 } satisfies ToolDef<InputSchema, Output>)

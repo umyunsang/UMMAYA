@@ -2,416 +2,564 @@
 // SPDX-License-Identifier: Apache-2.0
 // Spec 1635 P4 UI L2 — UX snapshot dumper.
 //
-// Renders each UI L2 surface in isolation via ink-testing-library and writes
-// the last frame to specs/1635-ui-l2-citizen-port/ux-snapshots/<surface>.txt
-// so the Lead can visually verify the citizen-facing UX without an
-// interactive PTY session.
-//
-// Run: bun run scripts/dump-ui-l2-snapshots.tsx
+// Renders current, live TUI surfaces through the same UMMAYA Ink runtime used
+// by focused component tests. Output is written to:
+// specs/1635-ui-l2-citizen-port/ux-snapshots/<surface>.txt
 
-import React from 'react';
-import { render } from 'ink-testing-library';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import React from 'react'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { PassThrough, Writable } from 'node:stream'
 
-// Inline ANSI strip — covers CSI, OSC, and basic SGR sequences.
-// Avoids adding strip-ansi as a runtime dep (SC-008 compliance).
-const ANSI_RE = /[][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]/g;
-function stripAnsi(s: string): string {
-  return s.replace(ANSI_RE, '');
+import { AppStateProvider } from '../src/state/AppState.js'
+import { KeybindingSetup } from '../src/keybindings/KeybindingProviderSetup.js'
+import { render as renderInk, Box, Text } from '../src/ink.js'
+import { ThemeProvider } from '../src/theme/provider.js'
+
+import { WelcomeV2 } from '../src/components/LogoV2/WelcomeV2.js'
+import { UmmayaPrimitivePermissionRequest } from '../src/components/permissions/UmmayaPrimitivePermissionRequest/UmmayaPrimitivePermissionRequest.js'
+import { BypassPermissionsModeDialog } from '../src/components/BypassPermissionsModeDialog.js'
+import { ConsentListView } from '../src/components/consent/ConsentListView.js'
+import { ConsentRevokeConfirmDialog } from '../src/components/consent/ConsentRevokeConfirmDialog.js'
+import { ErrorEnvelope } from '../src/components/messages/ErrorEnvelope.js'
+import { ContextQuoteBlock } from '../src/components/messages/ContextQuoteBlock.js'
+import { StreamingChunk } from '../src/components/messages/StreamingChunk.js'
+import { SlashCommandSuggestions } from '../src/components/PromptInput/SlashCommandSuggestions.js'
+import { HelpV2Grouped } from '../src/components/help/HelpV2Grouped.js'
+import {
+  PluginBrowser,
+  type PluginEntry,
+} from '../src/components/plugins/PluginBrowser.js'
+import { PointCard } from '../src/components/primitive/PointCard.js'
+import { CollectionList } from '../src/components/primitive/CollectionList.js'
+import { DetailView } from '../src/components/primitive/DetailView.js'
+import { TimeseriesTable } from '../src/components/primitive/TimeseriesTable.js'
+import { ErrorBanner } from '../src/components/primitive/ErrorBanner.js'
+import { SubmitReceipt } from '../src/components/primitive/SubmitReceipt.js'
+import { SubmitErrorBanner } from '../src/components/primitive/SubmitErrorBanner.js'
+import { AuthContextCard } from '../src/components/primitive/AuthContextCard.js'
+
+import type { PermissionReceiptT } from '../src/schemas/ui-l2/permission.js'
+import type { ErrorEnvelopeT } from '../src/schemas/ui-l2/error.js'
+
+const OUT_DIR = join(
+  import.meta.dir,
+  '..',
+  '..',
+  'specs',
+  '1635-ui-l2-citizen-port',
+  'ux-snapshots',
+)
+mkdirSync(OUT_DIR, { recursive: true })
+
+process.env['UMMAYA_TUI_LOCALE'] ??= 'ko'
+
+type Snapshot = {
+  readonly name: string
+  readonly note: string
+  readonly component: React.ReactElement
 }
 
-import { PermissionLayerHeader } from '../src/components/permissions/PermissionLayerHeader.js';
-import { PermissionGauntletModal } from '../src/components/permissions/PermissionGauntletModal.js';
-import { ReceiptToast } from '../src/components/permissions/ReceiptToast.js';
-import { BypassReinforcementModal } from '../src/components/permissions/BypassReinforcementModal.js';
-import { ErrorEnvelope } from '../src/components/messages/ErrorEnvelope.js';
-import { ContextQuoteBlock } from '../src/components/messages/ContextQuoteBlock.js';
-import { StreamingChunk } from '../src/components/messages/StreamingChunk.js';
-import { SlashCommandSuggestions } from '../src/components/PromptInput/SlashCommandSuggestions.js';
-import { HelpV2Grouped } from '../src/components/help/HelpV2Grouped.js';
-import { PluginBrowser } from '../src/components/plugins/PluginBrowser.js';
-import { HistorySearchDialog } from '../src/components/history/HistorySearchDialog.js';
-import { AgentVisibilityPanel } from '../src/components/agents/AgentVisibilityPanel.js';
-import { AgentDetailRow } from '../src/components/agents/AgentDetailRow.js';
-import { PreflightStep } from '../src/components/onboarding/PreflightStep.js';
-import { ThemeStep } from '../src/components/onboarding/ThemeStep.js';
-import { PipaConsentStep } from '../src/components/onboarding/PipaConsentStep.js';
-import { TerminalSetupStep } from '../src/components/onboarding/TerminalSetupStep.js';
+type TestStdin = PassThrough & {
+  isTTY: true
+  isRaw: boolean
+  setRawMode: (mode: boolean) => void
+  ref: () => TestStdin
+  unref: () => TestStdin
+}
 
-import type { PermissionReceiptT } from '../src/schemas/ui-l2/permission.js';
-import type { ErrorEnvelopeT } from '../src/schemas/ui-l2/error.js';
-import type { AgentVisibilityEntryT } from '../src/schemas/ui-l2/agent.js';
-import { UI_L2_SLASH_COMMANDS } from '../src/commands/catalog.js';
+type TestStdout = Writable & {
+  isTTY: true
+  columns: number
+  rows: number
+  output: string
+}
 
-const OUT_DIR = join(import.meta.dir, '..', '..', 'specs', '1635-ui-l2-citizen-port', 'ux-snapshots');
-mkdirSync(OUT_DIR, { recursive: true });
+function tick(ms = 80): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
-type Snapshot = { name: string; component: React.ReactElement; note: string };
+function makeLocalInkStreams(): { stdin: TestStdin; stdout: TestStdout } {
+  const stdin = new PassThrough() as TestStdin
+  stdin.isTTY = true
+  stdin.isRaw = false
+  stdin.setRawMode = (mode: boolean) => {
+    stdin.isRaw = mode
+  }
+  stdin.ref = () => stdin
+  stdin.unref = () => stdin
 
-const snapshots: Snapshot[] = [
-  // UI-C Permission Gauntlet (FR-015..018, 022)
-  {
-    name: '01-permission-modal-layer1',
-    note: 'FR-015/016/017 — Layer 1 (green ⓵) modal with [Y/A/N]',
-    component: React.createElement(PermissionGauntletModal, {
-      layer: 1,
-      toolName: 'koroad_traffic_lookup',
-      description: '도로교통공단 사고 정보 조회',
-      onDecide: () => {},
-    }),
-  },
-  {
-    name: '02-permission-modal-layer2',
-    note: 'FR-016 — Layer 2 (orange ⓶) modal',
-    component: React.createElement(PermissionGauntletModal, {
-      layer: 2,
-      toolName: 'hira_hospital_lookup',
-      description: '심평원 의료기관 조회 (개인정보 포함)',
-      onDecide: () => {},
-    }),
-  },
-  {
-    name: '03-permission-modal-layer3',
-    note: 'FR-016 — Layer 3 (red ⓷) modal with reinforcement notice',
-    component: React.createElement(PermissionGauntletModal, {
-      layer: 3,
-      toolName: 'gov24_civil_application_submit',
-      description: '정부24 민원 제출 (시민 명의로 외부 시스템에 영향)',
-      onDecide: () => {},
-    }),
-  },
-  {
-    name: '04-receipt-toast-issued',
-    note: 'FR-018 — Receipt issued toast',
-    component: React.createElement(ReceiptToast, {
-      variant: 'issued',
-      receiptId: 'rcpt-7d3a8f2e9c4b',
-    }),
-  },
-  {
-    name: '05-receipt-toast-revoked',
-    note: 'FR-020 — Receipt revoked toast',
-    component: React.createElement(ReceiptToast, {
-      variant: 'revoked',
-      receiptId: 'rcpt-7d3a8f2e9c4b',
-    }),
-  },
-  {
-    name: '06-receipt-toast-already-revoked',
-    note: 'FR-021 — Idempotent already-revoked toast',
-    component: React.createElement(ReceiptToast, {
-      variant: 'already_revoked',
-      receiptId: 'rcpt-7d3a8f2e9c4b',
-    }),
-  },
-  {
-    name: '07-bypass-reinforcement',
-    note: 'FR-022 — bypassPermissions reinforcement modal',
-    component: React.createElement(BypassReinforcementModal, {
-      onConfirm: () => {},
-      onCancel: () => {},
-    }),
-  },
-  {
-    name: '08-permission-layer-header-1',
-    note: 'FR-016 — Layer 1 header glyph component standalone',
-    component: React.createElement(PermissionLayerHeader, { layer: 1 }),
-  },
-  {
-    name: '09-permission-layer-header-2',
-    note: 'FR-016 — Layer 2 header standalone',
-    component: React.createElement(PermissionLayerHeader, { layer: 2 }),
-  },
-  {
-    name: '10-permission-layer-header-3',
-    note: 'FR-016 — Layer 3 header standalone',
-    component: React.createElement(PermissionLayerHeader, { layer: 3 }),
-  },
+  const stdout = new Writable({
+    write(chunk, _encoding, callback) {
+      stdout.output += chunk.toString()
+      callback()
+    },
+  }) as TestStdout
+  stdout.isTTY = true
+  stdout.columns = 110
+  stdout.rows = 34
+  stdout.output = ''
 
-  // UI-B REPL Main (FR-008..014)
-  {
-    name: '11-error-envelope-llm',
-    note: 'FR-012 — LLM error envelope (purple/🧠)',
-    component: React.createElement(ErrorEnvelope, {
-      error: {
-        type: 'llm',
-        title_ko: 'LLM 응답 오류',
-        title_en: 'LLM response error',
-        detail_ko: 'EXAONE 모델이 4xx 응답을 반환했습니다.',
-        detail_en: 'EXAONE returned a 4xx response.',
-        retry_suggested: true,
-        occurred_at: new Date('2026-04-25T12:00:00Z').toISOString(),
-      } as ErrorEnvelopeT,
-      onRetry: () => {},
-    }),
-  },
-  {
-    name: '12-error-envelope-tool',
-    note: 'FR-012 — Tool error envelope (orange/🔧)',
-    component: React.createElement(ErrorEnvelope, {
-      error: {
-        type: 'tool',
-        title_ko: '도구 호출 오류',
-        title_en: 'Tool invocation error',
-        detail_ko: 'KOROAD 어댑터가 timeout 에러를 반환했습니다.',
-        detail_en: 'KOROAD adapter returned timeout.',
-        retry_suggested: true,
-        occurred_at: new Date('2026-04-25T12:00:00Z').toISOString(),
-      } as ErrorEnvelopeT,
-      onRetry: () => {},
-    }),
-  },
-  {
-    name: '13-error-envelope-network',
-    note: 'FR-012 — Network error envelope (red/📡)',
-    component: React.createElement(ErrorEnvelope, {
-      error: {
-        type: 'network',
-        title_ko: '네트워크 연결이 끊어졌습니다',
-        title_en: 'Network connection lost',
-        detail_ko: '5초간 응답이 없습니다. 다시 시도해주세요.',
-        detail_en: 'No response for 5 seconds. Please retry.',
-        retry_suggested: true,
-        occurred_at: new Date('2026-04-25T12:00:00Z').toISOString(),
-      } as ErrorEnvelopeT,
-      onRetry: () => {},
-    }),
-  },
-  {
-    name: '14-context-quote-block',
-    note: 'FR-013 — ⎿ quote block with single-border',
-    component: React.createElement(ContextQuoteBlock, {
-      label: 'Turn 3',
-      children: '시민님이 차상위 가구 대상 의료급여 신청을 시작했습니다.',
-    }),
-  },
-  {
-    name: '15-streaming-chunk-active',
-    note: 'FR-008 — 20-token chunk streaming (mid-stream sample)',
-    component: React.createElement(StreamingChunk, {
-      streamedText: '오늘 서울 강남구 일대 도로 상황을 조회하고 있습니다. 현재 잠실대교 부근에서 ',
-      isStreaming: true,
-    }),
-  },
-  {
-    name: '16-slash-autocomplete',
-    note: 'FR-014 — autocomplete dropdown after typing /',
-    component: React.createElement(SlashCommandSuggestions, {
-      inputText: '/c',
-      selectedIndex: 0,
-      onSelect: () => {},
-    }),
-  },
+  return { stdin, stdout }
+}
 
-  // UI-D Ministry Agent (FR-025..028)
-  {
-    name: '17-agent-visibility-panel-swarm',
-    note: 'FR-025 — proposal-iv 5-state panel with 3 ministries',
-    component: React.createElement(AgentVisibilityPanel, {
-      initialEntries: [
-        {
-          agent_id: 'mohw-001',
-          ministry: 'MOHW',
-          state: 'running',
-          sla_remaining_ms: 8400,
-          health: 'green',
-          rolling_avg_response_ms: 320,
-          last_transition_at: new Date('2026-04-25T12:00:00Z').toISOString(),
-        },
-        {
-          agent_id: 'knpa-002',
-          ministry: 'KNPA',
-          state: 'waiting-permission',
-          sla_remaining_ms: 12000,
-          health: 'amber',
-          rolling_avg_response_ms: 580,
-          last_transition_at: new Date('2026-04-25T12:00:01Z').toISOString(),
-        },
-        {
-          agent_id: 'mois-003',
-          ministry: 'MOIS',
-          state: 'done',
-          sla_remaining_ms: null,
-          health: 'green',
-          rolling_avg_response_ms: 240,
-          last_transition_at: new Date('2026-04-25T12:00:02Z').toISOString(),
-        },
-      ] as AgentVisibilityEntryT[],
-      showDetail: false,
-    }),
-  },
-  {
-    name: '18-agent-visibility-panel-detail',
-    note: 'FR-026 — /agents --detail with SLA + health + avg-response',
-    component: React.createElement(AgentVisibilityPanel, {
-      initialEntries: [
-        {
-          agent_id: 'mohw-001',
-          ministry: 'MOHW',
-          state: 'running',
-          sla_remaining_ms: 8400,
-          health: 'green',
-          rolling_avg_response_ms: 320,
-          last_transition_at: new Date('2026-04-25T12:00:00Z').toISOString(),
-        },
-        {
-          agent_id: 'knpa-002',
-          ministry: 'KNPA',
-          state: 'waiting-permission',
-          sla_remaining_ms: 12000,
-          health: 'amber',
-          rolling_avg_response_ms: 580,
-          last_transition_at: new Date('2026-04-25T12:00:01Z').toISOString(),
-        },
-      ] as AgentVisibilityEntryT[],
-      showDetail: true,
-    }),
-  },
+function normalizeFrameText(output: string): string {
+  return output
+    .replace(/\u001B\]([^\u0007]|\u001B\\)*(\u0007|\u001B\\)/g, '')
+    .replace(/\u001B\[1C/g, ' ')
+    .replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\r/g, '')
+}
 
-  // UI-E Auxiliary (FR-029..033)
-  {
-    name: '19-help-v2-grouped',
-    note: 'FR-029 — /help 4-group output (Session/Permission/Tool/Storage)',
-    component: React.createElement(HelpV2Grouped, {
-      catalog: UI_L2_SLASH_COMMANDS,
-      locale: 'ko',
-    }),
-  },
-  {
-    name: '20-plugin-browser',
-    note: 'FR-031 — /plugins browser ⏺/○ + Space/i/r/a',
-    component: React.createElement(PluginBrowser, {
-      plugins: [
-        { id: 'ummaya-koroad', name: 'KOROAD 교통 정보', active: true, version: '0.1.0' },
-        { id: 'ummaya-hira', name: 'HIRA 의료기관', active: true, version: '0.1.0' },
-        { id: 'ummaya-gov24', name: '정부24 민원', active: false, version: '0.0.5' },
-      ],
-      onToggle: () => {},
-      onDetail: () => {},
-      onRemove: () => {},
-      onMarketplace: () => {},
-      onDismiss: () => {},
-    }),
-  },
-  {
-    name: '21-history-search-dialog',
-    note: 'FR-033 — /history 3-filter form',
-    component: React.createElement(HistorySearchDialog, {
-      sessions: [
-        {
-          session_id: 'sess-2026-04-20-001',
-          started_at: '2026-04-20T09:30:00Z',
-          last_active_at: '2026-04-20T10:00:00Z',
-          preview: '운전면허 갱신 안내',
-          layers_touched: [1, 2],
-        },
-        {
-          session_id: 'sess-2026-04-22-002',
-          started_at: '2026-04-22T14:15:00Z',
-          last_active_at: '2026-04-22T15:30:00Z',
-          preview: '차상위 의료급여 신청',
-          layers_touched: [1, 2, 3],
-        },
-      ],
-      onSelect: () => {},
-      onCancel: () => {},
-    }),
-  },
+function Runtime({ children }: { children: React.ReactNode }): React.ReactElement {
+  return (
+    <AppStateProvider>
+      <KeybindingSetup>
+        <ThemeProvider>{children}</ThemeProvider>
+      </KeybindingSetup>
+    </AppStateProvider>
+  )
+}
 
-  // UI-A Onboarding 5-step (FR-001..006)
-  {
-    name: '22-onboarding-1-preflight',
-    note: 'FR-001 step 1 — Preflight ✓/✗ checks',
-    component: React.createElement(PreflightStep, {
-      onAdvance: () => {},
-      onBack: () => {},
-    }),
-  },
-  {
-    name: '23-onboarding-2-theme',
-    note: 'FR-001 step 2 + FR-035 — UFO mascot purple palette',
-    component: React.createElement(ThemeStep, {
-      onAdvance: () => {},
-      onBack: () => {},
-    }),
-  },
-  {
-    name: '24-onboarding-3-pipa-consent',
-    note: 'FR-001 step 3 + FR-006 — PIPA §26 trustee notice',
-    component: React.createElement(PipaConsentStep, {
-      onAdvance: () => {},
-      onBack: () => {},
-    }),
-  },
-  {
-    name: '25-onboarding-5-terminal-setup',
-    note: 'FR-001 step 5 + FR-005 — 4 a11y toggles',
-    component: React.createElement(TerminalSetupStep, {
-      onAdvance: () => {},
-      onBack: () => {},
-    }),
-  },
-  {
-    name: '26-agent-detail-row',
-    note: 'FR-026 — Single agent detail row',
-    component: React.createElement(AgentDetailRow, {
-      agent: {
-        agent_id: 'mohw-001',
-        ministry: 'MOHW',
-        state: 'running',
-        sla_remaining_ms: 8400,
-        health: 'green',
-        rolling_avg_response_ms: 320,
-        last_transition_at: new Date('2026-04-25T12:00:00Z').toISOString(),
-      } as AgentVisibilityEntryT,
-    }),
-  },
-];
+async function renderSnapshot(component: React.ReactElement): Promise<string> {
+  const streams = makeLocalInkStreams()
+  const instance = await renderInk(<Runtime>{component}</Runtime>, {
+    stdin: streams.stdin,
+    stdout: streams.stdout,
+    stderr: streams.stdout,
+    exitOnCtrlC: false,
+    patchConsole: false,
+  })
 
-let pass = 0;
-let fail = 0;
-const failures: { name: string; error: string }[] = [];
-
-for (const { name, component, note } of snapshots) {
   try {
-    const { lastFrame, unmount } = render(component);
-    // Allow a tick for useEffect to fire
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    const frame = lastFrame() ?? '<empty frame>';
-    const cleaned = stripAnsi(frame);
-    const out = `# UX Snapshot: ${name}\n# Note: ${note}\n# Generated: ${new Date().toISOString()}\n\n${cleaned}\n`;
-    writeFileSync(join(OUT_DIR, `${name}.txt`), out, 'utf8');
-    unmount();
-    pass++;
-    console.log(`✓ ${name}`);
-  } catch (err) {
-    fail++;
-    const errMsg = err instanceof Error ? err.message : String(err);
-    failures.push({ name, error: errMsg });
-    console.error(`✗ ${name}: ${errMsg}`);
+    await tick()
+    return normalizeFrameText(streams.stdout.output) || '<empty frame>'
+  } finally {
+    instance.unmount()
+    instance.cleanup()
   }
 }
 
-// Index file
+function receipt(overrides: Partial<PermissionReceiptT> = {}): PermissionReceiptT {
+  return {
+    receipt_id: 'rcpt-7d3a8f2e9c4b',
+    layer: 2,
+    tool_name: 'gov24_application_submit',
+    decision: 'allow_once',
+    decided_at: '2026-04-25T12:00:00.000Z',
+    session_id: 'sess-ui-l2-snapshot',
+    revoked_at: null,
+    ...overrides,
+  }
+}
+
+const plugins: PluginEntry[] = [
+  {
+    id: 'ummaya-koroad',
+    name: 'KOROAD Traffic',
+    version: '0.1.0',
+    description_ko: '도로교통공단 사고 정보 조회',
+    description_en: 'KOROAD traffic accident lookup',
+    isActive: true,
+    tier: 'live',
+    layer: 1,
+  },
+  {
+    id: 'ummaya-gov24',
+    name: 'Government24 Submit',
+    version: '0.0.5',
+    description_ko: '정부24 민원 제출 모의 어댑터',
+    description_en: 'Government24 submission mock adapter',
+    isActive: false,
+    tier: 'mock',
+    layer: 3,
+  },
+]
+
+const llmError: ErrorEnvelopeT = {
+  type: 'llm',
+  title_ko: 'LLM 응답 오류',
+  title_en: 'LLM response error',
+  detail_ko: 'EXAONE 모델이 4xx 응답을 반환했습니다.',
+  detail_en: 'EXAONE returned a 4xx response.',
+  retry_suggested: true,
+  occurred_at: '2026-04-25T12:00:00.000Z',
+}
+
+const toolError: ErrorEnvelopeT = {
+  type: 'tool',
+  title_ko: '도구 호출 오류',
+  title_en: 'Tool invocation error',
+  detail_ko: 'KOROAD 어댑터가 timeout 에러를 반환했습니다.',
+  detail_en: 'KOROAD adapter returned timeout.',
+  retry_suggested: true,
+  occurred_at: '2026-04-25T12:00:00.000Z',
+}
+
+const networkError: ErrorEnvelopeT = {
+  type: 'network',
+  title_ko: '네트워크 연결이 끊어졌습니다',
+  title_en: 'Network connection lost',
+  detail_ko: '5초간 응답이 없습니다. 다시 시도해주세요.',
+  detail_en: 'No response for 5 seconds. Please retry.',
+  retry_suggested: true,
+  occurred_at: '2026-04-25T12:00:00.000Z',
+}
+
+const snapshots: Snapshot[] = [
+  {
+    name: '01-welcome-v2',
+    note: 'Current welcome surface with UMMAYA brand glyph',
+    component: <WelcomeV2 />,
+  },
+  {
+    name: '02-permission-check-layer1',
+    note: 'check primitive permission modal, layer 1 glyph',
+    component: (
+      <UmmayaPrimitivePermissionRequest
+        primitive="check"
+        toolName="hira_hospital_search"
+        onDecision={() => {}}
+      />
+    ),
+  },
+  {
+    name: '03-permission-send-layer2',
+    note: 'send primitive reversible permission modal, layer 2 glyph',
+    component: (
+      <UmmayaPrimitivePermissionRequest
+        primitive="send"
+        toolName="gov24_draft_submit"
+        onDecision={() => {}}
+      />
+    ),
+  },
+  {
+    name: '04-permission-send-layer3',
+    note: 'send primitive irreversible permission modal, layer 3 glyph plus receipt',
+    component: (
+      <UmmayaPrimitivePermissionRequest
+        primitive="send"
+        toolName="payment_rail_commit"
+        isIrreversible
+        receiptId="rcpt-layer3-final"
+        onDecision={() => {}}
+      />
+    ),
+  },
+  {
+    name: '05-consent-list-empty',
+    note: '/consent empty receipt list',
+    component: <ConsentListView receipts={[]} onExit={() => {}} />,
+  },
+  {
+    name: '06-consent-list-populated',
+    note: '/consent receipt table with revoked marker',
+    component: (
+      <ConsentListView
+        receipts={[
+          receipt({ receipt_id: 'rcpt-active001', layer: 1, tool_name: 'kma_forecast' }),
+          receipt({
+            receipt_id: 'rcpt-revoked02',
+            layer: 3,
+            decision: 'allow_session',
+            revoked_at: '2026-04-25T13:00:00.000Z',
+          }),
+        ]}
+        onExit={() => {}}
+      />
+    ),
+  },
+  {
+    name: '07-consent-revoke-confirm',
+    note: '/consent revoke confirmation modal',
+    component: (
+      <ConsentRevokeConfirmDialog
+        receipt={receipt()}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />
+    ),
+  },
+  {
+    name: '08-consent-revoke-already',
+    note: '/consent revoke already-revoked modal copy',
+    component: (
+      <ConsentRevokeConfirmDialog
+        receipt={receipt({ revoked_at: '2026-04-25T13:00:00.000Z' })}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />
+    ),
+  },
+  {
+    name: '09-bypass-permissions-dialog',
+    note: 'Bypass permissions warning dialog',
+    component: <BypassPermissionsModeDialog onAccept={() => {}} />,
+  },
+  {
+    name: '10-error-envelope-llm',
+    note: 'LLM error envelope',
+    component: <ErrorEnvelope error={llmError} onRetry={() => {}} />,
+  },
+  {
+    name: '11-error-envelope-tool',
+    note: 'Tool error envelope',
+    component: <ErrorEnvelope error={toolError} onRetry={() => {}} />,
+  },
+  {
+    name: '12-error-envelope-network',
+    note: 'Network error envelope',
+    component: <ErrorEnvelope error={networkError} onRetry={() => {}} />,
+  },
+  {
+    name: '13-context-quote-block',
+    note: 'Context quote with thread glyph',
+    component: (
+      <ContextQuoteBlock label="Turn 3">
+        <Text>시민님이 의료급여 신청을 시작했습니다.</Text>
+      </ContextQuoteBlock>
+    ),
+  },
+  {
+    name: '14-streaming-chunk-active',
+    note: 'Streaming response chunk with active hint',
+    component: (
+      <StreamingChunk
+        streamedText="오늘 서울 강남구 일대 도로 상황을 조회하고 있습니다. 현재 잠실대교 부근에서 "
+        isStreaming
+      />
+    ),
+  },
+  {
+    name: '15-slash-autocomplete',
+    note: 'Slash command suggestions after /c',
+    component: <SlashCommandSuggestions inputText="/c" selectedIndex={0} />,
+  },
+  {
+    name: '16-help-v2-grouped',
+    note: '/help grouped command catalog',
+    component: <HelpV2Grouped onDismiss={() => {}} />,
+  },
+  {
+    name: '17-plugin-browser',
+    note: '/plugins browser with live/mock rows',
+    component: (
+      <PluginBrowser
+        plugins={plugins}
+        onToggle={() => {}}
+        onDetail={() => {}}
+        onRemove={() => {}}
+        onMarketplace={() => {}}
+        onDismiss={() => {}}
+      />
+    ),
+  },
+  {
+    name: '18-plugin-browser-empty',
+    note: '/plugins empty-state',
+    component: (
+      <PluginBrowser
+        plugins={[]}
+        onToggle={() => {}}
+        onDetail={() => {}}
+        onRemove={() => {}}
+        onMarketplace={() => {}}
+        onDismiss={() => {}}
+      />
+    ),
+  },
+  {
+    name: '19-primitive-point-card',
+    note: 'find point renderer',
+    component: (
+      <PointCard
+        payload={{
+          kind: 'find',
+          subtype: 'point',
+          tool_id: 'koroad_accident_search',
+          title: '서울특별시 강남구 테헤란로',
+          subtitle: '교통사고 잦은 곳',
+          fields: [
+            { label: '사고 건수', value: '17건' },
+            { label: '제한 속도', value: '50 km/h' },
+          ],
+        }}
+      />
+    ),
+  },
+  {
+    name: '20-primitive-collection-list',
+    note: 'find collection renderer',
+    component: (
+      <CollectionList
+        payload={{
+          kind: 'find',
+          subtype: 'collection',
+          tool_id: 'find',
+          items: [
+            { index: 1, title: 'koroad_accident_search', meta: '교통사고 잦은 곳' },
+            { index: 2, title: 'kma_short_term_forecast', meta: '단기 예보' },
+            { index: 3, title: 'hira_hospital_search', meta: '병의원 검색' },
+          ],
+        }}
+      />
+    ),
+  },
+  {
+    name: '21-primitive-detail-view',
+    note: 'find detail renderer',
+    component: (
+      <DetailView
+        payload={{
+          kind: 'find',
+          subtype: 'detail',
+          tool_id: 'hira_hospital_search',
+          fields: [
+            { label: '기관명', value: '서울시민병원' },
+            { label: '진료과', value: '내과, 응급의학과' },
+          ],
+        }}
+      />
+    ),
+  },
+  {
+    name: '22-primitive-timeseries',
+    note: 'find timeseries renderer',
+    component: (
+      <TimeseriesTable
+        payload={{
+          kind: 'find',
+          subtype: 'timeseries',
+          tool_id: 'kma_short_term_forecast',
+          unit: '°C',
+          rows: [
+            { ts: '2026-04-25T09:00', value: '11.2' },
+            { ts: '2026-04-25T12:00', value: '15.8' },
+            { ts: '2026-04-25T15:00', value: '17.4' },
+          ],
+        }}
+      />
+    ),
+  },
+  {
+    name: '23-primitive-find-error',
+    note: 'find error renderer',
+    component: (
+      <ErrorBanner
+        payload={{
+          kind: 'find',
+          subtype: 'error',
+          tool_id: 'data_go_kr_lookup',
+          title: '조회 실패',
+          description: '공공데이터 응답 시간이 초과되었습니다.',
+          retry_hint: '잠시 후 다시 조회하세요.',
+        }}
+      />
+    ),
+  },
+  {
+    name: '24-primitive-submit-success',
+    note: 'send success receipt renderer',
+    component: (
+      <SubmitReceipt
+        payload={{
+          kind: 'send',
+          tool_id: 'gov24_mock_submit',
+          family: 'submit_application',
+          ok: true,
+          confirmation_id: 'GOV24-20260425-001',
+          timestamp: '2026-04-25T12:00:00+09:00',
+          summary: '정부24 민원 제출 모의 접수가 완료되었습니다.',
+          mock_reason: 'delegation_absent',
+        }}
+      />
+    ),
+  },
+  {
+    name: '25-primitive-submit-error',
+    note: 'send failure renderer',
+    component: (
+      <SubmitErrorBanner
+        payload={{
+          kind: 'send',
+          tool_id: 'payment_rail_commit',
+          family: 'pay',
+          ok: false,
+          error_code: 'permission_required',
+          message: '레이어 3 권한 확인이 필요합니다.',
+          retry_hint: '/consent에서 권한을 확인하세요.',
+          mock_reason: 'payment_rail',
+        }}
+      />
+    ),
+  },
+  {
+    name: '26-primitive-auth-context',
+    note: 'check success renderer',
+    component: (
+      <AuthContextCard
+        payload={{
+          kind: 'check',
+          tool_id: 'mobile_id_verify',
+          family: 'mobile_id',
+          ok: true,
+          korea_tier: '모바일 신분증',
+          nist_aal_hint: 'AAL2',
+          identity_label: '홍길동 (1985년생)',
+        }}
+      />
+    ),
+  },
+]
+
+let pass = 0
+let fail = 0
+const failures: Array<{ name: string; error: string }> = []
+
+for (const snapshot of snapshots) {
+  try {
+    const frame = await renderSnapshot(snapshot.component)
+    const out = [
+      `# UX Snapshot: ${snapshot.name}`,
+      `# Note: ${snapshot.note}`,
+      `# Generated: ${new Date().toISOString()}`,
+      '',
+      frame,
+      '',
+    ].join('\n')
+    writeFileSync(join(OUT_DIR, `${snapshot.name}.txt`), out, 'utf8')
+    pass += 1
+    console.log(`OK ${snapshot.name}`)
+  } catch (err) {
+    fail += 1
+    const error = err instanceof Error ? err.message : String(err)
+    failures.push({ name: snapshot.name, error })
+    console.error(`FAIL ${snapshot.name}: ${error}`)
+  }
+}
+
 const indexLines = [
   '# UX Snapshots — Spec 1635 P4 UI L2 Citizen Port',
   `# Generated: ${new Date().toISOString()}`,
   `# Pass: ${pass} · Fail: ${fail} · Total: ${snapshots.length}`,
   '',
-];
-for (const { name, note } of snapshots) {
-  indexLines.push(`- ${name}.txt — ${note}`);
+]
+for (const snapshot of snapshots) {
+  indexLines.push(`- ${snapshot.name}.txt — ${snapshot.note}`)
 }
-writeFileSync(join(OUT_DIR, 'INDEX.txt'), indexLines.join('\n') + '\n', 'utf8');
+writeFileSync(join(OUT_DIR, 'INDEX.txt'), `${indexLines.join('\n')}\n`, 'utf8')
 
-console.log(`\n=== Summary ===`);
-console.log(`Pass: ${pass} / Fail: ${fail} / Total: ${snapshots.length}`);
-console.log(`Output: ${OUT_DIR}`);
+console.log('')
+console.log('=== Summary ===')
+console.log(`Pass: ${pass} / Fail: ${fail} / Total: ${snapshots.length}`)
+console.log(`Output: ${OUT_DIR}`)
+
 if (fail > 0) {
-  console.log('\nFailures:');
-  for (const f of failures) {
-    console.log(`  ${f.name}: ${f.error}`);
+  console.log('')
+  console.log('Failures:')
+  for (const failure of failures) {
+    console.log(`  ${failure.name}: ${failure.error}`)
   }
-  process.exit(1);
+  process.exit(1)
 }

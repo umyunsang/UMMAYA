@@ -214,6 +214,9 @@ def test_core_primitives_are_not_adapter_manifest_entries() -> None:
     registry._tools = {
         "find": _registry_tool("find", primitive="find", is_core=True),
         "locate": _registry_tool("locate", primitive="locate", is_core=True),
+        "send": _registry_tool("send", primitive="send", is_core=True),
+        "check": _registry_tool("check", primitive="check", is_core=True),
+        "document": _registry_tool("document", primitive="document", is_core=True),
         "kma_current_observation": _registry_tool(
             "kma_current_observation",
             primitive="find",
@@ -227,6 +230,9 @@ def test_core_primitives_are_not_adapter_manifest_entries() -> None:
     assert "kma_current_observation" in by_id
     assert "find" not in by_id
     assert "locate" not in by_id
+    assert "send" not in by_id
+    assert "check" not in by_id
+    assert "document" not in by_id
 
     _EXTRA_REGISTRY.clear()
 

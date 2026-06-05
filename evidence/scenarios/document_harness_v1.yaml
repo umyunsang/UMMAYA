@@ -1,0 +1,354 @@
+version: 1
+scenario_id: document_harness_v1
+created_at: "2026-06-01"
+source_basis: public_ax_document_harness_spec
+target_system: "UMMAYA local document harness"
+network_policy: offline_only
+required_sequence:
+  - document
+acceptance_gates:
+  original_mutation: blocked
+  derivative_lineage: required
+  structured_result_schema: required
+  render_reread_evidence: required
+  live_government_calls: forbidden
+fixtures:
+  - fixture_id: hwpx-birth-benefit
+    format: hwpx
+    source_artifact_id: artifact-hwpx-source-001
+    source_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+    derivative_artifact_id: artifact-hwpx-derivative-001
+    derivative_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
+    structured_diff_id: diff-hwpx-001
+    structured_diff_sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+    render_artifact_ids:
+      - render-hwpx-page-001
+    validation_report_id: validation-hwpx-001
+    validation_report_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+    expected_correlation_id: corr-doc-hwpx-001
+  - fixture_id: docx-civil-form
+    format: docx
+    source_artifact_id: artifact-docx-source-001
+    source_sha256: "5555555555555555555555555555555555555555555555555555555555555555"
+    derivative_artifact_id: artifact-docx-derivative-001
+    derivative_sha256: "6666666666666666666666666666666666666666666666666666666666666666"
+    structured_diff_id: diff-docx-001
+    structured_diff_sha256: "7777777777777777777777777777777777777777777777777777777777777777"
+    render_artifact_ids:
+      - render-docx-page-001
+    validation_report_id: validation-docx-001
+    validation_report_sha256: "8888888888888888888888888888888888888888888888888888888888888888"
+    expected_correlation_id: corr-doc-docx-001
+  - fixture_id: xlsx-public-sheet
+    format: xlsx
+    source_artifact_id: artifact-xlsx-source-001
+    source_sha256: "9999999999999999999999999999999999999999999999999999999999999999"
+    derivative_artifact_id: artifact-xlsx-derivative-001
+    derivative_sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    structured_diff_id: diff-xlsx-001
+    structured_diff_sha256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    render_artifact_ids:
+      - render-xlsx-sheet-001
+    validation_report_id: validation-xlsx-001
+    validation_report_sha256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    expected_correlation_id: corr-doc-xlsx-001
+  - fixture_id: pdf-permit-form
+    format: pdf
+    source_artifact_id: artifact-pdf-source-001
+    source_sha256: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    derivative_artifact_id: artifact-pdf-derivative-001
+    derivative_sha256: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    structured_diff_id: diff-pdf-001
+    structured_diff_sha256: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    render_artifact_ids:
+      - render-pdf-page-001
+    validation_report_id: validation-pdf-001
+    validation_report_sha256: "abababababababababababababababababababababababababababababababab"
+    expected_correlation_id: corr-doc-pdf-001
+  - fixture_id: pptx-briefing-template
+    format: pptx
+    source_artifact_id: artifact-pptx-source-001
+    source_sha256: "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc"
+    derivative_artifact_id: artifact-pptx-derivative-001
+    derivative_sha256: "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+    structured_diff_id: diff-pptx-001
+    structured_diff_sha256: "dededededededededededededededededededededededededededededededede"
+    render_artifact_ids:
+      - render-pptx-slide-001
+    validation_report_id: validation-pptx-001
+    validation_report_sha256: "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef"
+    expected_correlation_id: corr-doc-pptx-001
+lifecycle_records:
+  - record_id: lifecycle-hwpx-intake-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: intake
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: document-intake
+    artifact_id: artifact-hwpx-source-001
+    artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+    evidence_ref: tests/tools/documents/test_intake_security.py
+  - record_id: lifecycle-hwpx-classification-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: classification
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: hwpx-package-text-adapter
+    artifact_id: artifact-hwpx-source-001
+    artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+    evidence_ref: tests/tools/documents/test_builtin_hwpx_engine.py
+  - record_id: lifecycle-hwpx-capability-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: capability
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: hwpx-package-text-adapter
+    artifact_id: artifact-hwpx-source-001
+    artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+    evidence_ref: tests/tools/documents/test_capability_profiles.py
+  - record_id: lifecycle-hwpx-adapter-selection-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: adapter_selection
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: hwpx-package-text-adapter
+    artifact_id: artifact-hwpx-source-001
+    artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+    evidence_ref: tests/tools/documents/test_adapter_registry.py
+  - record_id: lifecycle-hwpx-permission-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: permission
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: document-permission-boundary
+    artifact_id: artifact-hwpx-source-001
+    artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+    evidence_ref: tests/tools/documents/test_document_tool_flow.py
+  - record_id: lifecycle-hwpx-mutation-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: mutation
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: hwpx-package-text-adapter
+    artifact_id: artifact-hwpx-derivative-001
+    artifact_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
+    document_diff_id: diff-hwpx-001
+    evidence_ref: tests/tools/documents/test_document_tool_flow.py
+  - record_id: lifecycle-hwpx-render-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: render
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: rhwp-node-wasm-render-evidence
+    artifact_id: render-hwpx-page-001
+    artifact_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+    document_diff_id: diff-hwpx-001
+    evidence_ref: tests/tools/documents/test_render_and_reread.py
+  - record_id: lifecycle-hwpx-reread-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: reread
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: hwpx-package-text-adapter
+    artifact_id: artifact-hwpx-derivative-001
+    artifact_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
+    document_diff_id: diff-hwpx-001
+    evidence_ref: tests/tools/documents/test_render_and_reread.py
+  - record_id: lifecycle-hwpx-validation-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: validation
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: public-form-validator
+    artifact_id: validation-hwpx-001
+    artifact_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+    document_diff_id: diff-hwpx-001
+    evidence_ref: tests/tools/documents/test_public_form_validator.py
+  - record_id: lifecycle-hwpx-diff-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: diff
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: structured-document-diff
+    artifact_id: diff-hwpx-001
+    artifact_sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+    document_diff_id: diff-hwpx-001
+    evidence_ref: tui/src/tools/_shared/documentChangeToPatch.ts
+  - record_id: lifecycle-hwpx-tui-frame-001
+    scenario_id: document_harness_v1
+    correlation_id: corr-doc-hwpx-001
+    stage: tui_frame
+    status: pass
+    known_format: hwpx
+    format_family: hwp
+    adapter_id: cc-style-document-result-card
+    artifact_id: ux-hwpx-alpha9-terminal-frame
+    artifact_sha256: "1212121212121212121212121212121212121212121212121212121212121212"
+    document_diff_id: diff-hwpx-001
+    frame_hash: "sha256:1212121212121212121212121212121212121212121212121212121212121212"
+    evidence_ref: specs/2802-public-doc-harness/format-adapter-execution-progress-2026-06-03.md
+beta_cases:
+  - case_id: beta-weekly-log-hwpx
+    domain: weekly_log
+    known_format: hwpx
+    format_family: hwp
+    expected_outcome: ready_for_review
+    expected_operation: autonomous_fill
+    fixture_id: hwpx-birth-benefit
+    evidence_ref: tests/tools/documents/test_autonomous_fill_planner.py
+  - case_id: beta-contest-proposal-hwp
+    domain: contest_proposal
+    known_format: hwp
+    format_family: hwp
+    expected_outcome: read_only
+    expected_operation: inspect_only_block_write
+    evidence_ref: tests/tools/documents/test_builtin_hwp_adapter.py
+  - case_id: beta-consent-hwp
+    domain: consent
+    known_format: hwp
+    format_family: hwp
+    expected_outcome: read_only
+    expected_operation: inspect_only_block_write
+    evidence_ref: tests/tools/documents/test_builtin_hwp_adapter.py
+  - case_id: beta-pledge-docx
+    domain: pledge
+    known_format: docx
+    format_family: ooxml
+    expected_outcome: ready_for_review
+    expected_operation: field_fill
+    fixture_id: docx-civil-form
+    evidence_ref: tests/tools/documents/test_ooxml_adapters.py
+  - case_id: beta-spreadsheet-xlsx
+    domain: spreadsheet
+    known_format: xlsx
+    format_family: ooxml
+    expected_outcome: ready_for_review
+    expected_operation: cell_fill
+    fixture_id: xlsx-public-sheet
+    evidence_ref: tests/tools/documents/test_ooxml_adapters.py
+  - case_id: beta-pdf-form
+    domain: pdf_form
+    known_format: pdf
+    format_family: pdf
+    expected_outcome: ready_for_review
+    expected_operation: acroform_fill
+    fixture_id: pdf-permit-form
+    evidence_ref: tests/tools/documents/test_pdf_adapter.py
+  - case_id: beta-presentation-pptx
+    domain: presentation
+    known_format: pptx
+    format_family: ooxml
+    expected_outcome: ready_for_review
+    expected_operation: placeholder_fill
+    fixture_id: pptx-briefing-template
+    evidence_ref: tests/tools/documents/test_ooxml_adapters.py
+  - case_id: beta-public-data-csv
+    domain: public_data_csv_json
+    known_format: csv
+    format_family: data_file
+    expected_outcome: read_only
+    expected_operation: serializer_roundtrip_inspect
+    evidence_ref: tests/tools/documents/test_passive_format_adapters.py
+  - case_id: beta-public-data-json
+    domain: public_data_csv_json
+    known_format: json
+    format_family: data_file
+    expected_outcome: read_only
+    expected_operation: serializer_roundtrip_inspect
+    evidence_ref: tests/tools/documents/test_passive_format_adapters.py
+  - case_id: beta-static-pdf
+    domain: static_pdf
+    known_format: pdf
+    format_family: pdf
+    expected_outcome: blocked
+    expected_operation: fill_blocked_static_pdf
+    evidence_ref: tests/tools/documents/test_pdf_adapter.py
+  - case_id: beta-scanned-image-png
+    domain: scanned_image
+    known_format: png
+    format_family: image_scan
+    expected_outcome: blocked
+    expected_operation: extraction_only_no_mutation
+    evidence_ref: tests/tools/documents/test_passive_format_adapters.py
+  - case_id: beta-archive-bundle-zip
+    domain: archive_bundle
+    known_format: zip
+    format_family: archive
+    expected_outcome: blocked
+    expected_operation: enumerate_children_no_in_place_mutation
+    evidence_ref: tests/tools/documents/test_passive_format_adapters.py
+negative_cases:
+  - case_id: negative-missing-file
+    trigger: missing_file
+    expected_status: needs_input
+    expected_reason: document_path_not_found
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_document_tool_flow.py
+  - case_id: negative-ambiguous-file-candidates
+    trigger: ambiguous_file_candidates
+    expected_status: needs_input
+    expected_reason: explicit_selection_required
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_document_tool_flow.py
+  - case_id: negative-unsupported-known-format
+    trigger: unsupported_known_format
+    expected_status: blocked
+    expected_reason: unsupported_operation
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_intake_security.py
+  - case_id: negative-blocked-hwp-write
+    trigger: blocked_hwp_write
+    expected_status: blocked
+    expected_reason: unsupported_operation
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_builtin_hwp_adapter.py
+  - case_id: negative-static-pdf-fill
+    trigger: static_pdf_fill
+    expected_status: blocked
+    expected_reason: static_pdf
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_pdf_adapter.py
+  - case_id: negative-macro-active-content
+    trigger: macro_active_content
+    expected_status: blocked
+    expected_reason: macro_detected
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_intake_security.py
+  - case_id: negative-path-traversal
+    trigger: path_traversal
+    expected_status: blocked
+    expected_reason: path_traversal_detected
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_intake_security.py
+  - case_id: negative-oversized-archive
+    trigger: oversized_archive
+    expected_status: blocked
+    expected_reason: oversized_expanded_bytes
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_intake_security.py
+  - case_id: negative-external-link
+    trigger: external_link
+    expected_status: blocked
+    expected_reason: external_link_detected
+    derivative_save: forbidden
+    evidence_ref: tests/tools/documents/test_intake_security.py

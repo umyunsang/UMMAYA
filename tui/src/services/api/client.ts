@@ -601,12 +601,75 @@ function convertToolChoice(
 }
 
 function sanitizeSchema(schema: Record<string, unknown>): Record<string, unknown> {
-  const clone = { ...schema }
+  const clone = inlineLocalJsonSchemaRefs(schema)
   delete clone.cache_control
   delete clone.defer_loading
   delete clone.eager_input_streaming
   if (clone.type !== 'object') clone.type = 'object'
   return clone
+}
+
+function inlineLocalJsonSchemaRefs(schema: Record<string, unknown>): Record<string, unknown> {
+  const defs = isRecord(schema.$defs) ? schema.$defs : {}
+  const inlined = inlineSchemaNode(schema, defs, [])
+  if (!isRecord(inlined)) {
+    throw new Error('OpenAI tool parameters schema must be a JSON object')
+  }
+  return inlined
+}
+
+function inlineSchemaNode(
+  node: unknown,
+  defs: Record<string, unknown>,
+  stack: string[],
+): unknown {
+  if (Array.isArray(node)) {
+    return node.map(item => inlineSchemaNode(item, defs, stack))
+  }
+  if (!isRecord(node)) return node
+
+  const refName = localDefRefName(node.$ref)
+  if (refName) {
+    if (stack.includes(refName)) {
+      throw new Error(`Cyclic JSON Schema reference is not supported: #/$defs/${refName}`)
+    }
+    if (!Object.prototype.hasOwnProperty.call(defs, refName)) {
+      throw new Error(`Unknown JSON Schema reference: #/$defs/${refName}`)
+    }
+
+    const expanded = inlineSchemaNode(defs[refName], defs, [...stack, refName])
+    const siblings = Object.fromEntries(
+      Object.entries(node).filter(([key]) => key !== '$ref' && key !== '$defs'),
+    )
+    if (Object.keys(siblings).length === 0) return expanded
+    if (!isRecord(expanded)) {
+      throw new Error(`JSON Schema reference target must be an object: #/$defs/${refName}`)
+    }
+    return {
+      ...expanded,
+      ...Object.fromEntries(
+        Object.entries(siblings).map(([key, value]) => [
+          key,
+          inlineSchemaNode(value, defs, stack),
+        ]),
+      ),
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(node)
+      .filter(([key]) => key !== '$defs')
+      .map(([key, value]) => [key, inlineSchemaNode(value, defs, stack)]),
+  )
+}
+
+function localDefRefName(ref: unknown): string | null {
+  if (typeof ref !== 'string' || !ref.startsWith('#/$defs/')) return null
+  return ref.slice('#/$defs/'.length).replace(/~1/g, '/').replace(/~0/g, '~')
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function systemToText(system: BetaMessageStreamParams['system']): string {

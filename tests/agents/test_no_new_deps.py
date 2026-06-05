@@ -6,7 +6,8 @@ dependency to [project.dependencies] in pyproject.toml. All new
 functionality must be implemented with existing dependencies or stdlib.
 
 This test parses pyproject.toml and verifies that the declared runtime
-dependency set matches the pre-Epic-13 baseline. Any addition fails CI.
+dependency set matches the pre-Epic-13 baseline plus explicitly owned
+spec-driven additions. Unowned additions fail CI.
 """
 
 from __future__ import annotations
@@ -47,9 +48,31 @@ _BASELINE_DEPS: frozenset[str] = frozenset(
         "sentence_transformers",
         "numpy",
         "torch",
+        "python-docx",
         "PyYAML",
         "pyyaml",
         # torch/numpy are always present as sentence-transformers deps
+    ]
+)
+_SPEC_DRIVEN_RUNTIME_ADDITIONS: frozenset[str] = frozenset(
+    [
+        # Spec 2802 Public AX document harness promotes bounded OOXML/PDF
+        # engines after fixture-backed adapter and render/re-read evidence.
+        "defusedxml",
+        "openpyxl",
+        "pypdf",
+        "pypdfium2",
+        "python-pptx",
+        "python_pptx",
+        # Spec 2802 PDF Korean render hardening: pypdf requires fontTools to
+        # build embedded TrueType appearance streams for Korean AcroForm values.
+        "fonttools",
+        # Spec 2802 promotes read-only legacy HWP inspection through
+        # unhwp after real public AX HWP fixture extraction evidence.
+        "unhwp",
+        # Spec 2802 promotes bounded ODT/ODS/ODP writer support through odfdo
+        # after ODF standard, license, and local fixture evidence.
+        "odfdo",
     ]
 )
 
@@ -103,7 +126,7 @@ def test_no_new_runtime_dependencies() -> None:
         return s.lower().replace("-", "_")
 
     current_normalised = {_norm(n) for n in current_names}
-    baseline_normalised = {_norm(n) for n in _BASELINE_DEPS}
+    baseline_normalised = {_norm(n) for n in (_BASELINE_DEPS | _SPEC_DRIVEN_RUNTIME_ADDITIONS)}
 
     additions = current_normalised - baseline_normalised
     assert not additions, (

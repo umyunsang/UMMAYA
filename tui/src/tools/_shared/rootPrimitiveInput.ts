@@ -3,6 +3,7 @@ export const ROOT_PRIMITIVE_TOOL_IDS = new Set([
   'locate',
   'check',
   'send',
+  'document',
 ])
 
 function asRecord(value: unknown): Record<string, unknown> | null {

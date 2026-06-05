@@ -209,17 +209,19 @@ export async function* queryModelWithStreaming(params: {
           })
           yield finalMessage
         }
-        yield {
-          type: 'stream_event' as const,
-          event: {
-            type: 'message_delta' as const,
-            delta: { stop_reason: 'end_turn', stop_sequence: null },
-            usage: { output_tokens: 0 },
-          },
-        }
-        yield {
-          type: 'stream_event' as const,
-          event: { type: 'message_stop' as const },
+        if (messageStartEmitted) {
+          yield {
+            type: 'stream_event' as const,
+            event: {
+              type: 'message_delta' as const,
+              delta: { stop_reason: 'end_turn', stop_sequence: null },
+              usage: { output_tokens: 0 },
+            },
+          }
+          yield {
+            type: 'stream_event' as const,
+            event: { type: 'message_stop' as const },
+          }
         }
         return
       }

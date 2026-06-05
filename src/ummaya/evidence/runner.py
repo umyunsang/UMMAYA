@@ -9,15 +9,19 @@ service channels, LLM providers, or observability backends.
 from __future__ import annotations
 
 import argparse
+import json
+import os
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from ummaya.evidence.document_viewer_ux import DocumentViewerUxArtifact
 from ummaya.evidence.models import EvidenceGate, RunEvidence
 from ummaya.evidence.task_registry import EvidenceDatasetRef, load_task_registry
+from ummaya.tools.documents.models import KnownDocumentFormat
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_SCENARIO_PATH = _REPO_ROOT / "evidence/scenarios/national_ax_citizen_requests_v1.yaml"
@@ -264,6 +268,224 @@ def run_dataset(
     )
 
 
+def build_evidence_output_payload(
+    evidence: RunEvidence,
+    *,
+    include_document_harness: bool = True,
+    document_viewer_ux_artifacts: Sequence[DocumentViewerUxArtifact] = (),
+    hwp_bridge_probe_env: Mapping[str, str] | None = None,
+    hwp_bridge_probe_search_path: Sequence[str] | None = None,
+    odf_probe_env: Mapping[str, str] | None = None,
+    odf_probe_search_path: Sequence[str] | None = None,
+    odf_probe_importable_modules: frozenset[str] | None = None,
+    pdfa_probe_env: Mapping[str, str] | None = None,
+    pdfa_probe_search_path: Sequence[str] | None = None,
+    archive_probe_env: Mapping[str, str] | None = None,
+    archive_probe_search_path: Sequence[str] | None = None,
+    passive_probe_env: Mapping[str, str] | None = None,
+    passive_probe_search_path: Sequence[str] | None = None,
+    passive_probe_importable_modules: frozenset[str] | None = None,
+    legacy_office_probe_env: Mapping[str, str] | None = None,
+    legacy_office_probe_search_path: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """Build the JSON payload emitted by the CLI."""
+    payload = evidence.model_dump(mode="json")
+    if document_viewer_ux_artifacts:
+        payload["gates"] = _with_passed_ux_gate(payload["gates"])
+        payload["ux_artifacts"] = [
+            artifact.model_dump(mode="json") for artifact in document_viewer_ux_artifacts
+        ]
+    if include_document_harness:
+        from ummaya.evidence.document_harness import (  # noqa: PLC0415
+            beta_cases_from_scenario,
+            lifecycle_records_from_scenario,
+            load_document_harness_scenario,
+            negative_cases_from_scenario,
+            records_from_scenario,
+        )
+
+        scenario = load_document_harness_scenario()
+        document_records = records_from_scenario(scenario)
+        _validate_document_viewer_ux_joins(document_records, document_viewer_ux_artifacts)
+        payload["document_evidence_records"] = [
+            record.model_dump(mode="json") for record in document_records
+        ]
+        payload["document_lifecycle_records"] = [
+            record.model_dump(mode="json") for record in lifecycle_records_from_scenario(scenario)
+        ]
+        payload["document_beta_cases"] = [
+            case.model_dump(mode="json") for case in beta_cases_from_scenario(scenario)
+        ]
+        payload["document_negative_cases"] = [
+            case.model_dump(mode="json") for case in negative_cases_from_scenario(scenario)
+        ]
+        from ummaya.tools.documents.hwp_conversion_probe import (  # noqa: PLC0415
+            probe_hwp_to_hwpx_bridge,
+        )
+
+        bridge_probe = probe_hwp_to_hwpx_bridge(
+            env=hwp_bridge_probe_env,
+            search_path=_default_hwp_bridge_probe_search_path(
+                env=hwp_bridge_probe_env,
+                explicit_search_path=hwp_bridge_probe_search_path,
+            ),
+        )
+        payload["document_bridge_probe_records"] = [bridge_probe.model_dump(mode="json")]
+        from ummaya.tools.documents.odf_promotion_probe import (  # noqa: PLC0415
+            probe_odf_promotion,
+        )
+
+        odf_probe_records = probe_odf_promotion(
+            env=odf_probe_env,
+            search_path=odf_probe_search_path,
+            importable_modules=odf_probe_importable_modules,
+        )
+        payload["document_odf_probe_records"] = [
+            record.model_dump(mode="json") for record in odf_probe_records
+        ]
+        from ummaya.tools.documents.pdfa_promotion_probe import (  # noqa: PLC0415
+            probe_pdfa_promotion,
+        )
+
+        pdfa_probe_record = probe_pdfa_promotion(
+            env=pdfa_probe_env,
+            search_path=pdfa_probe_search_path,
+        )
+        payload["document_pdfa_probe_records"] = [pdfa_probe_record.model_dump(mode="json")]
+        from ummaya.tools.documents.archive_container_probe import (  # noqa: PLC0415
+            probe_archive_container_promotion,
+        )
+
+        archive_probe_records = probe_archive_container_promotion(
+            env=archive_probe_env,
+            search_path=archive_probe_search_path,
+        )
+        payload["document_archive_probe_records"] = [
+            record.model_dump(mode="json") for record in archive_probe_records
+        ]
+        from ummaya.tools.documents.passive_capability_probe import (  # noqa: PLC0415
+            probe_passive_capabilities,
+        )
+
+        passive_probe_records = probe_passive_capabilities(
+            env=passive_probe_env,
+            search_path=passive_probe_search_path,
+            importable_modules=passive_probe_importable_modules,
+        )
+        payload["document_passive_probe_records"] = [
+            record.model_dump(mode="json") for record in passive_probe_records
+        ]
+        from ummaya.tools.documents.legacy_office_promotion_probe import (  # noqa: PLC0415
+            probe_legacy_office_promotion,
+        )
+
+        legacy_office_probe_records = probe_legacy_office_promotion(
+            env=legacy_office_probe_env,
+            search_path=legacy_office_probe_search_path,
+        )
+        payload["document_legacy_office_probe_records"] = [
+            record.model_dump(mode="json") for record in legacy_office_probe_records
+        ]
+        from ummaya.tools.documents.format_completion_audit import (  # noqa: PLC0415
+            audit_document_format_completion,
+        )
+
+        payload["document_format_completion_audit"] = audit_document_format_completion(
+            derivative_promoted_formats=_derivative_promoted_formats_from_probe_records(
+                bridge_probe=bridge_probe,
+                legacy_office_probe_records=legacy_office_probe_records,
+            ),
+            pdfa_conformance_promoted=pdfa_probe_record.status == "candidate_available",
+        ).model_dump(mode="json")
+    return payload
+
+
+def _derivative_promoted_formats_from_probe_records(
+    *,
+    bridge_probe: Any,
+    legacy_office_probe_records: Sequence[Any],
+) -> frozenset[KnownDocumentFormat]:
+    from ummaya.tools.documents.hwp_conversion_probe import (  # noqa: PLC0415
+        HWPXJS_CANDIDATE_ID,
+    )
+
+    promoted: set[KnownDocumentFormat] = set()
+    if bridge_probe.status == "configured" or (
+        bridge_probe.status == "available" and bridge_probe.candidate_id == HWPXJS_CANDIDATE_ID
+    ):
+        promoted.add(KnownDocumentFormat.hwp)
+    for record in legacy_office_probe_records:
+        if record.status == "candidate_available":
+            promoted.add(record.known_format)
+    return frozenset(promoted)
+
+
+def _default_hwp_bridge_probe_search_path(
+    *,
+    env: Mapping[str, str] | None,
+    explicit_search_path: Sequence[str] | None,
+) -> Sequence[str] | None:
+    if explicit_search_path is not None:
+        return explicit_search_path
+    if env is not None:
+        return None
+
+    paths: list[str] = []
+    for root in (Path.cwd(), _REPO_ROOT):
+        node_bin = root / "node_modules" / ".bin"
+        node_bin_str = str(node_bin)
+        if node_bin_str not in paths:
+            paths.append(node_bin_str)
+
+    process_path = os.environ.get("PATH", "")
+    paths.extend(part for part in process_path.split(os.pathsep) if part)
+    return tuple(paths) if paths else None
+
+
+def _validate_document_viewer_ux_joins(
+    document_records: Sequence[Any],
+    document_viewer_ux_artifacts: Sequence[DocumentViewerUxArtifact],
+) -> None:
+    if not document_viewer_ux_artifacts:
+        return
+    from ummaya.evidence.document_harness import DocumentHarnessEvidenceError  # noqa: PLC0415
+
+    valid_joins = {
+        (record.structured_diff_id, record.correlation_id) for record in document_records
+    }
+    for artifact in document_viewer_ux_artifacts:
+        if artifact.document_diff_id is None:
+            raise DocumentHarnessEvidenceError(
+                f"document viewer UX artifact does not carry a document_diff_id: "
+                f"{artifact.artifact_id}"
+            )
+        join_key = (artifact.document_diff_id, artifact.correlation_id)
+        if join_key not in valid_joins:
+            raise DocumentHarnessEvidenceError(
+                "document viewer UX artifact does not join a backend document diff "
+                f"record by document_diff_id and correlation_id: {artifact.artifact_id}"
+            )
+
+
+def _with_passed_ux_gate(gates: object) -> list[object]:
+    if not isinstance(gates, list):
+        return []
+    promoted: list[object] = []
+    for gate in gates:
+        if isinstance(gate, dict) and gate.get("name") == "ux":
+            promoted.append(
+                {
+                    **gate,
+                    "status": "pass",
+                    "summary": "Playwright document viewer UX artifacts are attached",
+                    "check_ids": ["document-viewer-playwright-png", "frame-hash"],
+                }
+            )
+            continue
+        promoted.append(gate)
+    return promoted
+
+
 def main() -> None:
     """CLI entrypoint for `python -m ummaya.evidence`."""
 
@@ -296,6 +518,29 @@ def main() -> None:
         default=Path(".evidence/run.json"),
         help="Output JSON path.",
     )
+    parser.add_argument(
+        "--document-viewer-html",
+        type=Path,
+        action="append",
+        default=None,
+        help="Local document viewer HTML path to capture as a Playwright UX artifact.",
+    )
+    parser.add_argument(
+        "--document-viewer-ux-out-dir",
+        type=Path,
+        default=None,
+        help="Directory for Playwright document viewer PNG artifacts.",
+    )
+    parser.add_argument(
+        "--document-viewer-correlation-id",
+        default=None,
+        help="Correlation ID to attach when the viewer manifest does not carry one.",
+    )
+    parser.add_argument(
+        "--document-viewer-diff-id",
+        default=None,
+        help="Document diff ID to attach when the viewer manifest does not carry one.",
+    )
     args = parser.parse_args()
 
     evidence = run_dataset(
@@ -305,4 +550,26 @@ def main() -> None:
         dataset_ref=args.dataset_ref,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
+    ux_out_dir = args.document_viewer_ux_out_dir or args.out.parent / "ux-artifacts"
+    document_viewer_ux_artifacts: list[DocumentViewerUxArtifact] = []
+    document_viewer_html_paths = tuple(args.document_viewer_html or ())
+    if document_viewer_html_paths:
+        from ummaya.evidence.document_viewer_ux import (  # noqa: PLC0415
+            capture_document_viewer_ux_artifact,
+        )
+
+        for viewer_html_path in document_viewer_html_paths:
+            document_viewer_ux_artifacts.append(
+                capture_document_viewer_ux_artifact(
+                    viewer_html_path=viewer_html_path,
+                    output_dir=ux_out_dir,
+                    source_ref=args.source_ref,
+                    correlation_id=args.document_viewer_correlation_id,
+                    document_diff_id=args.document_viewer_diff_id,
+                )
+            )
+    payload = build_evidence_output_payload(
+        evidence,
+        document_viewer_ux_artifacts=tuple(document_viewer_ux_artifacts),
+    )
+    args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

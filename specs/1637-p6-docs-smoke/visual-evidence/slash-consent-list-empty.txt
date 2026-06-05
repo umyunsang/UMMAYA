@@ -1,0 +1,12 @@
+# Visual evidence — slash-consent-list-empty
+# Slash command — `/consent` empty receipt list
+# Captured 2026-06-01T08:18:49.562Z via ink-testing-library render()
+
+
+ ✻ UMMAYA · 권한 영수증 / Consent receipts
+
+   아직 발급된 영수증이 없습니다 · No receipts issued yet
+
+
+ 총 0건 · 0 receipts
+ Esc · 닫기 (dismiss)

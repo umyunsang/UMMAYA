@@ -47,6 +47,7 @@ logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
 
 AdapterFn = Callable[[BaseModel], Awaitable[dict[str, Any]]]
+SessionAwareAdapterFn = Callable[[BaseModel, object | None], Awaitable[dict[str, Any]]]
 
 _LOOKUP_ENVELOPE_KINDS: frozenset[str] = frozenset(
     {"record", "collection", "timeseries", "error", "search"}
@@ -195,6 +196,7 @@ class ToolExecutor:
         """
         self._registry = registry
         self._adapters: dict[str, AdapterFn] = {}
+        self._session_adapters: dict[str, SessionAwareAdapterFn] = {}
         self._recovery_executor = recovery_executor
         self._metrics: MetricsCollector | None = metrics
         self._event_logger: ObservabilityEventLogger | None = event_logger
@@ -210,6 +212,31 @@ class ToolExecutor:
         """
         self._adapters[tool_id] = adapter
         logger.debug("Registered adapter for tool: %s", tool_id)
+
+    def register_session_adapter(self, tool_id: str, adapter: SessionAwareAdapterFn) -> None:
+        """Register an adapter that also receives the caller session identity."""
+
+        async def _without_session(inp: BaseModel) -> dict[str, Any]:
+            return await adapter(inp, None)
+
+        self._adapters[tool_id] = _without_session
+        self._session_adapters[tool_id] = adapter
+        logger.debug("Registered session-aware adapter for tool: %s", tool_id)
+
+    def _adapter_for_session(
+        self,
+        tool_id: str,
+        adapter: AdapterFn,
+        session_identity: object | None,
+    ) -> AdapterFn:
+        session_adapter = self._session_adapters.get(tool_id)
+        if session_adapter is None:
+            return adapter
+
+        async def _with_session(inp: BaseModel) -> dict[str, Any]:
+            return await session_adapter(inp, session_identity)
+
+        return _with_session
 
     async def invoke_raw(  # noqa: C901
         self,
@@ -269,6 +296,7 @@ class ToolExecutor:
                 elapsed_ms=_elapsed(),
                 retryable=False,
             )
+        adapter = self._adapter_for_session(tool_id, adapter, session_identity)
 
         try:
             validated_input = tool.input_schema.model_validate(params)
@@ -458,6 +486,7 @@ class ToolExecutor:
                 elapsed_ms=_elapsed(),
                 retryable=False,
             )
+        adapter = self._adapter_for_session(tool_id, adapter, session_identity)
 
         # --- Input validation ---------------------------------------------------
         try:

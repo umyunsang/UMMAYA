@@ -216,7 +216,7 @@ class GovAPITool(BaseModel):
     Distinct from ``AdapterRegistration.source_mode`` (mirror fidelity axis)."""
 
     # Spec 031 T032 dual-axis fields — None during pre-v1.2 compatibility window FR-028
-    primitive: Literal["find", "locate", "send", "check"] | None = None
+    primitive: Literal["find", "locate", "send", "check", "document"] | None = None
     """Active primitive surface this adapter binds to (Spec 031 AdapterPrimitive).
 
     Set to the appropriate value during Spec 031 Phase 4 (T033).

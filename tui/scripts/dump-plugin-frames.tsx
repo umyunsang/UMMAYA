@@ -9,7 +9,6 @@
  *
  * Surfaces dumped:
  *   - PluginBrowser (active + inactive states, no plugins, navigation hint)
- *   - PIPAConsentStep (initial dot-progress + submit prompt)
  *   - /plugin slash command acknowledgements (install / list / pipa-text)
  *
  * Usage:
@@ -28,7 +27,6 @@ import {
   PluginBrowser,
   type PluginEntry,
 } from '../src/components/plugins/PluginBrowser.js'
-import { PipaConsentStep } from '../src/components/onboarding/PIPAConsentStep.js'
 import pluginCommand from '../src/commands/plugin.js'
 import type {
   PluginOpFrame,
@@ -153,43 +151,7 @@ const SAMPLE_PLUGINS: PluginEntry[] = [
 }
 
 // ---------------------------------------------------------------------------
-// Surface 2 — PIPA consent step (Onboarding step 3)
-// ---------------------------------------------------------------------------
-
-{
-  const result = render(
-    <ThemeProvider>
-      <PipaConsentStep
-        onAdvance={() => undefined}
-        onExit={() => undefined}
-        sessionId="01HNMJ1Z000000000000000000"
-        writeRecord={() => undefined}
-        locale="ko"
-      />
-    </ThemeProvider>,
-  )
-  dump('pipa-consent-step-ko', result.lastFrame())
-  result.unmount()
-}
-
-{
-  const result = render(
-    <ThemeProvider>
-      <PipaConsentStep
-        onAdvance={() => undefined}
-        onExit={() => undefined}
-        sessionId="01HNMJ1Z000000000000000000"
-        writeRecord={() => undefined}
-        locale="en"
-      />
-    </ThemeProvider>,
-  )
-  dump('pipa-consent-step-en', result.lastFrame())
-  result.unmount()
-}
-
-// ---------------------------------------------------------------------------
-// Surface 3 — /plugin slash command acknowledgements
+// Surface 2 — /plugin slash command acknowledgements
 // (text-only — we render a small wrapper that displays the result string)
 // ---------------------------------------------------------------------------
 

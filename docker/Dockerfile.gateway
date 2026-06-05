@@ -21,6 +21,7 @@ RUN uv sync --frozen --extra gateway --no-install-project --no-dev
 COPY src/ ./src/
 COPY prompts/ ./prompts/
 COPY docs/plugins/security-review.md ./docs/plugins/security-review.md
+COPY specs/2802-public-doc-harness/contracts/ ./specs/2802-public-doc-harness/contracts/
 COPY tests/fixtures/plugin_validation/ ./tests/fixtures/plugin_validation/
 RUN uv sync --frozen --extra gateway --no-dev
 
@@ -34,6 +35,7 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY src/ /app/src/
 COPY prompts/ /app/prompts/
+COPY specs/2802-public-doc-harness/contracts/ /app/specs/2802-public-doc-harness/contracts/
 
 ENV PATH=/app/.venv/bin:$PATH \
     PYTHONPATH=/app/src \
