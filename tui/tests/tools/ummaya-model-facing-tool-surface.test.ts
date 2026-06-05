@@ -425,7 +425,7 @@ describe('UMMAYA model-facing tool surface', () => {
     expect(selected).not.toContain('kakao_address_search')
   })
 
-  test('PPS bid wording forces synced concrete adapter even before tool pool refresh', () => {
+  test('PPS bid wording does not force synced concrete adapter before backend validation', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -477,10 +477,7 @@ describe('UMMAYA model-facing tool surface', () => {
       tools: [toolNamed('find'), toolNamed('locate'), toolNamed('ToolSearch')],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'pps_bid_public_info',
-    })
+    expect(override).toBeUndefined()
   })
 
   test('direct public-data wording rejects unrelated primitive substitutions', async () => {
@@ -930,10 +927,7 @@ describe('UMMAYA model-facing tool surface', () => {
       },
     ] as any
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'tago_bus_route_search',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterRouteSearch = [
       ...firstTurn,
@@ -1169,10 +1163,7 @@ describe('UMMAYA model-facing tool surface', () => {
       },
     ] as any
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'tago_bus_station_search',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterStation = [
       ...firstTurn,
@@ -1284,10 +1275,7 @@ describe('UMMAYA model-facing tool surface', () => {
       },
     ] as any
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'tago_bus_station_search',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterStation = [
       ...firstTurn,
@@ -1446,10 +1434,7 @@ describe('UMMAYA model-facing tool surface', () => {
         },
       },
     ] as any
-    expect(selectUmmayaToolChoiceOverride({ messages: airFirstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'airkorea_ctprvn_air_quality',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: airFirstTurn, tools })).toBeUndefined()
 
     const afterAirKorea = [
       ...airFirstTurn,
@@ -1797,7 +1782,7 @@ describe('UMMAYA model-facing tool surface', () => {
     expect(selected).not.toContain('kma_current_observation')
   })
 
-  test('airport aviation wording forces concrete METAR tool choice on first live turn', () => {
+  test('airport aviation wording does not force concrete METAR tool choice on first live turn', () => {
     const override = selectUmmayaToolChoiceOverride({
       messages: [
         {
@@ -1818,13 +1803,10 @@ describe('UMMAYA model-facing tool surface', () => {
       ],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_air_metar_decoded',
-    })
+    expect(override).toBeUndefined()
   })
 
-  test('KMA aviation wording forces synced adapter before tool pool refresh', () => {
+  test('KMA aviation wording does not force synced adapter before backend validation', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -1872,13 +1854,10 @@ describe('UMMAYA model-facing tool surface', () => {
       tools: [toolNamed('find'), toolNamed('locate'), toolNamed('kma_current_observation')],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_air_metar_decoded',
-    })
+    expect(override).toBeUndefined()
   })
 
-  test('airport runway wording prefers AMOS when the adapter is visible', () => {
+  test('airport runway wording does not force AMOS before backend validation', () => {
     const override = selectUmmayaToolChoiceOverride({
       messages: [
         {
@@ -1896,10 +1875,7 @@ describe('UMMAYA model-facing tool surface', () => {
       ],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_air_amos_minute',
-    })
+    expect(override).toBeUndefined()
   })
 
   test('airport aviation tool choice override stops after an aviation tool was attempted', () => {
@@ -2488,10 +2464,7 @@ describe('UMMAYA model-facing tool surface', () => {
       toolNamed('kma_current_observation'),
     ]
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_analysis_weather_chart_image',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterChartAttempt = [
       ...firstTurn,
@@ -2677,7 +2650,7 @@ describe('UMMAYA model-facing tool surface', () => {
     ).toContain('Do not ask for coordinates')
   })
 
-  test('analysis map wording forces synced chart adapter before tool pool refresh', () => {
+  test('analysis map wording does not force synced chart adapter before backend validation', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -2725,10 +2698,7 @@ describe('UMMAYA model-facing tool surface', () => {
       tools: [toolNamed('find'), toolNamed('locate'), toolNamed('kma_current_observation')],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_analysis_weather_chart_image',
-    })
+    expect(override).toBeUndefined()
   })
 
   test('AED wording rejects ER adapter substitution at validation time', async () => {
@@ -4665,7 +4635,7 @@ describe('UMMAYA model-facing tool surface', () => {
     }
   })
 
-  test('protected certificate wording forces concrete check adapter tool choice', () => {
+  test('protected certificate wording does not force concrete check adapter tool choice before validation', () => {
     const override = selectUmmayaToolChoiceOverride({
       messages: [
         {
@@ -4685,13 +4655,10 @@ describe('UMMAYA model-facing tool surface', () => {
       ],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'mock_verify_module_simple_auth',
-    })
+    expect(override).toBeUndefined()
   })
 
-  test('protected certificate wording retrieves and forces check adapter before unrelated find tools', () => {
+  test('protected certificate wording retrieves check adapters without forcing before validation', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -4783,10 +4750,7 @@ describe('UMMAYA model-facing tool surface', () => {
       ] as any,
       tools: [toolNamed('find'), toolNamed('check'), toolNamed('ToolSearch')],
     })
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'mock_verify_mobile_id',
-    })
+    expect(override).toBeUndefined()
   })
 
   test('protected certificate wording suppresses further tools after a check attempt', () => {

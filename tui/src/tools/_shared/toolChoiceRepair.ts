@@ -113,6 +113,84 @@ interface DocumentPathRef {
   expectedFormat: DocumentFormat
 }
 
+export interface UmmayaTuiRepairPolicy {
+  id: string
+  kind: 'display_or_answer_repair'
+  owner: string
+  evidenceEvent: string
+  removalCondition: string
+}
+
+export interface UmmayaBackendRepairReceipt {
+  source: 'backend_route_decision' | 'backend_validation'
+  reason: string
+  evidenceEvent: string
+  toolName?: string
+}
+
+export const UMMAYA_TUI_REPAIR_POLICIES: readonly UmmayaTuiRepairPolicy[] = [
+  {
+    id: 'document_observable_operation_backfill',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-display-repair',
+    evidenceEvent: 'ummaya.tui.repair.document_observable_operation_backfill',
+    removalCondition:
+      'Delete when document adapters emit display_operation in backend tool-use receipts.',
+  },
+  {
+    id: 'document_completion_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.document_completion_prompt',
+    removalCondition:
+      'Delete when backend RouteDecision stop reasons emit terminal document answer instructions.',
+  },
+  {
+    id: 'tago_bus_followup_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.tago_bus_followup_prompt',
+    removalCondition:
+      'Delete when backend route decisions encode TAGO chain prerequisites and next required adapter.',
+  },
+  {
+    id: 'tago_bus_completion_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.tago_bus_completion_prompt',
+    removalCondition:
+      'Delete when TAGO adapters return a backend terminal answer contract.',
+  },
+  {
+    id: 'airkorea_completion_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.airkorea_completion_prompt',
+    removalCondition:
+      'Delete when AirKorea adapter output includes backend answer-synthesis constraints.',
+  },
+  {
+    id: 'generic_pending_final_answer_repair',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.generic_pending_final_answer_repair',
+    removalCondition:
+      'Delete when backend stop reasons reject plan-only final answers after tool_result evidence.',
+  },
+]
+
+function hasBackendRepairReceipt(
+  receipt: UmmayaBackendRepairReceipt | undefined,
+): boolean {
+  return (
+    receipt !== undefined &&
+    (receipt.source === 'backend_route_decision' ||
+      receipt.source === 'backend_validation') &&
+    receipt.reason.trim() !== '' &&
+    receipt.evidenceEvent.startsWith('ummaya.')
+  )
+}
+
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null
     ? (value as Record<string, unknown>)
@@ -698,12 +776,15 @@ export function repairUmmayaExplicitDocumentToolUseFromUserQuery({
   input,
   messages,
   tools,
+  backendRepairReceipt,
 }: {
   toolName: string
   input: Record<string, unknown>
   messages: readonly Message[]
   tools: Tools
+  backendRepairReceipt?: UmmayaBackendRepairReceipt
 }): ForcedUmmayaToolUse | undefined {
+  if (!hasBackendRepairReceipt(backendRepairReceipt)) return undefined
   const available = availableToolNamesFromTools(tools)
   if (!isAvailableOrSyncedAdapter(available, DOCUMENT_TOOL_NAME)) return undefined
 
@@ -760,10 +841,13 @@ export function backfillUmmayaObservableToolInputFromUserQuery({
 export function selectUmmayaClientForcedToolUse({
   messages,
   tools,
+  backendRepairReceipt,
 }: {
   messages: readonly Message[]
   tools: Tools
+  backendRepairReceipt?: UmmayaBackendRepairReceipt
 }): ForcedUmmayaToolUse | undefined {
+  if (!hasBackendRepairReceipt(backendRepairReceipt)) return undefined
   const available = availableToolNamesFromTools(tools)
   const userText = latestUserText(messages)
   const documentToolName = selectDocumentWorkflowTargetToolName(
@@ -1403,37 +1487,12 @@ export function selectUmmayaToolChoiceOverride({
     return undefined
   }
 
-  const documentToolName = selectDocumentWorkflowToolChoice(
-    userText,
-    available,
-    messages,
-  )
-  if (documentToolName) {
-    return { type: 'tool', name: documentToolName }
-  }
-
   if (
     publicDataTargetTool &&
     !usedToolNames.has(publicDataTargetTool) &&
     isAvailableOrSyncedAdapter(available, publicDataTargetTool)
   ) {
     return { type: 'tool', name: publicDataTargetTool }
-  }
-
-  if (
-    AIRKOREA_RE.test(userText) &&
-    !usedToolNames.has(AIRKOREA_TOOL_NAME) &&
-    isAvailableOrSyncedAdapter(available, AIRKOREA_TOOL_NAME)
-  ) {
-    return { type: 'tool', name: AIRKOREA_TOOL_NAME }
-  }
-
-  if (
-    PPS_BID_RE.test(userText) &&
-    !usedToolNames.has(PPS_BID_TOOL_NAME) &&
-    isAvailableOrSyncedAdapter(available, PPS_BID_TOOL_NAME)
-  ) {
-    return { type: 'tool', name: PPS_BID_TOOL_NAME }
   }
 
   if (
@@ -1464,7 +1523,6 @@ export function selectUmmayaToolChoiceOverride({
 
   const shouldForceAviation =
     latestToolResult.includes('KMA aviation tool-choice mismatch') ||
-    (airportAviationQuery && !usedAviationTool) ||
     needsGimpoAviationFollowup
   if (shouldForceAviation) {
     const name = selectKmaAviationTool(
@@ -1477,9 +1535,7 @@ export function selectUmmayaToolChoiceOverride({
   }
 
   const shouldForceKmaAnalysis =
-    latestToolResult.includes('KMA analysis tool-choice mismatch') ||
-    (isKmaAnalysisMapText(userText) &&
-      !usedToolNames.has(KMA_ANALYSIS_CHART_TOOL_NAME))
+    latestToolResult.includes('KMA analysis tool-choice mismatch')
   if (
     shouldForceKmaAnalysis &&
     isAvailableOrSyncedAdapter(available, KMA_ANALYSIS_CHART_TOOL_NAME)
@@ -1501,14 +1557,19 @@ export function selectUmmayaToolChoiceOverride({
     usedToolNames,
     messages,
   )
-  if (tagoToolName) {
+  const hasTagoBusFollowupEvidence =
+    hasSuccessfulStationSearch(messages) ||
+    hasSuccessfulRouteSearch(messages) ||
+    hasSuccessfulRouteStationSearch(messages)
+  const hasTagoBusValidationMismatch =
+    latestToolResult.includes('Public-data tool-choice mismatch') &&
+    latestToolResult.includes('matches TAGO bus adapters')
+  if (tagoToolName && (hasTagoBusFollowupEvidence || hasTagoBusValidationMismatch)) {
     return { type: 'tool', name: tagoToolName }
   }
 
   const shouldForceProtected =
-    latestToolResult.includes('Protected-domain tool-choice mismatch') ||
-    (PROTECTED_QUERY_RE.test(userText) &&
-      !hasAnyToolUse(usedToolNames, PROTECTED_CHECK_TOOLS))
+    latestToolResult.includes('Protected-domain tool-choice mismatch')
   if (shouldForceProtected) {
     const name = selectProtectedCheckTool(`${userText}\n${latestToolResult}`, available)
     if (name) return { type: 'tool', name }
