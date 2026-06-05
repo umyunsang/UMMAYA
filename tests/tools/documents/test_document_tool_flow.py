@@ -1125,8 +1125,10 @@ def test_document_save_blocks_explicit_local_path_extension_mismatch(
 
 
 _SAFE_ARTIFACT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
-_WEB_FORM_SOURCE_DIR = Path(".evidence/public-document-design-web-forms-20260604/sources")
-_SEOUL_CULTURE_DOCX = _WEB_FORM_SOURCE_DIR / "seoul-culture-application-plan.docx"
+_PUBLIC_FORM_FIXTURE_DIR = (
+    Path(__file__).parents[2] / "fixtures" / "documents" / "public_forms" / "sources"
+)
+_SEOUL_CULTURE_DOCX = _PUBLIC_FORM_FIXTURE_DIR / "seoul-culture-application-plan.docx"
 
 
 def _write_minimal_docx(path: Path) -> None:

@@ -49,6 +49,14 @@ _KNOWN_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
         "numpy",
         "torch",
         "python-docx",
+        "openpyxl",
+        "python-pptx",
+        "defusedxml",
+        "pypdf",
+        "pypdfium2",
+        "unhwp",
+        "fonttools",
+        "odfdo",
         "pyyaml",
     }
 )

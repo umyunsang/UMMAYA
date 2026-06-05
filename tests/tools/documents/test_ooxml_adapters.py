@@ -49,8 +49,10 @@ from ummaya.tools.documents.tool_defs import (
     DocumentStylePatch,
 )
 
-_WEB_FORM_SOURCE_DIR = Path(".evidence/public-document-design-web-forms-20260604/sources")
-_SEOUL_CULTURE_DOCX = _WEB_FORM_SOURCE_DIR / "seoul-culture-application-plan.docx"
+_PUBLIC_FORM_FIXTURE_DIR = (
+    Path(__file__).parents[2] / "fixtures" / "documents" / "public_forms" / "sources"
+)
+_SEOUL_CULTURE_DOCX = _PUBLIC_FORM_FIXTURE_DIR / "seoul-culture-application-plan.docx"
 
 
 def test_default_registry_uses_separate_ooxml_adapters() -> None:

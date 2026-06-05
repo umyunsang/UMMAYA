@@ -22,9 +22,11 @@ from ummaya.tools.documents.models import (
     TableCell,
 )
 
-_WEB_FORM_SOURCE_DIR = Path(".evidence/public-document-design-web-forms-20260604/sources")
-_SEOUL_CULTURE_DOCX = _WEB_FORM_SOURCE_DIR / "seoul-culture-application-plan.docx"
-_SEOUL_DDP_DOCX = _WEB_FORM_SOURCE_DIR / "seoul-ddp-design-fair-application.docx"
+_PUBLIC_FORM_FIXTURE_DIR = (
+    Path(__file__).parents[2] / "fixtures" / "documents" / "public_forms" / "sources"
+)
+_SEOUL_CULTURE_DOCX = _PUBLIC_FORM_FIXTURE_DIR / "seoul-culture-application-plan.docx"
+_SEOUL_DDP_DOCX = _PUBLIC_FORM_FIXTURE_DIR / "seoul-ddp-design-fair-application.docx"
 
 
 def test_autonomous_fill_planner_consumes_ir_and_infers_next_week_values() -> None:
