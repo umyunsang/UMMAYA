@@ -31,6 +31,27 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _PYPROJECT = _REPO_ROOT / "pyproject.toml"
+_SPEC_DRIVEN_RUNTIME_ADDITIONS = frozenset(
+    {
+        # Spec 2802 Public AX document harness promotes python-docx for
+        # read-only DOCX inspection after fixture-backed gate evidence.
+        "python-docx",
+        # Spec 2802 promotes bounded OOXML/PDF runtime engines after
+        # fixture-backed adapter, render/re-read, and Evidence Fabric gates.
+        "defusedxml",
+        "fonttools",
+        "openpyxl",
+        "pypdf",
+        "pypdfium2",
+        "python-pptx",
+        # Spec 2802 promotes read-only legacy HWP inspection after
+        # fixture-backed extraction evidence; write remains blocked.
+        "unhwp",
+        # Spec 2802 promotes bounded ODT/ODS/ODP writer support after
+        # ODF standard, license, and local fixture evidence.
+        "odfdo",
+    }
+)
 
 
 def _git(*args: str) -> str:
@@ -135,11 +156,12 @@ def test_no_new_runtime_dependencies(base_ref: str) -> None:
     except subprocess.CalledProcessError as exc:
         pytest.skip(f"Could not read pyproject.toml at {base_ref!r}: {exc}")
 
-    added = current - baseline
+    added = current - baseline - _SPEC_DRIVEN_RUNTIME_ADDITIONS
     assert not added, (
         f"SC-008 regression: Spec 033 must not add runtime dependencies. "
         f"New entries found vs {base_ref!r}: {sorted(added)!r}.  "
         "AGENTS.md hard rule: 'Never add a dependency outside a spec-driven PR' "
         "— Spec 033 plan.md §Technical Context declares zero new dependencies. "
-        "If a new dep is truly required, open a separate spec-driven PR."
+        "Spec-driven additions must be listed in this test with their owning "
+        "spec and promotion evidence."
     )
