@@ -87,12 +87,12 @@ class TestMCPToolsListShape:
         tools = response["result"]["tools"]
         # Subscribe is deferred out of the active surface until UMMAYA owns an
         # app/push delivery runtime. The MCP tool list mirrors the active
-        # registry: 162 tools after Spec #2800 adds active KMA APIHub structured
+        # registry: 154 tools after Spec #2800 adds active KMA APIHub structured
         # adapters, the KMA URL expansion adds five non-structured URL
-        # operations, TAGO exposes route-station lookup, and Spec #2802 adds
-        # nine local Public AX document harness tools. Disabled/retired catalog
+        # operations, TAGO exposes route-station lookup, and Spec #2802 exposes
+        # one local Public AX document primitive. Disabled/retired catalog
         # operations remain non-callable.
-        assert len(tools) == 162, f"Tool list count drift: got {len(tools)}, expected 162"
+        assert len(tools) == 154, f"Tool list count drift: got {len(tools)}, expected 154"
 
     def test_tools_list_entries_have_required_keys(self, mcp_server: MCPServer) -> None:
         response = asyncio.run(

@@ -272,7 +272,7 @@ async def test_complete_with_tools(
 def test_serialize_tool_definition_inlines_local_json_schema_refs() -> None:
     """Provider payload must not expose Pydantic-local $defs/$ref schemas."""
     document_tool = next(
-        tool for tool in build_document_tool_definitions() if tool.id == "document_inspect"
+        tool for tool in build_document_tool_definitions() if tool.id == "document"
     )
     raw_tool = document_tool.to_openai_tool()
     raw_parameters = raw_tool["function"]["parameters"]  # type: ignore[index]
@@ -290,6 +290,18 @@ def test_serialize_tool_definition_inlines_local_json_schema_refs() -> None:
     assert isinstance(document_parameter, dict)
     assert document_parameter["type"] == "object"
     assert "hwpx" in json.dumps(document_parameter)
+
+
+def test_document_tool_description_forbids_pre_check_file_absence_claims() -> None:
+    """The model-facing document primitive must not prime false local-file absence claims."""
+    document_tool = next(
+        tool for tool in build_document_tool_definitions() if tool.id == "document"
+    )
+    raw_tool = document_tool.to_openai_tool()
+    description = raw_tool["function"]["description"]  # type: ignore[index]
+    assert isinstance(description, str)
+    assert "claim that a local/Downloads file is missing before this tool checks it" in description
+    assert "checking the document location and contents first" in description
 
 
 @respx.mock

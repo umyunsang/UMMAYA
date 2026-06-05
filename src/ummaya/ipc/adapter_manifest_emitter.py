@@ -255,7 +255,7 @@ def _build_entries(  # noqa: C901, ANN401 — three-source walker, refactor defe
     except Exception:
         tools_list = []
 
-    root_primitive_tool_ids = frozenset({"locate", "find", "check", "send"})
+    root_primitive_tool_ids = frozenset({"locate", "find", "check", "send", "document"})
 
     for tool in tools_list:
         tool_id_opt: str | None = tool.id if hasattr(tool, "id") else getattr(tool, "tool_id", None)

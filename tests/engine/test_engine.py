@@ -267,6 +267,58 @@ def test_available_adapters_context_constrains_from_primary_candidate() -> None:
     )
 
 
+def test_available_adapters_context_prioritizes_document_primitive() -> None:
+    """A local office-document edit request should expose document before locate."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "이 HWPX 문서를 13주차로 작성하고 compact diff로 변경사항을 보여줘: "
+        "/Users/um-yunsang/Downloads/SW중심대학사업 주간활동일지(학과_팀명).hwpx"
+    )
+
+    assert message is not None
+    assert turn_tool_ids[0] == "document"
+    content = message.content or ""
+    assert "tool_id: document" in content
+    assert "document.path" in content
+    assert "Do not call locate" in content
+    assert "tool_id: kakao_keyword_search" not in content
+    assert "tool_id: kakao_address_search" not in content
+
+
+def test_available_adapters_context_routes_natural_document_work_without_extension() -> None:
+    """A natural local form-writing request must not fall through to location tools."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "다운로드 폴더에 있는 SW중심대학사업 현장미러형연계프로젝트 "
+        "주간활동일지 양식을 13주차 활동일지로 작성해줘."
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "document"
+    assert "tool_id: document" in content
+    assert "tool_id: kakao_keyword_search" not in content
+    assert "tool_id: kakao_address_search" not in content
+
+
 def test_available_adapters_context_preserves_locate_for_location_candidates() -> None:
     """Location-dependent candidates remain exposed as concrete adapter tools."""
 

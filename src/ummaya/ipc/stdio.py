@@ -35,6 +35,7 @@ import time
 import uuid
 from collections.abc import Callable, Collection
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Final, Literal, cast
 
@@ -876,6 +877,90 @@ _KMA_ANALYSIS_MAP_USER_QUERY_RE: Final = re.compile(
     r"(일기도|분석일기도|지도\s*자료|비구름|바람\s*흐름|synoptic|weather\s*chart)",
     re.IGNORECASE,
 )
+_DOCUMENT_WRITE_REQUEST_RE: Final = re.compile(
+    r"(작성|수정|편집|채우|입력|변경|저장|write|edit|fill|apply|save)",
+    re.IGNORECASE,
+)
+_DOCUMENT_SAVE_REQUEST_RE: Final = re.compile(
+    r"(저장|내보내|export|save)",
+    re.IGNORECASE,
+)
+_DOCUMENT_INTERNAL_USER_QUERY_KEY: Final = "__ummaya_user_query"
+_DOCUMENT_EXPLICIT_LOCAL_PATH_RE: Final = re.compile(
+    r"(?P<path>(?:~|/)[^\s\"'<>]+?\."
+    r"(?:hwpx|hwp|docx|pdf|xlsx|pptx|odt|ods|odp|doc|xls|ppt|csv|txt|md|json|xml|html))",
+    re.IGNORECASE,
+)
+_DOCUMENT_REVIEW_REQUEST_RE: Final = re.compile(
+    r"(diff|compact|변경사항|렌더|미리보기|render|viewport|page)",
+    re.IGNORECASE,
+)
+_DOCUMENT_DIFF_ONLY_FINAL_REQUEST_RE: Final = re.compile(
+    r"(실제(?:로)?\s*바뀐\s*내용만|바뀐\s*내용만|변경된\s*부분만|변경사항만|"
+    r"actual\s+changed\s+content\s+only|only\s+changed)",
+    re.IGNORECASE,
+)
+_DOCUMENT_ARTIFACT_ID_RE: Final = re.compile(
+    r"(?:^|[\s\"'`(])(?:artifact_id|artifact\s*id|artifact|아티팩트)?\s*"
+    r"((?:source|working|derivative|render|export|viewport)-[A-Za-z0-9][A-Za-z0-9_.-]{0,127})"
+    r"(?=$|[^A-Za-z0-9_.-])",
+    re.IGNORECASE,
+)
+_DOCUMENT_MUTATION_TOOL_IDS: Final[frozenset[str]] = frozenset(
+    {"document_apply_fill", "document_apply_style"}
+)
+_DOCUMENT_FINAL_ANSWER_OVERCLAIM_MARKERS: Final[frozenset[str]] = frozenset(
+    {
+        "활동 내용",
+        "주요 성과",
+        "문제점",
+        "개선사항",
+        "다음 주 계획",
+        "향후 계획",
+        "개발 활동",
+        "시각적 비교 기능",
+        "구현 완료",
+        "UMMAYA Phase",
+        "도구 결과",
+        "작성하겠습니다",
+        "작성해 드리겠습니다",
+        "보여드리겠습니다",
+        "확인해보겠습니다",
+        "구성하고",
+        "작성하여",
+        "활동일지로 작성",
+        "주간 활동일지",
+        "다음 주차 활동일지",
+        "다음 주 활동 계획",
+        "활동 계획",
+        "주요 일정",
+        "주요 변경사항",
+        "변경 요약",
+        "도큐먼트 하네스",
+        "CLI 툴 체인",
+        "품질 검증",
+        "파이프라인 최적화",
+        "시각적 diff",
+        "시각적 차이 비교",
+        "렌더링 아티팩트",
+        "아티팩트도 생성",
+        "아티팩트 생성",
+        "저장되었습니다",
+        "저장 완료",
+        "성공적으로 저장",
+        "업데이트가 완료되었습니다",
+        "표시되어 있습니다",
+        "표시하겠습니다",
+        "확인하실 수 있습니다",
+        "changes in the TUI",
+        "준비되었습니다",
+        "📋",
+        "📅",
+        "🔄",
+        "📊",
+        "| 항목 |",
+    }
+)
 _KMA_ANALYSIS_TOOL_IDS: Final[frozenset[str]] = frozenset(
     {
         "kma_apihub_url_high_resolution_grid_point",
@@ -916,6 +1001,102 @@ def _initial_concrete_tool_choice_for_query(
 ) -> str | None:
     """Force direct first calls only for unambiguous single-adapter lookups."""
     available = set(available_tool_names)
+    return _document_tool_choice_for_query(
+        user_query,
+        available,
+    ) or _initial_public_data_tool_choice_for_query(user_query, available)
+
+
+def _document_tool_choice_for_query(
+    user_query: str,
+    available: set[str],
+) -> str | None:
+    """Force unambiguous local document turns through the single document primitive."""
+    from ummaya.tools.search import is_document_harness_query  # noqa: PLC0415
+
+    if (
+        _DOCUMENT_ARTIFACT_ID_RE.search(user_query)
+        and _DOCUMENT_REVIEW_REQUEST_RE.search(user_query)
+        and "document" in available
+    ):
+        return "document"
+    if is_document_harness_query(user_query) and "document" in available:
+        return "document"
+    return None
+
+
+def _normalize_document_root_call_for_user_intent(
+    fname: str,
+    args_obj: dict[str, object],
+    latest_user_utt: str,
+) -> dict[str, object]:
+    """Align document primitive read-only calls with explicit write/save intent."""
+    if fname != "document" or args_obj.get("tool_id") != "document":
+        return args_obj
+    params_obj = args_obj.get("params")
+    if not isinstance(params_obj, dict):
+        return args_obj
+    normalized_params = dict(params_obj)
+    internal_user_query = normalized_params.pop(_DOCUMENT_INTERNAL_USER_QUERY_KEY, None)
+    intent_text = latest_user_utt
+    if isinstance(internal_user_query, str) and internal_user_query.strip():
+        intent_text = internal_user_query.strip()
+    _normalize_document_path_from_user_query(normalized_params, intent_text)
+    operation = str(params_obj.get("operation") or "").casefold()
+    changed = normalized_params != params_obj
+    if operation in {"fill", "save"} and intent_text and _DOCUMENT_WRITE_REQUEST_RE.search(
+        intent_text
+    ):
+        if _DOCUMENT_SAVE_REQUEST_RE.search(intent_text):
+            normalized_params["operation"] = "save"
+        normalized_params["instruction"] = intent_text
+        return {**args_obj, "params": normalized_params}
+    if operation not in {"inspect", "extract"}:
+        return {**args_obj, "params": normalized_params} if changed else args_obj
+    if not intent_text or not _DOCUMENT_WRITE_REQUEST_RE.search(intent_text):
+        return {**args_obj, "params": normalized_params} if changed else args_obj
+
+    normalized_params["operation"] = (
+        "save" if _DOCUMENT_SAVE_REQUEST_RE.search(intent_text) else "fill"
+    )
+    normalized_params["instruction"] = intent_text
+    return {**args_obj, "params": normalized_params}
+
+
+def _normalize_document_path_from_user_query(
+    normalized_params: dict[str, object],
+    intent_text: str,
+) -> None:
+    if not intent_text:
+        return
+    document_obj = normalized_params.get("document")
+    if not isinstance(document_obj, dict):
+        return
+    current_path = document_obj.get("path")
+    if isinstance(current_path, str) and Path(current_path).expanduser().exists():
+        return
+    expected_format = document_obj.get("expected_format")
+    expected_suffix = f".{expected_format}".lower() if isinstance(expected_format, str) else None
+    explicit_paths: list[Path] = []
+    for match in _DOCUMENT_EXPLICIT_LOCAL_PATH_RE.finditer(intent_text):
+        candidate = Path(match.group("path").rstrip(".,;:)]}）")).expanduser()
+        if expected_suffix is not None and candidate.suffix.lower() != expected_suffix:
+            continue
+        if candidate.exists():
+            explicit_paths.append(candidate.resolve())
+    if not explicit_paths:
+        return
+    normalized_params["document"] = {
+        **document_obj,
+        "path": str(explicit_paths[0]),
+    }
+
+
+def _initial_public_data_tool_choice_for_query(
+    user_query: str,
+    available: set[str],
+) -> str | None:
+    """Force direct first calls only for unambiguous public-data lookups."""
     if (
         _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query)
         and _KMA_ANALYSIS_CHART_TOOL_ID in available
@@ -1041,6 +1222,7 @@ def _conversation_has_successful_any_primitive_result(llm_messages: list[Any]) -
         or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="locate")
         or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="check")
         or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="send")
+        or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="document")
     )
 
 
@@ -1658,6 +1840,80 @@ def _payload_dict_is_error_like(payload: dict[str, object]) -> bool:
     return isinstance(error, str) and bool(error)
 
 
+def _message_role(msg: Any) -> object:
+    """Return a transcript message role across SDK and dict shapes."""
+    return getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
+
+
+def _message_content(msg: Any) -> object:
+    """Return a transcript message content across SDK and dict shapes."""
+    content = getattr(msg, "content", None)
+    if content is None and isinstance(msg, dict):
+        content = msg.get("content")
+    return content
+
+
+def _decode_tool_result_payload_content(content: object) -> object | None:
+    """Decode the payload stored inside a tool_result message/content part."""
+    if isinstance(content, str):
+        try:
+            payload: object = _stdlib_json.loads(content)
+            return payload
+        except _stdlib_json.JSONDecodeError:
+            return None
+    if isinstance(content, (dict, list)):
+        return content
+    return None
+
+
+def _iter_tool_result_payloads(msg: Any) -> list[tuple[str | None, str | None, object]]:
+    """Return tool_result payloads from OpenAI tool-role or CC user-role shapes."""
+    role = _message_role(msg)
+    if role == "tool":
+        content = _message_content(msg)
+        payload = _decode_tool_result_payload_content(content)
+        if payload is None:
+            return []
+        call_id = getattr(msg, "tool_call_id", None) or (
+            msg.get("tool_call_id") if isinstance(msg, dict) else None
+        )
+        name = getattr(msg, "name", None) or (msg.get("name") if isinstance(msg, dict) else None)
+        return [
+            (
+                call_id if isinstance(call_id, str) else None,
+                name if isinstance(name, str) else None,
+                payload,
+            )
+        ]
+    if role != "user":
+        return []
+    content = _message_content(msg)
+    if not isinstance(content, list):
+        return []
+    payloads: list[tuple[str | None, str | None, object]] = []
+    for item in content:
+        if not isinstance(item, dict) or item.get("type") != "tool_result":
+            continue
+        payload = _decode_tool_result_payload_content(item.get("content"))
+        if payload is None:
+            continue
+        call_id = item.get("tool_use_id")
+        payloads.append((call_id if isinstance(call_id, str) else None, None, payload))
+    return payloads
+
+
+def _message_is_tool_result_only(msg: Any) -> bool:
+    """Return True for CC-style user messages that only carry tool_result blocks."""
+    if _message_role(msg) != "user":
+        return False
+    content = _message_content(msg)
+    return (
+        isinstance(content, list)
+        and bool(content)
+        and all(isinstance(item, dict) and item.get("type") == "tool_result" for item in content)
+    )
+
+
 def _tool_result_payload_is_error(payload: object) -> bool:
     """Return True for structured tool-result payloads that are errors."""
     if not isinstance(payload, dict):
@@ -1668,6 +1924,224 @@ def _tool_result_payload_is_error(payload: object) -> bool:
     return isinstance(result, dict) and _payload_dict_is_error_like(
         {str(key): value for key, value in result.items()}
     )
+
+
+def _payload_has_successful_document_tool_id(
+    payload: object,
+    tool_ids: frozenset[str],
+) -> bool:
+    """Return True when a structured tool result contains a successful document tool."""
+    if isinstance(payload, list):
+        return any(_payload_has_successful_document_tool_id(item, tool_ids) for item in payload)
+    if not isinstance(payload, dict):
+        return False
+    tool_id = payload.get("tool_id")
+    if isinstance(tool_id, str) and tool_id in tool_ids:
+        status = payload.get("status")
+        status_text = str(status).lower() if status is not None else "ok"
+        if status_text in {"ok", "succeeded", "completed", "ready"} and not (
+            _tool_result_payload_is_error(payload)
+        ):
+            return True
+    return any(
+        _payload_has_successful_document_tool_id(value, tool_ids) for value in payload.values()
+    )
+
+
+def _conversation_has_successful_document_tool_result(
+    llm_messages: list[Any],
+    *,
+    tool_ids: frozenset[str],
+) -> bool:
+    """Return True when a concrete document tool has a successful tool_result."""
+    return _conversation_has_successful_document_tool_result_after(
+        llm_messages,
+        tool_ids=tool_ids,
+        after_index=-1,
+    )
+
+
+def _conversation_has_successful_document_tool_result_after(
+    llm_messages: list[Any],
+    *,
+    tool_ids: frozenset[str],
+    after_index: int,
+) -> bool:
+    """Return True when a successful document tool_result appears after an index."""
+    start_index = max(0, after_index + 1)
+    for msg in llm_messages[start_index:]:
+        for _, _, payload in _iter_tool_result_payloads(msg):
+            if _payload_has_successful_document_tool_id(payload, tool_ids):
+                return True
+    return False
+
+
+def _conversation_has_successful_document_diff_result_after(
+    llm_messages: list[Any],
+    *,
+    after_index: int,
+) -> bool:
+    """Return True when a successful document mutation/render diff appears."""
+    start_index = max(0, after_index + 1)
+    for msg in llm_messages[start_index:]:
+        for _, _, payload in _iter_tool_result_payloads(msg):
+            document_result = _extract_successful_document_result_payload(payload)
+            if document_result is not None and _document_diff_changes(document_result):
+                return True
+    return False
+
+
+def _conversation_has_successful_document_completion_result_after(
+    llm_messages: list[Any],
+    *,
+    after_index: int,
+) -> bool:
+    """Return True when the latest turn has a completed document/review result."""
+    start_index = max(0, after_index + 1)
+    for msg in llm_messages[start_index:]:
+        for _, _, payload in _iter_tool_result_payloads(msg):
+            if _extract_successful_document_completion_payload(payload) is not None:
+                return True
+    return False
+
+
+def _extract_successful_document_completion_payload(payload: object) -> dict[str, object] | None:
+    """Return a successful document completion payload, excluding inspect-only results."""
+    if isinstance(payload, list):
+        return _extract_successful_document_completion_from_sequence(payload)
+    if isinstance(payload, dict):
+        return _extract_successful_document_completion_from_dict(payload)
+    return None
+
+
+def _extract_successful_document_completion_from_sequence(
+    payload: list[object],
+) -> dict[str, object] | None:
+    for item in reversed(payload):
+        result = _extract_successful_document_completion_payload(item)
+        if result is not None:
+            return result
+    return None
+
+
+def _extract_successful_document_completion_from_dict(
+    payload: dict[str, object],
+) -> dict[str, object] | None:
+    if _tool_result_payload_is_error(payload):
+        return None
+
+    direct = _direct_successful_document_completion_payload(payload)
+    if direct is not None:
+        return direct
+
+    result = payload.get("result")
+    if isinstance(result, dict):
+        nested = _extract_successful_document_completion_payload(result)
+        if nested is not None:
+            return nested
+    return _extract_successful_document_completion_from_sequence(list(payload.values()))
+
+
+def _direct_successful_document_completion_payload(
+    payload: dict[str, object],
+) -> dict[str, object] | None:
+    tool_id = payload.get("tool_id")
+    if not isinstance(tool_id, str) or tool_id not in {"document", "document_render"}:
+        return None
+    status = payload.get("status")
+    status_text = str(status).lower() if status is not None else "ok"
+    if status_text not in {"ok", "succeeded", "completed", "ready"}:
+        return None
+    if tool_id == "document" and _document_result_is_inspect_only(payload):
+        return None
+    return payload
+
+
+def _document_result_is_inspect_only(payload: dict[str, object]) -> bool:
+    """Return True for document primitive results that only inspected a file."""
+    if _document_diff_changes(payload):
+        return False
+    diff = payload.get("diff")
+    if diff is None and isinstance(payload.get("extraction"), dict):
+        return True
+    if diff is None and payload.get("render_artifacts") == []:
+        artifact_refs = payload.get("artifact_refs")
+        if isinstance(artifact_refs, list) and artifact_refs:
+            has_only_source_refs = all(
+                isinstance(ref, str) and ref.startswith("source-") for ref in artifact_refs
+            )
+            if has_only_source_refs:
+                return True
+    summary = str(payload.get("text_summary") or "").casefold()
+    return (
+        "inspection completed through the document primitive" in summary
+        or "document inspection completed" in summary
+        or "document extraction completed" in summary
+    )
+
+
+def _latest_user_message_index(llm_messages: list[Any]) -> int:
+    """Return the latest user-message index in the LLM transcript."""
+    for index in range(len(llm_messages) - 1, -1, -1):
+        msg = llm_messages[index]
+        if _message_role(msg) == "user" and not _message_is_tool_result_only(msg):
+            return index
+    return -1
+
+
+def _check_document_workflow_terminated_without_required_tool(
+    llm_messages: list[Any],
+    latest_user_utt: str,
+    *,
+    candidate_final_answer: str = "",
+) -> dict[str, str] | None:
+    """Return the missing document tool when a document workflow tries to stop early."""
+    from ummaya.tools.search import is_document_harness_query  # noqa: PLC0415
+
+    text_for_intent = f"{latest_user_utt}\n{candidate_final_answer}"
+    latest_user_index = _latest_user_message_index(llm_messages)
+    has_document_workflow_activity = _conversation_has_successful_document_tool_result(
+        llm_messages,
+        tool_ids=frozenset(
+            {
+                "document",
+                "document_render",
+                "document_inspect",
+                "document_extract",
+                "document_form_schema",
+                "document_copy_for_edit",
+                "document_apply_fill",
+                "document_apply_style",
+                "document_validate_public_form",
+                "document_save",
+            }
+        ),
+    )
+    if not is_document_harness_query(latest_user_utt) and not has_document_workflow_activity:
+        return None
+    wants_write = bool(_DOCUMENT_WRITE_REQUEST_RE.search(text_for_intent))
+    wants_review = bool(_DOCUMENT_REVIEW_REQUEST_RE.search(text_for_intent))
+    if not wants_write and not wants_review:
+        return None
+    has_document_result_for_latest_request = (
+        _conversation_has_successful_document_completion_result_after(
+            llm_messages,
+            after_index=latest_user_index,
+        )
+    )
+    if has_document_result_for_latest_request:
+        return None
+    return {
+        "tool_id": "document",
+        "message": (
+            "Document workflow request has no successful document primitive result "
+            "for the latest user turn. Do NOT answer from intended edits or "
+            "fabricate compact diff text. Call document once with the document "
+            "locator, requested operation, instruction, and any inferred patches; "
+            "the runtime will inspect, copy, mutate, render, and return the "
+            "automatic compact diff."
+        ),
+    }
 
 
 def _lookup_call_ids_for_tool(
@@ -1713,24 +2187,10 @@ def _tool_result_payload_for_call(
     matching_call_ids: set[str],
 ) -> object | None:
     """Parse a lookup tool-result message when it matches one of call IDs."""
-    role = getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
-    if role != "tool":
-        return None
-    call_id = getattr(msg, "tool_call_id", None) or (
-        msg.get("tool_call_id") if isinstance(msg, dict) else None
-    )
-    if not isinstance(call_id, str) or call_id not in matching_call_ids:
-        return None
-    content = getattr(msg, "content", None) or (
-        msg.get("content") if isinstance(msg, dict) else None
-    )
-    if not isinstance(content, str):
-        return None
-    try:
-        payload: object = _stdlib_json.loads(content)
-        return payload
-    except _stdlib_json.JSONDecodeError:
-        return None
+    for call_id, _, payload in _iter_tool_result_payloads(msg):
+        if isinstance(call_id, str) and call_id in matching_call_ids:
+            return payload
+    return None
 
 
 def _conversation_has_successful_lookup(
@@ -1796,24 +2256,11 @@ def _tool_result_payload_for_primitive_call(
     matching_call_ids: set[str],
 ) -> object | None:
     """Parse a primitive tool-result message when it matches one of call IDs."""
-    role = getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
-    if role != "tool":
-        return None
-    call_id = getattr(msg, "tool_call_id", None) or (
-        msg.get("tool_call_id") if isinstance(msg, dict) else None
-    )
-    if not isinstance(call_id, str) or call_id not in matching_call_ids:
-        return None
-    content = getattr(msg, "content", None) or (
-        msg.get("content") if isinstance(msg, dict) else None
-    )
-    if not isinstance(content, str):
-        return None
-    try:
-        payload: object = _stdlib_json.loads(content)
-        return payload
-    except _stdlib_json.JSONDecodeError:
-        return None
+    _ = primitive
+    for call_id, _, payload in _iter_tool_result_payloads(msg):
+        if isinstance(call_id, str) and call_id in matching_call_ids:
+            return payload
+    return None
 
 
 def _tool_result_payload_for_primitive(
@@ -1828,24 +2275,17 @@ def _tool_result_payload_for_primitive(
     resolved state of the most recent primitive invocation, not a specific
     call handle.
     """
-    role = getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
-    if role != "tool":
-        return None
-    name = getattr(msg, "name", None) or (msg.get("name") if isinstance(msg, dict) else None)
-    content = getattr(msg, "content", None) or (
-        msg.get("content") if isinstance(msg, dict) else None
-    )
-    if not isinstance(content, str):
-        return None
-    try:
-        payload: object = _stdlib_json.loads(content)
+    for _, name, payload in _iter_tool_result_payloads(msg):
         if name == primitive:
             return payload
         if isinstance(payload, dict) and payload.get("kind") == primitive:
             return payload
-        return None
-    except _stdlib_json.JSONDecodeError:
-        return None
+        result = _primitive_payload_result_dict(payload)
+        if primitive == "document" and result is not None:
+            tool_id = result.get("tool_id")
+            if tool_id in {"document", "document_render"}:
+                return payload
+    return None
 
 
 def _primitive_payload_is_success(payload: object, *, primitive: str) -> bool:
@@ -1859,6 +2299,10 @@ def _primitive_payload_is_success(payload: object, *, primitive: str) -> bool:
         if isinstance(result, dict) and result.get("status") == "succeeded":
             return True
         return payload.get("status") == "succeeded"
+    if primitive == "document":
+        if isinstance(result, dict):
+            return result.get("status") == "ok"
+        return payload.get("status") == "ok"
     return True
 
 
@@ -2177,7 +2621,7 @@ def _latest_successful_primitive_observation(
         )
         primitive: object = tool_message_name
         payload: object | None = None
-        if primitive not in {"find", "locate", "check", "send"}:
+        if primitive not in {"find", "locate", "check", "send", "document"}:
             if not isinstance(content, str):
                 continue
             try:
@@ -2187,7 +2631,7 @@ def _latest_successful_primitive_observation(
             if not isinstance(parsed_payload, dict):
                 continue
             primitive = parsed_payload.get("kind")
-            if primitive not in {"find", "locate", "check", "send"}:
+            if primitive not in {"find", "locate", "check", "send", "document"}:
                 continue
             payload = parsed_payload
         if payload is None:
@@ -2203,6 +2647,183 @@ def _latest_successful_primitive_observation(
             "payload": _scrub_tool_result_for_final_observation(payload),
         }
     return None
+
+
+def _latest_successful_document_result(llm_messages: list[Any]) -> dict[str, object] | None:
+    """Return the latest successful document primitive result payload."""
+    for msg in reversed(llm_messages):
+        payload = _tool_result_payload_for_primitive(msg, primitive="document")
+        if payload is not None and _primitive_payload_is_success(payload, primitive="document"):
+            result = _primitive_payload_result_dict(payload)
+            if result is not None:
+                return result
+            if isinstance(payload, dict):
+                return cast("dict[str, object]", payload)
+        role = getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
+        if role != "tool":
+            continue
+        content = getattr(msg, "content", None)
+        if content is None and isinstance(msg, dict):
+            content = msg.get("content")
+        parsed_payload: object = None
+        if isinstance(content, str):
+            try:
+                parsed_payload = _stdlib_json.loads(content)
+            except _stdlib_json.JSONDecodeError:
+                continue
+        else:
+            parsed_payload = content
+        document_result = _extract_successful_document_result_payload(parsed_payload)
+        if document_result is not None:
+            return document_result
+    return None
+
+
+def _extract_successful_document_result_payload(payload: object) -> dict[str, object] | None:
+    """Return a successful document result from direct, wrapped, or nested payloads."""
+    if isinstance(payload, list):
+        return _extract_successful_document_result_from_sequence(payload)
+    if isinstance(payload, dict):
+        return _extract_successful_document_result_from_dict(payload)
+    return None
+
+
+def _extract_successful_document_result_from_sequence(
+    payload: list[object],
+) -> dict[str, object] | None:
+    """Return the last successful document result from a payload sequence."""
+    for item in reversed(payload):
+        document_result = _extract_successful_document_result_payload(item)
+        if document_result is not None:
+            return document_result
+    return None
+
+
+def _extract_successful_document_result_from_dict(
+    payload: dict[str, object],
+) -> dict[str, object] | None:
+    """Return a successful document result from a payload mapping."""
+    if _tool_result_payload_is_error(payload):
+        return None
+    result = payload.get("result")
+    if isinstance(result, dict):
+        document_result = _extract_successful_document_result_payload(result)
+        if document_result is not None:
+            return document_result
+    if _payload_is_document_result_with_diff(payload):
+        return payload
+    for nested in reversed(list(payload.values())):
+        document_result = _extract_successful_document_result_payload(nested)
+        if document_result is not None:
+            return document_result
+    return None
+
+
+def _payload_is_document_result_with_diff(payload: dict[str, object]) -> bool:
+    """Return True when a payload has the user-visible document diff contract."""
+    diff = payload.get("diff")
+    status = str(payload.get("status") or "ok").lower()
+    return (
+        isinstance(diff, dict)
+        and isinstance(diff.get("changes"), list)
+        and status in {"ok", "succeeded", "completed", "ready"}
+    )
+
+
+def _document_diff_changes(result: dict[str, object]) -> list[dict[str, object]]:
+    """Return structured document diff changes from a document result."""
+    diff = result.get("diff")
+    if not isinstance(diff, dict):
+        return []
+    changes = diff.get("changes")
+    if not isinstance(changes, list):
+        return []
+    return [change for change in changes if isinstance(change, dict)]
+
+
+def _document_result_allowed_claim_text(result: dict[str, object]) -> str:
+    """Build the bounded document-result text a final answer may claim from."""
+    parts: list[str] = []
+    for key in ("tool_id", "status", "text_summary"):
+        value = result.get(key)
+        if value is not None:
+            parts.append(str(value))
+    for change in _document_diff_changes(result):
+        for key in (
+            "change_id",
+            "change_type",
+            "display_label",
+            "target_path",
+            "before_value",
+            "after_value",
+        ):
+            value = change.get(key)
+            if value is not None:
+                parts.append(str(value))
+    return "\n".join(parts)
+
+
+def _document_diff_only_final_answer(
+    latest_user_utt: str,
+    llm_messages: list[Any],
+) -> str | None:
+    """Build a diff-only final answer when the citizen explicitly asks for it."""
+    if not _DOCUMENT_DIFF_ONLY_FINAL_REQUEST_RE.search(latest_user_utt):
+        return None
+    result = _latest_successful_document_result(llm_messages)
+    if result is None:
+        return None
+    changes = _document_diff_changes(result)
+    if not changes:
+        return None
+    lines = ["실제 변경된 내용:"]
+    for change in changes:
+        target_path = str(change.get("display_label") or change.get("target_path") or "document")
+        before = str(change.get("before_value") or "")
+        after = str(change.get("after_value") or "")
+        lines.append(f"- {target_path}: {before} -> {after}")
+    return "\n".join(lines)
+
+
+def _compact_claim_text(text: str) -> str:
+    """Normalize claim text for marker comparison without losing Korean terms."""
+    return re.sub(r"\s+", "", text).casefold()
+
+
+def _final_answer_overclaims_document_edit(
+    text: str,
+    llm_messages: list[Any],
+) -> bool:
+    """Return True when a document final answer adds content absent from the diff."""
+    if not text.strip():
+        return False
+    result = _latest_successful_document_result(llm_messages)
+    if result is None:
+        return False
+    changes = _document_diff_changes(result)
+    if not changes:
+        return False
+    nonempty_lines = [line.strip() for line in text.splitlines() if line.strip()]
+    max_expected_lines = max(8, len(changes) * 4)
+    if len(nonempty_lines) > max_expected_lines:
+        return True
+    allowed = _compact_claim_text(_document_result_allowed_claim_text(result))
+    answer = _compact_claim_text(text)
+    for change in changes:
+        display_label = str(change.get("display_label") or "").strip()
+        target_path = str(change.get("target_path") or "").strip()
+        if not display_label or not target_path:
+            continue
+        if (
+            _compact_claim_text(target_path) in answer
+            and _compact_claim_text(display_label) not in answer
+        ):
+            return True
+    for marker in _DOCUMENT_FINAL_ANSWER_OVERCLAIM_MARKERS:
+        marker_text = _compact_claim_text(marker)
+        if marker_text in answer and marker_text not in allowed:
+            return True
+    return False
 
 
 def _final_answer_observation_message(
@@ -2225,6 +2846,16 @@ def _final_answer_observation_message(
                 observation_json[:_FINAL_ANSWER_OBSERVATION_JSON_LIMIT] + "...[truncated]"
             )
 
+    document_guidance = ""
+    if observation is not None and observation.get("primitive") == "document":
+        document_guidance = (
+            "\nDocument diff changes are the only approved edit claims. "
+            "For document results, mention only result.status, text_summary, "
+            "and diff.changes display_label/target_path/before_value/after_value. Do not add "
+            "activity contents, achievements, plans, problems, improvements, "
+            "or saved fields that are absent from diff.changes.\n"
+        )
+
     return (
         "[UMMAYA FINAL ANSWER OBSERVATION]\n"
         f"{message}\n\n"
@@ -2232,6 +2863,7 @@ def _final_answer_observation_message(
         f"{latest_user_utt}\n\n"
         "Latest successful primitive tool_result JSON:\n"
         f"{observation_json}\n\n"
+        f"{document_guidance}"
         "Use only the observed tool_result data above and the prior tool_result "
         "messages. Do not call another tool. Do not invent names, addresses, "
         "phone numbers, timestamps, weather values, receipt IDs, or source "
@@ -6360,6 +6992,24 @@ async def run(  # noqa: C901
             span.set_attribute("ummaya.tool.dispatched", fname)
             span.set_attribute("ummaya.session.id", session_id)
 
+            if fname == "document" and "tool_id" not in args_obj:
+                args_obj = {
+                    "tool_id": "document",
+                    "params": dict(args_obj),
+                }
+            normalized_document_args = _normalize_document_root_call_for_user_intent(
+                fname,
+                args_obj,
+                _session_latest_user_utterances.get(session_id, ""),
+            )
+            if normalized_document_args is not args_obj:
+                span.set_attribute("ummaya.document.intent_normalized", True)
+                logger.warning(
+                    "_dispatch_primitive: normalized document root call to match latest "
+                    "citizen write/save intent."
+                )
+                args_obj = normalized_document_args
+
             local_document_harness_call = _is_local_document_harness_root_call(fname, args_obj)
             invalid_gated_tool_id = (
                 _invalid_gated_primitive_tool_id_result(fname, args_obj)
@@ -7083,6 +7733,7 @@ async def run(  # noqa: C901
         force_verify_next_turn: str | None = None
         force_lookup_next_turn: str | None = None
         force_submit_next_turn: str | None = None
+        force_document_next_turn: str | None = None
         force_no_tools_next_turn = False
         continue_free_next_turn = False
         mock_disclosure_required = False
@@ -7240,19 +7891,32 @@ async def run(  # noqa: C901
                 )
                 force_submit_next_turn = None
             elif (
+                force_document_next_turn is not None
+                and force_document_next_turn in _tool_definition_names(stream_tools)
+            ):
+                stream_tool_choice = _function_tool_choice(force_document_next_turn)
+                logger.warning(
+                    "_handle_chat_request: forcing concrete document adapter %s "
+                    "after validation gate",
+                    force_document_next_turn,
+                )
+                force_document_next_turn = None
+            elif (
                 force_locate_next_turn
                 or force_verify_next_turn is not None
                 or force_lookup_next_turn is not None
                 or force_submit_next_turn is not None
+                or force_document_next_turn is not None
             ):
                 logger.warning(
                     "_handle_chat_request: continuing turn %d with free tool_choice "
-                    "after validation gate hint (locate=%s check=%s find=%s send=%s)",
+                    "after validation gate hint (locate=%s check=%s find=%s send=%s document=%s)",
                     _turn,
                     force_locate_next_turn,
                     force_verify_next_turn,
                     force_lookup_next_turn,
                     force_submit_next_turn,
+                    force_document_next_turn,
                 )
             try:
                 stream_kwargs: dict[str, object] = {
@@ -7549,6 +8213,37 @@ async def run(  # noqa: C901
                     buffered_visible.clear()
                     continue
 
+                document_followup_gate = _check_document_workflow_terminated_without_required_tool(
+                    llm_messages,
+                    latest_user_utt,
+                )
+                if document_followup_gate is not None:
+                    document_tool_id = document_followup_gate["tool_id"]
+                    try:
+                        document_tool = _ensure_tool_registry().find(document_tool_id)
+                        document_primitive = str(getattr(document_tool, "primitive", "") or "")
+                    except Exception:  # noqa: BLE001
+                        document_primitive = ""
+                    if document_primitive == "find":
+                        force_lookup_next_turn = document_tool_id
+                    elif document_primitive == "send":
+                        force_submit_next_turn = document_tool_id
+                    elif document_primitive == "check":
+                        force_verify_next_turn = document_tool_id
+                    elif document_primitive == "document":
+                        force_document_next_turn = document_tool_id
+                    else:
+                        continue_free_next_turn = True
+                    _append_tool_routing_observation(
+                        (
+                            "rejected final-answer turn — document workflow "
+                            f"missing {document_tool_id}"
+                        ),
+                        document_followup_gate["message"],
+                    )
+                    buffered_visible.clear()
+                    continue
+
                 from ummaya.llm.tool_call_parser import (  # noqa: PLC0415
                     strip_leaked_thinking_markers,
                 )
@@ -7562,9 +8257,46 @@ async def run(  # noqa: C901
                 else:
                     merged_prose = _remove_unneeded_mock_disclosure(merged_prose)
                     merged_prose = _remove_unneeded_live_meta_disclosure(merged_prose)
+                document_followup_gate = _check_document_workflow_terminated_without_required_tool(
+                    llm_messages,
+                    latest_user_utt,
+                    candidate_final_answer=merged_prose,
+                )
+                if document_followup_gate is not None:
+                    document_tool_id = document_followup_gate["tool_id"]
+                    try:
+                        document_tool = _ensure_tool_registry().find(document_tool_id)
+                        document_primitive = str(getattr(document_tool, "primitive", "") or "")
+                    except Exception:  # noqa: BLE001
+                        document_primitive = ""
+                    if document_primitive == "find":
+                        force_lookup_next_turn = document_tool_id
+                    elif document_primitive == "send":
+                        force_submit_next_turn = document_tool_id
+                    elif document_primitive == "check":
+                        force_verify_next_turn = document_tool_id
+                    elif document_primitive == "document":
+                        force_document_next_turn = document_tool_id
+                    else:
+                        continue_free_next_turn = True
+                    _append_tool_routing_observation(
+                        (
+                            "rejected final-answer turn — document workflow "
+                            f"missing {document_tool_id}"
+                        ),
+                        document_followup_gate["message"],
+                    )
+                    buffered_visible.clear()
+                    continue
                 has_successful_tool_result = _conversation_has_successful_any_primitive_result(
                     llm_messages
                 )
+                diff_only_document_answer = _document_diff_only_final_answer(
+                    latest_user_utt,
+                    llm_messages,
+                )
+                if diff_only_document_answer is not None:
+                    merged_prose = diff_only_document_answer
                 if (
                     merged_prose.strip()
                     and _final_answer_looks_like_tool_call_narration(merged_prose)
@@ -7584,6 +8316,47 @@ async def run(  # noqa: C901
                     )
                     buffered_visible.clear()
                     continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
+                    and _final_answer_overclaims_document_edit(merged_prose, llm_messages)
+                ):
+                    if empty_final_retry_count < 2:
+                        empty_final_retry_count += 1
+                        _append_final_answer_observation(
+                            "rejected document final answer overclaimed observed diff",
+                            (
+                                "The previous assistant turn claimed document content or "
+                                "work sections not present in the latest document diff. "
+                                "Document diff changes are the only approved edit claims. "
+                                "Produce a concise Korean final answer using only "
+                                "result.status, text_summary, and diff.changes "
+                                "display_label/target_path/before_value/after_value from "
+                                "the latest document tool_result. Do not add activity content, "
+                                "achievements, next plans, problems, improvements, render "
+                                "artifacts, or document sections unless they appear in "
+                                "diff.changes."
+                            ),
+                        )
+                        buffered_visible.clear()
+                        continue
+                    await write_frame(
+                        ErrorFrame(
+                            session_id=frame.session_id,
+                            correlation_id=frame.correlation_id or str(uuid.uuid4()),
+                            role="backend",
+                            ts=_utcnow(),
+                            kind="error",
+                            code="document_final_answer_overclaim",
+                            message=(
+                                "Model returned an ungrounded document final answer "
+                                "after successful document diff results. No synthetic "
+                                "answer was generated."
+                            ),
+                            details={"retry_count": empty_final_retry_count},
+                        )
+                    )
+                    return
                 if not merged_prose.strip() and has_successful_tool_result:
                     if empty_final_retry_count < 2:
                         empty_final_retry_count += 1
@@ -8579,6 +9352,7 @@ async def run(  # noqa: C901
                     or force_verify_next_turn is not None
                     or force_lookup_next_turn is not None
                     or force_submit_next_turn is not None
+                    or force_document_next_turn is not None
                     or continue_free_next_turn
                 ):
                     if continue_free_next_turn:
@@ -9204,6 +9978,37 @@ async def run(  # noqa: C901
                     await _handle_tool_call(frame)
                 except Exception as exc:  # noqa: BLE001
                     logger.exception("tool_call handler failed: %s", exc)
+                    try:
+                        from ummaya.ipc.frame_schema import (  # noqa: PLC0415
+                            ToolCallFrame,
+                            ToolResultEnvelope,
+                            ToolResultFrame,
+                        )
+                        from ummaya.primitives import PRIMITIVE_REGISTRY  # noqa: PLC0415
+
+                        if isinstance(frame, ToolCallFrame):
+                            error_kind = (
+                                frame.name if frame.name in PRIMITIVE_REGISTRY else "find"
+                            )
+                            await write_frame(
+                                ToolResultFrame(
+                                    session_id=frame.session_id,
+                                    correlation_id=frame.correlation_id,
+                                    role="backend",
+                                    ts=_utcnow(),
+                                    kind="tool_result",
+                                    call_id=frame.call_id,
+                                    envelope=ToolResultEnvelope.model_validate(
+                                        {
+                                            "kind": error_kind,
+                                            "error": f"tool_call handler failed: {exc}",
+                                            "tool_id": frame.name,
+                                        }
+                                    ),
+                                )
+                            )
+                    except Exception:  # noqa: BLE001
+                        logger.exception("failed to emit tool_call failure result")
 
             elif frame.kind == "permission_response":
                 # Spec 1978 T047 — resolve pending permission Future.

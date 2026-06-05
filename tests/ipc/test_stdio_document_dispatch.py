@@ -60,7 +60,7 @@ class _FakeStdout:
 
 
 @pytest.mark.asyncio
-async def test_concrete_document_inspect_tool_call_bypasses_lookup_envelope(
+async def test_concrete_document_primitive_tool_call_bypasses_lookup_envelope(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -77,10 +77,12 @@ async def test_concrete_document_inspect_tool_call_bypasses_lookup_envelope(
         ts=_ts(),
         kind="tool_call",
         call_id=call_id,
-        name="document_inspect",
+        name="document",
         arguments={
             "correlation_id": "corr-doc-ipc",
             "document": {"path": str(source), "expected_format": "docx"},
+            "operation": "inspect",
+            "instruction": "Inspect this DOCX file through the document primitive.",
         },
     )
     exit_frame = SessionEventFrame(
@@ -100,17 +102,17 @@ async def test_concrete_document_inspect_tool_call_bypasses_lookup_envelope(
         for frame in frames
         if frame.get("kind") == "tool_result" and frame.get("call_id") == call_id
     ]
-    assert tool_results, f"document_inspect must emit a tool_result frame: {frames!r}"
+    assert tool_results, f"document primitive must emit a tool_result frame: {frames!r}"
     envelope = tool_results[0]["envelope"]
-    assert envelope["kind"] == "find"
+    assert envelope["kind"] == "document"
     result = envelope.get("result")
     assert isinstance(result, dict)
-    assert result.get("tool_id") == "document_inspect"
+    assert result.get("tool_id") == "document"
     assert "expected envelope schema" not in json.dumps(result)
 
 
 @pytest.mark.asyncio
-async def test_local_document_validation_bypasses_citizen_permission_gate(
+async def test_local_document_primitive_bypasses_citizen_permission_gate(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -118,33 +120,20 @@ async def test_local_document_validation_bypasses_citizen_permission_gate(
     _write_minimal_hwpx(source)
 
     session_id = str(uuid.uuid4())
-    inspect_call_id = f"call-document-inspect-{uuid.uuid4().hex[:8]}"
-    validate_call_id = f"call-document-validate-{uuid.uuid4().hex[:8]}"
-    inspect_frame = ToolCallFrame(
+    call_id = f"call-document-{uuid.uuid4().hex[:8]}"
+    document_frame = ToolCallFrame(
         session_id=session_id,
         correlation_id=str(uuid.uuid4()),
         role="tool",
         ts=_ts(),
         kind="tool_call",
-        call_id=inspect_call_id,
-        name="document_inspect",
+        call_id=call_id,
+        name="document",
         arguments={
             "correlation_id": "corr-doc-perm",
             "document": {"path": str(source), "expected_format": "hwpx"},
-        },
-    )
-    validate_frame = ToolCallFrame(
-        session_id=session_id,
-        correlation_id=str(uuid.uuid4()),
-        role="tool",
-        ts=_ts(),
-        kind="tool_call",
-        call_id=validate_call_id,
-        name="document_validate_public_form",
-        arguments={
-            "correlation_id": "corr-doc-validate",
-            "document": {"artifact_id": "source-corr-doc-perm"},
-            "template_id": "unknown-template",
+            "operation": "inspect",
+            "instruction": "Inspect this HWPX file without opening a citizen permission prompt.",
         },
     )
     exit_frame = SessionEventFrame(
@@ -158,24 +147,85 @@ async def test_local_document_validation_bypasses_citizen_permission_gate(
     )
 
     monkeypatch.setenv("UMMAYA_PERMISSION_TIMEOUT_SECONDS", "0.01")
-    buf = await _run_stdio_frames(
-        [inspect_frame, validate_frame, exit_frame], session_id, monkeypatch
-    )
+    buf = await _run_stdio_frames([document_frame, exit_frame], session_id, monkeypatch)
 
     frames = buf.as_frames()
     assert not [frame for frame in frames if frame.get("kind") == "permission_request"]
-    validate_results = [
+    document_results = [
         frame
         for frame in frames
-        if frame.get("kind") == "tool_result" and frame.get("call_id") == validate_call_id
+        if frame.get("kind") == "tool_result" and frame.get("call_id") == call_id
     ]
-    assert validate_results, f"document_validate_public_form must emit a tool_result: {frames!r}"
-    envelope = validate_results[0]["envelope"]
-    assert envelope["kind"] == "check"
+    assert document_results, f"document primitive must emit a tool_result: {frames!r}"
+    envelope = document_results[0]["envelope"]
+    assert envelope["kind"] == "document"
     result = envelope.get("result")
     assert isinstance(result, dict)
-    assert result.get("tool_id") == "document_validate_public_form"
-    assert result.get("status") == "blocked"
+    assert result.get("tool_id") == "document"
+    assert result.get("status") == "ok"
+
+
+@pytest.mark.asyncio
+async def test_direct_document_extract_tool_call_promotes_to_write_workflow_from_user_query(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "weekly.hwpx"
+    destination = tmp_path / "weekly-auto.hwpx"
+    _write_minimal_hwpx(source)
+
+    session_id = str(uuid.uuid4())
+    call_id = f"call-document-{uuid.uuid4().hex[:8]}"
+    user_query = (
+        f"{source} 문서 내용을 파악해서 다음 주차 활동일지로 알아서 작성하고, "
+        f"저장은 {destination} 로 해줘. 수정 후 변경된 부분만 바로 확인할 수 있게 보여줘."
+    )
+    document_frame = ToolCallFrame(
+        session_id=session_id,
+        correlation_id=str(uuid.uuid4()),
+        role="tool",
+        ts=_ts(),
+        kind="tool_call",
+        call_id=call_id,
+        name="document",
+        arguments={
+            "correlation_id": "corr-doc-autosave",
+            "document": {"path": str(source), "expected_format": "hwpx"},
+            "operation": "extract",
+            "instruction": "문서 내용을 구조적으로 추출하고 다음 주차 작성 정보를 파악하세요.",
+            "__ummaya_user_query": user_query,
+        },
+    )
+    exit_frame = SessionEventFrame(
+        session_id=session_id,
+        correlation_id=str(uuid.uuid4()),
+        role="tui",
+        ts=_ts(),
+        kind="session_event",
+        event="exit",
+        payload={},
+    )
+
+    buf = await _run_stdio_frames([document_frame, exit_frame], session_id, monkeypatch)
+
+    frames = buf.as_frames()
+    document_results = [
+        frame
+        for frame in frames
+        if frame.get("kind") == "tool_result" and frame.get("call_id") == call_id
+    ]
+    assert document_results, f"document primitive must emit a tool_result: {frames!r}"
+    result = document_results[0]["envelope"].get("result")
+    assert isinstance(result, dict)
+    assert result.get("tool_id") == "document"
+    assert result.get("status") in {"ok", "blocked"}
+    assert result.get("diff") is not None
+    if result.get("status") == "ok":
+        assert result.get("saved_exports"), result
+        assert destination.exists()
+    else:
+        assert result.get("blocked_reason") == "validation_failed"
+        assert not destination.exists()
 
 
 async def _run_stdio_frames(
