@@ -14,7 +14,10 @@ from ummaya.tools.routing.decision_service import RouteDecisionService
 from ummaya.tools.routing.decision_types import (
     FeasibilityStatus,
     RouteCandidate,
+    RouteClarificationDecision,
+    RouteClarificationReason,
     RouteDecision,
+    RouteStopReason,
     SchemaProjectionLevel,
 )
 from ummaya.tools.routing.intent import (
@@ -38,7 +41,10 @@ __all__ = [
     "FeasibilityStatus",
     "LEGACY_PRIMITIVE_ALIASES",
     "RouteCandidate",
+    "RouteClarificationDecision",
+    "RouteClarificationReason",
     "RouteDecision",
+    "RouteStopReason",
     "RouteDecisionService",
     "SchemaFieldSummary",
     "SchemaProjectionLevel",

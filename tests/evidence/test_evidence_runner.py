@@ -7,6 +7,7 @@ from pathlib import Path
 
 def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
     from ummaya.evidence.runner import run_dataset
+    from ummaya.tools.routing import RouteStopReason
 
     evidence = run_dataset(
         scenario_path=Path("evidence/scenarios/national_ax_citizen_requests_v1.yaml"),
@@ -17,6 +18,18 @@ def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
     assert evidence.source_ref == "test"
     assert evidence.scenario_count > 0
     assert evidence.scenario_ids
+    assert evidence.route_trace_records
+    assert all(
+        record.scenario_id in evidence.scenario_ids for record in evidence.route_trace_records
+    )
+    assert all(
+        record.stop_reason in RouteStopReason.__args__
+        for record in evidence.route_trace_records
+    )
+    assert any(
+        record.stop_reason == "permission_required"
+        for record in evidence.route_trace_records
+    )
     assert {gate.name for gate in evidence.gates} == {
         "contract",
         "scenario",
@@ -30,6 +43,8 @@ def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
     output_path.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
     decoded = json.loads(output_path.read_text(encoding="utf-8"))
     assert decoded["schema_version"] == "evidence.v2"
+    assert decoded["route_trace_records"][0]["stop_reason"] in RouteStopReason.__args__
+    assert "clarification_reason" in decoded["route_trace_records"][0]
     assert decoded["task_registry_id"] == "ummaya/evidence-task-registry"
     assert decoded["dataset_ref"] == "ummaya/national-ax-core@local"
     assert decoded["task_count"] == 1

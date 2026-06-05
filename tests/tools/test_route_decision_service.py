@@ -8,7 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool
 from ummaya.tools.registry import ToolRegistry
-from ummaya.tools.routing import RouteDecision, RouteDecisionService
+from ummaya.tools.routing import RouteDecision, RouteDecisionService, RouteStopReason
 from ummaya.tools.routing import decision_service as decision_service_module
 
 
@@ -46,7 +46,8 @@ def test_route_decision_uses_registry_retrieval_and_selects_feasible_candidate(
 
     assert decision.selected_tools == ("kma_weather_forecast",)
     assert decision.schema_projection_level == "summary"
-    assert decision.stop_reason is None
+    assert decision.stop_reason == "answerable"
+    assert decision.clarification is None
     assert decision.candidate_set[0].feasible is True
     assert decision.candidate_set[0].filter_reasons == ()
     assert decision.backend_label == "bm25"
@@ -93,8 +94,11 @@ def test_route_decision_filters_missing_coordinate_slots() -> None:
 
     assert decision.selected_tools == ()
     assert decision.schema_projection_level == "none"
-    assert decision.stop_reason == "no_feasible_candidate"
-    assert decision.clarification_question == "Required slot missing: lat, lon."
+    assert decision.stop_reason == "needs_input"
+    assert decision.clarification is not None
+    assert decision.clarification.reason == "missing_slots"
+    assert decision.clarification.missing_slots == ("lat", "lon")
+    assert decision.clarification_question == "Which values should I use for lat and lon?"
     assert set(decision.candidate_set[0].filter_reasons) == {
         "missing_slot:lat",
         "missing_slot:lon",
@@ -135,10 +139,12 @@ def test_route_decision_filters_inactive_and_missing_prerequisite(sample_tool_fa
     feasible = service.decide(
         "민원 신청 제출해줘",
         initial_scores=(("gov24_minwon_submit", 9.0),),
+        session_identity={"citizen_id": "fixture"},
     )
 
     assert feasible.selected_tools == ("gov24_minwon_submit",)
     assert feasible.permission_gate is True
+    assert feasible.stop_reason == "permission_required"
 
     registry.set_active("gov24_minwon_submit", False)
     inactive = service.decide(
@@ -218,6 +224,7 @@ def test_route_decision_hard_excludes_disallowed_credentials(sample_tool_factory
 
     assert decision.selected_tools == ()
     assert decision.candidate_set == ()
+    assert decision.stop_reason == "blocked_no_credential"
     assert "hard_excluded:disallowed_credential:api_key:kma_weather_forecast" in (
         decision.evidence_events
     )
@@ -272,7 +279,7 @@ def test_route_decision_permission_gate_uses_selected_slice(sample_tool_factory)
     assert decision.permission_gate is False
 
 
-def test_route_decision_tie_breaks_by_tool_id(sample_tool_factory) -> None:
+def test_route_decision_equal_candidates_require_clarification(sample_tool_factory) -> None:
     registry = ToolRegistry()
     registry.register(
         sample_tool_factory(
@@ -300,7 +307,103 @@ def test_route_decision_tie_breaks_by_tool_id(sample_tool_factory) -> None:
         max_selected=1,
     )
 
-    assert decision.selected_tools == ("alpha_weather_forecast",)
+    assert decision.selected_tools == ()
+    assert tuple(candidate.tool_id for candidate in decision.candidate_set[:2]) == (
+        "alpha_weather_forecast",
+        "zeta_weather_forecast",
+    )
+    assert decision.stop_reason == "needs_input"
+    assert decision.clarification is not None
+    assert decision.clarification.reason == "equal_candidates"
+    assert decision.clarification.candidate_tool_ids == (
+        "alpha_weather_forecast",
+        "zeta_weather_forecast",
+    )
+    assert decision.clarification_question == (
+        "Which service should I use: alpha_weather_forecast or zeta_weather_forecast?"
+    )
+
+
+def test_route_decision_side_effect_without_confirmation_requires_clarification(
+    sample_tool_factory,
+) -> None:
+    registry = ToolRegistry()
+    registry.register(
+        sample_tool_factory(
+            id="simple_auth_check",
+            ministry="UMMAYA",
+            auth_type="oauth",
+            primitive="check",
+            policy=_policy("login"),
+            search_hint="identity check verify",
+        )
+    )
+    registry.register(
+        sample_tool_factory(
+            id="gov24_minwon_submit",
+            ministry="GOV24",
+            auth_type="oauth",
+            primitive="send",
+            policy=_policy("send"),
+            llm_description="Submit a civil-affairs request after explicit citizen confirmation.",
+            search_hint="민원 신청 제출 submit",
+        )
+    )
+
+    decision = RouteDecisionService(registry).decide(
+        "민원 신청 제출해줘",
+        initial_scores=(("gov24_minwon_submit", 9.0),),
+    )
+
+    assert decision.selected_tools == ()
+    assert decision.stop_reason == "needs_input"
+    assert decision.clarification is not None
+    assert decision.clarification.reason == "side_effect_confirmation"
+    assert decision.clarification_question == "Should I proceed with gov24_minwon_submit?"
+
+
+def test_route_decision_repeated_tool_mismatch_terminates_with_reason(
+    sample_tool_factory,
+) -> None:
+    registry = ToolRegistry()
+    registry.register(
+        sample_tool_factory(
+            id="kma_weather_forecast",
+            primitive="find",
+            policy=_policy(),
+            search_hint="weather forecast",
+        )
+    )
+
+    decision = RouteDecisionService(registry).select_adapters(
+        "weather forecast",
+        initial_scores=(("kma_weather_forecast", 10.0),),
+        validation_events=(
+            "tool_mismatch:kma_weather_forecast:locate",
+            "tool_mismatch:kma_weather_forecast:search_tools",
+        ),
+    )
+
+    assert decision.selected_tools == ()
+    assert decision.schema_projection_level == "none"
+    assert decision.stop_reason == "repeated_tool_mismatch"
+    assert decision.degradation_reason == "repeated_tool_mismatch"
+    assert "termination:repeated_tool_mismatch" in decision.evidence_events
+
+
+def test_route_decision_stop_reasons_match_plan_contract() -> None:
+    assert set(RouteStopReason.__args__) == {
+        "answerable",
+        "needs_input",
+        "permission_required",
+        "handoff_required",
+        "blocked_no_adapter",
+        "blocked_no_credential",
+        "max_turns",
+        "repeated_tool_mismatch",
+        "no_new_evidence",
+        "runtime_tool_failure_unrecovered",
+    }
 
 
 def test_route_decision_include_infeasible_retains_soft_rejection_reasons() -> None:

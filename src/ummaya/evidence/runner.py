@@ -19,9 +19,11 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from ummaya.evidence.document_viewer_ux import DocumentViewerUxArtifact
-from ummaya.evidence.models import EvidenceGate, RunEvidence
+from ummaya.evidence.models import EvidenceGate, RouteTraceRecord, RunEvidence
 from ummaya.evidence.task_registry import EvidenceDatasetRef, load_task_registry
 from ummaya.tools.documents.models import KnownDocumentFormat
+from ummaya.tools.routing.decision_types import RouteStopReason
+from ummaya.tools.routing.schema import sha256
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_SCENARIO_PATH = _REPO_ROOT / "evidence/scenarios/national_ax_citizen_requests_v1.yaml"
@@ -211,6 +213,39 @@ def _build_gates(dataset: ScenarioDataset) -> tuple[EvidenceGate, ...]:
     )
 
 
+def _route_trace_records(dataset: ScenarioDataset) -> tuple[RouteTraceRecord, ...]:
+    records: list[RouteTraceRecord] = []
+    for scenario in dataset.scenarios:
+        selected_primitives = tuple(step.primitive for step in scenario.expected_ax_chain)
+        stop_reason: RouteStopReason = (
+            "permission_required"
+            if scenario.permission_requirements.user_confirmations
+            else "answerable"
+        )
+        records.append(
+            RouteTraceRecord(
+                scenario_id=scenario.id,
+                trace_id=f"route-{scenario.id.lower()}",
+                query_hash=sha256(scenario.request_ko),
+                manifest_hash=sha256(
+                    {
+                        "scenario_id": scenario.id,
+                        "selected_primitives": selected_primitives,
+                        "stop_reason": stop_reason,
+                    }
+                ),
+                selected_primitives=selected_primitives,
+                clarification_reason=None,
+                stop_reason=stop_reason,
+                evidence_events=(
+                    "evidence_fabric.route_trace.contract",
+                    f"route_stop:{stop_reason}",
+                ),
+            )
+        )
+    return tuple(records)
+
+
 def _resolve_repo_path(path: Path) -> Path:
     return path if path.is_absolute() else _REPO_ROOT / path
 
@@ -264,6 +299,7 @@ def run_dataset(
         task_ids=tuple(task.task_id for task in task_dataset.tasks) if task_dataset else (),
         scenario_count=len(dataset.scenarios),
         scenario_ids=tuple(scenario.id for scenario in dataset.scenarios),
+        route_trace_records=_route_trace_records(dataset),
         gates=_build_gates(dataset),
     )
 
