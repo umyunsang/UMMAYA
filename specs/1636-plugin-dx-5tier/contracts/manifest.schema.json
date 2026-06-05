@@ -6,7 +6,8 @@
         "find",
         "locate",
         "send",
-        "check"
+        "check",
+        "document"
       ],
       "title": "AdapterPrimitive",
       "type": "string"

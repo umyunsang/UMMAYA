@@ -12,4 +12,3 @@
 
  Space 활성 토글 · i 상세 · r 제거 · a 스토어
  Esc · 닫기 (dismiss)
-

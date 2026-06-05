@@ -15,7 +15,8 @@
     },
     "tools": {
       "type": "array",
-      "minItems": 9,
+      "minItems": 1,
+      "maxItems": 1,
       "items": {
         "$ref": "#/$defs/ToolContract"
       }
@@ -23,66 +24,10 @@
   },
   "x-ummaya-tools": [
     {
-      "tool_id": "document_inspect",
-      "primitive": "find",
-      "input_schema": "#/$defs/DocumentInspectRequest",
-      "output_schema": "#/$defs/DocumentInspectResult",
-      "permission": "read_local_artifact"
-    },
-    {
-      "tool_id": "document_extract",
-      "primitive": "find",
-      "input_schema": "#/$defs/DocumentExtractRequest",
-      "output_schema": "#/$defs/DocumentExtractionResult",
-      "permission": "read_local_artifact"
-    },
-    {
-      "tool_id": "document_form_schema",
-      "primitive": "find",
-      "input_schema": "#/$defs/DocumentFormSchemaRequest",
-      "output_schema": "#/$defs/DocumentExtractionResult",
-      "permission": "read_local_artifact"
-    },
-    {
-      "tool_id": "document_copy_for_edit",
-      "primitive": "send",
-      "input_schema": "#/$defs/DocumentCopyForEditRequest",
-      "output_schema": "#/$defs/DocumentMutationResult",
-      "permission": "write_derivative_artifact"
-    },
-    {
-      "tool_id": "document_apply_fill",
-      "primitive": "send",
-      "input_schema": "#/$defs/DocumentApplyFillRequest",
-      "output_schema": "#/$defs/DocumentMutationResult",
-      "permission": "write_derivative_artifact"
-    },
-    {
-      "tool_id": "document_apply_style",
-      "primitive": "send",
-      "input_schema": "#/$defs/DocumentApplyStyleRequest",
-      "output_schema": "#/$defs/DocumentMutationResult",
-      "permission": "write_derivative_artifact"
-    },
-    {
-      "tool_id": "document_render",
-      "primitive": "find",
-      "input_schema": "#/$defs/DocumentRenderRequest",
-      "output_schema": "#/$defs/DocumentMutationResult",
-      "permission": "read_local_artifact"
-    },
-    {
-      "tool_id": "document_validate_public_form",
-      "primitive": "check",
-      "input_schema": "#/$defs/DocumentValidatePublicFormRequest",
-      "output_schema": "#/$defs/DocumentValidationResult",
-      "permission": "validate_local_artifact"
-    },
-    {
-      "tool_id": "document_save",
-      "primitive": "send",
-      "input_schema": "#/$defs/DocumentSaveRequest",
-      "output_schema": "#/$defs/DocumentMutationResult",
+      "tool_id": "document",
+      "primitive": "document",
+      "input_schema": "#/$defs/DocumentPrimitiveRequest",
+      "output_schema": "#/$defs/DocumentPrimitiveResult",
       "permission": "write_derivative_artifact"
     }
   ],
@@ -91,66 +36,10 @@
       "version": "0.1.0",
       "tools": [
         {
-          "tool_id": "document_inspect",
-          "primitive": "find",
-          "input_schema": "#/$defs/DocumentInspectRequest",
-          "output_schema": "#/$defs/DocumentInspectResult",
-          "permission": "read_local_artifact"
-        },
-        {
-          "tool_id": "document_extract",
-          "primitive": "find",
-          "input_schema": "#/$defs/DocumentExtractRequest",
-          "output_schema": "#/$defs/DocumentExtractionResult",
-          "permission": "read_local_artifact"
-        },
-        {
-          "tool_id": "document_form_schema",
-          "primitive": "find",
-          "input_schema": "#/$defs/DocumentFormSchemaRequest",
-          "output_schema": "#/$defs/DocumentExtractionResult",
-          "permission": "read_local_artifact"
-        },
-        {
-          "tool_id": "document_copy_for_edit",
-          "primitive": "send",
-          "input_schema": "#/$defs/DocumentCopyForEditRequest",
-          "output_schema": "#/$defs/DocumentMutationResult",
-          "permission": "write_derivative_artifact"
-        },
-        {
-          "tool_id": "document_apply_fill",
-          "primitive": "send",
-          "input_schema": "#/$defs/DocumentApplyFillRequest",
-          "output_schema": "#/$defs/DocumentMutationResult",
-          "permission": "write_derivative_artifact"
-        },
-        {
-          "tool_id": "document_apply_style",
-          "primitive": "send",
-          "input_schema": "#/$defs/DocumentApplyStyleRequest",
-          "output_schema": "#/$defs/DocumentMutationResult",
-          "permission": "write_derivative_artifact"
-        },
-        {
-          "tool_id": "document_render",
-          "primitive": "find",
-          "input_schema": "#/$defs/DocumentRenderRequest",
-          "output_schema": "#/$defs/DocumentMutationResult",
-          "permission": "read_local_artifact"
-        },
-        {
-          "tool_id": "document_validate_public_form",
-          "primitive": "check",
-          "input_schema": "#/$defs/DocumentValidatePublicFormRequest",
-          "output_schema": "#/$defs/DocumentValidationResult",
-          "permission": "validate_local_artifact"
-        },
-        {
-          "tool_id": "document_save",
-          "primitive": "send",
-          "input_schema": "#/$defs/DocumentSaveRequest",
-          "output_schema": "#/$defs/DocumentMutationResult",
+          "tool_id": "document",
+          "primitive": "document",
+          "input_schema": "#/$defs/DocumentPrimitiveRequest",
+          "output_schema": "#/$defs/DocumentPrimitiveResult",
           "permission": "write_derivative_artifact"
         }
       ]
@@ -171,23 +60,13 @@
         "tool_id": {
           "type": "string",
           "enum": [
-            "document_inspect",
-            "document_extract",
-            "document_form_schema",
-            "document_copy_for_edit",
-            "document_apply_fill",
-            "document_apply_style",
-            "document_render",
-            "document_validate_public_form",
-            "document_save"
+            "document"
           ]
         },
         "primitive": {
           "type": "string",
           "enum": [
-            "find",
-            "check",
-            "send"
+            "document"
           ]
         },
         "input_schema": {
@@ -272,6 +151,81 @@
           ]
         }
       ]
+    },
+    "DocumentPrimitiveRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document",
+        "instruction"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "inspect",
+            "extract",
+            "fill",
+            "style",
+            "validate",
+            "save"
+          ],
+          "default": "fill"
+        },
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "patches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "target_path",
+              "value"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "target_path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "value": {
+                "$ref": "#/$defs/ScalarValue"
+              }
+            }
+          },
+          "default": []
+        },
+        "styles": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "template_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination_display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination_path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "ArtifactRef": {
       "type": "object",
@@ -914,6 +868,46 @@
         "destination_display_name": {
           "type": "string",
           "minLength": 1
+        },
+        "destination_path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "DocumentSavedExport": {
+      "type": "object",
+      "required": [
+        "export_artifact_id",
+        "source_artifact_id",
+        "sha256",
+        "byte_size",
+        "overwrite_existing"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "export_artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "overwrite_existing": {
+          "type": "boolean"
         }
       }
     },
@@ -1001,6 +995,12 @@
         "validation_report": {
           "$ref": "#/$defs/ValidationReport"
         },
+        "saved_exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DocumentSavedExport"
+          }
+        },
         "findings": {
           "type": "array",
           "items": {
@@ -1011,6 +1011,9 @@
           "type": "string"
         }
       }
+    },
+    "DocumentPrimitiveResult": {
+      "$ref": "#/$defs/DocumentMutationResult"
     },
     "DocumentValidationResult": {
       "type": "object",

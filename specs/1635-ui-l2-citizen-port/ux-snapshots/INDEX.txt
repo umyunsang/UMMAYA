@@ -1,30 +1,30 @@
 # UX Snapshots — Spec 1635 P4 UI L2 Citizen Port
-# Generated: 2026-04-25T11:32:53.063Z
+# Generated: 2026-06-01T08:18:52.348Z
 # Pass: 26 · Fail: 0 · Total: 26
 
-- 01-permission-modal-layer1.txt — FR-015/016/017 — Layer 1 (green ⓵) modal with [Y/A/N]
-- 02-permission-modal-layer2.txt — FR-016 — Layer 2 (orange ⓶) modal
-- 03-permission-modal-layer3.txt — FR-016 — Layer 3 (red ⓷) modal with reinforcement notice
-- 04-receipt-toast-issued.txt — FR-018 — Receipt issued toast
-- 05-receipt-toast-revoked.txt — FR-020 — Receipt revoked toast
-- 06-receipt-toast-already-revoked.txt — FR-021 — Idempotent already-revoked toast
-- 07-bypass-reinforcement.txt — FR-022 — bypassPermissions reinforcement modal
-- 08-permission-layer-header-1.txt — FR-016 — Layer 1 header glyph component standalone
-- 09-permission-layer-header-2.txt — FR-016 — Layer 2 header standalone
-- 10-permission-layer-header-3.txt — FR-016 — Layer 3 header standalone
-- 11-error-envelope-llm.txt — FR-012 — LLM error envelope (purple/🧠)
-- 12-error-envelope-tool.txt — FR-012 — Tool error envelope (orange/🔧)
-- 13-error-envelope-network.txt — FR-012 — Network error envelope (red/📡)
-- 14-context-quote-block.txt — FR-013 — ⎿ quote block with single-border
-- 15-streaming-chunk-active.txt — FR-008 — 20-token chunk streaming (mid-stream sample)
-- 16-slash-autocomplete.txt — FR-014 — autocomplete dropdown after typing /
-- 17-agent-visibility-panel-swarm.txt — FR-025 — proposal-iv 5-state panel with 3 ministries
-- 18-agent-visibility-panel-detail.txt — FR-026 — /agents --detail with SLA + health + avg-response
-- 19-help-v2-grouped.txt — FR-029 — /help 4-group output (Session/Permission/Tool/Storage)
-- 20-plugin-browser.txt — FR-031 — /plugins browser ⏺/○ + Space/i/r/a
-- 21-history-search-dialog.txt — FR-033 — /history 3-filter form
-- 22-onboarding-1-preflight.txt — FR-001 step 1 — Preflight ✓/✗ checks
-- 23-onboarding-2-theme.txt — FR-001 step 2 + FR-035 — UFO mascot purple palette
-- 24-onboarding-3-pipa-consent.txt — FR-001 step 3 + FR-006 — PIPA §26 trustee notice
-- 25-onboarding-5-terminal-setup.txt — FR-001 step 5 + FR-005 — 4 a11y toggles
-- 26-agent-detail-row.txt — FR-026 — Single agent detail row
+- 01-welcome-v2.txt — Current welcome surface with UMMAYA brand glyph
+- 02-permission-check-layer1.txt — check primitive permission modal, layer 1 glyph
+- 03-permission-send-layer2.txt — send primitive reversible permission modal, layer 2 glyph
+- 04-permission-send-layer3.txt — send primitive irreversible permission modal, layer 3 glyph plus receipt
+- 05-consent-list-empty.txt — /consent empty receipt list
+- 06-consent-list-populated.txt — /consent receipt table with revoked marker
+- 07-consent-revoke-confirm.txt — /consent revoke confirmation modal
+- 08-consent-revoke-already.txt — /consent revoke already-revoked modal copy
+- 09-bypass-permissions-dialog.txt — Bypass permissions warning dialog
+- 10-error-envelope-llm.txt — LLM error envelope
+- 11-error-envelope-tool.txt — Tool error envelope
+- 12-error-envelope-network.txt — Network error envelope
+- 13-context-quote-block.txt — Context quote with thread glyph
+- 14-streaming-chunk-active.txt — Streaming response chunk with active hint
+- 15-slash-autocomplete.txt — Slash command suggestions after /c
+- 16-help-v2-grouped.txt — /help grouped command catalog
+- 17-plugin-browser.txt — /plugins browser with live/mock rows
+- 18-plugin-browser-empty.txt — /plugins empty-state
+- 19-primitive-point-card.txt — find point renderer
+- 20-primitive-collection-list.txt — find collection renderer
+- 21-primitive-detail-view.txt — find detail renderer
+- 22-primitive-timeseries.txt — find timeseries renderer
+- 23-primitive-find-error.txt — find error renderer
+- 24-primitive-submit-success.txt — send success receipt renderer
+- 25-primitive-submit-error.txt — send failure renderer
+- 26-primitive-auth-context.txt — check success renderer

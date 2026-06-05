@@ -1,0 +1,27 @@
+# UX Snapshot: 20-primitive-collection-list
+# Note: find collection renderer
+# Generated: 2026-06-01T08:18:51.815Z
+
+
+ERRORConfig accessed before allowed.
+
+ src/utils/config.ts:1428:15
+
+ 1425: ): A {
+ 1426:// Log a warning if config is accessed before it's allowed
+ 1427:if (!configReadingAllowed && process.env.NODE_ENV !== 'test') {
+ 1428:throw new Error('Config accessed before allowed.')
+ 1429:}
+ 1430:
+ 1431:const fs = getFsImplementation()
+
+ - getConfig (src/utils/config.ts:1428:15)
+ - getGlobalConfig (src/utils/config.ts:1083:7)
+ - defaultInitialTheme (src/components/design-system/ThemeProvider.tsx:35:10)
+ - mountStateImpl (node_modules/react-reconciler/cjs/react-reconciler.development.js:5941:24)
+ - mountState (node_modules/react-reconciler/cjs/react-reconciler.development.js:5962:22)
+ - useState (node_modules/react-reconciler/cjs/react-reconciler.development.js:17940:18)
+ - ThemeProvider (src/components/design-system/ThemeProvider.tsx:48:43)
+ - react_stack_bottom_frame (node_modules/react-reconciler/cjs/react-reconciler.development.js:17596:20)
+ - renderWithHooks (node_modules/react-reconciler/cjs/react-reconciler.development.js:5335:22)
+ - updateFunctionComponent (node_modules/react-reconciler/cjs/react-reconciler.development.js:7720:19)

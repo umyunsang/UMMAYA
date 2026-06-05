@@ -36,7 +36,7 @@ uv run python -m json.tool specs/2802-public-doc-harness/contracts/document-tool
 Expected:
 
 - JSON parses successfully.
-- Tool contracts include `document_inspect`, `document_extract`, `document_form_schema`, `document_copy_for_edit`, `document_apply_fill`, `document_apply_style`, `document_render`, `document_validate_public_form`, and `document_save`.
+- Tool contracts include one model-facing `document` primitive. Inspect, extract, form-schema, copy-for-edit, fill, style, render, validate, and save remain internal workflow stages surfaced through the result evidence.
 
 ## 4. Build Fixture Corpus
 
@@ -77,8 +77,8 @@ Expected:
 - HWP direct write returns a structured blocked result.
 - Hostile fixtures fail closed before unsafe parse or write.
 - Public-form validation computes paragraph, table, image, metadata, aggregate, round-trip, render, and security results.
-- `document_inspect`, `document_extract`, `document_form_schema`, `document_copy_for_edit`, `document_apply_fill`, `document_apply_style`, `document_render`, `document_validate_public_form`, and `document_save` register as concrete `GovAPITool` definitions.
-- Write/export operations are `send` tools and require the existing permission/auth gate before creating derivatives or exports.
+- The single `document` primitive registers as the concrete model-facing `GovAPITool` definition.
+- Write/export operations are document operations and require the existing permission/auth gate before creating derivatives or exports.
 
 ## 6. Run General Gates
 

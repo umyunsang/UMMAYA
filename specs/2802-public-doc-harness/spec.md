@@ -4,17 +4,17 @@
 **Originating Epic**: #3050
 **Created**: 2026-06-01
 **Status**: Draft
-**Input**: User description: "Build the document-writing foundation required for Public AX: LLMs must accurately read and write public-document artifacts such as HWPX, HWP, DOCX, PDF, XLSX, and PPTX; control fonts, styles, layout, and official form structure; save files safely; validate whether the generated artifact conforms to public submission formats; research open-source/private HWP/HWPX editor and document harness references rather than relying on Hancom official code; evaluate whether the data.go.kr public document AI corpus helps form-conformance validation; and define a layered implementation design through a self-evaluating high-conformance loop."
+**Input**: User description: "Build the document-writing foundation required for Public AX: LLMs must accurately read and write public-document artifacts such as HWPX, HWP, DOCX, PDF, XLSX, and PPTX; control fonts, styles, layout, and official form structure; save files safely; validate whether the generated artifact conforms to public submission formats; research open-source/private HWP/HWPX editor and document harness references rather than relying on Hancom official code; evaluate whether the data.go.kr public document AI corpus helps form-conformance validation; define a layered implementation design through a self-evaluating high-conformance loop; and broaden the plan so UMMAYA can recognize, route, and safely handle all common national-infrastructure document families beyond HWPX."
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Inspect and Normalize Public Document Artifacts (Priority: P1)
 
-A citizen, civil servant, or evaluator provides an existing public-document file in HWPX, HWP, DOCX, PDF, XLSX, or PPTX format. UMMAYA reads the file without mutating it, identifies the real format and document structure, extracts text, tables, images, style cues, and candidate form fields, and returns a normalized, evidence-backed representation the LLM can reason over.
+A citizen, civil servant, or evaluator provides an existing public-document file. The initial promoted fixture set covers HWPX, HWP, DOCX, PDF, XLSX, and PPTX, and the broader Public AX format universe also includes legacy Office binaries, ODF files, law/data export files, structured public-data files, scanned/image documents, and archive/container attachments. UMMAYA reads the file without mutating it, identifies the real format and document structure, extracts text, tables, images, style cues, data schema, and candidate form fields where available, and returns a normalized, evidence-backed representation the LLM can reason over.
 
 **Why this priority**: Public AX cannot safely draft or validate official documents until the harness can read the formats already exchanged in Korean national infrastructure. HWP/HWPX and office-document extraction are therefore the foundation layer.
 
-**Independent Test**: Provide fixture files for each supported extension and verify that UMMAYA returns a structured inspection result with detected format, source checksum, extraction warnings, text blocks, tables, embedded-media references, and layout anchors where available.
+**Independent Test**: Provide fixture files for each promoted extension and known-format family and verify that UMMAYA returns a structured inspection result with detected format, source checksum, capability profile, extraction warnings, text blocks, tables, data schema, embedded-media references, and layout anchors where available.
 
 **Acceptance Scenarios**:
 
@@ -78,7 +78,7 @@ After any write operation, UMMAYA renders the derivative artifact into reviewer-
 
 ### User Story 5 - Drive Document Work Through the UMMAYA Tool Loop (Priority: P2)
 
-The LLM can plan and execute document operations through UMMAYA's existing harness. It calls explicit document capabilities for inspection, extraction, field-schema discovery, copying, filling, styling, rendering, validation, and saving. These capabilities remain concrete ToolRegistry entries discovered and invoked under UMMAYA's existing `find`, `check`, and `send` primitive families, not new root primitives. Any operation that writes or exports a document requires permission context and produces auditable evidence.
+The LLM can plan and execute document operations through UMMAYA's existing harness by calling one first-class `document` primitive. The primitive receives the user's document intent once, then runs internal stages for inspection, extraction, field-schema discovery, working-copy creation, filling, styling, rendering, validation, and saving. Format-specific engines such as HWPX are adapters below this primitive, not separate model-facing tools. Any operation that writes or exports a document requires permission context and produces auditable evidence.
 
 **Why this priority**: Public AX requires the model to operate documents as controlled tools, not as hidden side effects. Tool-loop integration turns the document layer into a repeatable national-infrastructure capability.
 
@@ -86,7 +86,7 @@ The LLM can plan and execute document operations through UMMAYA's existing harne
 
 **Acceptance Scenarios**:
 
-1. **Given** a user asks to complete an attached public form, **When** the LLM plans the work, **Then** it discovers concrete document capabilities through the existing tool registry and selects them in a valid order: inspect, derive field schema, copy for edit, fill, render, validate, and save.
+1. **Given** a user asks to complete an attached public form, **When** the LLM plans the work, **Then** it discovers and calls the single `document` primitive, and the runtime records the internal stage order: inspect, derive field schema, copy for edit, fill, render, validate, and save as applicable.
 2. **Given** a write or export operation is about to run, **When** the tool loop reaches that step, **Then** UMMAYA presents the user with a permission request that identifies the source file, derivative path, intended changes, and validation status.
 3. **Given** a document contains personal data, **When** the harness processes it, **Then** audit evidence records the operation locally and does not transmit document bytes to unrelated external channels.
 4. **Given** the model asks for an unsupported edit, **When** the harness evaluates the request, **Then** it returns a typed unsupported-capability result instead of performing a best-effort mutation.
@@ -128,12 +128,12 @@ The project evaluates each candidate format layer against repeatable criteria: e
 
 #### Format Intake and Normalization
 
-- **FR-001**: The system MUST accept document artifacts with extensions HWPX, HWP, DOCX, PDF, XLSX, and PPTX and MUST detect the real format independently of the file name.
+- **FR-001**: The system MUST accept and classify known national-infrastructure document families, starting with HWPX, HWP, DOCX, PDF, XLSX, and PPTX and extending to legacy Office (`doc`, `xls`, `ppt`), ODF (`odt`, `ods`, `odp`), legal/web exports (`html`, `txt`, `rtf`, `md`), public-data files (`csv`, `tsv`, `xml`, `json`, `jsonl`, `yaml`, `yml`), scanned/image documents (`png`, `jpg`, `jpeg`, `tif`, `tiff`, `bmp`, `webp`), and archive/container attachments (`zip`, `7z`, `tar`, `gz`). Real format detection MUST be independent of the file name, and known-but-unsupported formats MUST return typed capability limits rather than an unknown-format error.
 - **FR-002**: The system MUST preserve the original artifact byte-for-byte and MUST perform any write operation only against a derivative copy with recorded lineage to the original hash.
 - **FR-003**: The system MUST produce a normalized document representation that includes extracted text, structural hierarchy, tables, embedded media references, style cues, and source locators where the format exposes them.
 - **FR-004**: The system MUST report a per-artifact capability profile before editing, including at minimum: readable, writable, fillable, style-controllable, renderable, conformance-verifiable, and unsupported-reason fields.
 - **FR-005**: HWP binary artifacts MUST be supported only for safe read, extraction, render, or conversion evidence where available; direct HWP binary authoring MUST be blocked in this epic and represented as a deferred capability.
-- **FR-006**: HWPX, DOCX, XLSX, PDF, and PPTX artifacts MUST each have explicit read, write, render, and validation capability boundaries; unsupported operations MUST return typed unsupported results.
+- **FR-006**: Every known format family MUST have explicit read, extract, fill, style, render, save, and validation capability boundaries. HWPX, DOCX, XLSX, fillable PDF, and PPTX are the initial write-promotion candidates; legacy binaries, ODF, data files, images, and archives MUST remain read-only, transform-only, extraction-only, or container-only until they pass the same promotion gates. Unsupported operations MUST return typed unsupported results.
 
 #### Form Schema and Public-Form Rules
 
@@ -155,8 +155,8 @@ The project evaluates each candidate format layer against repeatable criteria: e
 
 #### Tool-Loop Integration
 
-- **FR-019**: The system MUST expose model-callable document capabilities for inspect, extract, field-schema discovery, copy-for-edit, fill, style, render, validate, and save operations.
-- **FR-020**: Every document capability MUST have a deterministic input/output contract with typed success, warning, unsupported, and failure results, and MUST return structured results that can be validated without relying on free-text parsing.
+- **FR-019**: The system MUST expose document work as one first-class model-callable `document` primitive. Inspect, extract, field-schema discovery, copy-for-edit, fill, style, render, validate, and save are internal orchestration stages, not separate normal model-facing tools.
+- **FR-020**: The `document` primitive MUST have a deterministic input/output contract with typed success, warning, unsupported, and failure results, and MUST return structured results that can be validated without relying on free-text parsing.
 - **FR-021**: Any operation that writes, exports, overwrites, deletes, or marks a derivative as ready MUST require an explicit permission boundary that identifies the source artifact, target artifact, intended change class, and validation status.
 - **FR-022**: The system MUST record audit evidence for every document operation, including source hash, derivative hash when present, capability profile, validation result, and correlation ID.
 - **FR-023**: The system MUST fail closed when the model requests an operation outside the active capability profile.
@@ -166,7 +166,7 @@ The project evaluates each candidate format layer against repeatable criteria: e
 - **FR-024**: The system MUST maintain a 100-point scorecard for each format capability profile using these weights: extraction fidelity 20, write fidelity 20, style/layout control 15, deterministic round trip 15, public-form validation 15, security and privacy posture 10, and license/maintenance/tool-call usability 5.
 - **FR-025**: A write capability MUST NOT be promoted unless it scores at least 85/100 and passes every hard gate: no original-file mutation, deterministic save or normalized-equivalent save, exact re-read equality for intended values, render evidence, structured result validation, and no critical security finding.
 - **FR-026**: The system MUST retain rejected or deferred candidate profiles with reasons so subsequent plan or research work can compare upgrades against the same standard.
-- **FR-027**: The system MUST run evaluation against representative fixtures for HWPX, HWP, DOCX, PDF, XLSX, and PPTX before declaring the feature complete; the fixture manifest MUST list source, redistribution status, expected fields, expected layout anchors, and negative cases for each fixture.
+- **FR-027**: The system MUST run evaluation against representative fixtures for the promoted six-format matrix and the broader known-format families before declaring the all-format harness complete. The fixture manifest MUST list source, redistribution status, expected capability profile, expected fields or schema, expected layout anchors when applicable, and negative cases for each fixture.
 
 #### Security and Data Handling
 
@@ -182,7 +182,7 @@ The project evaluates each candidate format layer against repeatable criteria: e
 - **FR-037**: The data.go.kr semantic evaluation metric MUST be a macro average of paragraph-block F1, table-cell F1, image-reference F1, and metadata exact-match score, with each component reported separately before the aggregate 0.85 threshold is applied.
 - **FR-038**: A read-only capability MAY be promoted with a 75/100 or higher score only when all security hard gates pass and unsupported write/fill/style operations remain explicitly blocked.
 - **FR-039**: A style-control capability MUST NOT be promoted unless the render/re-read loop proves that font, paragraph, table/cell, page, or printable-region changes are bounded to the requested anchors and do not alter protected template content.
-- **FR-040**: Document capabilities MUST be registered as concrete UMMAYA tool entries under the existing tool-discovery and primitive flow; this feature MUST NOT introduce additional root primitive verbs beyond `find`, `locate`, `check`, and `send`.
+- **FR-040**: Document capabilities MUST be registered under the first-class `document` primitive to prevent confusion with public-data `find`, geospatial `locate`, transaction `send`, and identity/delegation `check` adapters. Format-specific support such as HWPX lives below this primitive as document adapters.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -190,7 +190,8 @@ The project evaluates each candidate format layer against repeatable criteria: e
 - **FormatCapabilityProfile**: Per-format and per-engine capability declaration for read, write, fill, style, render, validate, and unsupported operations, with evidence score and promotion status.
 - **DocumentIR**: Normalized representation of text blocks, sections, tables, cells, sheets, slides, pages, media references, style cues, and source locators.
 - **FormSchema**: Extracted or inferred set of fields with stable IDs, labels, required status, value constraints, layout anchors, evidence, and confidence.
-- **EditOperation**: User-approved document mutation such as fill, style, table/cell update, copy, render, validate, or save, with before/after anchors.
+- **DocumentOperation**: User-requested document read, fill, style, validation, save, or review intent carried by the single `document` primitive and executed through internal format adapters.
+- **EditOperation**: Internal document mutation such as fill, style, table/cell update, copy, render, validate, or save, with before/after anchors.
 - **RenderSnapshot**: Reviewer-readable output generated from a document artifact, tied to artifact hash and page, sheet, or slide anchors.
 - **ValidationReport**: Hard failures, warnings, informational findings, readiness status, conformance score, and remediation hints.
 - **EvidenceRun**: End-to-end evaluation record connecting input artifact, tool sequence, capability profile, render snapshots, validation report, and final artifact status.
@@ -201,7 +202,7 @@ The project evaluates each candidate format layer against repeatable criteria: e
 
 ### Measurable Outcomes
 
-- **SC-001**: At least 95% of fixture artifacts across HWPX, HWP, DOCX, PDF, XLSX, and PPTX complete inspection without crash, original mutation, or untyped failure.
+- **SC-001**: At least 95% of fixture artifacts across promoted document formats and known-format families complete classification and capability reporting without crash, original mutation, or untyped failure.
 - **SC-002**: 100% of promoted write-capability fixtures re-read the intended filled values exactly after save.
 - **SC-003**: 100% of official-form-ready derivatives pass all hard validation checks before they can be marked ready for review.
 - **SC-004**: At least 90% of supported public-form fixtures preserve protected labels, table geometry, signature/seal regions, and required layout anchors within the validator tolerance.
@@ -209,7 +210,7 @@ The project evaluates each candidate format layer against repeatable criteria: e
 - **SC-006**: The semantic evaluation subset using 행정안전부_정부 공문서 AI 학습데이터 조회 서비스 records achieves at least 0.85 measured agreement for paragraph structure, table extraction, and image-reference extraction against the prepared expected outputs.
 - **SC-007**: Unsupported or unsafe operations return an unsupported or blocked result in 100% of negative fixtures, with no derivative save.
 - **SC-008**: No CI evaluation test performs live calls to government, data.go.kr, identity, payment, certificate, utility, or external citizen-infrastructure endpoints.
-- **SC-009**: In a full conversation smoke scenario, the LLM completes inspect -> schema -> copy -> fill -> render -> validate -> save through observable tool calls with no hidden document mutation.
+- **SC-009**: In a full conversation smoke scenario, the LLM calls `document` once for a document edit request; the returned result exposes inspect -> schema -> copy -> fill -> render -> validate/save workflow evidence internally and renders the compact diff automatically without requiring the user to ask for "show changes."
 - **SC-010**: 100% of promoted write and style-control capability profiles meet the score threshold and every hard gate defined in FR-024 through FR-039.
 - **SC-011**: 100% of negative security fixtures for extension mismatch, container/signature mismatch, path traversal, unsafe filename, expanded package limit, macro/active content, and external-link fetching are blocked before write or ready status.
 - **SC-012**: 100% of direct HWP binary write attempts return a typed blocked result in this epic, while safe HWP read/extract/render/convert fixtures still produce evidence where supported.

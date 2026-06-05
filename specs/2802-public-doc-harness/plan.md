@@ -5,21 +5,21 @@
 
 ## Summary
 
-Build a local UMMAYA document harness that lets the LLM inspect, extract, safely copy, fill, style, render, validate, and save public-administration document artifacts across HWPX, HWP, DOCX, PDF, XLSX, and PPTX. The harness is not a new parser/converter project and not a new root primitive family. It registers concrete tools under the existing ToolRegistry primitive metadata (`find`, `check`, `send`) and follows Claude Code-style typed tool contracts, permission boundaries, artifact storage, and evidence reporting.
+Build a local UMMAYA document harness that lets the LLM inspect, extract, safely copy, fill, style, render, validate, and save public-administration document artifacts. The initial promotion matrix covers HWPX, HWP, DOCX, PDF, XLSX, and PPTX, but the Public AX target is broader: the harness must recognize every common national-infrastructure document family, route it through an explicit capability profile, edit only promoted safe formats, and fail closed with useful next actions for known-but-unsupported formats. The harness is not a new parser/converter project and does not scatter normal document work across separate inspect/fill/render tools. It exposes one model-facing `document` primitive backed by format-specific adapters and follows Claude Code-style typed tool contracts, permission boundaries, artifact storage, result painting, and evidence reporting.
 
 The implementation is promotion-gated by format. HWPX, DOCX, XLSX, PDF, and PPTX may be promoted for write only after deterministic round-trip, render, validation, and security gates pass. Binary HWP direct writing is blocked in this epic; HWP may only receive read/extract/render/convert capabilities if evidence proves fidelity and safety.
 
 ## Technical Context
 
 **Language/Version**: Python 3.12+ backend. TypeScript is only relevant if later tasks expose richer TUI result rendering.  
-**Primary Dependencies**: Existing UMMAYA `ToolRegistry`, `GovAPITool`, Pydantic v2, Evidence Fabric, OTEL, stdlib `zipfile`/`hashlib`/`pathlib` for intake and fixture/test-double handling, pytest, pytest-asyncio, hypothesis. Candidate format engines are evaluated by scorecard before runtime adoption: `python-hwpx` for HWPX, `python-docx` for DOCX, `openpyxl` for XLSX, `pypdf` for AcroForm PDF, and `python-pptx` for PPTX. RHWP, HWP MCP, OpenHWP, pyhwp, hwp.js, and unhwp remain comparative HWP/HWPX references unless a task explicitly justifies a dependency bridge.  
+**Primary Dependencies**: Existing UMMAYA `ToolRegistry`, `GovAPITool`, Pydantic v2, Evidence Fabric, OTEL, stdlib `zipfile`/`hashlib`/`pathlib` for intake and fixture/test-double handling, pytest, pytest-asyncio, hypothesis. Candidate format engines are evaluated by scorecard before runtime adoption: `python-hwpx` for HWPX, `python-docx` for DOCX, `openpyxl` for XLSX, `pypdf` for AcroForm PDF, and `python-pptx` for PPTX. RHWP, HWP MCP, OpenHWP, pyhwp, hwp.js, and unhwp remain comparative HWP/HWPX references unless a task explicitly justifies a dependency bridge. The all-format expansion track additionally evaluates ODF (`odt`, `ods`, `odp`), legacy Office (`doc`, `xls`, `ppt`), public-data files (`csv`, `tsv`, `xml`, `json`, `jsonl`, `yaml`, `yml`), legal/web exports (`html`, `txt`, `rtf`, `md`), scanned/image documents (`png`, `jpg`, `jpeg`, `tif`, `tiff`, `bmp`, `webp`), and archive/container attachments (`zip`, `7z`, `tar`, `gz`) as known formats with explicit read/write/render limits.
 **Storage**: Local file artifact store outside web/public roots at `~/.ummaya/document_artifacts/<session_id>/`, with `sources/`, `working/`, `renders/`, `reports/`, and `exports/`. CI fixtures stay under `tests/fixtures/documents/`. Evidence outputs stay under `.evidence/`.  
 **Testing**: `uv run pytest tests/tools/documents tests/evidence tests/ci -q` for feature gates; `uv run ruff check src tests`, `uv run ruff format --check src tests`, `uv run mypy src`, and `uv run pytest -m "not live"` before implementation completion. No live `data.go.kr` or agency calls in CI.  
 **Target Platform**: Local macOS/Linux developer runtime used by Codex and UMMAYA CLI/TUI.  
 **Project Type**: Backend tool-system package plus evidence fixtures. TUI integration is limited to rendering structured tool results already emitted by the tool loop unless tasks identify a real display gap.  
 **Performance Goals**: For representative local fixtures up to 10 MB and 50 logical pages/slides/sheets, inspect/extract should complete within 5 seconds p95; fill/style/save/validate should complete within 15 seconds p95; oversized or decompression-risk artifacts fail closed before full parse.  
-**Constraints**: Local-only processing, no external document upload, no original mutation, no hidden overwrite, no path traversal, no hidden-file or public-root writes, no direct HWP binary writing, no new root primitive verbs, Pydantic v2 strict models, and explicit dependency/license justification before adding any new package.  
-**Scale/Scope**: Initial fixture matrix covers HWPX, HWP, DOCX, PDF, XLSX, and PPTX, including public-form-like templates, style-heavy templates, malformed/hostile files, and at least one data.go.kr-derived public-administration metadata corpus snapshot for form/schema matching.
+**Constraints**: Local-only processing, no external document upload, no original mutation, no hidden overwrite, no path traversal, no hidden-file or public-root writes, no direct HWP binary writing, no unchecked expansion of public-service primitive families, Pydantic v2 strict models, and explicit dependency/license justification before adding any new package.
+**Scale/Scope**: Initial fixture matrix covers HWPX, HWP, DOCX, PDF, XLSX, and PPTX, including public-form-like templates, style-heavy templates, malformed/hostile files, and at least one data.go.kr-derived public-administration metadata corpus snapshot for form/schema matching. The all-format addendum in `autonomous-fill-plan-research-2026-06-03.md` extends the implementation plan with `KnownDocumentFormat`, `FormatCapabilityProfile`, shared `DocumentIR`, and staged promotion gates for ODF, legacy Office, public-data, text/web export, image/scanned, and archive/container families. The detailed checklist source for the next implementation loop is `format-adapter-implementation-plan-2026-06-03.md`.
 
 ## Constitution Check
 
@@ -28,7 +28,7 @@ The implementation is promotion-gated by format. HWPX, DOCX, XLSX, PDF, and PPTX
 | Gate | Status | Evidence |
 |------|--------|----------|
 | Reference-first against UMMAYA thesis | PASS | Reviewed `docs/vision.md`, `docs/requirements/ummaya-migration-tree.md`, and Claude Code restored source patterns. |
-| Preserve existing primitive model | PASS | Tool IDs are concrete document tools mapped to `find`, `check`, and `send`; no `read/write/edit` root primitives are introduced. |
+| Preserve existing primitive model | PASS | Existing public-service primitives remain unchanged; document authoring is isolated as one first-class `document` primitive because `find`/`check`/`send` caused adapter confusion for local file authoring. |
 | Claude Code source parity check | PASS | CC supports document reading and binary output storage adjacent patterns, but not public-document authoring. This feature is a UMMAYA domain harness layered above CC-style tool contracts. |
 | Pydantic v2 and no `Any` | PASS | Contracts require strict request/result models and generated JSON Schema. |
 | Fail-closed public infrastructure | PASS | The harness does not call agencies or submit forms. It only manipulates local user-provided artifacts and fixture corpora. |
@@ -136,7 +136,7 @@ The selected implementation layer is **engine-backed harness + capability-profil
 
 | Criterion | Weight | Score | Rationale |
 |-----------|--------|-------|-----------|
-| UMMAYA architecture fit | 20 | 20 | Uses existing ToolRegistry, permission, evidence, and primitive metadata; no new root primitive family. |
+| UMMAYA architecture fit | 20 | 20 | Uses existing ToolRegistry, permission, evidence, and primitive metadata; public-service primitive families stay unchanged while local document authoring is isolated as one first-class `document` primitive. |
 | Format-specific evidence depth | 20 | 17 | HWPX/OOXML/PDF/HWP risks are separated; remaining engine selection is intentionally task-scoped and issue-backed. |
 | Public-form conformance measurability | 20 | 18 | Defines structural, round-trip, render, and public-form metrics; exact fixture pack remains a tracked task. |
 | Security and privacy posture | 20 | 20 | Local-only artifact store, immutable originals, derivative writes, upload-class controls, and hostile fixtures are mandatory. |

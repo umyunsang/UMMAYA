@@ -20,7 +20,7 @@
 
 - `python-hwpx`: Python HWPX automation with open/read/edit/generate/validate, OWPML dataclass mapping, OPC handling, table filling, text/style operations, and atomic save patterns.
 - `hwpx-mcp-server`: MCP-oriented HWPX server exposing document info, text, outline, search/replace, batch replace, paragraph insertion, copy, table-cell edits, markdown conversion, and validation.
-- `rhwp`: Rust/WASM HWP/HWPX viewer/editor ecosystem; useful as a comparative conformance target, but adopting it in UMMAYA would require a cross-runtime bridge and extra dependency scrutiny.
+- `rhwp` / `@rhwp/core`: Rust/WASM HWP/HWPX viewer/editor ecosystem; selected for HWPX visual render promotion after user approval removed the blanket Rust/WASM prohibition. UMMAYA uses it through a narrow local Node/WASM bridge, not by rewriting the Python harness.
 - `hwp-mcp`: MCP server pattern built around HWP/HWPX operations; useful for tool taxonomy and risk mapping.
 - OpenHWP, pyhwp, hwp.js, and unhwp: useful HWP binary read/extract/convert references, not sufficient evidence for safe direct HWP binary writing in this epic.
 
@@ -77,7 +77,7 @@
 
 - Hancom official tooling: deprioritized because the user explicitly requested OSS/private ecosystem evidence rather than closed official code paths.
 - Direct raw XML editing as a product path: rejected because it would rebuild a document editor/parser instead of a harness. Direct XML assertions may be used only as test oracles for candidate-engine evaluation.
-- Rust/WASM RHWP as core dependency: not selected for the initial core because it may be strong for conformance but adds runtime/language complexity that needs separate approval.
+- Rust/WASM RHWP as a full core rewrite: rejected. The selected path is narrower: keep the Python harness and use `@rhwp/core` only as a local render bridge for SVG page evidence.
 
 ## Decision 4: Binary HWP Policy
 
@@ -260,13 +260,15 @@ Current fixture decisions:
 | Format | Candidate | Operation | Decision | Reason |
 |--------|-----------|-----------|----------|--------|
 | HWPX | `python-hwpx` | read/write | Promote candidate profile | Scorecard passes read/write thresholds, dependency gate passes, license gate passes, and evidence references stay offline. |
-| HWPX | `hwpx-package-text` | read/write | Promote default smoke engine | No dependency addition; supports only existing HWPX text-node reread/write smoke needed for public-form alpha tests. Style, render, and layout fidelity remain unpromoted. |
+| HWPX | `hwpx-package-native` | read/write/style | Promote default runtime engine | Local package rewrite supports text-node and table-cell value mutation, native style reference authoring, style-map reread proof, deterministic save/export, and no external egress. Page render is delegated to the promoted RHWP bridge. |
 | HWPX | `direct-owpml-oracle` | write | Reject for runtime promotion | Retained only as a conformance/test oracle; it does not expose a supported runtime write operation. |
 | HWP | `OpenHWP-read-only` | read | Promote candidate profile | Read-only extraction score meets the read threshold with dependency and license gates passed. |
 | HWP | `OpenHWP-read-only` | write | Block | Binary HWP direct write remains blocked in this epic regardless of score. |
 | HWP | `pyhwp-read-only` | read | Defer/reject runtime promotion | AGPL license gate fails, so it remains comparative read evidence only. |
 | DOCX | `python-docx` | read | Promote default runtime engine | PyPI records MIT license and Python 3.9+ support; python-docx 1.2.0 documents loading DOCX files, top-level paragraphs/tables, document-order iteration, and core properties. |
-| HWPX | `rhwp` | write | Defer runtime promotion | Score and license are promising, but the Rust/WASM bridge dependency gate requires a separate architecture decision. |
+| HWPX | `rhwp-node-wasm` | render | Promote runtime bridge | MIT `@rhwp/core` renders HWPX fixtures locally to SVG behind a narrow Node/WASM bridge with no external egress; the `hwpxjs-html-render` bridge is used only for HWPX tables missing RHWP geometry. |
+| HWPX | `viewport-camera-diff` | render diff | Promote render evidence extension | Full-page SVG render artifacts remain unmodified; changed regions are represented as separate viewport-camera artifacts and metadata so the document page is not polluted with overlay markers. |
+| HWPX | `rhwp` | write | Defer direct runtime promotion | Direct RHWP write/export APIs remain deferred; UMMAYA's promoted safe-write path is the native OWPML package mutation layer for field, table-cell, and style operations. |
 
 The offline data.go.kr metadata snapshot is evaluation context only. It supports semantic,
 table, image-reference, summary, and rewrite evaluation with the FR-037 macro average

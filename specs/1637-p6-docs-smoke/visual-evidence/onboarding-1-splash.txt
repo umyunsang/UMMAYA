@@ -1,0 +1,13 @@
+# Visual evidence — onboarding-1-splash
+# Onboarding step 1 — splash (WelcomeV2 logo + brand glyph)
+# Captured 2026-06-01T08:18:49.527Z via ink-testing-library render()
+
+Welcome to UMMAYA v0.2.4
+Unified Multi-Ministry Agent for Your Administration
+………………………………………………………………………………………………………………
+
+                            ▗▖ ▗▖
+                           ▟▛▛▀▜▜▙
+                           ██▘ ▝██
+                          ▐█▘ ▄ ▝█▌
+                          ▝▜▙███▟▛▘
