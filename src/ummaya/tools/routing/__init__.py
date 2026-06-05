@@ -23,12 +23,18 @@ from ummaya.tools.routing.intent import (
     ToolSelectionIntent,
     extract_tool_selection_intent,
 )
+from ummaya.tools.routing.projection import (
+    AvailableAdaptersProjection,
+    build_available_adapters_projection,
+    selected_concrete_adapter_tools,
+)
 
 __all__ = [
     "ACTIVE_PRIMITIVES",
     "AdapterCard",
     "AdapterCardError",
     "AdapterCardQualityViolation",
+    "AvailableAdaptersProjection",
     "FeasibilityStatus",
     "LEGACY_PRIMITIVE_ALIASES",
     "RouteCandidate",
@@ -40,6 +46,8 @@ __all__ = [
     "assert_adapter_card_quality",
     "build_adapter_card",
     "build_adapter_cards",
+    "build_available_adapters_projection",
     "extract_tool_selection_intent",
     "lint_adapter_card",
+    "selected_concrete_adapter_tools",
 ]

@@ -272,6 +272,37 @@ def test_route_decision_permission_gate_uses_selected_slice(sample_tool_factory)
     assert decision.permission_gate is False
 
 
+def test_route_decision_tie_breaks_by_tool_id(sample_tool_factory) -> None:
+    registry = ToolRegistry()
+    registry.register(
+        sample_tool_factory(
+            id="zeta_weather_forecast",
+            primitive="find",
+            policy=_policy(),
+            search_hint="weather forecast",
+        )
+    )
+    registry.register(
+        sample_tool_factory(
+            id="alpha_weather_forecast",
+            primitive="find",
+            policy=_policy(),
+            search_hint="weather forecast",
+        )
+    )
+
+    decision = RouteDecisionService(registry).select_adapters(
+        "weather forecast",
+        initial_scores=(
+            ("zeta_weather_forecast", 10.0),
+            ("alpha_weather_forecast", 10.0),
+        ),
+        max_selected=1,
+    )
+
+    assert decision.selected_tools == ("alpha_weather_forecast",)
+
+
 def test_route_decision_include_infeasible_retains_soft_rejection_reasons() -> None:
     registry = ToolRegistry()
     tool = GovAPITool(

@@ -8,7 +8,6 @@ the standalone ``query()`` async generator.
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
@@ -20,9 +19,13 @@ from ummaya.engine.models import QueryContext, QueryState, SessionBudget
 from ummaya.engine.query import query
 from ummaya.llm.client import LLMClient
 from ummaya.llm.models import ChatMessage
-from ummaya.tools.errors import ToolNotFoundError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.registry import ToolRegistry
+from ummaya.tools.routing import (
+    RouteDecisionService,
+    build_available_adapters_projection,
+    selected_concrete_adapter_tools,
+)
 
 if TYPE_CHECKING:
     from ummaya.permissions.models import SessionContext
@@ -30,66 +33,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _INTERNAL_CONTEXT_TOOL_IDS = frozenset({"find", "locate", "check", "send", "search_tools"})
-
-_LOCATION_DEPENDENT_SCHEMA_KEYS = frozenset(
-    {
-        "adm_cd",
-        "admcd",
-        "admin_code",
-        "administrative_code",
-        "latitude",
-        "lat",
-        "longitude",
-        "lon",
-        "lng",
-        "nx",
-        "ny",
-        "region_cd",
-        "region_code",
-    }
-)
-
-
-def _schema_requires_location_resolution(
-    input_schema_json: object,
-    required_params: object,
-) -> bool:
-    """Return True when an adapter schema needs prior locate output."""
-
-    return _contains_location_dependent_key(
-        required_params
-    ) or _schema_required_fields_contain_location_key(input_schema_json)
-
-
-def _schema_required_fields_contain_location_key(value: object) -> bool:
-    """Return True when JSON Schema required fields demand locate-derived data."""
-
-    if isinstance(value, dict):
-        required = value.get("required")
-        if _contains_location_dependent_key(required):
-            return True
-        return any(
-            _schema_required_fields_contain_location_key(nested) for nested in value.values()
-        )
-    if isinstance(value, list):
-        return any(_schema_required_fields_contain_location_key(item) for item in value)
-    return False
-
-
-def _contains_location_dependent_key(value: object) -> bool:
-    """Recursively detect coordinate/admin-code schema fields."""
-
-    if isinstance(value, dict):
-        for key, nested in value.items():
-            if str(key).lower() in _LOCATION_DEPENDENT_SCHEMA_KEYS:
-                return True
-            if _contains_location_dependent_key(nested):
-                return True
-    elif isinstance(value, list):
-        return any(_contains_location_dependent_key(item) for item in value)
-    elif isinstance(value, str):
-        return value.lower() in _LOCATION_DEPENDENT_SCHEMA_KEYS
-    return False
 
 
 class QueryEngine:
@@ -296,85 +239,36 @@ class QueryEngine:
         """Build dynamic adapter context and per-turn concrete tool exposure."""
 
         try:
-            from ummaya.tools.search import search  # noqa: PLC0415
-
-            candidates = search(
+            decision = RouteDecisionService(self._tool_registry).select_adapters(
                 user_message,
-                self._tool_registry.bm25_index,
-                self._tool_registry,
                 top_k=15,
+                max_selected=5,
+            )
+            concrete_tools = selected_concrete_adapter_tools(
+                decision,
+                self._tool_registry,
+                exclude_tool_ids=_INTERNAL_CONTEXT_TOOL_IDS,
+                max_tools=5,
+            )
+            tool_ids = tuple(tool.id for tool in concrete_tools)
+            if not tool_ids:
+                return None, ()
+            projection = build_available_adapters_projection(
+                decision,
+                self._tool_registry,
+                query=user_message,
+                projection_level=decision.schema_projection_level,
+                max_visible=len(tool_ids),
+                visible_tool_ids=tool_ids,
             )
         except Exception:  # noqa: BLE001
             logger.exception("available_adapters auto-inject failed")
             return None, ()
 
-        adapter_lines: list[str] = []
-        selected_tool_ids: list[str] = []
-        primary_find_without_location = False
-        visible_count = 0
-        for candidate in candidates:
-            try:
-                tool = self._tool_registry.find(candidate.tool_id)
-            except ToolNotFoundError:
-                continue
-            if candidate.score <= 0:
-                continue
-            if tool.id in _INTERNAL_CONTEXT_TOOL_IDS:
-                continue
-            primitive = candidate.primitive if isinstance(candidate.primitive, str) else None
-            requires_location = _schema_requires_location_resolution(
-                candidate.input_schema_json,
-                candidate.required_params,
-            )
-            primary_find_without_location = primary_find_without_location or (
-                visible_count == 0 and primitive == "find" and not requires_location
-            )
-            if visible_count > 0 and primary_find_without_location and requires_location:
-                continue
-            schema_json = json.dumps(
-                candidate.input_schema_json,
-                ensure_ascii=False,
-                sort_keys=True,
-            )
-            selected_tool_ids.append(candidate.tool_id)
-            adapter_lines.extend(
-                [
-                    f"- tool_id: {candidate.tool_id}",
-                    f"  primitive: {candidate.primitive}",
-                    f"  description: {candidate.llm_description or tool.name_ko}",
-                    f"  required_params: {candidate.required_params}",
-                    f"  input_schema_json: {schema_json}",
-                    f"  call_hint: {candidate.tool_id}({{...}})",
-                    f"  policy_url: {candidate.real_classification_url or ''}",
-                ]
-            )
-            visible_count += 1
-            if visible_count >= 5:
-                break
-
-        if not adapter_lines:
+        if projection.content is None:
             return None, ()
 
-        content = "\n".join(
-            [
-                "<available_adapters>",
-                "Use these adapter candidates for this citizen request. "
-                "The model-facing function name is the concrete tool_id shown "
-                "below when that function is present in tools[]. Call the "
-                "concrete adapter directly with exactly the input_schema_json "
-                "fields. Do not wrap tool_id/params inside a concrete adapter "
-                "call. The root primitives (find, locate, check, send) are "
-                "legacy compatibility wrappers only when a concrete adapter "
-                "function is not loaded. "
-                "Do not call locate just because the citizen text contains a "
-                "city/province name; treat that as the dataset/filter term. "
-                "Call locate only when the selected adapter schema requires "
-                "coordinates, administrative codes, or a place-to-region conversion.",
-                *adapter_lines,
-                "</available_adapters>",
-            ]
-        )
-        return ChatMessage(role="system", content=content), tuple(selected_tool_ids)
+        return ChatMessage(role="system", content=projection.content), tool_ids
 
     def set_permission_session(self, session: SessionContext | None) -> None:
         """Update the permission-pipeline session used for subsequent turns.

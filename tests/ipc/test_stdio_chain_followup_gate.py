@@ -111,6 +111,21 @@ def test_available_adapters_find_candidate_triggers_followup_signal() -> None:
     assert _available_adapters_block_has_find_candidate(block)
 
 
+def test_available_adapters_new_projection_find_candidate_triggers_followup_signal() -> None:
+    block = "\n".join(
+        [
+            '<available_adapters query="다대1동 근처 내과" decision_id="abc" '
+            'backend="bm25" schema_projection="summary">',
+            "RouteDecision candidates (top 1, backend=bm25, manifest_hash=123).",
+            "- tool_id: hira_hospital_search",
+            "  primitive: find",
+            "  source_mode: live",
+            "</available_adapters>",
+        ]
+    )
+    assert _available_adapters_block_has_find_candidate(block)
+
+
 def test_locate_only_available_adapters_do_not_trigger_followup_signal() -> None:
     """Pure locate candidate blocks stay out of the follow-up gate."""
     block = "\n".join(
@@ -381,6 +396,25 @@ def _msg_available_adapters(*, find: bool = True) -> LLMChatMessage:
             [
                 '<available_adapters query="테스트">',
                 candidate,
+                "</available_adapters>",
+            ]
+        ),
+    )
+
+
+def _msg_available_adapters_new_projection(*, find: bool = True) -> LLMChatMessage:
+    tool_id = "kma_current_observation" if find else "kakao_address_search"
+    primitive = "find" if find else "locate"
+    return LLMChatMessage(
+        role="system",
+        content="\n".join(
+            [
+                '<available_adapters query="테스트" decision_id="abc" '
+                'backend="bm25" schema_projection="summary">',
+                "RouteDecision candidates (top 1, backend=bm25, manifest_hash=123).",
+                f"- tool_id: {tool_id}",
+                f"  primitive: {primitive}",
+                "  source_mode: live",
                 "</available_adapters>",
             ]
         ),
@@ -2706,6 +2740,23 @@ def test_resolve_only_then_terminate_is_rejected() -> None:
     assert "Chain incomplete" in msg
     assert "find" in msg.lower()
     assert "fabrication" in msg.lower()
+
+
+def test_resolve_only_then_terminate_is_rejected_with_new_projection() -> None:
+    msgs: list[Any] = [
+        _msg_available_adapters_new_projection(find=True),
+        LLMChatMessage(role="user", content="지금 부산 사하구 다대1동 날씨 어때"),
+        _msg_assistant_tool_call(
+            "locate",
+            {"query": "부산 사하구 다대1동", "want": "coords_and_admcd"},
+        ),
+        _msg_tool_result("locate", {"lat": 35.05915, "lon": 128.97132}),
+    ]
+
+    msg = _check_resolve_terminated_without_followup(msgs, "지금 부산 사하구 다대1동 날씨 어때")
+
+    assert msg is not None
+    assert "Chain incomplete" in msg
 
 
 def test_resolve_only_with_non_observable_query_passes() -> None:
