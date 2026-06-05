@@ -19,6 +19,10 @@ describe('UMMAYA system prompt migration', () => {
       expect(prompt).toContain('Korean public-service')
       expect(prompt).toContain('Before every tool call')
       expect(prompt).toContain('After every tool result')
+      expect(prompt).toContain(
+        'include a text block before the next tool call',
+      )
+      expect(prompt).toContain('Do not use generic status-only boilerplate')
       expect(prompt).toContain('Do not expose hidden chain-of-thought')
       expect(prompt).toContain('Bind final-answer values exactly')
       expect(prompt).toContain('For KMA current observations')
