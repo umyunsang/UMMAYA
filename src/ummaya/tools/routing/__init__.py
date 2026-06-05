@@ -10,6 +10,13 @@ from ummaya.tools.routing.cards import (
     build_adapter_cards,
     lint_adapter_card,
 )
+from ummaya.tools.routing.decision_service import RouteDecisionService
+from ummaya.tools.routing.decision_types import (
+    FeasibilityStatus,
+    RouteCandidate,
+    RouteDecision,
+    SchemaProjectionLevel,
+)
 from ummaya.tools.routing.intent import (
     ACTIVE_PRIMITIVES,
     LEGACY_PRIMITIVE_ALIASES,
@@ -22,8 +29,13 @@ __all__ = [
     "AdapterCard",
     "AdapterCardError",
     "AdapterCardQualityViolation",
+    "FeasibilityStatus",
     "LEGACY_PRIMITIVE_ALIASES",
+    "RouteCandidate",
+    "RouteDecision",
+    "RouteDecisionService",
     "SchemaFieldSummary",
+    "SchemaProjectionLevel",
     "ToolSelectionIntent",
     "assert_adapter_card_quality",
     "build_adapter_card",
