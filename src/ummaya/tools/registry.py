@@ -49,6 +49,7 @@ class AdapterPrimitive(StrEnum):
     locate = "locate"
     send = "send"
     check = "check"
+    document = "document"
 
 
 class AdapterSourceMode(StrEnum):

@@ -7,6 +7,7 @@ Exports the active primitive symbols that make up the main-tool surface:
 - ``locate``: geocoding (re-exported from Spec 022).
 - ``send``: write-transaction absorber (Spec 031 US1, T024).
 - ``check``: delegation-only identity binding (Spec 031 US2, T042).
+- ``document``: local public-document authoring and review harness.
 
 ``subscribe`` is intentionally not part of the active surface. National alert
 and notice subscriptions are app/phone push-notification concerns, not a CLI
@@ -18,6 +19,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from ummaya.primitives.document import document
 from ummaya.primitives.submit import send
 from ummaya.primitives.verify import check
 from ummaya.tools.lookup import find
@@ -46,6 +48,7 @@ PRIMITIVE_REGISTRY: dict[str, Callable[..., Any]] = {
     "locate": locate,
     "send": send,
     "check": check,
+    "document": document,
 }
 
 # Subset of ``PRIMITIVE_REGISTRY`` whose invocation requires a Spec 033
@@ -64,9 +67,9 @@ PRIMITIVE_REGISTRY: dict[str, Callable[..., Any]] = {
 #
 # The complement (``PRIMITIVE_REGISTRY.keys() - GATED_PRIMITIVES``) is the
 # fully auto-allowed set: find / locate.
-GATED_PRIMITIVES: frozenset[str] = frozenset({"check", "send"})
+GATED_PRIMITIVES: frozenset[str] = frozenset({"check", "send", "document"})
 LIGHT_GATE_PRIMITIVES: frozenset[str] = frozenset({"check"})
-HEAVY_GATE_PRIMITIVES: frozenset[str] = frozenset({"send"})
+HEAVY_GATE_PRIMITIVES: frozenset[str] = frozenset({"send", "document"})
 
 # ``__all__`` enumerates the LLM-visible primitive *surface* — the active root
 # verbs. The metadata constants ``PRIMITIVE_REGISTRY``
@@ -77,6 +80,7 @@ __all__ = [
     "locate",
     "send",
     "check",
+    "document",
 ]
 # Metadata constants (GATED_PRIMITIVES / LIGHT_GATE_PRIMITIVES /
 # HEAVY_GATE_PRIMITIVES / PRIMITIVE_REGISTRY) are intentionally NOT in __all__

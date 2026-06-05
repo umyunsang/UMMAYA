@@ -20,26 +20,15 @@ def test_document_tool_contract_declares_all_model_visible_tools() -> None:
 
     tool_ids = {tool["tool_id"] for tool in schema["x-ummaya-tools"]}
 
-    assert tool_ids == {
-        "document_inspect",
-        "document_extract",
-        "document_form_schema",
-        "document_copy_for_edit",
-        "document_apply_fill",
-        "document_apply_style",
-        "document_render",
-        "document_validate_public_form",
-        "document_save",
-    }
+    assert tool_ids == {"document"}
 
 
-def test_document_tool_contract_uses_existing_primitive_families_only() -> None:
+def test_document_tool_contract_uses_dedicated_document_primitive() -> None:
     schema = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
 
     primitives = {tool["primitive"] for tool in schema["x-ummaya-tools"]}
 
-    assert primitives <= {"find", "check", "send"}
-    assert "locate" not in primitives
+    assert primitives == {"document"}
 
 
 def test_document_tool_contract_has_closed_contract_objects() -> None:

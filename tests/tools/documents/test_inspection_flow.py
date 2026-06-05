@@ -10,9 +10,15 @@ from pathlib import Path
 
 import pytest
 
+from ummaya.tools.documents.adapter_registry import DocumentAdapterRegistry
 from ummaya.tools.documents.engines import DocumentEngineRegistry
 from ummaya.tools.documents.inspection import inspect_document
-from ummaya.tools.documents.models import DocumentExtraction, DocumentFormat, ParagraphBlock
+from ummaya.tools.documents.models import (
+    DocumentExtraction,
+    DocumentFormat,
+    KnownDocumentFormat,
+    ParagraphBlock,
+)
 
 
 class StaticInspectionEngine:
@@ -42,6 +48,32 @@ class StaticInspectionEngine:
         )
 
 
+class StaticInspectionAdapter:
+    """Test double for a format adapter below the document primitive."""
+
+    adapter_id = "test-docx-adapter"
+    known_formats = (KnownDocumentFormat.docx,)
+    promoted_formats = (DocumentFormat.docx,)
+
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.calls: list[Path] = []
+
+    def inspect(self, path: Path, *, artifact_id: str) -> DocumentExtraction:
+        self.calls.append(path)
+        return DocumentExtraction(
+            artifact_id=artifact_id,
+            paragraphs=[
+                ParagraphBlock(
+                    block_id="adapter-paragraph-001",
+                    text=self.text,
+                    source_path="adapter://test-docx-adapter/paragraph/1",
+                )
+            ],
+            metadata={"adapter_id": self.adapter_id, "format": "docx"},
+        )
+
+
 def _zip_bytes(entries: dict[str, bytes]) -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as package:
@@ -58,6 +90,12 @@ def _write(path: Path, payload: bytes) -> Path:
 def _registry_for(engine: StaticInspectionEngine) -> DocumentEngineRegistry:
     registry = DocumentEngineRegistry()
     registry.register(engine)
+    return registry
+
+
+def _adapter_registry_for(adapter: StaticInspectionAdapter) -> DocumentAdapterRegistry:
+    registry = DocumentAdapterRegistry()
+    registry.register(adapter)
     return registry
 
 
@@ -167,6 +205,26 @@ def test_inspect_document_delegates_to_registered_engine_without_mutating_source
     assert expected_text in _text(result)
     assert engine.calls == [source]
     assert hashlib.sha256(source.read_bytes()).hexdigest() == before
+
+
+def test_inspect_document_delegates_to_registered_adapter_before_engine_registry(
+    tmp_path: Path,
+) -> None:
+    source = _write(tmp_path / "form.docx", _docx_fixture("DOCX package marker"))
+    adapter = StaticInspectionAdapter(text="Adapter-selected document text")
+
+    result = inspect_document(
+        source,
+        expected_format=DocumentFormat.docx,
+        adapter_registry=_adapter_registry_for(adapter),
+        engine_registry=DocumentEngineRegistry(),
+    )
+
+    assert result.status.value == "ok"
+    assert result.blocked_reason is None
+    assert "Adapter-selected document text" in _text(result)
+    assert adapter.calls == [source]
+    assert "test-docx-adapter" in result.text_summary
 
 
 def test_inspect_hwp_reports_read_only_binary_boundary(tmp_path: Path) -> None:

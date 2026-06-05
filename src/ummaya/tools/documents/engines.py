@@ -6,7 +6,20 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from ummaya.tools.documents.models import DocumentExtraction, DocumentFormat, DocumentPatch
+from ummaya.tools.documents.models import (
+    BlockedReason,
+    DocumentExtraction,
+    DocumentFormat,
+    DocumentPatch,
+)
+
+
+class DocumentMutationBlockedError(ValueError):
+    """Raised when a mutation engine blocks with a typed document reason."""
+
+    def __init__(self, reason: BlockedReason, message: str) -> None:
+        super().__init__(message)
+        self.reason = reason
 
 
 class DocumentInspectionEngine(Protocol):
@@ -70,14 +83,81 @@ class DocumentEngineRegistry:
 
 def build_default_document_engine_registry() -> DocumentEngineRegistry:
     """Build the default promoted-engine registry for local document tools."""
+    from ummaya.tools.documents.formats.archive import (  # noqa: PLC0415
+        ArchiveContainerDocumentEngine,
+    )
+    from ummaya.tools.documents.formats.code_file import (  # noqa: PLC0415
+        PythonSourceDocumentEngine,
+    )
+    from ummaya.tools.documents.formats.data_file import (  # noqa: PLC0415
+        DataFileDocumentEngine,
+    )
+    from ummaya.tools.documents.formats.hwp import (  # noqa: PLC0415
+        UnhwpReadOnlyInspectionEngine,
+    )
     from ummaya.tools.documents.formats.hwpx import (  # noqa: PLC0415
         HwpXPackageTextEngine,
+        OwpmlPackageTextEngine,
+    )
+    from ummaya.tools.documents.formats.odf import (  # noqa: PLC0415
+        OdfdoPresentationDocumentEngine,
+        OdfdoSpreadsheetDocumentEngine,
+        OdfdoTextDocumentEngine,
     )
     from ummaya.tools.documents.formats.ooxml import (  # noqa: PLC0415
-        PythonDocxInspectionEngine,
+        OpenPyxlDocumentEngine,
+        PythonDocxDocumentEngine,
+        PythonPptxDocumentEngine,
+    )
+    from ummaya.tools.documents.formats.pdf import PypdfAcroFormEngine  # noqa: PLC0415
+    from ummaya.tools.documents.formats.text_web import (  # noqa: PLC0415
+        TextWebDocumentEngine,
     )
 
     registry = DocumentEngineRegistry()
     registry.register(HwpXPackageTextEngine())
-    registry.register(PythonDocxInspectionEngine())
+    registry.register(OwpmlPackageTextEngine())
+    registry.register(UnhwpReadOnlyInspectionEngine())
+    registry.register(PythonDocxDocumentEngine())
+    registry.register(OpenPyxlDocumentEngine())
+    registry.register(PythonPptxDocumentEngine())
+    registry.register(PypdfAcroFormEngine())
+    registry.register(OdfdoTextDocumentEngine())
+    registry.register(OdfdoSpreadsheetDocumentEngine())
+    registry.register(OdfdoPresentationDocumentEngine())
+    registry.register(TextWebDocumentEngine(DocumentFormat.html))
+    registry.register(TextWebDocumentEngine(DocumentFormat.htm))
+    registry.register(TextWebDocumentEngine(DocumentFormat.txt))
+    registry.register(TextWebDocumentEngine(DocumentFormat.rtf))
+    registry.register(TextWebDocumentEngine(DocumentFormat.md))
+    registry.register(PythonSourceDocumentEngine())
+    for document_format in (
+        DocumentFormat.csv,
+        DocumentFormat.tsv,
+        DocumentFormat.xml,
+        DocumentFormat.rdf,
+        DocumentFormat.ttl,
+        DocumentFormat.lod,
+        DocumentFormat.json,
+        DocumentFormat.jsonl,
+        DocumentFormat.yaml,
+        DocumentFormat.yml,
+        DocumentFormat.geojson,
+        DocumentFormat.gpx,
+        DocumentFormat.kml,
+        DocumentFormat.fasta,
+        DocumentFormat.sgml,
+        DocumentFormat.dtd,
+        DocumentFormat.hml,
+        DocumentFormat.etc,
+    ):
+        registry.register(DataFileDocumentEngine(document_format))
+    for document_format in (
+        DocumentFormat.epub,
+        DocumentFormat.zip,
+        DocumentFormat.seven_z,
+        DocumentFormat.tar,
+        DocumentFormat.gz,
+    ):
+        registry.register(ArchiveContainerDocumentEngine(document_format))
     return registry

@@ -1,19 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
-"""US5 ToolRegistry exposure tests for the Public AX document harness."""
+"""ToolRegistry exposure tests for the Public AX document primitive."""
 
 from __future__ import annotations
 
 import importlib
+import json
 from collections.abc import Callable, Collection
 from typing import cast
 
 import pytest
 from pydantic import BaseModel
 
-from ummaya.tools.documents.contracts import (
-    DocumentToolContractCatalog,
-    load_document_tool_contracts,
-)
+from ummaya.tools.documents.contracts import load_document_tool_contracts
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.models import GovAPITool
 from ummaya.tools.register_all import register_all_tools
@@ -68,19 +66,19 @@ def _document_tools_by_id(registry: ToolRegistry) -> dict[str, GovAPITool]:
 
 
 def test_document_tool_ids_match_contract_extension() -> None:
-    """The future registry constant mirrors x-ummaya-tools exactly."""
+    """The model-facing registry constant mirrors the single document primitive."""
     _, document_tool_ids = _load_document_registry_api()
 
-    assert document_tool_ids == frozenset(_CONTRACTS.tool_ids)
-    assert len(document_tool_ids) == 9
+    assert document_tool_ids == frozenset({"document"})
+    assert _CONTRACTS.tool_ids == ("document",)
 
 
 def test_register_document_tools_registers_exact_contract_ids() -> None:
-    """register_document_tools() exposes exactly the nine contract tools."""
+    """register_document_tools() exposes one model-facing document primitive."""
     registry, executor = _registered_document_tools()
 
-    assert {tool.id for tool in registry.all_tools()} == set(_CONTRACTS.tool_ids)
-    assert set(executor._adapters) == set(_CONTRACTS.tool_ids)
+    assert {tool.id for tool in registry.all_tools()} == {"document"}
+    assert set(executor._adapters) == {"document"}
 
 
 def test_document_tool_definitions_match_contract_metadata() -> None:
@@ -103,43 +101,40 @@ def test_document_tool_definitions_match_contract_metadata() -> None:
         assert tool.search_hint.strip()
 
 
-def test_document_tool_primitive_buckets_match_contract() -> None:
-    """Document tools stay under find/check/send; no new root primitive is added."""
+def test_document_contract_guides_single_call_edit_and_review() -> None:
+    """The model-facing surface must describe one edit call with automatic review."""
+    registry, _ = _registered_document_tools()
+    tool = _document_tools_by_id(registry)["document"]
+
+    schema_text = json.dumps(tool.input_schema.model_json_schema(), ensure_ascii=False)
+    model_surface = f"{tool.llm_description or ''}\n{tool.search_hint}\n{schema_text}"
+
+    assert tool.primitive == "document"
+    assert "document.path" in model_surface
+    assert "local file path" in model_surface
+    assert "single document primitive" in model_surface
+    assert "automatic compact diff" in model_surface
+    assert "Do not call locate" in model_surface
+    assert "Do not call document_inspect" in model_surface
+    assert "Do not call document_render" in model_surface
+
+
+def test_document_tool_primitive_bucket_is_document() -> None:
+    """Document work is a first-class primitive, not a find/send/check adapter chain."""
     registry, _ = _registered_document_tools()
     tools_by_id = _document_tools_by_id(registry)
-    expected_by_primitive = _tools_by_primitive(_CONTRACTS)
 
-    actual_by_primitive = {
-        primitive: {
-            tool_id
-            for tool_id in _CONTRACTS.tool_ids
-            if tools_by_id[tool_id].primitive == primitive
-        }
-        for primitive in ("find", "check", "send")
-    }
-
-    assert actual_by_primitive == expected_by_primitive
+    assert tools_by_id["document"].primitive == "document"
 
 
-def test_register_all_tools_includes_document_inspect_in_routing_index() -> None:
-    """Boot registration must route document_inspect without live document calls."""
+def test_register_all_tools_includes_document_in_routing_index() -> None:
+    """Boot registration must route document as a dedicated primitive."""
     registry = ToolRegistry()
     executor = ToolExecutor(registry)
 
     routing_index = register_all_tools(registry, executor)
 
-    assert "document_inspect" in registry
-    assert "document_inspect" in routing_index.by_tool_id
-    assert routing_index.by_tool_id["document_inspect"].primitive == "find"
-    assert routing_index.by_tool_id["document_inspect"] in routing_index.by_primitive["find"]
-
-
-def _tools_by_primitive(
-    contracts: DocumentToolContractCatalog,
-) -> dict[str, set[str]]:
-    return {
-        primitive: {
-            contract.tool_id for contract in contracts.tools if contract.primitive == primitive
-        }
-        for primitive in ("find", "check", "send")
-    }
+    assert "document" in registry
+    assert "document" in routing_index.by_tool_id
+    assert routing_index.by_tool_id["document"].primitive == "document"
+    assert routing_index.by_tool_id["document"] in routing_index.by_primitive["document"]

@@ -24,25 +24,15 @@ def test_load_document_tool_contracts_reads_checked_in_schema() -> None:
 
     assert isinstance(catalog, DocumentToolContractCatalog)
     assert catalog.version == "0.1.0"
-    assert len(catalog.tools) == 9
-    assert catalog.tool_ids == (
-        "document_inspect",
-        "document_extract",
-        "document_form_schema",
-        "document_copy_for_edit",
-        "document_apply_fill",
-        "document_apply_style",
-        "document_render",
-        "document_validate_public_form",
-        "document_save",
-    )
+    assert len(catalog.tools) == 1
+    assert catalog.tool_ids == ("document",)
 
 
 def test_loaded_document_tool_contracts_keep_closed_primitives() -> None:
     catalog = load_document_tool_contracts()
 
-    assert {tool.primitive for tool in catalog.tools} == {"find", "check", "send"}
-    assert catalog.by_tool_id("document_validate_public_form").primitive == "check"
+    assert {tool.primitive for tool in catalog.tools} == {"document"}
+    assert catalog.by_tool_id("document").primitive == "document"
 
 
 def test_export_pydantic_schema_preserves_closed_model_shape() -> None:

@@ -10,23 +10,13 @@ from typing import Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
-DocumentPrimitive = Literal["find", "check", "send"]
+DocumentPrimitive = Literal["document"]
 DocumentPermission = Literal[
     "read_local_artifact",
     "write_derivative_artifact",
     "validate_local_artifact",
 ]
-DocumentToolId = Literal[
-    "document_inspect",
-    "document_extract",
-    "document_form_schema",
-    "document_copy_for_edit",
-    "document_apply_fill",
-    "document_apply_style",
-    "document_render",
-    "document_validate_public_form",
-    "document_save",
-]
+DocumentToolId = Literal["document",]
 
 CONTRACT_SCHEMA_PATH = (
     Path(__file__).resolve().parents[4]
@@ -55,7 +45,7 @@ class DocumentToolContractCatalog(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     version: Literal["0.1.0"]
-    tools: tuple[DocumentToolContract, ...] = Field(min_length=9)
+    tools: tuple[DocumentToolContract, ...] = Field(min_length=1, max_length=1)
 
     @computed_field  # type: ignore[prop-decorator]
     @property

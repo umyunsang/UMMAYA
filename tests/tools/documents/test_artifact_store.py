@@ -19,6 +19,7 @@ from ummaya.tools.documents.models import (
     DocumentFormat,
     SecurityState,
 )
+from ummaya.tools.documents.registry import _runtime_session_id
 
 
 def _model_value(model: object, raw: str) -> object:
@@ -37,6 +38,13 @@ def _raw_value(value: object) -> str:
 
 def _sha256(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
+
+
+def test_document_runtime_session_id_preserves_safe_tui_session_ids() -> None:
+    session_id = "66666666-6666-4666-8666-666666662802"
+
+    assert _runtime_session_id(session_id) == session_id
+    assert _runtime_session_id("project/session").startswith("project-session-")
 
 
 def test_store_source_copies_bytes_immutably_and_records_checksum_lineage(tmp_path: Path) -> None:
@@ -77,6 +85,44 @@ def test_store_source_copies_bytes_immutably_and_records_checksum_lineage(tmp_pa
             mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
     assert stored_path.read_bytes() == original_bytes
+
+
+def test_load_artifact_rehydrates_persisted_metadata_for_same_session(
+    tmp_path: Path,
+) -> None:
+    original_path = tmp_path / "weekly-log.hwpx"
+    original_bytes = b"hwpx source"
+    original_path.write_bytes(original_bytes)
+    store = DocumentArtifactStore(root=tmp_path / "store", session_id="session-resume")
+    artifact = store.store_source(
+        original_path,
+        artifact_id="source-weekly-log",
+        document_format=_model_value(DocumentFormat, "hwpx"),
+        mime_type="application/owpml",
+    )
+
+    resumed_store = DocumentArtifactStore(root=tmp_path / "store", session_id="session-resume")
+    resumed = resumed_store.load_artifact("source-weekly-log")
+
+    assert resumed == artifact
+    assert resumed is not None
+    assert Path(resumed.source_path).read_bytes() == original_bytes
+
+
+def test_load_artifact_stays_session_scoped(tmp_path: Path) -> None:
+    original_path = tmp_path / "weekly-log.hwpx"
+    original_path.write_bytes(b"hwpx source")
+    store = DocumentArtifactStore(root=tmp_path / "store", session_id="session-a")
+    store.store_source(
+        original_path,
+        artifact_id="source-weekly-log",
+        document_format=_model_value(DocumentFormat, "hwpx"),
+        mime_type="application/owpml",
+    )
+
+    other_session_store = DocumentArtifactStore(root=tmp_path / "store", session_id="session-b")
+
+    assert other_session_store.load_artifact("source-weekly-log") is None
 
 
 def test_write_derivative_stays_under_session_root_and_records_parent_lineage(

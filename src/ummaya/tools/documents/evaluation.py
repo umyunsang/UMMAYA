@@ -19,9 +19,12 @@ from ummaya.tools.documents.capability import (
 from ummaya.tools.documents.scorecard import CapabilityScorecard
 
 GateState = Literal["pass", "fail", "defer"]
+DependencyPermissionBoundary = Literal["document_primitive_only", "not_applicable"]
 DependencyReason = Literal[
     "dependency_gate_failed",
+    "dependency_gate_deferred",
     "license_gate_failed",
+    "license_gate_deferred",
 ]
 CandidateDecisionReason = str
 DataGoKrUsageScope = Literal[
@@ -56,6 +59,29 @@ class CandidateDependencyGate(BaseModel):
     runtime_dependency: bool
     gate: GateState
     notes: str = Field(min_length=1)
+    requires_adr: bool = False
+    adr_ref: str | None = None
+    permission_boundary: DependencyPermissionBoundary = "not_applicable"
+    local_only_execution: bool = True
+    package_ref: str | None = None
+
+    @model_validator(mode="after")
+    def _enforce_runtime_bridge_gate(self) -> CandidateDependencyGate:
+        if self.gate == "pass" and not self.local_only_execution:
+            raise ValueError("local_only_execution must be true for passed dependency gates")
+        if not self.requires_adr:
+            return self
+        if self.adr_ref is None:
+            raise ValueError("requires_adr dependency gates require adr_ref")
+        if not self.adr_ref.startswith("docs/adr/ADR-"):
+            raise ValueError("adr_ref must point at docs/adr/ADR-*.md")
+        if self.permission_boundary != "document_primitive_only":
+            raise ValueError(
+                "requires_adr document bridges must use document_primitive_only permission"
+            )
+        if self.package_ref is None:
+            raise ValueError("requires_adr dependency gates require package_ref")
+        return self
 
 
 class CandidateProfile(BaseModel):
@@ -200,12 +226,22 @@ def evaluate_candidate_profiles(
                 profile.scorecard,
             )
             reasons: list[str] = list(promotion.reasons)
-            dependency_gate_passed = profile.dependency.gate == "pass"
-            license_gate_passed = profile.license.gate == "pass"
-            if not dependency_gate_passed:
-                reasons.append("dependency_gate_failed")
-            if not license_gate_passed:
-                reasons.append("license_gate_failed")
+            dependency_reason = _gate_reason(
+                profile.dependency.gate,
+                failed_reason="dependency_gate_failed",
+                deferred_reason="dependency_gate_deferred",
+            )
+            license_reason = _gate_reason(
+                profile.license.gate,
+                failed_reason="license_gate_failed",
+                deferred_reason="license_gate_deferred",
+            )
+            dependency_gate_passed = dependency_reason is None
+            license_gate_passed = license_reason is None
+            if dependency_reason is not None:
+                reasons.append(dependency_reason)
+            if license_reason is not None:
+                reasons.append(license_reason)
 
             decisions.append(
                 CandidateDecision(
@@ -233,6 +269,19 @@ def load_data_go_kr_metadata_snapshot(path: Path) -> DataGoKrMetadataSnapshot:
     """Load the offline data.go.kr semantic-evaluation metadata snapshot."""
     raw = _load_yaml_mapping(path)
     return DataGoKrMetadataSnapshot.model_validate(raw)
+
+
+def _gate_reason(
+    gate: GateState,
+    *,
+    failed_reason: str,
+    deferred_reason: str,
+) -> str | None:
+    if gate == "pass":
+        return None
+    if gate == "defer":
+        return deferred_reason
+    return failed_reason
 
 
 def _load_yaml_mapping(path: Path) -> dict[str, object]:

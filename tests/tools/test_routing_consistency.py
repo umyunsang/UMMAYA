@@ -55,7 +55,7 @@ class TestInvariant1PrimitiveDeclared:
 
     def test_all_primitives_within_closed_enum(self, live_registry):
         """Every declared primitive is one of the active reserved primitives."""
-        valid_primitives = frozenset({"find", "locate", "send", "check"})
+        valid_primitives = frozenset({"find", "locate", "send", "check", "document"})
         registry, _ = live_registry
         for tool_id, tool in registry._tools.items():
             assert tool.primitive in valid_primitives, (

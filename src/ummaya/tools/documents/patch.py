@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
@@ -11,16 +12,21 @@ from ummaya.tools.documents.artifact_store import DocumentArtifactStore
 from ummaya.tools.documents.diff import DocumentDiff, diff_from_patch
 from ummaya.tools.documents.engines import (
     DocumentEngineRegistry,
+    DocumentMutationBlockedError,
+    DocumentMutationEngine,
     UnsupportedDocumentEngineError,
 )
 from ummaya.tools.documents.models import (
     ArtifactLineage,
     BlockedReason,
     DocumentArtifact,
+    DocumentExtraction,
     DocumentPatch,
     ToolResultStatus,
 )
 from ummaya.tools.documents.style import DocumentPatchValidationError, validate_document_patch
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentPatchResult(BaseModel):
@@ -89,8 +95,16 @@ def apply_document_patch(
             f"No mutation-capable engine is registered for {working_artifact.format.value}.",
         )
 
+    before_extraction = _safe_inspect_for_diff(
+        engine,
+        Path(working_artifact.source_path),
+        artifact_id=working_artifact.artifact_id,
+        phase="before",
+    )
     try:
         payload = engine.apply_patch(Path(working_artifact.source_path), patch)
+    except DocumentMutationBlockedError as exc:
+        return _blocked(working_artifact, exc.reason, str(exc))
     except ValueError as exc:
         return _blocked(working_artifact, BlockedReason.validation_failed, str(exc))
     derivative = store.write_derivative(
@@ -100,6 +114,12 @@ def apply_document_patch(
         destination_name=destination_name,
         payload=payload,
     )
+    after_extraction = _safe_inspect_for_diff(
+        engine,
+        Path(derivative.source_path),
+        artifact_id=derivative.artifact_id,
+        phase="after",
+    )
     return DocumentPatchResult(
         status=ToolResultStatus.ok,
         source_artifact=working_artifact,
@@ -108,6 +128,8 @@ def apply_document_patch(
             patch,
             source_artifact_id=working_artifact.artifact_id,
             derivative_artifact_id=derivative.artifact_id,
+            before_extraction=before_extraction,
+            after_extraction=after_extraction,
         ),
         text_summary=(
             f"Applied {len(patch.operations)} document patch operation(s) "
@@ -127,3 +149,22 @@ def _blocked(
         blocked_reason=reason,
         text_summary=message,
     )
+
+
+def _safe_inspect_for_diff(
+    engine: DocumentMutationEngine,
+    path: Path,
+    *,
+    artifact_id: str,
+    phase: str,
+) -> DocumentExtraction | None:
+    try:
+        return engine.inspect(path, artifact_id=artifact_id)
+    except Exception as exc:  # pragma: no cover - defensive evidence enrichment path.
+        logger.warning(
+            "Document patch diff %s-inspection failed for %s: %s",
+            phase,
+            artifact_id,
+            exc,
+        )
+        return None

@@ -49,20 +49,49 @@ def test_candidate_profiles_fixture_drives_promotions_and_rejections() -> None:
     assert rejected.reasons == ("unsupported_operation",)
     assert rejected.decision_note == "Retain as a test oracle only, not a runtime engine."
 
+    render = _decision(run.decisions, "hwpx", "rhwp-node-wasm", "render")
+    assert render.promoted is True
+    assert render.reasons == ("render_threshold_met",)
+    assert render.required_score == 75
+    assert render.decision_note == (
+        "Promoted for page-level SVG evidence; write/export remains a separate gate."
+    )
 
-def test_hwp_read_only_candidate_promotes_read_and_blocks_write() -> None:
+
+def test_hwp_candidates_score_but_defer_runtime_bridge_until_adr_gate_passes() -> None:
     profiles = load_candidate_profiles(_FIXTURE_ROOT / "candidate_profiles.yaml")
 
     run = evaluate_candidate_profiles(profiles)
 
     read_decision = _decision(run.decisions, "hwp", "OpenHWP-read-only", "read")
     write_decision = _decision(run.decisions, "hwp", "OpenHWP-read-only", "write")
+    hwpforge_convert = _decision(run.decisions, "hwp", "HwpForge-hwp5-to-hwpx", "convert")
+    unhwp_read = _decision(run.decisions, "hwp", "unhwp-read-only", "read")
 
-    assert read_decision.promoted is True
-    assert read_decision.reasons == ("read_threshold_met",)
+    assert read_decision.promoted is False
+    assert read_decision.reasons == ("read_threshold_met", "dependency_gate_deferred")
+    assert read_decision.license_gate_passed is True
+    assert read_decision.dependency_gate_passed is False
     assert write_decision.promoted is False
-    assert write_decision.reasons == ("hwp_write_blocked",)
+    assert write_decision.reasons == ("hwp_write_blocked", "dependency_gate_deferred")
     assert write_decision.decision_note == "Binary HWP direct write remains blocked in this epic."
+    assert hwpforge_convert.promoted is False
+    assert hwpforge_convert.reasons == (
+        "conversion_threshold_met",
+        "dependency_gate_deferred",
+    )
+    assert hwpforge_convert.dependency_gate_passed is False
+    assert hwpforge_convert.required_score == 85
+    assert hwpforge_convert.decision_note == (
+        "Defer HWP-to-HWPX runtime bridge until the HwpForge CLI crate or "
+        "another local converter is pinned, built, and passes ADR-011 "
+        "dependency, permission, local-only, render, and reread gates."
+    )
+    assert unhwp_read.promoted is True
+    assert unhwp_read.decision_note == (
+        "Promote read-only HWP inspection through unhwp; direct HWP write and "
+        "HWP-to-HWPX authoring remain blocked until conversion gates pass."
+    )
 
 
 def test_data_go_kr_metadata_snapshot_is_offline_evaluation_context_only() -> None:

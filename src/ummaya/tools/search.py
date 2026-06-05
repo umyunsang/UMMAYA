@@ -139,6 +139,26 @@ _KCUE_TOOL_IDS = frozenset(
         "kcue_student_regional_foreign",
     }
 )
+_DOCUMENT_PATH_RE = re.compile(
+    r"(?:^|[\s:'\"(])(?:~|/|[A-Za-z]:\\|\.{1,2}/)?[^\s:'\"]*"
+    r"\.(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b",
+    re.IGNORECASE,
+)
+_DOCUMENT_FORMAT_RE = re.compile(r"\b(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b", re.IGNORECASE)
+_DOCUMENT_INTENT_RE = re.compile(
+    r"(문서|공문서|양식|서식|파일|작성|저장|렌더|미리보기|변경사항|"
+    r"\bdiff\b|\bcompact\b|\bdocument\b|\bfile\b|\bform\b|\brender\b|\bsave\b|\bwrite\b)",
+    re.IGNORECASE,
+)
+_DOCUMENT_WRITE_INTENT_RE = re.compile(
+    r"(작성|수정|편집|채우|입력|변경|저장|write|edit|fill|apply|save)",
+    re.IGNORECASE,
+)
+_DOCUMENT_LOCAL_HINT_RE = re.compile(
+    r"(다운로드|downloads?|폴더|파일|양식|서식|활동일지|신청서|등본|증명서)",
+    re.IGNORECASE,
+)
+_DOCUMENT_TOOL_IDS = frozenset({"document"})
 _KMA_ANALYSIS_MAP_RE = re.compile(
     r"(일기도|분석일기도|지도\s*자료|비구름|바람\s*흐름|날씨\s*흐름|전국\s*날씨|"
     r"synoptic|weather\s*chart)",
@@ -219,6 +239,23 @@ def _is_kcue_regional_query(query: str) -> bool:
     return bool(
         _KCUE_REGIONAL_FINANCE_RE.search(query) or _KCUE_REGIONAL_FOREIGN_STUDENT_RE.search(query)
     )
+
+
+def _is_document_harness_query(query: str) -> bool:
+    return bool(
+        _DOCUMENT_PATH_RE.search(query)
+        or (_DOCUMENT_FORMAT_RE.search(query) and _DOCUMENT_INTENT_RE.search(query))
+        or (
+            _DOCUMENT_INTENT_RE.search(query)
+            and _DOCUMENT_WRITE_INTENT_RE.search(query)
+            and _DOCUMENT_LOCAL_HINT_RE.search(query)
+        )
+    )
+
+
+def is_document_harness_query(query: str) -> bool:
+    """Return whether a query is a local document-harness request."""
+    return _is_document_harness_query(query)
 
 
 def _is_emergency_chain_query(query: str) -> bool:
@@ -453,6 +490,26 @@ def _health_detail_additions(query: str) -> list[str]:
     ]
 
 
+def _document_harness_additions(query: str) -> list[str]:
+    if not _is_document_harness_query(query):
+        return []
+    return [
+        "document",
+        "document.path",
+        "local",
+        "file",
+        "path",
+        "artifact_refs",
+        "public",
+        "document",
+        "harness",
+        "form",
+        "render",
+        "diff",
+        "save",
+    ]
+
+
 def _filter_kma_lifestyle_weather_scores(
     scored: list[tuple[str, float]],
 ) -> list[tuple[str, float]]:
@@ -573,6 +630,22 @@ def _filter_health_detail_scores(
     ]
 
 
+def _filter_document_harness_scores(
+    query: str,
+    scored: list[tuple[str, float]],
+) -> list[tuple[str, float]]:
+    if not _is_document_harness_query(query):
+        return scored
+    if not any(tool_id in _DOCUMENT_TOOL_IDS for tool_id, _score in scored):
+        return scored
+    boosts = {"document": 1600.0}
+    return [
+        (tool_id, score + boosts[tool_id])
+        for tool_id, score in scored
+        if tool_id in _DOCUMENT_TOOL_IDS
+    ]
+
+
 def _filter_initial_special_scores(
     query: str, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
@@ -688,6 +761,7 @@ def _expand_query_for_adapter_retrieval(query: str) -> str:
     additions.extend(_kcue_regional_additions(query))
     additions.extend(_ocean_water_quality_additions(query))
     additions.extend(_health_detail_additions(query))
+    additions.extend(_document_harness_additions(query))
     additions.extend(_public_safety_location_additions(query))
     if _TRAFFIC_HAZARD_RE.search(query):
         additions.extend(_traffic_hazard_additions())
@@ -719,6 +793,7 @@ def _filter_special_case_scores(
         )
     if is_lifestyle_weather_query:
         scored = _filter_kma_lifestyle_weather_scores(scored)
+    scored = _filter_document_harness_scores(query, scored)
     scored = _filter_emergency_chain_scores(query, scored)
     scored = _filter_pps_bid_scores(query, scored)
     scored = _filter_kcue_regional_scores(query, scored)

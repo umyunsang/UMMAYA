@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # Accepts single-scope strings AND comma-joined multi-scope strings for US1.
 # ---------------------------------------------------------------------------
 
-_SCOPE_VERBS = r"find|locate|send|check|lookup|resolve_location|submit|verify"
+_SCOPE_VERBS = r"find|locate|send|check|document|lookup|resolve_location|submit|verify"
 
 _SINGLE_SCOPE_PATTERN: re.Pattern[str] = re.compile(rf"^({_SCOPE_VERBS}):[a-z0-9_]+\.[a-z0-9_-]+$")
 

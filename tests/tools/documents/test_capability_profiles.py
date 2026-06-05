@@ -150,6 +150,46 @@ def test_write_promotion_requires_85_points_and_write_hard_gates() -> None:
     assert "write_hard_gates_failed" in missing_hard_gate.reasons
 
 
+def test_render_promotion_requires_75_points_and_security_hard_gate() -> None:
+    profile = FormatCapabilityProfile(
+        format="hwpx",
+        engine_id="rhwp-node-wasm",
+        supported_operations=("render",),
+    )
+    passing_render_score = CapabilityScorecard(
+        extraction_fidelity=18,
+        write_fidelity=0,
+        style_layout_control=15,
+        deterministic_round_trip=15,
+        public_form_validation=15,
+        security_privacy=10,
+        license_maintenance_tool_usability=5,
+    )
+
+    promoted = evaluate_capability_promotion(profile, "render", passing_render_score)
+
+    assert passing_render_score.total_score == 78
+    assert promoted.promoted is True
+    assert promoted.required_score == 75
+    assert promoted.reasons == ("render_threshold_met",)
+
+    below_threshold = evaluate_capability_promotion(
+        profile,
+        "render",
+        passing_render_score.model_copy(update={"style_layout_control": 10}),
+    )
+    blocked = evaluate_capability_promotion(
+        profile,
+        "render",
+        passing_render_score.model_copy(update={"security_gate_passed": False}),
+    )
+
+    assert below_threshold.promoted is False
+    assert "score_below_render_threshold" in below_threshold.reasons
+    assert blocked.promoted is False
+    assert "security_gates_failed" in blocked.reasons
+
+
 def test_hwp_binary_write_is_always_blocked() -> None:
     profile = FormatCapabilityProfile(
         format="hwp",

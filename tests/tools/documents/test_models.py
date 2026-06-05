@@ -11,25 +11,37 @@ import pytest
 from pydantic import ValidationError
 
 from ummaya.tools.documents.models import (
+    KNOWN_DOCUMENT_FORMAT_FAMILIES,
+    PROMOTED_RUNTIME_DOCUMENT_FORMATS,
     ArtifactLineage,
+    AutonomousFillPlan,
     BlockedReason,
     DocumentArtifact,
     DocumentExtraction,
     DocumentFormat,
+    DocumentFormatFamily,
+    DocumentIntent,
+    DocumentIR,
     DocumentPatch,
     DocumentPatchOperation,
+    DocumentProtectedRange,
     DocumentSecurityFinding,
     DocumentToolCall,
     DocumentToolResult,
     FormatCapabilityProfile,
     FormField,
+    FormSlot,
+    KnownDocumentFormat,
     OperationType,
+    ParagraphBlock,
     PermissionState,
     PrimitiveName,
     PromotionCapability,
     PromotionGateResult,
     PromotionState,
+    ProtectedRangeCategory,
     SecurityState,
+    SourceAnchor,
     StyleDescriptor,
     ToolResultStatus,
     ValidationDecision,
@@ -38,6 +50,187 @@ from ummaya.tools.documents.models import (
 
 NOW = datetime(2026, 6, 1, 0, 0, tzinfo=UTC)
 SHA256 = "0" * 64
+
+
+def test_known_document_formats_separate_all_format_classification_from_runtime_promotion() -> None:
+    assert {document_format.value for document_format in DocumentFormat} == {
+        "hwpx",
+        "hwp",
+        "owpml",
+        "doc",
+        "docx",
+        "pdf",
+        "xls",
+        "xlsx",
+        "ppt",
+        "pptx",
+        "odt",
+        "ods",
+        "odp",
+        "html",
+        "htm",
+        "txt",
+        "rtf",
+        "md",
+        "epub",
+        "csv",
+        "tsv",
+        "xml",
+        "rdf",
+        "ttl",
+        "lod",
+        "json",
+        "jsonl",
+        "yaml",
+        "yml",
+        "geojson",
+        "gpx",
+        "kml",
+        "fasta",
+        "sgml",
+        "dtd",
+        "py",
+        "hml",
+        "zip",
+        "7z",
+        "tar",
+        "gz",
+        "etc",
+    }
+    promoted_runtime_values = tuple(
+        document_format.value for document_format in PROMOTED_RUNTIME_DOCUMENT_FORMATS
+    )
+    assert promoted_runtime_values == (
+        "hwpx",
+        "hwp",
+        "owpml",
+        "docx",
+        "pdf",
+        "xlsx",
+        "pptx",
+        "odt",
+        "ods",
+        "odp",
+        "html",
+        "htm",
+        "txt",
+        "rtf",
+        "md",
+        "epub",
+        "csv",
+        "tsv",
+        "xml",
+        "rdf",
+        "ttl",
+        "lod",
+        "json",
+        "jsonl",
+        "yaml",
+        "yml",
+        "geojson",
+        "gpx",
+        "kml",
+        "fasta",
+        "sgml",
+        "dtd",
+        "py",
+        "hml",
+        "zip",
+        "7z",
+        "tar",
+        "gz",
+        "etc",
+    )
+    assert "doc" not in promoted_runtime_values
+    assert "xls" not in promoted_runtime_values
+    assert "ppt" not in promoted_runtime_values
+
+    known_values = {known_format.value for known_format in KnownDocumentFormat}
+    assert {
+        "hwpx",
+        "hwp",
+        "hml",
+        "owpml",
+        "docx",
+        "xlsx",
+        "pptx",
+        "doc",
+        "xls",
+        "ppt",
+        "pdf",
+        "pdfa",
+        "odt",
+        "ods",
+        "odp",
+        "html",
+        "txt",
+        "rtf",
+        "md",
+        "epub",
+        "csv",
+        "tsv",
+        "xml",
+        "rdf",
+        "ttl",
+        "lod",
+        "json",
+        "jsonl",
+        "yaml",
+        "yml",
+        "geojson",
+        "gpx",
+        "kml",
+        "fasta",
+        "sgml",
+        "dtd",
+        "py",
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "tif",
+        "tiff",
+        "bmp",
+        "webp",
+        "shp",
+        "shx",
+        "dbf",
+        "prj",
+        "stl",
+        "wav",
+        "mp3",
+        "mp4",
+        "zip",
+        "7z",
+        "tar",
+        "gz",
+        "etc",
+    }.issubset(known_values)
+
+    assert KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.odt] is DocumentFormatFamily.odf
+    assert KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.csv] is DocumentFormatFamily.data_file
+    assert KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.ttl] is DocumentFormatFamily.data_file
+    assert (
+        KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.geojson]
+        is DocumentFormatFamily.data_file
+    )
+    assert (
+        KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.png] is DocumentFormatFamily.image_scan
+    )
+    assert (
+        KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.gif] is DocumentFormatFamily.image_scan
+    )
+    assert (
+        KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.shp]
+        is DocumentFormatFamily.geospatial_data
+    )
+    assert (
+        KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.mp4] is DocumentFormatFamily.media_asset
+    )
+    assert (
+        KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.python] is DocumentFormatFamily.code_file
+    )
+    assert KNOWN_DOCUMENT_FORMAT_FAMILIES[KnownDocumentFormat.zip] is DocumentFormatFamily.archive
 
 
 def test_document_artifact_is_strict_frozen_and_blocks_unknown_fields(tmp_path: Path) -> None:
@@ -94,6 +287,192 @@ def test_document_artifact_is_strict_frozen_and_blocks_unknown_fields(tmp_path: 
             lineage=ArtifactLineage.source,
             security_state=SecurityState.accepted,
         )
+
+
+def test_document_ir_wraps_extraction_with_source_anchors_and_form_slots() -> None:
+    extraction = DocumentExtraction(
+        artifact_id="artifact-ir-001",
+        paragraphs=[
+            ParagraphBlock(
+                block_id="paragraph-001",
+                text="신청인 성명",
+                source_path="/body/section[1]/p[1]",
+            )
+        ],
+        fields=[
+            FormField(
+                field_id="applicant_name",
+                label="신청인 성명",
+                path="/body/section[1]/table[1]/cell[2,1]",
+                field_type="text",
+                required=True,
+                current_value=None,
+                source_confidence=Decimal("0.92"),
+            )
+        ],
+    )
+
+    document_ir = DocumentIR.from_extraction(
+        artifact_id="artifact-ir-001",
+        document_format=DocumentFormat.hwpx,
+        extraction=extraction,
+        engine_id="hwpx-package-text-adapter",
+    )
+
+    assert document_ir.document_format is DocumentFormat.hwpx
+    assert document_ir.extraction is extraction
+    assert document_ir.source_anchors[0].format_path == "/body/section[1]/p[1]"
+    assert document_ir.source_anchors[0].engine_id == "hwpx-package-text-adapter"
+    assert document_ir.form_slots[0].slot_id == "applicant_name"
+    assert document_ir.form_slots[0].source_anchor.format_path == (
+        "/body/section[1]/table[1]/cell[2,1]"
+    )
+    assert document_ir.form_slots[0].confidence == Decimal("0.92")
+
+
+def test_source_anchor_and_autonomous_fill_plan_are_strict_and_review_safe() -> None:
+    anchor = SourceAnchor(
+        format_path="/body/section[1]/table[1]/cell[4,1]",
+        page_number=1,
+        bbox={
+            "x": Decimal("10"),
+            "y": Decimal("20"),
+            "width": Decimal("120"),
+            "height": Decimal("24"),
+        },
+        confidence=Decimal("0.90"),
+        engine_id="hwpx-package-text-adapter",
+    )
+    slot = FormSlot(
+        slot_id="consent_signature",
+        label="서명",
+        field_type="signature",
+        required=True,
+        protected=True,
+        source_anchor=anchor,
+        current_value=None,
+        candidate_value="홍길동",
+        confidence=Decimal("0.80"),
+    )
+    intent = DocumentIntent(
+        intent_id="intent-001",
+        operation="fill",
+        instruction="문서 내용을 파악하고 알아서 작성해",
+        confidence=Decimal("0.70"),
+    )
+
+    with pytest.raises(ValidationError, match="protected slots require human review"):
+        AutonomousFillPlan(
+            plan_id="plan-001",
+            artifact_id="artifact-ir-001",
+            intent=intent,
+            slots=(slot,),
+            requires_human_review=False,
+            confidence=Decimal("0.70"),
+        )
+
+    plan = AutonomousFillPlan(
+        plan_id="plan-001",
+        artifact_id="artifact-ir-001",
+        intent=intent,
+        slots=(slot,),
+        requires_human_review=True,
+        confidence=Decimal("0.70"),
+        blocked_slot_ids=("consent_signature",),
+    )
+    assert plan.blocked_slot_ids == ("consent_signature",)
+
+    with pytest.raises(ValidationError, match="blocked_slot_ids must reference known slots"):
+        AutonomousFillPlan(
+            plan_id="plan-002",
+            artifact_id="artifact-ir-001",
+            intent=intent,
+            slots=(slot,),
+            requires_human_review=True,
+            confidence=Decimal("0.70"),
+            blocked_slot_ids=("unknown-slot",),
+        )
+
+    with pytest.raises(ValidationError, match="Input should be less than or equal to 1"):
+        SourceAnchor(
+            format_path="/body/section[1]/p[1]",
+            confidence=Decimal("1.10"),
+            engine_id="hwpx-package-text-adapter",
+        )
+
+
+def test_document_ir_carries_protected_ranges_for_sensitive_public_form_areas() -> None:
+    anchor = SourceAnchor(
+        format_path="/body/section[1]/table[1]/cell[5,2]",
+        confidence=Decimal("0.96"),
+        engine_id="hwpx-package-text-adapter",
+    )
+    protected_range = DocumentProtectedRange(
+        range_id="range-resident-registration-number",
+        category=ProtectedRangeCategory.identity_number,
+        label="주민등록번호",
+        source_anchor=anchor,
+        reason="Identity numbers require explicit human review before mutation.",
+    )
+    document_ir = DocumentIR(
+        artifact_id="artifact-ir-protected",
+        document_format=DocumentFormat.hwpx,
+        extraction=DocumentExtraction(artifact_id="artifact-ir-protected"),
+        protected_ranges=(protected_range,),
+    )
+
+    assert document_ir.protected_ranges[0].category is ProtectedRangeCategory.identity_number
+    assert document_ir.protected_ranges[0].blocked_operations == ("autonomous_fill",)
+
+    with pytest.raises(ValidationError, match="protected ranges require human review"):
+        DocumentProtectedRange(
+            range_id="range-unsafe",
+            category=ProtectedRangeCategory.bank_account,
+            label="계좌번호",
+            source_anchor=anchor,
+            reason="Bank account values require review.",
+            requires_human_review=False,
+        )
+
+    with pytest.raises(ValidationError, match="blocked_operations must not be empty"):
+        DocumentProtectedRange(
+            range_id="range-empty",
+            category=ProtectedRangeCategory.signature,
+            label="서명",
+            source_anchor=anchor,
+            reason="Signature fields require review.",
+            blocked_operations=(),
+        )
+
+
+def test_document_ir_from_extraction_promotes_sensitive_fields_to_protected_ranges() -> None:
+    extraction = DocumentExtraction(
+        artifact_id="artifact-sensitive",
+        fields=[
+            FormField(
+                field_id="resident_registration_number",
+                label="주민등록번호",
+                path="/body/section[1]/table[1]/cell[5,2]",
+                field_type="text",
+                required=True,
+                current_value=None,
+                source_confidence=Decimal("0.94"),
+            )
+        ],
+    )
+
+    document_ir = DocumentIR.from_extraction(
+        artifact_id="artifact-sensitive",
+        document_format=DocumentFormat.hwpx,
+        extraction=extraction,
+        engine_id="hwpx-package-text-adapter",
+    )
+
+    assert document_ir.form_slots[0].protected is True
+    assert document_ir.protected_ranges[0].category is ProtectedRangeCategory.identity_number
+    assert document_ir.protected_ranges[0].source_anchor.format_path == (
+        "/body/section[1]/table[1]/cell[5,2]"
+    )
 
 
 def test_document_artifact_enforces_lineage_and_security_invariants(tmp_path: Path) -> None:
@@ -282,6 +661,47 @@ def test_promotion_gate_models_enforce_score_and_hwp_write_boundaries() -> None:
             supports_render=False,
             supports_validation=False,
             last_evaluated_at=NOW,
+        )
+
+
+def test_promotion_gate_models_allow_style_capability_and_state() -> None:
+    style_gate = PromotionGateResult(
+        gate_id="gate-style",
+        profile_id="profile-hwpx-style",
+        capability=PromotionCapability.style,
+        score_total=90,
+        extraction_fidelity=20,
+        write_fidelity=20,
+        style_layout_control=15,
+        deterministic_round_trip=15,
+        public_form_validation=15,
+        security_privacy=5,
+        license_maintenance_tool_usability=0,
+        hard_gates_passed=True,
+        promotion_state=PromotionState.style_enabled,
+        evidence_record_ids=["evidence-style-001"],
+    )
+
+    assert PromotionCapability("style") is PromotionCapability.style
+    assert PromotionState("style_enabled") is PromotionState.style_enabled
+    assert style_gate.capability is PromotionCapability.style
+    assert style_gate.promotion_state is PromotionState.style_enabled
+
+    with pytest.raises(ValidationError, match="style promotion requires score_total >= 85"):
+        PromotionGateResult(
+            gate_id="gate-style-low-score",
+            profile_id="profile-hwpx-style",
+            capability=PromotionCapability.style,
+            score_total=84,
+            extraction_fidelity=20,
+            write_fidelity=20,
+            style_layout_control=15,
+            deterministic_round_trip=14,
+            public_form_validation=10,
+            security_privacy=5,
+            license_maintenance_tool_usability=0,
+            hard_gates_passed=True,
+            promotion_state=PromotionState.style_enabled,
         )
 
 

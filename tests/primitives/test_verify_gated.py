@@ -74,8 +74,9 @@ def test_heavy_gate_does_not_contain_verify() -> None:
 
 
 def test_heavy_gate_contains_submit() -> None:
-    """submit is side-effecting — must be in HEAVY_GATE_PRIMITIVES."""
+    """submit and document authoring are side-effecting heavy-gate primitives."""
     assert "send" in HEAVY_GATE_PRIMITIVES
+    assert "document" in HEAVY_GATE_PRIMITIVES
     assert "subscribe" not in HEAVY_GATE_PRIMITIVES
 
 

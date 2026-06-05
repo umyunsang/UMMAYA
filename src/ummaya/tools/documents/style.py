@@ -30,6 +30,11 @@ def validate_document_patch(patch: DocumentPatch) -> None:
             raise DocumentPatchValidationError(
                 f"spreadsheet print areas cannot be edited by fill patches: {operation.target_path}"
             )
+        if "/media/" in target or "/animations/" in target or "/masters/" in target:
+            raise DocumentPatchValidationError(
+                "presentation media, animation, and master targets are not promoted: "
+                f"{operation.target_path}"
+            )
         if operation.operation_type in {
             OperationType.set_paragraph_style,
             OperationType.set_run_style,

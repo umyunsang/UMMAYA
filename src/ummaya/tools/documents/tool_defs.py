@@ -45,12 +45,19 @@ class DocumentLocator(DocumentToolRequestModel):
     path: str | None = Field(
         default=None,
         min_length=1,
-        description="Absolute or relative local file path for a user-provided document.",
+        description=(
+            "Absolute or relative local file path for first intake of a "
+            "user-provided document. Use document.path when the user gives a "
+            "local file path such as /Users/name/form.hwpx."
+        ),
     )
     artifact_id: str | None = Field(
         default=None,
         min_length=1,
-        description="Previously returned local artifact identifier.",
+        description=(
+            "Previously returned local artifact identifier from artifact_refs. "
+            "Do not invent artifact_id values."
+        ),
     )
     expected_format: DocumentFormat | None = Field(
         default=None,
@@ -110,6 +117,63 @@ class DocumentApplyFillRequest(DocumentToolRequestModel):
     document: DocumentLocator
     patches: tuple[DocumentFieldPatch, ...] = Field(min_length=1)
     dry_run: bool = False
+
+
+class DocumentPrimitiveRequest(DocumentToolRequestModel):
+    """Single model-facing public-document operation request."""
+
+    correlation_id: str = Field(min_length=1)
+    document: DocumentLocator
+    operation: Literal["inspect", "extract", "fill", "style", "validate", "save"] = Field(
+        default="fill",
+        description=(
+            "Requested document operation. Normal document authoring uses fill or "
+            "style; the primitive still performs inspect/copy/render internally. "
+            "For write intents such as 'understand the document and complete it', "
+            "'fill it in', 'update it', 'revise it', or Korean requests like "
+            "'문서내용을 파악하고 알아서 작성해/수정해/채워줘', choose fill. Use "
+            "extract only for explicitly read-only requests that ask to inspect, "
+            "summarize, or extract content without changing the document."
+        ),
+    )
+    instruction: str = Field(
+        min_length=1,
+        max_length=1200,
+        description=(
+            "Citizen-facing document task in natural language. Use this as the "
+            "high-level edit/review intent; do not call document_inspect or "
+            "document_render separately."
+        ),
+    )
+    patches: tuple[DocumentFieldPatch, ...] = Field(
+        default=(),
+        description=(
+            "Optional explicit field or text patches when the target path is known "
+            "from the document schema or prior context."
+        ),
+    )
+    styles: tuple[DocumentStylePatch, ...] = Field(
+        default=(),
+        description="Optional explicit bounded style patches.",
+    )
+    template_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Optional offline public-form baseline to validate after editing.",
+    )
+    destination_display_name: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Optional local export display name after review.",
+    )
+    destination_path: str | None = Field(
+        default=None,
+        min_length=1,
+        description=(
+            "Optional explicit local output path for a reviewed derivative. Use only "
+            "when the user asks to save/export the completed document to a local path."
+        ),
+    )
 
 
 class DocumentStylePatch(DocumentToolRequestModel):
@@ -172,6 +236,14 @@ class DocumentSaveRequest(DocumentToolRequestModel):
     correlation_id: str = Field(min_length=1)
     document: DocumentLocator
     destination_display_name: str = Field(min_length=1)
+    destination_path: str | None = Field(
+        default=None,
+        min_length=1,
+        description=(
+            "Optional explicit local output path. If omitted, save remains an "
+            "artifact-store export only."
+        ),
+    )
 
 
 class DocumentInspectResult(DocumentToolResult):
@@ -186,11 +258,16 @@ class DocumentMutationResult(DocumentToolResult):
     """Output schema for derivative-producing document tools."""
 
 
+class DocumentPrimitiveResult(DocumentToolResult):
+    """Output schema for the model-facing document primitive."""
+
+
 class DocumentValidationResult(DocumentToolResult):
     """Output schema for public-form validation tools."""
 
 
-_REQUEST_MODELS: dict[DocumentToolId, type[BaseModel]] = {
+_REQUEST_MODELS: dict[str, type[BaseModel]] = {
+    "document": DocumentPrimitiveRequest,
     "document_inspect": DocumentInspectRequest,
     "document_extract": DocumentExtractRequest,
     "document_form_schema": DocumentFormSchemaRequest,
@@ -202,7 +279,8 @@ _REQUEST_MODELS: dict[DocumentToolId, type[BaseModel]] = {
     "document_save": DocumentSaveRequest,
 }
 
-_OUTPUT_MODELS: dict[DocumentToolId, type[BaseModel]] = {
+_OUTPUT_MODELS: dict[str, type[BaseModel]] = {
+    "document": DocumentPrimitiveResult,
     "document_inspect": DocumentInspectResult,
     "document_extract": DocumentExtractionResult,
     "document_form_schema": DocumentExtractionResult,
@@ -214,7 +292,8 @@ _OUTPUT_MODELS: dict[DocumentToolId, type[BaseModel]] = {
     "document_save": DocumentMutationResult,
 }
 
-_DISPLAY_NAMES: dict[DocumentToolId, str] = {
+_DISPLAY_NAMES: dict[str, str] = {
+    "document": "문서 작업",
     "document_inspect": "문서 검사",
     "document_extract": "문서 구조 추출",
     "document_form_schema": "공문서 양식 필드 조회",
@@ -226,11 +305,28 @@ _DISPLAY_NAMES: dict[DocumentToolId, str] = {
     "document_save": "문서 저장",
 }
 
-_DESCRIPTIONS: dict[DocumentToolId, str] = {
+_DESCRIPTIONS: dict[str, str] = {
+    "document": (
+        "Single document primitive for local public-document authoring and review. "
+        "Use this one tool for HWPX, HWP, DOCX, PDF, XLSX, or PPTX document work. "
+        "It internally performs inspect, schema/extraction, working-copy creation, "
+        "fill/style mutation, render evidence, and automatic compact diff review. "
+        "For local files pass document.path. Do not call locate for files. Do not "
+        "call document_inspect, document_apply_fill, or document_render separately; "
+        "those are internal stages, not the model-facing workflow. Do not call "
+        "document_render separately after editing because automatic compact diff "
+        "review is included in this tool result. Do not claim that a "
+        "local/Downloads file is missing before this tool checks it; say only "
+        "that you are checking the document location and contents first."
+    ),
     "document_inspect": (
         "Inspect a local HWPX, HWP, DOCX, PDF, XLSX, or PPTX artifact through a "
         "promoted document engine. Returns artifact IDs, normalized structure, "
-        "style/form cues, and fail-closed security findings without mutating bytes."
+        "style/form cues, and fail-closed security findings without mutating bytes. "
+        "For a user-provided local file path, call document_inspect first with "
+        "document.path and optional expected_format. Do not call locate for "
+        "files. Do not invent artifact_id values; only reuse artifact_refs "
+        "returned by prior document tool results."
     ),
     "document_extract": (
         "Extract LLM-readable paragraphs, tables, images, fields, metadata, and styles "
@@ -266,7 +362,12 @@ _DESCRIPTIONS: dict[DocumentToolId, str] = {
     ),
 }
 
-_TRIGGER_EXAMPLES: dict[DocumentToolId, list[str]] = {
+_TRIGGER_EXAMPLES: dict[str, list[str]] = {
+    "document": [
+        "HWPX 양식을 13주차 활동일지로 작성해줘",
+        "공문서 파일을 채우고 내가 볼 수 있게 변경사항을 보여줘",
+        "주민등록등본 양식의 성명 칸을 채워줘",
+    ],
     "document_inspect": ["이 HWPX 공문서 읽어줘", "PDF 양식 구조 확인", "엑셀 민원 서식 검사"],
     "document_extract": ["문서 표와 필드 추출", "공문서 본문 읽기"],
     "document_form_schema": ["제출양식 입력칸 알려줘", "작성해야 할 필드 확인"],
@@ -333,9 +434,7 @@ def needs_input_document_tool_result(
 
 def _build_tool(contract: DocumentToolContract) -> GovAPITool:
     permission = contract.permission
-    gate: Literal["read-only", "action"] = (
-        "read-only" if permission != "write_derivative_artifact" else "action"
-    )
+    gate: Literal["read-only", "action"] = "action"
     auth_type: Literal["public", "oauth"] = "public" if gate == "read-only" else "oauth"
     tool_id = contract.tool_id
     return GovAPITool(
@@ -371,7 +470,10 @@ def _build_tool(contract: DocumentToolContract) -> GovAPITool:
 def _search_hint(tool_id: DocumentToolId, contract: DocumentToolContract) -> str:
     return (
         f"문서 공문서 양식 서식 파일 {tool_id} {contract.permission} "
-        "hwpx hwp docx pdf xlsx pptx public document harness form style render validate save"
+        "single document primitive automatic compact diff hwpx hwp docx pdf xlsx pptx "
+        "public document harness form fill style render validate save local file path "
+        "document.path do not call locate do not call document_inspect do not call "
+        "document_apply_fill do not call document_render"
     )
 
 
@@ -386,6 +488,8 @@ __all__ = [
     "DocumentFormSchemaRequest",
     "DocumentExtractionResult",
     "DocumentInspectResult",
+    "DocumentPrimitiveRequest",
+    "DocumentPrimitiveResult",
     "DocumentMutationResult",
     "DocumentInspectRequest",
     "DocumentLocator",
