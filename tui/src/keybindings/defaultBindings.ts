@@ -338,3 +338,7 @@ export const DEFAULT_BINDINGS: KeybindingBlock[] = [
     },
   },
 ]
+
+// Backwards-compatible name used by older focused TUI tests and snapshot
+// harnesses. The active runtime import remains DEFAULT_BINDINGS.
+export const DEFAULT_BINDING_BLOCKS = DEFAULT_BINDINGS

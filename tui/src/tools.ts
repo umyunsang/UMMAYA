@@ -6,6 +6,7 @@ import { LookupPrimitive } from './tools/LookupPrimitive/LookupPrimitive.js'
 import { ResolveLocationPrimitive } from './tools/ResolveLocationPrimitive/ResolveLocationPrimitive.js'
 import { SubmitPrimitive } from './tools/SubmitPrimitive/SubmitPrimitive.js'
 import { VerifyPrimitive } from './tools/VerifyPrimitive/VerifyPrimitive.js'
+import { DocumentPrimitive } from './tools/DocumentPrimitive/DocumentPrimitive.js'
 import { getAdapterTools } from './tools/AdapterTool/AdapterTool.js'
 import { TranslateTool } from './tools/TranslateTool/TranslateTool.js'
 import { CalculatorTool } from './tools/CalculatorTool/CalculatorTool.js'
@@ -84,6 +85,7 @@ import { LSPTool } from './tools/LSPTool/LSPTool.js'
 import { ListMcpResourcesTool } from './tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
 import { ReadMcpResourceTool } from './tools/ReadMcpResourceTool/ReadMcpResourceTool.js'
 import { ToolSearchTool } from './tools/ToolSearchTool/ToolSearchTool.js'
+import { getWorkspaceTools } from './tools/WorkspaceToolAdapter/WorkspaceToolAdapter.js'
 import { EnterPlanModeTool } from './tools/EnterPlanModeTool/EnterPlanModeTool.js'
 import { EnterWorktreeTool } from './tools/EnterWorktreeTool/EnterWorktreeTool.js'
 import { ExitWorktreeTool } from './tools/ExitWorktreeTool/ExitWorktreeTool.js'
@@ -208,6 +210,8 @@ export function getAllBaseTools(): Tools {
     ResolveLocationPrimitive,
     SubmitPrimitive,
     VerifyPrimitive,
+    DocumentPrimitive,
+    ...getWorkspaceTools(),
   ]
 }
 

@@ -135,6 +135,7 @@ mock.module(join(TUI_ROOT, 'src/services/compact/microCompact.js'), () => ({
 mock.module(join(TUI_ROOT, 'src/ipc/bridgeSingleton.js'), () => ({
   getOrCreateUmmayaBridge: () => _currentBridge,
   getUmmayaBridgeSessionId: () => 'test-session-handlers',
+  ensureUmmayaAdapterManifest: async () => true,
   closeUmmayaBridge: async () => {},
 }))
 
@@ -143,9 +144,23 @@ mock.module(join(TUI_ROOT, 'src/query/toolSerialization.js'), () => ({
   toolToFunctionSchema: async () => ({}),
 }))
 
-mock.module(join(TUI_ROOT, 'src/utils/messages.js'), () => ({
+function buildMessagesMockModule() {
+  return {
   SYNTHETIC_MODEL: 'ummaya-test-model',
   SYNTHETIC_MESSAGES: new Set<string>(),
+  EMPTY_LOOKUPS: {},
+  INTERRUPT_MESSAGE: '[Request interrupted by user]',
+  CANCEL_MESSAGE: 'Cancelled',
+  REJECT_MESSAGE: 'Rejected',
+  REJECT_MESSAGE_WITH_REASON_PREFIX: 'Rejected:',
+  SUBAGENT_REJECT_MESSAGE: 'Rejected',
+  SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX: 'Rejected:',
+  PLAN_REJECTION_PREFIX: 'Rejected:',
+  AUTO_REJECT_MESSAGE: (toolName: string) => `Rejected ${toolName}`,
+  DONT_ASK_REJECT_MESSAGE: (toolName: string) => `Rejected ${toolName}`,
+  NO_RESPONSE_REQUESTED: 'No response requested.',
+  buildClassifierUnavailableMessage: () => 'Classifier unavailable',
+  isClassifierDenial: () => false,
   isEmptyMessageText: (text: unknown) => text === '',
   createAssistantMessage: ({ content }: { content: unknown }) => ({
     type: 'assistant',
@@ -168,6 +183,15 @@ mock.module(join(TUI_ROOT, 'src/utils/messages.js'), () => ({
         cache_creation_input_tokens: 0,
         cache_read_input_tokens: 0,
       },
+    },
+  }),
+  createAssistantAPIErrorMessage: ({ content }: { content?: string } = {}) => ({
+    type: 'assistant',
+    isApiErrorMessage: true,
+    apiError: 'test',
+    message: {
+      role: 'assistant',
+      content: [{ type: 'text', text: content ?? '' }],
     },
   }),
   createSystemMessage: (
@@ -197,7 +221,186 @@ mock.module(join(TUI_ROOT, 'src/utils/messages.js'), () => ({
     toolUseResult,
     sourceToolAssistantUUID,
   }),
-}))
+  extractTextContent: (content: unknown, separator = '') => {
+    if (typeof content === 'string') return content
+    if (!Array.isArray(content)) return ''
+    return content
+      .map(block => {
+        if (typeof block === 'string') return block
+        if (typeof block !== 'object' || block === null) return ''
+        const record = block as Record<string, unknown>
+        return typeof record.text === 'string' ? record.text : ''
+      })
+      .filter(Boolean)
+      .join(separator)
+  },
+  getUserMessageText: (message: { message?: { content?: unknown } }) => {
+    const content = message?.message?.content
+    if (typeof content === 'string') return content
+    if (!Array.isArray(content)) return ''
+    return content
+      .map(block => {
+        if (typeof block === 'string') return block
+        if (typeof block !== 'object' || block === null) return ''
+        const record = block as Record<string, unknown>
+        return typeof record.text === 'string' ? record.text : ''
+      })
+      .filter(Boolean)
+      .join('')
+  },
+  getAssistantMessageText: (message: { message?: { content?: unknown } }) => {
+    const content = message?.message?.content
+    if (typeof content === 'string') return content
+    if (!Array.isArray(content)) return ''
+    return content
+      .map(block => {
+        if (typeof block === 'string') return block
+        if (typeof block !== 'object' || block === null) return ''
+        const record = block as Record<string, unknown>
+        return typeof record.text === 'string' ? record.text : ''
+      })
+      .filter(Boolean)
+      .join('')
+  },
+  extractTag: (html: string, tagName: string) => {
+    if (!html.trim() || !tagName.trim()) return null
+    const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const match = new RegExp(
+      `<${escapedTag}(?:\\s+[^>]*)?>([\\s\\S]*?)<\\/${escapedTag}>`,
+      'i',
+    ).exec(html)
+    return match?.[1] ?? null
+  },
+  countToolCalls: (
+    messages: Array<{ type?: string; message?: { content?: unknown } }>,
+    toolName: string,
+    maxCount?: number,
+  ) => {
+    let count = 0
+    for (const message of messages) {
+      const content = message.message?.content
+      if (message.type !== 'assistant' || !Array.isArray(content)) continue
+      if (
+        content.some(block => {
+          if (typeof block !== 'object' || block === null) return false
+          const record = block as Record<string, unknown>
+          return record.type === 'tool_use' && record.name === toolName
+        })
+      ) {
+        count += 1
+        if (maxCount !== undefined && count >= maxCount) return count
+      }
+    }
+    return count
+  },
+  hasToolCallsInLastAssistantTurn: (
+    messages: Array<{ type?: string; message?: { content?: unknown } }>,
+  ) => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index]
+      const content = message?.message?.content
+      if (message?.type !== 'assistant' || !Array.isArray(content)) continue
+      return content.some(block => {
+        if (typeof block !== 'object' || block === null) return false
+        return (block as Record<string, unknown>).type === 'tool_use'
+      })
+    }
+    return false
+  },
+  isThinkingMessage: (message: { message?: { content?: unknown } }) =>
+    Array.isArray(message?.message?.content) &&
+    message.message.content.some(block => {
+      if (typeof block !== 'object' || block === null) return false
+      return (block as Record<string, unknown>).type === 'thinking'
+    }),
+  normalizeMessagesForAPI: (messages: unknown[]) => messages,
+  normalizeContentFromAPI: (contentBlocks: unknown[]) =>
+    contentBlocks.map(block => {
+      if (typeof block !== 'object' || block === null) return block
+      const record = block as Record<string, unknown>
+      if (record.type !== 'tool_use' || typeof record.input !== 'string') {
+        return record
+      }
+      try {
+        return { ...record, input: JSON.parse(record.input) }
+      } catch {
+        return { ...record, input: {} }
+      }
+    }),
+  stripSignatureBlocks: (messages: unknown[]) => messages,
+  stripToolReferenceBlocksFromUserMessage: (message: unknown) => message,
+  ensureToolResultPairing: (messages: unknown[]) => messages,
+  stripAdvisorBlocks: (messages: unknown[]) => messages,
+  normalizeAttachmentForAPI: (attachment: unknown) => attachment,
+  normalizeMessages: (messages: unknown[]) => messages,
+  filterWhitespaceOnlyAssistantMessages: (messages: unknown[]) => messages,
+  filterOrphanedThinkingOnlyMessages: (messages: unknown[]) => messages,
+  filterUnresolvedToolUses: (messages: unknown[]) => messages,
+  reorderMessagesInUI: (messages: unknown[]) => messages,
+  getMessagesAfterCompactBoundary: (messages: unknown[]) => messages,
+  getLastAssistantMessage: (messages: Array<{ type?: string }>) =>
+    [...messages].reverse().find(message => message.type === 'assistant') ?? null,
+  getContentText: (content: unknown) => {
+    if (typeof content === 'string') return content
+    if (!Array.isArray(content)) return ''
+    return content
+      .map(block => {
+        if (typeof block === 'string') return block
+        if (typeof block !== 'object' || block === null) return ''
+        const record = block as Record<string, unknown>
+        return typeof record.text === 'string' ? record.text : ''
+      })
+      .join('')
+  },
+  textForResubmit: () => '',
+  handleMessageFromStream: () => null,
+  isCompactBoundaryMessage: () => false,
+  createTurnDurationMessage: () => ({ type: 'system', content: '' }),
+  createAgentsKilledMessage: () => ({ type: 'system', content: '' }),
+  createApiMetricsMessage: () => ({ type: 'system', content: '' }),
+  createCompactBoundaryMessage: () => ({ type: 'system', content: '<compact />' }),
+  createMicrocompactBoundaryMessage: () => ({ type: 'system', content: '<microcompact />' }),
+  createStopHookSummaryMessage: () => ({ type: 'system', content: '' }),
+  createAwaySummaryMessage: () => ({ type: 'system', content: '' }),
+  createMemorySavedMessage: () => ({ type: 'system', content: '' }),
+  createSystemAPIErrorMessage: ({ content }: { content?: string } = {}) => ({
+    type: 'system',
+    content: content ?? '',
+  }),
+  createPermissionRetryMessage: () => ({ type: 'system', content: '' }),
+  createBridgeStatusMessage: () => ({ type: 'system', content: '' }),
+  createScheduledTaskFireMessage: () => ({ type: 'system', content: '' }),
+  createToolResultStopMessage: () => ({ type: 'user', message: { content: [] } }),
+  createToolUseSummaryMessage: () => ({ type: 'system', content: '' }),
+  createProgressMessage: () => ({ type: 'progress' }),
+  createSyntheticUserCaveatMessage: () => ({ type: 'user', message: { content: '' } }),
+  createUserInterruptionMessage: () => ({ type: 'user', message: { content: 'Interrupted by user' } }),
+  createCommandInputMessage: () => ({ type: 'user', message: { content: '' } }),
+  formatCommandInputTags: (value: string) => value,
+  withMemoryCorrectionHint: (message: string) => message,
+  wrapInSystemReminder: (message: string) => message,
+  buildYoloRejectionMessage: (reason: string) => reason,
+  isNotEmptyMessage: () => true,
+  shouldShowUserMessage: () => true,
+  deriveUUID: () => 'derived-uuid',
+  buildMessageLookups: () => ({}),
+  buildSubagentLookups: () => ({}),
+  getToolUseID: () => undefined,
+  getToolUseIDs: () => [],
+  getProgressMessagesFromLookup: () => [],
+  getSiblingToolUseIDsFromLookup: () => new Set<string>(),
+  hasUnresolvedHooksFromLookup: () => false,
+  hasSuccessfulToolCall: () => false,
+  isSyntheticMessage: () => false,
+  isToolUseResultMessage: () => false,
+  isEmptyMessageText: (text: unknown) => text === '',
+  stripPromptXMLTags: (text: string) => text,
+  INTERRUPT_MESSAGE_FOR_TOOL_USE: 'Interrupted by user',
+  }
+}
+
+mock.module(join(TUI_ROOT, 'src/utils/messages.js'), buildMessagesMockModule)
+mock.module(join(TUI_ROOT, 'src/utils/messages.ts'), buildMessagesMockModule)
 
 // Dynamic import AFTER mock.module() so the mocked bindings are in place
 // when the legacy backend-chat provider resolves bridgeSingleton /
@@ -230,14 +433,19 @@ function makeFrame(
   }
 }
 
-async function run(buildFrames: (corrId: string) => StagedFrame[]): Promise<unknown[]> {
+async function run(
+  buildFrames: (corrId: string) => StagedFrame[],
+  messages: readonly unknown[] = [
+    { type: 'user', message: { role: 'user', content: 'hi' } },
+  ],
+): Promise<unknown[]> {
   const previousPrimary = process.env.UMMAYA_FRIENDLI_TOKEN
   process.env.UMMAYA_FRIENDLI_TOKEN = 'test-token-handlers'
   installBridge(buildFrames)
   try {
     const results: unknown[] = []
     for await (const ev of queryModelWithStreaming({
-      messages: [{ type: 'user', message: { role: 'user', content: 'hi' } }],
+      messages,
       systemPrompt: 'test system prompt',
     })) {
       results.push(ev)
@@ -250,6 +458,16 @@ async function run(buildFrames: (corrId: string) => StagedFrame[]): Promise<unkn
       process.env.UMMAYA_FRIENDLI_TOKEN = previousPrimary
     }
   }
+}
+
+function assistantMessages(results: readonly unknown[]): Array<{
+  message: { content: Array<{ type?: string; text?: string; name?: string }> }
+}> {
+  return results.filter(
+    (r) => (r as { type?: string }).type === 'assistant',
+  ) as Array<{
+    message: { content: Array<{ type?: string; text?: string; name?: string }> }
+  }>
 }
 
 describe('thinking persistence guard', () => {
@@ -289,6 +507,62 @@ describe('thinking persistence guard', () => {
         process.env.UMMAYA_PERSIST_THINKING = previousPersistThinking
       }
     }
+  })
+})
+
+describe('document harness streaming prelude parity', () => {
+  test('streams CC-style document intent prose before a tool_call', async () => {
+    const userRequest =
+      '다운로드 폴더에 있는 SW중심대학사업 현장미러형연계프로젝트 주간활동일지 HWPX 양식을 13주차 활동일지로 작성해줘. 활동기간은 2026.06.01부터 2026.06.07까지고, 작성이 끝나면 원본과 달라진 부분을 문서 화면으로 비교해서 내가 바로 확인할 수 있게 보여줘.'
+    const results = await run(
+      (corrId) => [
+        makeFrame('assistant_chunk', corrId, {
+          message_id: 'mid-document-prelude',
+          delta:
+            '먼저 다운로드 폴더에서 HWPX 양식 파일을 찾고 문서 검사 도구를 사용하겠습니다.',
+          done: false,
+        }),
+        makeFrame('tool_call', corrId, {
+          call_id: 'document-inspect-001',
+          name: 'find',
+          arguments: {
+            mode: 'inspect',
+            tool_id: 'document_inspect',
+            path: '/Users/um-yunsang/Downloads/SW중심대학사업 현장미러형연계프로젝트 주간활동일지 HWPX 양식.hwpx',
+          },
+        }),
+      ],
+      [{ type: 'user', message: { role: 'user', content: userRequest } }],
+    )
+
+    const streamedTextDeltas = results.filter((r) => {
+      const streamEvent = r as {
+        type?: string
+        event?: { type?: string; delta?: { type?: string; text?: string } }
+      }
+      return (
+        streamEvent.type === 'stream_event' &&
+        streamEvent.event?.type === 'content_block_delta' &&
+        streamEvent.event.delta?.type === 'text_delta'
+      )
+    })
+    expect(streamedTextDeltas).toHaveLength(1)
+
+    const terminal = assistantMessages(results).at(-1)!
+    expect(terminal.message.content).toContainEqual({
+      type: 'text',
+      text: '먼저 다운로드 폴더에서 HWPX 양식 파일을 찾고 문서 검사 도구를 사용하겠습니다.',
+    })
+    expect(terminal.message.content).toContainEqual({
+      type: 'tool_use',
+      id: 'document-inspect-001',
+      name: 'find',
+      input: {
+        mode: 'inspect',
+        tool_id: 'document_inspect',
+        path: '/Users/um-yunsang/Downloads/SW중심대학사업 현장미러형연계프로젝트 주간활동일지 HWPX 양식.hwpx',
+      },
+    })
   })
 })
 

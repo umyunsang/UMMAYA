@@ -9,12 +9,13 @@
 //   bun run probe:tool-registry
 //
 // Expected success output:
-//   tool_registry: <N> entries verified (4 primitives) in <D>ms
+//   tool_registry: <N> entries verified (5 primitives) in <D>ms
 
 import { LookupPrimitive } from '../tools/LookupPrimitive/LookupPrimitive.js'
 import { ResolveLocationPrimitive } from '../tools/ResolveLocationPrimitive/ResolveLocationPrimitive.js'
 import { SubmitPrimitive } from '../tools/SubmitPrimitive/SubmitPrimitive.js'
 import { VerifyPrimitive } from '../tools/VerifyPrimitive/VerifyPrimitive.js'
+import { DocumentPrimitive } from '../tools/DocumentPrimitive/DocumentPrimitive.js'
 import { verifyBootRegistry } from '../services/toolRegistry/bootGuard.js'
 import type { Tool } from '../Tool.js'
 
@@ -23,6 +24,7 @@ const primitiveRegistry: readonly Tool[] = [
   ResolveLocationPrimitive as unknown as Tool,
   SubmitPrimitive as unknown as Tool,
   VerifyPrimitive as unknown as Tool,
+  DocumentPrimitive as unknown as Tool,
 ]
 
 const result = verifyBootRegistry(primitiveRegistry)

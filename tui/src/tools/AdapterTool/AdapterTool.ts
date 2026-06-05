@@ -1,4 +1,8 @@
 import { z } from 'zod/v4'
+import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { basename, join } from 'node:path'
 import {
   buildTool,
   type Tool,
@@ -21,16 +25,59 @@ import {
   normalizeDirectPublicDataToolInput,
   validateDirectPublicDataToolChoice,
 } from '../_shared/directPublicDataGuard.js'
+import {
+  applyDocumentVisualRenderGateToOutput,
+  extractDocumentToolResultPayload,
+  isDocumentVisualRenderFailedOutput,
+  renderDocumentToolResultIfPresent,
+} from '../_shared/documentToolResultRender.js'
 import { LookupPrimitive } from '../LookupPrimitive/LookupPrimitive.js'
 import { ResolveLocationPrimitive } from '../ResolveLocationPrimitive/ResolveLocationPrimitive.js'
 import { SubmitPrimitive } from '../SubmitPrimitive/SubmitPrimitive.js'
 import { VerifyPrimitive } from '../VerifyPrimitive/VerifyPrimitive.js'
+import { DocumentPrimitive } from '../DocumentPrimitive/DocumentPrimitive.js'
+import { resolveDocumentPrimitiveTimeoutMs } from '../_shared/documentPrimitiveTimeout.js'
 
-type AdapterPrimitive = 'find' | 'locate' | 'send' | 'check'
+type AdapterPrimitive = 'find' | 'locate' | 'send' | 'check' | 'document'
 
 type InputSchema = z.ZodType<{ [key: string]: unknown }>
 
-const ROOT_PRIMITIVE_TOOL_NAMES = new Set(['locate', 'find', 'check', 'send'])
+const ROOT_PRIMITIVE_TOOL_NAMES = new Set([
+  'locate',
+  'find',
+  'check',
+  'send',
+  'document',
+])
+const DOCUMENT_TOOL_NAMES = new Set([
+  'document',
+  'document_inspect',
+  'document_extract',
+  'document_form_schema',
+  'document_copy_for_edit',
+  'document_apply_fill',
+  'document_apply_style',
+  'document_render',
+  'document_validate_public_form',
+  'document_save',
+])
+const DOCUMENT_MUTATION_TOOL_NAMES = new Set([
+  'document_apply_fill',
+  'document_apply_style',
+])
+const DOCUMENT_ARTIFACT_FOLLOWUP_TOOL_NAMES = new Set([
+  'document_apply_fill',
+  'document_apply_style',
+  'document_render',
+  'document_validate_public_form',
+  'document_save',
+])
+// Purely mechanical pipeline steps that carry no user-meaningful change — only
+// these are hidden on success. Substantive mutations (apply_fill / apply_style)
+// now render their inline structural diff immediately (per-mutation trigger),
+// the same way Claude Code shows a diff the moment an edit lands. See
+// specs/2802-public-doc-harness/deep-research-migration-document-render.md.
+const MECHANICAL_DOCUMENT_TOOL_NAMES = new Set(['document_copy_for_edit'])
 const KMA_URL_AIR_TOOL_NAMES = new Set([
   'kma_apihub_url_air_amos_minute',
   'kma_apihub_url_air_metar_decoded',
@@ -97,6 +144,24 @@ const MEDICAL_COLLAPSE_RE =
   /(사람이\s*쓰러|쓰러졌|쓰러져|의식\s*잃|의식을\s*잃|심정지|호흡이\s*없|숨을\s*안|collapsed|unconscious|cardiac\s*arrest)/iu
 const TRAFFIC_HAZARD_RE =
   /(교통사고|사고\s*위험|사고다발|위험\s*(구간|도로|지점)|어린이보호구역|보호구역|도로\s*구간|accident|hazard|hotspot)/iu
+const SAFE_DOCUMENT_ARTIFACT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/u
+const EXPLICIT_DOCUMENT_ARTIFACT_MARKER_RE =
+  /(?:^|[\s"'`(])(?:artifact_id|artifact\s*id|artifact|아티팩트)\s*[:=]?\s*([A-Za-z0-9][A-Za-z0-9_.-]{0,127})(?=$|[^A-Za-z0-9_.-])/iu
+const EXPLICIT_DOCUMENT_ARTIFACT_PREFIX_RE =
+  /(?:^|[\s"'`(])((?:source|working|derivative|render|export|viewport)-[A-Za-z0-9][A-Za-z0-9_.-]{0,127})(?=$|[^A-Za-z0-9_.-])/u
+const DOCUMENT_FORMAT_RE = /\b(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b/iu
+const DOWNLOADS_FOLDER_PATH_RE = /(?:^|[\\/])Downloads$/u
+const DOWNLOADS_PATH_SEGMENT_RE = /(?:^|[\\/])Downloads[\\/](?<tail>.+)$/iu
+const DOCUMENT_EXTENSION_RE = /\.(?:hwpx|hwp|docx|pdf|xlsx|pptx)$/iu
+const DOCUMENT_EXTENSION_TRAILING_PUNCT_RE =
+  /(\.(?:hwpx|hwp|docx|pdf|xlsx|pptx))[.。．]+$/iu
+const EXPLICIT_LOCAL_DOCUMENT_PATH_RE =
+  /(?:^|[\s"'`(])(?<path>(?:~|\/|\.{1,2}\/|[A-Za-z]:\\)[^\n\r"'`]*?\.(?:hwpx|hwp|docx|pdf|xlsx|pptx))(?=$|[\s"'`),，。]|[가-힣])/giu
+const HWPX_TEXT_TARGET_ALIAS_RE =
+  /^\/?hwp(?:x)?[-_/]text(?:[-_](?<indexA>\d+)|\[(?<indexB>\d+)\])(?:\/text\(\))?$/iu
+const HWPX_TEXT_TARGET_RE = /^\/hwpx\/text\[\d+\]$/u
+const HWPX_BLOCK_TABLE_CELL_TARGET_RE =
+  /^\/hwpx\/\[(?<tableId>hwpx-table-\d{3})\]\/cells\[(?<row>\d+)\]\[(?<column>\d+)\]$/u
 
 const fallbackInputSchema = z.object({}).passthrough() as InputSchema
 
@@ -108,6 +173,680 @@ function isJsonObject(value: unknown): value is JsonObject {
 
 function asJsonObject(value: unknown): JsonObject {
   return isJsonObject(value) ? value : {}
+}
+
+function documentToolUseAction(toolId: string): string {
+  switch (toolId) {
+    case 'document':
+      return 'Prepare document workflow'
+    case 'document_inspect':
+      return 'Inspect document form'
+    case 'document_extract':
+      return 'Read document content'
+    case 'document_form_schema':
+      return 'Map document fields'
+    case 'document_apply_fill':
+      return 'Fill document fields'
+    case 'document_apply_style':
+      return 'Apply document formatting'
+    case 'document_render':
+      return 'Render document diff'
+    case 'document_validate_public_form':
+      return 'Validate public-form rules'
+    case 'document_save':
+      return 'Save document'
+    default:
+      return 'Process document'
+  }
+}
+
+function documentToolUseTarget(input: Record<string, unknown>): string | undefined {
+  const document = asJsonObject(input.document)
+  const path =
+    typeof document.path === 'string'
+      ? document.path
+      : typeof input.path === 'string'
+        ? input.path
+        : undefined
+  if (path !== undefined && path.trim()) {
+    return basename(path)
+  }
+  if (
+    typeof document.artifact_id === 'string' ||
+    typeof input.artifact_id === 'string'
+  ) {
+    return 'current document'
+  }
+  return undefined
+}
+
+function renderDocumentToolUseMessage(
+  toolId: string,
+  input: Record<string, unknown>,
+): string | null {
+  if (MECHANICAL_DOCUMENT_TOOL_NAMES.has(toolId)) return null
+  const action = documentToolUseAction(toolId)
+  const target = documentToolUseTarget(input)
+  return target === undefined ? action : `${action}: ${target}`
+}
+
+function messageInnerRecord(message: unknown): JsonObject {
+  return asJsonObject(asJsonObject(message).message)
+}
+
+function messageRole(message: unknown): string | undefined {
+  const inner = messageInnerRecord(message)
+  const outer = asJsonObject(message)
+  if (typeof inner.role === 'string') return inner.role
+  if (typeof outer.role === 'string') return outer.role
+  return typeof outer.type === 'string' ? outer.type : undefined
+}
+
+function messageContent(message: unknown): unknown {
+  const inner = messageInnerRecord(message)
+  return inner.content ?? asJsonObject(message).content
+}
+
+function isToolResultContent(content: unknown): boolean {
+  if (!Array.isArray(content)) return false
+  return content.some(block => asJsonObject(block).type === 'tool_result')
+}
+
+function textFromMessageContent(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return ''
+  return content
+    .map(block => {
+      if (typeof block === 'string') return block
+      const record = asJsonObject(block)
+      if (record.type === 'tool_result') return ''
+      if (typeof record.text === 'string') return record.text
+      if (typeof record.content === 'string') return record.content
+      return ''
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
+function latestPlainUserText(messages: readonly unknown[]): string {
+  for (let idx = messages.length - 1; idx >= 0; idx -= 1) {
+    const content = messageContent(messages[idx])
+    if (messageRole(messages[idx]) !== 'user' || isToolResultContent(content)) {
+      continue
+    }
+    const text = textFromMessageContent(content).trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function safeDocumentArtifactId(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const candidate = value.trim()
+  return SAFE_DOCUMENT_ARTIFACT_ID_RE.test(candidate) ? candidate : undefined
+}
+
+function explicitDocumentArtifactIdFromText(text: string): string | undefined {
+  const marked = EXPLICIT_DOCUMENT_ARTIFACT_MARKER_RE.exec(text)?.[1]
+  const markedArtifactId = safeDocumentArtifactId(marked)
+  if (markedArtifactId) return markedArtifactId
+  const prefixed = EXPLICIT_DOCUMENT_ARTIFACT_PREFIX_RE.exec(text)?.[1]
+  return safeDocumentArtifactId(prefixed)
+}
+
+function parseJsonObject(value: unknown): JsonObject | undefined {
+  if (isJsonObject(value)) return value
+  if (typeof value !== 'string' || !value.trim()) return undefined
+  try {
+    return asJsonObject(JSON.parse(value))
+  } catch {
+    return undefined
+  }
+}
+
+function documentToolResultPayload(message: unknown): JsonObject | undefined {
+  const directResult = asJsonObject(asJsonObject(message).toolUseResult).result
+  if (isJsonObject(directResult)) return directResult
+
+  const content = messageContent(message)
+  if (!Array.isArray(content)) return undefined
+  for (const block of content) {
+    const record = asJsonObject(block)
+    if (record.type !== 'tool_result') continue
+    const parsed = parseJsonObject(record.content)
+    const nestedResult = asJsonObject(parsed).result
+    if (isJsonObject(nestedResult)) return nestedResult
+  }
+  return undefined
+}
+
+function latestDocumentArtifactRef(
+  messages: readonly unknown[],
+  options: {
+    toolIds: ReadonlySet<string>
+    artifactPrefix: string
+  },
+): string | undefined {
+  for (let idx = messages.length - 1; idx >= 0; idx -= 1) {
+    const payload = documentToolResultPayload(messages[idx])
+    if (!payload) continue
+    if (
+      typeof payload.tool_id !== 'string' ||
+      !options.toolIds.has(payload.tool_id)
+    ) continue
+    if (payload.status !== 'ok') continue
+    const refs = Array.isArray(payload.artifact_refs) ? payload.artifact_refs : []
+    for (let refIdx = refs.length - 1; refIdx >= 0; refIdx -= 1) {
+      const ref = safeDocumentArtifactId(refs[refIdx])
+      if (ref?.startsWith(options.artifactPrefix)) return ref
+    }
+  }
+  return undefined
+}
+
+function latestMutableDocumentArtifactRef(messages: readonly unknown[]): string | undefined {
+  return (
+    latestDocumentArtifactRef(messages, {
+      toolIds: DOCUMENT_MUTATION_TOOL_NAMES,
+      artifactPrefix: 'derivative-',
+    }) ??
+    latestDocumentArtifactRef(messages, {
+      toolIds: new Set([
+        'document_copy_for_edit',
+        'document_apply_fill',
+        'document_apply_style',
+      ]),
+      artifactPrefix: 'working-',
+    })
+  )
+}
+
+function shouldHideSuccessfulIntermediateDocumentResult(output: unknown): boolean {
+  const payload = extractDocumentToolResultPayload(output)
+  return (
+    payload !== null &&
+    payload.status === 'ok' &&
+    typeof payload.tool_id === 'string' &&
+    MECHANICAL_DOCUMENT_TOOL_NAMES.has(payload.tool_id)
+  )
+}
+
+function documentCorrelationId(value: unknown): string {
+  return typeof value === 'string' && value.trim()
+    ? value.trim()
+    : `document-render-${randomUUID()}`
+}
+
+function documentFormatFromText(text: string): string | undefined {
+  return DOCUMENT_FORMAT_RE.exec(text)?.[0]?.toLowerCase()
+}
+
+function documentFormatFromPath(path: string): string | undefined {
+  const match = /\.(hwpx|hwp|docx|pdf|xlsx|pptx)$/iu.exec(path.trim())
+  return match?.[1]?.toLowerCase()
+}
+
+function inferredDownloadsDocumentPath(text: string): string | undefined {
+  if (!/(다운로드\s*폴더|downloads)/iu.test(text)) return undefined
+  const formatMatch = DOCUMENT_FORMAT_RE.exec(text)
+  const format = formatMatch?.[0]?.toLowerCase()
+  if (!format || formatMatch === null) return undefined
+  const beforeFormat = text.slice(0, formatMatch.index).trim()
+  const nameMatch =
+    /(?:다운로드\s*폴더|downloads)(?:에)?\s*(?:있는|의)?\s*(?<name>.+)$/iu.exec(
+      beforeFormat,
+    )
+  const rawName = nameMatch?.groups?.name?.trim()
+  if (!rawName) return undefined
+  const fileName = rawName
+    .replace(/[\\/:*?"<>|]/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .replace(/[.。．]+$/gu, '')
+    .trim()
+  if (!fileName) return undefined
+  return join(homedir(), 'Downloads', `${fileName}.${format}`)
+}
+
+function isDownloadsFolderLikePath(value: unknown): boolean {
+  if (typeof value !== 'string') return false
+  const normalized = value
+    .trim()
+    .replace(/^['"`]+|['"`]+$/gu, '')
+    .replace(/[\\/]+$/u, '')
+    .replace(/\.$/u, '')
+  return DOWNLOADS_FOLDER_PATH_RE.test(normalized)
+}
+
+function normalizeDownloadsDocumentPath(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const cleaned = value
+    .trim()
+    .replace(/^['"`]+|['"`]+$/gu, '')
+    .replace(DOCUMENT_EXTENSION_TRAILING_PUNCT_RE, '$1')
+  if (!cleaned) return undefined
+  const downloadsPathMatch = DOWNLOADS_PATH_SEGMENT_RE.exec(cleaned)
+  if (DOCUMENT_EXTENSION_RE.test(cleaned) && downloadsPathMatch) {
+    const homeDownloads = `${homedir()}/Downloads/`
+    if (cleaned.startsWith(homeDownloads)) return cleaned
+    const tail = downloadsPathMatch.groups?.tail
+    if (!tail || tail.includes('..')) return undefined
+    const parts = tail.split(/[\\/]+/u).filter(Boolean)
+    if (parts.length === 0) return undefined
+    return join(homedir(), 'Downloads', ...parts)
+  }
+  return undefined
+}
+
+function cleanUserDocumentPath(value: string): string {
+  return value
+    .trim()
+    .replace(/^['"`]+|['"`]+$/gu, '')
+    .replace(DOCUMENT_EXTENSION_TRAILING_PUNCT_RE, '$1')
+    .replace(/^~/u, homedir())
+}
+
+function existingUserDocumentPathsFromText(text: string): string[] {
+  const paths: string[] = []
+  for (const match of text.matchAll(EXPLICIT_LOCAL_DOCUMENT_PATH_RE)) {
+    const rawPath = match.groups?.path
+    if (typeof rawPath !== 'string') continue
+    const candidate = cleanUserDocumentPath(rawPath)
+    if (!candidate || !DOCUMENT_EXTENSION_RE.test(candidate)) continue
+    if (!existsSync(candidate)) continue
+    if (!paths.includes(candidate)) paths.push(candidate)
+  }
+  return paths
+}
+
+function normalizeExactUserDocumentPathInput(
+  input: Record<string, unknown>,
+  document: JsonObject,
+  messages: readonly unknown[],
+): Record<string, unknown> | undefined {
+  if (document.artifact_id !== undefined) return undefined
+  const userPaths = existingUserDocumentPathsFromText(latestPlainUserText(messages))
+  if (userPaths.length !== 1) return undefined
+  const lockedPath = userPaths[0]
+  if (lockedPath === undefined) return undefined
+
+  const currentPath =
+    typeof document.path === 'string' ? cleanUserDocumentPath(document.path) : undefined
+  if (currentPath !== undefined && existsSync(currentPath)) return undefined
+  if (
+    currentPath !== undefined &&
+    basename(currentPath) !== basename(lockedPath)
+  ) {
+    return undefined
+  }
+
+  return {
+    ...input,
+    correlation_id: documentCorrelationId(input.correlation_id),
+    document: {
+      ...document,
+      path: lockedPath,
+      expected_format:
+        documentFormatFromPath(lockedPath) ??
+        document.expected_format ??
+        input.expected_format ??
+        documentFormatFromText(latestPlainUserText(messages)),
+    },
+  }
+}
+
+function normalizeDocumentInspectPathInput(
+  toolId: string,
+  input: Record<string, unknown>,
+  document: JsonObject,
+  messages: readonly unknown[],
+): Record<string, unknown> | undefined {
+  if (toolId !== 'document_inspect' && toolId !== 'document') return undefined
+  const path = document.path ?? input.path
+  const userText = latestPlainUserText(messages)
+  const cleanedPath = typeof path === 'string' ? cleanUserDocumentPath(path) : undefined
+  if (
+    cleanedPath !== undefined &&
+    DOCUMENT_EXTENSION_RE.test(cleanedPath) &&
+    existsSync(cleanedPath)
+  ) {
+    return undefined
+  }
+  const normalizedDownloadsPath = normalizeDownloadsDocumentPath(path)
+  const inferredPath = isDownloadsFolderLikePath(path)
+    ? inferredDownloadsDocumentPath(userText)
+    : undefined
+  const inferredDownloadsPath = inferredDownloadsDocumentPath(userText)
+  const shouldPreferUserTextDownloadsPath =
+    normalizedDownloadsPath !== undefined &&
+    inferredDownloadsPath !== undefined &&
+    normalizedDownloadsPath !== inferredDownloadsPath
+  const normalizedPath =
+    (shouldPreferUserTextDownloadsPath ? inferredDownloadsPath : undefined) ??
+    (normalizedDownloadsPath !== undefined && existsSync(normalizedDownloadsPath)
+      ? normalizedDownloadsPath
+      : undefined) ??
+    (inferredPath !== undefined && existsSync(inferredPath) ? inferredPath : undefined) ??
+    (inferredDownloadsPath !== undefined && existsSync(inferredDownloadsPath)
+      ? inferredDownloadsPath
+      : undefined) ??
+    inferredDownloadsPath ??
+    normalizedDownloadsPath ??
+    inferredPath
+  if (!normalizedPath) return undefined
+  return {
+    ...input,
+    correlation_id: documentCorrelationId(input.correlation_id),
+    document: {
+      ...document,
+      path: normalizedPath,
+      expected_format:
+        documentFormatFromPath(normalizedPath) ??
+        document.expected_format ??
+        input.expected_format ??
+        documentFormatFromText(userText),
+    },
+  }
+}
+
+function normalizeDocumentPathExpectedFormatInput(
+  input: Record<string, unknown>,
+  document: JsonObject,
+): Record<string, unknown> | undefined {
+  if (document.artifact_id !== undefined) return undefined
+  if (typeof document.path !== 'string') return undefined
+  const normalizedPath = cleanUserDocumentPath(document.path)
+  const pathFormat = documentFormatFromPath(normalizedPath)
+  if (pathFormat === undefined) return undefined
+  const currentFormat =
+    typeof document.expected_format === 'string'
+      ? document.expected_format.toLowerCase()
+      : undefined
+  if (currentFormat === pathFormat && document.path === normalizedPath) {
+    return undefined
+  }
+  return {
+    ...input,
+    correlation_id: documentCorrelationId(input.correlation_id),
+    document: {
+      ...document,
+      path: normalizedPath,
+      expected_format: pathFormat,
+    },
+  }
+}
+
+function normalizeHwpxTextTargetPath(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const targetPath = value.trim()
+  const match = HWPX_TEXT_TARGET_ALIAS_RE.exec(targetPath)
+  const rawIndex = match?.groups?.indexA ?? match?.groups?.indexB
+  if (!rawIndex) return undefined
+  return `/hwpx/text[${Number(rawIndex)}]`
+}
+
+function latestDocumentFieldPaths(messages: readonly unknown[]): Set<string> | undefined {
+  for (let idx = messages.length - 1; idx >= 0; idx -= 1) {
+    const payload = documentToolResultPayload(messages[idx])
+    const extraction = asJsonObject(payload?.extraction)
+    const fields = Array.isArray(extraction.fields) ? extraction.fields : []
+    const paths = new Set<string>()
+    for (const field of fields) {
+      const path = asJsonObject(field).path
+      if (typeof path === 'string' && path.trim()) {
+        paths.add(path.trim())
+      }
+    }
+    if (paths.size > 0) return paths
+  }
+  return undefined
+}
+
+function latestDocumentTableCellFieldAliases(
+  messages: readonly unknown[],
+): Map<string, string> | undefined {
+  for (let idx = messages.length - 1; idx >= 0; idx -= 1) {
+    const payload = documentToolResultPayload(messages[idx])
+    const extraction = asJsonObject(payload?.extraction)
+    const tables = Array.isArray(extraction.tables) ? extraction.tables : []
+    const aliases = new Map<string, string>()
+    for (const tableValue of tables) {
+      const table = asJsonObject(tableValue)
+      const blockId = table.block_id
+      const cells = Array.isArray(table.cells) ? table.cells : []
+      if (typeof blockId !== 'string' || !blockId.trim()) continue
+      for (const cellValue of cells) {
+        const cell = asJsonObject(cellValue)
+        const rowIndex = cell.row_index
+        const columnIndex = cell.column_index
+        const fieldPath = cell.field_path
+        if (
+          typeof rowIndex !== 'number' ||
+          typeof columnIndex !== 'number' ||
+          typeof fieldPath !== 'string' ||
+          !fieldPath.trim()
+        ) {
+          continue
+        }
+        aliases.set(
+          `/hwpx/[${blockId.trim()}]/cells[${rowIndex}][${columnIndex}]`,
+          fieldPath.trim(),
+        )
+      }
+    }
+    if (aliases.size > 0) return aliases
+  }
+  return undefined
+}
+
+function normalizeHwpxTableCellTargetPath(
+  value: unknown,
+  aliases: ReadonlyMap<string, string> | undefined,
+): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const targetPath = value.trim()
+  if (!HWPX_BLOCK_TABLE_CELL_TARGET_RE.test(targetPath)) return undefined
+  return aliases?.get(targetPath)
+}
+
+function normalizeDocumentPatchTargetPaths(
+  input: Record<string, unknown>,
+  messages: readonly unknown[],
+): Record<string, unknown> {
+  const patches = input.patches
+  if (!Array.isArray(patches)) return input
+
+  const fieldPaths = latestDocumentFieldPaths(messages)
+  const tableCellAliases = latestDocumentTableCellFieldAliases(messages)
+  let changed = false
+  const normalizedPatches = patches.flatMap(patch => {
+    if (!isJsonObject(patch)) return patch
+    const rawTargetPath =
+      typeof patch.target_path === 'string' ? patch.target_path.trim() : patch.target_path
+    const isHwpxTableCellTarget =
+      typeof rawTargetPath === 'string' && HWPX_BLOCK_TABLE_CELL_TARGET_RE.test(rawTargetPath)
+    const normalizedTargetPath =
+      normalizeHwpxTextTargetPath(patch.target_path) ??
+      normalizeHwpxTableCellTargetPath(patch.target_path, tableCellAliases)
+    const targetPath =
+      normalizedTargetPath ?? (
+        typeof rawTargetPath === 'string' ? rawTargetPath : patch.target_path
+      )
+    if (
+      isHwpxTableCellTarget &&
+      tableCellAliases !== undefined &&
+      normalizedTargetPath === undefined
+    ) {
+      changed = true
+      return []
+    }
+    if (
+      typeof targetPath === 'string' &&
+      fieldPaths !== undefined &&
+      HWPX_TEXT_TARGET_RE.test(targetPath) &&
+      !fieldPaths.has(targetPath)
+    ) {
+      changed = true
+      return []
+    }
+    if (
+      normalizedTargetPath === undefined ||
+      normalizedTargetPath === patch.target_path
+    ) {
+      return patch
+    }
+    changed = true
+    return {
+      ...patch,
+      target_path: normalizedTargetPath,
+    }
+  })
+
+  if (normalizedPatches.length === 0) return input
+  return changed ? { ...input, patches: normalizedPatches } : input
+}
+
+function normalizeDocumentPrimitiveInstructionInput(
+  toolId: string,
+  input: Record<string, unknown>,
+  messages: readonly unknown[],
+): Record<string, unknown> {
+  if (toolId !== 'document') return input
+  if (Array.isArray(input.patches) && input.patches.length > 0) return input
+
+  const userText = latestPlainUserText(messages)
+  if (!userText) return input
+
+  const instruction =
+    typeof input.instruction === 'string' ? input.instruction.trim() : ''
+  if (instruction.includes(userText)) return input
+
+  return {
+    ...input,
+    instruction: instruction
+      ? `${instruction}\n\nOriginal user request:\n${userText}`
+      : userText,
+  }
+}
+
+export function normalizeExplicitDocumentArtifactInput(
+  toolId: string,
+  input: Record<string, unknown>,
+  messages: readonly unknown[],
+): Record<string, unknown> {
+  if (!DOCUMENT_TOOL_NAMES.has(toolId)) return input
+
+  const instructionInput = normalizeDocumentPrimitiveInstructionInput(
+    toolId,
+    input,
+    messages,
+  )
+  const normalizedPatchInput = normalizeDocumentPatchTargetPaths(
+    instructionInput,
+    messages,
+  )
+  const { artifact_id: topLevelArtifactIdRaw, ...withoutTopLevelArtifactId } =
+    normalizedPatchInput
+  const document = asJsonObject(normalizedPatchInput.document)
+  const normalizedExactUserPathInput = normalizeExactUserDocumentPathInput(
+    normalizedPatchInput,
+    document,
+    messages,
+  )
+  if (normalizedExactUserPathInput) return normalizedExactUserPathInput
+  const normalizedInspectPathInput = normalizeDocumentInspectPathInput(
+    toolId,
+    normalizedPatchInput,
+    document,
+    messages,
+  )
+  if (normalizedInspectPathInput) return normalizedInspectPathInput
+  const { path: _documentPath, ...documentWithoutPath } = document
+  const existingDocumentArtifactId = safeDocumentArtifactId(document.artifact_id)
+  const inputArtifactId =
+    existingDocumentArtifactId ?? safeDocumentArtifactId(topLevelArtifactIdRaw)
+  const hasExtractionArtifactId = inputArtifactId?.startsWith('document-intake-') === true
+
+  if (DOCUMENT_ARTIFACT_FOLLOWUP_TOOL_NAMES.has(toolId)) {
+    const artifactId = latestMutableDocumentArtifactRef(messages)
+    if (
+      artifactId &&
+      (
+        document.path !== undefined ||
+        existingDocumentArtifactId?.startsWith('source-') ||
+        hasExtractionArtifactId
+      )
+    ) {
+      return {
+        ...withoutTopLevelArtifactId,
+        correlation_id: documentCorrelationId(input.correlation_id),
+        document: {
+          ...documentWithoutPath,
+          artifact_id: artifactId,
+        },
+      }
+    }
+  }
+
+  if (toolId === 'document_copy_for_edit' && hasExtractionArtifactId) {
+    const sourceArtifactId = latestDocumentArtifactRef(messages, {
+      toolIds: new Set(['document_inspect', 'document_extract', 'document_form_schema']),
+      artifactPrefix: 'source-',
+    })
+    if (sourceArtifactId) {
+      return {
+        ...withoutTopLevelArtifactId,
+        correlation_id: documentCorrelationId(input.correlation_id),
+        document: {
+          ...documentWithoutPath,
+          artifact_id: sourceArtifactId,
+        },
+      }
+    }
+  }
+
+  if (existingDocumentArtifactId) {
+    return topLevelArtifactIdRaw === undefined
+      ? { ...normalizedPatchInput, document: documentWithoutPath }
+      : { ...withoutTopLevelArtifactId, document: documentWithoutPath }
+  }
+
+  if (toolId === 'document_copy_for_edit' && document.path !== undefined) {
+    const sourceArtifactId = latestDocumentArtifactRef(messages, {
+      toolIds: new Set(['document_inspect', 'document_extract', 'document_form_schema']),
+      artifactPrefix: 'source-',
+    })
+    if (sourceArtifactId) {
+      return {
+        ...withoutTopLevelArtifactId,
+        correlation_id: documentCorrelationId(input.correlation_id),
+        document: {
+          ...documentWithoutPath,
+          artifact_id: sourceArtifactId,
+        },
+      }
+    }
+  }
+
+  const topLevelArtifactId = safeDocumentArtifactId(topLevelArtifactIdRaw)
+  const currentTextArtifactId = explicitDocumentArtifactIdFromText(
+    latestPlainUserText(messages),
+  )
+  const artifactId = topLevelArtifactId ?? currentTextArtifactId
+  if (!artifactId) {
+    return (
+      normalizeDocumentPathExpectedFormatInput(normalizedPatchInput, document) ??
+      normalizedPatchInput
+    )
+  }
+
+  return {
+    ...withoutTopLevelArtifactId,
+    correlation_id: documentCorrelationId(input.correlation_id),
+    document: {
+      ...documentWithoutPath,
+      artifact_id: artifactId,
+    },
+  }
 }
 
 function asStringArray(value: unknown): string[] {
@@ -270,6 +1009,8 @@ function primitiveToolFor(primitive: AdapterPrimitive): Tool {
       return ResolveLocationPrimitive as Tool
     case 'send':
       return SubmitPrimitive as Tool
+    case 'document':
+      return DocumentPrimitive as Tool
     case 'check':
       return VerifyPrimitive as Tool
     case 'find':
@@ -1133,30 +1874,56 @@ function buildAdapterTool(entry: AdapterManifestEntry): Tool {
     },
 
     async call(input, context) {
-      const normalizedInput = normalizeDirectPublicDataToolInput(
+      const normalizedDocumentInput = normalizeExplicitDocumentArtifactInput(
+        entry.tool_id,
+        input,
+        context.messages,
+      )
+      const directPublicDataInput = normalizeDirectPublicDataToolInput(
         entry.tool_id,
         context,
-        input,
+        normalizedDocumentInput,
       )
-      return dispatchPrimitive({
+      const result = await dispatchPrimitive({
         primitive,
         toolName: entry.tool_id,
-        args: normalizedInput,
+        args: directPublicDataInput,
         context,
         registry: getOrCreatePendingCallRegistry(),
         bridge: getOrCreateUmmayaBridge(),
+        timeoutMs:
+          primitive === 'document'
+            ? resolveDocumentPrimitiveTimeoutMs()
+            : undefined,
       })
+      return {
+        ...result,
+        data: applyDocumentVisualRenderGateToOutput(result.data),
+      }
     },
 
     userFacingName(input) {
+      if (DOCUMENT_TOOL_NAMES.has(entry.tool_id)) {
+        return 'Document'
+      }
       return primitiveTool.userFacingName(rootInputFor(entry, input ?? {}))
     },
 
     mapToolResultToToolResultBlockParam(output, toolUseID) {
-      return primitiveTool.mapToolResultToToolResultBlockParam(output, toolUseID)
+      const gatedOutput = applyDocumentVisualRenderGateToOutput(output)
+      const block = primitiveTool.mapToolResultToToolResultBlockParam(gatedOutput, toolUseID)
+      return isDocumentVisualRenderFailedOutput(gatedOutput)
+        ? { ...block, is_error: true }
+        : block
     },
 
     renderToolUseMessage(input, options) {
+      if (DOCUMENT_TOOL_NAMES.has(entry.tool_id)) {
+        return renderDocumentToolUseMessage(
+          entry.tool_id,
+          input as Record<string, unknown>,
+        )
+      }
       const rendered = primitiveTool.renderToolUseMessage(
         rootInputFor(entry, input),
         options,
@@ -1165,8 +1932,16 @@ function buildAdapterTool(entry: AdapterManifestEntry): Tool {
     },
 
     renderToolResultMessage(output, progressMessagesForMessage, options) {
+      const gatedOutput = applyDocumentVisualRenderGateToOutput(output)
+      if (shouldHideSuccessfulIntermediateDocumentResult(gatedOutput)) {
+        return null
+      }
+      const documentResult = renderDocumentToolResultIfPresent(gatedOutput, options)
+      if (documentResult !== null) {
+        return documentResult
+      }
       return primitiveTool.renderToolResultMessage?.(
-        output,
+        gatedOutput,
         progressMessagesForMessage,
         options,
       ) ?? null

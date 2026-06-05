@@ -26,7 +26,7 @@ import type { PermissionDecision } from '../ipc/codec.js'
 /** The shape exposed to PermissionGauntletModal (no resolver, no enqueued_at) */
 export interface PendingPermissionRequest {
   request_id: string
-  primitive_kind: 'find' | 'locate' | 'check' | 'send'
+  primitive_kind: 'find' | 'locate' | 'check' | 'send' | 'document'
   description_ko: string
   description_en: string
   risk_level: 'low' | 'medium' | 'high'

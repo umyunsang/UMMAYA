@@ -206,6 +206,143 @@ export interface VerifyFailPayload {
 export type VerifyPayload = VerifySuccessPayload | VerifyFailPayload
 
 // ---------------------------------------------------------------------------
+// Public document harness mode
+// ---------------------------------------------------------------------------
+
+export type DocumentToolStatus = 'ok' | 'blocked' | 'failed' | 'needs_input'
+export type DocumentWorkflowStepStatus =
+  | 'pending'
+  | 'completed'
+  | 'current'
+  | 'blocked'
+  | 'failed'
+  | 'skipped'
+
+export interface DocumentChangePayload {
+  change_id: string
+  operation_id: string
+  change_type: 'field' | 'table_cell' | 'text' | 'style' | 'metadata' | 'copy'
+  target_path: string
+  display_label?: string | null
+  before_value?: string | null
+  after_value?: string | null
+}
+
+export interface DocumentDiffPayload {
+  diff_id?: string
+  diff_sha256?: string
+  resource_ref?: string
+  source_artifact_id: string
+  derivative_artifact_id: string
+  changes: DocumentChangePayload[]
+  render_artifacts?: DocumentRenderArtifactPayload[]
+  baseline_render_artifacts?: DocumentRenderArtifactPayload[]
+  changed_viewports?: DocumentChangedViewportPayload[]
+  viewport_cameras?: DocumentViewportCameraPayload[]
+  inline_truncated?: boolean
+  omitted_change_count?: number
+}
+
+export interface DocumentClipRectPayload {
+  x: number | string
+  y: number | string
+  width: number | string
+  height: number | string
+}
+
+export interface DocumentChangedViewportPayload {
+  viewport_id: string
+  change_ids: string[]
+  page_number: number
+  source_render_artifact_id: string
+  clip_rect: DocumentClipRectPayload
+  padding_x?: number | string
+  padding_y?: number | string
+  svg_artifact_ref?: string | null
+  svg_artifact_path?: string | null
+  png_artifact_ref?: string | null
+  png_artifact_path?: string | null
+  before_svg_artifact_ref?: string | null
+  before_svg_artifact_path?: string | null
+  before_png_artifact_ref?: string | null
+  before_png_artifact_path?: string | null
+  after_svg_artifact_ref?: string | null
+  after_svg_artifact_path?: string | null
+  after_png_artifact_ref?: string | null
+  after_png_artifact_path?: string | null
+  text_fallback?: string[]
+  anchor_strategy?: string
+  confidence?: number | string
+  warnings?: string[]
+}
+
+export interface DocumentViewportCameraPayload {
+  source_render_artifact_id: string
+  baseline_render_artifact_id: string
+  page_index: number
+  viewport_rect: DocumentClipRectPayload
+  zoom: number | string
+  change_ids: string[]
+}
+
+export interface DocumentRenderArtifactPayload {
+  render_artifact_id: string
+  source_artifact_id?: string
+  render_sha256?: string
+  render_path?: string
+  render_mime_type?: string | null
+  raster_artifact_ref?: string | null
+  raster_artifact_path?: string | null
+  raster_mime_type?: string | null
+  page_number?: number
+  engine_id?: string
+}
+
+export interface DocumentPromotionGatePayload {
+  capability?: string
+  promotion_state?: string
+  hard_gate_failures?: string[]
+  promotion_checklist?: Array<{
+    check_id: string
+    capability?: string
+    status?: string
+    evidence_required?: string
+    detail?: string | null
+  }>
+}
+
+export interface DocumentWorkflowStepPayload {
+  step_id: string
+  label: string
+  status: DocumentWorkflowStepStatus
+  artifact_id?: string | null
+  artifact_sha256?: string | null
+  detail?: string | null
+}
+
+export interface DocumentSavedExportPayload {
+  export_id?: string | null
+  artifact_id?: string | null
+  local_path?: string | null
+  sha256?: string | null
+  mime_type?: string | null
+}
+
+export interface DocumentToolResultPayload {
+  tool_id: string
+  correlation_id: string
+  status: DocumentToolStatus
+  artifact_refs?: string[]
+  text_summary: string
+  blocked_reason?: string | null
+  diff?: DocumentDiffPayload | null
+  render_artifacts?: DocumentRenderArtifactPayload[]
+  promotion_gate_result?: DocumentPromotionGatePayload | null
+  workflow_steps?: DocumentWorkflowStepPayload[]
+  saved_exports?: DocumentSavedExportPayload[]
+}
+
+// ---------------------------------------------------------------------------
 // Unrecognized payload (FR-033)
 // ---------------------------------------------------------------------------
 

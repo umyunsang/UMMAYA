@@ -3,11 +3,11 @@
 //
 // Tests the active primitive arms (check / send-reversible / send-irreversible)
 // × the 3 decision paths (allow_once / allow_session / deny).
-// Render is done via ink-testing-library; we assert on lastFrame() text.
+// Static and stdin renders use the UMMAYA Ink runtime so the tests exercise the
+// same AppStateProvider/KeybindingSetup path as the real TUI.
 
 import { describe, test, expect, mock } from 'bun:test'
 import React from 'react'
-import { render } from 'ink-testing-library'
 import { PassThrough, Writable } from 'stream'
 import { render as renderInk } from '@/ink.js'
 import { AppStateProvider } from '@/state/AppState'
@@ -64,6 +64,32 @@ function makeLocalInkStreams(): { stdin: TestStdin; stdout: TestStdout } {
   stdout.output = ''
 
   return { stdin, stdout }
+}
+
+function normalizeFrameText(output: string): string {
+  return output
+    .replace(/\u001B\]([^\u0007]|\u001B\\)*(\u0007|\u001B\\)/g, '')
+    .replace(/\u001B\[1C/g, ' ')
+    .replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, '')
+}
+
+async function renderStaticFrame(element: React.ReactElement): Promise<string> {
+  const streams = makeLocalInkStreams()
+  const instance = await renderInk(element, {
+    stdin: streams.stdin,
+    stdout: streams.stdout,
+    stderr: streams.stdout,
+    exitOnCtrlC: false,
+    patchConsole: false,
+  })
+
+  try {
+    await tick()
+    return normalizeFrameText(streams.stdout.output)
+  } finally {
+    instance.unmount()
+    instance.cleanup()
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -133,45 +159,45 @@ function key(overrides: Partial<Key>): Key {
 // ---------------------------------------------------------------------------
 
 describe('UmmayaPrimitivePermissionRequest — check (Layer 1)', () => {
-  test('renders layer 1 glyph ⓵', () => {
+  test('renders layer 1 glyph ⓵', async () => {
     const props = makeProps('check')
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame()).toContain('⓵')
+    expect(frame).toContain('⓵')
   })
 
-  test('renders check modal title (contains 신원)', () => {
+  test('renders check modal title (contains 신원)', async () => {
     const props = makeProps('check')
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame() ?? '').toContain('신원')
+    expect(frame).toContain('신원')
   })
 
-  test('renders tool name in body', () => {
+  test('renders tool name in body', async () => {
     const props = makeProps('check', false, { toolName: 'hira_hospital_search' })
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame()).toContain('hira_hospital_search')
+    expect(frame).toContain('hira_hospital_search')
   })
 
-  test('renders PIPA notice (contains 22)', () => {
+  test('renders PIPA notice (contains 22)', async () => {
     const props = makeProps('check')
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
     // PIPA §22-2 citation substring present in modal
-    expect(lastFrame() ?? '').toContain('22')
+    expect(frame).toContain('22')
   })
 })
 
@@ -180,24 +206,24 @@ describe('UmmayaPrimitivePermissionRequest — check (Layer 1)', () => {
 // ---------------------------------------------------------------------------
 
 describe('UmmayaPrimitivePermissionRequest — send reversible (Layer 2)', () => {
-  test('renders layer 2 glyph ⓶', () => {
+  test('renders layer 2 glyph ⓶', async () => {
     const props = makeProps('send', false)
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame()).toContain('⓶')
+    expect(frame).toContain('⓶')
   })
 
-  test('does NOT render "취소 불가" for reversible send', () => {
+  test('does NOT render "취소 불가" for reversible send', async () => {
     const props = makeProps('send', false)
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame()).not.toContain('취소 불가')
+    expect(frame).not.toContain('취소 불가')
   })
 })
 
@@ -206,24 +232,24 @@ describe('UmmayaPrimitivePermissionRequest — send reversible (Layer 2)', () =>
 // ---------------------------------------------------------------------------
 
 describe('UmmayaPrimitivePermissionRequest — send irreversible (Layer 3)', () => {
-  test('renders layer 3 glyph ⓷', () => {
+  test('renders layer 3 glyph ⓷', async () => {
     const props = makeProps('send', true)
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame()).toContain('⓷')
+    expect(frame).toContain('⓷')
   })
 
-  test('renders irreversible warning text (contains 취소)', () => {
+  test('renders irreversible warning text (contains 취소)', async () => {
     const props = makeProps('send', true)
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame() ?? '').toContain('취소')
+    expect(frame).toContain('취소')
   })
 })
 
@@ -232,10 +258,10 @@ describe('UmmayaPrimitivePermissionRequest — send irreversible (Layer 3)', () 
 // ---------------------------------------------------------------------------
 
 describe('UmmayaPrimitivePermissionRequest — find (bypass)', () => {
-  test('renders nothing for find primitive', () => {
+  test('renders nothing for find primitive', async () => {
     const onDecision = mock(() => {})
     const onDismiss = mock(() => {})
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest
           primitive="find"
@@ -246,7 +272,6 @@ describe('UmmayaPrimitivePermissionRequest — find (bypass)', () => {
       </Wrap>,
     )
     // null render → lastFrame has no permission content
-    const frame = lastFrame() ?? ''
     expect(frame).not.toContain('⓵')
     expect(frame).not.toContain('⓶')
     expect(frame).not.toContain('⓷')
@@ -259,14 +284,13 @@ describe('UmmayaPrimitivePermissionRequest — find (bypass)', () => {
 
 describe('UmmayaPrimitivePermissionRequest — selector labels', () => {
   for (const primitive of ['check', 'send'] as const) {
-    test(`${primitive}: shows selector labels without UMMAYA-only hotkey prefixes`, () => {
+    test(`${primitive}: shows selector labels without UMMAYA-only hotkey prefixes`, async () => {
       const props = makeProps(primitive)
-      const { lastFrame } = render(
+      const frame = await renderStaticFrame(
         <Wrap>
           <UmmayaPrimitivePermissionRequest {...props} />
         </Wrap>,
       )
-      const frame = lastFrame() ?? ''
       expect(frame).toContain('한 번')
       expect(frame).toContain('세션')
       expect(frame).toContain('거부')
@@ -366,23 +390,23 @@ describe('UmmayaPrimitivePermissionRequest — selector labels', () => {
 // ---------------------------------------------------------------------------
 
 describe('UmmayaPrimitivePermissionRequest — receiptId footer', () => {
-  test('shows receipt ID when provided', () => {
+  test('shows receipt ID when provided', async () => {
     const props = makeProps('check', false, { receiptId: 'rcpt-abc12345' })
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame()).toContain('rcpt-abc12345')
+    expect(frame).toContain('rcpt-abc12345')
   })
 
-  test('no receipt ID text when omitted', () => {
+  test('no receipt ID text when omitted', async () => {
     const props = makeProps('check')
-    const { lastFrame } = render(
+    const frame = await renderStaticFrame(
       <Wrap>
         <UmmayaPrimitivePermissionRequest {...props} />
       </Wrap>,
     )
-    expect(lastFrame()).not.toContain('rcpt-')
+    expect(frame).not.toContain('rcpt-')
   })
 })

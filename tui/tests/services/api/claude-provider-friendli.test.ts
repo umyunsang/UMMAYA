@@ -48,6 +48,30 @@ function responseForTextDelta(text: string): Response {
   )
 }
 
+function responseForTextThenDocumentToolCall(): Response {
+  const encoder = new TextEncoder()
+  const lines = [
+    'data: {"id":"chatcmpl_document_tool_1","model":"LGAI-EXAONE/K-EXAONE-236B-A23B","choices":[{"delta":{"content":"먼저 다운로드 폴더에서 HWPX 양식 파일을 찾고 문서 검사 도구를 사용하겠습니다.\\n"}}]}',
+    'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_document_1","type":"function","function":{"name":"document_inspect","arguments":"{\\"correlation_id\\":\\"doc-corr\\",\\"document\\":{\\"path\\":\\"/Users/um-yunsang/Downloads/SW중심대학사업 현장미러형연계프로젝트 주간활동일지.hwpx\\",\\"expected_format\\":\\"hwpx\\"}}"}}]}}]}',
+    'data: {"choices":[{"finish_reason":"tool_calls","delta":{}}],"usage":{"prompt_tokens":31,"completion_tokens":12}}',
+    'data: [DONE]',
+  ]
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        for (const line of lines) {
+          controller.enqueue(encoder.encode(`${line}\n\n`))
+        }
+        controller.close()
+      },
+    }),
+    {
+      status: 200,
+      headers: { 'content-type': 'text/event-stream', 'x-request-id': 'req_document_1' },
+    },
+  )
+}
+
 describe('CC provider wired to FriendliAI client shim', () => {
   test('streams through services/api/claude.ts without backend chat_request', async () => {
     let requestBody: Record<string, unknown> | undefined
@@ -183,6 +207,96 @@ describe('CC provider wired to FriendliAI client shim', () => {
       })
     } finally {
       clearManifestCache()
+      if (previousToken === undefined) {
+        delete process.env.UMMAYA_FRIENDLI_TOKEN
+      } else {
+        process.env.UMMAYA_FRIENDLI_TOKEN = previousToken
+      }
+      if (previousDisableFallback === undefined) {
+        delete process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK
+      } else {
+        process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK = previousDisableFallback
+      }
+    }
+  })
+
+  test('streams CC-style document intent prose before a document tool call', async () => {
+    const previousToken = process.env.UMMAYA_FRIENDLI_TOKEN
+    const previousDisableFallback = process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK
+    process.env.UMMAYA_FRIENDLI_TOKEN = 'friendli-token'
+    process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK = '1'
+
+    try {
+      const tools = assembleToolPool(getEmptyToolPermissionContext(), [])
+      const events: unknown[] = []
+      for await (const event of queryModelWithStreaming({
+        messages: [
+          createUserMessage({
+            content:
+              '다운로드 폴더에 있는 SW중심대학사업 현장미러형연계프로젝트 주간활동일지 HWPX 양식을 13주차 활동일지로 작성해줘. 활동기간은 2026.06.01부터 2026.06.07까지고, 작성이 끝나면 원본과 달라진 부분을 문서 화면으로 비교해서 내가 바로 확인할 수 있게 보여줘.',
+          }),
+        ],
+        systemPrompt: asSystemPrompt(['System prompt']),
+        thinkingConfig: { type: 'disabled' },
+        tools,
+        signal: new AbortController().signal,
+        options: {
+          getToolPermissionContext: async () => getEmptyToolPermissionContext(),
+          model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+          isNonInteractiveSession: false,
+          querySource: 'repl_main_thread',
+          agents: [],
+          allowedAgentTypes: [],
+          mcpTools: [],
+          fetchOverride: async () => responseForTextThenDocumentToolCall(),
+        },
+      })) {
+        events.push(event)
+      }
+
+      const assistantMessages = events.filter(
+        event => (event as { type?: string }).type === 'assistant',
+      ) as Array<{ message: { content: Array<{ type?: string; text?: string; name?: string }> } }>
+      const visibleText = JSON.stringify(events)
+      expect(visibleText).toContain('먼저 다운로드 폴더')
+      expect(
+        events.some(event => {
+          const streamEvent = event as {
+            type?: string
+            event?: { type?: string; delta?: { type?: string } }
+          }
+          return (
+            streamEvent.type === 'stream_event' &&
+            streamEvent.event?.type === 'content_block_delta' &&
+            streamEvent.event.delta?.type === 'text_delta'
+          )
+        }),
+      ).toBe(true)
+      expect(
+        assistantMessages.some(message =>
+          message.message.content.some(block =>
+            block.type === 'text' &&
+            block.text?.includes('먼저 다운로드 폴더'),
+          ),
+        ),
+      ).toBe(true)
+      expect(
+        assistantMessages.some(message =>
+          message.message.content.some(block =>
+            block.type === 'tool_use' &&
+            block.name === 'document_inspect',
+          ),
+        ),
+      ).toBe(true)
+      expect(
+        assistantMessages.flatMap(message => message.message.content),
+      ).toContainEqual(
+        expect.objectContaining({
+          type: 'tool_use',
+          name: 'document_inspect',
+        }),
+      )
+    } finally {
       if (previousToken === undefined) {
         delete process.env.UMMAYA_FRIENDLI_TOKEN
       } else {

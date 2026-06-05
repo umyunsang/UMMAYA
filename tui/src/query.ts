@@ -45,6 +45,7 @@ import {
 import { logAntError, logForDebugging } from './utils/debug.js'
 import {
   createUserMessage,
+  createAssistantMessage,
   createUserInterruptionMessage,
   normalizeMessagesForAPI,
   createSystemMessage,
@@ -115,12 +116,15 @@ import {
   shouldWithholdProtectedCheckToolCallText,
 } from './tools/_shared/protectedCheckGuard.js'
 import {
+  backfillUmmayaObservableToolInputFromUserQuery,
+  buildDocumentCompletionPromptIfNeeded,
   buildAirKoreaCompletionPromptIfNeeded,
   buildAirKoreaFinalAnswerRepairPromptIfNeeded,
   buildGenericPendingFinalAnswerRepairPromptIfNeeded,
   buildTagoBusCompletionPromptIfNeeded,
   buildTagoBusFinalAnswerRepairPromptIfNeeded,
   buildTagoBusFollowupPromptIfNeeded,
+  selectUmmayaClientForcedToolUse,
   selectUmmayaToolChoiceOverride,
   shouldWithholdAirKoreaFinalAnswer,
   shouldWithholdGenericPendingFinalAnswer,
@@ -209,6 +213,10 @@ function isWithheldMaxOutputTokens(
   msg: Message | StreamEvent | undefined,
 ): msg is AssistantMessage {
   return msg?.type === 'assistant' && msg.apiError === 'max_output_tokens'
+}
+
+function forcedToolUseId(uuid: string): string {
+  return `call_ummaya_${uuid.replace(/[^A-Za-z0-9]/gu, '').slice(0, 24)}`
 }
 
 export type QueryParams = {
@@ -823,23 +831,28 @@ async function* queryLoop(
                     toolUseContext.options.tools,
                     block.name,
                   )
+                  const inputCopy = { ...(block.input as Record<string, unknown>) }
                   if (tool?.backfillObservableInput) {
-                    const originalInput = block.input as Record<string, unknown>
-                    const inputCopy = { ...originalInput }
                     tool.backfillObservableInput(inputCopy)
-                    // Only yield a clone when backfill ADDED fields; skip if
-                    // it only OVERWROTE existing ones (e.g. file tools
-                    // expanding file_path). Overwrites change the serialized
-                    // transcript and break VCR fixture hashes on resume,
-                    // while adding nothing the SDK stream needs — hooks get
-                    // the expanded path via toolExecution.ts separately.
-                    const addedFields = Object.keys(inputCopy).some(
-                      k => !(k in originalInput),
-                    )
-                    if (addedFields) {
-                      clonedContent ??= [...message.message.content]
-                      clonedContent[i] = { ...block, input: inputCopy }
-                    }
+                  }
+                  backfillUmmayaObservableToolInputFromUserQuery({
+                    toolName: block.name,
+                    input: inputCopy,
+                    messages: messagesForQuery,
+                  })
+                  // Only yield a clone when backfill ADDED fields; skip if
+                  // it only OVERWROTE existing ones (e.g. file tools
+                  // expanding file_path). Overwrites change the serialized
+                  // transcript and break VCR fixture hashes on resume,
+                  // while adding nothing the SDK stream needs — hooks get
+                  // the expanded path via toolExecution.ts separately.
+                  const originalInput = block.input as Record<string, unknown>
+                  const addedFields = Object.keys(inputCopy).some(
+                    k => !(k in originalInput),
+                  )
+                  if (addedFields) {
+                    clonedContent ??= [...message.message.content]
+                    clonedContent[i] = { ...block, input: inputCopy }
                   }
                 }
               }
@@ -947,6 +960,16 @@ async function* queryLoop(
                 messages: messagesForQuery,
                 candidate: message,
               })
+            ) {
+              withheld = true
+            }
+            if (
+              message.type === 'assistant' &&
+              !assistantHasToolUse &&
+              selectUmmayaClientForcedToolUse({
+                messages: messagesForQuery,
+                tools: toolUseContext.options.tools,
+              }) !== undefined
             ) {
               withheld = true
             }
@@ -1193,6 +1216,49 @@ async function* queryLoop(
       const summary = await pendingToolUseSummary
       if (summary) {
         yield summary
+      }
+    }
+
+    if (!needsFollowUp) {
+      const forcedToolUse = selectUmmayaClientForcedToolUse({
+        messages: [...messagesForQuery, ...assistantMessages],
+        tools: toolUseContext.options.tools,
+      })
+      if (forcedToolUse) {
+        const forcedTool = getAdapterToolByName(forcedToolUse.name)
+        if (
+          forcedTool &&
+          !toolUseContext.options.tools.some(tool => tool.name === forcedTool.name)
+        ) {
+          toolUseContext = {
+            ...toolUseContext,
+            options: {
+              ...toolUseContext.options,
+              tools: [...toolUseContext.options.tools, forcedTool],
+            },
+          }
+        }
+        const forcedToolUseBlock = {
+          type: 'tool_use' as const,
+          id: forcedToolUseId(deps.uuid()),
+          name: forcedToolUse.name,
+          input: forcedToolUse.input,
+        } as ToolUseBlock
+        const forcedAssistantMessage = createAssistantMessage({
+          content: [forcedToolUseBlock] as Parameters<
+            typeof createAssistantMessage
+          >[0]['content'],
+          isVirtual: true,
+        })
+        logForDebugging(
+          `UMMAYA client-forced tool_use after provider ignored tool_choice: ${forcedToolUse.name}`,
+        )
+        yield forcedAssistantMessage
+        assistantMessages.length = 0
+        toolUseBlocks.length = 0
+        assistantMessages.push(forcedAssistantMessage)
+        toolUseBlocks.push(forcedToolUseBlock)
+        needsFollowUp = true
       }
     }
 
@@ -2151,6 +2217,17 @@ async function* queryLoop(
           toolResults.push(
             createUserMessage({
               content: airKoreaCompletionPrompt,
+              isMeta: true,
+            }),
+          )
+        }
+        const documentCompletionPrompt = buildDocumentCompletionPromptIfNeeded({
+          messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
+        })
+        if (documentCompletionPrompt) {
+          toolResults.push(
+            createUserMessage({
+              content: documentCompletionPrompt,
               isMeta: true,
             }),
           )

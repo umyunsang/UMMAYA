@@ -36,6 +36,7 @@ import { SubmitReceipt } from './SubmitReceipt'
 import { SubmitErrorBanner } from './SubmitErrorBanner'
 import { AuthContextCard } from './AuthContextCard'
 import { AuthWarningBanner } from './AuthWarningBanner'
+import { DocumentToolResultCard } from './DocumentToolResultCard'
 import { UnrecognizedPayload } from './UnrecognizedPayload'
 
 import type {
@@ -44,6 +45,8 @@ import type {
   ResolveLocationPayload,
   SubmitPayload,
   VerifyPayload,
+  DocumentToolResultPayload,
+  DocumentToolStatus,
 } from './types'
 
 // ---------------------------------------------------------------------------
@@ -131,10 +134,18 @@ export interface PrimitiveDispatcherProps {
    * Accepts any object; unknown shapes fall through to <UnrecognizedPayload>.
    */
   payload: PrimitivePayload | Record<string, unknown>
+  expanded?: boolean
 }
 
-export function PrimitiveDispatcher({ payload }: PrimitiveDispatcherProps): React.JSX.Element {
+export function PrimitiveDispatcher({
+  payload,
+  expanded = false,
+}: PrimitiveDispatcherProps): React.JSX.Element {
   const _theme = useTheme() // ensure ThemeProvider is present in the tree
+
+  if (isDocumentToolResultPayload(payload)) {
+    return <DocumentToolResultCard payload={payload} expanded={expanded} />
+  }
 
   const kind = (payload as { kind?: string }).kind
 
@@ -176,5 +187,36 @@ export { SubmitReceipt } from './SubmitReceipt'
 export { SubmitErrorBanner } from './SubmitErrorBanner'
 export { AuthContextCard } from './AuthContextCard'
 export { AuthWarningBanner } from './AuthWarningBanner'
+export { DocumentToolResultCard } from './DocumentToolResultCard'
 export { UnrecognizedPayload } from './UnrecognizedPayload'
 export type * from './types'
+
+function isDocumentToolResultPayload(
+  payload: PrimitivePayload | Record<string, unknown>,
+): payload is DocumentToolResultPayload {
+  if (!isRecord(payload)) {
+    return false
+  }
+  const toolId = payload.tool_id
+  const status = payload.status
+  return (
+    typeof toolId === 'string' &&
+    (toolId === 'document' || toolId.startsWith('document_')) &&
+    isDocumentToolStatus(status) &&
+    typeof payload.correlation_id === 'string' &&
+    typeof payload.text_summary === 'string'
+  )
+}
+
+function isDocumentToolStatus(status: unknown): status is DocumentToolStatus {
+  return (
+    status === 'ok' ||
+    status === 'blocked' ||
+    status === 'failed' ||
+    status === 'needs_input'
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
