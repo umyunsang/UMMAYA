@@ -1044,8 +1044,10 @@ def _normalize_document_root_call_for_user_intent(
     _normalize_document_path_from_user_query(normalized_params, intent_text)
     operation = str(params_obj.get("operation") or "").casefold()
     changed = normalized_params != params_obj
-    if operation in {"fill", "save"} and intent_text and _DOCUMENT_WRITE_REQUEST_RE.search(
-        intent_text
+    if (
+        operation in {"fill", "save"}
+        and intent_text
+        and _DOCUMENT_WRITE_REQUEST_RE.search(intent_text)
     ):
         if _DOCUMENT_SAVE_REQUEST_RE.search(intent_text):
             normalized_params["operation"] = "save"
@@ -9987,9 +9989,7 @@ async def run(  # noqa: C901
                         from ummaya.primitives import PRIMITIVE_REGISTRY  # noqa: PLC0415
 
                         if isinstance(frame, ToolCallFrame):
-                            error_kind = (
-                                frame.name if frame.name in PRIMITIVE_REGISTRY else "find"
-                            )
+                            error_kind = frame.name if frame.name in PRIMITIVE_REGISTRY else "find"
                             await write_frame(
                                 ToolResultFrame(
                                     session_id=frame.session_id,

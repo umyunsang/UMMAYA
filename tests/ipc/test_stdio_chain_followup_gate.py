@@ -64,6 +64,7 @@ from ummaya.ipc.stdio import (
     _location_independent_resolve_redirect_for_query,
     _maybe_reroute_locate_admin_keyword_args,
     _maybe_reroute_locate_poi_address_args,
+    _normalize_document_root_call_for_user_intent,
     _normalize_hira_lookup_args_from_prior_locate,
     _normalize_koroad_lookup_args_from_prior_locate,
     _normalize_lookup_args_for_query,
@@ -71,7 +72,6 @@ from ummaya.ipc.stdio import (
     _normalize_nmc_lookup_args_from_prior_locate,
     _normalize_pps_bid_args_from_user_query,
     _normalize_reverse_geocode_args_from_prior_locate,
-    _normalize_document_root_call_for_user_intent,
     _normalize_root_primitive_adapter_envelope,
     _normalize_submit_args_for_query,
     _normalize_verify_args_for_query,
@@ -1139,7 +1139,9 @@ def test_document_workflow_final_answer_gate_requires_single_document_primitive_
             {
                 "tool_id": "document",
                 "status": "ok",
-                "diff": {"changes": [{"path": "/hwpx/text[1]", "before": "12 주차", "after": "13주차"}]},
+                "diff": {
+                    "changes": [{"path": "/hwpx/text[1]", "before": "12 주차", "after": "13주차"}]
+                },
                 "render_artifacts": [{"id": "render-13", "page_index": 0}],
             },
         )
@@ -1184,7 +1186,7 @@ def test_document_root_call_normalizes_extract_for_write_save_intent() -> None:
         "tool_id": "document",
         "params": {
             "correlation_id": "weekly_activity_log_analysis",
-            "document": {"path": "/tmp/fixtures/weekly.hwpx"},
+            "document": {"path": "/tmp/fixtures/weekly.hwpx"},  # noqa: S108 - fixture-like transcript path
             "operation": "extract",
             "instruction": "현재 주차 활동일지 문서 내용을 파악해주세요.",
         },
@@ -1222,9 +1224,7 @@ def test_document_root_call_uses_internal_user_query_for_direct_tui_payload(
 
     assert normalized is not args
     assert normalized["params"]["operation"] == "save"
-    assert normalized["params"]["instruction"].endswith(
-        f"저장은 {destination} 로 해줘."
-    )
+    assert normalized["params"]["instruction"].endswith(f"저장은 {destination} 로 해줘.")
     assert normalized["params"]["document"]["path"] == str(source)
     assert "__ummaya_user_query" not in normalized["params"]
 
@@ -1257,11 +1257,11 @@ def test_document_root_call_uses_internal_user_query_for_write_payload_instructi
 
 
 def test_document_root_call_keeps_extract_for_read_only_intent() -> None:
-    query = "/tmp/fixtures/weekly.hwpx 문서 내용을 요약해줘."
+    query = "/tmp/fixtures/weekly.hwpx 문서 내용을 요약해줘."  # noqa: S108 - fixture-like transcript path
     args = {
         "tool_id": "document",
         "params": {
-            "document": {"path": "/tmp/fixtures/weekly.hwpx"},
+            "document": {"path": "/tmp/fixtures/weekly.hwpx"},  # noqa: S108 - fixture-like transcript path
             "operation": "extract",
             "instruction": "문서 내용을 추출해주세요.",
         },

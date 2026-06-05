@@ -358,11 +358,8 @@ def test_autonomous_fill_planner_keeps_adjacent_blank_cell_instruction_narrow() 
     assert plan.requires_human_review is False
     assert plan.blocked_slot_ids == ()
     assert [
-        (slot.slot_id, slot.source_anchor.format_path, slot.candidate_value)
-        for slot in plan.slots
-    ] == [
-        ("접수번호", "Contents/section0.xml#table[1]/r4c2", "UMMAYA-2026-0002")
-    ]
+        (slot.slot_id, slot.source_anchor.format_path, slot.candidate_value) for slot in plan.slots
+    ] == [("접수번호", "Contents/section0.xml#table[1]/r4c2", "UMMAYA-2026-0002")]
 
 
 def test_document_ir_extracts_table_sheet_slide_and_acroform_slots() -> None:
@@ -585,8 +582,7 @@ def test_autonomous_fill_planner_blocks_unsafe_style_on_legal_signature_slot() -
     plan = plan_autonomous_fill(
         document_ir,
         instruction=(
-            "문서 내용을 파악해서 서명 칸에는 홍길동을 넣고 "
-            "Malgun Gothic 12pt bold로 맞춰줘."
+            "문서 내용을 파악해서 서명 칸에는 홍길동을 넣고 Malgun Gothic 12pt bold로 맞춰줘."
         ),
     )
 

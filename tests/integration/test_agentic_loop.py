@@ -563,9 +563,9 @@ def test_document_final_answer_overclaim_detector_rejects_visual_status_prose() 
         (
             "문서가 성공적으로 업데이트되었습니다.\n\n"
             "변경된 부분:\n"
-            "1. 주차 기간 수정: \"13 주차\" → \"14주차\"로 변경\n"
-            "2. 활동 기간 수정: \"2026.06.01 ~ 2026.06.07\" → "
-            "\"2026.06.08~2026.06.14\"로 변경\n\n"
+            '1. 주차 기간 수정: "13 주차" → "14주차"로 변경\n'
+            '2. 활동 기간 수정: "2026.06.01 ~ 2026.06.07" → '
+            '"2026.06.08~2026.06.14"로 변경\n\n'
             "문서 상태: 문서가 정상적으로 업데이트되었으며, 변경된 내용을 "
             "확인할 수 있는 시각적 차이(diff)가 제공되었습니다. 변경 사항은 "
             "문서 내에서 자동으로 검토되어 다음 주차 활동일지로 적절히 "
@@ -651,10 +651,13 @@ def test_document_diff_only_final_answer_prefers_display_label() -> None:
         }
     ]
 
-    assert _document_diff_only_final_answer(
-        "수정 후 변경된 부분만 바로 확인할 수 있게 보여줘.",
-        llm_messages,
-    ) == "실제 변경된 내용:\n- 접수번호:  -> UMMAYA-2026-0005"
+    assert (
+        _document_diff_only_final_answer(
+            "수정 후 변경된 부분만 바로 확인할 수 있게 보여줘.",
+            llm_messages,
+        )
+        == "실제 변경된 내용:\n- 접수번호:  -> UMMAYA-2026-0005"
+    )
 
 
 def test_document_final_answer_rejects_native_path_when_display_label_exists() -> None:
@@ -776,8 +779,7 @@ def test_document_write_gate_rejects_extract_only_cc_tool_result() -> None:
                                 "render_artifacts": [],
                                 "workflow_steps": [],
                                 "text_summary": (
-                                    "Document inspection completed through the "
-                                    "document primitive."
+                                    "Document inspection completed through the document primitive."
                                 ),
                             },
                         },

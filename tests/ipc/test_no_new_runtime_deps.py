@@ -354,9 +354,7 @@ def test_no_new_root_npm_runtime_deps() -> None:
     diff_text = _best_effort_diff(_ROOT_PACKAGE_JSON)
     if diff_text is not None:
         new_deps = _new_tui_deps_from_diff(diff_text)
-        unexpected = [
-            dep for dep in new_deps if dep not in _ROOT_NPM_SPEC_2802_ADDITIONS
-        ]
+        unexpected = [dep for dep in new_deps if dep not in _ROOT_NPM_SPEC_2802_ADDITIONS]
         assert unexpected == [], (
             f"SC-008 violation (root npm): {len(unexpected)} unapproved runtime dep(s) added:\n"
             + "\n".join(f"  + {d}" for d in unexpected)

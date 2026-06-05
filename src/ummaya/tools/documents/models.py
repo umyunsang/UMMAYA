@@ -1122,9 +1122,7 @@ def _nearest_left_table_label_cell(
     value_cell: TableCell,
 ) -> TableCell | None:
     left_cells = [
-        candidate
-        for candidate in ordered_cells
-        if candidate.column_index < value_cell.column_index
+        candidate for candidate in ordered_cells if candidate.column_index < value_cell.column_index
     ]
     for candidate in reversed(left_cells):
         if _meaningful_table_slot_label(candidate.text.strip()):

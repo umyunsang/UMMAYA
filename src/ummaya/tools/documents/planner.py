@@ -140,9 +140,8 @@ def _planned_slots(
             session_context=session_context,
             protected_range=protected_range,
         )
-        protected_requested = (
-            protected_range is not None
-            and (broad_autonomous_fill or protected_slot_requested)
+        protected_requested = protected_range is not None and (
+            broad_autonomous_fill or protected_slot_requested
         )
         missing_required = _missing_required_slot(planned_slot, instruction)
         slot_is_protected_context = (
@@ -478,11 +477,7 @@ def _hex_after_terms(instruction: str, terms: tuple[str, ...]) -> str | None:
 def _alignment_from_instruction(instruction: str) -> StyleAlignment | None:
     instruction_key = _normalize_key(instruction)
     instruction_casefold = instruction.casefold()
-    if (
-        "center" in instruction_casefold
-        or "가운데" in instruction_key
-        or "중앙" in instruction_key
-    ):
+    if "center" in instruction_casefold or "가운데" in instruction_key or "중앙" in instruction_key:
         return "center"
     if (
         "right" in instruction_casefold

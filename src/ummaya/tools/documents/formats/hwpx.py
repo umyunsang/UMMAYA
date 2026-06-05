@@ -220,8 +220,8 @@ class HwpXPackageTextEngine:
         applied_table_cell_style_targets: set[_HwpXTableCellTarget] = set()
 
         with ZipFile(path) as archive:
-            text_style_refs, table_cell_style_refs, header_payload = (
-                _hwpx_style_refs_from_buckets(archive, patch_buckets)
+            text_style_refs, table_cell_style_refs, header_payload = _hwpx_style_refs_from_buckets(
+                archive, patch_buckets
             )
 
             for member in _section_members(archive):
@@ -562,12 +562,8 @@ def _hwpx_table_cell_alias_map(extraction: DocumentExtraction) -> dict[str, str]
             aliases[cell.source_path] = native_target
             aliases[f"/table[{table_index}]/cell[{row},{column}]"] = native_target
             aliases[f"/table[{table_index}]/cells[{row}][{column}]"] = native_target
-            aliases[f"/body/section[1]/table[{table_index}]/cell[{row},{column}]"] = (
-                native_target
-            )
-            aliases[f"/body/section[1]/table[{table_index}]/cells[{row}][{column}]"] = (
-                native_target
-            )
+            aliases[f"/body/section[1]/table[{table_index}]/cell[{row},{column}]"] = native_target
+            aliases[f"/body/section[1]/table[{table_index}]/cells[{row}][{column}]"] = native_target
     return aliases
 
 
@@ -1014,9 +1010,7 @@ def _hwpx_header_payload(archive: ZipFile) -> bytes:
     try:
         return archive.read("Contents/header.xml")
     except KeyError:
-        return (
-            b'<hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" />'
-        )
+        return b'<hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" />'
 
 
 def _hwpx_style_refs_from_buckets(
@@ -1036,9 +1030,13 @@ def _hwpx_style_refs_from_buckets(
         target: _ensure_hwpx_style_refs(header_root, style)
         for target, style in patch_buckets.table_cell_styles.items()
     }
-    return text_style_refs, table_cell_style_refs, _serialize_section(
-        header_root,
-        header_namespaces,
+    return (
+        text_style_refs,
+        table_cell_style_refs,
+        _serialize_section(
+            header_root,
+            header_namespaces,
+        ),
     )
 
 
@@ -1062,9 +1060,7 @@ def _raise_for_missing_hwpx_patch_targets(
         set(patch_buckets.table_cell_replacements) - applied_table_cell_targets
     )
     _raise_for_missing_hwpx_table_cell_targets(missing_table_cell_targets)
-    missing_table_cell_style_targets = (
-        set(table_cell_style_refs) - applied_table_cell_style_targets
-    )
+    missing_table_cell_style_targets = set(table_cell_style_refs) - applied_table_cell_style_targets
     _raise_for_missing_hwpx_table_cell_targets(missing_table_cell_style_targets)
 
 
@@ -1505,10 +1501,7 @@ def _hwpx_table_cell_target(target_path: str) -> _HwpXTableCellTarget | None:
 
 
 def _hwpx_table_cell_target_path(target: _HwpXTableCellTarget) -> str:
-    return (
-        f"{target.member}#table[{target.table_index}]/"
-        f"r{target.row_index}c{target.column_index}"
-    )
+    return f"{target.member}#table[{target.table_index}]/r{target.row_index}c{target.column_index}"
 
 
 def _hwpx_table_cell_target_sort_key(

@@ -347,9 +347,7 @@ class DocumentToolRuntime:
                     )
                 candidate_patches = _fill_patches_from_autonomous_plan(autonomous_plan)
                 if not candidate_style_patches:
-                    candidate_style_patches = _style_patches_from_autonomous_plan(
-                        autonomous_plan
-                    )
+                    candidate_style_patches = _style_patches_from_autonomous_plan(autonomous_plan)
                 if autonomous_plan.save_intent is not None:
                     autonomous_save_path = autonomous_plan.save_intent.destination_path
                     autonomous_save_display_name = (

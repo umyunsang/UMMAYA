@@ -496,10 +496,7 @@ def test_hwp_document_primitive_derives_hwpx_save_path_from_instruction(
             correlation_id="hwp-instruction-derived-save-path",
             document=DocumentLocator(path=str(source), expected_format=DocumentFormat.hwp),
             operation="fill",
-            instruction=(
-                "팀명은 GovOn-HWP로 작성하고, "
-                f"저장은 {destination} 로 해줘."
-            ),
+            instruction=(f"팀명은 GovOn-HWP로 작성하고, 저장은 {destination} 로 해줘."),
             patches=(DocumentFieldPatch(target_path="팀명", value="GovOn-HWP"),),
         )
     )

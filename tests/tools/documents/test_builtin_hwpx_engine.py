@@ -333,8 +333,7 @@ def test_hwpx_native_border_style_mutation_round_trips(tmp_path: Path) -> None:
         and style.border.color_rgb == "4472C4"
     ]
     assert any(
-        border.width_pt is not None
-        and abs(border.width_pt - Decimal("0.50")) <= Decimal("0.02")
+        border.width_pt is not None and abs(border.width_pt - Decimal("0.50")) <= Decimal("0.02")
         for border in border_styles
     )
 
@@ -871,9 +870,7 @@ def test_default_runtime_fills_hwpx_empty_table_cell_alias(
     assert extract_result.extraction is not None
     team_cell = extract_result.extraction.tables[0].cells[1]
     assert team_cell.text == "GovOn AX"
-    team_field = next(
-        field for field in extract_result.extraction.fields if field.label == "팀명"
-    )
+    team_field = next(field for field in extract_result.extraction.fields if field.label == "팀명")
     assert team_field.path == "/hwpx/text[2]"
     assert team_field.current_value == "GovOn AX"
 

@@ -969,7 +969,7 @@ def test_document_primitive_autonomous_docx_fill_style_save_to_destination_path(
     styles_xml = _docx_xml(export_path, "word/styles.xml")
     assert 'w:eastAsia="Malgun Gothic"' not in styles_xml
     assert 'w:sz w:val="24"' in document_xml
-    assert 'w:b' in document_xml
+    assert "w:b" in document_xml
     assert 'w:color w:val="1F4E79"' in document_xml
     assert 'w:fill="FFF2CC"' in document_xml
     assert 'w:jc w:val="center"' in document_xml
@@ -1053,10 +1053,7 @@ def test_document_primitive_combined_style_blocks_destination_extension_mismatch
     assert not mismatched_export_path.exists()
     assert not result.saved_exports
     assert not any(ref.startswith("export-") for ref in result.artifact_refs)
-    assert not any(
-        path.name.startswith("export-")
-        for path in (tmp_path / "artifacts").rglob("*")
-    )
+    assert not any(path.name.startswith("export-") for path in (tmp_path / "artifacts").rglob("*"))
     assert not any(
         step.step_id == "save"
         and (
@@ -1116,10 +1113,7 @@ def test_document_save_blocks_explicit_local_path_extension_mismatch(
     assert not (tmp_path / "exports" / "civil-form-final.pdf").exists()
     assert not save_result.saved_exports
     assert not any(ref.startswith("export-") for ref in save_result.artifact_refs)
-    assert not any(
-        path.name.startswith("export-")
-        for path in (tmp_path / "artifacts").rglob("*")
-    )
+    assert not any(path.name.startswith("export-") for path in (tmp_path / "artifacts").rglob("*"))
     assert not any(
         step.step_id == "save"
         and (
