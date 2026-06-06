@@ -1506,6 +1506,101 @@ describe('UMMAYA model-facing tool surface', () => {
       name: 'kma_apihub_url_analysis_weather_chart_image',
     })
 
+    const weatherMismatchMessages = [
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '부산역 지금 비 와? 우산 챙겨야 해?',
+        },
+      },
+      {
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'air-1',
+              name: 'airkorea_ctprvn_air_quality',
+              input: { sido_name: '부산' },
+            },
+          ],
+        },
+      },
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'air-1',
+              is_error: true,
+              content:
+                '<tool_use_error>Public-data tool-choice mismatch: target=weather_current. The latest citizen request needs official weather or location data; the previous tool choice does not match that route.</tool_use_error>',
+            },
+          ],
+        },
+      },
+    ] as any
+    const weatherTools = [
+      toolNamed('airkorea_ctprvn_air_quality'),
+      toolNamed('kakao_keyword_search'),
+      toolNamed('kma_current_observation'),
+    ]
+    expect(
+      selectUmmayaToolChoiceOverride({
+        messages: weatherMismatchMessages,
+        tools: weatherTools,
+      }),
+    ).toEqual({ type: 'tool', name: 'kakao_keyword_search' })
+
+    const weatherAfterLocationMessages = [
+      ...weatherMismatchMessages,
+      {
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'loc-1',
+              name: 'kakao_keyword_search',
+              input: { query: '부산역' },
+            },
+          ],
+        },
+      },
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'loc-1',
+              content:
+                '{"ok":true,"result":{"kind":"poi","lat":35.115,"lon":129.041,"nx":98,"ny":76}}',
+            },
+            {
+              type: 'tool_result',
+              tool_use_id: 'air-1',
+              is_error: true,
+              content:
+                '<tool_use_error>Public-data tool-choice mismatch: target=current_weather. The latest citizen request needs that route; the previous tool choice does not match that route.</tool_use_error>',
+            },
+          ],
+        },
+      },
+    ] as any
+    expect(
+      selectUmmayaToolChoiceOverride({
+        messages: weatherAfterLocationMessages,
+        tools: weatherTools,
+      }),
+    ).toEqual({ type: 'tool', name: 'kma_current_observation' })
+
     const afterAirKorea = [
       ...airFirstTurn,
       {

@@ -17,6 +17,8 @@ const KMA_AIR_TOOLS = [
   'kma_apihub_url_air_metar_decoded',
   'kma_apihub_url_air_amos_minute',
 ] as const
+const KAKAO_KEYWORD_TOOL_NAME = 'kakao_keyword_search'
+const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
 const NMC_EMERGENCY_TOOL_NAME = 'nmc_emergency_search'
 const NMC_AED_TOOL_NAME = 'nmc_aed_site_locate'
 const KAKAO_COORD_TO_REGION_TOOL_NAME = 'kakao_coord_to_region'
@@ -1462,9 +1464,20 @@ export function shouldSuppressUmmayaToolCallsForAnswerSynthesis({
 
 function publicDataMismatchTargetTool(
   latestToolResult: string,
+  available: Set<string>,
+  usedToolNames: Set<string>,
 ): string | undefined {
   const targetKind = PUBLIC_DATA_MISMATCH_TARGET_RE.exec(latestToolResult)?.[1]
   if (targetKind === 'weather_chart') return KMA_ANALYSIS_CHART_TOOL_NAME
+  if (targetKind === 'current_weather' || targetKind === 'weather_current') {
+    return chooseAvailableOrSyncedAdapter(
+      available,
+      [
+        !usedToolNames.has(KAKAO_KEYWORD_TOOL_NAME) ? KAKAO_KEYWORD_TOOL_NAME : '',
+        KMA_CURRENT_OBSERVATION_TOOL_NAME,
+      ].filter(Boolean),
+    )
+  }
   if (targetKind === 'air_quality') return AIRKOREA_TOOL_NAME
   if (targetKind === 'procurement_bid') return PPS_BID_TOOL_NAME
   const legacyCandidate = PUBLIC_DATA_MISMATCH_CALL_RE.exec(latestToolResult)?.[1]
@@ -1484,7 +1497,11 @@ export function selectUmmayaToolChoiceOverride({
   const usedToolNames = toolUseNames(messages)
   const airportAviationQuery = isAirportAviationQuery(userText)
   const usedAviationTool = hasAnyToolUse(usedToolNames, KMA_AIR_TOOLS)
-  const publicDataTargetTool = publicDataMismatchTargetTool(latestToolResult)
+  const publicDataTargetTool = publicDataMismatchTargetTool(
+    latestToolResult,
+    available,
+    usedToolNames,
+  )
   if (
     shouldSuppressUmmayaToolCallsForAnswerSynthesis({
       messages,
