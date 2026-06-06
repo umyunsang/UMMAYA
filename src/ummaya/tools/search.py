@@ -110,6 +110,7 @@ def search(
         top_k=effective_top_k,
         max_selected=effective_top_k,
         intent=intent,
+        drop_zero_score_candidates=False,
     )
 
     results: list[AdapterCandidate] = []

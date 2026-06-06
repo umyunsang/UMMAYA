@@ -54,6 +54,37 @@ def test_route_decision_uses_registry_retrieval_and_selects_feasible_candidate(
     assert decision.effective_top_k == 1
 
 
+def test_route_decision_blocks_multi_candidate_all_zero_scores(sample_tool_factory) -> None:
+    registry = ToolRegistry()
+    registry.register(
+        sample_tool_factory(
+            id="alpha_tool",
+            primitive="find",
+            policy=_policy(),
+            search_hint="alpha domain",
+        )
+    )
+    registry.register(
+        sample_tool_factory(
+            id="beta_tool",
+            primitive="find",
+            policy=_policy(),
+            search_hint="beta domain",
+        )
+    )
+
+    decision = RouteDecisionService(registry).select_adapters(
+        "unrelated no match query",
+        initial_scores=(("alpha_tool", 0.0), ("beta_tool", 0.0)),
+    )
+
+    assert decision.selected_tools == ()
+    assert decision.candidate_set == ()
+    assert decision.stop_reason == "blocked_no_adapter"
+    assert "soft_excluded:zero_retrieval_score:alpha_tool" in decision.evidence_events
+    assert "soft_excluded:zero_retrieval_score:beta_tool" in decision.evidence_events
+
+
 def test_route_decision_models_reject_unknown_fields(sample_tool_factory) -> None:
     registry = ToolRegistry()
     registry.register(sample_tool_factory(id="kma_weather_forecast", policy=_policy()))
@@ -360,6 +391,54 @@ def test_route_decision_side_effect_without_confirmation_requires_clarification(
     assert decision.clarification is not None
     assert decision.clarification.reason == "side_effect_confirmation"
     assert decision.clarification_question == "Should I proceed with gov24_minwon_submit?"
+
+
+def test_route_decision_ignores_lower_ranked_side_effect_noise(
+    sample_tool_factory,
+) -> None:
+    registry = ToolRegistry()
+    registry.register(
+        sample_tool_factory(
+            id="koroad_accident_hazard_search",
+            primitive="find",
+            policy=_policy(),
+            search_hint="교통사고 다발지역 공공데이터",
+        )
+    )
+    registry.register(
+        sample_tool_factory(
+            id="simple_auth_check",
+            ministry="UMMAYA",
+            auth_type="oauth",
+            primitive="check",
+            policy=_policy("login"),
+            search_hint="identity check verify",
+        )
+    )
+    registry.register(
+        sample_tool_factory(
+            id="mock_submit_module_public_mydata_action",
+            ministry="OTHER",
+            auth_type="oauth",
+            primitive="send",
+            policy=_policy("send"),
+            search_hint="public mydata action submit",
+        )
+    )
+
+    decision = RouteDecisionService(registry).decide(
+        "서울 강남구 교통사고 다발지역을 공공 API로 조회해줘",
+        initial_scores=(
+            ("koroad_accident_hazard_search", 80.0),
+            ("mock_submit_module_public_mydata_action", 1.0),
+            ("simple_auth_check", 0.5),
+        ),
+        max_selected=1,
+    )
+
+    assert decision.stop_reason == "answerable"
+    assert decision.selected_tools == ("koroad_accident_hazard_search",)
+    assert decision.clarification is None
 
 
 def test_route_decision_repeated_tool_mismatch_terminates_with_reason(

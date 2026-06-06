@@ -7,14 +7,17 @@ from datetime import UTC, datetime
 from ummaya.tools.models import AdapterRealDomainPolicy
 from ummaya.tools.registry import ToolRegistry
 from ummaya.tools.routing import RouteDecisionService
-from ummaya.tools.routing.projection import build_available_adapters_projection
+from ummaya.tools.routing.projection import (
+    build_available_adapters_projection,
+    selected_concrete_adapter_tools,
+)
 
 
-def _policy() -> AdapterRealDomainPolicy:
+def _policy(citizen_facing_gate: str = "read-only") -> AdapterRealDomainPolicy:
     return AdapterRealDomainPolicy(
         real_classification_url="https://example.go.kr/policy",
         real_classification_text="Published agency policy",
-        citizen_facing_gate="read-only",
+        citizen_facing_gate=citizen_facing_gate,
         last_verified=datetime(2026, 6, 5, tzinfo=UTC),
     )
 
@@ -162,3 +165,48 @@ def test_available_adapter_projection_renders_only_visible_tool_ids(
         set(_projected_tool_id_lines(projection.content))
         & {"find", "locate", "check", "send", "search_tools"}
     )
+
+
+def test_available_adapter_projection_does_not_resurrect_clarification_candidates(
+    sample_tool_factory,
+) -> None:
+    registry = ToolRegistry()
+    registry.register(
+        sample_tool_factory(
+            id="simple_auth_check",
+            ministry="UMMAYA",
+            auth_type="oauth",
+            primitive="check",
+            policy=_policy("login"),
+            search_hint="identity check verify",
+        )
+    )
+    registry.register(
+        sample_tool_factory(
+            id="gov24_minwon_submit",
+            ministry="GOV24",
+            auth_type="oauth",
+            primitive="send",
+            policy=_policy("send"),
+            llm_description="Submit a civil-affairs request after explicit citizen confirmation.",
+            search_hint="민원 신청 제출 submit",
+        )
+    )
+    decision = RouteDecisionService(registry).decide(
+        "민원 신청 제출해줘",
+        initial_scores=(("gov24_minwon_submit", 9.0),),
+    )
+
+    projection = build_available_adapters_projection(
+        decision,
+        registry,
+        query="민원 신청 제출해줘",
+        projection_level="summary",
+    )
+
+    assert decision.stop_reason == "needs_input"
+    assert decision.selected_tools == ()
+    assert decision.candidate_set
+    assert selected_concrete_adapter_tools(decision, registry) == ()
+    assert projection.tool_ids == ()
+    assert projection.content is None

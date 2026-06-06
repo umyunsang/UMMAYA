@@ -27,12 +27,10 @@ def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
         if record.trace_kind == "scenario_route"
     )
     assert all(
-        record.stop_reason in RouteStopReason.__args__
-        for record in evidence.route_trace_records
+        record.stop_reason in RouteStopReason.__args__ for record in evidence.route_trace_records
     )
     assert any(
-        record.stop_reason == "permission_required"
-        for record in evidence.route_trace_records
+        record.stop_reason == "permission_required" for record in evidence.route_trace_records
     )
     scenario_assertions = [
         assertion
@@ -75,8 +73,7 @@ def test_evidence_runner_emits_required_gates(tmp_path: Path) -> None:
         for assertion in scenario_assertions
     )
     assert all(
-        assertion.route_source == "expected_route_contract"
-        for assertion in scenario_assertions
+        assertion.route_source == "expected_route_contract" for assertion in scenario_assertions
     )
     assert negative_assertions
     assert all(assertion.adapter_family == "no_tool" for assertion in negative_assertions)
@@ -160,7 +157,7 @@ def test_evidence_runner_rejects_route_assertion_cheat_keys(tmp_path: Path) -> N
         "scenarios:\n"
         "  - id: TAX-001\n"
         "    lifecycle_domain: tax\n"
-        "    request_ko: \"세금 신고해줘.\"\n"
+        '    request_ko: "세금 신고해줘."\n'
         "    adapter_family: hometax_internal\n"
         "    selected_tools:\n"
         "        - hometax_vat_submit\n"
@@ -189,7 +186,7 @@ def test_evidence_runner_rejects_selected_route_state_keys(tmp_path: Path) -> No
         "scenarios:\n"
         "  - id: TAX-001\n"
         "    lifecycle_domain: tax\n"
-        "    request_ko: \"세금 신고해줘.\"\n"
+        '    request_ko: "세금 신고해줘."\n'
         "    selected_domain: tax\n"
         "    selected_primitives: [verify, submit]\n"
         "    stop_reason: permission_required\n"

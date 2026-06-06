@@ -974,7 +974,8 @@ _PPS_BID_USER_QUERY_RE: Final = re.compile(
     re.IGNORECASE,
 )
 _AIRKOREA_USER_QUERY_RE: Final = re.compile(
-    r"(미세먼지|초미세먼지|대기질|대기오염|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea)",
+    r"(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|"
+    r"pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)",
     re.IGNORECASE,
 )
 _TAGO_BUS_USER_QUERY_RE: Final = re.compile(
@@ -1002,10 +1003,7 @@ def _initial_concrete_tool_choice_for_query(
 ) -> str | None:
     """Force direct first calls only for unambiguous single-adapter lookups."""
     available = set(available_tool_names)
-    return _document_tool_choice_for_query(
-        user_query,
-        available,
-    ) or _initial_public_data_tool_choice_for_query(user_query, available)
+    return _document_tool_choice_for_query(user_query, available)
 
 
 def _document_tool_choice_for_query(
@@ -1093,37 +1091,6 @@ def _normalize_document_path_from_user_query(
         **document_obj,
         "path": str(explicit_paths[0]),
     }
-
-
-def _initial_public_data_tool_choice_for_query(
-    user_query: str,
-    available: set[str],
-) -> str | None:
-    """Force direct first calls only for unambiguous public-data lookups."""
-    if (
-        _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query)
-        and _KMA_ANALYSIS_CHART_TOOL_ID in available
-    ):
-        return _KMA_ANALYSIS_CHART_TOOL_ID
-    if _KMA_AIRPORT_PLACE_RE.search(user_query) and _KMA_AIRPORT_AVIATION_RE.search(user_query):
-        if (
-            re.search(r"(김포|gimpo|rkss)", user_query, re.IGNORECASE)
-            and re.search(r"(amos|활주로|rvr|runway|매분)", user_query, re.IGNORECASE)
-            and "kma_apihub_url_air_amos_minute" in available
-        ):
-            return "kma_apihub_url_air_amos_minute"
-        if "kma_apihub_url_air_metar_decoded" in available:
-            return "kma_apihub_url_air_metar_decoded"
-    if _PPS_BID_USER_QUERY_RE.search(user_query) and _PPS_BID_TOOL_ID in available:
-        return _PPS_BID_TOOL_ID
-    if _AIRKOREA_USER_QUERY_RE.search(user_query) and _AIRKOREA_TOOL_ID in available:
-        return _AIRKOREA_TOOL_ID
-    if _TAGO_BUS_USER_QUERY_RE.search(user_query):
-        if _TAGO_ROUTE_NO_RE.search(user_query) and "tago_bus_route_search" in available:
-            return "tago_bus_route_search"
-        if "tago_bus_station_search" in available:
-            return "tago_bus_station_search"
-    return None
 
 
 def _final_answer_looks_like_kma_analysis_fabrication(text: str, user_query: str) -> bool:
@@ -5089,26 +5056,31 @@ def _emitted_tool_id(fname: str, args_obj: dict[str, object]) -> str | None:
     return None
 
 
-def _direct_public_data_target_for_query(user_query: str) -> tuple[frozenset[str], str, str] | None:
+def _direct_public_data_target_for_query(
+    user_query: str,
+) -> tuple[frozenset[str], str, str, str] | None:
     """Return target adapter family for public-data wording that should not use substitutes."""
     if _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query):
         return (
             frozenset({_KMA_ANALYSIS_CHART_TOOL_ID}),
             _KMA_ANALYSIS_CHART_TOOL_ID,
-            "call the KMA APIHub analyzed weather-chart adapter and do not "
-            "substitute location, AirKorea, or ordinary weather tools.",
+            "weather_chart",
+            "use official KMA APIHub analyzed weather-chart evidence and do not "
+            "substitute location, AirKorea, or ordinary weather evidence.",
         )
     if _PPS_BID_USER_QUERY_RE.search(user_query):
         return (
             frozenset({_PPS_BID_TOOL_ID}),
             _PPS_BID_TOOL_ID,
-            "call the PPS/NaraJangteo bid adapter with its bid notice date fields.",
+            "procurement_bid",
+            "use PPS/NaraJangteo bid notice date fields.",
         )
     if _AIRKOREA_USER_QUERY_RE.search(user_query):
         return (
             frozenset({_AIRKOREA_TOOL_ID}),
             _AIRKOREA_TOOL_ID,
-            "call the AirKorea city/province air-quality adapter with sido_name such as '부산'.",
+            "air_quality",
+            "use AirKorea city/province air-quality evidence with sido_name such as '부산'.",
         )
     if _TAGO_BUS_USER_QUERY_RE.search(user_query):
         preferred = (
@@ -5119,15 +5091,17 @@ def _direct_public_data_target_for_query(user_query: str) -> tuple[frozenset[str
         return (
             _TAGO_TOOL_IDS,
             preferred,
-            "use TAGO bus schemas; for a route number, start with "
-            "tago_bus_route_search, then route_station and arrival.",
+            "bus_realtime",
+            "use TAGO bus evidence; for a route number, start with route search, "
+            "then route-station and arrival evidence.",
         )
     if _query_implies_current_weather_observation(user_query):
         return (
             _KMA_ORDINARY_WEATHER_TOOL_IDS | _KMA_LOCATION_TOOL_IDS,
             "kakao_keyword_search",
-            "use a location adapter first when coordinates are missing, then "
-            "KMA current observation for rain/umbrella/current-weather values.",
+            "current_weather",
+            "use location resolution first when coordinates are missing, then "
+            "KMA current observation evidence for rain/umbrella/current-weather values.",
         )
     return None
 
@@ -5141,15 +5115,15 @@ def _check_direct_public_data_tool_choice_prerequisite(
     target = _direct_public_data_target_for_query(user_query)
     if target is None:
         return None
-    allowed_tool_ids, preferred_tool_id, hint = target
+    allowed_tool_ids, preferred_tool_id, route_label, hint = target
     emitted_tool_id = _emitted_tool_id(fname, args_obj)
     if emitted_tool_id is None or emitted_tool_id in allowed_tool_ids:
         return None
     return (
         preferred_tool_id,
-        "Public-data tool-choice mismatch: the latest citizen request matches "
-        f"{preferred_tool_id}. The model emitted {emitted_tool_id} instead. "
-        f"RECOVERY: {hint}",
+        "Public-data tool-choice mismatch: "
+        f"target={route_label}. The latest citizen request needs that route; "
+        f"the previous tool choice does not match. RECOVERY: {hint}",
     )
 
 
@@ -6289,11 +6263,16 @@ async def run(  # noqa: C901
             from ummaya.tools.routing import build_available_adapters_projection  # noqa: PLC0415
 
             visible_tool_ids_tuple = None if visible_tool_ids is None else tuple(visible_tool_ids)
+            projection_level = (
+                route_decision.schema_projection_level
+                if route_decision.selected_tools or not visible_tool_ids_tuple
+                else "summary"
+            )
             projection = build_available_adapters_projection(
                 route_decision,
                 _ensure_tool_registry(),
                 query=q,
-                projection_level=route_decision.schema_projection_level,
+                projection_level=projection_level,
                 max_visible=_AVAILABLE_ADAPTERS_TOP_K
                 if visible_tool_ids_tuple is None
                 else len(visible_tool_ids_tuple),
@@ -7285,6 +7264,17 @@ async def run(  # noqa: C901
         # a primitive dispatcher with a concrete adapter in `tool_id`.
         registry = cast("Any", _ensure_tool_registry())
         turn_route_decision = _route_decision_for_turn(latest_user_utt)
+        from ummaya.ipc.route_diagnostics import (  # noqa: PLC0415
+            log_route_decision_diagnostic,
+        )
+
+        log_route_decision_diagnostic(
+            logger=logger,
+            turn_index=_diag_turn_idx,
+            session_id=frame.session_id,
+            correlation_id=frame.correlation_id,
+            decision=turn_route_decision,
+        )
         turn_concrete_adapter_tools = _select_concrete_adapter_tools_for_turn(
             latest_user_utt, route_decision=turn_route_decision
         )

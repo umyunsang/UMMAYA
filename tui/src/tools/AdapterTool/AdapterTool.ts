@@ -109,6 +109,8 @@ const KMA_ANALYSIS_POINT_RE =
   /(주변|근처|특정지점|좌표|위도|경도|\blat\b|\blon\b|공항\s*주변)/iu
 const KMA_LIFESTYLE_WEATHER_RE =
   /(날씨|현재\s*기상|실황|관측|예보|기온|습도|풍속|지금\s*비|비\s*(와|오|올|내리)|우산|강수|소나기|산책|퇴근|current\s+weather|forecast|rain|umbrella|precipitation|temperature)/iu
+const AIRKOREA_AIR_QUALITY_RE =
+  /(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)/iu
 const KMA_LIFESTYLE_WEATHER_TOOL_NAMES = new Set([
   'kma_current_observation',
   'kma_ultra_short_term_forecast',
@@ -130,6 +132,8 @@ const PROTECTED_MOBILE_ID_RE = /(mobile\s*id|모바일\s*(?:신분증|id)|mobile
 const PROTECTED_SIMPLE_AUTH_RE =
   /(simple_auth|간편인증|ganpyeon|소득금액증명|증명원|민원|발급)/iu
 const PROTECTED_MYDATA_RE = /(mydata|마이데이터)/iu
+const GOV24_MINWON_SUBMIT_RE =
+  /(?=.*(?:정부24|gov24))(?=.*(?:주민등록등본|등본|민원|발급))(?=.*(?:신청|접수|발급|submit|apply|issue))/iu
 const PROTECTED_CHECK_TOOL_NAMES = [
   'mock_verify_module_simple_auth',
   'mock_verify_ganpyeon_injeung',
@@ -1476,12 +1480,17 @@ function isKmaAnalysisQuery(query: string): boolean {
 function isLifestyleWeatherQuery(query: string): boolean {
   return (
     KMA_LIFESTYLE_WEATHER_RE.test(query) &&
+    !isAirKoreaAirQualityQuery(query) &&
     !isAirportAviationQuery(query) &&
     !isKmaAnalysisQuery(query) &&
     !isMedicalEmergencyQuery(query) &&
     !TRAFFIC_HAZARD_RE.test(query) &&
     !MOF_OCEAN_WATER_QUALITY_RE.test(query)
   )
+}
+
+function isAirKoreaAirQualityQuery(query: string): boolean {
+  return AIRKOREA_AIR_QUALITY_RE.test(query)
 }
 
 function isPpsBidQuery(query: string): boolean {
@@ -1501,6 +1510,20 @@ function protectedCheckToolPreference(query: string): string[] {
     ...PROTECTED_CHECK_TOOL_NAMES,
   ].filter((toolName): toolName is string => typeof toolName === 'string')
   return [...new Set(preferred)]
+}
+
+function isGov24MinwonSubmitQuery(query: string): boolean {
+  return GOV24_MINWON_SUBMIT_RE.test(query)
+}
+
+function gov24MinwonToolPreference(): string[] {
+  return [
+    'mock_verify_module_simple_auth',
+    'mock_submit_module_gov24_minwon',
+    'mock_lookup_module_gov24_certificate',
+    'mock_verify_ganpyeon_injeung',
+    'mock_verify_mobile_id',
+  ]
 }
 
 function isTagoBusQuery(query: string): boolean {
@@ -1579,6 +1602,11 @@ function scoreAdapterEntry(
     if (entry.tool_id === 'juso_adm_cd_lookup') score += 260
     if (entry.tool_id === 'sgis_adm_cd_lookup') score += 260
   }
+  if (isAirKoreaAirQualityQuery(query)) {
+    if (entry.tool_id === 'airkorea_ctprvn_air_quality') score += 1400
+    if (isLocationAdapter(entry)) score = Math.max(0, score - 120)
+    if (entry.tool_id.startsWith('kma_')) score = Math.max(0, score - 160)
+  }
   if (HIRA_MEDICAL_DETAIL_RE.test(query)) {
     if (entry.tool_id === 'hira_medical_institution_detail') score += 650
   }
@@ -1595,6 +1623,12 @@ function scoreAdapterEntry(
   }
   if (isPpsBidQuery(query)) {
     if (entry.tool_id === 'pps_bid_public_info') score += 1000
+  }
+  if (isGov24MinwonSubmitQuery(query)) {
+    const preference = gov24MinwonToolPreference()
+    const index = preference.indexOf(entry.tool_id)
+    if (index >= 0) score += 1400 - index * 40
+    if (isLocationAdapter(entry)) score = Math.max(0, score - 180)
   }
   if (isProtectedCheckQuery(query) && entry.primitive === 'check') {
     const preference = protectedCheckToolPreference(query)
@@ -1629,6 +1663,12 @@ function filterSpecialCaseRanked(
   ranked: ScoredAdapterEntry[],
 ): ScoredAdapterEntry[] {
   let filtered = ranked
+  if (isAirKoreaAirQualityQuery(query)) {
+    const allowed = filtered.filter(
+      candidate => candidate.entry.tool_id === 'airkorea_ctprvn_air_quality',
+    )
+    if (allowed.length > 0) return allowed
+  }
   if (isKmaAnalysisQuery(query)) {
     const allowLocation = isKmaAnalysisPointQuery(query)
     const preferPoiLocation = queryPrefersPoiLocation(query)
@@ -1669,6 +1709,19 @@ function filterSpecialCaseRanked(
     const allowed = filtered.filter(candidate => candidate.entry.tool_id === 'pps_bid_public_info')
     if (allowed.length > 0) {
       filtered = allowed.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score
+        return a.entry.tool_id.localeCompare(b.entry.tool_id)
+      })
+    }
+  }
+  if (isGov24MinwonSubmitQuery(query)) {
+    const preference = gov24MinwonToolPreference()
+    const allowed = filtered.filter(candidate => preference.includes(candidate.entry.tool_id))
+    if (allowed.length > 0) {
+      return allowed.sort((a, b) => {
+        const aRank = preference.indexOf(a.entry.tool_id)
+        const bRank = preference.indexOf(b.entry.tool_id)
+        if (aRank !== bRank) return aRank - bRank
         if (b.score !== a.score) return b.score - a.score
         return a.entry.tool_id.localeCompare(b.entry.tool_id)
       })
@@ -1788,6 +1841,8 @@ function buildAdapterTool(entry: AdapterManifestEntry): Tool {
   const primitiveTool = primitiveToolFor(primitive)
   const adapterInputSchema = inputSchemaFor(entry)
   const adapterInputJSONSchema = inputJSONSchemaFor(entry)
+  const directCheckAdapterRequiresPermission =
+    primitive === 'check' && !ROOT_PRIMITIVE_TOOL_NAMES.has(entry.tool_id)
 
   return buildTool({
     name: entry.tool_id,
@@ -1818,11 +1873,17 @@ function buildAdapterTool(entry: AdapterManifestEntry): Tool {
     },
 
     isReadOnly(input) {
+      if (directCheckAdapterRequiresPermission) return false
       return primitiveTool.isReadOnly(rootInputFor(entry, input))
     },
 
     isDestructive(input) {
+      if (directCheckAdapterRequiresPermission) return true
       return primitiveTool.isDestructive?.(rootInputFor(entry, input)) ?? false
+    },
+
+    async checkPermissions(input, context) {
+      return primitiveTool.checkPermissions(rootInputFor(entry, input), context)
     },
 
     async description() {

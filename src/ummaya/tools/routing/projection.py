@@ -103,7 +103,7 @@ def selected_concrete_adapter_tools(
 ) -> tuple[GovAPITool, ...]:
     excluded = frozenset(exclude_tool_ids)
     tools: list[GovAPITool] = []
-    for tool_id in decision.selected_tools:
+    for tool_id in _decision_tool_ids(decision):
         if tool_id in excluded:
             continue
         try:
@@ -126,18 +126,29 @@ def _selected_candidates(
     selected = (
         tuple(tool_id for tool_id in visible_tool_ids if tool_id not in excluded)
         if visible_tool_ids is not None
-        else tuple(tool_id for tool_id in decision.selected_tools if tool_id not in excluded)
+        else tuple(tool_id for tool_id in _decision_tool_ids(decision) if tool_id not in excluded)
     )
     selected_rank = {tool_id: index for index, tool_id in enumerate(selected)}
     candidates_by_id = {
         candidate.tool_id: candidate
         for candidate in decision.candidate_set
-        if candidate.tool_id in selected_rank and candidate.feasible
+        if candidate.tool_id in selected_rank
     }
     ordered = tuple(
         candidates_by_id[tool_id] for tool_id in selected if tool_id in candidates_by_id
     )
     return ordered[: max(0, max_visible)]
+
+
+def _decision_tool_ids(decision: RouteDecision) -> tuple[str, ...]:
+    if decision.selected_tools:
+        return decision.selected_tools
+    if (
+        decision.clarification is not None
+        and decision.clarification.reason == "side_effect_confirmation"
+    ):
+        return ()
+    return tuple(candidate.tool_id for candidate in decision.candidate_set)
 
 
 def _candidate_lines(

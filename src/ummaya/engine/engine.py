@@ -253,11 +253,14 @@ class QueryEngine:
             tool_ids = tuple(tool.id for tool in concrete_tools)
             if not tool_ids:
                 return None, ()
+            projection_level = (
+                decision.schema_projection_level if decision.selected_tools else "summary"
+            )
             projection = build_available_adapters_projection(
                 decision,
                 self._tool_registry,
                 query=user_message,
-                projection_level=decision.schema_projection_level,
+                projection_level=projection_level,
                 max_visible=len(tool_ids),
                 visible_tool_ids=tool_ids,
             )

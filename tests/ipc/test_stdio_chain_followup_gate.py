@@ -1046,8 +1046,9 @@ def test_latest_citizen_user_utterance_skips_available_adapters_suffix() -> None
     )
 
 
-def test_initial_concrete_tool_choice_for_unambiguous_public_data_queries() -> None:
+def test_initial_concrete_tool_choice_only_for_document_queries() -> None:
     available = {
+        "document",
         "find",
         "locate",
         "pps_bid_public_info",
@@ -1062,35 +1063,42 @@ def test_initial_concrete_tool_choice_for_unambiguous_public_data_queries() -> N
             "이번 주 부산시 전기공사 입찰 올라온 거 있어?",
             available,
         )
-        == "pps_bid_public_info"
+        is None
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "지금 부산 중구 미세먼지 괜찮아? 마스크 써야 해?",
             available,
         )
-        == "airkorea_ctprvn_air_quality"
+        is None
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "오늘 오후 전국 비구름 흐름이 어떤지 공식 기상도나 위성 자료 기준으로 설명해줘",
             available,
         )
-        == "kma_apihub_url_analysis_weather_chart_image"
+        is None
+    )
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "다운로드 폴더의 신청서.hwpx 문서를 작성해줘",
+            available,
+        )
+        == "document"
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "오늘 밤 김해에서 김포 가는데 비행기 뜰만해? 바람이랑 시정도 봐줘",
             available,
         )
-        == "kma_apihub_url_air_metar_decoded"
+        is None
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "부산역에서 1001번 버스 곧 와?",
             available,
         )
-        == "tago_bus_route_search"
+        is None
     )
 
 
@@ -1362,7 +1370,19 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
     ) or (None, "")
     assert preferred == "tago_bus_route_search"
     assert "Public-data tool-choice mismatch" in message
-    assert "airkorea_ctprvn_air_quality" in message
+    assert "target=bus_realtime" in message
+    assert "airkorea_ctprvn_air_quality" not in message
+    assert "tago_bus_route_search" not in message
+
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "kma_current_observation",
+        {"nx": 98, "ny": 75},
+        "내일 비구름 흐름 일기도 지도 자료 보여줘",
+    ) or (None, "")
+    assert preferred == "kma_apihub_url_analysis_weather_chart_image"
+    assert "target=weather_chart" in message
+    assert "kma_apihub_url_analysis_weather_chart_image" not in message
+    assert "kma_current_observation" not in message
 
     preferred, message = _check_direct_public_data_tool_choice_prerequisite(
         "airkorea_ctprvn_air_quality",
@@ -1370,7 +1390,20 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
         "퇴근하고 해운대 산책 갈 건데 지금 비 와? 우산 챙겨야 해?",
     ) or (None, "")
     assert preferred == "kakao_keyword_search"
+    assert "target=current_weather" in message
     assert "KMA current observation" in message
+    assert "airkorea_ctprvn_air_quality" not in message
+    assert "kakao_keyword_search" not in message
+
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "kma_current_observation",
+        {"nx": 98, "ny": 75},
+        "이번 주 부산시 전기공사 입찰 올라온 거 있어?",
+    ) or (None, "")
+    assert preferred == "pps_bid_public_info"
+    assert "target=procurement_bid" in message
+    assert "pps_bid_public_info" not in message
+    assert "kma_current_observation" not in message
 
     assert (
         _check_direct_public_data_tool_choice_prerequisite(

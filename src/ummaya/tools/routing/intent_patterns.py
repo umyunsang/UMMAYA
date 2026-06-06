@@ -112,6 +112,11 @@ _PPS_SHOPPING_RE = re.compile(
     r"(종합\s*쇼핑몰|쇼핑몰|계약\s*물품|물품\s*조회|shopping\s*mall)",
     re.IGNORECASE,
 )
+_AIRKOREA_AIR_QUALITY_RE = re.compile(
+    r"(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|"
+    r"pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)",
+    re.IGNORECASE,
+)
 _KCUE_REGIONAL_RE = re.compile(
     r"(대학알리미|대학정보공시|학교구분코드|schl[_\s-]?div[_\s-]?cd|KCUE|"
     r"지역별\s*(등록금|재정)|외국인\s*유학생|foreign\s+student|international\s+student)",

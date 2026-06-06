@@ -435,9 +435,7 @@ def _negative_control_assertion(record: RouteTraceRecord) -> RouteSelectionAsser
         expected_primitives=(),
         selected_primitives=(),
         adapter_family="no_tool",
-        argument_feasibility="sufficient"
-        if record.stop_reason == "answerable"
-        else "blocked",
+        argument_feasibility="sufficient" if record.stop_reason == "answerable" else "blocked",
         clarification_expected=False,
         clarification_reason=None,
         stop_reason=record.stop_reason,

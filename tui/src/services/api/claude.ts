@@ -220,8 +220,16 @@ import {
   getAdapterToolByName,
   selectTopKAdapterToolNamesForQuery,
 } from '../../tools/AdapterTool/AdapterTool.js'
+import {
+  appendRouteDiagnostic,
+  hashRouteDiagnosticText,
+} from '../../tools/AdapterTool/routeDiagnostics.js'
 import { isNonSyntheticUserText } from '../../tools/_shared/citizenUserText.js'
 import { shouldSuppressUmmayaToolCallsForAnswerSynthesis } from '../../tools/_shared/toolChoiceRepair.js'
+import {
+  getAdapterManifestHash,
+  listAdapters,
+} from './adapterManifest.js'
 import { count } from '../../utils/array.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
@@ -295,6 +303,9 @@ const {
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray
 type JsonObject = { [key: string]: JsonValue }
 type JsonArray = JsonValue[]
+
+const forcedToolChoiceSystemInstruction = (toolName: string): string =>
+  `Mandatory tool call: the host selected ${toolName} for this turn. Do not answer with prose, do not ask a follow-up question, and do not choose another tool. Emit exactly one ${toolName} tool call with valid JSON arguments.`
 
 /**
  * Assemble the extra body parameters for the API request, based on the
@@ -1187,11 +1198,11 @@ async function* queryModel(
     'query',
   )
 
-  const turnLocalAdapterToolNames = new Set(
-    selectTopKAdapterToolNamesForQuery(
-      latestUserTextForToolRetrieval(messages),
-    ),
+  const latestUserTextForAdapters = latestUserTextForToolRetrieval(messages)
+  const selectedAdapterToolNames = selectTopKAdapterToolNamesForQuery(
+    latestUserTextForAdapters,
   )
+  const turnLocalAdapterToolNames = new Set(selectedAdapterToolNames)
   if (options.toolChoice?.type === 'tool') {
     turnLocalAdapterToolNames.add(options.toolChoice.name)
   }
@@ -1348,6 +1359,23 @@ async function* queryModel(
       }),
     ),
   )
+  appendRouteDiagnostic('adapter_selection', {
+    query_hash: hashRouteDiagnosticText(latestUserTextForAdapters),
+    query_source: options.querySource,
+    manifest_hash: getAdapterManifestHash(),
+    selected_tools: selectedAdapterToolNames,
+    final_adapter_tools: filteredTools
+      .filter(tool => turnLocalAdapterToolNames.has(tool.name))
+      .map(tool => tool.name),
+    candidate_count: listAdapters().length,
+    request_tool_count: requestTools.length,
+    filtered_tool_count: filteredTools.length,
+    tool_schema_count: toolSchemas.length,
+    tool_search_enabled: useToolSearch,
+    schema_projection_level: 'top_k_concrete_adapter_schemas',
+    forced_tool_choice:
+      options.toolChoice?.type === 'tool' ? options.toolChoice.name : null,
+  })
 
   if (useToolSearch) {
     const includedDeferredTools = count(filteredTools, t =>
@@ -1469,6 +1497,9 @@ async function* queryModel(
       ...systemPrompt,
       ...(advisorModel ? [ADVISOR_TOOL_INSTRUCTIONS] : []),
       ...(injectChromeHere ? [CHROME_TOOL_SEARCH_INSTRUCTIONS] : []),
+      ...(options.toolChoice?.type === 'tool'
+        ? [forcedToolChoiceSystemInstruction(options.toolChoice.name)]
+        : []),
     ].filter(Boolean),
   )
 

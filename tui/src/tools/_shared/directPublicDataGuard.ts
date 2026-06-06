@@ -5,7 +5,7 @@ import { textFromContent } from './nmcAedGuard.js'
 
 const PPS_BID_RE = /(입찰|나라장터|조달청|공고|전기공사|bid|procurement)/iu
 const AIRKOREA_RE =
-  /(미세먼지|초미세먼지|대기질|대기오염|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea)/iu
+  /(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)/iu
 const KMA_CHART_RE = /(일기도|분석일기도|지도\s*자료|비구름|바람\s*흐름|synoptic|weather\s*chart)/iu
 const KMA_WEATHER_RE =
   /(날씨|현재\s*기상|실황|관측|예보|기온|습도|풍속|지금\s*비|비\s*(와|오|올|내리)|우산|강수|소나기|산책|퇴근|current\s+weather|forecast|rain|umbrella|precipitation|temperature)/iu
@@ -57,7 +57,8 @@ const AIRKOREA_SIDO_ALIASES: Record<string, string> = {
 
 type DirectTarget = {
   toolIds: readonly string[]
-  label: string
+  routeKind: string
+  displayLabel: string
   hint: string
 }
 
@@ -161,25 +162,28 @@ function directTargetForUserText(text: string): DirectTarget | undefined {
   if (KMA_CHART_RE.test(text)) {
     return {
       toolIds: ['kma_apihub_url_analysis_weather_chart_image'],
-      label: 'kma_apihub_url_analysis_weather_chart_image',
+      routeKind: 'weather_chart',
+      displayLabel: 'official weather chart data',
       hint:
-        "params must follow the weather chart/map schema: anal_time is required as UTC YYYYMMDDHHMM. Use the latest completed official analysis slot and include minutes, for example '202605281200', not a 10-digit KST hour.",
+        "Use the weather chart/map schema. The analysis time must be UTC YYYYMMDDHHMM, for example '202605281200'.",
     }
   }
   if (PPS_BID_RE.test(text)) {
     return {
       toolIds: ['pps_bid_public_info'],
-      label: 'pps_bid_public_info',
+      routeKind: 'procurement_bid',
+      displayLabel: 'official procurement notice data',
       hint:
-        "params must include inqry_bgn_dt/inqry_end_dt as valid YYYYMMDDHHMM and inqry_div:'1' unless the citizen asks for opening datetime. Keep each PPS call within a 31-day window. Copy citizen keywords into bid_ntce_nm and use region/industry filters only when the citizen supplied them; do not hard-code 전기공사 or 부산광역시 for unrelated procurement questions.",
+        'Use the procurement notice schema. Keep each query window within 31 days and only apply region or industry filters the citizen supplied.',
     }
   }
   if (AIRKOREA_RE.test(text)) {
     return {
       toolIds: ['airkorea_ctprvn_air_quality'],
-      label: 'airkorea_ctprvn_air_quality',
+      routeKind: 'air_quality',
+      displayLabel: 'official city/province air-quality data',
       hint:
-        "params should include sido_name:'부산', plus optional page_no/num_of_rows/ver exactly as the adapter schema exposes.",
+        'Use the city/province air-quality schema with the requested Korean city or province name.',
     }
   }
   if (TAGO_BUS_RE.test(text)) {
@@ -191,9 +195,10 @@ function directTargetForUserText(text: string): DirectTarget | undefined {
         'tago_bus_route_station_search',
         'tago_bus_location_search',
       ],
-      label: 'TAGO bus adapters',
+      routeKind: 'bus_realtime',
+      displayLabel: 'official bus route or arrival data',
       hint:
-        "use TAGO bus schemas for bus arrival/route requests. If a route number is named, call tago_bus_route_search for route_id, then tago_bus_route_station_search with route_id and node_nm to find passing stops. Call tago_bus_arrival_search with city_code, node_id, and route_no or route_id. If node_id is unknown, tago_bus_station_search can list nearby named stops.",
+        'Use the bus route, stop, or arrival schema. If the citizen named a route number, resolve the route before checking passing stops or arrivals.',
     }
   }
   if (KMA_WEATHER_RE.test(text)) {
@@ -206,9 +211,10 @@ function directTargetForUserText(text: string): DirectTarget | undefined {
         'kma_ultra_short_term_forecast',
         'kma_short_term_forecast',
       ],
-      label: 'KMA weather/location adapters',
+      routeKind: 'weather_current',
+      displayLabel: 'official weather or location data',
       hint:
-        'use a location adapter first when coordinates are missing, then KMA current-observation or forecast schemas for rain/umbrella/current-weather values. Do not use air-quality or bus adapters for ordinary weather.',
+        'Use location evidence first when coordinates are missing, then current observation or forecast data for ordinary weather values.',
     }
   }
   return undefined
@@ -354,8 +360,8 @@ export function validateDirectPublicDataToolChoice(
   return {
     result: false,
     message:
-      `Public-data tool-choice mismatch: the latest citizen request matches ${target.label}. ` +
-      `Call ${target.label} through the correct primitive instead of ${toolId}. ` +
+      `Public-data tool-choice mismatch: target=${target.routeKind}. ` +
+      `The latest citizen request needs ${target.displayLabel}; the previous tool choice does not match that route. ` +
       target.hint,
     errorCode: 1,
   }

@@ -47,6 +47,7 @@ import importlib
 import json
 import logging
 import os
+import re
 from datetime import UTC, datetime
 from typing import IO, Any, Literal
 
@@ -371,22 +372,37 @@ def _verify_family_llm_description(
     """Build model-facing prose for a verify-family manifest entry."""
 
     metadata = metadata or {}
-    tool_id = str(metadata.get("tool_id") or family).strip()
     name = str(metadata.get("name_ko") or family).strip()
-    scope_rules = str(metadata.get("scope_rules") or "").strip()
+    scope_rules = _safe_verify_scope_rules(str(metadata.get("scope_rules") or "").strip())
     scope_clause = f" {scope_rules}" if scope_rules else ""
     return (
-        f"Internal check-family surface for {name} (family_hint='{family}', "
-        f"bridged adapter id '{tool_id}'). Use this only through the core check "
-        "primitive before a downstream protected find/send action needs delegated "
-        "authorization. Params must follow input_schema_json exactly: scope_list "
-        "contains '<verb>:<adapter_family>.<action>' scope strings, purpose_ko is "
-        "the Korean citizen-facing consent purpose, and purpose_en is the audit-log "
+        f"Internal check-family surface for {name} (family_hint='{family}'). "
+        "Use this only through the core check primitive before a downstream "
+        "protected find/send action needs delegated authorization. Params must "
+        "follow input_schema_json exactly: scope_list contains "
+        "'<verb>:<adapter_family>.<action>' scope strings, purpose_ko is the "
+        "Korean citizen-facing consent purpose, and purpose_en is the audit-log "
         "English purpose. The manifest entry stays source_mode='internal' because "
         "the agency citation is emitted by the verify response transparency stamp, "
-        "while the pre-call tool schema remains stable for the TUI and LLM loop."
+        "while the pre-call tool schema remains stable for the TUI and LLM loop. "
+        "Do not mention internal mock bridge identifiers in citizen-facing prose."
         f"{scope_clause}"
     )
+
+
+def _safe_verify_scope_rules(scope_rules: str) -> str:
+    if not scope_rules:
+        return ""
+    safe_sentences: list[str] = []
+    for sentence in re.split(r"(?<=[.!?])\s+", scope_rules):
+        candidate = sentence.strip()
+        if not candidate:
+            continue
+        lowered = candidate.lower()
+        if "mock_verify" in lowered or "tool_id" in lowered:
+            continue
+        safe_sentences.append(candidate)
+    return " ".join(safe_sentences)
 
 
 def _string_list(value: object) -> list[str]:

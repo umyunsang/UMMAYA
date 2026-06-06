@@ -119,3 +119,10 @@ def test_kcue_finance_subsignal_implies_regional_parent_ref() -> None:
 
     assert "kcue_regional" in intent.public_data_refs
     assert "kcue_regional_finance" in intent.public_data_refs
+
+
+def test_airkorea_air_quality_signal_is_not_weather_ref() -> None:
+    intent = extract_tool_selection_intent("부산 공기질과 미세먼지 지금 어때? air quality 확인해줘")
+
+    assert "airkorea_air_quality" in intent.public_data_refs
+    assert "kma_lifestyle_weather" not in intent.public_data_refs

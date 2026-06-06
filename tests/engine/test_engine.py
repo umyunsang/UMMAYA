@@ -629,6 +629,29 @@ def test_available_adapters_context_pps_bid_search_exposes_search_contract() -> 
     assert "bid_ntce_no" not in content
 
 
+def test_available_adapters_context_air_quality_exposes_airkorea() -> None:
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "부산 공기질과 미세먼지 지금 어때? air quality 확인해줘"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "airkorea_ctprvn_air_quality"
+    assert "airkorea_ctprvn_air_quality" in turn_tool_ids
+    assert "kma_current_observation" not in turn_tool_ids
+    assert "kakao_keyword_search" not in turn_tool_ids
+    assert "sido_name" in content
+
+
 def test_available_adapters_context_natural_kcue_finance_excludes_locate() -> None:
     """Natural official university tuition wording should expose KCUE finance first."""
 

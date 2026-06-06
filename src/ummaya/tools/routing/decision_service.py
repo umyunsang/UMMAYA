@@ -76,6 +76,7 @@ class RouteDecisionService:
         include_infeasible: bool = False,
         initial_scores: Iterable[tuple[str, float]] | None = None,
         validation_events: Sequence[str] = (),
+        drop_zero_score_candidates: bool | None = None,
     ) -> RouteDecision:
         registry_size = len(self._registry)
         effective_top_k = max(1, min(top_k, registry_size, 20)) if registry_size else 0
@@ -107,6 +108,11 @@ class RouteDecisionService:
             backend_label = "injected"
             degradation_reason = None
 
+        should_drop_zero_score_candidates = (
+            _should_drop_zero_score_candidates(scored, route_intent=route_intent)
+            if drop_zero_score_candidates is None
+            else drop_zero_score_candidates
+        )
         active_cards, card_events = self._active_cards()
         active_tool_ids = frozenset(card.tool_id for card in active_cards)
         active_primitives = frozenset(card.primitive_family for card in active_cards)
@@ -120,21 +126,22 @@ class RouteDecisionService:
             allowed_credentials=(
                 None if allowed_credentials is None else frozenset(allowed_credentials)
             ),
+            drop_zero_score_candidates=should_drop_zero_score_candidates,
         )
         ranked_candidates = tuple(sorted(candidates, key=_candidate_sort_key))
         selected_candidates = tuple(
             candidate for candidate in ranked_candidates if candidate.feasible
         )
         selection_limit = max_selected if max_selected is not None else effective_top_k
+        selected_slice = selected_candidates[:selection_limit]
         clarification = _clarification_decision(
             ranked_candidates,
             selected_candidates=selected_candidates,
+            selected_slice=selected_slice,
             selection_limit=selection_limit,
             session_identity=session_identity,
         )
-        selected_route_candidates = (
-            () if clarification is not None else selected_candidates[:selection_limit]
-        )
+        selected_route_candidates = () if clarification is not None else selected_slice
         selected_tools = tuple(candidate.tool_id for candidate in selected_route_candidates)
         visible_candidates = (ranked_candidates if include_infeasible else selected_candidates)[
             :effective_top_k
@@ -300,10 +307,19 @@ class RouteDecisionService:
         active_primitives: frozenset[PrimitiveFamily],
         allowed_source_modes: frozenset[SourceMode],
         allowed_credentials: frozenset[str] | None,
+        drop_zero_score_candidates: bool,
     ) -> tuple[tuple[RouteCandidate, ...], tuple[str, ...]]:
         candidates: list[RouteCandidate] = []
         evidence_events: list[str] = []
         for tool_id, raw_score in scored:
+            retrieval_score = max(0.0, float(raw_score))
+            if (
+                drop_zero_score_candidates
+                and retrieval_score <= 0.0
+                and tool_id not in route_intent.explicit_tool_ids
+            ):
+                evidence_events.append(f"soft_excluded:zero_retrieval_score:{tool_id}")
+                continue
             try:
                 card = build_adapter_card(self._registry.find(tool_id))
             except ToolNotFoundError:
@@ -326,7 +342,6 @@ class RouteDecisionService:
                     evidence_events.append(f"hard_excluded:{reason}:{tool_id}")
                 continue
 
-            retrieval_score = max(0.0, float(raw_score))
             filter_reasons = soft_filter_reasons(
                 card,
                 route_intent=route_intent,
@@ -357,6 +372,16 @@ def _route_validation_events(validation_events: Sequence[str]) -> tuple[str, ...
     return tuple(f"validation_event:{event}" for event in validation_events)
 
 
+def _should_drop_zero_score_candidates(
+    scored: Sequence[tuple[str, float]], *, route_intent: ToolSelectionIntent
+) -> bool:
+    if route_intent.explicit_tool_ids:
+        return False
+    if any(float(score) > 0.0 for _tool_id, score in scored):
+        return True
+    return len(scored) > 1
+
+
 def _candidate_selection_score(candidate: RouteCandidate) -> float:
     penalty = len(candidate.filter_reasons) * 1000.0
     return candidate.retrieval_score + candidate.score_breakdown["feasibility"] * 100.0 - penalty
@@ -375,6 +400,7 @@ def _clarification_decision(
     candidates: tuple[RouteCandidate, ...],
     *,
     selected_candidates: tuple[RouteCandidate, ...],
+    selected_slice: tuple[RouteCandidate, ...],
     selection_limit: int,
     session_identity: object | None,
 ) -> RouteClarificationDecision | None:
@@ -409,17 +435,22 @@ def _clarification_decision(
             evidence_events=("clarification:equal_candidates",),
         )
 
-    for candidate in candidates:
-        if "permission_context_missing" in candidate.filter_reasons:
-            return RouteClarificationDecision(
-                reason="side_effect_confirmation",
-                question=f"Should I proceed with {candidate.tool_id}?",
-                candidate_tool_ids=(candidate.tool_id,),
-                evidence_events=("clarification:side_effect_confirmation",),
-            )
+    top_candidate = candidates[0]
+    if "permission_context_missing" in top_candidate.filter_reasons:
+        return RouteClarificationDecision(
+            reason="side_effect_confirmation",
+            question=f"Should I proceed with {top_candidate.tool_id}?",
+            candidate_tool_ids=(top_candidate.tool_id,),
+            evidence_events=("clarification:side_effect_confirmation",),
+        )
     if session_identity is None:
-        for candidate in selected_candidates:
-            if candidate.card.side_effect_level in {"action", "sign", "send", "verify"}:
+        for candidate in selected_slice:
+            if candidate.tool_id != "document" and candidate.card.side_effect_level in {
+                "action",
+                "sign",
+                "send",
+                "verify",
+            }:
                 return RouteClarificationDecision(
                     reason="side_effect_confirmation",
                     question=f"Should I proceed with {candidate.tool_id}?",

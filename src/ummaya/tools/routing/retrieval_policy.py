@@ -41,6 +41,7 @@ _LOCATION_TOOL_IDS = frozenset(
         "sgis_adm_cd_lookup",
     }
 )
+_AIRKOREA_TOOL_IDS = frozenset({"airkorea_ctprvn_air_quality"})
 
 
 def expand_query_for_adapter_retrieval(query: str) -> str:
@@ -67,6 +68,7 @@ def expand_query_for_intent(query: str, intent: ToolSelectionIntent) -> str:
         additions.extend(["AED", "자동심장충격기", "자동제세동기", "국립중앙의료원"])
     additions.extend(_emergency_chain_additions(intent))
     additions.extend(_pps_bid_additions(intent))
+    additions.extend(_airkorea_air_quality_additions(intent))
     additions.extend(_kcue_regional_additions(intent))
     additions.extend(_ocean_water_quality_additions(intent))
     additions.extend(_health_detail_additions(intent))
@@ -103,6 +105,7 @@ def filter_special_case_scores(
     scored = _filter_document_harness_scores(intent, scored)
     scored = _filter_emergency_chain_scores(intent, scored)
     scored = _filter_pps_bid_scores(intent, scored)
+    scored = _filter_airkorea_air_quality_scores(intent, scored)
     scored = _filter_kcue_regional_scores(intent, scored)
     scored = _filter_health_detail_scores(intent, scored)
     scored = _filter_public_safety_location_scores(intent, scored)
@@ -314,6 +317,24 @@ def _pps_bid_additions(intent: ToolSelectionIntent) -> list[str]:
     ]
 
 
+def _airkorea_air_quality_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("airkorea_air_quality"):
+        return []
+    return [
+        "에어코리아",
+        "AirKorea",
+        "미세먼지",
+        "초미세먼지",
+        "대기질",
+        "대기오염",
+        "공기질",
+        "PM10",
+        "PM2.5",
+        "sido_name",
+        "city province air quality",
+    ]
+
+
 def _kcue_regional_additions(intent: ToolSelectionIntent) -> list[str]:
     if not intent.has_public_data_ref("kcue_regional"):
         return []
@@ -456,6 +477,17 @@ def _filter_pps_bid_scores(
     return [
         (tool_id, score + 1000.0) for tool_id, score in scored if tool_id == "pps_bid_public_info"
     ]
+
+
+def _filter_airkorea_air_quality_scores(
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    if not intent.has_public_data_ref("airkorea_air_quality"):
+        return scored
+    has_airkorea = any(tool_id in _AIRKOREA_TOOL_IDS for tool_id, _ in scored)
+    if not has_airkorea:
+        return scored
+    return [(tool_id, score + 1200.0) for tool_id, score in scored if tool_id in _AIRKOREA_TOOL_IDS]
 
 
 def _filter_kcue_regional_scores(
