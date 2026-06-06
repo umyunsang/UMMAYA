@@ -366,6 +366,13 @@ def test_full_runtime_manifest_exports_model_facing_tool_metadata() -> None:
     assert "check:mobile_id.identity" in str(mobile_id.llm_description)
     assert "mobile ID" in str(mobile_id.search_hint)
 
+    for entry in entries:
+        if entry.primitive != "check" or entry.source_mode != "internal":
+            continue
+        description = str(entry.llm_description)
+        assert "mock_verify" not in description
+        assert "bridged adapter id" not in description
+
     _EXTRA_REGISTRY.clear()
 
 

@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool
+from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool, MockFidelityGrade
 
 if TYPE_CHECKING:
     from ummaya.tools.registry import ToolRegistry
@@ -346,6 +346,7 @@ def _verify_to_govapitool(entry: dict[str, Any]) -> GovAPITool:
         rate_limit_per_minute=30,
         is_core=False,  # Discoverable via lookup search; NOT in primary LLM tool list
         primitive="check",
+        adapter_mode="mock",
     )
 
 
@@ -385,7 +386,22 @@ def _submit_to_govapitool(
         rate_limit_per_minute=registration.rate_limit_per_minute,
         is_core=False,  # Discoverable via lookup search; NOT in primary LLM tool list
         primitive="send",
+        adapter_mode="mock",
+        mock_fidelity_grade=_mock_fidelity_from_source_mode(registration.source_mode),
     )
+
+
+def _mock_fidelity_from_source_mode(source_mode: object) -> MockFidelityGrade:
+    raw = str(getattr(source_mode, "value", source_mode))
+    match raw:
+        case "OPENAPI":
+            return "OPENAPI"
+        case "OOS":
+            return "OOS"
+        case "harness-only" | "HARNESS_ONLY":
+            return "HARNESS_ONLY"
+        case _:
+            return "unknown"
 
 
 # ---------------------------------------------------------------------------

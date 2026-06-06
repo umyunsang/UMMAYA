@@ -94,6 +94,10 @@ export function listAdapters(): AdapterManifestEntry[] {
   )
 }
 
+export function getAdapterManifestHash(): string | null {
+  return _cache?.manifestHash ?? null
+}
+
 /**
  * Returns ``true`` when at least one manifest frame has been ingested.
  *

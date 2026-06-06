@@ -18,6 +18,7 @@ import {
 } from '../../../services/mcp/channelPermissions.js'
 import { executeAsyncClassifierCheck } from '../../../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../../../tools/BashTool/toolName.js'
+import { appendRoutePermissionPromptDiagnostic } from '../../../tools/AdapterTool/routeDiagnostics.js'
 import {
   clearClassifierChecking,
   setClassifierApproval,
@@ -229,6 +230,15 @@ function handleInteractivePermission(
         resolveOnce(ctx.buildAllow(freshResult.updatedInput ?? ctx.input))
       }
     },
+  })
+  appendRoutePermissionPromptDiagnostic({
+    toolName: ctx.tool.name,
+    input: displayInput,
+    toolUseID: ctx.toolUseID,
+    messageID: ctx.messageId,
+    queryChainID: ctx.toolUseContext.queryTracking?.chainId ?? null,
+    queryDepth: ctx.toolUseContext.queryTracking?.depth ?? null,
+    permissionMode: ctx.toolUseContext.getAppState().toolPermissionContext.mode ?? null,
   })
 
   // Race 4: Bridge permission response from CCR (claude.ai)

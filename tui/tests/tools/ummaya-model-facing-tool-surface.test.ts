@@ -425,7 +425,7 @@ describe('UMMAYA model-facing tool surface', () => {
     expect(selected).not.toContain('kakao_address_search')
   })
 
-  test('PPS bid wording forces synced concrete adapter even before tool pool refresh', () => {
+  test('PPS bid wording does not force synced concrete adapter on the first turn', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -477,10 +477,7 @@ describe('UMMAYA model-facing tool surface', () => {
       tools: [toolNamed('find'), toolNamed('locate'), toolNamed('ToolSearch')],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'pps_bid_public_info',
-    })
+    expect(override).toBeUndefined()
   })
 
   test('direct public-data wording rejects unrelated primitive substitutions', async () => {
@@ -585,7 +582,10 @@ describe('UMMAYA model-facing tool surface', () => {
       ppsContext,
     )
     expect(ppsLocate.result).toBe(false)
-    if (!ppsLocate.result) expect(ppsLocate.message).toContain('pps_bid_public_info')
+    if (!ppsLocate.result) {
+      expect(ppsLocate.message).toContain('target=procurement_bid')
+      expect(ppsLocate.message).not.toContain('pps_bid_public_info')
+    }
 
     const ppsTool = getAdapterToolByName('pps_bid_public_info')
     expect(ppsTool).toBeDefined()
@@ -614,7 +614,23 @@ describe('UMMAYA model-facing tool surface', () => {
       airContext,
     )
     expect(airWeather.result).toBe(false)
-    if (!airWeather.result) expect(airWeather.message).toContain('airkorea_ctprvn_air_quality')
+    if (!airWeather.result) {
+      expect(airWeather.message).toContain('target=air_quality')
+      expect(airWeather.message).not.toContain('airkorea_ctprvn_air_quality')
+    }
+    const airQualityContext = {
+      options: { tools: [] },
+      messages: [{ role: 'user', content: '부산 공기질 지금 어때? air quality 확인해줘' }],
+    } as any
+    const airQualityWeather = await LookupPrimitive.validateInput!(
+      { tool_id: 'kma_current_observation', params: { nx: 98, ny: 75 } },
+      airQualityContext,
+    )
+    expect(airQualityWeather.result).toBe(false)
+    if (!airQualityWeather.result) {
+      expect(airQualityWeather.message).toContain('target=air_quality')
+      expect(airQualityWeather.message).not.toContain('airkorea_ctprvn_air_quality')
+    }
     const broadAirKorea = normalizeDirectPublicDataToolInput(
       'airkorea_ctprvn_air_quality',
       airContext,
@@ -635,7 +651,7 @@ describe('UMMAYA model-facing tool surface', () => {
     )
     expect(weatherAir.result).toBe(false)
     if (!weatherAir.result) {
-      expect(weatherAir.message).toContain('KMA weather/location adapters')
+      expect(weatherAir.message).toContain('target=weather_current')
     }
 
     const weatherWithMetaContext = {
@@ -666,7 +682,7 @@ describe('UMMAYA model-facing tool surface', () => {
     )
     expect(weatherWithMetaAir.result).toBe(false)
     if (!weatherWithMetaAir.result) {
-      expect(weatherWithMetaAir.message).toContain('KMA weather/location adapters')
+      expect(weatherWithMetaAir.message).toContain('target=weather_current')
       expect(weatherWithMetaAir.message).not.toContain(
         'kma_apihub_url_analysis_weather_chart_image',
       )
@@ -684,7 +700,7 @@ describe('UMMAYA model-facing tool surface', () => {
     )
     expect(chartWeather.result).toBe(false)
     if (!chartWeather.result) {
-      expect(chartWeather.message).toContain('kma_apihub_url_analysis_weather_chart_image')
+      expect(chartWeather.message).toContain('target=weather_chart')
       expect(chartWeather.message).toContain('YYYYMMDDHHMM')
       expect(chartWeather.message).toContain('UTC')
     }
@@ -888,7 +904,10 @@ describe('UMMAYA model-facing tool surface', () => {
       context,
     )
     expect(weather.result).toBe(false)
-    if (!weather.result) expect(weather.message).toContain('TAGO')
+    if (!weather.result) {
+      expect(weather.message).toContain('target=bus_realtime')
+      expect(weather.message).not.toContain('tago_bus_')
+    }
 
     const wrongBusanCode = await LookupPrimitive.validateInput!(
       { tool_id: 'tago_bus_station_search', params: { city_code: '11', node_nm: '부산역' } },
@@ -930,10 +949,7 @@ describe('UMMAYA model-facing tool surface', () => {
       },
     ] as any
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'tago_bus_route_search',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterRouteSearch = [
       ...firstTurn,
@@ -1169,10 +1185,7 @@ describe('UMMAYA model-facing tool surface', () => {
       },
     ] as any
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'tago_bus_station_search',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterStation = [
       ...firstTurn,
@@ -1284,10 +1297,7 @@ describe('UMMAYA model-facing tool surface', () => {
       },
     ] as any
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'tago_bus_station_search',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterStation = [
       ...firstTurn,
@@ -1371,7 +1381,7 @@ describe('UMMAYA model-facing tool surface', () => {
               tool_use_id: 'locate-1',
               is_error: true,
               content:
-                '<tool_use_error>Public-data tool-choice mismatch: the latest citizen request matches TAGO bus adapters. Call TAGO bus adapters through the correct primitive instead of kakao_keyword_search.</tool_use_error>',
+                '<tool_use_error>Public-data tool-choice mismatch: target=bus_realtime. The latest citizen request needs official bus route or arrival data; the previous tool choice does not match that route.</tool_use_error>',
             },
           ],
         },
@@ -1425,7 +1435,7 @@ describe('UMMAYA model-facing tool surface', () => {
               tool_use_id: 'locate-2',
               is_error: true,
               content:
-                "<tool_use_error>Public-data tool-choice mismatch: the latest citizen request matches airkorea_ctprvn_air_quality. Call airkorea_ctprvn_air_quality through the correct primitive instead of kakao_address_search. params should include sido_name:'부산'.</tool_use_error>",
+                '<tool_use_error>Public-data tool-choice mismatch: target=air_quality. The latest citizen request needs official city/province air-quality data; the previous tool choice does not match that route.</tool_use_error>',
             },
           ],
         },
@@ -1446,10 +1456,150 @@ describe('UMMAYA model-facing tool surface', () => {
         },
       },
     ] as any
-    expect(selectUmmayaToolChoiceOverride({ messages: airFirstTurn, tools })).toEqual({
+    expect(selectUmmayaToolChoiceOverride({ messages: airFirstTurn, tools })).toBeUndefined()
+
+    const chartMessages = [
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '내일 비구름 흐름 일기도 지도 자료 보여줘',
+        },
+      },
+      {
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'weather-1',
+              name: 'kma_current_observation',
+              input: { nx: 98, ny: 76 },
+            },
+          ],
+        },
+      },
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'weather-1',
+              is_error: true,
+              content:
+                '<tool_use_error>Public-data tool-choice mismatch: target=weather_chart. The latest citizen request needs official weather chart data; the previous tool choice does not match that route.</tool_use_error>',
+            },
+          ],
+        },
+      },
+    ] as any
+    const chartTools = [
+      toolNamed('kma_current_observation'),
+      toolNamed('kma_apihub_url_analysis_weather_chart_image'),
+      toolNamed('pps_bid_public_info'),
+    ]
+    expect(selectUmmayaToolChoiceOverride({ messages: chartMessages, tools: chartTools })).toEqual({
       type: 'tool',
-      name: 'airkorea_ctprvn_air_quality',
+      name: 'kma_apihub_url_analysis_weather_chart_image',
     })
+
+    const weatherMismatchMessages = [
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '부산역 지금 비 와? 우산 챙겨야 해?',
+        },
+      },
+      {
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'air-1',
+              name: 'airkorea_ctprvn_air_quality',
+              input: { sido_name: '부산' },
+            },
+          ],
+        },
+      },
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'air-1',
+              is_error: true,
+              content:
+                '<tool_use_error>Public-data tool-choice mismatch: target=weather_current. The latest citizen request needs official weather or location data; the previous tool choice does not match that route.</tool_use_error>',
+            },
+          ],
+        },
+      },
+    ] as any
+    const weatherTools = [
+      toolNamed('airkorea_ctprvn_air_quality'),
+      toolNamed('kakao_keyword_search'),
+      toolNamed('kma_current_observation'),
+    ]
+    expect(
+      selectUmmayaToolChoiceOverride({
+        messages: weatherMismatchMessages,
+        tools: weatherTools,
+      }),
+    ).toEqual({ type: 'tool', name: 'kakao_keyword_search' })
+
+    const weatherAfterLocationMessages = [
+      ...weatherMismatchMessages,
+      {
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'loc-1',
+              name: 'kakao_keyword_search',
+              input: { query: '부산역' },
+            },
+          ],
+        },
+      },
+      {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'loc-1',
+              content:
+                '{"ok":true,"result":{"kind":"poi","lat":35.115,"lon":129.041,"nx":98,"ny":76}}',
+            },
+            {
+              type: 'tool_result',
+              tool_use_id: 'air-1',
+              is_error: true,
+              content:
+                '<tool_use_error>Public-data tool-choice mismatch: target=current_weather. The latest citizen request needs that route; the previous tool choice does not match that route.</tool_use_error>',
+            },
+          ],
+        },
+      },
+    ] as any
+    expect(
+      selectUmmayaToolChoiceOverride({
+        messages: weatherAfterLocationMessages,
+        tools: weatherTools,
+      }),
+    ).toEqual({ type: 'tool', name: 'kma_current_observation' })
 
     const afterAirKorea = [
       ...airFirstTurn,
@@ -1479,6 +1629,7 @@ describe('UMMAYA model-facing tool surface', () => {
     })
     expect(airKoreaCompletionPrompt).toContain('actual tool_result')
     expect(airKoreaCompletionPrompt).toContain('do not infer the citizen place district')
+    expect(airKoreaCompletionPrompt).not.toContain('airkorea_ctprvn_air_quality')
     const airKoreaNearestClaim = {
       type: 'assistant',
       message: {
@@ -1498,6 +1649,11 @@ describe('UMMAYA model-facing tool surface', () => {
         messages: [...afterAirKorea, airKoreaNearestClaim],
       }),
     ).toContain('city/province station data')
+    expect(
+      buildAirKoreaFinalAnswerRepairPromptIfNeeded({
+        messages: [...afterAirKorea, airKoreaNearestClaim],
+      }),
+    ).not.toContain('airkorea_ctprvn_air_quality')
   })
 
   test('textual tool-call final answers are withheld and repaired after tool evidence', () => {
@@ -1797,7 +1953,7 @@ describe('UMMAYA model-facing tool surface', () => {
     expect(selected).not.toContain('kma_current_observation')
   })
 
-  test('airport aviation wording forces concrete METAR tool choice on first live turn', () => {
+  test('airport aviation wording does not force concrete METAR tool choice on first live turn', () => {
     const override = selectUmmayaToolChoiceOverride({
       messages: [
         {
@@ -1818,13 +1974,10 @@ describe('UMMAYA model-facing tool surface', () => {
       ],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_air_metar_decoded',
-    })
+    expect(override).toBeUndefined()
   })
 
-  test('KMA aviation wording forces synced adapter before tool pool refresh', () => {
+  test('KMA aviation wording does not force synced adapter before backend validation', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -1872,13 +2025,10 @@ describe('UMMAYA model-facing tool surface', () => {
       tools: [toolNamed('find'), toolNamed('locate'), toolNamed('kma_current_observation')],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_air_metar_decoded',
-    })
+    expect(override).toBeUndefined()
   })
 
-  test('airport runway wording prefers AMOS when the adapter is visible', () => {
+  test('airport runway wording does not force AMOS before backend validation', () => {
     const override = selectUmmayaToolChoiceOverride({
       messages: [
         {
@@ -1896,10 +2046,7 @@ describe('UMMAYA model-facing tool surface', () => {
       ],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_air_amos_minute',
-    })
+    expect(override).toBeUndefined()
   })
 
   test('airport aviation tool choice override stops after an aviation tool was attempted', () => {
@@ -2488,10 +2635,7 @@ describe('UMMAYA model-facing tool surface', () => {
       toolNamed('kma_current_observation'),
     ]
 
-    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_analysis_weather_chart_image',
-    })
+    expect(selectUmmayaToolChoiceOverride({ messages: firstTurn, tools })).toBeUndefined()
 
     const afterChartAttempt = [
       ...firstTurn,
@@ -2677,7 +2821,7 @@ describe('UMMAYA model-facing tool surface', () => {
     ).toContain('Do not ask for coordinates')
   })
 
-  test('analysis map wording forces synced chart adapter before tool pool refresh', () => {
+  test('analysis map wording does not force synced chart adapter before backend validation', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -2725,10 +2869,7 @@ describe('UMMAYA model-facing tool surface', () => {
       tools: [toolNamed('find'), toolNamed('locate'), toolNamed('kma_current_observation')],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'kma_apihub_url_analysis_weather_chart_image',
-    })
+    expect(override).toBeUndefined()
   })
 
   test('AED wording rejects ER adapter substitution at validation time', async () => {
@@ -4230,6 +4371,75 @@ describe('UMMAYA model-facing tool surface', () => {
     expect(forecastSelected).not.toContain('bfc_funeral_area_fee')
   })
 
+  test('air-quality public-data query selects AirKorea over location and KMA weather', () => {
+    clearManifestCache()
+    ingestManifestFrame({
+      kind: 'adapter_manifest_sync',
+      version: '1.0',
+      session_id: 'test-session',
+      correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9C7',
+      ts: new Date().toISOString(),
+      role: 'backend',
+      frame_seq: 0,
+      entries: [
+        {
+          tool_id: 'kakao_keyword_search',
+          name: 'Kakao Keyword Search',
+          primitive: 'locate',
+          policy_authority_url: 'https://developers.kakao.com/',
+          source_mode: 'live',
+          search_hint: '장소 키워드 POI 부산 위치 keyword place station',
+          llm_description: 'Resolve POI/place names to coordinates.',
+          input_schema_json: {
+            type: 'object',
+            properties: { query: { type: 'string' } },
+            required: ['query'],
+            additionalProperties: false,
+          },
+        },
+        {
+          tool_id: 'kma_current_observation',
+          name: 'KMA Current Observation',
+          primitive: 'find',
+          policy_authority_url: 'https://apihub.kma.go.kr/',
+          source_mode: 'live',
+          search_hint: '현재 날씨 비 예보 기상청 KMA current weather',
+          llm_description: 'KMA current weather observation.',
+          input_schema_json: {
+            type: 'object',
+            properties: { nx: { type: 'integer' }, ny: { type: 'integer' } },
+            required: ['nx', 'ny'],
+            additionalProperties: false,
+          },
+        },
+        {
+          tool_id: 'airkorea_ctprvn_air_quality',
+          name: 'AirKorea Air Quality',
+          primitive: 'find',
+          policy_authority_url: 'https://www.data.go.kr/data/15073861/openapi.do',
+          source_mode: 'live',
+          search_hint: '에어코리아 미세먼지 초미세먼지 대기질 대기오염 PM10 PM2.5',
+          llm_description: 'AirKorea city/province air quality.',
+          input_schema_json: {
+            type: 'object',
+            properties: { sido_name: { type: 'string' } },
+            required: ['sido_name'],
+            additionalProperties: false,
+          },
+        },
+      ],
+      manifest_hash: 'b'.repeat(64),
+      emitter_pid: 12345,
+    } satisfies AdapterManifestSyncFrame)
+
+    const selected = selectTopKAdapterToolNamesForQuery(
+      '공공데이터에서 부산 미세먼지 관련 자료 찾아줘',
+      5,
+    )
+
+    expect(selected).toEqual(['airkorea_ctprvn_air_quality'])
+  })
+
   test('public safety and assistive location wording keeps dedicated adapters', () => {
     clearManifestCache()
     ingestManifestFrame({
@@ -4665,7 +4875,7 @@ describe('UMMAYA model-facing tool surface', () => {
     }
   })
 
-  test('protected certificate wording forces concrete check adapter tool choice', () => {
+  test('protected certificate wording does not force concrete check adapter tool choice before validation', () => {
     const override = selectUmmayaToolChoiceOverride({
       messages: [
         {
@@ -4685,13 +4895,10 @@ describe('UMMAYA model-facing tool surface', () => {
       ],
     })
 
-    expect(override).toEqual({
-      type: 'tool',
-      name: 'mock_verify_module_simple_auth',
-    })
+    expect(override).toBeUndefined()
   })
 
-  test('protected certificate wording retrieves and forces check adapter before unrelated find tools', () => {
+  test('protected certificate wording retrieves check adapters without forcing before validation', () => {
     clearManifestCache()
     ingestManifestFrame({
       kind: 'adapter_manifest_sync',
@@ -4783,10 +4990,208 @@ describe('UMMAYA model-facing tool surface', () => {
       ] as any,
       tools: [toolNamed('find'), toolNamed('check'), toolNamed('ToolSearch')],
     })
+    expect(override).toBeUndefined()
+  })
+
+  test('Gov24 minwon submit wording retrieves protected check and submit chain', () => {
+    clearManifestCache()
+    ingestManifestFrame({
+      kind: 'adapter_manifest_sync',
+      version: '1.0',
+      session_id: 'test-session',
+      correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9A3',
+      ts: new Date().toISOString(),
+      role: 'backend',
+      frame_seq: 0,
+      entries: [
+        {
+          tool_id: 'kakao_keyword_search',
+          name: 'Kakao Keyword Search',
+          primitive: 'locate',
+          policy_authority_url: 'https://developers.kakao.com/',
+          source_mode: 'live',
+          search_hint: '장소 키워드 위치 검색',
+          llm_description: 'Resolve place names.',
+          input_schema_json: {
+            type: 'object',
+            properties: { query: { type: 'string' } },
+            required: ['query'],
+            additionalProperties: false,
+          },
+        },
+        {
+          tool_id: 'ccourt_publication_documents',
+          name: 'Court Publications',
+          primitive: 'find',
+          policy_authority_url: 'https://www.scourt.go.kr/',
+          source_mode: 'live',
+          search_hint: '공고 문서 열람',
+          llm_description: 'Court document publication search.',
+          input_schema_json: {
+            type: 'object',
+            properties: { query: { type: 'string' } },
+            required: ['query'],
+            additionalProperties: false,
+          },
+        },
+        {
+          tool_id: 'mock_lookup_module_gov24_certificate',
+          name: 'Government24 certificate lookup',
+          primitive: 'find',
+          policy_authority_url: 'https://www.gov.kr/',
+          source_mode: 'mock',
+          search_hint: '정부24 주민등록등본 증명서 조회',
+          llm_description: 'Mock Government24 certificate lookup.',
+          input_schema_json: {
+            type: 'object',
+            properties: {
+              certificate_type: { type: 'string' },
+              purpose: { type: 'string' },
+            },
+            required: ['certificate_type', 'purpose'],
+            additionalProperties: false,
+          },
+        },
+        {
+          tool_id: 'mock_verify_module_simple_auth',
+          name: 'Simple Auth Module',
+          primitive: 'check',
+          policy_authority_url: 'https://www.gov.kr/',
+          source_mode: 'mock',
+          search_hint: '간편인증 정부24 주민등록등본 민원 발급',
+          llm_description: 'Simple auth check for protected Gov24 requests.',
+          input_schema_json: {
+            type: 'object',
+            properties: { scope_list: { type: 'array', items: { type: 'string' } } },
+            required: ['scope_list'],
+            additionalProperties: false,
+          },
+        },
+        {
+          tool_id: 'mock_submit_module_gov24_minwon',
+          name: 'Government24 civil petition submit',
+          primitive: 'send',
+          policy_authority_url: 'https://www.gov.kr/',
+          source_mode: 'mock',
+          search_hint: '정부24 주민등록등본 민원 신청 발급 제출',
+          llm_description: 'Mock Government24 civil petition submission adapter.',
+          input_schema_json: {
+            type: 'object',
+            properties: {
+              form_code: { type: 'string' },
+              delegation_token: { type: 'string' },
+            },
+            required: ['form_code', 'delegation_token'],
+            additionalProperties: false,
+          },
+        },
+      ],
+      manifest_hash: 'c'.repeat(64),
+      emitter_pid: 12345,
+    } satisfies AdapterManifestSyncFrame)
+
+    const selected = selectTopKAdapterToolNamesForQuery(
+      '정부24에서 주민등록등본 발급 민원 신청해줘',
+      5,
+    )
+
+    expect(selected[0]).toBe('mock_verify_module_simple_auth')
+    expect(selected).toContain('mock_submit_module_gov24_minwon')
+    expect(selected).toContain('mock_lookup_module_gov24_certificate')
+    expect(selected).not.toContain('kakao_keyword_search')
+    expect(selected).not.toContain('ccourt_publication_documents')
+
+    const override = selectUmmayaToolChoiceOverride({
+      messages: [
+        {
+          type: 'user',
+          message: { role: 'user', content: '정부24에서 주민등록등본 발급 민원 신청해줘' },
+        },
+      ] as any,
+      tools: [
+        toolNamed('ToolSearch'),
+        toolNamed('mock_verify_module_simple_auth'),
+        toolNamed('mock_submit_module_gov24_minwon'),
+      ],
+    })
     expect(override).toEqual({
       type: 'tool',
-      name: 'mock_verify_mobile_id',
+      name: 'mock_verify_module_simple_auth',
     })
+  })
+
+  test('protected concrete check adapters require permission before direct execution', async () => {
+    clearManifestCache()
+    ingestManifestFrame({
+      kind: 'adapter_manifest_sync',
+      version: '1.0',
+      session_id: 'test-session',
+      correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9B1',
+      ts: new Date().toISOString(),
+      role: 'backend',
+      frame_seq: 0,
+      entries: [
+        {
+          tool_id: 'mock_verify_module_simple_auth',
+          name: 'Simple Auth Module',
+          primitive: 'check',
+          policy_authority_url: 'https://www.gov.kr/',
+          source_mode: 'mock',
+          search_hint: '간편인증 주민등록등본 민원 발급 simple auth',
+          llm_description: 'Mock simple-auth verification adapter.',
+          input_schema_json: {
+            type: 'object',
+            properties: { scope_list: { type: 'array', items: { type: 'string' } } },
+            required: ['scope_list'],
+            additionalProperties: false,
+          },
+        },
+        {
+          tool_id: 'mock_submit_module_gov24_minwon',
+          name: 'Government24 civil petition submit',
+          primitive: 'send',
+          policy_authority_url: 'https://www.gov.kr/',
+          source_mode: 'mock',
+          search_hint: '정부24 주민등록등본 민원 신청 발급 제출',
+          llm_description: 'Mock Government24 civil petition submission adapter.',
+          input_schema_json: {
+            type: 'object',
+            properties: {
+              form_code: { type: 'string' },
+              delegation_token: { type: 'string' },
+            },
+            required: ['form_code', 'delegation_token'],
+            additionalProperties: false,
+          },
+        },
+      ],
+      manifest_hash: 'a'.repeat(64),
+      emitter_pid: 12345,
+    } satisfies AdapterManifestSyncFrame)
+
+    const checkTool = getAdapterToolByName('mock_verify_module_simple_auth')
+    expect(checkTool).toBeDefined()
+    expect(checkTool?.isReadOnly({ scope_list: ['gov24.resident_registration'] })).toBe(
+      false,
+    )
+    expect(
+      checkTool?.isDestructive?.({ scope_list: ['gov24.resident_registration'] }),
+    ).toBe(true)
+    const checkPermission = await checkTool!.checkPermissions(
+      { scope_list: ['gov24.resident_registration'] },
+      {} as any,
+    )
+    expect(checkPermission.behavior).toBe('ask')
+    expect(checkPermission.message).toContain('권한 위임 필요')
+
+    const sendTool = getAdapterToolByName('mock_submit_module_gov24_minwon')
+    expect(sendTool).toBeDefined()
+    const sendPermission = await sendTool!.checkPermissions(
+      { form_code: 'resident-registration', delegation_token: 'mock-token' },
+      {} as any,
+    )
+    expect(sendPermission.behavior).toBe('ask')
+    expect(sendPermission.message).toContain('제출 요청')
   })
 
   test('protected certificate wording suppresses further tools after a check attempt', () => {

@@ -1,4 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { assembleToolPool } from '../../../src/tools.js'
@@ -205,6 +207,9 @@ describe('CC provider wired to FriendliAI client shim', () => {
         type: 'function',
         function: { name: 'kma_apihub_url_air_metar_decoded' },
       })
+      expect(JSON.stringify(requestBody?.['messages'])).toContain(
+        'Mandatory tool call: the host selected kma_apihub_url_air_metar_decoded',
+      )
     } finally {
       clearManifestCache()
       if (previousToken === undefined) {
@@ -216,6 +221,111 @@ describe('CC provider wired to FriendliAI client shim', () => {
         delete process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK
       } else {
         process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK = previousDisableFallback
+      }
+    }
+  })
+
+  test('records turn-local adapter selection diagnostics for provider requests', async () => {
+    let requestBody: Record<string, unknown> | undefined
+    const previousToken = process.env.UMMAYA_FRIENDLI_TOKEN
+    const previousDisableFallback = process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK
+    const previousDiagnosticsFile = process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE
+    const diagnosticsDir = mkdtempSync(join(tmpdir(), 'ummaya-route-diagnostics-'))
+    const diagnosticsPath = join(diagnosticsDir, 'route.jsonl')
+    process.env.UMMAYA_FRIENDLI_TOKEN = 'friendli-token'
+    process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK = '1'
+    process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE = diagnosticsPath
+    clearManifestCache()
+    ingestManifestFrame({
+      kind: 'adapter_manifest_sync',
+      version: '1.0',
+      session_id: 'test-session',
+      correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9EF',
+      ts: new Date().toISOString(),
+      role: 'backend',
+      frame_seq: 0,
+      entries: [
+        {
+          tool_id: 'kma_apihub_url_air_metar_decoded',
+          name: 'KMA APIHub decoded METAR',
+          primitive: 'find',
+          policy_authority_url: 'https://apihub.kma.go.kr/',
+          source_mode: 'live',
+          search_hint: 'METAR SPECI decoded airport weather aviation',
+          llm_description: 'Decoded METAR airport weather.',
+          input_schema_json: {
+            type: 'object',
+            properties: { org: { type: 'string' } },
+            additionalProperties: false,
+          },
+        },
+      ],
+      manifest_hash: 'b'.repeat(64),
+      emitter_pid: 12345,
+    })
+
+    try {
+      const tools = assembleToolPool(getEmptyToolPermissionContext(), [])
+      for await (const _event of queryModelWithStreaming({
+        messages: [createUserMessage({ content: 'METAR airport weather 확인해줘' })],
+        systemPrompt: asSystemPrompt(['System prompt']),
+        thinkingConfig: { type: 'disabled' },
+        tools,
+        signal: new AbortController().signal,
+        options: {
+          getToolPermissionContext: async () => getEmptyToolPermissionContext(),
+          model: 'LGAI-EXAONE/K-EXAONE-236B-A23B',
+          isNonInteractiveSession: false,
+          querySource: 'repl_main_thread',
+          agents: [],
+          allowedAgentTypes: [],
+          mcpTools: [],
+          fetchOverride: async (_input: string | URL | Request, init?: RequestInit) => {
+            requestBody = JSON.parse(String(init?.body))
+            return responseForTextDelta('ok')
+          },
+        },
+      })) {
+      }
+
+      const diagnosticLines = readFileSync(diagnosticsPath, 'utf8')
+        .trim()
+        .split('\n')
+        .map(line => JSON.parse(line) as Record<string, unknown>)
+      const selection = diagnosticLines.find(record => record.event === 'adapter_selection')
+      expect(selection).toEqual(
+        expect.objectContaining({
+          manifest_hash: 'b'.repeat(64),
+          query_source: 'repl_main_thread',
+          schema_projection_level: 'top_k_concrete_adapter_schemas',
+        }),
+      )
+      expect(selection?.selected_tools).toContain('kma_apihub_url_air_metar_decoded')
+      expect(selection?.final_adapter_tools).toContain('kma_apihub_url_air_metar_decoded')
+      expect(selection?.query_hash).toMatch(/^[a-f0-9]{64}$/)
+      const toolsPayload = requestBody?.['tools'] as
+        | Array<{ function?: { name?: string } }>
+        | undefined
+      expect(toolsPayload?.map(tool => tool.function?.name)).toContain(
+        'kma_apihub_url_air_metar_decoded',
+      )
+    } finally {
+      clearManifestCache()
+      rmSync(diagnosticsDir, { recursive: true, force: true })
+      if (previousToken === undefined) {
+        delete process.env.UMMAYA_FRIENDLI_TOKEN
+      } else {
+        process.env.UMMAYA_FRIENDLI_TOKEN = previousToken
+      }
+      if (previousDisableFallback === undefined) {
+        delete process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK
+      } else {
+        process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK = previousDisableFallback
+      }
+      if (previousDiagnosticsFile === undefined) {
+        delete process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE
+      } else {
+        process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE = previousDiagnosticsFile
       }
     }
   })

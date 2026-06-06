@@ -181,6 +181,14 @@ def _adapter_context_tool() -> GovAPITool:
     )
 
 
+def _projected_tool_ids(content: str) -> tuple[str, ...]:
+    return tuple(
+        line.strip().removeprefix("- tool_id:").strip()
+        for line in content.splitlines()
+        if line.strip().startswith("- tool_id:")
+    )
+
+
 def test_available_adapters_context_includes_retrieved_adapter() -> None:
     """Rich REPL QueryEngine must inject BM25 adapter candidates for the turn."""
     registry = ToolRegistry()
@@ -199,13 +207,38 @@ def test_available_adapters_context_includes_retrieved_adapter() -> None:
 
     assert message is not None
     assert message.role == "system"
-    assert "<available_adapters>" in (message.content or "")
+    assert "<available_adapters" in (message.content or "")
     assert "bfc_funeral_area_fee" in (message.content or "")
-    assert "The model-facing function name is the concrete tool_id" in (message.content or "")
-    assert "Do not call locate just because" in (message.content or "")
-    assert "call_hint: bfc_funeral_area_fee({...})" in (message.content or "")
+    assert 'backend="bm25"' in (message.content or "")
+    assert 'schema_projection="summary"' in (message.content or "")
+    assert "RouteDecision candidates" in (message.content or "")
+    assert "input_schema_summary" in (message.content or "")
+    assert "call_hint: bfc_funeral_area_fee({...schema fields...})" in (message.content or "")
+    assert "input_schema_json" not in (message.content or "")
     assert 'find({"tool_id":"bfc_funeral_area_fee"' not in (message.content or "")
     assert "Do not call the concrete tool_id as a function name" not in (message.content or "")
+
+
+def test_available_adapters_context_projection_matches_exposed_tools() -> None:
+    registry = ToolRegistry()
+    register_mvp_surface(registry)
+    registry.register(_adapter_context_tool())
+    executor = ToolExecutor(registry)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "부산광역시 장례식장 시설 사용료 목록을 조회해줘"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    projected_tool_ids = _projected_tool_ids(content)
+    assert projected_tool_ids == turn_tool_ids
+    assert not (set(projected_tool_ids) & {"find", "locate", "check", "send", "search_tools"})
 
 
 @pytest.mark.asyncio
@@ -289,7 +322,8 @@ def test_available_adapters_context_prioritizes_document_primitive() -> None:
     content = message.content or ""
     assert "tool_id: document" in content
     assert "document.path" in content
-    assert "Do not call locate" in content
+    assert 'schema_projection="summary"' in content
+    assert "input_schema_json" not in content
     assert "tool_id: kakao_keyword_search" not in content
     assert "tool_id: kakao_address_search" not in content
 
@@ -359,7 +393,7 @@ def test_available_adapters_context_constrains_aed_region_filters_to_find() -> N
     assert message is not None
     content = message.content or ""
     assert "nmc_aed_site_locate" in content
-    assert "kakao_keyword_search" not in content
+    assert "tool_id: kakao_keyword_search" not in content
     assert "nmc_aed_site_locate" in turn_tool_ids
     assert "kakao_keyword_search" not in turn_tool_ids
 
@@ -593,6 +627,29 @@ def test_available_adapters_context_pps_bid_search_exposes_search_contract() -> 
     assert "inqry_end_dt" in content
     assert "bid_ntce_nm" in content
     assert "bid_ntce_no" not in content
+
+
+def test_available_adapters_context_air_quality_exposes_airkorea() -> None:
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "부산 공기질과 미세먼지 지금 어때? air quality 확인해줘"
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "airkorea_ctprvn_air_quality"
+    assert "airkorea_ctprvn_air_quality" in turn_tool_ids
+    assert "kma_current_observation" not in turn_tool_ids
+    assert "kakao_keyword_search" not in turn_tool_ids
+    assert "sido_name" in content
 
 
 def test_available_adapters_context_natural_kcue_finance_excludes_locate() -> None:

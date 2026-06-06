@@ -603,6 +603,37 @@
   },
   {
     "agencies_or_infrastructure": [
+      "aviation weather infrastructure",
+      "airport operations data",
+      "airline delay notice infrastructure",
+      "public transit operations data"
+    ],
+    "domain": "mobility",
+    "evaluation_focus": [
+      "aviation_weather",
+      "multi_source_lookup",
+      "alert_subscription_boundary"
+    ],
+    "expected_ax_chain": [
+      {
+        "primitive": "locate",
+        "purpose": "normalize_airport_and_destination"
+      },
+      {
+        "primitive": "find",
+        "purpose": "collect_aviation_weather_delay_and_airport_access_status"
+      },
+      {
+        "primitive": "send",
+        "purpose": "monitor_weather_delay_and_access_alerts_until_departure"
+      }
+    ],
+    "id": "MOB-003",
+    "priority": "P1",
+    "request_ko": "내일 김해공항에서 제주로 가는 항공편이 있는데 항공기상, 지연 위험, 공항 이동까지 확인하고 알림 설정해줘."
+  },
+  {
+    "agencies_or_infrastructure": [
       "National Tax Service Hometax",
       "local government licensing infrastructure",
       "food safety education infrastructure",
@@ -676,6 +707,41 @@
     "id": "BUS-002",
     "priority": "P1",
     "request_ko": "직원을 처음 채용했어. 4대보험 신고, 근로계약, 지원금 받을 수 있는지까지 확인해서 진행해줘."
+  },
+  {
+    "agencies_or_infrastructure": [
+      "public procurement infrastructure",
+      "supplier registration infrastructure",
+      "business certificate infrastructure",
+      "bid notice public data"
+    ],
+    "domain": "business",
+    "evaluation_focus": [
+      "procurement",
+      "document_completeness",
+      "irreversible_submission_guard"
+    ],
+    "expected_ax_chain": [
+      {
+        "primitive": "check",
+        "purpose": "supplier_identity_and_business_authority"
+      },
+      {
+        "primitive": "find",
+        "purpose": "find_procurement_bid_notice_and_required_documents"
+      },
+      {
+        "primitive": "send",
+        "purpose": "submit_bid_or_prepare_official_handoff_after_confirmation"
+      },
+      {
+        "primitive": "send",
+        "purpose": "track_procurement_notice_changes_and_deadlines"
+      }
+    ],
+    "id": "BUS-003",
+    "priority": "P1",
+    "request_ko": "소상공인 장비 납품 입찰에 참여하고 싶어. 나라장터 공고를 찾고 자격서류를 확인해서 제출 가능하면 진행해줘."
   },
   {
     "agencies_or_infrastructure": [
@@ -790,80 +856,5 @@
     "id": "EDU-002",
     "priority": "P1",
     "request_ko": "등록금이 부담돼. 국가장학금, 학자금대출, 근로장학 중 내가 신청할 수 있는 걸 찾아서 진행해줘."
-  },
-  {
-    "agencies_or_infrastructure": [
-      "local disaster response center",
-      "disaster relief infrastructure",
-      "temporary housing infrastructure",
-      "electric and gas safety operators",
-      "emergency alert infrastructure"
-    ],
-    "domain": "safety",
-    "evaluation_focus": [
-      "crisis_mode",
-      "partial_information_handling",
-      "multi_agency_relief"
-    ],
-    "expected_ax_chain": [
-      {
-        "primitive": "locate",
-        "purpose": "identify_affected_address_and_jurisdiction"
-      },
-      {
-        "primitive": "check",
-        "purpose": "resident_or_property_authority"
-      },
-      {
-        "primitive": "send",
-        "purpose": "file_disaster_damage_report"
-      },
-      {
-        "primitive": "send",
-        "purpose": "request_relief_temporary_housing_or_safety_inspection"
-      },
-      {
-        "primitive": "send",
-        "purpose": "monitor_disaster_alerts_and_case_status"
-      }
-    ],
-    "id": "SAF-001",
-    "priority": "P0",
-    "request_ko": "집이 침수됐어. 피해 신고, 재난지원금, 임시주거, 전기·가스 안전 점검까지 바로 도와줘."
-  },
-  {
-    "agencies_or_infrastructure": [
-      "local civil complaint infrastructure",
-      "environmental complaint infrastructure",
-      "municipal construction permit records",
-      "evidence attachment infrastructure"
-    ],
-    "domain": "safety",
-    "evaluation_focus": [
-      "civil_petition_routing",
-      "evidence_sanitization",
-      "response_tracking"
-    ],
-    "expected_ax_chain": [
-      {
-        "primitive": "locate",
-        "purpose": "identify_jurisdiction_and_construction_site"
-      },
-      {
-        "primitive": "find",
-        "purpose": "determine_responsible_office_and_required_evidence"
-      },
-      {
-        "primitive": "send",
-        "purpose": "submit_civil_complaint_with_user_confirmed_evidence"
-      },
-      {
-        "primitive": "send",
-        "purpose": "track_response_deadline"
-      }
-    ],
-    "id": "SAF-002",
-    "priority": "P1",
-    "request_ko": "동네 공사 소음이 너무 심해. 어디에 민원 넣어야 하는지 찾고 증거 정리해서 접수해줘."
   }
 ]

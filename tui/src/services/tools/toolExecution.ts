@@ -51,7 +51,9 @@ import {
 import {
   getAdapterToolByName,
   isAdapterToolName,
+  isRootPrimitiveToolName,
 } from '../../tools/AdapterTool/AdapterTool.js'
+import { appendRouteDiagnostic } from '../../tools/AdapterTool/routeDiagnostics.js'
 import { getAllBaseTools } from '../../tools.js'
 import type { HookProgress } from '../../types/hooks.js'
 import type {
@@ -366,6 +368,21 @@ export async function* runToolUse(
   }
   const messageId = assistantMessage.message.id
   const requestId = assistantMessage.requestId
+  const isAdapterTool = isAdapterToolName(toolName)
+  const isRouteTool = isAdapterTool || isRootPrimitiveToolName(toolName)
+  const routeTargetToolId = extractRouteTargetToolId(toolUse.input)
+  if (isRouteTool) {
+    appendRouteDiagnostic('route_tool_dispatch', {
+      tool_name: toolName,
+      tool_surface: isAdapterTool ? 'concrete_adapter' : 'root_primitive',
+      target_tool_id: routeTargetToolId,
+      tool_use_id: toolUse.id,
+      message_id: messageId,
+      request_id: requestId ?? null,
+      query_chain_id: toolUseContext.queryTracking?.chainId ?? null,
+      query_depth: toolUseContext.queryTracking?.depth ?? null,
+    })
+  }
   const mcpServerType = getMcpServerType(
     toolName,
     toolUseContext.options.mcpClients,
@@ -762,6 +779,9 @@ async function checkPermissionsAndCallTool(
   }
 
   const resultingMessages = []
+  const isAdapterTool = isAdapterToolName(tool.name)
+  const isRouteTool = isAdapterTool || isRootPrimitiveToolName(tool.name)
+  const toolSurface = isAdapterTool ? 'concrete_adapter' : 'root_primitive'
 
   // Defense-in-depth: strip _simulatedSedEdit from model-provided Bash input.
   // This field is internal-only — it must only be injected by the permission
@@ -1003,6 +1023,21 @@ async function checkPermissionsAndCallTool(
   }
 
   if (permissionDecision.behavior !== 'allow') {
+    if (isRouteTool) {
+      appendRouteDiagnostic('route_tool_permission', {
+        tool_name: tool.name,
+        tool_surface: toolSurface,
+        target_tool_id: extractRouteTargetToolId(processedInput),
+        tool_use_id: toolUseID,
+        message_id: messageId,
+        request_id: requestId ?? null,
+        query_chain_id: toolUseContext.queryTracking?.chainId ?? null,
+        query_depth: toolUseContext.queryTracking?.depth ?? null,
+        permission_mode: permissionMode,
+        permission_behavior: permissionDecision.behavior,
+        result_status: 'blocked',
+      })
+    }
     logForDebugging(`${tool.name} tool permission denied`)
     const decisionInfo = toolUseContext.toolDecisions?.get(toolUseID)
     endToolBlockedOnUserSpan('reject', decisionInfo?.source || 'unknown')
@@ -1214,6 +1249,20 @@ async function checkPermissionsAndCallTool(
     callInput = processedInput
   }
   try {
+    if (isRouteTool) {
+      appendRouteDiagnostic('route_tool_call_start', {
+        tool_name: tool.name,
+        tool_surface: toolSurface,
+        target_tool_id: extractRouteTargetToolId(callInput),
+        tool_use_id: toolUseID,
+        message_id: messageId,
+        request_id: requestId ?? null,
+        query_chain_id: toolUseContext.queryTracking?.chainId ?? null,
+        query_depth: toolUseContext.queryTracking?.depth ?? null,
+        permission_mode: permissionMode,
+        permission_behavior: permissionDecision.behavior,
+      })
+    }
     const result = await tool.call(
       callInput,
       {
@@ -1309,6 +1358,21 @@ async function checkPermissionsAndCallTool(
       : typeof mappedContent === 'string'
         ? mappedContent.length
         : jsonStringify(mappedContent).length
+    if (isRouteTool) {
+      appendRouteDiagnostic('route_tool_result', {
+        tool_name: tool.name,
+        tool_surface: toolSurface,
+        target_tool_id: extractRouteTargetToolId(callInput),
+        tool_use_id: toolUseID,
+        message_id: messageId,
+        request_id: requestId ?? null,
+        query_chain_id: toolUseContext.queryTracking?.chainId ?? null,
+        query_depth: toolUseContext.queryTracking?.depth ?? null,
+        duration_ms: durationMs,
+        result_status: 'success',
+        tool_result_size_bytes: toolResultSizeBytes,
+      })
+    }
 
     // Extract file extension for file-related tools
     let fileExtension: ReturnType<typeof getFileExtensionForAnalytics>
@@ -1605,6 +1669,21 @@ async function checkPermissionsAndCallTool(
       error: errorMessage(error),
     })
     endToolSpan()
+    if (isRouteTool) {
+      appendRouteDiagnostic('route_tool_result', {
+        tool_name: tool.name,
+        tool_surface: toolSurface,
+        target_tool_id: extractRouteTargetToolId(callInput),
+        tool_use_id: toolUseID,
+        message_id: messageId,
+        request_id: requestId ?? null,
+        query_chain_id: toolUseContext.queryTracking?.chainId ?? null,
+        query_depth: toolUseContext.queryTracking?.depth ?? null,
+        duration_ms: durationMs,
+        result_status: 'error',
+        error_kind: classifyToolError(error),
+      })
+    }
 
     // Handle MCP auth errors by updating the client status to 'needs-auth'
     // This updates the /mcp display to show the server needs re-authorization
@@ -1752,4 +1831,10 @@ async function checkPermissionsAndCallTool(
       toolUseContext.toolDecisions?.delete(toolUseID)
     }
   }
+}
+
+function extractRouteTargetToolId(input: unknown): string | null {
+  if (!input || typeof input !== 'object') return null
+  const value = (input as { tool_id?: unknown }).tool_id
+  return typeof value === 'string' ? value : null
 }

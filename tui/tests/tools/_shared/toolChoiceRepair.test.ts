@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import type { Tools } from '../../../src/Tool.js'
 import type { Message } from '../../../src/types/message.js'
 import {
+  UMMAYA_TUI_REPAIR_POLICIES,
   backfillUmmayaObservableToolInputFromUserQuery,
   buildDocumentCompletionPromptIfNeeded,
   repairUmmayaExplicitDocumentToolUseFromUserQuery,
@@ -36,6 +37,12 @@ const documentAndLegacyGlobTools = [
 ].map(name => ({ name })) as Tools
 
 const toolSearchOnlyTools = [{ name: 'ToolSearch' }] as Tools
+const backendRepairReceipt = {
+  source: 'backend_route_decision' as const,
+  reason: 'backend recorded an explicit document repair for this turn',
+  evidenceEvent: 'ummaya.route_decision.document_repair',
+  toolName: 'document',
+}
 
 function user(text: string): Message {
   return {
@@ -71,16 +78,53 @@ function toolResult(id: string, payload: Record<string, unknown>): Message {
 }
 
 describe('document harness tool-choice repair', () => {
-  test('starts local HWPX write/diff requests with the document primitive', () => {
+  test('backend route decision validation blocks initial document tool-choice override', () => {
     expect(
       selectUmmayaToolChoiceOverride({
         messages: [user(docQuery)],
         tools: documentTools,
       }),
-    ).toEqual({ type: 'tool', name: 'document' })
+    ).toBeUndefined()
   })
 
-  test('routes explicit current-session artifact render requests to the document primitive', () => {
+  test('does not synthesize unsourced virtual tool use for explicit document paths', () => {
+    const prompt =
+      '웹에서 받은 서울문화포털 DDP 참가신청서 DOCX 사본 /tmp/ummaya-g011-live-tui/inputs/seoul-culture-application-plan.docx 내용을 파악해서 접수번호 옆 빈칸에 UMMAYA-G011-2026을 넣고 저장해줘.'
+
+    expect(selectUmmayaClientForcedToolUse({
+      messages: [user(prompt)],
+      tools: documentTools,
+    })).toBeUndefined()
+    expect(
+      repairUmmayaExplicitDocumentToolUseFromUserQuery({
+        toolName: 'tago_bus_station_search',
+        input: { city_code: '21', node_nm: '/tmp/ummaya-g011-live-tui/inputs/seoul-culture-application-plan.docx' },
+        messages: [user(prompt)],
+        tools: documentTools,
+      }),
+    ).toBeUndefined()
+  })
+
+  test('display-only repair policies carry audit marker and deletion condition', () => {
+    expect(UMMAYA_TUI_REPAIR_POLICIES.length).toBeGreaterThan(0)
+    for (const policy of UMMAYA_TUI_REPAIR_POLICIES) {
+      expect(policy.owner).toMatch(/^ummaya:/u)
+      expect(policy.evidenceEvent).toMatch(/^ummaya\./u)
+      expect(policy.removalCondition.length).toBeGreaterThan(20)
+      expect(policy.kind).toBe('display_or_answer_repair')
+    }
+  })
+
+  test('does not force local HWPX write/diff requests from TUI intent alone', () => {
+    expect(
+      selectUmmayaToolChoiceOverride({
+        messages: [user(docQuery)],
+        tools: documentTools,
+      }),
+    ).toBeUndefined()
+  })
+
+  test('does not force explicit current-session artifact render requests from TUI intent alone', () => {
     expect(
       selectUmmayaToolChoiceOverride({
         messages: [
@@ -90,10 +134,10 @@ describe('document harness tool-choice repair', () => {
         ],
         tools: documentTools,
       }),
-    ).toEqual({ type: 'tool', name: 'document' })
+    ).toBeUndefined()
   })
 
-  test('keeps visual diff wording on the document primitive', () => {
+  test('does not force visual diff wording onto the document primitive from TUI intent alone', () => {
     expect(
       selectUmmayaToolChoiceOverride({
         messages: [
@@ -103,7 +147,7 @@ describe('document harness tool-choice repair', () => {
         ],
         tools: documentTools,
       }),
-    ).toEqual({ type: 'tool', name: 'document' })
+    ).toBeUndefined()
   })
 
   test('does not synthesize incomplete document arguments when the primitive is available', () => {
@@ -126,7 +170,7 @@ describe('document harness tool-choice repair', () => {
     expect(selectUmmayaClientForcedToolUse({ messages, tools: documentTools })).toBeUndefined()
   })
 
-  test('routes deferred document requests through ToolSearch before prose fallback', () => {
+  test('does not route deferred document requests through ToolSearch from TUI intent alone', () => {
     const messages = [
       user(
         '다운로드 폴더에 있는 SW중심대학사업 현장미러형연계프로젝트 주간활동일지 HWPX 양식을 13주차 활동일지로 작성해줘. 작성이 끝나면 원본과 달라진 부분을 문서 화면으로 비교해서 보여줘.',
@@ -138,14 +182,8 @@ describe('document harness tool-choice repair', () => {
         messages,
         tools: toolSearchOnlyTools,
       }),
-    ).toEqual({ type: 'tool', name: 'ToolSearch' })
-    expect(selectUmmayaClientForcedToolUse({ messages, tools: toolSearchOnlyTools })).toEqual({
-      name: 'ToolSearch',
-      input: {
-        query: 'select:document',
-        max_results: 1,
-      },
-    })
+    ).toBeUndefined()
+    expect(selectUmmayaClientForcedToolUse({ messages, tools: toolSearchOnlyTools })).toBeUndefined()
   })
 
   test('does not bypass model intent analysis for Downloads HWPX edit requests', () => {
@@ -158,7 +196,7 @@ describe('document harness tool-choice repair', () => {
     expect(selectUmmayaClientForcedToolUse({ messages, tools: documentTools })).toBeUndefined()
   })
 
-  test('client-forces the document primitive when provider ignores tool_choice for an explicit local path', () => {
+  test('backend route decision validation permits receipted virtual document repair', () => {
     const prompt =
       '웹에서 받은 서울문화포털 DDP 참가신청서 DOCX 사본 /tmp/ummaya-g011-live-tui/inputs/seoul-culture-application-plan.docx 내용을 파악해서 접수번호 옆 빈칸에 UMMAYA-G011-2026을 넣고, 그 칸을 Malgun Gothic 12pt 굵게, 글자색 1F4E79, 배경색 FFF2CC, 가운데 정렬로 보정한 뒤 /tmp/ummaya-g011-live-tui/tui-exports/g011-seoul-culture-application-plan.docx 로 저장해줘. 수정 후 변경된 부분을 바로 확인할 수 있게 보여줘.'
     const messages = [
@@ -177,7 +215,12 @@ describe('document harness tool-choice repair', () => {
       } as Message,
     ]
 
-    expect(selectUmmayaClientForcedToolUse({ messages, tools: documentTools })).toEqual({
+    expect(selectUmmayaClientForcedToolUse({ messages, tools: documentTools })).toBeUndefined()
+    expect(selectUmmayaClientForcedToolUse({
+      messages,
+      tools: documentTools,
+      backendRepairReceipt,
+    })).toEqual({
       name: 'document',
       input: {
         correlation_id: expect.stringMatching(/^client-forced-document-[a-f0-9]{8}$/),
@@ -206,6 +249,18 @@ describe('document harness tool-choice repair', () => {
         },
         messages: [user(prompt)],
         tools: documentTools,
+      }),
+    ).toBeUndefined()
+    expect(
+      repairUmmayaExplicitDocumentToolUseFromUserQuery({
+        toolName: 'tago_bus_station_search',
+        input: {
+          city_code: '21',
+          node_nm: '/Users/example/nts_business_registration_individual.hwpx',
+        },
+        messages: [user(prompt)],
+        tools: documentTools,
+        backendRepairReceipt,
       }),
     ).toEqual({
       name: 'document',
@@ -237,11 +292,11 @@ describe('document harness tool-choice repair', () => {
     expect(selectUmmayaToolChoiceOverride({
       messages: [user(prompt)],
       tools: documentTools,
-    })).toEqual({ type: 'tool', name: 'document' })
+    })).toBeUndefined()
     expect(selectUmmayaClientForcedToolUse({
       messages: [user(prompt)],
       tools: documentTools,
-    })?.input.operation).toBe('inspect')
+    })).toBeUndefined()
 
     backfillUmmayaObservableToolInputFromUserQuery({
       toolName: 'document',
@@ -259,7 +314,7 @@ describe('document harness tool-choice repair', () => {
     expect(selectUmmayaClientForcedToolUse({
       messages: [user(prompt)],
       tools: documentTools,
-    })?.input.operation).toBe('fill')
+    })).toBeUndefined()
   })
 
   test('repairs provider document fill calls back to inspect for explicit read-only requests', () => {
@@ -280,6 +335,7 @@ describe('document harness tool-choice repair', () => {
         },
         messages: [user(prompt)],
         tools: documentTools,
+        backendRepairReceipt,
       }),
     ).toEqual({
       name: 'document',
@@ -330,7 +386,7 @@ describe('document harness tool-choice repair', () => {
         messages,
         tools: documentAndGlobTools,
       }),
-    ).toEqual({ type: 'tool', name: 'workspace_glob' })
+    ).toBeUndefined()
   })
 
   test('keeps a legacy CC glob fallback only when the workspace adapter is absent', () => {
@@ -345,7 +401,7 @@ describe('document harness tool-choice repair', () => {
         messages,
         tools: documentAndLegacyGlobTools,
       }),
-    ).toEqual({ type: 'tool', name: 'Glob' })
+    ).toBeUndefined()
   })
 
   test('uses document directly when the user already supplied an exact local document path', () => {
@@ -360,7 +416,7 @@ describe('document harness tool-choice repair', () => {
         messages,
         tools: documentAndGlobTools,
       }),
-    ).toEqual({ type: 'tool', name: 'document' })
+    ).toBeUndefined()
   })
 
   test('reroutes a new explicit artifact render request even when the session has an older render', () => {
@@ -380,7 +436,7 @@ describe('document harness tool-choice repair', () => {
         messages: priorRendered,
         tools: documentTools,
       }),
-    ).toEqual({ type: 'tool', name: 'document' })
+    ).toBeUndefined()
     expect(
       shouldSuppressUmmayaToolCallsForAnswerSynthesis({
         messages: priorRendered,
@@ -527,7 +583,7 @@ describe('document harness tool-choice repair', () => {
         messages,
         tools: documentTools,
       }),
-    ).toEqual({ type: 'tool', name: 'document' })
+    ).toBeUndefined()
   })
 
   test('requires one successful document primitive result instead of an exposed stage chain', () => {
@@ -539,7 +595,7 @@ describe('document harness tool-choice repair', () => {
         messages: beforeResult,
         tools: documentTools,
       }),
-    ).toEqual({ type: 'tool', name: 'document' })
+    ).toBeUndefined()
 
     const rendered = [
       ...beforeResult,

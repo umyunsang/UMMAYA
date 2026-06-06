@@ -33,7 +33,7 @@ import signal
 import sys
 import time
 import uuid
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Iterable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import FrameType
@@ -54,6 +54,7 @@ if TYPE_CHECKING:
     from ummaya.session.manager import SessionManager
     from ummaya.tools.executor import ToolExecutor
     from ummaya.tools.registry import ToolRegistry
+    from ummaya.tools.routing import RouteDecision
 
 logger = logging.getLogger(__name__)
 
@@ -973,7 +974,8 @@ _PPS_BID_USER_QUERY_RE: Final = re.compile(
     re.IGNORECASE,
 )
 _AIRKOREA_USER_QUERY_RE: Final = re.compile(
-    r"(미세먼지|초미세먼지|대기질|대기오염|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea)",
+    r"(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|"
+    r"pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)",
     re.IGNORECASE,
 )
 _TAGO_BUS_USER_QUERY_RE: Final = re.compile(
@@ -1001,10 +1003,7 @@ def _initial_concrete_tool_choice_for_query(
 ) -> str | None:
     """Force direct first calls only for unambiguous single-adapter lookups."""
     available = set(available_tool_names)
-    return _document_tool_choice_for_query(
-        user_query,
-        available,
-    ) or _initial_public_data_tool_choice_for_query(user_query, available)
+    return _document_tool_choice_for_query(user_query, available)
 
 
 def _document_tool_choice_for_query(
@@ -1092,37 +1091,6 @@ def _normalize_document_path_from_user_query(
         **document_obj,
         "path": str(explicit_paths[0]),
     }
-
-
-def _initial_public_data_tool_choice_for_query(
-    user_query: str,
-    available: set[str],
-) -> str | None:
-    """Force direct first calls only for unambiguous public-data lookups."""
-    if (
-        _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query)
-        and _KMA_ANALYSIS_CHART_TOOL_ID in available
-    ):
-        return _KMA_ANALYSIS_CHART_TOOL_ID
-    if _KMA_AIRPORT_PLACE_RE.search(user_query) and _KMA_AIRPORT_AVIATION_RE.search(user_query):
-        if (
-            re.search(r"(김포|gimpo|rkss)", user_query, re.IGNORECASE)
-            and re.search(r"(amos|활주로|rvr|runway|매분)", user_query, re.IGNORECASE)
-            and "kma_apihub_url_air_amos_minute" in available
-        ):
-            return "kma_apihub_url_air_amos_minute"
-        if "kma_apihub_url_air_metar_decoded" in available:
-            return "kma_apihub_url_air_metar_decoded"
-    if _PPS_BID_USER_QUERY_RE.search(user_query) and _PPS_BID_TOOL_ID in available:
-        return _PPS_BID_TOOL_ID
-    if _AIRKOREA_USER_QUERY_RE.search(user_query) and _AIRKOREA_TOOL_ID in available:
-        return _AIRKOREA_TOOL_ID
-    if _TAGO_BUS_USER_QUERY_RE.search(user_query):
-        if _TAGO_ROUTE_NO_RE.search(user_query) and "tago_bus_route_search" in available:
-            return "tago_bus_route_search"
-        if "tago_bus_station_search" in available:
-            return "tago_bus_station_search"
-    return None
 
 
 def _final_answer_looks_like_kma_analysis_fabrication(text: str, user_query: str) -> bool:
@@ -5088,26 +5056,31 @@ def _emitted_tool_id(fname: str, args_obj: dict[str, object]) -> str | None:
     return None
 
 
-def _direct_public_data_target_for_query(user_query: str) -> tuple[frozenset[str], str, str] | None:
+def _direct_public_data_target_for_query(
+    user_query: str,
+) -> tuple[frozenset[str], str, str, str] | None:
     """Return target adapter family for public-data wording that should not use substitutes."""
     if _KMA_ANALYSIS_MAP_USER_QUERY_RE.search(user_query):
         return (
             frozenset({_KMA_ANALYSIS_CHART_TOOL_ID}),
             _KMA_ANALYSIS_CHART_TOOL_ID,
-            "call the KMA APIHub analyzed weather-chart adapter and do not "
-            "substitute location, AirKorea, or ordinary weather tools.",
+            "weather_chart",
+            "use official KMA APIHub analyzed weather-chart evidence and do not "
+            "substitute location, AirKorea, or ordinary weather evidence.",
         )
     if _PPS_BID_USER_QUERY_RE.search(user_query):
         return (
             frozenset({_PPS_BID_TOOL_ID}),
             _PPS_BID_TOOL_ID,
-            "call the PPS/NaraJangteo bid adapter with its bid notice date fields.",
+            "procurement_bid",
+            "use PPS/NaraJangteo bid notice date fields.",
         )
     if _AIRKOREA_USER_QUERY_RE.search(user_query):
         return (
             frozenset({_AIRKOREA_TOOL_ID}),
             _AIRKOREA_TOOL_ID,
-            "call the AirKorea city/province air-quality adapter with sido_name such as '부산'.",
+            "air_quality",
+            "use AirKorea city/province air-quality evidence with sido_name such as '부산'.",
         )
     if _TAGO_BUS_USER_QUERY_RE.search(user_query):
         preferred = (
@@ -5118,15 +5091,17 @@ def _direct_public_data_target_for_query(user_query: str) -> tuple[frozenset[str
         return (
             _TAGO_TOOL_IDS,
             preferred,
-            "use TAGO bus schemas; for a route number, start with "
-            "tago_bus_route_search, then route_station and arrival.",
+            "bus_realtime",
+            "use TAGO bus evidence; for a route number, start with route search, "
+            "then route-station and arrival evidence.",
         )
     if _query_implies_current_weather_observation(user_query):
         return (
             _KMA_ORDINARY_WEATHER_TOOL_IDS | _KMA_LOCATION_TOOL_IDS,
             "kakao_keyword_search",
-            "use a location adapter first when coordinates are missing, then "
-            "KMA current observation for rain/umbrella/current-weather values.",
+            "current_weather",
+            "use location resolution first when coordinates are missing, then "
+            "KMA current observation evidence for rain/umbrella/current-weather values.",
         )
     return None
 
@@ -5140,15 +5115,15 @@ def _check_direct_public_data_tool_choice_prerequisite(
     target = _direct_public_data_target_for_query(user_query)
     if target is None:
         return None
-    allowed_tool_ids, preferred_tool_id, hint = target
+    allowed_tool_ids, preferred_tool_id, route_label, hint = target
     emitted_tool_id = _emitted_tool_id(fname, args_obj)
     if emitted_tool_id is None or emitted_tool_id in allowed_tool_ids:
         return None
     return (
         preferred_tool_id,
-        "Public-data tool-choice mismatch: the latest citizen request matches "
-        f"{preferred_tool_id}. The model emitted {emitted_tool_id} instead. "
-        f"RECOVERY: {hint}",
+        "Public-data tool-choice mismatch: "
+        f"target={route_label}. The latest citizen request needs that route; "
+        f"the previous tool choice does not match. RECOVERY: {hint}",
     )
 
 
@@ -5244,6 +5219,7 @@ _AVAILABLE_ADAPTER_FIND_LINE_RE: Final = re.compile(
     r"^\s*-\s+[A-Za-z0-9_.:-]+\s+\(primitive=find\)",
     re.MULTILINE,
 )
+_AVAILABLE_ADAPTER_TOOL_ID_LINE_RE: Final = re.compile(r"^\s*-\s*tool_id:\s*[A-Za-z0-9_.:-]+\s*$")
 _MEDICAL_COLLAPSE_RE: Final = re.compile(
     r"(사람[이가은는 ]*쓰러|쓰러졌|쓰러져|의식[을 ]*(?:잃|없)|심정지|"
     r"숨[을 ]*(?:안|못)|호흡[이가은는 ]*없|자동심장|심장충격|제세동|"
@@ -5278,7 +5254,21 @@ def _latest_available_adapters_block(llm_messages: list[Any]) -> str:
 
 def _available_adapters_block_has_find_candidate(block: str) -> bool:
     """Return True when retrieval surfaced a non-locate follow-up adapter."""
-    return bool(block and _AVAILABLE_ADAPTER_FIND_LINE_RE.search(block))
+    if not block:
+        return False
+    if _AVAILABLE_ADAPTER_FIND_LINE_RE.search(block):
+        return True
+    in_projected_candidate = False
+    for line in block.splitlines():
+        stripped = line.strip()
+        if _AVAILABLE_ADAPTER_TOOL_ID_LINE_RE.match(line):
+            in_projected_candidate = True
+            continue
+        if stripped.startswith("- "):
+            in_projected_candidate = False
+        if in_projected_candidate and stripped == "primitive: find":
+            return True
+    return False
 
 
 def _available_adapters_block_has_tool_id(block: str, tool_id: str) -> bool:
@@ -6209,54 +6199,50 @@ async def run(  # noqa: C901
     )
     _root_primitive_tool_ids = _ROOT_PRIMITIVE_TOOL_IDS
 
-    def _select_concrete_adapter_tools_for_turn(user_query: str) -> list[Any]:
-        """Return concrete, non-core adapter tools for this citizen turn.
+    def _route_decision_for_turn(user_query: str) -> RouteDecision | None:
+        q = (user_query or "").strip()
+        if not q:
+            return None
+        registry = _ensure_tool_registry()
+        try:
+            from ummaya.tools.routing import RouteDecisionService  # noqa: PLC0415
 
-        CC exposes concrete Tool objects to the model; UMMAYA keeps the same
-        model-facing shape and uses BM25/dense retrieval only as a loading
-        optimization so the tool list stays small.
-        """
+            raw_top_k = max(_AVAILABLE_ADAPTERS_TOP_K * 3, _AVAILABLE_ADAPTERS_TOP_K)
+            return RouteDecisionService(registry).select_adapters(
+                q,
+                top_k=min(raw_top_k, 20),
+                max_selected=_AVAILABLE_ADAPTERS_TOP_K,
+            )
+        except Exception:
+            logger.exception("route decision failed for '%s'", q[:80])
+            return None
+
+    def _select_concrete_adapter_tools_for_turn(
+        user_query: str, route_decision: RouteDecision | None = None
+    ) -> list[Any]:
         q = (user_query or "").strip()
         if not q:
             return []
         registry = _ensure_tool_registry()
-        selected: dict[str, Any] = {}
-        for tool in registry.all_tools():
-            if tool.id in _root_primitive_tool_ids:
-                continue
-            if tool.id in q:
-                selected[tool.id] = tool
-        try:
-            from ummaya.tools.search import search  # noqa: PLC0415
+        decision = route_decision or _route_decision_for_turn(q)
+        if decision is None:
+            return []
+        from ummaya.tools.routing import selected_concrete_adapter_tools  # noqa: PLC0415
 
-            raw_top_k = max(_AVAILABLE_ADAPTERS_TOP_K * 3, _AVAILABLE_ADAPTERS_TOP_K)
-            candidates = search(
-                query=q,
-                bm25_index=registry.bm25_index,
-                registry=registry,
-                top_k=min(raw_top_k, 20),
+        return list(
+            selected_concrete_adapter_tools(
+                decision,
+                registry,
+                exclude_tool_ids=_root_primitive_tool_ids,
+                max_tools=_AVAILABLE_ADAPTERS_TOP_K,
             )
-        except Exception:
-            logger.exception("adapter tool retrieval failed for '%s'", q[:80])
-            candidates = []
-        for candidate in candidates:
-            try:
-                tool = registry.find(candidate.tool_id)
-            except Exception:
-                logger.debug(
-                    "Skipping unavailable adapter candidate %s",
-                    candidate.tool_id,
-                    exc_info=True,
-                )
-                continue
-            if tool.id in _root_primitive_tool_ids:
-                continue
-            selected.setdefault(tool.id, tool)
-            if len(selected) >= _AVAILABLE_ADAPTERS_TOP_K:
-                break
-        return list(selected.values())[:_AVAILABLE_ADAPTERS_TOP_K]
+        )
 
-    def _build_available_adapters_suffix(user_query: str) -> str:  # noqa: C901
+    def _build_available_adapters_suffix(
+        user_query: str,
+        route_decision: RouteDecision | None = None,
+        visible_tool_ids: Iterable[str] | None = None,
+    ) -> str:  # noqa: C901
         """Run BM25 against the live registry and emit the citizen-turn
         ``<available_adapters>`` XML block for the dynamic system-prompt
         suffix.
@@ -6270,281 +6256,32 @@ async def run(  # noqa: C901
         q = (user_query or "").strip()
         if not q:
             return ""
+        route_decision = route_decision or _route_decision_for_turn(q)
+        if route_decision is None:
+            return ""
         try:
-            from ummaya.tools.search import search  # noqa: PLC0415
+            from ummaya.tools.routing import build_available_adapters_projection  # noqa: PLC0415
 
-            registry = _ensure_tool_registry()
-            raw_top_k = max(_AVAILABLE_ADAPTERS_TOP_K * 3, _AVAILABLE_ADAPTERS_TOP_K)
-            candidates = search(
+            visible_tool_ids_tuple = None if visible_tool_ids is None else tuple(visible_tool_ids)
+            projection_level = (
+                route_decision.schema_projection_level
+                if route_decision.selected_tools or not visible_tool_ids_tuple
+                else "summary"
+            )
+            projection = build_available_adapters_projection(
+                route_decision,
+                _ensure_tool_registry(),
                 query=q,
-                bm25_index=registry.bm25_index,
-                registry=registry,
-                top_k=min(raw_top_k, 20),
+                projection_level=projection_level,
+                max_visible=_AVAILABLE_ADAPTERS_TOP_K
+                if visible_tool_ids_tuple is None
+                else len(visible_tool_ids_tuple),
+                visible_tool_ids=visible_tool_ids_tuple,
             )
+            return projection.content or ""
         except Exception:
-            logger.exception("BM25 retrieval failed for '%s'", q[:80])
+            logger.exception("route decision projection failed for '%s'", q[:80])
             return ""
-        filtered_candidates = []
-        for candidate in candidates:
-            try:
-                tool = registry.find(candidate.tool_id)
-            except Exception:
-                logger.debug(
-                    "Skipping unavailable adapter candidate %s",
-                    candidate.tool_id,
-                    exc_info=True,
-                )
-                continue
-            if tool.id in _root_primitive_tool_ids:
-                continue
-            filtered_candidates.append(candidate)
-            if len(filtered_candidates) >= _AVAILABLE_ADAPTERS_TOP_K:
-                break
-        candidates = filtered_candidates
-        if not candidates:
-            return ""
-        candidate_ids = tuple(candidate.tool_id for candidate in candidates)
-        first_candidate_id = candidate_ids[0]
-        has_amos_candidate = "kma_apihub_url_air_amos_minute" in candidate_ids
-        has_metar_candidate = "kma_apihub_url_air_metar_decoded" in candidate_ids
-        has_analysis_candidate = any(
-            candidate_id
-            in {
-                "kma_apihub_url_high_resolution_grid_point",
-                "kma_apihub_url_aws_objective_analysis_grid",
-                "kma_apihub_url_analysis_weather_chart_image",
-            }
-            for candidate_id in candidate_ids
-        )
-        is_gimpo_runway_query = bool(
-            re.search(r"(김포공항|Gimpo|RKSS)", q, re.IGNORECASE)
-            and re.search(
-                r"(AMOS|활주로|RVR|runway|시정|visibility|공항기상관측|매분)",
-                q,
-                re.IGNORECASE,
-            )
-        )
-        # Build a compact, LLM-readable block.
-        #
-        # Spec 2521 (2026-05-02) — emit per-field schema signatures so the
-        # LLM can fill ``params`` against each adapter's actual REST shape.
-        # The previous suffix only carried ``search_hint`` and assumed the
-        # LLM could "infer params from search_hint" — K-EXAONE on FriendliAI
-        # consistently invented ``{"location": "...", "date": "..."}`` style
-        # payloads which fail every adapter's pydantic validation
-        # (``Invalid parameters for tool``). Rendering each field with its
-        # type + required flag + truncated description gives K-EXAONE
-        # enough signal to call e.g. ``{"lat": 37.5, "lon": 129.0,
-        # "base_date": "20260502", "base_time": "0500"}`` correctly.
-        lines: list[str] = [
-            f'<available_adapters query="{q[:120]}">',
-            f"백엔드 BM25 후보 (top {len(candidates)}, 점수 내림차순):",
-            "",
-        ]
-        for c in candidates:
-            hint = (c.search_hint or "").strip()
-            if len(hint) > 90:
-                hint = hint[:87] + "..."
-            primitive = c.primitive or "find"
-            lines.append(
-                f"- {c.tool_id} (primitive={primitive}) [{c.score:.2f}] — {hint or '(설명 없음)'}"
-            )
-            lines.append(f"  호출: {c.tool_id}({{...schema fields...}})")
-            # Render the adapter's llm_description (usage prose, ORDERING RULE,
-            # prerequisites, worked examples) so the LLM sees the complete
-            # "먼저 locate 호출" ordering rule.
-            # Bug: without this, the per-field description for nx is truncated
-            # and K-EXAONE skips locate, producing invalid_params.
-            if c.llm_description:
-                desc_text = c.llm_description.strip().replace("\n", " ")
-                # Emit enough text for adapter-specific negative routing and
-                # output-use rules. KMA METAR/AMOS descriptions carry critical
-                # "Gimhae is not AMOS" and "safe_weather only" instructions
-                # after the purpose sentence; truncating them makes the TUI
-                # path claim no METAR tool exists.
-                if len(desc_text) > 900:
-                    desc_text = desc_text[:897] + "..."
-                lines.append(f"  설명: {desc_text}")
-            # Render input schema signature so the LLM sees exact field
-            # names + types + required flags + (truncated) descriptions.
-            # Field desc limit raised 80→120 so nx/ny examples fit untruncated.
-            schema = c.input_schema_json or {}
-            properties = schema.get("properties") if isinstance(schema, dict) else None
-            required: set[str] = set()
-            raw_required = schema.get("required") if isinstance(schema, dict) else None
-            if isinstance(raw_required, list):
-                required = {str(item) for item in raw_required if isinstance(item, str)}
-            # Spec 2522 T010 — ORDERING directive removed.
-            # The Spec 2521 ORDERING block ("nx/ny 는 KMA 격자 좌표 — 반드시
-            # locate 을 먼저 호출") forced a cross-domain chain that
-            # contradicts both the user directive ("chain X / UMMAYA does not
-            # force cross-domain chain") and v4 description 5-section
-            # self_contained_decl ("이 도구 단독 호출로 완결. locate 등
-            # cross-domain chain 불필요"). With both signals present K-EXAONE
-            # ignored both and hallucinated nx/ny → Spec 2521 regression.
-            # Each adapter's description (섹션 4 domain_quirk + 섹션 5
-            # self_contained_decl + 섹션 3 short_reference 17 광역시도 표) is now
-            # self-sufficient. The model decides chain vs single-tool autonomously.
-            # Reference: research-stdio-ordering.md, frames-busan-weather/ T042 evidence.
-            # Spec 2522 T047 fix — resolve $ref to $defs and inline enum values.
-            # KOROAD KoroadAccidentSearchInput.search_year_cd uses
-            # `$ref: #/$defs/SearchYearCd` (20 values). The previous renderer
-            # only inlined `properties.<f>.enum` and gave up on $ref, leaving
-            # K-EXAONE to guess plain '2024' (invalid). Spec 2522 frames-gangnam-
-            # accident-fix2 evidence: invalid_params persisted after T042 fix.
-            # Fix: resolve $ref against schema['$defs'] + raise threshold 8→25.
-            defs_raw = schema.get("$defs") if isinstance(schema, dict) else None
-            defs: dict[str, Any] | None = defs_raw if isinstance(defs_raw, dict) else None
-
-            def _resolve_enum(
-                meta: dict[str, Any], defs: dict[str, Any] | None
-            ) -> list[Any] | None:
-                # direct enum
-                e = meta.get("enum")
-                if isinstance(e, list):
-                    return e
-                # $ref → $defs/<name>
-                ref = meta.get("$ref")
-                if isinstance(ref, str) and ref.startswith("#/$defs/") and isinstance(defs, dict):
-                    name = ref.removeprefix("#/$defs/")
-                    target = defs.get(name)
-                    if isinstance(target, dict):
-                        target_enum = target.get("enum")
-                        if isinstance(target_enum, list):
-                            return target_enum
-                return None
-
-            def _resolve_enum_with_names(
-                meta: dict[str, Any], defs: dict[str, Any] | None
-            ) -> list[tuple[Any, str]] | None:
-                """Spec 2522 — agency 자체 코드체계 (KOROAD GugunCode SEOUL_GANGNAM=680
-                등) 의 IntEnum name 을 의미 매핑으로 노출. pydantic JSON schema 의
-                $defs 안 IntEnum 의 'enum' (값) + 'x-enum-varnames' (name) 또는
-                'description' (docstring) 을 묶어서 LLM 에 보여줌.
-                """
-                ref = meta.get("$ref")
-                if not (isinstance(ref, str) and ref.startswith("#/$defs/")):
-                    return None
-                if not isinstance(defs, dict):
-                    return None
-                name = ref.removeprefix("#/$defs/")
-                target = defs.get(name)
-                if not isinstance(target, dict):
-                    return None
-                values = target.get("enum")
-                if not isinstance(values, list):
-                    return None
-                # IntEnum name 추출 — pydantic v2 가 'x-enum-varnames' 또는
-                # 'enumNames' 로 export 하지 않음. 대신 module-level dict 조회.
-                varnames = target.get("x-enum-varnames")
-                if isinstance(varnames, list) and len(varnames) == len(values):
-                    return list(zip(values, varnames, strict=False))
-                return None
-
-            if isinstance(properties, dict) and properties:
-                for fname, fmeta in properties.items():
-                    if not isinstance(fmeta, dict):
-                        continue
-                    ftype = fmeta.get("type") or fmeta.get("anyOf") or "any"
-                    if isinstance(ftype, list):
-                        ftype = "|".join(str(t) for t in ftype)
-                    fdesc = str(fmeta.get("description", "")).strip().replace("\n", " ")
-                    # Spec 2522 — agency 자체 코드체계 (KOROAD 68 시군구 매핑 ≈ 1600
-                    # chars + 기존 description ≈ 600 chars = ~2200 chars / KMA 156
-                    # station 등) 인라인 허용. 일반 도구는 100자 미만이라 영향 X.
-                    if len(fdesc) > 5000:
-                        fdesc = fdesc[:4997] + "..."
-                    pat = fmeta.get("pattern")
-                    pat_part = f" pattern={pat!r}" if isinstance(pat, str) else ""
-                    enum = _resolve_enum(fmeta, defs)
-                    # Spec 2522 T047 — threshold 25→200 — KOROAD GugunCode (115) /
-                    # SearchYearCd (20) / SidoCode (17) 등 모두 노출. 의미 매핑은
-                    # field description 에 따로 인라인 (Pydantic IntEnum 의 name
-                    # 은 JSON schema 표준 export 안 됨).
-                    if isinstance(enum, list) and len(enum) <= 200:
-                        enum_part = f" enum={enum}"
-                    else:
-                        enum_part = ""
-                    flag = "필수" if fname in required else "선택"
-                    lines.append(
-                        f"    · {fname} ({ftype}, {flag}{pat_part}{enum_part})"
-                        + (f" — {fdesc}" if fdesc else "")
-                    )
-        lines.append("")
-        lines.append(
-            "규칙: 위 목록의 tool_id는 concrete adapter id입니다. model-facing "
-            "함수명도 tools[]에 로드된 concrete tool_id입니다. concrete adapter "
-            "function은 schema 필드만 받으므로 tool_id/params envelope를 그 안에 "
-            "넣지 마세요. concrete function이 로드되지 않고 root primitive만 "
-            '있을 때만 legacy envelope 예: find({"tool_id":"...", "params":{...}}) '
-            "형식을 사용합니다. 동일 tool_id 를 한 turn 안에서 반복 호출하지 "
-            "마세요. 위 목록에 요청과 일치하는 adapter가 있으면 도구가 없다고 "
-            "답하지 마세요."
-        )
-        if has_analysis_candidate:
-            lines.append(
-                "분석자료 특수 규칙: 위 후보에 고해상도 격자자료, AWS 객관분석, "
-                "분석일기도 이미지가 있으면 기상청이 이미 분석한 자료 도구가 있는 "
-                "것입니다. 공항 관측값/METAR/AMOS/일반 예보가 아니라 시민이 말한 "
-                "분석자료 계열 후보를 호출하세요. 지도/일기도/비구름/바람 흐름 "
-                "질의는 kma_apihub_url_analysis_weather_chart_image 를 우선 호출하고, "
-                "특정 지점 주변 값은 locate 뒤 "
-                "kma_apihub_url_high_resolution_grid_point 또는 "
-                "kma_apihub_url_aws_objective_analysis_grid 를 호출하세요. 공항/랜드마크 "
-                "주변 좌표는 kakao_keyword_search 를 kakao_address_search 보다 먼저 "
-                "사용하세요. locate 가 실패하면 다른 후보 위치 도구를 시도하고, 도구 "
-                "결과 없이 좌표를 추정하지 마세요. APIHub 승인 대기나 upstream 오류가 "
-                "나면 그 실패를 그대로 설명하고, 도구 결과 없이 지도 기반 내용을 "
-                "추정하지 마세요."
-            )
-        if has_amos_candidate and (
-            is_gimpo_runway_query or first_candidate_id == "kma_apihub_url_air_amos_minute"
-        ):
-            lines.append(
-                "AMOS 특수 규칙: kma_apihub_url_air_amos_minute 가 김포공항 "
-                "활주로/시정/RVR/매분 관측 후보이면 AMOS 공항기상관측 도구가 "
-                "있는 것입니다. 김포공항은 stn=110 을 사용하세요. 이 후보는 "
-                "좌표를 요구하지 않으므로 locate/kma_current_observation 을 먼저 "
-                '호출하지 말고 즉시 kma_apihub_url_air_amos_minute({"stn":"110",'
-                '"help":1}) 를 호출하세요. METAR 는 '
-                "보조 확인이 필요할 때만 추가로 사용하세요."
-            )
-        if has_metar_candidate and not (has_amos_candidate and is_gimpo_runway_query):
-            lines.append(
-                "METAR 특수 규칙: kma_apihub_url_air_metar_decoded 가 후보에 있으면 "
-                "공항 METAR 해독자료 조회 도구가 있는 것입니다. 김해공항/RKPK는 "
-                "decoded_records 의 station 153 Gimhae Airport / RKPK record를 "
-                "사용하고, 날씨 값은 decoded_records[].safe_weather 만 사용하세요. "
-                "raw_fields/raw_report에서 별도 값을 만들지 마세요. 이 후보는 좌표를 "
-                "요구하지 않으므로 locate/kma_current_observation 을 먼저 호출하지 "
-                '말고 즉시 kma_apihub_url_air_metar_decoded({"org":"K","help":1}) '
-                "를 호출하세요."
-            )
-        listed_primitives = {str(candidate.primitive or "find") for candidate in candidates}
-        if listed_primitives == {"find"}:
-            lines.append(
-                "공개자료 조회 규칙: 위 후보가 모두 primitive=find 이면 시민이 "
-                "인증/본인확인/동의/신청/제출/납부/신고를 명시하지 않은 한 "
-                "check/send 계열 adapter를 호출하지 마세요. 성공한 find 결과가 있으면 "
-                "다음 turn 은 최종 답변입니다."
-            )
-        lines.append(
-            "호출 전 검증: 시민 발화의 명시 조건(개수, 반경/거리, 날짜/시간, 종류, "
-            "카테고리, 진료과/분야, 키워드, 행정구역 등)이 아래 schema 의 선택 "
-            "필드와 대응하면 그 필드를 반드시 params 에 포함하세요. 더 좁은 요청을 "
-            "넓은 무필터 조회로 실행하지 마세요."
-        )
-        lines.append(
-            'params 는 위에 표시된 정확한 필드명만 사용하세요 — 일반적인 "location"/'
-            '"date" 같은 추측 키는 모든 어댑터에서 invalid_params 로 거부됩니다.'
-        )
-        lines.append(
-            "BM25 도구 발견은 백엔드 internal 기능입니다. 모델은 검색 함수를 호출하지 "
-            "않고, backend가 tools[]에 실어준 concrete adapter function을 우선 "
-            "호출합니다."
-        )
-        lines.append("</available_adapters>")
-        return "\n".join(lines)
 
     # Spec 1978 T053 — eager-import the Mock adapter tree so every adapter
     # self-registers with its primitive dispatcher before the first chat
@@ -7526,9 +7263,23 @@ async def run(  # noqa: C901
         # CC-style loop contract: the model can paint progress prose, then call
         # a primitive dispatcher with a concrete adapter in `tool_id`.
         registry = cast("Any", _ensure_tool_registry())
-        backend_tools_raw = [
-            t.to_openai_tool() for t in _select_concrete_adapter_tools_for_turn(latest_user_utt)
-        ]
+        turn_route_decision = _route_decision_for_turn(latest_user_utt)
+        from ummaya.ipc.route_diagnostics import (  # noqa: PLC0415
+            log_route_decision_diagnostic,
+        )
+
+        log_route_decision_diagnostic(
+            logger=logger,
+            turn_index=_diag_turn_idx,
+            session_id=frame.session_id,
+            correlation_id=frame.correlation_id,
+            decision=turn_route_decision,
+        )
+        turn_concrete_adapter_tools = _select_concrete_adapter_tools_for_turn(
+            latest_user_utt, route_decision=turn_route_decision
+        )
+        turn_concrete_adapter_tool_ids = tuple(t.id for t in turn_concrete_adapter_tools)
+        backend_tools_raw = [t.to_openai_tool() for t in turn_concrete_adapter_tools]
         backend_tool_names: set[object] = set()
         for raw_tool in backend_tools_raw:
             if not isinstance(raw_tool, dict):
@@ -7662,7 +7413,11 @@ async def run(  # noqa: C901
                         (latest_user_utt or "")[:256],
                     )
                 if latest_user_utt:
-                    suffix_block = _build_available_adapters_suffix(latest_user_utt)
+                    suffix_block = _build_available_adapters_suffix(
+                        latest_user_utt,
+                        route_decision=turn_route_decision,
+                        visible_tool_ids=turn_concrete_adapter_tool_ids,
+                    )
                     if suffix_block:
                         augmented_system = augmented_system + "\n\n" + suffix_block + "\n"
             except Exception:  # noqa: BLE001 — fail-open per FR-002

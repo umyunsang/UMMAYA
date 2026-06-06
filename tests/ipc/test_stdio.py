@@ -158,6 +158,30 @@ def _encode_frame(frame: Any) -> bytes:
     return (frame.model_dump_json() + "\n").encode("utf-8")
 
 
+def _llm_tool_names(tools: object) -> tuple[str, ...]:
+    if not isinstance(tools, list):
+        return ()
+    names: list[str] = []
+    for tool in tools:
+        if isinstance(tool, dict):
+            function = tool.get("function")
+            name = function.get("name") if isinstance(function, dict) else None
+        else:
+            function = getattr(tool, "function", None)
+            name = getattr(function, "name", None)
+        if isinstance(name, str):
+            names.append(name)
+    return tuple(names)
+
+
+def _projected_adapter_tool_ids(content: str) -> tuple[str, ...]:
+    return tuple(
+        line.strip().removeprefix("- tool_id:").strip()
+        for line in content.splitlines()
+        if line.strip().startswith("- tool_id:")
+    )
+
+
 # ---------------------------------------------------------------------------
 # In-process harness: fake stdout buffer
 # ---------------------------------------------------------------------------
@@ -525,6 +549,46 @@ async def test_chat_request_appends_available_tools_section(
         "Expected at least one concrete adapter header in the system prompt "
         f"Available tools section. Content preview: {system_content[:500]!r}"
     )
+
+
+@pytest.mark.asyncio
+async def test_chat_request_appends_route_decision_adapter_projection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frame = _make_chat_request(
+        tools=[],
+        system="Base system prompt.",
+        content="이번 주 부산시 전기공사 입찰 올라온 거 있어?",
+    )
+
+    _buf, fake_client = await _run_with_frame(
+        frame,
+        _FakeLLMClientNoTools,
+        monkeypatch=monkeypatch,
+    )
+
+    assert fake_client.recorded_calls
+    first_call = fake_client.recorded_calls[0]
+    messages_sent = first_call.get("messages", [])
+    system_content = next(
+        (
+            getattr(msg, "content", None)
+            for msg in messages_sent
+            if getattr(msg, "role", None) == "system"
+        ),
+        None,
+    )
+
+    assert isinstance(system_content, str)
+    assert "<available_adapters" in system_content
+    assert 'schema_projection="summary"' in system_content
+    assert "RouteDecision candidates" in system_content
+    assert "input_schema_summary" in system_content
+    assert "백엔드 BM25 후보" not in system_content
+    projected_tool_ids = _projected_adapter_tool_ids(system_content)
+    tool_names = _llm_tool_names(first_call.get("tools"))
+    assert projected_tool_ids == tool_names
+    assert not (set(projected_tool_ids) & {"find", "locate", "check", "send", "search_tools"})
 
 
 # ---------------------------------------------------------------------------

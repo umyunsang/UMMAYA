@@ -111,6 +111,21 @@ def test_available_adapters_find_candidate_triggers_followup_signal() -> None:
     assert _available_adapters_block_has_find_candidate(block)
 
 
+def test_available_adapters_new_projection_find_candidate_triggers_followup_signal() -> None:
+    block = "\n".join(
+        [
+            '<available_adapters query="다대1동 근처 내과" decision_id="abc" '
+            'backend="bm25" schema_projection="summary">',
+            "RouteDecision candidates (top 1, backend=bm25, manifest_hash=123).",
+            "- tool_id: hira_hospital_search",
+            "  primitive: find",
+            "  source_mode: live",
+            "</available_adapters>",
+        ]
+    )
+    assert _available_adapters_block_has_find_candidate(block)
+
+
 def test_locate_only_available_adapters_do_not_trigger_followup_signal() -> None:
     """Pure locate candidate blocks stay out of the follow-up gate."""
     block = "\n".join(
@@ -381,6 +396,25 @@ def _msg_available_adapters(*, find: bool = True) -> LLMChatMessage:
             [
                 '<available_adapters query="테스트">',
                 candidate,
+                "</available_adapters>",
+            ]
+        ),
+    )
+
+
+def _msg_available_adapters_new_projection(*, find: bool = True) -> LLMChatMessage:
+    tool_id = "kma_current_observation" if find else "kakao_address_search"
+    primitive = "find" if find else "locate"
+    return LLMChatMessage(
+        role="system",
+        content="\n".join(
+            [
+                '<available_adapters query="테스트" decision_id="abc" '
+                'backend="bm25" schema_projection="summary">',
+                "RouteDecision candidates (top 1, backend=bm25, manifest_hash=123).",
+                f"- tool_id: {tool_id}",
+                f"  primitive: {primitive}",
+                "  source_mode: live",
                 "</available_adapters>",
             ]
         ),
@@ -1012,8 +1046,9 @@ def test_latest_citizen_user_utterance_skips_available_adapters_suffix() -> None
     )
 
 
-def test_initial_concrete_tool_choice_for_unambiguous_public_data_queries() -> None:
+def test_initial_concrete_tool_choice_only_for_document_queries() -> None:
     available = {
+        "document",
         "find",
         "locate",
         "pps_bid_public_info",
@@ -1028,35 +1063,42 @@ def test_initial_concrete_tool_choice_for_unambiguous_public_data_queries() -> N
             "이번 주 부산시 전기공사 입찰 올라온 거 있어?",
             available,
         )
-        == "pps_bid_public_info"
+        is None
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "지금 부산 중구 미세먼지 괜찮아? 마스크 써야 해?",
             available,
         )
-        == "airkorea_ctprvn_air_quality"
+        is None
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "오늘 오후 전국 비구름 흐름이 어떤지 공식 기상도나 위성 자료 기준으로 설명해줘",
             available,
         )
-        == "kma_apihub_url_analysis_weather_chart_image"
+        is None
+    )
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "다운로드 폴더의 신청서.hwpx 문서를 작성해줘",
+            available,
+        )
+        == "document"
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "오늘 밤 김해에서 김포 가는데 비행기 뜰만해? 바람이랑 시정도 봐줘",
             available,
         )
-        == "kma_apihub_url_air_metar_decoded"
+        is None
     )
     assert (
         _initial_concrete_tool_choice_for_query(
             "부산역에서 1001번 버스 곧 와?",
             available,
         )
-        == "tago_bus_route_search"
+        is None
     )
 
 
@@ -1328,7 +1370,19 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
     ) or (None, "")
     assert preferred == "tago_bus_route_search"
     assert "Public-data tool-choice mismatch" in message
-    assert "airkorea_ctprvn_air_quality" in message
+    assert "target=bus_realtime" in message
+    assert "airkorea_ctprvn_air_quality" not in message
+    assert "tago_bus_route_search" not in message
+
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "kma_current_observation",
+        {"nx": 98, "ny": 75},
+        "내일 비구름 흐름 일기도 지도 자료 보여줘",
+    ) or (None, "")
+    assert preferred == "kma_apihub_url_analysis_weather_chart_image"
+    assert "target=weather_chart" in message
+    assert "kma_apihub_url_analysis_weather_chart_image" not in message
+    assert "kma_current_observation" not in message
 
     preferred, message = _check_direct_public_data_tool_choice_prerequisite(
         "airkorea_ctprvn_air_quality",
@@ -1336,7 +1390,20 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
         "퇴근하고 해운대 산책 갈 건데 지금 비 와? 우산 챙겨야 해?",
     ) or (None, "")
     assert preferred == "kakao_keyword_search"
+    assert "target=current_weather" in message
     assert "KMA current observation" in message
+    assert "airkorea_ctprvn_air_quality" not in message
+    assert "kakao_keyword_search" not in message
+
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "kma_current_observation",
+        {"nx": 98, "ny": 75},
+        "이번 주 부산시 전기공사 입찰 올라온 거 있어?",
+    ) or (None, "")
+    assert preferred == "pps_bid_public_info"
+    assert "target=procurement_bid" in message
+    assert "pps_bid_public_info" not in message
+    assert "kma_current_observation" not in message
 
     assert (
         _check_direct_public_data_tool_choice_prerequisite(
@@ -2706,6 +2773,23 @@ def test_resolve_only_then_terminate_is_rejected() -> None:
     assert "Chain incomplete" in msg
     assert "find" in msg.lower()
     assert "fabrication" in msg.lower()
+
+
+def test_resolve_only_then_terminate_is_rejected_with_new_projection() -> None:
+    msgs: list[Any] = [
+        _msg_available_adapters_new_projection(find=True),
+        LLMChatMessage(role="user", content="지금 부산 사하구 다대1동 날씨 어때"),
+        _msg_assistant_tool_call(
+            "locate",
+            {"query": "부산 사하구 다대1동", "want": "coords_and_admcd"},
+        ),
+        _msg_tool_result("locate", {"lat": 35.05915, "lon": 128.97132}),
+    ]
+
+    msg = _check_resolve_terminated_without_followup(msgs, "지금 부산 사하구 다대1동 날씨 어때")
+
+    assert msg is not None
+    assert "Chain incomplete" in msg
 
 
 def test_resolve_only_with_non_observable_query_passes() -> None:

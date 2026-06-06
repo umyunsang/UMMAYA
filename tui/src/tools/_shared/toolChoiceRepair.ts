@@ -17,6 +17,8 @@ const KMA_AIR_TOOLS = [
   'kma_apihub_url_air_metar_decoded',
   'kma_apihub_url_air_amos_minute',
 ] as const
+const KAKAO_KEYWORD_TOOL_NAME = 'kakao_keyword_search'
+const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
 const NMC_EMERGENCY_TOOL_NAME = 'nmc_emergency_search'
 const NMC_AED_TOOL_NAME = 'nmc_aed_site_locate'
 const KAKAO_COORD_TO_REGION_TOOL_NAME = 'kakao_coord_to_region'
@@ -50,6 +52,8 @@ const MOBILE_ID_RE = /(mobile\s*id|모바일\s*(?:신분증|id)|mobile_id)/iu
 const SIMPLE_AUTH_RE =
   /(simple_auth|간편인증|ganpyeon|소득금액증명|증명원|민원|발급)/iu
 const MYDATA_RE = /(mydata|마이데이터)/iu
+const GOV24_MINWON_SUBMIT_RE =
+  /(?=.*(?:정부24|gov24))(?=.*(?:주민등록등본|등본|민원|발급))(?=.*(?:신청|접수|발급|submit|apply|issue))/iu
 const MEDICAL_COLLAPSE_RE =
   /(사람이\s*쓰러|쓰러졌|쓰러짐|쓰러져|의식[을이가은는\s]*(없|잃|불명)|무의식|심정지|심폐소생|cpr|호흡\s*(없|곤란)|숨\s*(안|못)|collapse|collapsed|unconscious|cardiac\s*arrest|not\s*breathing|aed|자동심장|심장충격|제세동)/iu
 const MEDICAL_COLLAPSE_OR_ER_RE =
@@ -62,7 +66,7 @@ const TAGO_ROUTE_NO_RE = /(?:^|[^\d])(\d{1,4}(?:-\d)?)\s*번/u
 const TAGO_PLACE_RE = /([가-힣A-Za-z0-9().·\s]+?)(?:에서|근처|앞|인근)/u
 const PPS_BID_RE = /(입찰|나라장터|조달청|공고|공사조회|전기공사|bid|procurement)/iu
 const AIRKOREA_RE =
-  /(미세먼지|초미세먼지|대기질|대기오염|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea)/iu
+  /(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)/iu
 const DOCUMENT_PATH_RE =
   /(?:^|[\s:'"(])(?:~|\/|[A-Za-z]:\\|\.{1,2}\/)?[^\s:'"]*\.(?:hwpx|hwp|docx|pdf|xlsx|pptx)\b/iu
 const DOCUMENT_EXPLICIT_PATH_SCAN_RE =
@@ -84,6 +88,8 @@ const DOCUMENT_DIFF_AND_SAVE_ONLY_FINAL_RE =
   /(실제(?:로)?\s*바뀐\s*내용\s*(?:과|및|랑|하고)\s*저장\s*(?:위치|경로)만|변경(?:된)?\s*(?:내용|부분|사항).{0,24}저장\s*(?:위치|경로)만|changed.{0,24}(?:save|saved).{0,24}(?:location|path).{0,24}only)/iu
 const DOCUMENT_LOCAL_HINT_RE =
   /(다운로드|downloads?|폴더|파일|양식|서식|활동일지|신청서|등본|증명서)/iu
+const PUBLIC_DATA_MISMATCH_TARGET_RE =
+  /Public-data tool-choice mismatch:\s*target=([a-z_]+)/iu
 const PUBLIC_DATA_MISMATCH_CALL_RE =
   /Public-data tool-choice mismatch:[\s\S]*?\bCall\s+([a-z][a-z0-9_]*)\s+/iu
 const TAGO_BUS_COMPLETION_PROMPT =
@@ -91,7 +97,7 @@ const TAGO_BUS_COMPLETION_PROMPT =
 const TAGO_BUS_REPAIR_PROMPT =
   'TAGO bus final answer repair: the previous answer still promised another stop/route lookup after TAGO arrival evidence was already attempted. Rewrite the final Korean answer now from the actual TAGO tool_result only. Do not say 확인하겠습니다, 확인해보겠습니다, 검색해 보겠습니다, 다시 조회, or that you will check another stop. If the arrival result has zero items, say no current arrival is shown for the checked 부산역 stop and ask the citizen for a specific route number or exact stop only as a next-step option.'
 const AIRKOREA_COMPLETION_PROMPT =
-  'AirKorea air-quality evidence complete: airkorea_ctprvn_air_quality has already returned the official result for this 미세먼지/초미세먼지 request. Do not call another location, weather, public-data, or AirKorea tool in this turn. Write the final Korean answer now from the actual tool_result only. Include stationName, dataTime, PM10 value and pm10GradeLabelKo, PM2.5 value and pm25GradeLabelKo, and CAI/khaiValue with khaiGradeLabelKo when present. This adapter returns city/province measurement rows, not a geocoded nearest-station result: say it is city/province station data, use only exact stationName rows present in tool_result, and do not infer the citizen place district, distance, nearest station, station groups, or value ranges unless those exact fields exist in tool_result. If totalCount is 0 or items are empty, say the official AirKorea API returned no rows for the checked sidoName and do not say you are still checking.'
+  'AirKorea air-quality evidence complete: the official AirKorea result has already returned for this 미세먼지/초미세먼지 request. Do not call another location, weather, public-data, or AirKorea tool in this turn. Write the final Korean answer now from the actual tool_result only. Include stationName, dataTime, PM10 value and pm10GradeLabelKo, PM2.5 value and pm25GradeLabelKo, and CAI/khaiValue with khaiGradeLabelKo when present. This result returns city/province measurement rows, not a geocoded nearest-station result: say it is city/province station data, use only exact stationName rows present in tool_result, and do not infer the citizen place district, distance, nearest station, station groups, or value ranges unless those exact fields exist in tool_result. If totalCount is 0 or items are empty, say the official AirKorea API returned no rows for the checked sidoName and do not say you are still checking.'
 const AIRKOREA_REPAIR_PROMPT =
   'AirKorea final answer repair: the previous answer inferred nearest/direction/distance, average/range values, district groups, or changed raw values beyond the official tool_result. Rewrite the final Korean answer using only the exact AirKorea rows listed below. Do not say 가장 가까운, 인근, 동쪽, 서쪽, 남쪽, 북쪽, distance, nearest, 평균, 범위, 대부분, 해운대구 지역, or average unless those exact fields exist in tool_result. Copy PM10, PM2.5, CAI, stationName, dataTime, and grade labels literally. If the citizen named a place but the tool returned only city/province rows, say this is city/province station data rather than a nearest-station answer.'
 const AIRKOREA_UNSUPPORTED_LOCATION_CLAIM_RE =
@@ -111,6 +117,84 @@ type DocumentFormat = 'hwpx' | 'hwp' | 'docx' | 'pdf' | 'xlsx' | 'pptx'
 interface DocumentPathRef {
   path: string
   expectedFormat: DocumentFormat
+}
+
+export interface UmmayaTuiRepairPolicy {
+  id: string
+  kind: 'display_or_answer_repair'
+  owner: string
+  evidenceEvent: string
+  removalCondition: string
+}
+
+export interface UmmayaBackendRepairReceipt {
+  source: 'backend_route_decision' | 'backend_validation'
+  reason: string
+  evidenceEvent: string
+  toolName?: string
+}
+
+export const UMMAYA_TUI_REPAIR_POLICIES: readonly UmmayaTuiRepairPolicy[] = [
+  {
+    id: 'document_observable_operation_backfill',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-display-repair',
+    evidenceEvent: 'ummaya.tui.repair.document_observable_operation_backfill',
+    removalCondition:
+      'Delete when document adapters emit display_operation in backend tool-use receipts.',
+  },
+  {
+    id: 'document_completion_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.document_completion_prompt',
+    removalCondition:
+      'Delete when backend RouteDecision stop reasons emit terminal document answer instructions.',
+  },
+  {
+    id: 'tago_bus_followup_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.tago_bus_followup_prompt',
+    removalCondition:
+      'Delete when backend route decisions encode TAGO chain prerequisites and next required adapter.',
+  },
+  {
+    id: 'tago_bus_completion_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.tago_bus_completion_prompt',
+    removalCondition:
+      'Delete when TAGO adapters return a backend terminal answer contract.',
+  },
+  {
+    id: 'airkorea_completion_prompt',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.airkorea_completion_prompt',
+    removalCondition:
+      'Delete when AirKorea adapter output includes backend answer-synthesis constraints.',
+  },
+  {
+    id: 'generic_pending_final_answer_repair',
+    kind: 'display_or_answer_repair',
+    owner: 'ummaya:tui-answer-repair',
+    evidenceEvent: 'ummaya.tui.repair.generic_pending_final_answer_repair',
+    removalCondition:
+      'Delete when backend stop reasons reject plan-only final answers after tool_result evidence.',
+  },
+]
+
+function hasBackendRepairReceipt(
+  receipt: UmmayaBackendRepairReceipt | undefined,
+): boolean {
+  return (
+    receipt !== undefined &&
+    (receipt.source === 'backend_route_decision' ||
+      receipt.source === 'backend_validation') &&
+    receipt.reason.trim() !== '' &&
+    receipt.evidenceEvent.startsWith('ummaya.')
+  )
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -698,12 +782,15 @@ export function repairUmmayaExplicitDocumentToolUseFromUserQuery({
   input,
   messages,
   tools,
+  backendRepairReceipt,
 }: {
   toolName: string
   input: Record<string, unknown>
   messages: readonly Message[]
   tools: Tools
+  backendRepairReceipt?: UmmayaBackendRepairReceipt
 }): ForcedUmmayaToolUse | undefined {
+  if (!hasBackendRepairReceipt(backendRepairReceipt)) return undefined
   const available = availableToolNamesFromTools(tools)
   if (!isAvailableOrSyncedAdapter(available, DOCUMENT_TOOL_NAME)) return undefined
 
@@ -760,10 +847,13 @@ export function backfillUmmayaObservableToolInputFromUserQuery({
 export function selectUmmayaClientForcedToolUse({
   messages,
   tools,
+  backendRepairReceipt,
 }: {
   messages: readonly Message[]
   tools: Tools
+  backendRepairReceipt?: UmmayaBackendRepairReceipt
 }): ForcedUmmayaToolUse | undefined {
+  if (!hasBackendRepairReceipt(backendRepairReceipt)) return undefined
   const available = availableToolNamesFromTools(tools)
   const userText = latestUserText(messages)
   const documentToolName = selectDocumentWorkflowTargetToolName(
@@ -1374,10 +1464,24 @@ export function shouldSuppressUmmayaToolCallsForAnswerSynthesis({
 
 function publicDataMismatchTargetTool(
   latestToolResult: string,
+  available: Set<string>,
+  usedToolNames: Set<string>,
 ): string | undefined {
-  const candidate = PUBLIC_DATA_MISMATCH_CALL_RE.exec(latestToolResult)?.[1]
-  if (!candidate) return undefined
-  return candidate
+  const targetKind = PUBLIC_DATA_MISMATCH_TARGET_RE.exec(latestToolResult)?.[1]
+  if (targetKind === 'weather_chart') return KMA_ANALYSIS_CHART_TOOL_NAME
+  if (targetKind === 'current_weather' || targetKind === 'weather_current') {
+    return chooseAvailableOrSyncedAdapter(
+      available,
+      [
+        !usedToolNames.has(KAKAO_KEYWORD_TOOL_NAME) ? KAKAO_KEYWORD_TOOL_NAME : '',
+        KMA_CURRENT_OBSERVATION_TOOL_NAME,
+      ].filter(Boolean),
+    )
+  }
+  if (targetKind === 'air_quality') return AIRKOREA_TOOL_NAME
+  if (targetKind === 'procurement_bid') return PPS_BID_TOOL_NAME
+  const legacyCandidate = PUBLIC_DATA_MISMATCH_CALL_RE.exec(latestToolResult)?.[1]
+  return legacyCandidate
 }
 
 export function selectUmmayaToolChoiceOverride({
@@ -1393,7 +1497,11 @@ export function selectUmmayaToolChoiceOverride({
   const usedToolNames = toolUseNames(messages)
   const airportAviationQuery = isAirportAviationQuery(userText)
   const usedAviationTool = hasAnyToolUse(usedToolNames, KMA_AIR_TOOLS)
-  const publicDataTargetTool = publicDataMismatchTargetTool(latestToolResult)
+  const publicDataTargetTool = publicDataMismatchTargetTool(
+    latestToolResult,
+    available,
+    usedToolNames,
+  )
   if (
     shouldSuppressUmmayaToolCallsForAnswerSynthesis({
       messages,
@@ -1401,15 +1509,6 @@ export function selectUmmayaToolChoiceOverride({
     })
   ) {
     return undefined
-  }
-
-  const documentToolName = selectDocumentWorkflowToolChoice(
-    userText,
-    available,
-    messages,
-  )
-  if (documentToolName) {
-    return { type: 'tool', name: documentToolName }
   }
 
   if (
@@ -1421,19 +1520,11 @@ export function selectUmmayaToolChoiceOverride({
   }
 
   if (
-    AIRKOREA_RE.test(userText) &&
-    !usedToolNames.has(AIRKOREA_TOOL_NAME) &&
-    isAvailableOrSyncedAdapter(available, AIRKOREA_TOOL_NAME)
+    GOV24_MINWON_SUBMIT_RE.test(userText) &&
+    !usedToolNames.has('mock_verify_module_simple_auth') &&
+    isAvailableOrSyncedAdapter(available, 'mock_verify_module_simple_auth')
   ) {
-    return { type: 'tool', name: AIRKOREA_TOOL_NAME }
-  }
-
-  if (
-    PPS_BID_RE.test(userText) &&
-    !usedToolNames.has(PPS_BID_TOOL_NAME) &&
-    isAvailableOrSyncedAdapter(available, PPS_BID_TOOL_NAME)
-  ) {
-    return { type: 'tool', name: PPS_BID_TOOL_NAME }
+    return { type: 'tool', name: 'mock_verify_module_simple_auth' }
   }
 
   if (
@@ -1464,7 +1555,6 @@ export function selectUmmayaToolChoiceOverride({
 
   const shouldForceAviation =
     latestToolResult.includes('KMA aviation tool-choice mismatch') ||
-    (airportAviationQuery && !usedAviationTool) ||
     needsGimpoAviationFollowup
   if (shouldForceAviation) {
     const name = selectKmaAviationTool(
@@ -1477,9 +1567,7 @@ export function selectUmmayaToolChoiceOverride({
   }
 
   const shouldForceKmaAnalysis =
-    latestToolResult.includes('KMA analysis tool-choice mismatch') ||
-    (isKmaAnalysisMapText(userText) &&
-      !usedToolNames.has(KMA_ANALYSIS_CHART_TOOL_NAME))
+    latestToolResult.includes('KMA analysis tool-choice mismatch')
   if (
     shouldForceKmaAnalysis &&
     isAvailableOrSyncedAdapter(available, KMA_ANALYSIS_CHART_TOOL_NAME)
@@ -1501,14 +1589,19 @@ export function selectUmmayaToolChoiceOverride({
     usedToolNames,
     messages,
   )
-  if (tagoToolName) {
+  const hasTagoBusFollowupEvidence =
+    hasSuccessfulStationSearch(messages) ||
+    hasSuccessfulRouteSearch(messages) ||
+    hasSuccessfulRouteStationSearch(messages)
+  const hasTagoBusValidationMismatch =
+    latestToolResult.includes('Public-data tool-choice mismatch') &&
+    latestToolResult.includes('target=bus_realtime')
+  if (tagoToolName && (hasTagoBusFollowupEvidence || hasTagoBusValidationMismatch)) {
     return { type: 'tool', name: tagoToolName }
   }
 
   const shouldForceProtected =
-    latestToolResult.includes('Protected-domain tool-choice mismatch') ||
-    (PROTECTED_QUERY_RE.test(userText) &&
-      !hasAnyToolUse(usedToolNames, PROTECTED_CHECK_TOOLS))
+    latestToolResult.includes('Protected-domain tool-choice mismatch')
   if (shouldForceProtected) {
     const name = selectProtectedCheckTool(`${userText}\n${latestToolResult}`, available)
     if (name) return { type: 'tool', name }
