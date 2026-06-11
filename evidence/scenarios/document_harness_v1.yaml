@@ -1,7 +1,7 @@
 version: 1
 scenario_id: document_harness_v1
 created_at: "2026-06-01"
-source_basis: public_ax_document_harness_spec
+source_basis: document_production_hardening_spec
 target_system: "UMMAYA local document harness"
 network_policy: offline_only
 required_sequence:
@@ -206,7 +206,7 @@ lifecycle_records:
     artifact_sha256: "1212121212121212121212121212121212121212121212121212121212121212"
     document_diff_id: diff-hwpx-001
     frame_hash: "sha256:1212121212121212121212121212121212121212121212121212121212121212"
-    evidence_ref: specs/2802-public-doc-harness/format-adapter-execution-progress-2026-06-03.md
+    evidence_ref: specs/2803-document-production-hardening/spec.md
 beta_cases:
   - case_id: beta-weekly-log-hwpx
     domain: weekly_log
@@ -352,3 +352,70 @@ negative_cases:
     expected_reason: external_link_detected
     derivative_save: forbidden
     evidence_ref: tests/tools/documents/test_intake_security.py
+authoring_cases:
+  - case_id: authoring-public-form-completion-docx
+    scenario_class: public_form_completion
+    correlation_id: corr-doc-authoring-public-form
+    expected_status: ready_for_review
+    requires_socratic_loop: false
+    requires_user_approval: true
+    mutation_allowed: true
+    render_comparison_required: true
+    hwp_direct_write_state: not_applicable
+    fixture_id: docx-civil-form
+    evidence_ref: tests/tools/documents/test_document_tool_flow.py
+  - case_id: authoring-narrative-business-plan
+    scenario_class: narrative_authoring
+    correlation_id: corr-doc-authoring-narrative
+    expected_status: needs_input
+    requires_socratic_loop: true
+    requires_user_approval: true
+    mutation_allowed: false
+    render_comparison_required: true
+    hwp_direct_write_state: not_applicable
+    fixture_id: narrative-business-plan
+    evidence_ref: tests/tools/documents/test_socratic_fill_planner.py
+  - case_id: authoring-block-plausible-filler
+    scenario_class: unsupported_plausible_writing
+    correlation_id: corr-doc-authoring-plausible-blocked
+    expected_status: blocked
+    requires_socratic_loop: true
+    requires_user_approval: false
+    mutation_allowed: false
+    render_comparison_required: false
+    hwp_direct_write_state: not_applicable
+    fixture_id: narrative-self-introduction
+    evidence_ref: tests/tools/documents/test_socratic_fill_planner.py
+  - case_id: authoring-protected-field
+    scenario_class: protected_field
+    correlation_id: corr-doc-authoring-protected-field
+    expected_status: needs_input
+    requires_socratic_loop: true
+    requires_user_approval: true
+    mutation_allowed: false
+    render_comparison_required: false
+    hwp_direct_write_state: not_applicable
+    fixture_id: docx-civil-form
+    evidence_ref: tests/tools/documents/test_autonomous_fill_planner.py
+  - case_id: authoring-direct-hwp-blocked
+    scenario_class: direct_hwp_path
+    correlation_id: corr-doc-authoring-hwp-blocked
+    expected_status: blocked
+    requires_socratic_loop: false
+    requires_user_approval: false
+    mutation_allowed: false
+    render_comparison_required: true
+    hwp_direct_write_state: blocked
+    fixture_id: hwp-direct-candidate
+    evidence_ref: tests/tools/documents/test_hwp_direct_edit_candidate.py
+  - case_id: authoring-render-comparison-required
+    scenario_class: render_comparison
+    correlation_id: corr-doc-authoring-render-comparison
+    expected_status: ready_for_review
+    requires_socratic_loop: false
+    requires_user_approval: true
+    mutation_allowed: true
+    render_comparison_required: true
+    hwp_direct_write_state: not_applicable
+    fixture_id: docx-civil-form
+    evidence_ref: tests/tools/documents/test_render_comparison_evidence.py

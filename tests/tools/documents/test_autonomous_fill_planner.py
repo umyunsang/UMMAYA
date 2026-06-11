@@ -267,8 +267,9 @@ def test_document_ir_infers_blank_public_form_table_cells_as_slots() -> None:
     )
 
     planned_values = {slot.label: slot.candidate_value for slot in plan.slots}
-    assert planned_values["상호(단체명)"] == "공공AX 테스트"
+    assert planned_values["상호(단체명)"] is None
     blocked_labels = {slot.label for slot in plan.slots if slot.slot_id in plan.blocked_slot_ids}
+    assert "상호(단체명)" in blocked_labels
     assert "사업장 전화번호" in blocked_labels
 
 

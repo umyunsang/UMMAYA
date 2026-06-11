@@ -52,5 +52,8 @@ def test_fixture_manifest_exposes_empty_groups_as_tuples() -> None:
     manifest = load_fixture_manifest()
 
     assert manifest.fixture_groups.benign == ()
-    assert manifest.fixture_groups.public_forms == ()
+    assert isinstance(manifest.fixture_groups.public_forms, tuple)
+    assert len(manifest.fixture_groups.public_forms) == 3
+    assert isinstance(manifest.fixture_groups.narrative_authoring, tuple)
+    assert len(manifest.fixture_groups.narrative_authoring) == 3
     assert manifest.fixture_groups.hostile == ()

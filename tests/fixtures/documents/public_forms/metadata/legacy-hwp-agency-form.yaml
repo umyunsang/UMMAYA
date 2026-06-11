@@ -1,0 +1,11 @@
+fixture_id: legacy-hwp-agency-form-metadata
+representation: metadata_only
+format: hwp
+source_ref: specs/2803-document-production-hardening/spec.md#FR-017
+reason: Direct HWP binary writing remains blocked until candidate promotion evidence exists.
+expected_fields:
+  - applicant_name
+  - requested_benefit
+protected_field_expectations:
+  - identity-number fields require human approval
+  - signature or seal regions stay protected

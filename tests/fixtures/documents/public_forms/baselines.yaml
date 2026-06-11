@@ -8,8 +8,8 @@ baselines:
     format: hwpx
     authoritative_standard: KS X 6101 OWPML/HWPX
     authority_refs:
-      - specs/2802-public-doc-harness/spec.md#FR-034
-      - specs/2802-public-doc-harness/research.md#hwpx
+      - specs/2803-document-production-hardening/spec.md#FR-002
+      - specs/2803-document-production-hardening/spec.md#FR-012
     supports_conformance: true
     expected_page_count: 2
     required_fields:
@@ -50,7 +50,7 @@ baselines:
     format: docx
     authoritative_standard: ECMA-376 Office Open XML
     authority_refs:
-      - specs/2802-public-doc-harness/spec.md#FR-035
+      - specs/2803-document-production-hardening/spec.md#FR-012
     supports_conformance: true
     required_fields: []
     protected_text: []
@@ -63,7 +63,7 @@ baselines:
     format: xlsx
     authoritative_standard: ECMA-376 Office Open XML
     authority_refs:
-      - specs/2802-public-doc-harness/spec.md#FR-035
+      - specs/2803-document-production-hardening/spec.md#FR-012
     supports_conformance: true
     required_fields: []
     protected_text: []
@@ -76,7 +76,7 @@ baselines:
     format: pptx
     authoritative_standard: ECMA-376 Office Open XML
     authority_refs:
-      - specs/2802-public-doc-harness/spec.md#FR-035
+      - specs/2803-document-production-hardening/spec.md#FR-012
     supports_conformance: true
     required_fields: []
     protected_text: []
@@ -89,7 +89,7 @@ baselines:
     format: pdf
     authoritative_standard: PDF AcroForm and rendered appearance
     authority_refs:
-      - specs/2802-public-doc-harness/spec.md#FR-036
+      - specs/2803-document-production-hardening/spec.md#FR-014
     supports_conformance: true
     required_fields: []
     protected_text: []
@@ -102,7 +102,7 @@ baselines:
     format: hwp
     authoritative_standard: HWP binary read-only boundary
     authority_refs:
-      - specs/2802-public-doc-harness/spec.md#FR-034
+      - specs/2803-document-production-hardening/spec.md#FR-017
     supports_conformance: false
     unsupported_reason: HWP binary write is blocked in this epic; conformance-ready output requires HWPX or another promoted editable derivative.
     required_fields: []

@@ -10,6 +10,7 @@ from decimal import Decimal
 from hashlib import sha256
 from pathlib import Path
 
+from ummaya.tools.documents.explicit_values import explicit_keyed_value_for_label
 from ummaya.tools.documents.models import (
     AutonomousFillPlan,
     AutonomousSaveIntent,
@@ -18,8 +19,13 @@ from ummaya.tools.documents.models import (
     DocumentIR,
     DocumentProtectedRange,
     FormSlot,
+    ScalarValue,
     StyleAlignment,
     StyleDescriptor,
+)
+from ummaya.tools.documents.socratic_planner import (
+    apply_socratic_fill_gate,
+    socratic_slot_requires_input,
 )
 
 _WEEK_LABEL_RE = re.compile(r"(?P<week>[0-9]{1,3})\s*주\s*차")
@@ -27,17 +33,9 @@ _DATE_RANGE_RE = re.compile(
     r"(?P<start>[0-9]{4}\.[0-9]{2}\.[0-9]{2})\s*(?:~|〜|-)\s*"
     r"(?P<end>[0-9]{4}\.[0-9]{2}\.[0-9]{2})"
 )
-_SAVE_CLAUSE_RE = re.compile(
-    r"\s*,?\s*(?:저장|내보내|export|save)\s*(?:은|는|:|=)?.*$",
-    re.IGNORECASE,
-)
 _SAVE_PATH_RE = re.compile(
     r"(?:저장|내보내|export|save)\s*(?:은|는|:|=)?\s*"
     r"(?P<path>(?:~|/|[A-Za-z]:)[^\s,;]+?\.(?:docx|hwpx|hwp|pdf|xlsx|pptx))",
-    re.IGNORECASE,
-)
-_UPDATE_TAIL_RE = re.compile(
-    r"\s+(?:로|으로)\s*(?:갱신|변경|수정|작성|입력|채우|해줘).*$",
     re.IGNORECASE,
 )
 _HEX_COLOR_RE = re.compile(r"\b(?P<hex>[0-9A-Fa-f]{6})\b")
@@ -72,7 +70,7 @@ def plan_autonomous_fill(
     document_ir: DocumentIR,
     *,
     instruction: str,
-    session_context: Mapping[str, object] | None = None,
+    session_context: Mapping[str, ScalarValue] | None = None,
 ) -> AutonomousFillPlan:
     """Build a deterministic fill plan from document IR and user intent."""
     intent = DocumentIntent(
@@ -89,7 +87,11 @@ def plan_autonomous_fill(
     blocked_slot_ids = tuple(
         slot.slot_id
         for slot in planned_slots
-        if slot.protected or _missing_required_slot(slot, instruction)
+        if (
+            slot.protected
+            or _missing_required_slot(slot, instruction)
+            or socratic_slot_requires_input(slot)
+        )
     )
     style_intents = _style_intents_from_instruction(
         instruction,
@@ -124,7 +126,7 @@ def _planned_slots(
     document_ir: DocumentIR,
     *,
     instruction: str,
-    session_context: Mapping[str, object],
+    session_context: Mapping[str, ScalarValue],
 ) -> tuple[FormSlot, ...]:
     slots: list[FormSlot] = []
     seen_slot_ids: set[str] = set()
@@ -134,16 +136,29 @@ def _planned_slots(
         protected_range = _protected_range_for_slot(document_ir, slot)
         protected_slot_requested = _protected_slot_requested(slot, instruction)
         broad_autonomous_fill = _instruction_requests_broad_autonomous_fill(instruction)
+        explicit_value = _explicit_keyed_value(slot, instruction)
+        context_value = _session_context_value(slot, session_context)
         planned_slot = _planned_slot(
             slot,
             instruction=instruction,
             session_context=session_context,
             protected_range=protected_range,
         )
+        planned_slot = apply_socratic_fill_gate(
+            planned_slot,
+            instruction=instruction,
+            session_context=session_context,
+            explicit_value_provided=explicit_value is not None,
+            context_value_provided=context_value is not None,
+            broad_autonomous_fill=broad_autonomous_fill,
+        )
         protected_requested = protected_range is not None and (
             broad_autonomous_fill or protected_slot_requested
         )
-        missing_required = _missing_required_slot(planned_slot, instruction)
+        missing_required = _missing_required_slot(
+            planned_slot,
+            instruction,
+        ) or socratic_slot_requires_input(planned_slot)
         slot_is_protected_context = (
             slot.protected or protected_range is not None or _slot_has_protected_semantics(slot)
         )
@@ -223,7 +238,7 @@ def _planned_slot(
     slot: FormSlot,
     *,
     instruction: str,
-    session_context: Mapping[str, object],
+    session_context: Mapping[str, ScalarValue],
     protected_range: DocumentProtectedRange | None,
 ) -> FormSlot:
     if slot.protected or protected_range is not None or _slot_has_protected_semantics(slot):
@@ -267,8 +282,8 @@ def _candidate_value_for_slot(
     slot: FormSlot,
     *,
     instruction: str,
-    session_context: Mapping[str, object],
-) -> object:
+    session_context: Mapping[str, ScalarValue],
+) -> ScalarValue:
     slot_key = _slot_key(slot)
     if _is_week_slot(slot_key):
         return _explicit_week_value(instruction) or _next_week_value(slot.current_value)
@@ -285,7 +300,7 @@ def _candidate_value_for_slot(
     return None
 
 
-def _protected_candidate(slot: FormSlot, instruction: str) -> object:
+def _protected_candidate(slot: FormSlot, instruction: str) -> ScalarValue:
     if not _protected_slot_requested(slot, instruction):
         return None
     return None
@@ -296,7 +311,7 @@ def _slot_is_empty(slot: FormSlot) -> bool:
     return value is None or (isinstance(value, str) and value.strip() == "")
 
 
-def _autonomous_draft_value_for_slot(slot: FormSlot) -> object:
+def _autonomous_draft_value_for_slot(slot: FormSlot) -> ScalarValue:
     slot_key = _slot_key(slot)
     if "코드" in slot_key or "code" in slot_key:
         return None
@@ -334,7 +349,7 @@ def _slot_has_legal_action_semantics(slot: FormSlot) -> bool:
 def _explicit_keyed_value(slot: FormSlot, instruction: str) -> str | None:
     labels = (slot.label, slot.slot_id)
     for label in labels:
-        value = _explicit_keyed_value_for_label(label, instruction)
+        value = explicit_keyed_value_for_label(label, instruction)
         if value is not None:
             return value
     return None
@@ -342,60 +357,9 @@ def _explicit_keyed_value(slot: FormSlot, instruction: str) -> str | None:
 
 def _explicit_slot_label_key(slot: FormSlot, instruction: str) -> str | None:
     for label in (slot.label, slot.slot_id):
-        if _explicit_keyed_value_for_label(label, instruction) is not None:
+        if explicit_keyed_value_for_label(label, instruction) is not None:
             return _normalize_key(label)
     return None
-
-
-def _explicit_keyed_value_for_label(label: str, instruction: str) -> str | None:
-    if not _is_meaningful_explicit_label(label):
-        return None
-    adjacent_blank_match = re.search(
-        rf"{re.escape(label)}\s*"
-        r"(?:옆|다음|우측|오른쪽)?\s*"
-        r"(?:빈\s*칸|칸|필드|항목)?\s*"
-        r"(?:에는|엔|에)\s*"
-        r"(?P<value>[^.!?。\n]+?)\s*(?:을|를)?\s*"
-        r"(?:넣|입력|작성|채우|수정|변경|갱신)",
-        instruction,
-        flags=re.IGNORECASE,
-    )
-    if adjacent_blank_match is not None:
-        value = _clean_explicit_keyed_value(adjacent_blank_match.group("value"))
-        return value or None
-    field_word_match = re.search(
-        rf"{re.escape(label)}\s*(?:은|는|이|가)?\s*(?:필드|칸|항목)?\s*"
-        r"(?:은|는|이|가|을|를)?\s*"
-        r"(?P<value>[^.!?。\n]+?)\s*(?:로|으로)\s*"
-        r"(?:작성|입력|채우|수정|변경|갱신)",
-        instruction,
-        flags=re.IGNORECASE,
-    )
-    if field_word_match is not None:
-        value = _clean_explicit_keyed_value(field_word_match.group("value"))
-        return value or None
-    match = re.search(
-        rf"{re.escape(label)}\s*(?:은|는|:|=)\s*(?P<value>[^.!?。\n]+[.!?。]?)",
-        instruction,
-        flags=re.IGNORECASE,
-    )
-    if match is not None:
-        value = _clean_explicit_keyed_value(match.group("value"))
-        return value or None
-    return None
-
-
-def _is_meaningful_explicit_label(label: str) -> bool:
-    label_key = _normalize_key(label)
-    if len(label_key) < 2:
-        return False
-    return any("a" <= char <= "z" or "가" <= char <= "힣" for char in label_key)
-
-
-def _clean_explicit_keyed_value(value: str) -> str:
-    cleaned = _SAVE_CLAUSE_RE.sub("", value).strip()
-    cleaned = _UPDATE_TAIL_RE.sub("", cleaned).strip()
-    return cleaned.strip(" ,;:)]}）")
 
 
 def _style_intents_from_instruction(
@@ -532,8 +496,8 @@ def _save_intent_from_instruction(instruction: str) -> AutonomousSaveIntent | No
 
 def _session_context_value(
     slot: FormSlot,
-    session_context: Mapping[str, object],
-) -> object:
+    session_context: Mapping[str, ScalarValue],
+) -> ScalarValue:
     slot_keys = {
         _normalize_key(slot.slot_id),
         _normalize_key(slot.label),
@@ -547,17 +511,21 @@ def _session_context_value(
     return None
 
 
-def _scalar_context_value(value: object) -> object:
+def _scalar_context_value(value: ScalarValue) -> ScalarValue:
     if value is None or isinstance(value, str | int | Decimal | bool | date | datetime):
         return value
-    return str(value)
+    return None
 
 
 def _missing_required_slot(slot: FormSlot, instruction: str) -> bool:
     return (
         slot.required
         and slot.candidate_value is None
-        and (_instruction_requests_broad_autonomous_fill(instruction) or slot.protected)
+        and (
+            _instruction_requests_broad_autonomous_fill(instruction)
+            or slot.protected
+            or socratic_slot_requires_input(slot)
+        )
     )
 
 

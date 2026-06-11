@@ -1,0 +1,10 @@
+fixture_id: scholarship-application-questions-metadata
+representation: metadata_only
+format: pdf
+source_ref: specs/2803-document-production-hardening/spec.md#FR-004
+expected_narrative_prompts:
+  - 학업계획
+  - 활동 경험
+protected_field_expectations:
+  - applicant identity fields are not auto-filled
+  - draft mutation requires explicit approval

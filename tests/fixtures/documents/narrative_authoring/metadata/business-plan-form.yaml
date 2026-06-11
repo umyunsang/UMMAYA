@@ -1,0 +1,10 @@
+fixture_id: business-plan-form-metadata
+representation: metadata_only
+format: docx
+source_ref: specs/2803-document-production-hardening/spec.md#User-Story-2
+expected_narrative_prompts:
+  - 사업 개요
+  - 시장 검증 근거
+protected_field_expectations:
+  - projected revenue needs user-provided basis
+  - market claims stay blocked without evidence
