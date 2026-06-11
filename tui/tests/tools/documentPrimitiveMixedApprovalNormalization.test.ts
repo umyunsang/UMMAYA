@@ -175,4 +175,29 @@ describe('DocumentPrimitive mixed approval normalization', () => {
     expect(String(args.approved_draft_sha256)).toMatch(/^[a-f0-9]{64}$/)
     expect(String(args.approved_draft_sha256)).not.toBe('0'.repeat(64))
   })
+
+  test('preserves issued approval tokens for mixed narrative and ordinary string patches', () => {
+    const issuedDraftId = 'draft-1234567890abcdef12345678'
+    const issuedDraftSha256 = 'f'.repeat(64)
+    const args = normalizeDocumentMutationPayloadsForDispatch(
+      {
+        approved_draft_id: issuedDraftId,
+        approved_draft_sha256: issuedDraftSha256,
+        patches: [
+          {
+            target_path: 'engine://python-docx/self-introduction-form.docx/table/1/r1c2',
+            value: 'Supported revised motivation draft.',
+          },
+          {
+            target_path: 'engine://python-docx/self-introduction-form.docx/table/1/r3c2',
+            value: 'Hong Gil-dong',
+          },
+        ],
+      },
+      'I approve this revised draft.',
+    )
+
+    expect(args.approved_draft_id).toBe(issuedDraftId)
+    expect(args.approved_draft_sha256).toBe(issuedDraftSha256)
+  })
 })

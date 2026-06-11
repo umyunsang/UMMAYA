@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto'
 
 const APPROVAL_TOKEN_RE = /승인|\bapprove\b/giu
 const APPROVAL_WORD_RE = /승인|\bapprove\b/iu
+const ISSUED_DRAFT_ID_RE = /^draft-[a-f0-9]{24}$/u
+const DRAFT_SHA256_RE = /^[a-f0-9]{64}$/u
 const DECISION_SPLIT_RE =
   /[.!?。]+|\b(?:but|however|nevertheless|instead|rather|and)\b|(?:하지만|그러나|그렇지만|다만|지만)/iu
 const EXPLICIT_ENGLISH_APPROVAL_SEGMENT_RE =
@@ -21,6 +23,11 @@ const EXPLICIT_REJECTION_RE =
 type StringPatch = {
   readonly targetPath: string
   readonly value: string
+}
+
+type ApprovedDraftFields = {
+  readonly draftId: string
+  readonly draftSha256: string
 }
 
 export function normalizeDocumentMutationPayloadsForDispatch(
@@ -73,9 +80,17 @@ function normalizeApprovedDraftPayloadForDispatch(
   args: Record<string, unknown>,
   userText: string | undefined,
 ): Record<string, unknown> {
+  const callerApproval = approvedDraftFieldsFromArgs(args)
   const normalizedArgs = withoutApprovedDraftFields(args)
   if (userText === undefined) return normalizedArgs
   if (!hasAffirmativeApproval(userText)) return normalizedArgs
+  if (callerApproval !== undefined) {
+    return {
+      ...normalizedArgs,
+      approved_draft_id: callerApproval.draftId,
+      approved_draft_sha256: callerApproval.draftSha256,
+    }
+  }
   const patches = stringPatchesFromArgs(normalizedArgs)
   if (patches === undefined || patches.length === 0) return normalizedArgs
   const approval = authoringApprovalForPatches(patches)
@@ -93,6 +108,17 @@ function withoutApprovedDraftFields(args: Record<string, unknown>): Record<strin
     ...withoutApproval
   } = args
   return withoutApproval
+}
+
+function approvedDraftFieldsFromArgs(
+  args: Record<string, unknown>,
+): ApprovedDraftFields | undefined {
+  const draftId = stringField(args, 'approved_draft_id')
+  const draftSha256 = stringField(args, 'approved_draft_sha256')
+  if (draftId === undefined || draftSha256 === undefined) return undefined
+  if (!ISSUED_DRAFT_ID_RE.test(draftId)) return undefined
+  if (!DRAFT_SHA256_RE.test(draftSha256)) return undefined
+  return { draftId, draftSha256 }
 }
 
 function hasAffirmativeApproval(userText: string): boolean {
