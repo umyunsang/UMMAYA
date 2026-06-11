@@ -127,7 +127,7 @@ include = [
     "/src/ummaya",
     "/prompts",
     "/docs/plugins/security-review.md",
-    "/specs/2802-public-doc-harness/contracts/document-tools.schema.json",
+    "/specs/2803-document-production-hardening/contracts/document-tools.schema.json",
     "/tests/fixtures/plugin_validation/checklist_manifest.yaml",
 ]
 
@@ -147,9 +147,9 @@ packages = ["src/ummaya"]
 # (default packages= only ships src/ummaya; without this include the
 # ummaya.plugins import fails at module load).
 "docs/plugins/security-review.md" = "ummaya/_canonical/security-review.md"
-# Bundle the Public AX document harness tool contract so installed wheels can
-# register model-visible document tools without depending on the source tree.
-"specs/2802-public-doc-harness/contracts/document-tools.schema.json" = "ummaya/_canonical/document-tools.schema.json"
+# Bundle the document production hardening tool contract so installed wheels
+# can register model-visible document tools without depending on the source tree.
+"specs/2803-document-production-hardening/contracts/document-tools.schema.json" = "ummaya/_canonical/document-tools.schema.json"
 # Bundle the 50-item validation checklist YAML so ummaya-plugin-validate
 # CLI can find it without depending on the source-tree layout.
 "tests/fixtures/plugin_validation/checklist_manifest.yaml" = "ummaya/_canonical/checklist_manifest.yaml"

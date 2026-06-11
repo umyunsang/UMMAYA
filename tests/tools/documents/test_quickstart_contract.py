@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Quickstart contract coverage for the Public AX document harness."""
-
 from __future__ import annotations
 
 from pathlib import Path
 
 from ummaya.tools.documents.contracts import load_document_tool_contracts
 
-QUICKSTART_PATH = Path("specs/2802-public-doc-harness/quickstart.md")
+QUICKSTART_PATH = Path("specs/2803-document-production-hardening/quickstart.md")
 
 
 def test_quickstart_lists_all_model_visible_document_tools() -> None:

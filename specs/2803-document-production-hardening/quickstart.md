@@ -1,9 +1,9 @@
-# Quickstart: Public AX Document Harness
+# Quickstart: Document Production Hardening
 
-This quickstart defines the implemented developer workflow for the Public AX
-document harness. The feature exposes local, engine-backed document tools
-through UMMAYA's existing ToolRegistry; it does not add a first-party parser,
-converter, office editor, or new root primitive family.
+This quickstart defines the developer workflow for the active document production hardening spec.
+The feature keeps one model-facing `document` primitive and treats inspection, Socratic evidence
+collection, draft approval, derivative writing, validation, render comparison, and save/export as
+internal workflow stages.
 
 ## 1. Verify Environment
 
@@ -15,32 +15,31 @@ uv run python --version
 Expected:
 
 - Python is 3.12 or newer.
-- No document-processing dependency is added without a task-level justification, license note, and focused tests.
+- No document-processing dependency is added without task-level justification, license review, local-only execution proof, and focused tests.
 
 ## 2. Confirm Feature Artifacts
 
 ```bash
-test -f specs/2802-public-doc-harness/spec.md
-test -f specs/2802-public-doc-harness/plan.md
-test -f specs/2802-public-doc-harness/research.md
-test -f specs/2802-public-doc-harness/data-model.md
-test -f specs/2802-public-doc-harness/contracts/document-tools.schema.json
+test -f specs/2803-document-production-hardening/spec.md
+test -f specs/2803-document-production-hardening/contracts/document-tools.schema.json
+test -f .omo/plans/document-production-hardening-2803.md
 ```
 
 ## 3. Validate Contract Schema
 
 ```bash
-uv run python -m json.tool specs/2802-public-doc-harness/contracts/document-tools.schema.json >/tmp/document-tools.schema.normalized.json
+uv run python -m json.tool specs/2803-document-production-hardening/contracts/document-tools.schema.json >/tmp/document-tools.schema.normalized.json
 ```
 
 Expected:
 
 - JSON parses successfully.
-- Tool contracts include one model-facing `document` primitive. Inspect, extract, form-schema, copy-for-edit, fill, style, render, validate, and save remain internal workflow stages surfaced through the result evidence.
+- Tool contracts include one model-facing `document` primitive.
+- Inspect, extract, form-schema, copy-for-edit, fill, style, render, validate, and save remain internal workflow stages surfaced through result evidence.
 
 ## 4. Build Fixture Corpus
 
-The implemented fixture and baseline corpus lives under:
+The fixture and baseline corpus lives under:
 
 ```text
 tests/fixtures/documents/
@@ -56,10 +55,10 @@ Fixture manifests and baseline records must preserve:
 - source/license/provenance
 - format
 - expected extraction counts
-- expected form fields
+- expected form fields and narrative prompts
 - expected style assertions
 - expected render/validation outcome
-- whether the file is data.go.kr-derived metadata, a locally created fixture, or a hostile negative fixture
+- whether the file is official/public metadata, a locally created fixture, or a hostile negative fixture
 
 No live `data.go.kr` request is allowed in CI.
 
@@ -74,10 +73,9 @@ uv run pytest tests/tools/documents tests/evidence tests/ci -q
 Expected:
 
 - HWPX, DOCX, XLSX, PDF, and PPTX happy paths pass only for promoted capabilities.
-- HWP direct write returns a structured blocked result.
+- HWP direct write returns a structured blocked result unless a promotion gate passes.
 - Hostile fixtures fail closed before unsafe parse or write.
-- Public-form validation computes paragraph, table, image, metadata, aggregate, round-trip, render, and security results.
-- The single `document` primitive registers as the concrete model-facing `GovAPITool` definition.
+- Broad requests such as "대충 그럴듯하게 써줘" ask for evidence rather than fabricating content.
 - Write/export operations are document operations and require the existing permission/auth gate before creating derivatives or exports.
 
 ## 6. Run General Gates
@@ -100,12 +98,12 @@ Expected:
 After implementation:
 
 ```bash
-uv run python -m ummaya.evidence --source-ref local --out .evidence/run.json
+uv run python -m ummaya.evidence --source-ref local --dataset-ref ummaya/national-ax-core@local --out .evidence/run.json
 ```
 
 Expected:
 
-- `.evidence/run.json` includes document harness scenario results joinable by `correlation_id`.
+- `.evidence/run.json` includes document scenario results joinable by `correlation_id`.
 - Document validation reports point to artifact IDs, not raw untrusted paths.
 - Render outputs and reports are stored under safe artifact/evidence paths.
 - Evidence records carry artifact IDs, SHA-256 hashes, report IDs, render IDs, and correlation IDs only; raw document bytes and user source paths are excluded.
@@ -115,12 +113,14 @@ Expected:
 Use a local public-form-like fixture and ask UMMAYA to:
 
 1. inspect the file,
-2. extract form fields,
-3. copy for edit,
-4. fill a field,
-5. apply a font/style patch,
-6. render or validate the derivative,
-7. save the derivative.
+2. ask for missing evidence,
+3. draft supported field or section content,
+4. request approval,
+5. copy for edit,
+6. fill a field,
+7. apply an approved font/style patch,
+8. render or validate the derivative,
+9. save the derivative.
 
 Expected:
 

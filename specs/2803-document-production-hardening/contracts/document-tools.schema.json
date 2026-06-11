@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ummaya.local/contracts/public-doc-harness/document-tools.schema.json",
-  "title": "Public AX Document Harness Tool Contracts",
+  "$id": "https://ummaya.local/contracts/document-production-hardening/document-tools.schema.json",
+  "title": "Document Production Hardening Tool Contracts",
   "type": "object",
   "required": [
     "version",
