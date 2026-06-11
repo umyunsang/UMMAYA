@@ -49,6 +49,7 @@ export class FileIndex {
   // During async build, tracks how many paths have bitmap/lowerPath filled.
   // search() uses this to search the ready prefix while build continues.
   private readyCount = 0
+  private buildGeneration = 0
 
   /**
    * Load paths from an array of strings.
@@ -56,6 +57,7 @@ export class FileIndex {
    * Automatically deduplicates paths.
    */
   loadFromFileList(fileList: string[]): void {
+    const generation = this.startBuild()
     // Deduplicate and filter empty strings (matches Rust HashSet behavior)
     const seen = new Set<string>()
     const paths: string[] = []
@@ -66,7 +68,7 @@ export class FileIndex {
       }
     }
 
-    this.buildIndex(paths)
+    this.buildIndex(paths, generation)
   }
 
   /**
@@ -88,18 +90,24 @@ export class FileIndex {
     const queryable = new Promise<void>(resolve => {
       markQueryable = resolve
     })
-    const done = this.buildAsync(fileList, markQueryable)
+    const generation = this.startBuild()
+    const done = this.buildAsync(fileList, markQueryable, generation)
     return { queryable, done }
   }
 
   private async buildAsync(
     fileList: string[],
     markQueryable: () => void,
+    generation: number,
   ): Promise<void> {
     const seen = new Set<string>()
     const paths: string[] = []
     let chunkStart = performance.now()
     for (let i = 0; i < fileList.length; i++) {
+      if (generation !== this.buildGeneration) {
+        markQueryable()
+        return
+      }
       const line = fileList[i]!
       if (line.length > 0 && !seen.has(line)) {
         seen.add(line)
@@ -112,11 +120,19 @@ export class FileIndex {
       }
     }
 
+    if (generation !== this.buildGeneration) {
+      markQueryable()
+      return
+    }
     this.resetArrays(paths)
 
     chunkStart = performance.now()
     let firstChunk = true
     for (let i = 0; i < paths.length; i++) {
+      if (generation !== this.buildGeneration) {
+        markQueryable()
+        return
+      }
       this.indexPath(i)
       if ((i & 0xff) === 0xff && performance.now() - chunkStart > CHUNK_MS) {
         this.readyCount = i + 1
@@ -125,19 +141,33 @@ export class FileIndex {
           firstChunk = false
         }
         await yieldToEventLoop()
+        if (generation !== this.buildGeneration) {
+          return
+        }
         chunkStart = performance.now()
       }
+    }
+    if (generation !== this.buildGeneration) {
+      return
     }
     this.readyCount = paths.length
     markQueryable()
   }
 
-  private buildIndex(paths: string[]): void {
+  private buildIndex(paths: string[], generation: number): void {
     this.resetArrays(paths)
     for (let i = 0; i < paths.length; i++) {
+      if (generation !== this.buildGeneration) {
+        return
+      }
       this.indexPath(i)
     }
     this.readyCount = paths.length
+  }
+
+  private startBuild(): number {
+    this.buildGeneration += 1
+    return this.buildGeneration
   }
 
   private resetArrays(paths: string[]): void {

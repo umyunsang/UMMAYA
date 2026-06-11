@@ -571,6 +571,63 @@ function isTerminalDocumentPrimitivePayload(value: unknown): boolean {
   return Object.values(record).some(isTerminalDocumentPrimitivePayload)
 }
 
+function documentResultHasDiffContract(record: Record<string, unknown>): boolean {
+  const diff = asRecord(record.diff)
+  return Array.isArray(diff?.changes)
+}
+
+function documentResultHasSavedExport(record: Record<string, unknown>): boolean {
+  const savedExports = Array.isArray(record.saved_exports)
+    ? record.saved_exports
+    : []
+  return savedExports.some(savedExport => {
+    const localPath = asRecord(savedExport)?.local_path
+    return typeof localPath === 'string' && localPath.trim() !== ''
+  })
+}
+
+function isDocumentWriteCompletionPayload(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(isDocumentWriteCompletionPayload)
+  }
+  const record = asRecord(value)
+  if (!record) return false
+  const toolId = typeof record.tool_id === 'string' ? record.tool_id : undefined
+  if (toolId === DOCUMENT_TOOL_NAME) {
+    const status = typeof record.status === 'string' ? record.status.toLowerCase() : 'ok'
+    if (status === 'blocked' || status === 'failed' || status === 'needs_input') {
+      return true
+    }
+    return (
+      status === 'ok' &&
+      (documentResultHasDiffContract(record) || documentResultHasSavedExport(record))
+    )
+  }
+  return Object.values(record).some(isDocumentWriteCompletionPayload)
+}
+
+function hasDocumentWriteCompletionResultAfter(
+  messages: readonly unknown[],
+  afterIndex: number,
+): boolean {
+  for (let index = Math.max(0, afterIndex + 1); index < messages.length; index += 1) {
+    const content = messageContent(messages[index])
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      const record = asRecord(block)
+      if (record?.type !== 'tool_result') continue
+      if (typeof record.content !== 'string') continue
+      const parsed = parseJsonRecord(record.content)
+      if (isDocumentWriteCompletionPayload(parsed)) return true
+    }
+  }
+  return false
+}
+
+function userTextRequiresDocumentWriteCompletion(userText: string): boolean {
+  return DOCUMENT_WRITE_RE.test(userText) && !DOCUMENT_READ_ONLY_RE.test(userText)
+}
+
 function isDocumentAnswerSynthesisPayload(value: unknown): boolean {
   if (Array.isArray(value)) {
     return value.some(isDocumentAnswerSynthesisPayload)
@@ -746,10 +803,9 @@ function selectDocumentWorkflowTargetToolName(
   const wantsReadOnly = DOCUMENT_READ_ONLY_RE.test(userText)
   if (!wantsWrite && !wantsReview && !wantsReadOnly) return undefined
   const latestUserIndex = latestUserMessageIndex(messages)
-  const hasDocumentForLatestRequest = hasTerminalDocumentPrimitiveToolResultAfter(
-    messages,
-    latestUserIndex,
-  )
+  const hasDocumentForLatestRequest = userTextRequiresDocumentWriteCompletion(userText)
+    ? hasDocumentWriteCompletionResultAfter(messages, latestUserIndex)
+    : hasTerminalDocumentPrimitiveToolResultAfter(messages, latestUserIndex)
 
   return hasDocumentForLatestRequest ? undefined : DOCUMENT_TOOL_NAME
 }
@@ -912,10 +968,10 @@ export function shouldCompleteAfterTerminalDocumentToolResult({
 }): boolean {
   const userText = latestUserText(messages)
   if (!isDocumentHarnessQuery(userText)) return false
-  return hasDocumentAnswerSynthesisResultAfter(
-    messages,
-    latestUserMessageIndex(messages),
-  )
+  const latestUserIndex = latestUserMessageIndex(messages)
+  return userTextRequiresDocumentWriteCompletion(userText)
+    ? hasDocumentWriteCompletionResultAfter(messages, latestUserIndex)
+    : hasDocumentAnswerSynthesisResultAfter(messages, latestUserIndex)
 }
 
 export function buildDocumentCompletionPromptIfNeeded({
@@ -926,10 +982,11 @@ export function buildDocumentCompletionPromptIfNeeded({
   const userText = latestUserText(messages)
   if (!isDocumentHarnessQuery(userText)) return undefined
   if (hasDocumentCompletionPrompt(messages)) return undefined
-  if (!hasTerminalDocumentToolResultAfter(
-    messages,
-    latestUserMessageIndex(messages),
-  )) return undefined
+  const latestUserIndex = latestUserMessageIndex(messages)
+  const hasCompletionResult = userTextRequiresDocumentWriteCompletion(userText)
+    ? hasDocumentWriteCompletionResultAfter(messages, latestUserIndex)
+    : hasTerminalDocumentToolResultAfter(messages, latestUserIndex)
+  if (!hasCompletionResult) return undefined
   return (
     documentDiffOnlyCompletionPrompt(userText, messages) ??
     DOCUMENT_COMPLETION_PROMPT
@@ -1450,7 +1507,7 @@ export function shouldSuppressUmmayaToolCallsForAnswerSynthesis({
   }
   if (
     isDocumentHarnessQuery(userText) &&
-    hasDocumentAnswerSynthesisResultAfter(messages, latestUserMessageIndex(messages))
+    shouldCompleteAfterTerminalDocumentToolResult({ messages })
   ) {
     return true
   }
