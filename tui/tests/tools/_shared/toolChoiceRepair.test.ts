@@ -662,6 +662,38 @@ describe('document harness tool-choice repair', () => {
     expect(completionPrompt).toContain('saved_exports is absent')
   })
 
+  test('save request does not complete from read-only document inspection result', () => {
+    const prompt =
+      '검토용 복사본을 /tmp/ummaya-goal-form-public.docx 로 저장해줘. 저장 후 원본과 검토용 복사본의 차이와 재읽기 검증 결과도 확인해서 알려줘. 파일: /Users/me/form.docx'
+    const messages = [
+      user(prompt),
+      toolUse('document-1', 'document', {
+        operation: 'inspect',
+        document: { path: '/Users/me/form.docx' },
+      }),
+      toolResult('document-1', {
+        tool_id: 'document',
+        status: 'ok',
+        text_summary: 'Document inspection completed through the document primitive.',
+        extraction: { paragraphs: [{ text: '기업 및 브랜드명:' }] },
+        diff: null,
+        render_artifacts: [],
+        saved_exports: [],
+      }),
+    ]
+
+    expect(buildDocumentCompletionPromptIfNeeded({ messages })).toBeUndefined()
+    expect(
+      shouldCompleteAfterTerminalDocumentToolResult({ messages }),
+    ).toBe(false)
+    expect(
+      shouldSuppressUmmayaToolCallsForAnswerSynthesis({
+        messages,
+        tools: documentTools,
+      }),
+    ).toBe(false)
+  })
+
   test('does not keep hidden document input repair fallback hooks', () => {
     const repairSource = readFileSync(
       join(TUI_ROOT, 'src/tools/_shared/toolChoiceRepair.ts'),

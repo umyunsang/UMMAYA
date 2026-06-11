@@ -664,6 +664,7 @@ def build_evidence_output_payload(
         ]
     if include_document_harness:
         from ummaya.evidence.document_harness import (  # noqa: PLC0415
+            authoring_cases_from_scenario,
             beta_cases_from_scenario,
             lifecycle_records_from_scenario,
             load_document_harness_scenario,
@@ -685,6 +686,9 @@ def build_evidence_output_payload(
         ]
         payload["document_negative_cases"] = [
             case.model_dump(mode="json") for case in negative_cases_from_scenario(scenario)
+        ]
+        payload["document_authoring_cases"] = [
+            case.model_dump(mode="json") for case in authoring_cases_from_scenario(scenario)
         ]
         from ummaya.tools.documents.hwp_conversion_probe import (  # noqa: PLC0415
             probe_hwp_to_hwpx_bridge,

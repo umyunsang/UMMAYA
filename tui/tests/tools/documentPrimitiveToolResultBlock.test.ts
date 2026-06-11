@@ -6,6 +6,7 @@ import {
   DocumentPrimitive,
   normalizeDocumentPrimitiveInputForDispatch,
 } from '../../src/tools/DocumentPrimitive/DocumentPrimitive'
+import { DOCUMENT_TOOL_PROMPT } from '../../src/tools/DocumentPrimitive/prompt'
 
 describe('DocumentPrimitive tool_result block', () => {
   test('renders provider inspect attempts with write intent as document edits', () => {
@@ -102,6 +103,143 @@ describe('DocumentPrimitive tool_result block', () => {
     expect(String(args.instruction)).toContain('Original user request:')
   })
 
+  test('keeps question-first authoring inspect calls as inspect for document structure', () => {
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      {
+        correlation_id: 'corr-document-question-first',
+        document: {
+          path: '/tmp/business-plan-form.docx',
+          expected_format: 'docx',
+        },
+        operation: 'inspect',
+        instruction: '사업계획서 양식의 빈칸과 문항 구조를 확인합니다.',
+        __ummaya_display_operation: 'fill',
+      },
+      '이 사업계획서 양식의 빈칸과 문항을 확인하고 제출할 수 있게 작성해줘. 근거가 부족하면 먼저 질문해.',
+    )
+
+    expect(args.operation).toBe('inspect')
+    expect(String(args.instruction)).toContain('Original user request:')
+  })
+
+  test('keeps structure inspection as inspect when current user text is unavailable', () => {
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      {
+        correlation_id: 'corr-document-structure-only',
+        document: {
+          path: '/tmp/business-plan-form.docx',
+          expected_format: 'docx',
+        },
+        operation: 'inspect',
+        instruction: '이 문서의 구조와 빈칸, 문항을 확인하여 필요한 정보를 파악하세요.',
+        __ummaya_display_operation: 'fill',
+      },
+      undefined,
+    )
+
+    expect(args.operation).toBe('inspect')
+  })
+
+  test('keeps draft preview requests read-only when the user says not to write yet', () => {
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      {
+        correlation_id: 'corr-document-draft-preview',
+        document: {
+          path: '/tmp/business-plan-form.docx',
+          expected_format: 'docx',
+        },
+        operation: 'extract',
+        instruction: '문서의 모든 텍스트와 자리 표시자, 양식 필드를 추출하여 구조를 확인하세요.',
+      },
+      '이 근거만 사용해서 초안을 먼저 보여줘. 아직 문서에는 쓰지 마.',
+    )
+
+    expect(args.operation).toBe('extract')
+  })
+
+  test('keeps extraction read-only when the instruction mentions observed formatting', () => {
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      {
+        correlation_id: 'corr-document-format-observation',
+        document: {
+          path: '/tmp/business-plan-form.docx',
+          expected_format: 'docx',
+        },
+        operation: 'extract',
+        instruction:
+          '문서의 모든 텍스트 내용을 추출하고, 서식(표, 제목, 단락 스타일 등)과 빈칸의 위치를 파악해주세요.',
+      },
+      undefined,
+    )
+
+    expect(args.operation).toBe('extract')
+  })
+
+  test('does not dispatch display-only document operation overrides', () => {
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      {
+        correlation_id: 'corr-document-display-only',
+        document: {
+          path: '/tmp/business-plan-form.docx',
+          expected_format: 'docx',
+        },
+        operation: 'extract',
+        instruction:
+          'Extract the entire form structure and identify fields and formatting.',
+        __ummaya_display_operation: 'fill',
+      },
+      undefined,
+    )
+
+    expect(args.operation).toBe('extract')
+    expect(JSON.stringify(args)).not.toContain('__ummaya_display_operation')
+  })
+
+  test('drops model-invented save destinations from read-only authoring turns', () => {
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      {
+        correlation_id: 'corr-document-readonly-destination',
+        document: {
+          path: '/tmp/business-plan-form.docx',
+          expected_format: 'docx',
+        },
+        operation: 'inspect',
+        instruction: 'Inspect the document structure and identify form fields.',
+        destination_path: '/tmp/model-invented-inspection',
+        destination_display_name: 'Model invented inspection output',
+        __ummaya_display_operation: 'fill',
+      },
+      '이 근거만 사용해서 초안을 먼저 보여줘. 아직 문서에는 쓰지 마.',
+    )
+
+    expect(args.operation).toBe('inspect')
+    expect(args.destination_path).toBeUndefined()
+    expect(args.destination_display_name).toBeUndefined()
+    expect(JSON.stringify(args)).not.toContain('__ummaya_display_operation')
+  })
+
+  test('uses artifact id only when a follow-up locator repeats path and artifact id', () => {
+    const args = normalizeDocumentPrimitiveInputForDispatch(
+      {
+        correlation_id: 'corr-document-artifact-followup',
+        document: {
+          path: '/tmp/business-plan-form.docx',
+          artifact_id: 'source-corr-document-artifact-followup',
+          expected_format: 'docx',
+        },
+        operation: 'extract',
+        instruction: '방금 확인한 양식의 문항 구조를 다시 확인합니다.',
+      },
+      '근거는 제공했으니 초안을 먼저 보여줘. 아직 문서에는 쓰지 마.',
+    )
+
+    expect(args.document).toEqual({
+      artifact_id: 'source-corr-document-artifact-followup',
+      expected_format: 'docx',
+    })
+    expect(JSON.stringify(args)).not.toContain('/tmp/business-plan-form.docx')
+  })
+
   test('downgrades model fill calls to inspect when the user explicitly requested read-only', () => {
     const args = normalizeDocumentPrimitiveInputForDispatch(
       {
@@ -156,5 +294,18 @@ describe('DocumentPrimitive tool_result block', () => {
     expect(change.target_path).toBe('접수번호')
     expect(change.display_label).toBe('접수번호')
     expect(JSON.stringify(parsed)).not.toContain('Contents/section0.xml')
+  })
+
+  test('teaches the model to collect evidence and approval before narrative writes', () => {
+    expect(DOCUMENT_TOOL_PROMPT).toContain('ask the user for missing evidence')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('do not call fill or save')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('draft preview')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('question-first authoring')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('patches plus approved_draft_id')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('target_path comes from the inspected document field path')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('approved_draft_id')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('approved_draft_sha256')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('Use either document.path or document.artifact_id, never both')
+    expect(DOCUMENT_TOOL_PROMPT).toContain('use document.artifact_id only')
   })
 })

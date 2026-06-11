@@ -148,6 +148,61 @@ describe('dispatchPrimitive — CC register-and-await dispatch', () => {
     const toolUseId = 'document-use-cc-1'
     const userQuery =
       '/tmp/weekly.hwpx 문서 내용을 파악해서 다음 주차 활동일지로 알아서 작성하고, 저장은 /tmp/weekly-auto.hwpx 로 해줘.'
+    const context = fakeContext(toolUseId)
+    context.messages = [
+      {
+        type: 'user',
+        message: { role: 'user', content: userQuery },
+      },
+    ]
+    const args = {
+      correlation_id: 'corr-document',
+      document: { path: '/tmp/weekly.hwpx', expected_format: 'hwpx' },
+      operation: 'fill',
+      instruction: '문서 내용을 다음 주차 활동일지로 작성하세요.',
+    }
+
+    const promise = dispatchPrimitive<{ ok: boolean; result?: unknown }>({
+      primitive: 'document',
+      args,
+      context,
+      registry,
+      bridge: fakeBridge((frame) => sentFrames.push(frame)),
+    })
+
+    await Promise.resolve()
+    expect(sentFrames[0]).toMatchObject({
+      role: 'tool',
+      kind: 'tool_call',
+      call_id: toolUseId,
+      name: 'document',
+      arguments: {
+        ...args,
+        __ummaya_user_query: userQuery,
+      },
+    })
+    expect(args).not.toHaveProperty('__ummaya_user_query')
+
+    const frame: Parameters<typeof registry.resolve>[1] = {
+      session_id: 'test-session',
+      correlation_id: 'test-corr',
+      ts: '2026-05-24T00:00:00Z',
+      role: 'backend',
+      kind: 'tool_result',
+      call_id: toolUseId,
+      envelope: { kind: 'document', result: { status: 'ok' } },
+    }
+    registry.resolve(toolUseId, frame)
+
+    const result = await promise
+    expect(result.data.ok).toBe(true)
+  })
+
+  test('does not add current user query to read-only document IPC calls', async () => {
+    const sentFrames: unknown[] = []
+    const toolUseId = 'document-use-readonly-cc-1'
+    const userQuery =
+      '/tmp/business-plan.docx 양식의 빈칸과 문항을 먼저 파악해줘. 아직 문서에는 쓰지 마.'
     const context = {
       ...fakeContext(toolUseId),
       messages: [
@@ -158,10 +213,10 @@ describe('dispatchPrimitive — CC register-and-await dispatch', () => {
       ],
     } as unknown as ToolUseContext
     const args = {
-      correlation_id: 'corr-document',
-      document: { path: '/tmp/weekly.hwpx', expected_format: 'hwpx' },
+      correlation_id: 'corr-document-readonly',
+      document: { path: '/tmp/business-plan.docx', expected_format: 'docx' },
       operation: 'extract',
-      instruction: '문서 내용을 구조적으로 추출하세요.',
+      instruction: '사업계획서 양식의 모든 빈칸, 문항, 서식을 구조적으로 추출하세요.',
     }
 
     const promise = dispatchPrimitive({
@@ -178,12 +233,9 @@ describe('dispatchPrimitive — CC register-and-await dispatch', () => {
       kind: 'tool_call',
       call_id: toolUseId,
       name: 'document',
-      arguments: {
-        ...args,
-        __ummaya_user_query: userQuery,
-      },
+      arguments: args,
     })
-    expect(args).not.toHaveProperty('__ummaya_user_query')
+    expect(JSON.stringify(sentFrames[0])).not.toContain('__ummaya_user_query')
 
     registry.resolve(toolUseId, {
       session_id: 'test-session',

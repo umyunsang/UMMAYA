@@ -13,10 +13,12 @@ import { truncateToWidth } from '../../utils/format.js'
 import { useTheme } from '@/theme/provider'
 import { MessageResponse } from '../MessageResponse.js'
 import { StructuredDiffFallback } from '../StructuredDiff/Fallback.js'
+import { DocumentSocraticReviewBlock } from './DocumentSocraticReviewBlock.js'
 import {
   documentChangeToPatch,
   documentVisibleChanges,
 } from '../../tools/_shared/documentChangeToPatch.js'
+import { extractDocumentSocraticReview } from './documentSocraticReview.js'
 import type {
   DocumentDiffPayload,
   DocumentToolResultPayload,
@@ -50,6 +52,7 @@ export function DocumentToolResultCard({
   const reviewDocumentName =
     diff === undefined ? payload.tool_id : documentNameFor(payload, diff)
   const savedExportPaths = savedExportPathsFor(payload)
+  const socraticReview = extractDocumentSocraticReview(payload)
 
   const patch =
     diff !== undefined && visibleChanges.length > 0
@@ -89,6 +92,7 @@ export function DocumentToolResultCard({
               {truncateToWidth(`Saved: ${localPath}`, surfaceWidth)}
             </Text>
           ))}
+          <DocumentSocraticReviewBlock review={socraticReview} width={surfaceWidth} />
         </Box>
       </MessageResponse>
     )
@@ -105,6 +109,7 @@ export function DocumentToolResultCard({
       {payload.blocked_reason !== undefined && payload.blocked_reason !== null && (
         <Text color={theme.warning}>{`Reason: ${payload.blocked_reason}`}</Text>
       )}
+      <DocumentSocraticReviewBlock review={socraticReview} width={surfaceWidth} />
       {promotionGate !== undefined && (
         <Box flexDirection="column" marginTop={1}>
           <Text color={theme.warning} wrap="wrap">

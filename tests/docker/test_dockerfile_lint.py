@@ -18,8 +18,10 @@ from pathlib import Path
 
 _DOCKERFILE_PATH = Path(__file__).resolve().parents[2] / "docker" / "Dockerfile"
 _DOCKERIGNORE_PATH = Path(__file__).resolve().parents[2] / ".dockerignore"
-_PUBLIC_DOC_CONTRACT_DIR = "specs/2802-public-doc-harness/contracts/"
-_PUBLIC_DOC_CONTRACT = "specs/2802-public-doc-harness/contracts/document-tools.schema.json"
+_PUBLIC_DOC_CONTRACT_DIR = "specs/2803-document-production-hardening/contracts/"
+_PUBLIC_DOC_CONTRACT = (
+    "specs/2803-document-production-hardening/contracts/document-tools.schema.json"
+)
 
 
 def _read_dockerfile() -> str:

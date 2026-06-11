@@ -157,6 +157,35 @@ def test_document_harness_scenario_covers_phase11_beta_and_negative_matrices() -
     assert all(case.derivative_save == "forbidden" for case in scenario.negative_cases)
 
 
+def test_document_harness_scenario_covers_authoring_gate_matrix() -> None:
+    from ummaya.evidence.document_harness import load_document_harness_scenario
+
+    scenario = load_document_harness_scenario(Path("evidence/scenarios/document_harness_v1.yaml"))
+
+    cases_by_class = {case.scenario_class: case for case in scenario.authoring_cases}
+    assert set(cases_by_class) == {
+        "public_form_completion",
+        "narrative_authoring",
+        "unsupported_plausible_writing",
+        "protected_field",
+        "direct_hwp_path",
+        "render_comparison",
+    }
+    assert cases_by_class["public_form_completion"].expected_status == "ready_for_review"
+    assert cases_by_class["public_form_completion"].mutation_allowed is True
+    assert cases_by_class["narrative_authoring"].requires_socratic_loop is True
+    assert cases_by_class["narrative_authoring"].requires_user_approval is True
+    assert cases_by_class["unsupported_plausible_writing"].expected_status == "blocked"
+    assert cases_by_class["unsupported_plausible_writing"].mutation_allowed is False
+    assert cases_by_class["protected_field"].expected_status == "needs_input"
+    assert cases_by_class["protected_field"].mutation_allowed is False
+    assert cases_by_class["direct_hwp_path"].hwp_direct_write_state == "blocked"
+    assert cases_by_class["direct_hwp_path"].mutation_allowed is False
+    assert cases_by_class["render_comparison"].render_comparison_required is True
+    assert all(case.correlation_id for case in scenario.authoring_cases)
+    assert all(case.evidence_ref for case in scenario.authoring_cases)
+
+
 def test_document_records_attach_to_evidence_runner_output() -> None:
     from ummaya.evidence.document_harness import (
         DocumentEvidenceRecord,
@@ -240,6 +269,23 @@ def test_evidence_cli_payload_includes_document_harness_records() -> None:
     }
     assert payload["document_beta_cases"]
     assert payload["document_negative_cases"]
+    authoring_cases = payload["document_authoring_cases"]
+    assert {case["scenario_class"] for case in authoring_cases} == {
+        "public_form_completion",
+        "narrative_authoring",
+        "unsupported_plausible_writing",
+        "protected_field",
+        "direct_hwp_path",
+        "render_comparison",
+    }
+    assert any(
+        case["scenario_class"] == "render_comparison" and case["render_comparison_required"] is True
+        for case in authoring_cases
+    )
+    assert any(
+        case["scenario_class"] == "direct_hwp_path" and case["hwp_direct_write_state"] == "blocked"
+        for case in authoring_cases
+    )
     bridge_records = payload["document_bridge_probe_records"]
     assert bridge_records == [
         {

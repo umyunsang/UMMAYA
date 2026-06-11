@@ -28,7 +28,7 @@ from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool
 
 DOCUMENT_TOOL_IDS = cast(tuple[DocumentToolId, ...], load_document_tool_contracts().tool_ids)
 DOCUMENT_POLICY_URL = (
-    "https://github.com/umyunsang/UMMAYA/blob/main/specs/2802-public-doc-harness/spec.md"
+    "https://github.com/umyunsang/UMMAYA/blob/main/specs/2803-document-production-hardening/spec.md"
 )
 _POLICY_VERIFIED_AT = datetime(2026, 6, 1, tzinfo=UTC)
 
@@ -174,6 +174,22 @@ class DocumentPrimitiveRequest(DocumentToolRequestModel):
             "when the user asks to save/export the completed document to a local path."
         ),
     )
+    approved_draft_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Approved authoring draft identifier for narrative document insertion.",
+    )
+    approved_draft_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[a-f0-9]{64}$",
+        description="SHA-256 of the user-approved narrative draft text.",
+    )
+
+    @model_validator(mode="after")
+    def _require_complete_authoring_approval(self) -> DocumentPrimitiveRequest:
+        if (self.approved_draft_id is None) != (self.approved_draft_sha256 is None):
+            raise ValueError("approved draft id and sha256 must be provided together")
+        return self
 
 
 class DocumentStylePatch(DocumentToolRequestModel):

@@ -35,7 +35,6 @@ import time
 import uuid
 from collections.abc import Callable, Collection, Iterable
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Final, Literal, cast
 
@@ -43,6 +42,9 @@ from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from pydantic import TypeAdapter, ValidationError
 
+from ummaya.ipc.document_intent_normalization import (
+    _normalize_document_root_call_for_user_intent,
+)
 from ummaya.ipc.envelope import attach_envelope_span_attributes
 from ummaya.ipc.frame_schema import (
     ErrorFrame,
@@ -882,16 +884,6 @@ _DOCUMENT_WRITE_REQUEST_RE: Final = re.compile(
     r"(작성|수정|편집|채우|채워|입력|변경|저장|write|edit|fill|apply|save)",
     re.IGNORECASE,
 )
-_DOCUMENT_SAVE_REQUEST_RE: Final = re.compile(
-    r"(저장|내보내|export|save)",
-    re.IGNORECASE,
-)
-_DOCUMENT_INTERNAL_USER_QUERY_KEY: Final = "__ummaya_user_query"
-_DOCUMENT_EXPLICIT_LOCAL_PATH_RE: Final = re.compile(
-    r"(?P<path>(?:~|/)[^\s\"'<>]+?\."
-    r"(?:hwpx|hwp|docx|pdf|xlsx|pptx|odt|ods|odp|doc|xls|ppt|csv|txt|md|json|xml|html))",
-    re.IGNORECASE,
-)
 _DOCUMENT_REVIEW_REQUEST_RE: Final = re.compile(
     r"(diff|compact|변경사항|렌더|미리보기|render|viewport|page)",
     re.IGNORECASE,
@@ -1022,75 +1014,6 @@ def _document_tool_choice_for_query(
     if is_document_harness_query(user_query) and "document" in available:
         return "document"
     return None
-
-
-def _normalize_document_root_call_for_user_intent(
-    fname: str,
-    args_obj: dict[str, object],
-    latest_user_utt: str,
-) -> dict[str, object]:
-    """Align document primitive read-only calls with explicit write/save intent."""
-    if fname != "document" or args_obj.get("tool_id") != "document":
-        return args_obj
-    params_obj = args_obj.get("params")
-    if not isinstance(params_obj, dict):
-        return args_obj
-    normalized_params = dict(params_obj)
-    internal_user_query = normalized_params.pop(_DOCUMENT_INTERNAL_USER_QUERY_KEY, None)
-    intent_text = latest_user_utt
-    if isinstance(internal_user_query, str) and internal_user_query.strip():
-        intent_text = internal_user_query.strip()
-    _normalize_document_path_from_user_query(normalized_params, intent_text)
-    operation = str(params_obj.get("operation") or "").casefold()
-    changed = normalized_params != params_obj
-    if (
-        operation in {"fill", "save"}
-        and intent_text
-        and _DOCUMENT_WRITE_REQUEST_RE.search(intent_text)
-    ):
-        if _DOCUMENT_SAVE_REQUEST_RE.search(intent_text):
-            normalized_params["operation"] = "save"
-        normalized_params["instruction"] = intent_text
-        return {**args_obj, "params": normalized_params}
-    if operation not in {"inspect", "extract"}:
-        return {**args_obj, "params": normalized_params} if changed else args_obj
-    if not intent_text or not _DOCUMENT_WRITE_REQUEST_RE.search(intent_text):
-        return {**args_obj, "params": normalized_params} if changed else args_obj
-
-    normalized_params["operation"] = (
-        "save" if _DOCUMENT_SAVE_REQUEST_RE.search(intent_text) else "fill"
-    )
-    normalized_params["instruction"] = intent_text
-    return {**args_obj, "params": normalized_params}
-
-
-def _normalize_document_path_from_user_query(
-    normalized_params: dict[str, object],
-    intent_text: str,
-) -> None:
-    if not intent_text:
-        return
-    document_obj = normalized_params.get("document")
-    if not isinstance(document_obj, dict):
-        return
-    current_path = document_obj.get("path")
-    if isinstance(current_path, str) and Path(current_path).expanduser().exists():
-        return
-    expected_format = document_obj.get("expected_format")
-    expected_suffix = f".{expected_format}".lower() if isinstance(expected_format, str) else None
-    explicit_paths: list[Path] = []
-    for match in _DOCUMENT_EXPLICIT_LOCAL_PATH_RE.finditer(intent_text):
-        candidate = Path(match.group("path").rstrip(".,;:)]}）")).expanduser()
-        if expected_suffix is not None and candidate.suffix.lower() != expected_suffix:
-            continue
-        if candidate.exists():
-            explicit_paths.append(candidate.resolve())
-    if not explicit_paths:
-        return
-    normalized_params["document"] = {
-        **document_obj,
-        "path": str(explicit_paths[0]),
-    }
 
 
 def _final_answer_looks_like_kma_analysis_fabrication(text: str, user_query: str) -> bool:

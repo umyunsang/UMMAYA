@@ -14,6 +14,7 @@ import type { IPCBridge } from '../../ipc/bridge.js'
 import type { ToolCallFrame, ToolResultFrame } from '../../ipc/frames.generated.js'
 import { getUmmayaBridgeSessionId } from '../../ipc/bridgeSingleton.js'
 import type { ToolUseContext, ToolResult } from '../../Tool.js'
+import { argumentsForPrimitive } from './documentDispatchArguments.js'
 import { PendingCallRegistry } from './pendingCallRegistry.js'
 
 // ---------------------------------------------------------------------------
@@ -102,45 +103,6 @@ function _maybeEmitCheckpoint(
     }
   } catch {
     // Ignore serialization errors
-  }
-}
-
-function latestUserTextFromContext(context: ToolUseContext): string | undefined {
-  const messages = context.messages ?? []
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index] as Record<string, unknown> | undefined
-    if (!message || message['type'] !== 'user') continue
-    const sdkMessage = message['message'] as Record<string, unknown> | undefined
-    if (!sdkMessage || sdkMessage['role'] !== 'user') continue
-    const content = sdkMessage['content']
-    if (typeof content === 'string' && content.trim() !== '') {
-      return content
-    }
-    if (!Array.isArray(content)) continue
-    const text = content
-      .map(block => {
-        if (!block || typeof block !== 'object') return ''
-        const item = block as Record<string, unknown>
-        if (item['type'] !== 'text') return ''
-        return typeof item['text'] === 'string' ? item['text'] : ''
-      })
-      .filter(Boolean)
-      .join('\n')
-      .trim()
-    if (text !== '') return text
-  }
-  return undefined
-}
-
-function argumentsForPrimitive(
-  opts: DispatchPrimitiveOpts,
-): Record<string, unknown> {
-  if (opts.primitive !== 'document') return opts.args
-  const userQuery = latestUserTextFromContext(opts.context)
-  if (!userQuery) return opts.args
-  return {
-    ...opts.args,
-    __ummaya_user_query: userQuery,
   }
 }
 

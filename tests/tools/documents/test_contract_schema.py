@@ -9,7 +9,7 @@ from pathlib import Path
 CONTRACT_PATH = (
     Path(__file__).parents[3]
     / "specs"
-    / "2802-public-doc-harness"
+    / "2803-document-production-hardening"
     / "contracts"
     / "document-tools.schema.json"
 )

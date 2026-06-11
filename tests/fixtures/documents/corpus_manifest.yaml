@@ -12,10 +12,168 @@ formats:
   - pptx
 fixture_groups:
   benign: []
-  public_forms: []
+  public_forms:
+    - fixture_id: seoul-culture-application-plan-docx
+      format: docx
+      path: public_forms/sources/seoul-culture-application-plan.docx
+      source: Local sanitized public-form fixture for Seoul culture application planning.
+      redistribution_status: open_license
+      size_bytes: 20747
+      sha256: 9183cf4d2302af7ea767a7308ee17ba3b3837bb7b1eaa02045629fb8df2ab5ed
+      authoring_flow: public_form_fill
+      expected_authoring_flow:
+        - inspect_required_fields
+        - ask_missing_evidence
+        - insert_approved_values
+        - render_compare_before_save
+      expected_fields:
+        - applicant_name
+        - project_summary
+      expected_layout_anchors:
+        - title
+        - applicant_table
+      protected_field_expectations:
+        - signature fields require human approval
+        - identity fields are never fabricated
+      coverage_tags:
+        - form_blanks
+        - protected_fields
+        - missing_evidence
+    - fixture_id: seoul-ddp-design-fair-application-docx
+      format: docx
+      path: public_forms/sources/seoul-ddp-design-fair-application.docx
+      source: Local sanitized public-form fixture for DDP design fair application.
+      redistribution_status: open_license
+      size_bytes: 11757
+      sha256: d19a371263337f12c71e8d07222a367826bd3ca6ce1800d0e4511281613a124a
+      authoring_flow: public_form_fill
+      expected_authoring_flow:
+        - inspect_required_fields
+        - block_unsupported_claims
+        - preserve_table_layout
+        - render_compare_before_save
+      expected_fields:
+        - applicant_name
+        - exhibit_title
+      expected_layout_anchors:
+        - application_table
+        - protected_footer
+      protected_field_expectations:
+        - organization identity fields require provided evidence
+        - signature fields are protected
+      coverage_tags:
+        - form_blanks
+        - protected_fields
+    - fixture_id: legacy-hwp-agency-form-metadata
+      format: hwp
+      path: public_forms/metadata/legacy-hwp-agency-form.yaml
+      source: Metadata-only direct-HWP blocked fixture derived from the 2803 HWP promotion boundary.
+      redistribution_status: metadata_only
+      size_bytes: 430
+      sha256: d6e60494ad38620ae225be3470d265ff4f5b7f28a542bee3660da3c0608e8444
+      authoring_flow: public_form_fill
+      expected_authoring_flow:
+        - inspect_read_only_hwp
+        - block_direct_hwp_write
+        - request_hwp_to_hwpx_derivative_or_editable_template
+      expected_fields:
+        - applicant_name
+        - requested_benefit
+      expected_layout_anchors:
+        - hwp_table_metadata
+      protected_field_expectations:
+        - identity-number fields require human approval
+        - signature or seal regions stay protected
+      coverage_tags:
+        - form_blanks
+        - protected_fields
+        - direct_hwp_blocked
+  narrative_authoring:
+    - fixture_id: self-introduction-form-metadata
+      format: docx
+      path: narrative_authoring/metadata/self-introduction-form.yaml
+      source: Metadata-only sanitized self-introduction fixture for Socratic authoring.
+      redistribution_status: metadata_only
+      size_bytes: 355
+      sha256: cec54a0f724ec52c349612da951e5399eac3679ec21c8d509c854b76248b0a02
+      authoring_flow: socratic_narrative
+      expected_authoring_flow:
+        - extract_questions
+        - ask_missing_evidence
+        - draft_from_evidence
+        - require_approved_draft_hash
+      expected_fields:
+        - applicant_name
+      expected_narrative_prompts:
+        - 지원동기
+        - 성장과정
+      expected_layout_anchors:
+        - question_list
+      protected_field_expectations:
+        - unsupported awards stay blocked without evidence
+        - final insertion requires approved draft hash
+      coverage_tags:
+        - self_introduction
+        - missing_evidence
+        - approved_draft_mutation
+    - fixture_id: business-plan-form-metadata
+      format: docx
+      path: narrative_authoring/metadata/business-plan-form.yaml
+      source: Metadata-only sanitized business-plan fixture for Socratic authoring.
+      redistribution_status: metadata_only
+      size_bytes: 354
+      sha256: f40a1a10156c2e32701091aeba2ae0756469c9286d718b845e7c2a560820df66
+      authoring_flow: socratic_narrative
+      expected_authoring_flow:
+        - extract_sections
+        - ask_for_basis
+        - block_unsupported_market_claims
+        - require_approved_draft_hash
+      expected_fields:
+        - business_name
+      expected_narrative_prompts:
+        - 사업 개요
+        - 시장 검증 근거
+      expected_layout_anchors:
+        - section_table
+      protected_field_expectations:
+        - projected revenue needs user-provided basis
+        - market claims stay blocked without evidence
+      coverage_tags:
+        - business_plan
+        - missing_evidence
+        - approved_draft_mutation
+    - fixture_id: scholarship-application-questions-metadata
+      format: pdf
+      path: narrative_authoring/metadata/scholarship-application-questions.yaml
+      source: Metadata-only sanitized scholarship application fixture for Socratic authoring.
+      redistribution_status: metadata_only
+      size_bytes: 354
+      sha256: c341893868d293d486a9cc18366dfcfe23119462e9df08a5470c48dc26364e5f
+      authoring_flow: socratic_narrative
+      expected_authoring_flow:
+        - extract_questions
+        - ask_evidence_loop
+        - approve_or_leave_blank
+        - block_identity_autofill
+      expected_fields:
+        - applicant_name
+      expected_narrative_prompts:
+        - 학업계획
+        - 활동 경험
+      expected_layout_anchors:
+        - question_page
+      protected_field_expectations:
+        - applicant identity fields are not auto-filled
+        - draft mutation requires explicit approval
+      coverage_tags:
+        - self_introduction
+        - missing_evidence
+        - approved_draft_mutation
   hostile: []
 requirements:
   source: "Every fixture entry must declare provenance and redistribution status."
-  expected_fields: "Public-form fixtures must declare expected fields and layout anchors."
+  expected_fields: "Public-form and narrative fixtures must declare expected fields or prompts plus layout anchors."
+  hash_and_size: "Every production fixture entry must declare size_bytes and sha256; metadata-only entries record the metadata artifact hash."
+  authoring_flow: "Every production fixture entry must declare its expected authoring flow and protected-field expectations."
   negative_cases: "Hostile fixtures must declare the intake rule expected to block them."
-

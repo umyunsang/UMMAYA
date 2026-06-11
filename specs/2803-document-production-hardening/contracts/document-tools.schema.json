@@ -1,0 +1,1043 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ummaya.local/contracts/document-production-hardening/document-tools.schema.json",
+  "title": "Document Production Hardening Tool Contracts",
+  "type": "object",
+  "required": [
+    "version",
+    "tools"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "$ref": "#/$defs/ToolContract"
+      }
+    }
+  },
+  "x-ummaya-tools": [
+    {
+      "tool_id": "document",
+      "primitive": "document",
+      "input_schema": "#/$defs/DocumentPrimitiveRequest",
+      "output_schema": "#/$defs/DocumentPrimitiveResult",
+      "permission": "write_derivative_artifact"
+    }
+  ],
+  "examples": [
+    {
+      "version": "0.1.0",
+      "tools": [
+        {
+          "tool_id": "document",
+          "primitive": "document",
+          "input_schema": "#/$defs/DocumentPrimitiveRequest",
+          "output_schema": "#/$defs/DocumentPrimitiveResult",
+          "permission": "write_derivative_artifact"
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "ToolContract": {
+      "type": "object",
+      "required": [
+        "tool_id",
+        "primitive",
+        "input_schema",
+        "output_schema",
+        "permission"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tool_id": {
+          "type": "string",
+          "enum": [
+            "document"
+          ]
+        },
+        "primitive": {
+          "type": "string",
+          "enum": [
+            "document"
+          ]
+        },
+        "input_schema": {
+          "type": "string",
+          "pattern": "^#/"
+        },
+        "output_schema": {
+          "type": "string",
+          "pattern": "^#/"
+        },
+        "permission": {
+          "type": "string",
+          "enum": [
+            "read_local_artifact",
+            "write_derivative_artifact",
+            "validate_local_artifact"
+          ]
+        }
+      }
+    },
+    "DocumentFormat": {
+      "type": "string",
+      "enum": [
+        "hwpx",
+        "hwp",
+        "docx",
+        "pdf",
+        "xlsx",
+        "pptx"
+      ]
+    },
+    "Primitive": {
+      "type": "string",
+      "enum": [
+        "find",
+        "check",
+        "send"
+      ]
+    },
+    "Status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "blocked",
+        "failed",
+        "needs_input"
+      ]
+    },
+    "ScalarValue": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "DocumentLocator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_format": {
+          "$ref": "#/$defs/DocumentFormat"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "path"
+          ]
+        },
+        {
+          "required": [
+            "artifact_id"
+          ]
+        }
+      ]
+    },
+    "DocumentPrimitiveRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document",
+        "instruction"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "inspect",
+            "extract",
+            "fill",
+            "style",
+            "validate",
+            "save"
+          ],
+          "default": "fill"
+        },
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "patches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "target_path",
+              "value"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "target_path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "value": {
+                "$ref": "#/$defs/ScalarValue"
+              }
+            }
+          },
+          "default": []
+        },
+        "styles": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "template_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination_display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination_path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ArtifactRef": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "format",
+        "sha256",
+        "byte_size",
+        "lineage"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "$ref": "#/$defs/DocumentFormat"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lineage": {
+          "type": "string",
+          "enum": [
+            "source",
+            "working_copy",
+            "render",
+            "validation_report",
+            "export"
+          ]
+        }
+      }
+    },
+    "Finding": {
+      "type": "object",
+      "required": [
+        "code",
+        "severity",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warning",
+            "error",
+            "critical"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_path": {
+          "type": "string"
+        }
+      }
+    },
+    "ParagraphBlock": {
+      "type": "object",
+      "required": [
+        "block_id",
+        "order",
+        "text"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "block_id": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string"
+        },
+        "style_id": {
+          "type": "string"
+        }
+      }
+    },
+    "TableCell": {
+      "type": "object",
+      "required": [
+        "row",
+        "column",
+        "text"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "row_span": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "column_span": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "text": {
+          "type": "string"
+        },
+        "style_id": {
+          "type": "string"
+        }
+      }
+    },
+    "TableBlock": {
+      "type": "object",
+      "required": [
+        "table_id",
+        "order",
+        "cells"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "table_id": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TableCell"
+          }
+        }
+      }
+    },
+    "ImageReference": {
+      "type": "object",
+      "required": [
+        "image_id",
+        "order",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "image_id": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "description": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "FormField": {
+      "type": "object",
+      "required": [
+        "field_id",
+        "label",
+        "path",
+        "field_type",
+        "required",
+        "source_confidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "field_id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "field_type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "number",
+            "date",
+            "choice",
+            "checkbox",
+            "signature",
+            "attachment",
+            "unknown"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "current_value": {
+          "$ref": "#/$defs/ScalarValue"
+        },
+        "allowed_values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScalarValue"
+          }
+        },
+        "source_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "DocumentExtraction": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "paragraphs",
+        "tables",
+        "images",
+        "fields",
+        "warnings"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "type": "string"
+        },
+        "paragraphs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ParagraphBlock"
+          }
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TableBlock"
+          }
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ImageReference"
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FormField"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "StylePatch": {
+      "type": "object",
+      "required": [
+        "target_path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target_path": {
+          "type": "string"
+        },
+        "font_family": {
+          "type": "string"
+        },
+        "font_size_pt": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "font_color_rgb": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{6}$"
+        },
+        "fill_color_rgb": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{6}$"
+        },
+        "alignment": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right",
+            "justify",
+            "distributed"
+          ]
+        }
+      }
+    },
+    "FieldPatch": {
+      "type": "object",
+      "required": [
+        "target_path",
+        "value"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "$ref": "#/$defs/ScalarValue"
+        }
+      }
+    },
+    "ValidationReport": {
+      "type": "object",
+      "required": [
+        "report_id",
+        "artifact_id",
+        "aggregate_score",
+        "round_trip_passed",
+        "render_passed",
+        "security_passed",
+        "decision",
+        "findings"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "report_id": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "aggregate_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "round_trip_passed": {
+          "type": "boolean"
+        },
+        "render_passed": {
+          "type": "boolean"
+        },
+        "security_passed": {
+          "type": "boolean"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "blocked",
+            "needs_manual_review"
+          ]
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        }
+      }
+    },
+    "PromotionGateResult": {
+      "type": "object",
+      "required": [
+        "profile_id",
+        "capability",
+        "score_total",
+        "hard_gates_passed",
+        "promotion_state"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "profile_id": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string",
+          "enum": [
+            "read",
+            "extract",
+            "write",
+            "style",
+            "render",
+            "validate"
+          ]
+        },
+        "score_total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "hard_gates_passed": {
+          "type": "boolean"
+        },
+        "promotion_state": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "read_only",
+            "write_enabled",
+            "style_enabled"
+          ]
+        }
+      }
+    },
+    "DocumentInspectRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        }
+      }
+    },
+    "DocumentExtractRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document",
+        "include_tables",
+        "include_images",
+        "include_fields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "include_tables": {
+          "type": "boolean"
+        },
+        "include_images": {
+          "type": "boolean"
+        },
+        "include_fields": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DocumentFormSchemaRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        }
+      }
+    },
+    "DocumentCopyForEditRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "DocumentApplyFillRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document",
+        "patches"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "patches": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/FieldPatch"
+          }
+        },
+        "dry_run": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "DocumentApplyStyleRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document",
+        "styles"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "styles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/StylePatch"
+          }
+        },
+        "dry_run": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "DocumentRenderRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "page_limit": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "DocumentValidatePublicFormRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document",
+        "template_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "template_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "DocumentSaveRequest": {
+      "type": "object",
+      "required": [
+        "correlation_id",
+        "document",
+        "destination_display_name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentLocator"
+        },
+        "destination_display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination_path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "DocumentSavedExport": {
+      "type": "object",
+      "required": [
+        "export_artifact_id",
+        "source_artifact_id",
+        "sha256",
+        "byte_size",
+        "overwrite_existing"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "export_artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "overwrite_existing": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DocumentInspectResult": {
+      "type": "object",
+      "required": [
+        "status",
+        "artifact",
+        "findings",
+        "text_summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "artifact": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "promotion_gate": {
+          "$ref": "#/$defs/PromotionGateResult"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        },
+        "text_summary": {
+          "type": "string"
+        }
+      }
+    },
+    "DocumentExtractionResult": {
+      "type": "object",
+      "required": [
+        "status",
+        "artifact",
+        "extraction",
+        "findings",
+        "text_summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "artifact": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "extraction": {
+          "$ref": "#/$defs/DocumentExtraction"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        },
+        "text_summary": {
+          "type": "string"
+        }
+      }
+    },
+    "DocumentMutationResult": {
+      "type": "object",
+      "required": [
+        "status",
+        "source_artifact",
+        "working_artifact",
+        "findings",
+        "text_summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "source_artifact": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "working_artifact": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "validation_report": {
+          "$ref": "#/$defs/ValidationReport"
+        },
+        "saved_exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DocumentSavedExport"
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        },
+        "text_summary": {
+          "type": "string"
+        }
+      }
+    },
+    "DocumentPrimitiveResult": {
+      "$ref": "#/$defs/DocumentMutationResult"
+    },
+    "DocumentValidationResult": {
+      "type": "object",
+      "required": [
+        "status",
+        "artifact",
+        "validation_report",
+        "text_summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "artifact": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "validation_report": {
+          "$ref": "#/$defs/ValidationReport"
+        },
+        "text_summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

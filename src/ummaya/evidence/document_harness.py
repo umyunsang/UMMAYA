@@ -15,6 +15,7 @@ from typing import Literal, cast
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from ummaya.evidence.document_authoring_cases import DocumentAuthoringCase
 from ummaya.evidence.models import RunEvidence
 from ummaya.tools.documents.models import DocumentFormatFamily, KnownDocumentFormat
 
@@ -207,7 +208,7 @@ class DocumentHarnessScenario(BaseModel):
     version: int
     scenario_id: Literal["document_harness_v1"]
     created_at: str
-    source_basis: Literal["public_ax_document_harness_spec"]
+    source_basis: Literal["document_production_hardening_spec"]
     target_system: str
     network_policy: Literal["offline_only"]
     required_sequence: tuple[Literal["document"], ...]
@@ -216,6 +217,7 @@ class DocumentHarnessScenario(BaseModel):
     lifecycle_records: tuple[DocumentLifecycleEvidenceRecord, ...] = Field(min_length=1)
     beta_cases: tuple[DocumentBetaCase, ...] = Field(min_length=1)
     negative_cases: tuple[DocumentNegativeCase, ...] = Field(min_length=1)
+    authoring_cases: tuple[DocumentAuthoringCase, ...] = Field(min_length=1)
 
 
 def load_document_harness_scenario(
@@ -289,6 +291,12 @@ def negative_cases_from_scenario(
     """Return fail-closed beta-matrix cases from scenario metadata."""
 
     return scenario.negative_cases
+
+
+def authoring_cases_from_scenario(
+    scenario: DocumentHarnessScenario,
+) -> tuple[DocumentAuthoringCase, ...]:
+    return scenario.authoring_cases
 
 
 def _load_yaml_mapping(path: Path) -> Mapping[str, object]:

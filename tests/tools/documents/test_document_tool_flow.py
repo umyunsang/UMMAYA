@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import zipfile
 from decimal import Decimal
@@ -319,7 +320,7 @@ async def test_document_primitive_uses_autonomous_plan_when_patches_are_omitted(
 
 
 @pytest.mark.asyncio
-async def test_document_primitive_keeps_model_supplied_patch_for_autonomous_instruction(
+async def test_document_primitive_replaces_model_supplied_patch_for_autonomous_instruction(
     tmp_path: Path,
 ) -> None:
     from ummaya.tools.documents.registry import register_document_tools
@@ -354,7 +355,8 @@ async def test_document_primitive_keeps_model_supplied_patch_for_autonomous_inst
     assert isinstance(result, dict)
     assert result["status"] == "ok"
     changed_values = {change["after_value"] for change in result["diff"]["changes"]}
-    assert changed_values == {"임의 활동 내용"}
+    assert changed_values == {"14주차", "2026.06.08~2026.06.14"}
+    assert "임의 활동 내용" not in changed_values
 
 
 @pytest.mark.asyncio
@@ -1247,6 +1249,119 @@ def test_document_save_blocks_explicit_local_path_extension_mismatch(
         )
         for step in save_result.workflow_steps
     )
+
+
+def test_document_save_blocks_existing_explicit_local_path_without_overwrite(
+    tmp_path: Path,
+) -> None:
+    from ummaya.tools.documents.registry import DocumentToolRuntime
+
+    source = tmp_path / "civil-form.docx"
+    _write_minimal_docx(source)
+    export_path = tmp_path / "exports" / "civil-form-final.docx"
+    export_path.parent.mkdir(parents=True)
+    export_path.write_bytes(b"existing citizen draft")
+    engine_registry = DocumentEngineRegistry()
+    engine_registry.register(FlowDocxEngine())
+    runtime = DocumentToolRuntime(
+        session_id="session-doc-local-export-existing",
+        artifact_root=tmp_path / "artifacts",
+        engine_registry=engine_registry,
+        baseline_catalog=_baseline_catalog(),
+    )
+    inspect_result = runtime.inspect(
+        DocumentInspectRequest(
+            correlation_id="local-export-existing-inspect",
+            document=DocumentLocator(path=str(source), expected_format=DocumentFormat.docx),
+        )
+    )
+    copy_result = runtime.copy_for_edit(
+        DocumentCopyForEditRequest(
+            correlation_id="local-export-existing-copy",
+            document=DocumentLocator(artifact_id=inspect_result.artifact_refs[-1]),
+        )
+    )
+    fill_result = runtime.apply_fill(
+        DocumentApplyFillRequest(
+            correlation_id="local-export-existing-fill",
+            document=DocumentLocator(artifact_id=copy_result.artifact_refs[-1]),
+            patches=(_field_patch("/word/document.xml/field[applicant_name]", "Kim"),),
+        )
+    )
+
+    save_result = runtime.save(
+        DocumentSaveRequest(
+            correlation_id="local-export-existing-save",
+            document=DocumentLocator(artifact_id=fill_result.artifact_refs[-1]),
+            destination_display_name="civil-form-final.docx",
+            destination_path=str(export_path),
+        )
+    )
+
+    assert save_result.status is ToolResultStatus.blocked
+    assert save_result.blocked_reason == "validation_failed"
+    assert export_path.read_bytes() == b"existing citizen draft"
+    assert not save_result.saved_exports
+    assert not any(ref.startswith("export-") for ref in save_result.artifact_refs)
+    assert not any(path.name.startswith("export-") for path in (tmp_path / "artifacts").rglob("*"))
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="symlink unavailable on this platform")
+def test_document_save_blocks_explicit_local_path_symlink_destination(
+    tmp_path: Path,
+) -> None:
+    from ummaya.tools.documents.registry import DocumentToolRuntime
+
+    source = tmp_path / "civil-form.docx"
+    _write_minimal_docx(source)
+    attacker_target = tmp_path / "outside-target.docx"
+    attacker_target.write_bytes(b"keep me")
+    export_path = tmp_path / "exports" / "civil-form-final.docx"
+    export_path.parent.mkdir(parents=True)
+    export_path.symlink_to(attacker_target)
+    engine_registry = DocumentEngineRegistry()
+    engine_registry.register(FlowDocxEngine())
+    runtime = DocumentToolRuntime(
+        session_id="session-doc-local-export-symlink",
+        artifact_root=tmp_path / "artifacts",
+        engine_registry=engine_registry,
+        baseline_catalog=_baseline_catalog(),
+    )
+    inspect_result = runtime.inspect(
+        DocumentInspectRequest(
+            correlation_id="local-export-symlink-inspect",
+            document=DocumentLocator(path=str(source), expected_format=DocumentFormat.docx),
+        )
+    )
+    copy_result = runtime.copy_for_edit(
+        DocumentCopyForEditRequest(
+            correlation_id="local-export-symlink-copy",
+            document=DocumentLocator(artifact_id=inspect_result.artifact_refs[-1]),
+        )
+    )
+    fill_result = runtime.apply_fill(
+        DocumentApplyFillRequest(
+            correlation_id="local-export-symlink-fill",
+            document=DocumentLocator(artifact_id=copy_result.artifact_refs[-1]),
+            patches=(_field_patch("/word/document.xml/field[applicant_name]", "Kim"),),
+        )
+    )
+
+    save_result = runtime.save(
+        DocumentSaveRequest(
+            correlation_id="local-export-symlink-save",
+            document=DocumentLocator(artifact_id=fill_result.artifact_refs[-1]),
+            destination_display_name="civil-form-final.docx",
+            destination_path=str(export_path),
+        )
+    )
+
+    assert save_result.status is ToolResultStatus.blocked
+    assert save_result.blocked_reason == "validation_failed"
+    assert attacker_target.read_bytes() == b"keep me"
+    assert not save_result.saved_exports
+    assert not any(ref.startswith("export-") for ref in save_result.artifact_refs)
+    assert not any(path.name.startswith("export-") for path in (tmp_path / "artifacts").rglob("*"))
 
 
 _SAFE_ARTIFACT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")

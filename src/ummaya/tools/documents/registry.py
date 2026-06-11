@@ -3,11 +3,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import re
+import secrets
 import tempfile
 import unicodedata
+from dataclasses import dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, cast
@@ -63,6 +66,12 @@ from ummaya.tools.documents.pdfa_conformance import (
 )
 from ummaya.tools.documents.planner import plan_autonomous_fill
 from ummaya.tools.documents.render import render_document_evidence
+from ummaya.tools.documents.runtime_authoring import (
+    issue_authoring_drafts_for_unapproved_patches,
+    preview_editable_derivative,
+    unapproved_narrative_patch_targets,
+)
+from ummaya.tools.documents.runtime_authoring_bundle import IssuedAuthoringDraft
 from ummaya.tools.documents.tool_defs import (
     DOCUMENT_TOOL_IDS,
     DocumentApplyFillRequest,
@@ -168,6 +177,7 @@ class DocumentToolRuntime:
         self._artifacts: dict[str, DocumentArtifact] = {}
         self._extractions: dict[str, DocumentExtraction] = {}
         self._diffs_by_artifact_id: dict[str, DocumentDiff] = {}
+        self._issued_authoring_drafts: dict[str, IssuedAuthoringDraft] = {}
 
     async def handle(self, tool_id: str, request: BaseModel) -> dict[str, Any]:  # noqa: C901
         """Dispatch one validated document tool request."""
@@ -293,42 +303,39 @@ class DocumentToolRuntime:
             )
         elif request.operation in {"fill", "validate", "save"}:
             planning_artifact = source
-            if _editable_derivative_format(source.format) is not None:
-                copy_result = self.copy_for_edit(
-                    DocumentCopyForEditRequest(
-                        correlation_id=request.correlation_id,
-                        document=DocumentLocator(artifact_id=source.artifact_id),
-                        reason=_copy_for_edit_reason(request.instruction),
-                    )
-                )
-                if copy_result.status is not ToolResultStatus.ok:
-                    return _document_result_from_stage(
-                        copy_result,
-                        correlation_id=request.correlation_id,
-                    )
-                working_artifact_id = copy_result.artifact_refs[-1]
-                working_artifact = self._artifact_by_id(
-                    working_artifact_id,
-                    request.correlation_id,
-                )
-                if isinstance(working_artifact, DocumentToolResult):
-                    return _document_result_from_stage(
-                        working_artifact,
-                        correlation_id=request.correlation_id,
-                    )
-                planning_artifact = working_artifact
-
-            extraction = self._extraction_for_artifact(planning_artifact, request.correlation_id)
+            planning_format = planning_artifact.format
+            planning_extraction: DocumentExtraction | None = None
             candidate_patches = request.patches
             candidate_style_patches = request.styles
             if not candidate_patches or _should_prefer_autonomous_fill_plan(
                 request.instruction,
                 candidate_patches,
             ):
+                derivative_format = _editable_derivative_format(source.format)
+                if derivative_format is not None:
+                    preview = preview_editable_derivative(
+                        source,
+                        correlation_id=request.correlation_id,
+                        derivative_format=derivative_format,
+                        conversion_registry=self.conversion_registry,
+                        adapter_registry=self.adapter_registry,
+                    )
+                    if isinstance(preview, DocumentToolResult):
+                        return _document_result_from_stage(
+                            preview,
+                            correlation_id=request.correlation_id,
+                        )
+                    planning_extraction = preview.extraction
+                    planning_format = preview.document_format
+                else:
+                    planning_extraction = self._extraction_for_artifact(
+                        planning_artifact,
+                        request.correlation_id,
+                    )
                 document_ir = self.orchestrator.build_document_ir(
                     artifact_id=planning_artifact.artifact_id,
-                    document_format=planning_artifact.format,
-                    extraction=extraction,
+                    document_format=planning_format,
+                    extraction=planning_extraction,
                 )
                 autonomous_plan = plan_autonomous_fill(
                     document_ir,
@@ -375,19 +382,50 @@ class DocumentToolRuntime:
                         "or a safe autonomous fill plan."
                     ),
                 )
-            patches = _document_primitive_fill_patches(
+            if planning_extraction is None:
+                derivative_format = _editable_derivative_format(source.format)
+                if derivative_format is not None:
+                    preview = preview_editable_derivative(
+                        source,
+                        correlation_id=request.correlation_id,
+                        derivative_format=derivative_format,
+                        conversion_registry=self.conversion_registry,
+                        adapter_registry=self.adapter_registry,
+                    )
+                    if isinstance(preview, DocumentToolResult):
+                        return _document_result_from_stage(
+                            preview,
+                            correlation_id=request.correlation_id,
+                        )
+                    planning_extraction = preview.extraction
+                    planning_format = preview.document_format
+                else:
+                    planning_extraction = self._extraction_for_artifact(
+                        source,
+                        request.correlation_id,
+                    )
+            unapproved_targets = unapproved_narrative_patch_targets(
                 candidate_patches,
-                adapter=self.adapter_registry.require_promoted(planning_artifact.format),
-                extraction=extraction,
+                extraction=planning_extraction,
+                approved_draft_id=request.approved_draft_id,
+                approved_draft_sha256=request.approved_draft_sha256,
+                issued_drafts=tuple(self._issued_authoring_drafts.values()),
             )
-            if not patches:
+            if unapproved_targets:
+                issued_drafts = issue_authoring_drafts_for_unapproved_patches(
+                    candidate_patches,
+                    extraction=planning_extraction,
+                )
+                for draft in issued_drafts:
+                    self._issued_authoring_drafts[draft.draft_id] = draft
                 return needs_input_document_tool_result(
                     tool_id="document",
                     correlation_id=request.correlation_id,
                     artifact_refs=(source.artifact_id,),
                     message=(
-                        "Document fill operation could not map any natural-language patch "
-                        "target to extracted document fields."
+                        "Narrative document patch requires an approved draft hash before "
+                        f"mutation: {', '.join(unapproved_targets)}."
+                        f"{_authoring_draft_approval_message(issued_drafts)}"
                     ),
                 )
             if working_artifact_id is None:
@@ -412,6 +450,26 @@ class DocumentToolRuntime:
                 return _document_result_from_stage(
                     working_artifact,
                     correlation_id=request.correlation_id,
+                )
+            if planning_extraction is None:
+                planning_extraction = self._extraction_for_artifact(
+                    working_artifact,
+                    request.correlation_id,
+                )
+            patches = _document_primitive_fill_patches(
+                candidate_patches,
+                adapter=self.adapter_registry.require_promoted(working_artifact.format),
+                extraction=planning_extraction,
+            )
+            if not patches:
+                return needs_input_document_tool_result(
+                    tool_id="document",
+                    correlation_id=request.correlation_id,
+                    artifact_refs=(source.artifact_id,),
+                    message=(
+                        "Document fill operation could not map any natural-language patch "
+                        "target to extracted document fields."
+                    ),
                 )
             mutation_result = self._apply_patch_result(
                 tool_id="document_apply_fill",
@@ -975,9 +1033,30 @@ class DocumentToolRuntime:
                 f"{pdfa_result.report.exporter_id} and "
                 f"{pdfa_result.report.validator_id}."
             )
+        export_artifact_id = _generated_artifact_id("export", request.correlation_id)
+        saved_exports: tuple[DocumentSavedExport, ...] = ()
+        if request.destination_path is not None:
+            try:
+                saved_exports = (
+                    _write_explicit_local_export(
+                        artifact,
+                        export_artifact_id=export_artifact_id,
+                        payload=payload,
+                        destination_path=request.destination_path,
+                        allow_pdfa_alias=pdfa_export_requested,
+                    ),
+                )
+            except _LocalExportBlockedError as exc:
+                return unsupported_document_tool_result(
+                    tool_id="document_save",
+                    correlation_id=request.correlation_id,
+                    artifact_refs=(artifact.artifact_id,),
+                    message=str(exc),
+                    reason=exc.reason,
+                )
         export_artifact = self.store.write_derivative(
             artifact,
-            artifact_id=_generated_artifact_id("export", request.correlation_id),
+            artifact_id=export_artifact_id,
             lineage=ArtifactLineage.export,
             destination_name=request.destination_display_name,
             payload=payload,
@@ -990,26 +1069,6 @@ class DocumentToolRuntime:
             export_artifact,
             request.correlation_id,
         )
-        saved_exports: tuple[DocumentSavedExport, ...] = ()
-        if request.destination_path is not None:
-            try:
-                saved_exports = (
-                    _write_explicit_local_export(
-                        artifact,
-                        export_artifact=export_artifact,
-                        payload=payload,
-                        destination_path=request.destination_path,
-                        allow_pdfa_alias=pdfa_export_requested,
-                    ),
-                )
-            except _LocalExportBlockedError as exc:
-                return unsupported_document_tool_result(
-                    tool_id="document_save",
-                    correlation_id=request.correlation_id,
-                    artifact_refs=(artifact.artifact_id, export_artifact.artifact_id),
-                    message=str(exc),
-                    reason=exc.reason,
-                )
         try:
             diff = self._diff_for_artifact(artifact.artifact_id)
         except ArtifactStoreError as exc:
@@ -1792,9 +1851,20 @@ def _should_prefer_autonomous_fill_plan(
     patches: tuple[DocumentFieldPatch, ...],
 ) -> bool:
     """Return True when deterministic planning should replace model-supplied patches."""
-    _ = instruction
-    _ = patches
-    return False
+    return bool(patches) and _AUTONOMOUS_FILL_INSTRUCTION_RE.search(instruction) is not None
+
+
+def _authoring_draft_approval_message(
+    issued_drafts: tuple[IssuedAuthoringDraft, ...],
+) -> str:
+    if not issued_drafts:
+        return ""
+    draft = issued_drafts[0]
+    return (
+        " After user approval, retry with "
+        f"approved_draft_id={draft.draft_id} and "
+        f"approved_draft_sha256={draft.draft_sha256}."
+    )
 
 
 def _copy_for_edit_reason(instruction: str) -> str:
@@ -2275,10 +2345,17 @@ class _LocalExportBlockedError(ValueError):
         self.reason = reason
 
 
+@dataclass(frozen=True, slots=True)
+class _LocalExportTempFile:
+    path: Path
+    name: str
+    fd: int
+
+
 def _write_explicit_local_export(
     source_artifact: DocumentArtifact,
     *,
-    export_artifact: DocumentArtifact,
+    export_artifact_id: str,
     payload: bytes,
     destination_path: str,
     allow_pdfa_alias: bool = False,
@@ -2288,22 +2365,32 @@ def _write_explicit_local_export(
         document_format=source_artifact.format,
         allow_pdfa_alias=allow_pdfa_alias,
     )
-    overwrite_existing = destination.exists()
     destination.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = _write_tempfile_for_replace(destination, payload)
+    _raise_if_local_export_parent_is_symlink(destination)
+    parent_fd = _open_local_export_parent(destination.parent)
+    _raise_if_local_export_parent_changed(parent_fd, destination)
     try:
-        os.replace(temp_path, destination)
-        _fsync_directory_best_effort(destination.parent)
+        temp_file = _write_tempfile_for_local_export(destination, payload, parent_fd)
+        try:
+            _publish_tempfile_without_clobber(temp_file, destination, parent_fd)
+            _fsync_directory_fd_best_effort(parent_fd)
+        finally:
+            try:
+                _cleanup_local_export_entry_by_fd(temp_file.name, parent_fd)
+                with contextlib.suppress(OSError):
+                    if temp_file.path.exists():
+                        temp_file.path.unlink()
+            finally:
+                os.close(temp_file.fd)
     finally:
-        if temp_path.exists():
-            temp_path.unlink()
+        os.close(parent_fd)
     return DocumentSavedExport(
-        export_artifact_id=export_artifact.artifact_id,
+        export_artifact_id=export_artifact_id,
         source_artifact_id=source_artifact.artifact_id,
         local_path=destination,
         sha256=hashlib.sha256(payload).hexdigest(),
         byte_size=len(payload),
-        overwrite_existing=overwrite_existing,
+        overwrite_existing=False,
     )
 
 
@@ -2338,7 +2425,14 @@ def _validated_local_export_destination(
     document_format: DocumentFormat,
     allow_pdfa_alias: bool = False,
 ) -> Path:
-    destination = Path(destination_path).expanduser().resolve()
+    raw_destination = _absolute_local_export_path(Path(destination_path).expanduser())
+    if raw_destination.is_symlink():
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export destination is a symbolic link: {raw_destination}",
+        )
+    _raise_if_local_export_path_has_symlinked_ancestor(raw_destination)
+    destination = raw_destination
     if destination.name in {"", ".", ".."} or destination.name.startswith("."):
         raise _LocalExportBlockedError(
             BlockedReason.hidden_destination,
@@ -2353,6 +2447,11 @@ def _validated_local_export_destination(
         raise _LocalExportBlockedError(
             BlockedReason.validation_failed,
             f"Document local export destination is a directory: {destination}",
+        )
+    if destination.exists():
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export destination already exists: {destination}",
         )
     expected_suffix = f".{document_format.value}"
     allowed_suffixes = {expected_suffix}
@@ -2369,6 +2468,12 @@ def _validated_local_export_destination(
             ),
         )
     return destination
+
+
+def _absolute_local_export_path(path: Path) -> Path:
+    if path.is_absolute():
+        return path
+    return Path.cwd() / path
 
 
 def _pdfa_export_requested(
@@ -2389,23 +2494,218 @@ def _pdfa_export_requested(
     return Path(artifact.display_name).suffix.lower() == ".pdfa"
 
 
-def _write_tempfile_for_replace(destination: Path, payload: bytes) -> Path:
-    fd, raw_temp_path = tempfile.mkstemp(
-        prefix=f".{destination.name}.",
-        suffix=".tmp",
-        dir=destination.parent,
-    )
-    temp_path = Path(raw_temp_path)
+def _write_tempfile_for_local_export(
+    destination: Path,
+    payload: bytes,
+    parent_fd: int,
+) -> _LocalExportTempFile:
+    temp_name = _local_export_temp_name(destination)
+    open_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        open_flags |= os.O_NOFOLLOW
+    file_fd: int | None = None
     try:
-        with os.fdopen(fd, "wb") as handle:
-            handle.write(payload)
-            handle.flush()
-            os.fsync(handle.fileno())
-    except Exception:
-        if temp_path.exists():
-            temp_path.unlink()
+        file_fd = os.open(temp_name, open_flags, 0o600, dir_fd=parent_fd)
+    except FileExistsError as exc:
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export temp path already exists: {destination.parent / temp_name}",
+        ) from exc
+    except OSError as exc:
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export temp path is unavailable: {destination.parent / temp_name}",
+        ) from exc
+    temp_path = destination.parent / temp_name
+    try:
+        _raise_if_local_export_parent_changed(parent_fd, destination)
+        _write_all_to_fd(file_fd, payload)
+        os.fsync(file_fd)
+        _raise_if_local_export_parent_changed(parent_fd, destination)
+    except (OSError, _LocalExportBlockedError):
+        if file_fd is not None:
+            os.close(file_fd)
+        _cleanup_local_export_entry_by_fd(temp_name, parent_fd)
+        with contextlib.suppress(OSError):
+            if temp_path.exists():
+                temp_path.unlink()
         raise
-    return temp_path
+    if file_fd is None:
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export temp path is unavailable: {temp_path}",
+        )
+    return _LocalExportTempFile(path=temp_path, name=temp_name, fd=file_fd)
+
+
+def _local_export_temp_name(destination: Path) -> str:
+    return f".{destination.name}.{secrets.token_hex(8)}.tmp"
+
+
+def _write_all_to_fd(file_fd: int, payload: bytes) -> None:
+    view = memoryview(payload)
+    while view:
+        written = os.write(file_fd, view)
+        view = view[written:]
+
+
+def _publish_tempfile_without_clobber(
+    temp_file: _LocalExportTempFile,
+    destination: Path,
+    parent_fd: int,
+) -> None:
+    _raise_if_local_export_parent_changed(parent_fd, destination)
+    if not _local_export_entry_matches_open_file(parent_fd, temp_file.name, temp_file.fd):
+        _cleanup_local_export_entry_by_fd(temp_file.name, parent_fd)
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export temp path changed during publish: {temp_file.path}",
+        )
+    try:
+        os.link(
+            temp_file.name,
+            destination.name,
+            src_dir_fd=parent_fd,
+            dst_dir_fd=parent_fd,
+            follow_symlinks=False,
+        )
+        if not _local_export_parent_is_current(parent_fd, destination.parent):
+            _unlink_local_export_entry_by_fd(destination.name, parent_fd)
+            _unlink_local_export_entry_by_fd(temp_file.name, parent_fd)
+            raise _LocalExportBlockedError(
+                BlockedReason.validation_failed,
+                f"Document local export destination changed during publish: {destination}",
+            )
+        if not destination.exists():
+            _unlink_local_export_entry_by_fd(destination.name, parent_fd)
+            _unlink_local_export_entry_by_fd(temp_file.name, parent_fd)
+            raise _LocalExportBlockedError(
+                BlockedReason.validation_failed,
+                f"Document local export destination is unavailable after publish: {destination}",
+            )
+        if not _local_export_entry_matches_open_file(parent_fd, destination.name, temp_file.fd):
+            _unlink_local_export_entry_by_fd(destination.name, parent_fd)
+            _unlink_local_export_entry_by_fd(temp_file.name, parent_fd)
+            raise _LocalExportBlockedError(
+                BlockedReason.validation_failed,
+                f"Document local export temp path changed during publish: {temp_file.path}",
+            )
+    except FileExistsError as exc:
+        if _local_export_entry_matches_open_file(parent_fd, destination.name, temp_file.fd):
+            _unlink_local_export_entry_by_fd(destination.name, parent_fd)
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export destination already exists: {destination}",
+        ) from exc
+    except FileNotFoundError as exc:
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export destination changed during publish: {destination}",
+        ) from exc
+    except OSError as exc:
+        _cleanup_local_export_entry_by_fd(temp_file.name, parent_fd)
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export destination changed during publish: {destination}",
+        ) from exc
+
+
+def _raise_if_local_export_parent_is_symlink(destination: Path) -> None:
+    _raise_if_local_export_path_has_symlinked_ancestor(destination)
+
+
+def _raise_if_local_export_path_has_symlinked_ancestor(destination: Path) -> None:
+    ancestor_chain = [*reversed(destination.parent.parents), destination.parent]
+    for ancestor in ancestor_chain:
+        if ancestor.is_symlink():
+            raise _LocalExportBlockedError(
+                BlockedReason.validation_failed,
+                f"Document local export destination parent is a symbolic link: {ancestor}",
+            )
+
+
+def _local_export_path_has_symlinked_ancestor(destination: Path) -> bool:
+    try:
+        _raise_if_local_export_path_has_symlinked_ancestor(destination)
+    except _LocalExportBlockedError:
+        return True
+    return False
+
+
+def _open_local_export_parent(directory: Path) -> int:
+    flags = os.O_RDONLY
+    if hasattr(os, "O_DIRECTORY"):
+        flags |= os.O_DIRECTORY
+    directory = _absolute_local_export_path(directory)
+    nofollow_flags = flags
+    if hasattr(os, "O_NOFOLLOW"):
+        nofollow_flags |= os.O_NOFOLLOW
+    parts = directory.parts
+    if not parts:
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export destination parent is unavailable: {directory}",
+        )
+    current_fd: int | None = None
+    try:
+        current_fd = os.open(parts[0], flags)
+        for part in parts[1:]:
+            next_fd = os.open(part, nofollow_flags, dir_fd=current_fd)
+            os.close(current_fd)
+            current_fd = next_fd
+        return current_fd
+    except OSError as exc:
+        if current_fd is not None:
+            os.close(current_fd)
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            f"Document local export destination parent is unavailable: {directory}",
+        ) from exc
+
+
+def _raise_if_local_export_parent_changed(parent_fd: int, destination: Path) -> None:
+    if not _local_export_parent_is_current(parent_fd, destination.parent):
+        raise _LocalExportBlockedError(
+            BlockedReason.validation_failed,
+            "Document local export destination parent changed during publish: "
+            f"{destination.parent}",
+        )
+
+
+def _local_export_parent_is_current(parent_fd: int, directory: Path) -> bool:
+    if _local_export_path_has_symlinked_ancestor(directory / "__ummaya_parent_probe__"):
+        return False
+    try:
+        current_stat = directory.stat()
+        opened_stat = os.fstat(parent_fd)
+    except OSError:
+        return False
+    return current_stat.st_dev == opened_stat.st_dev and current_stat.st_ino == opened_stat.st_ino
+
+
+def _local_export_entry_matches_open_file(
+    parent_fd: int,
+    entry_name: str,
+    file_fd: int,
+) -> bool:
+    try:
+        entry_stat = os.stat(entry_name, dir_fd=parent_fd, follow_symlinks=False)
+        file_stat = os.fstat(file_fd)
+    except OSError:
+        return False
+    return entry_stat.st_dev == file_stat.st_dev and entry_stat.st_ino == file_stat.st_ino
+
+
+def _unlink_local_export_entry_by_fd(entry_name: str, parent_fd: int) -> None:
+    try:
+        os.unlink(entry_name, dir_fd=parent_fd)
+    except FileNotFoundError:
+        return
+
+
+def _cleanup_local_export_entry_by_fd(entry_name: str, parent_fd: int) -> None:
+    with contextlib.suppress(OSError):
+        os.unlink(entry_name, dir_fd=parent_fd)
 
 
 def _fsync_directory_best_effort(directory: Path) -> None:
@@ -2419,6 +2719,11 @@ def _fsync_directory_best_effort(directory: Path) -> None:
         pass
     finally:
         os.close(directory_fd)
+
+
+def _fsync_directory_fd_best_effort(directory_fd: int) -> None:
+    with contextlib.suppress(OSError):
+        os.fsync(directory_fd)
 
 
 __all__ = [

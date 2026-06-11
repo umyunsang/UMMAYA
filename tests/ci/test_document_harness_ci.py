@@ -1,6 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-"""CI guards for the Public AX document harness offline boundary."""
-
 from __future__ import annotations
 
 import re
@@ -13,7 +11,7 @@ from tests.conftest import _marker_selected
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _SCAN_TARGETS = (
-    _REPO_ROOT / "specs" / "2802-public-doc-harness",
+    _REPO_ROOT / "specs" / "2803-document-production-hardening",
     _REPO_ROOT / "evidence" / "scenarios" / "document_harness_v1.yaml",
     _REPO_ROOT / "tests" / "tools" / "documents",
     _REPO_ROOT / "tests" / "evidence",
@@ -24,9 +22,8 @@ _TEXT_SUFFIXES = {".json", ".md", ".py", ".toml", ".ts", ".tsx", ".yaml", ".yml"
 
 _REFERENCE_URL_DOCS: frozenset[Path] = frozenset(
     {
-        Path("specs/2802-public-doc-harness/plan.md"),
-        Path("specs/2802-public-doc-harness/research.md"),
-        Path("specs/2802-public-doc-harness/parallel-evaluation-plan.md"),
+        Path("specs/2803-document-production-hardening/spec.md"),
+        Path("specs/2803-document-production-hardening/quickstart.md"),
     }
 )
 

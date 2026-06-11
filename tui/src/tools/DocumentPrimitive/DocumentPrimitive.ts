@@ -4,7 +4,7 @@
 import React from 'react'
 import { z } from 'zod/v4'
 import { Text } from '../../ink.js'
-import { buildTool, type ToolDef, type ToolUseContext } from '../../Tool.js'
+import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { getOrCreateUmmayaBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
@@ -28,6 +28,14 @@ import {
   DESCRIPTION,
   DOCUMENT_TOOL_PROMPT,
 } from './prompt.js'
+import {
+  latestUserTextFromContext,
+  normalizeDocumentPrimitiveInputForDispatch as normalizeDispatchInput,
+  operationOf,
+} from './dispatchNormalization.js'
+import { modelVisibleDocumentOutput } from './modelVisibleOutput.js'
+
+export { normalizeDocumentPrimitiveInputForDispatch } from './dispatchNormalization.js'
 
 const documentRefSchema = z
   .object({
@@ -79,115 +87,6 @@ const outputSchema = lazySchema(() =>
 )
 type OutputSchema = ReturnType<typeof outputSchema>
 export type Output = z.infer<OutputSchema>
-
-const WRITE_INTENT_RE =
-  /(작성|수정|편집|채우|채워|입력|변경|저장|보정|서식|글꼴|글자색|배경색|정렬|굵게|write|edit|fill|apply|save|style|format|bold)/iu
-const READ_ONLY_INTENT_RE =
-  /(읽기\s*전용|수정\s*없이|변경\s*없이|저장\s*없이|열람만|확인만|inspect|extract|read\s*only)/iu
-
-function hasWriteIntent(input: Input): boolean {
-  return hasWriteIntentFromText(input, undefined)
-}
-
-function hasWriteIntentFromText(input: Input, userText: string | undefined): boolean {
-  if (typeof input.destination_path === 'string') return true
-  if (Array.isArray(input.patches) && input.patches.length > 0) return true
-  if (Array.isArray(input.styles) && input.styles.length > 0) return true
-  if (hasReadOnlyIntentFromText(input, userText)) return false
-  return WRITE_INTENT_RE.test(input.instruction ?? '') ||
-    (userText !== undefined && WRITE_INTENT_RE.test(userText))
-}
-
-function hasReadOnlyIntentFromText(input: Input, userText: string | undefined): boolean {
-  return READ_ONLY_INTENT_RE.test(input.instruction ?? '') ||
-    (userText !== undefined && READ_ONLY_INTENT_RE.test(userText))
-}
-
-function hasPatchOrStylePayload(input: Input): boolean {
-  return (Array.isArray(input.patches) && input.patches.length > 0) ||
-    (Array.isArray(input.styles) && input.styles.length > 0)
-}
-
-function hasExplicitWritePayload(input: Input): boolean {
-  return hasPatchOrStylePayload(input)
-}
-
-export function normalizeDocumentPrimitiveInputForDispatch(
-  input: Input,
-  userText: string | undefined,
-): Record<string, unknown> {
-  const args: Record<string, unknown> = {
-    ...(input as Record<string, unknown>),
-    operation: operationOf(input, userText),
-  }
-  if (userText === undefined || hasPatchOrStylePayload(input)) {
-    return args
-  }
-
-  const instruction = typeof input.instruction === 'string'
-    ? input.instruction.trim()
-    : ''
-  if (instruction.includes(userText)) {
-    return args
-  }
-  args.instruction = instruction
-    ? `${instruction}\n\nOriginal user request:\n${userText}`
-    : userText
-  return args
-}
-
-function operationOf(input: Input, userText?: string): string {
-  const operation = typeof input.operation === 'string' ? input.operation : 'fill'
-  if (hasReadOnlyIntentFromText(input, userText) && !hasExplicitWritePayload(input)) {
-    return operation === 'extract' ? 'extract' : 'inspect'
-  }
-  const displayOperation =
-    typeof (input as Record<string, unknown>).__ummaya_display_operation === 'string'
-      ? String((input as Record<string, unknown>).__ummaya_display_operation)
-      : undefined
-  if (
-    displayOperation === 'fill' ||
-    displayOperation === 'style' ||
-    displayOperation === 'save'
-  ) {
-    return displayOperation
-  }
-  if (
-    (operation === 'inspect' || operation === 'extract') &&
-    hasWriteIntentFromText(input, userText)
-  ) {
-    return 'fill'
-  }
-  return operation
-}
-
-function latestUserTextFromContext(context: ToolUseContext): string | undefined {
-  const messages = (context as Record<string, unknown>).messages
-  if (!Array.isArray(messages)) return undefined
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index] as Record<string, unknown> | undefined
-    if (!message || message.type !== 'user') continue
-    const sdkMessage = message.message as Record<string, unknown> | undefined
-    const content = sdkMessage?.content ?? message.content
-    if (typeof content === 'string' && content.trim() !== '') {
-      return content
-    }
-    if (!Array.isArray(content)) continue
-    const text = content
-      .map(block => {
-        if (!block || typeof block !== 'object') return ''
-        const item = block as Record<string, unknown>
-        return item.type === 'text' && typeof item.text === 'string'
-          ? item.text
-          : ''
-      })
-      .filter(Boolean)
-      .join('\n')
-      .trim()
-    if (text !== '') return text
-  }
-  return undefined
-}
 
 function documentTarget(input: Input): string {
   const document = input.document as Record<string, unknown>
@@ -343,7 +242,7 @@ export const DocumentPrimitive = buildTool({
   },
 
   async call(input, context) {
-    const args = normalizeDocumentPrimitiveInputForDispatch(
+    const args = normalizeDispatchInput(
       input as Input,
       latestUserTextFromContext(context),
     )
@@ -361,42 +260,3 @@ export const DocumentPrimitive = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-function modelVisibleDocumentOutput(output: unknown): unknown {
-  return rewriteModelVisibleDocumentValue(output)
-}
-
-function rewriteModelVisibleDocumentValue(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => rewriteModelVisibleDocumentValue(item))
-  }
-  const record = asRecord(value)
-  if (record === null) {
-    return value
-  }
-
-  const rewritten: Record<string, unknown> = {}
-  for (const [key, nested] of Object.entries(record)) {
-    rewritten[key] = rewriteModelVisibleDocumentValue(nested)
-  }
-
-  const displayLabel = nonEmptyString(rewritten.display_label)
-  if (displayLabel !== undefined && typeof rewritten.target_path === 'string') {
-    rewritten.target_path = displayLabel
-  }
-  return rewritten
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null
-}
-
-function nonEmptyString(value: unknown): string | undefined {
-  if (typeof value !== 'string') {
-    return undefined
-  }
-  const trimmed = value.trim()
-  return trimmed === '' ? undefined : trimmed
-}

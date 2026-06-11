@@ -21,7 +21,7 @@ DocumentToolId = Literal["document",]
 CONTRACT_SCHEMA_PATH = (
     Path(__file__).resolve().parents[4]
     / "specs"
-    / "2802-public-doc-harness"
+    / "2803-document-production-hardening"
     / "contracts"
     / "document-tools.schema.json"
 )

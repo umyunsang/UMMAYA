@@ -1,0 +1,10 @@
+fixture_id: self-introduction-form-metadata
+representation: metadata_only
+format: docx
+source_ref: specs/2803-document-production-hardening/spec.md#User-Story-2
+expected_narrative_prompts:
+  - 지원동기
+  - 성장과정
+protected_field_expectations:
+  - unsupported awards stay blocked without evidence
+  - final insertion requires approved draft hash

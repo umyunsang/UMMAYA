@@ -8,7 +8,7 @@
 - `src/ummaya/tools/documents/registry.py`
 - `src/ummaya/tools/documents/evaluation.py`
 - `tests/fixtures/documents/candidate_profiles.yaml`
-- `specs/2802-public-doc-harness/hwp-promotion-deep-research-2026-06-03.md`
+- `specs/2803-document-production-hardening/spec.md`
 
 ## Context
 
@@ -36,9 +36,9 @@ both read-only HWP inspection and future conversion bridges.
 - `docs/vision.md`: UMMAYA is the Claude Code harness migrated to Korean public
   infrastructure; document operations are tool execution, not raw LLM byte
   generation.
-- `specs/2802-public-doc-harness/spec.md`: FR-005 blocks direct HWP binary
-  authoring and allows only safe read, extraction, render, or conversion
-  evidence where available.
+- `specs/2803-document-production-hardening/spec.md`: direct HWP authoring is
+  a target capability only after a candidate engine proves read, edit, save,
+  re-read, style preservation, and render comparison on real fixtures.
 - `docs/adr/ADR-010-workspace-bash-permission-boundary.md`: shell or workspace
   operations must not mutate document binaries; document mutation stays under
   the `document` primitive.

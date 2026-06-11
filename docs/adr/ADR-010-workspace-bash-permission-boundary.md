@@ -7,7 +7,7 @@
 - `tui/src/tools/WorkspaceToolAdapter/WorkspaceToolAdapter.ts`
 - `tui/src/tools.ts`
 - `tui/src/tools/_shared/toolChoiceRepair.ts`
-- `specs/2802-public-doc-harness/workspace-primitive-deep-research-2026-06-02.md`
+- `specs/2803-document-production-hardening/spec.md`
 
 ## Context
 
@@ -100,8 +100,7 @@ Implementation result:
 
 - `docs/vision.md`
 - `docs/requirements/ummaya-migration-tree.md`
-- `specs/2802-public-doc-harness/spec.md`
-- `specs/2802-public-doc-harness/workspace-primitive-deep-research-2026-06-02.md`
+- `specs/2803-document-production-hardening/spec.md`
 - `.references/claude-code-sourcemap/restored-src/src/tools/BashTool/`
 - Claude Code tools reference: https://code.claude.com/docs/en/tools-reference
 - Claude Code permissions: https://code.claude.com/docs/en/permissions
