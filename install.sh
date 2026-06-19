@@ -66,11 +66,11 @@ verify_launcher_health() {
   rm -rf "$smoke_dir"
 
   case "$inspect" in
-    *'"packageRoot":'*'"backendCommand":'*'"primitiveTimeoutMs":"90000"'*) ;;
+    *'"packageRoot":'*'"backendTransport":"hosted-gateway"'*'"backendCommand":null'*'"primitiveTimeoutMs":"90000"'*) ;;
     *) return 1 ;;
   esac
   case "$inspect" in
-    *'"--directory"'*|*'/.venv/bin/python'*) ;;
+    *'"liveAdapterProxyUrl":'*'/v1/adapters"'*) ;;
     *) return 1 ;;
   esac
 }

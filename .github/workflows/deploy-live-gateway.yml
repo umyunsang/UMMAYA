@@ -148,9 +148,11 @@ jobs:
             --cpu=1
             --memory=1Gi
             --concurrency=20
-            --min-instances=0
+            --min-instances=1
             --max-instances=10
             --service-account=${{ vars.GCP_RUN_RUNTIME_SERVICE_ACCOUNT }}
 
       - name: Smoke test deployed gateway
-        run: curl -fsS "${{ steps.deploy.outputs.url }}/readyz"
+        run: |
+          curl -fsS "${{ steps.deploy.outputs.url }}/readyz"
+          curl -fsS "${{ steps.deploy.outputs.url }}/v1/manifest" | python3 -c 'import json,sys; payload=json.load(sys.stdin); assert payload["kind"] == "adapter_manifest_sync"; assert payload["entries"]'

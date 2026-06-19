@@ -46,94 +46,37 @@ def test_packaged_launcher_overrides_stale_backend_env(tmp_path: Path) -> None:
     )
 
     assert payload["UMMAYA_PACKAGE_ROOT"] == str(package_root)
-    assert json.loads(str(payload["UMMAYA_BACKEND_CMD_JSON"])) == [
-        "uv",
-        "--directory",
-        str(package_root),
-        "run",
-        "--frozen",
-        "--no-dev",
-        "ummaya",
-        "--ipc",
-        "stdio",
-    ]
+    assert "UMMAYA_BACKEND_CMD_JSON" not in payload
+    assert payload["UMMAYA_BACKEND_TRANSPORT"] == "hosted-gateway"
+    assert str(payload["UMMAYA_LIVE_ADAPTER_PROXY_URL"]).endswith("/v1/adapters")
     assert payload["UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS"] == "90000"
 
 
-def test_packaged_launcher_prefers_existing_python_venv(tmp_path: Path) -> None:
+def test_packaged_launcher_ignores_packaged_python_venv(tmp_path: Path) -> None:
     package_root = tmp_path / "package"
     python_path = package_root / ".venv" / "bin" / "python"
     probe_log = tmp_path / "python-probe.log"
     python_path.parent.mkdir(parents=True)
     python_path.write_text(
-        "\n".join(
-            [
-                "#!/bin/sh",
-                f"printf '%s\\n' \"$@\" >> {shlex.quote(str(probe_log))}",
-                'if [ "$#" -eq 2 ] && [ "$1" = "-c" ] && [ "$2" = "import ummaya.cli" ]; then',
-                "  exit 0",
-                "fi",
-                "exit 1",
-                "",
-            ]
-        ),
+        f"#!/bin/sh\nprintf '%s\\n' \"$@\" >> {shlex.quote(str(probe_log))}\nexit 0\n",
         encoding="utf-8",
     )
     python_path.chmod(0o755)
 
     payload = _run_node(
         f"""
-        import {{ buildBackendCommand, configurePackageEnv }} from './bin/ummaya'
+        import {{ configurePackageEnv }} from './bin/ummaya'
 
         const env = {{}}
         const root = {json.dumps(str(package_root))}
         configurePackageEnv(root, env)
-        console.log(JSON.stringify({{env, command: buildBackendCommand(root)}}))
+        console.log(JSON.stringify(env))
         """,
     )
 
-    expected = [str(python_path), "-m", "ummaya.cli", "--ipc", "stdio"]
-    assert payload["command"] == expected
-    assert json.loads(str(payload["env"]["UMMAYA_BACKEND_CMD_JSON"])) == expected
-    assert probe_log.read_text(encoding="utf-8").splitlines() == [
-        "-c",
-        "import ummaya.cli",
-        "-c",
-        "import ummaya.cli",
-    ]
-
-
-def test_packaged_launcher_ignores_unimportable_python_venv(tmp_path: Path) -> None:
-    package_root = tmp_path / "package"
-    python_path = package_root / ".venv" / "bin" / "python"
-    python_path.parent.mkdir(parents=True)
-    python_path.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
-    python_path.chmod(0o755)
-
-    payload = _run_node(
-        f"""
-        import {{ buildBackendCommand, configurePackageEnv }} from './bin/ummaya'
-
-        const env = {{}}
-        const root = {json.dumps(str(package_root))}
-        configurePackageEnv(root, env)
-        console.log(JSON.stringify({{env, command: buildBackendCommand(root)}}))
-        """,
-    )
-
-    expected = [
-        "uv",
-        "--directory",
-        str(package_root),
-        "run",
-        "--frozen",
-        "--no-dev",
-        "ummaya",
-        "--ipc",
-        "stdio",
-    ]
-    assert payload["command"] == expected
-    assert json.loads(str(payload["env"]["UMMAYA_BACKEND_CMD_JSON"])) == expected
+    assert payload["UMMAYA_BACKEND_TRANSPORT"] == "hosted-gateway"
+    assert "UMMAYA_BACKEND_CMD_JSON" not in payload
+    assert not probe_log.exists()
 
 
 def test_packaged_launcher_allows_explicit_backend_debug_override(
@@ -157,6 +100,7 @@ def test_packaged_launcher_allows_explicit_backend_debug_override(
 
     assert payload["UMMAYA_PACKAGE_ROOT"] == str(package_root)
     assert payload["UMMAYA_BACKEND_CMD_JSON"] == '["custom","backend"]'
+    assert payload["UMMAYA_BACKEND_TRANSPORT"] == "stdio"
 
 
 def test_homebrew_wrapper_exports_backend_contract() -> None:
@@ -165,11 +109,11 @@ def test_homebrew_wrapper_exports_backend_contract() -> None:
     )
 
     assert "UMMAYA_PACKAGE_ROOT" in builder
-    assert "UMMAYA_BACKEND_CMD_JSON" in builder
-    assert "UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE" in builder
-    assert "json_escape" in builder
-    assert "--frozen" in builder
-    assert "--no-dev" in builder
+    assert "UMMAYA_BACKEND_TRANSPORT" in builder
+    assert "hosted-gateway" in builder
+    assert "UMMAYA_LIVE_ADAPTER_PROXY_URL" in builder
+    assert "--frozen" not in builder
+    assert "--no-dev" not in builder
     assert "smokeWrapper" in builder
     assert "createTar" in builder
     assert "portable: true" in builder
@@ -209,6 +153,7 @@ def test_installer_health_check_exercises_launcher_contract() -> None:
     assert "verify_launcher_health" in installer
     assert "UMMAYA_LAUNCHER_INSPECT=1" in installer
     assert 'UMMAYA_BACKEND_CMD_JSON=\'["stale","backend"]\'' in installer
+    assert '"backendTransport":"hosted-gateway"' in installer
     assert '"primitiveTimeoutMs":"90000"' in installer
 
 

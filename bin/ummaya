@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url'
 
 const MINIMUM_BUN_VERSION = '1.3.0'
 const PACKAGED_PRIMITIVE_TIMEOUT_MS = '90000'
+const DEFAULT_LIVE_ADAPTER_PROXY_URL =
+  'https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters'
 
 function currentLauncherPath() {
   return realpathSync(fileURLToPath(import.meta.url))
@@ -133,29 +135,15 @@ export function loadPackageDotenv(root, env = process.env) {
   }
 }
 
-export function buildBackendCommand(root) {
-  const packagedPython = join(root, '.venv', 'bin', 'python')
-  if (canImportUmmayaCli(packagedPython)) {
-    return [packagedPython, '-m', 'ummaya.cli', '--ipc', 'stdio']
-  }
-
-  return ['uv', '--directory', root, 'run', '--frozen', '--no-dev', 'ummaya', '--ipc', 'stdio']
-}
-
-export function canImportUmmayaCli(pythonPath) {
-  if (!existsSync(pythonPath)) return false
-  const result = spawnSync(pythonPath, ['-c', 'import ummaya.cli'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'ignore', 'ignore'],
-  })
-  return !result.error && result.status === 0
-}
-
 export function configurePackageEnv(root, env = process.env) {
   env.UMMAYA_PACKAGE_ROOT = root
-  if (env.UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE !== '1' || !env.UMMAYA_BACKEND_CMD_JSON) {
-    env.UMMAYA_BACKEND_CMD_JSON = JSON.stringify(buildBackendCommand(root))
+  if (env.UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE === '1' && env.UMMAYA_BACKEND_CMD_JSON) {
+    env.UMMAYA_BACKEND_TRANSPORT = 'stdio'
+  } else {
+    delete env.UMMAYA_BACKEND_CMD_JSON
+    env.UMMAYA_BACKEND_TRANSPORT = 'hosted-gateway'
   }
+  env.UMMAYA_LIVE_ADAPTER_PROXY_URL ??= DEFAULT_LIVE_ADAPTER_PROXY_URL
   env.UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS ??= PACKAGED_PRIMITIVE_TIMEOUT_MS
   return env
 }
@@ -165,7 +153,11 @@ function inspectLauncherAndExit() {
   process.stdout.write(
     `${JSON.stringify({
       packageRoot: process.env.UMMAYA_PACKAGE_ROOT,
-      backendCommand: JSON.parse(process.env.UMMAYA_BACKEND_CMD_JSON ?? '[]'),
+      backendTransport: process.env.UMMAYA_BACKEND_TRANSPORT,
+      backendCommand: process.env.UMMAYA_BACKEND_CMD_JSON
+        ? JSON.parse(process.env.UMMAYA_BACKEND_CMD_JSON)
+        : null,
+      liveAdapterProxyUrl: process.env.UMMAYA_LIVE_ADAPTER_PROXY_URL,
       primitiveTimeoutMs: process.env.UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS,
     })}\n`,
   )

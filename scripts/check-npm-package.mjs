@@ -150,9 +150,9 @@ assertSameVersion(
 
 const launcherText = readFileSync('bin/ummaya', 'utf8')
 const launcherContracts = [
-  'configurePackageEnv', 'UMMAYA_PACKAGE_ROOT', 'UMMAYA_BACKEND_CMD_JSON',
+  'configurePackageEnv', 'UMMAYA_PACKAGE_ROOT', 'UMMAYA_BACKEND_TRANSPORT',
+  'hosted-gateway', 'UMMAYA_LIVE_ADAPTER_PROXY_URL',
   'UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE', 'UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS',
-  '.venv', '--directory', '--frozen', '--no-dev',
 ]
 for (const expected of launcherContracts) {
   if (!launcherText.includes(expected)) {
@@ -162,15 +162,14 @@ for (const expected of launcherContracts) {
 if (launcherText.includes('UMMAYA_PACKAGE_ROOT ??=')) {
   throw new Error('bin/ummaya must not preserve stale UMMAYA_PACKAGE_ROOT')
 }
-if (launcherText.includes('UMMAYA_BACKEND_CMD_JSON ??=')) {
-  throw new Error('bin/ummaya must not preserve stale UMMAYA_BACKEND_CMD_JSON')
+if (!launcherText.includes('delete env.UMMAYA_BACKEND_CMD_JSON')) {
+  throw new Error('bin/ummaya must clear stale UMMAYA_BACKEND_CMD_JSON in packaged hosted mode')
 }
 
 const required = [
   'bin/ummaya', 'package.json', 'bun.lock', 'npm-shrinkwrap.json', 'README.md',
   'LICENSE', 'assets/ummaya-banner-dark.svg', 'assets/ummaya-banner-light.svg',
-  'assets/ummaya-logo.svg', 'pyproject.toml', 'uv.lock', 'src/ummaya/__init__.py',
-  'prompts/manifest.yaml', 'tui/src/entrypoints/cli.tsx',
+  'assets/ummaya-logo.svg', 'tui/src/entrypoints/cli.tsx',
   'tui/src/runtime/bun-bundle.ts', 'tui/src/runtime/bundle-package/index.ts',
   'tui/src/runtime/bundle-package/package.json', 'tui/src/stubs/macro-preload.ts',
   'docs/plugins/security-review.md',
@@ -182,6 +181,7 @@ const required = [
 const deny = [
   /(^|\/)\.env($|[./])/, /^\.github\//, /^\.references\//, /^\.specify\//,
   /(^|\/)secrets(\/|$)/,
+  /^src\/ummaya\//, /^pyproject\.toml$/, /^uv\.lock$/, /^prompts\//,
   /^specs\/(?!2803-document-production-hardening\/contracts\/document-tools\.schema\.json$)/,
   /(^|\/)node_modules(\/|$)/, /(^|\/)\.venv(\/|$)/, /(^|\/)dist(\/|$)/,
   /(^|\/)coverage\.xml$/, /(^|\/)\.DS_Store$/, /(^|\/)__pycache__(\/|$)/,

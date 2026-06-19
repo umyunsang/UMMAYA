@@ -1,9 +1,10 @@
 # Live Adapter Gateway
 
-UMMAYA release CLIs must not contain Kakao, data.go.kr, JUSO, or SGIS operator
-credentials. Packaged clients call an operator-hosted gateway for eligible live
-`find` and `locate` adapters; the gateway runs the same adapter registry in
-`direct` mode and keeps provider keys in the server runtime.
+UMMAYA release CLIs must not contain Kakao, data.go.kr, JUSO, SGIS, Python
+backend, or adapter execution credentials. Packaged npm/Homebrew clients fetch
+the adapter manifest from an operator-hosted gateway and call that gateway for
+eligible live `find` and `locate` adapters. The gateway runs the Python adapter
+registry in `direct` mode and keeps provider keys in the server runtime.
 
 ## Runtime
 
@@ -20,6 +21,7 @@ Health check:
 
 ```bash
 curl http://127.0.0.1:8080/readyz
+curl http://127.0.0.1:8080/v1/manifest
 ```
 
 Server-side request guards:
@@ -100,10 +102,12 @@ scripts/deploy-live-gateway-cloud-run.sh
 ```
 
 The GitHub Actions workflow `.github/workflows/deploy-live-gateway.yml` uses
-Google Workload Identity Federation and Artifact Registry. It runs automatically
-on `main` when gateway-relevant paths change and also supports manual
-`workflow_dispatch` with an optional `image_tag`. Configure these repository or
-environment variables before relying on either path:
+Google Workload Identity Federation and Artifact Registry. It deploys Cloud Run
+with `--min-instances=1` so the public package has an always-warm hosted backend
+surface instead of starting a backend inside the user package. It runs
+automatically on `main` when gateway-relevant paths change and also supports
+manual `workflow_dispatch` with an optional `image_tag`. Configure these
+repository or environment variables before relying on either path:
 
 ```text
 GCP_PROJECT_ID
@@ -131,13 +135,18 @@ there is no fallback route for missing operator credentials.
 Packaged CLI defaults:
 
 ```bash
-UMMAYA_LIVE_ADAPTER_MODE=auto
+UMMAYA_BACKEND_TRANSPORT=hosted-gateway
 UMMAYA_LIVE_ADAPTER_PROXY_URL=https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters
 ```
+
+The TUI derives `https://.../v1/manifest` from that URL during startup. The
+packaged launcher clears stale `UMMAYA_BACKEND_CMD_JSON` values so release
+clients do not run `uv`, `.venv/bin/python`, or local `ummaya --ipc stdio`.
 
 Source-tree or self-hosted direct debugging:
 
 ```bash
+UMMAYA_BACKEND_TRANSPORT=stdio
 UMMAYA_LIVE_ADAPTER_MODE=direct
 ```
 

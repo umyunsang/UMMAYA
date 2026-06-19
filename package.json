@@ -12,15 +12,11 @@
     "assets/*.svg",
     "assets/*.gif",
     "assets/*.mp4",
-    "src/ummaya/**",
-    "prompts/**",
     "tui/src/**",
     "tui/package.json",
     "tui/tsconfig.json",
-    "pyproject.toml",
     "bun.lock",
     "npm-shrinkwrap.json",
-    "uv.lock",
     "docs/demo/**",
     "docs/plugins/security-review.md",
     "specs/2803-document-production-hardening/contracts/document-tools.schema.json",
@@ -31,10 +27,7 @@
     "!tui/src/**/__tests__/**",
     "!tui/src/**/*.test.ts",
     "!tui/src/**/*.test.tsx",
-    "!tui/src/**/*.snap",
-    "!src/ummaya/**/tests/**",
-    "!src/ummaya/**/*.pyc",
-    "!src/ummaya/llm/_cc_reference/**"
+    "!tui/src/**/*.snap"
   ],
   "scripts": {
     "demo:readme": "bash docs/demo/record-readme-demo.sh",

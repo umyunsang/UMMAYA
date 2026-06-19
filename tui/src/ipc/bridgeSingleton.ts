@@ -11,6 +11,10 @@
 // prompt is actually typed. Subsequent turns reuse the running child.
 
 import { createBridge, type IPCBridge } from './bridge.js'
+import {
+  createHostedGatewayBridge,
+  shouldUseHostedGatewayBridge,
+} from './hostedGatewayBridge.js'
 import { getSessionId } from '../bootstrap/state.js'
 import {
   ingestManifestFrame,
@@ -38,7 +42,10 @@ let _pluginsModifiedThisSession = false
 export function getOrCreateUmmayaBridge(): IPCBridge {
   if (_bridge !== null) return _bridge
   const sessionId = getUmmayaBridgeSessionId()
-  _bridge = createBridge({
+  const bridgeFactory = shouldUseHostedGatewayBridge()
+    ? createHostedGatewayBridge
+    : createBridge
+  _bridge = bridgeFactory({
     sessionId,
     // Epic ε #2296 T010 — route adapter_manifest_sync frames to the TS-side
     // manifest cache on receipt (before any LLM turn, at backend boot time).

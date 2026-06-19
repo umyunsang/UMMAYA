@@ -191,20 +191,14 @@ runtime_bun="$root_dir/runtime/bun"
 runtime_sha256="${runtimeSha256}"
 package_root="$root_dir/package"
 
-json_escape() {
-  printf '%s' "$1" | sed 's/\\\\/\\\\\\\\/g; s/"/\\\\"/g'
-}
-
 export UMMAYA_PACKAGE_ROOT="$package_root"
-if [[ "\${UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE:-}" != "1" || -z "\${UMMAYA_BACKEND_CMD_JSON:-}" ]]; then
-  package_root_json="$(json_escape "$package_root")"
-  if [[ -x "$package_root/.venv/bin/python" ]]; then
-    python_json="$(json_escape "$package_root/.venv/bin/python")"
-    export UMMAYA_BACKEND_CMD_JSON="[\\"$python_json\\",\\"-m\\",\\"ummaya.cli\\",\\"--ipc\\",\\"stdio\\"]"
-  else
-    export UMMAYA_BACKEND_CMD_JSON="[\\"uv\\",\\"--directory\\",\\"$package_root_json\\",\\"run\\",\\"--frozen\\",\\"--no-dev\\",\\"ummaya\\",\\"--ipc\\",\\"stdio\\"]"
-  fi
+if [[ "\${UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE:-}" == "1" && -n "\${UMMAYA_BACKEND_CMD_JSON:-}" ]]; then
+  export UMMAYA_BACKEND_TRANSPORT="stdio"
+else
+  unset UMMAYA_BACKEND_CMD_JSON
+  export UMMAYA_BACKEND_TRANSPORT="hosted-gateway"
 fi
+export UMMAYA_LIVE_ADAPTER_PROXY_URL="\${UMMAYA_LIVE_ADAPTER_PROXY_URL:-https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters}"
 export UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS="\${UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS:-90000}"
 
 use_cached_runtime=0
@@ -275,21 +269,13 @@ function smokeWrapper(artifactRoot, arch) {
         `Wrapper package root ${payload.packageRoot} did not match ${expectedPackageRoot}`,
       )
     }
-    const expected = [
-      'uv',
-      '--directory',
-      expectedPackageRoot,
-      'run',
-      '--frozen',
-      '--no-dev',
-      'ummaya',
-      '--ipc',
-      'stdio',
-    ]
-    if (JSON.stringify(payload.backendCommand) !== JSON.stringify(expected)) {
+    if (payload.backendTransport !== 'hosted-gateway') {
       throw new Error(
-        `Wrapper backend command ${JSON.stringify(payload.backendCommand)} did not match ${JSON.stringify(expected)}`,
+        `Wrapper backend transport ${payload.backendTransport} did not match hosted-gateway`,
       )
+    }
+    if (payload.backendCommand !== null) {
+      throw new Error(`Wrapper backend command ${JSON.stringify(payload.backendCommand)} must be null`)
     }
     if (payload.primitiveTimeoutMs !== '90000') {
       throw new Error(`Wrapper primitive timeout ${payload.primitiveTimeoutMs} did not match 90000`)

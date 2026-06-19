@@ -63,7 +63,7 @@ gcloud run deploy "${SERVICE}" \
   --cpu 1 \
   --memory 1Gi \
   --concurrency "${GCP_RUN_CONCURRENCY:-20}" \
-  --min-instances "${GCP_RUN_MIN_INSTANCES:-0}" \
+  --min-instances "${GCP_RUN_MIN_INSTANCES:-1}" \
   --max-instances "${GCP_RUN_MAX_INSTANCES:-10}" \
   --service-account "${RUNTIME_SERVICE_ACCOUNT}" \
   --set-env-vars "UMMAYA_ENV=prod,UMMAYA_LIVE_ADAPTER_MODE=direct" \
@@ -76,4 +76,7 @@ url="$(gcloud run services describe "${SERVICE}" \
 
 echo "deploy-live-gateway: health check ${url}/readyz"
 curl -fsS "${url}/readyz"
+echo
+echo "deploy-live-gateway: manifest check ${url}/v1/manifest"
+curl -fsS "${url}/v1/manifest" | python3 -c 'import json,sys; payload=json.load(sys.stdin); assert payload["kind"] == "adapter_manifest_sync"; assert payload["entries"]'
 echo

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 from pydantic import BaseModel
 
@@ -12,7 +14,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from ummaya.gateway.app import _missing_gateway_operator_keys, create_app  # noqa: E402
 from ummaya.tools.executor import ToolExecutor  # noqa: E402
-from ummaya.tools.models import GovAPITool  # noqa: E402
+from ummaya.tools.models import AdapterRealDomainPolicy, GovAPITool  # noqa: E402
 from ummaya.tools.registry import ToolRegistry  # noqa: E402
 
 
@@ -28,6 +30,15 @@ class _LocateInput(BaseModel):
     query: str
 
 
+def _policy() -> AdapterRealDomainPolicy:
+    return AdapterRealDomainPolicy(
+        real_classification_url="https://www.data.go.kr/",
+        real_classification_text="Public data read-only API.",
+        citizen_facing_gate="read-only",
+        last_verified=datetime(2026, 6, 20, tzinfo=UTC),
+    )
+
+
 def _find_tool(adapter_mode: str = "live") -> GovAPITool:
     return GovAPITool(
         id="kma_current_observation",
@@ -41,6 +52,7 @@ def _find_tool(adapter_mode: str = "live") -> GovAPITool:
         search_hint="weather current observation",
         adapter_mode=adapter_mode,
         primitive="find",
+        policy=_policy(),
     )
 
 
@@ -57,6 +69,7 @@ def _locate_tool() -> GovAPITool:
         search_hint="locate keyword",
         adapter_mode="live",
         primitive="locate",
+        policy=_policy(),
     )
 
 
@@ -79,6 +92,26 @@ def test_healthz_reports_proxyable_live_adapter_count() -> None:
     assert response.json()["proxyable_live_adapter_count"] == 1
     assert ready.status_code == 200
     assert ready.json()["proxyable_live_adapter_count"] == 1
+
+
+def test_manifest_endpoint_exposes_registry_without_operator_secrets() -> None:
+    registry = ToolRegistry()
+    tool = _find_tool()
+    registry.register(tool)
+    executor = ToolExecutor(registry=registry, live_adapter_mode="direct")
+    executor.register_adapter(tool.id, _unused_adapter)
+
+    with _client(registry, executor) as client:
+        response = client.get("/v1/manifest")
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["kind"] == "adapter_manifest_sync"
+    assert body["role"] == "backend"
+    assert body["entries"][0]["tool_id"] == tool.id
+    assert body["entries"][0]["policy_authority_url"] == "https://www.data.go.kr/"
+    assert "UMMAYA_DATA_GO_KR_API_KEY" not in response.text
+    assert "serviceKey" not in response.text
 
 
 def test_gateway_requires_token_when_configured(monkeypatch: pytest.MonkeyPatch) -> None:

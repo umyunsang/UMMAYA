@@ -48,12 +48,13 @@ Column definitions:
 | `UMMAYA_DATA_GO_KR_API_KEY` | No (operator-managed) | — | API key string | `ummaya.settings.UmmayaSettings.data_go_kr_api_key` | [공공데이터포털](https://www.data.go.kr) |
 | `UMMAYA_KMA_API_HUB_AUTH_KEY` | No (operator-managed) | — | API Hub auth key string | `ummaya.settings.UmmayaSettings.kma_api_hub_auth_key`; KMA VilageFcst adapters | [KMA API Hub](https://apihub.kma.go.kr/) |
 | `UMMAYA_LIVE_ADAPTER_MODE` | No | `auto` | `auto` \| `proxy` \| `direct` | `ummaya.tools.live_proxy.should_use_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_mode) |
-| `UMMAYA_LIVE_ADAPTER_PROXY_URL` | No | `https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters` | HTTPS URL | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_url) |
+| `UMMAYA_LIVE_ADAPTER_PROXY_URL` | No | `https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters` | HTTPS URL | `ummaya.tools.live_proxy.invoke_live_adapter_proxy`; `tui/src/ipc/hostedGatewayBridge.ts` | [Live adapter gateway](#ummaya_live_adapter_proxy_url) |
 | `UMMAYA_LIVE_ADAPTER_PROXY_TIMEOUT_SECONDS` | No | `30.0` | Float > 0 | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_timeout_seconds) |
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN` | No (operator-managed) | — | Bearer token | `ummaya.gateway.app._require_gateway_token` | [Live adapter gateway](#ummaya_live_adapter_gateway_token) |
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_RATE_LIMIT_PER_MINUTE` | No | `120` | Integer >= 1 | `ummaya.gateway.app._enforce_gateway_rate_limit` | [Live adapter gateway](#ummaya_live_adapter_gateway_rate_limit_per_minute) |
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES` | No | `65536` | Integer >= 1024 | `ummaya.gateway.app.request_size_guard` | [Live adapter gateway](#ummaya_live_adapter_gateway_max_body_bytes) |
-| `UMMAYA_PACKAGE_ROOT` | No (internal wrapper) | — | Absolute package path | `bin/ummaya`, `ummaya.tools.live_proxy.should_use_live_adapter_proxy` | [Live adapter gateway](#ummaya_package_root) |
+| `UMMAYA_PACKAGE_ROOT` | No (internal wrapper) | — | Absolute package path | `bin/ummaya`; `tui/src/ipc/hostedGatewayBridge.ts`; `ummaya.tools.live_proxy.should_use_live_adapter_proxy` | [Live adapter gateway](#ummaya_package_root) |
+| `UMMAYA_BACKEND_TRANSPORT` | No | `hosted-gateway` in packaged npm/Homebrew launches; `stdio` in source-tree/local backend debug paths | `hosted-gateway` \| `stdio` | `bin/ummaya`; `tui/src/ipc/bridgeSingleton.ts` | [Live adapter gateway](#ummaya_backend_transport) |
 | `UMMAYA_ENABLE_ANTHROPIC_MARKETPLACE_AUTOINSTALL` | No | `false` | `true` \| `false` (case-insensitive; `1`/`yes` also accepted) | `tui/src/utils/plugins/officialMarketplaceStartupCheck.ts` | [Plugin marketplace auto-install](#ummaya_enable_anthropic_marketplace_autoinstall) |
 | `UMMAYA_JUSO_CONFM_KEY` | No (optional fallback) | — | Confirmation key string | `ummaya.settings.UmmayaSettings.juso_confm_key` | [도로명주소 개발자센터](https://business.juso.go.kr) |
 | `UMMAYA_SGIS_KEY` | No (operator-managed) | — | Consumer key string | `ummaya.settings.UmmayaSettings.sgis_key` | [SGIS API](https://sgis.mods.go.kr) |
@@ -82,7 +83,7 @@ Column definitions:
 | `UMMAYA_RETRIEVAL_MODEL_ID` | No | `intfloat/multilingual-e5-small` | Hugging Face model ID string | `ummaya.tools.retrieval.backend.build_retriever_from_env` | Epic #585 |
 | `UMMAYA_MEMDIR_USER` | No | `~/.ummaya/memdir/user` | Filesystem path (expanduser) | `ummaya.session.store._get_session_dir`; TUI memdir/session helpers | Spec 027 |
 | `UMMAYA_SESSION_DIR` | No | `~/.ummaya/sessions` | Filesystem path (expanduser) | `ummaya.session.store._get_session_dir` | Epic #287 |
-| `UMMAYA_BACKEND_CMD_JSON` | No | Set by packaged launcher to `["uv","--directory",<packageRoot>,"run","--frozen","--no-dev","ummaya","--ipc","stdio"]`, or to `<packageRoot>/.venv/bin/python -m ummaya.cli --ipc stdio` when that venv exists | JSON string array spawned by the TUI as the backend process; preferred over `UMMAYA_BACKEND_CMD` because paths with spaces stay unambiguous | `bin/ummaya`; TUI-side `tui/src/ipc/bridge.ts` | Release packaging |
+| `UMMAYA_BACKEND_CMD_JSON` | No | Unset in packaged npm/Homebrew launches; source-tree default is handled by `UMMAYA_BACKEND_CMD` / `tui/src/ipc/bridge.ts` | JSON string array spawned only when `UMMAYA_BACKEND_TRANSPORT=stdio`; packaged launchers clear stale values unless `UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE=1` is set for explicit debug | `bin/ummaya`; TUI-side `tui/src/ipc/bridge.ts` | Local backend debug |
 | `UMMAYA_BACKEND_CMD` | No | `uv run ummaya --ipc stdio` when no JSON command or package launcher is present | Shell command string spawned by the TUI as the backend process | TUI-side `tui/src/ipc/bridge.ts`; `ummaya.ipc.demo.mock_backend` is the canonical mock-backend value for local IPC checks | Epic #2296 |
 | `UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE` | No | `0` | Set `1` only for release/debug harnesses that intentionally replace the packaged backend command | `bin/ummaya` | Release packaging |
 | `UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS` | No | `30000` in raw TUI; packaged launcher sets `90000` unless already set | Milliseconds before a model-facing primitive tool call reports a TUI-side delayed-backend timeout | `tui/src/tools/_shared/dispatchPrimitive.ts`; packaged override in `bin/ummaya` | Release packaging |
@@ -250,11 +251,26 @@ Base URL for the operator-managed live adapter gateway. The CLI posts validated 
 parameters to `{UMMAYA_LIVE_ADAPTER_PROXY_URL}/{tool_id}` and expects the same Lookup/Locate
 envelope shape a local adapter would return.
 
+Packaged npm/Homebrew clients also derive the gateway manifest URL from this value by replacing
+`/v1/adapters` with `/v1/manifest`. The manifest contains adapter names, policy citations, and
+JSON Schemas only; operator API keys stay server-side.
+
 This value is not a secret and may be packaged as a default. Public CLI clients do not send a
 static bearer secret to this gateway. The service must keep `UMMAYA_KAKAO_API_KEY`,
 `UMMAYA_KMA_API_HUB_AUTH_KEY`, `UMMAYA_DATA_GO_KR_API_KEY`, and any other operator-managed public
 API credentials in a server-side secret manager, then protect the route with adapter allowlists,
 rate limits, request-size limits, observability, and provider quota controls.
+
+---
+
+### <a id="ummaya_backend_transport"></a>`UMMAYA_BACKEND_TRANSPORT`
+
+Packaged npm/Homebrew launchers set this to `hosted-gateway`. In that mode, the TUI does not spawn
+`uv`, `.venv/bin/python`, or `ummaya --ipc stdio`; it fetches `/v1/manifest` from the hosted gateway
+and dispatches eligible `find`/`locate` adapter calls to `/v1/adapters/{tool_id}`.
+
+Use `stdio` only for source-tree development, local gateway debugging, or explicit release harness
+overrides where a local backend process is intentional.
 
 ---
 

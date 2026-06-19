@@ -567,6 +567,29 @@ def _adapter_display_name(reg: Any) -> str:  # noqa: ANN401
 # ---------------------------------------------------------------------------
 
 
+def build_manifest_frame(
+    registry: Any,  # ummaya.tools.registry.ToolRegistry
+    *,
+    pid: int | None = None,
+) -> AdapterManifestSyncFrame:
+    emitter_pid = pid if pid is not None else os.getpid()
+    entries = _build_entries(registry)
+    if not entries:
+        raise ValueError("No adapter entries available — registry may be empty.")
+
+    manifest_hash = _compute_manifest_hash(entries)
+    return AdapterManifestSyncFrame(
+        kind="adapter_manifest_sync",
+        role="backend",
+        session_id="",
+        correlation_id=_new_ulid(),
+        ts=datetime.now(UTC).isoformat(),
+        entries=entries,
+        manifest_hash=manifest_hash,
+        emitter_pid=emitter_pid,
+    )
+
+
 def emit_manifest(
     stdout_writer: IO[str],
     registry: Any,  # ummaya.tools.registry.ToolRegistry
@@ -584,25 +607,8 @@ def emit_manifest(
         registry:      Fully booted :class:`~ummaya.tools.registry.ToolRegistry`.
         pid:           Emitter PID override (defaults to ``os.getpid()``).
     """
-    emitter_pid = pid if pid is not None else os.getpid()
-
     try:
-        entries = _build_entries(registry)
-        if not entries:
-            raise ValueError("No adapter entries available — registry may be empty.")
-
-        manifest_hash = _compute_manifest_hash(entries)
-
-        frame = AdapterManifestSyncFrame(
-            kind="adapter_manifest_sync",
-            role="backend",
-            session_id="",
-            correlation_id=_new_ulid(),
-            ts=datetime.now(UTC).isoformat(),
-            entries=entries,
-            manifest_hash=manifest_hash,
-            emitter_pid=emitter_pid,
-        )
+        frame = build_manifest_frame(registry, pid=pid)
     except Exception as exc:  # noqa: BLE001
         logger.critical("manifest_emitter: failed to build AdapterManifestSyncFrame — %s", exc)
         raise SystemExit(78) from exc  # noqa: TRY200
@@ -612,8 +618,8 @@ def emit_manifest(
     stdout_writer.flush()
     logger.info(
         "manifest_emitter: emitted %d entries (hash=%s...)",
-        len(entries),
-        manifest_hash[:16],
+        len(frame.entries),
+        frame.manifest_hash[:16],
     )
 
 

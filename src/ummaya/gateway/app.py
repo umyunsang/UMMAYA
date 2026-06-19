@@ -23,6 +23,7 @@ from starlette.responses import Response
 
 from ummaya._dotenv import load_repo_dotenv
 from ummaya._version import get_version
+from ummaya.ipc.adapter_manifest_emitter import build_manifest_frame
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.live_proxy import is_proxyable_live_adapter
 from ummaya.tools.models import GovAPITool
@@ -123,6 +124,12 @@ def create_app(  # noqa: C901
             "tool_count": len(tools),
             "proxyable_live_adapter_count": sum(is_proxyable_live_adapter(tool) for tool in tools),
         }
+
+    @app.get("/v1/manifest")
+    async def adapter_manifest(request: Request) -> JSONResponse:
+        state_ = _state(request)
+        frame = build_manifest_frame(state_.registry)
+        return JSONResponse(content=jsonable_encoder(frame))
 
     @app.post("/v1/adapters/{tool_id}")
     async def invoke_adapter(
