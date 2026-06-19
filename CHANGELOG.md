@@ -5,6 +5,15 @@ All notable changes to UMMAYA are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.7] - 2026-06-19
+
+### Fixed
+
+- Re-ran the release from the final hardening commit so npm provenance, tag target,
+  GitHub Release, and Homebrew artifacts converge on the same source revision.
+- Regenerated Homebrew Cask metadata from the final package input after formatting and
+  lockfile changes, preventing stale local tarball SHAs from blocking publication.
+
 ## [v0.2.6] - 2026-06-19
 
 ### Fixed
