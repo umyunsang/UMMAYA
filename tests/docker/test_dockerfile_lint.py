@@ -17,6 +17,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 _DOCKERFILE_PATH = Path(__file__).resolve().parents[2] / "docker" / "Dockerfile"
+_GATEWAY_DOCKERFILE_PATH = Path(__file__).resolve().parents[2] / "docker" / "Dockerfile.gateway"
 _DOCKERIGNORE_PATH = Path(__file__).resolve().parents[2] / ".dockerignore"
 _PUBLIC_DOC_CONTRACT_DIR = "specs/2803-document-production-hardening/contracts/"
 _PUBLIC_DOC_CONTRACT = (
@@ -30,6 +31,10 @@ def _read_dockerfile() -> str:
     Raises FileNotFoundError (RED) until T035 creates the file.
     """
     return _DOCKERFILE_PATH.read_text(encoding="utf-8")
+
+
+def _read_gateway_dockerfile() -> str:
+    return _GATEWAY_DOCKERFILE_PATH.read_text(encoding="utf-8")
 
 
 def _read_dockerignore() -> str:
@@ -191,3 +196,16 @@ def test_docker_context_keeps_public_doc_contract_schema() -> None:
     assert f"!{_PUBLIC_DOC_CONTRACT}" in dockerignore_text, (
         ".dockerignore must explicitly unignore the public document harness contract schema"
     )
+
+
+def test_runtime_dockerfiles_preseed_kiwipiepy_model_build_backend() -> None:
+    for path, text in (
+        (_DOCKERFILE_PATH, _read_dockerfile()),
+        (_GATEWAY_DOCKERFILE_PATH, _read_gateway_dockerfile()),
+    ):
+        assert "uv pip install setuptools==81.0.0" in text, (
+            f"{path.name} must preinstall the locked setuptools wheel before uv sync"
+        )
+        assert "--no-build-isolation-package kiwipiepy-model" in text, (
+            f"{path.name} must disable build isolation only for kiwipiepy-model"
+        )

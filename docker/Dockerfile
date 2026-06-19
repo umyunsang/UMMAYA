@@ -33,7 +33,10 @@ WORKDIR /app
 # hatchling reads it during metadata build even under --no-install-project.
 # This layer is cache-stable as long as pyproject.toml, uv.lock, and README.md are unchanged.
 COPY pyproject.toml uv.lock README.md ./
-RUN uv sync --frozen --no-install-project --no-dev
+RUN uv venv /app/.venv \
+    && uv pip install setuptools==81.0.0 \
+    && uv sync --frozen --no-install-project --no-dev \
+        --no-build-isolation-package kiwipiepy-model
 
 # Layer 2: install the project itself now that its source is present.
 # prompts/ + docs/plugins/security-review.md + tests/fixtures/plugin_validation/

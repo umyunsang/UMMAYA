@@ -16,7 +16,10 @@ ENV UV_LINK_MODE=copy \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md ./
-RUN uv sync --frozen --extra gateway --no-install-project --no-dev
+RUN uv venv /app/.venv \
+    && uv pip install setuptools==81.0.0 \
+    && uv sync --frozen --extra gateway --no-install-project --no-dev \
+        --no-build-isolation-package kiwipiepy-model
 
 COPY src/ ./src/
 COPY prompts/ ./prompts/
