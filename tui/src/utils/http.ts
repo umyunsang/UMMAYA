@@ -10,7 +10,6 @@ import {
   handleOAuth401Error,
   isClaudeAISubscriber,
 } from './auth.js'
-import { getClaudeCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
 // WARNING: We rely on `claude-cli` in the user agent for log filtering.
@@ -50,7 +49,7 @@ export function getMCPUserAgent(): string {
 }
 
 export function getWebFetchUserAgent(): string {
-  return `UMMAYA-User (${getClaudeCodeUserAgent()}; +https://ummaya-docs.pages.dev/)`
+  return `UMMAYA-User (ummaya/${MACRO.VERSION}; +https://ummaya-docs.pages.dev/)`
 }
 
 export type AuthHeaders = {

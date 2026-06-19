@@ -16,7 +16,7 @@ on:
     types: [submitted]
 
 jobs:
-  claude:
+  ummaya:
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@ummaya')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@ummaya')) ||
@@ -41,7 +41,7 @@ jobs:
       - name: Verify UMMAYA
         id: ummaya
         env:
-          FRIENDLI_TOKEN: \${{ secrets.FRIENDLI_TOKEN }}
+          UMMAYA_FRIENDLI_TOKEN: \${{ secrets.UMMAYA_FRIENDLI_TOKEN }}
         run: ummaya --version
 
       # See https://ummaya-docs.pages.dev/en/ for available options
@@ -64,31 +64,26 @@ This PR adds a GitHub Actions workflow that enables UMMAYA integration in our re
 
 ### How it works
 
-Once this PR is merged, we'll be able to interact with UMMAYA by mentioning @ummaya in a pull request or issue comment.
-Once the workflow is triggered, UMMAYA will analyze the comment and surrounding context, and execute on the request in a GitHub action.
+Once this PR is merged, @ummaya mentions in pull requests and issues will trigger a GitHub Actions smoke check for the repository's UMMAYA runtime.
+The generated workflow verifies that the packaged UMMAYA CLI can install and start with the configured FriendliAI credential. Extend it from the UMMAYA documentation before enabling repository-specific automation.
 
 ### Important Notes
 
 - **This workflow won't take effect until this PR is merged**
 - **@ummaya mentions won't work until after the merge is complete**
 - The workflow runs automatically whenever UMMAYA is mentioned in PR or issue comments
-- UMMAYA gets access to the entire PR or issue context including files, diffs, and previous comments
+- The generated workflow is a runtime smoke check until repository-specific automation is added
 
 ### Security
 
 - Our FriendliAI API key is securely stored as a GitHub Actions secret
 - Only users with write access to the repository can trigger the workflow
 - All UMMAYA runs are stored in the GitHub Actions run history
-- UMMAYA's default tools are limited to reading/writing files and interacting with our repo by creating comments, branches, and commits.
-- We can add more allowed tools by adding them to the workflow file like:
-
-\`\`\`
-allowed_tools: Bash(npm install),Bash(npm run build),Bash(npm run lint),Bash(npm run test)
-\`\`\`
+- Review the workflow file before adding write scopes, repository mutations, or project-specific commands.
 
 There's more information in the [UMMAYA documentation](https://ummaya-docs.pages.dev/en/).
 
-After merging this PR, let's try mentioning @ummaya in a comment on any PR to get started!`
+After merging this PR, mention @ummaya in a comment on any PR to verify the runtime smoke path.`
 
 export const CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT = `name: UMMAYA Review
 
@@ -103,7 +98,7 @@ on:
     #   - "src/**/*.jsx"
 
 jobs:
-  claude-review:
+  ummaya-review:
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -129,7 +124,7 @@ jobs:
       - name: Verify UMMAYA Review Runtime
         id: ummaya-review
         env:
-          FRIENDLI_TOKEN: \${{ secrets.FRIENDLI_TOKEN }}
+          UMMAYA_FRIENDLI_TOKEN: \${{ secrets.UMMAYA_FRIENDLI_TOKEN }}
         run: ummaya --version
 
       # See https://ummaya-docs.pages.dev/en/ for available options
