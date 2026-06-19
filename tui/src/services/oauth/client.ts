@@ -48,6 +48,7 @@ export function buildAuthUrl({
   state,
   port,
   isManual,
+  loginWithFriendliAi,
   loginWithClaudeAi,
   inferenceOnly,
   orgUUID,
@@ -58,13 +59,14 @@ export function buildAuthUrl({
   state: string
   port: number
   isManual: boolean
+  loginWithFriendliAi?: boolean
   loginWithClaudeAi?: boolean
   inferenceOnly?: boolean
   orgUUID?: string
   loginHint?: string
   loginMethod?: string
 }): string {
-  const authUrlBase = loginWithClaudeAi
+  const authUrlBase = (loginWithFriendliAi ?? loginWithClaudeAi)
     ? getOauthConfig().CLAUDE_AI_AUTHORIZE_URL
     : getOauthConfig().CONSOLE_AUTHORIZE_URL
 

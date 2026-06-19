@@ -32,6 +32,7 @@ export class OAuthService {
   async startOAuthFlow(
     authURLHandler: (url: string, automaticUrl?: string) => Promise<void>,
     options?: {
+      loginWithFriendliAi?: boolean
       loginWithClaudeAi?: boolean
       inferenceOnly?: boolean
       expiresIn?: number
@@ -56,11 +57,12 @@ export class OAuthService {
     const state = crypto.generateState()
 
     // Build auth URLs for both automatic and manual flows
+    const loginWithFriendliAi = options?.loginWithFriendliAi ?? options?.loginWithClaudeAi
     const opts = {
       codeChallenge,
       state,
       port: this.port,
-      loginWithClaudeAi: options?.loginWithClaudeAi,
+      loginWithFriendliAi,
       inferenceOnly: options?.inferenceOnly,
       orgUUID: options?.orgUUID,
       loginHint: options?.loginHint,

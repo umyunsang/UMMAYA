@@ -136,6 +136,8 @@ export function isEnterpriseSubscriber(): boolean { return false }
 
 export function isAnthropicAuthEnabled(): boolean { return false }
 
+export function isFriendliAuthEnabled(): boolean { return false }
+
 export function is1PApiCustomer(): boolean { return false }
 
 export function isUsing3PServices(): boolean { return false }
@@ -164,6 +166,10 @@ export function getAuthTokenSource(): {
 export function getRateLimitTier(): 0 { return 0 }
 
 export function getAnthropicApiKey(): null | string {
+  return getAnthropicApiKeyWithSource().key
+}
+
+export function getFriendliApiKey(): null | string {
   return getAnthropicApiKeyWithSource().key
 }
 
