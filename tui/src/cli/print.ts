@@ -14,6 +14,7 @@ import {
 import { waitForRemoteManagedSettingsToLoad } from 'src/services/remoteManagedSettings/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
 import { RemoteIO } from 'src/cli/remoteIO.js'
+import { resolveControlLoginWithFriendliAi } from 'src/cli/controlAuth.js'
 import {
   type Command,
   formatDescriptionWithSource,
@@ -3599,7 +3600,9 @@ function runHeadlessStreaming(
           // both URLs and wait. Automatic URL → localhost listener catches
           // the redirect if the browser is on this host; manual URL → the
           // success page shows "code#state" for claude_oauth_callback.
-          const { loginWithFriendliAi } = message.request
+          const loginWithFriendliAi = resolveControlLoginWithFriendliAi(
+            message.request,
+          )
 
           // Clean up any prior flow. cleanup() closes the localhost listener
           // and nulls the manual resolver. The prior `flow` promise is left
