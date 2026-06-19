@@ -108,9 +108,7 @@ def test_manifest_endpoint_exposes_registry_without_operator_secrets() -> None:
     assert response.status_code == 200
     assert body["kind"] == "adapter_manifest_sync"
     assert body["role"] == "backend"
-    manifest_entry = next(
-        entry for entry in body["entries"] if entry["tool_id"] == tool.id
-    )
+    manifest_entry = next(entry for entry in body["entries"] if entry["tool_id"] == tool.id)
     assert manifest_entry["policy_authority_url"] == "https://www.data.go.kr/"
     assert "UMMAYA_DATA_GO_KR_API_KEY" not in response.text
     assert "serviceKey" not in response.text
