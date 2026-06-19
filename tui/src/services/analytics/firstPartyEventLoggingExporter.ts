@@ -55,6 +55,17 @@ type FirstPartyEventLoggingPayload = {
   events: FirstPartyEventLoggingEvent[]
 }
 
+function getFirstPartyEventBaseUrl(
+  configuredBaseUrl: string | undefined,
+): string | undefined {
+  const baseUrl =
+    configuredBaseUrl ??
+    process.env.UMMAYA_FIRST_PARTY_EVENT_BASE_URL ??
+    process.env.ANTHROPIC_BASE_URL
+  const trimmed = baseUrl?.trim()
+  return trimmed ? trimmed.replace(/\/$/, '') : undefined
+}
+
 /**
  * Exporter for 1st-party event logging to /api/event_logging/batch.
  *
@@ -71,7 +82,7 @@ type FirstPartyEventLoggingPayload = {
  * - Auth fallback: retries without auth on 401 errors
  */
 export class FirstPartyEventLoggingExporter implements LogRecordExporter {
-  private readonly endpoint: string
+  private readonly endpoint: string | undefined
   private readonly timeout: number
   private readonly maxBatchSize: number
   private readonly skipAuth: boolean
@@ -109,15 +120,10 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       schedule?: (fn: () => Promise<void>, delayMs: number) => () => void
     } = {},
   ) {
-    // Default: prod, except when ANTHROPIC_BASE_URL is explicitly staging.
-    // Overridable via tengu_1p_event_batch_config.baseUrl.
-    const baseUrl =
-      options.baseUrl ||
-      (process.env.ANTHROPIC_BASE_URL === 'https://api-staging.anthropic.com'
-        ? 'https://api-staging.anthropic.com'
-        : 'https://api.anthropic.com')
-
-    this.endpoint = `${baseUrl}${options.path || '/api/event_logging/batch'}`
+    const baseUrl = getFirstPartyEventBaseUrl(options.baseUrl)
+    this.endpoint = baseUrl
+      ? `${baseUrl}${options.path || '/api/event_logging/batch'}`
+      : undefined
 
     this.timeout = options.timeout || 10000
     this.maxBatchSize = options.maxBatchSize || 200
@@ -134,8 +140,10 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
         return () => clearTimeout(t)
       })
 
-    // Retry any failed events from previous runs of this session (in background)
-    void this.retryPreviousBatches()
+    if (this.endpoint) {
+      // Retry any failed events from previous runs of this session (in background)
+      void this.retryPreviousBatches()
+    }
   }
 
   // Expose for testing
@@ -327,6 +335,11 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
         return
       }
 
+      if (!this.endpoint) {
+        resultCallback({ code: ExportResultCode.SUCCESS })
+        return
+      }
+
       if (this.attempts >= this.maxAttempts) {
         resultCallback({
           code: ExportResultCode.FAILED,
@@ -467,6 +480,11 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
   }
 
   private async retryFailedEvents(): Promise<void> {
+    if (!this.endpoint) {
+      this.resetBackoff()
+      return
+    }
+
     const filePath = this.getCurrentBatchFilePath()
 
     // Keep retrying while there are events and endpoint is healthy
@@ -527,6 +545,10 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
   private async sendBatchWithRetry(
     payload: FirstPartyEventLoggingPayload,
   ): Promise<void> {
+    if (!this.endpoint) {
+      return
+    }
+
     if (this.isKilled()) {
       // Throw so the caller short-circuits remaining batches and queues
       // everything to disk. Zero network traffic while killed; the backoff

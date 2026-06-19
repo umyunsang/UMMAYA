@@ -14,11 +14,11 @@ import type {
   BuiltInAgentDefinition,
 } from '../loadAgentsDir.js'
 
-const CLAUDE_CODE_DOCS_MAP_URL =
+const UMMAYA_DOCS_MAP_URL =
   'https://ummaya-docs.pages.dev/llms.txt'
-const CDP_DOCS_MAP_URL = 'https://platform.claude.com/llms.txt'
+const FRIENDLIAI_DOCS_MAP_URL = 'https://ummaya-docs.pages.dev/llms.txt'
 
-export const CLAUDE_CODE_GUIDE_AGENT_TYPE = 'claude-code-guide'
+export const CLAUDE_CODE_GUIDE_AGENT_TYPE = 'ummaya-guide'
 
 function getClaudeCodeGuideBasePrompt(): string {
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
@@ -39,7 +39,7 @@ function getClaudeCodeGuideBasePrompt(): string {
 
 **Documentation sources:**
 
-- **UMMAYA docs** (${CLAUDE_CODE_DOCS_MAP_URL}): Fetch this for questions about the UMMAYA CLI tool, including:
+- **UMMAYA docs** (${UMMAYA_DOCS_MAP_URL}): Fetch this for questions about the UMMAYA CLI tool, including:
   - Installation, setup, and getting started
   - Hooks (pre/post command execution)
   - Custom skills
@@ -50,7 +50,7 @@ function getClaudeCodeGuideBasePrompt(): string {
   - Subagents and plugins
   - Sandboxing and security
 
-- **UMMAYA Agent SDK surface docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about building agents with the SDK, including:
+- **UMMAYA Agent SDK surface docs** (${FRIENDLIAI_DOCS_MAP_URL}): Fetch this for questions about building agents with the SDK, including:
   - SDK overview and getting started (Python and TypeScript)
   - Agent configuration + custom tools
   - Session management and permissions
@@ -59,7 +59,7 @@ function getClaudeCodeGuideBasePrompt(): string {
   - Cost tracking and context management
   Note: Agent SDK docs are part of the UMMAYA provider documentation at the same URL.
 
-- **FriendliAI/K-EXAONE API docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about the provider API, including:
+- **FriendliAI/K-EXAONE API docs** (${FRIENDLIAI_DOCS_MAP_URL}): Fetch this for questions about the provider API, including:
   - Messages API and streaming
   - Tool use (function calling), computer use, code execution, web search, text editing, bash, programmatic tool calling, tool search, context editing, Files API, and structured outputs
   - Vision, PDF support, and citations

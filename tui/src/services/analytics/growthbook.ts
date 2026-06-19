@@ -421,27 +421,31 @@ function syncRemoteEvalToDisk(): void {
  */
 function isGrowthBookEnabled(): boolean {
   // GrowthBook depends on 1P event logging.
-  return is1PEventLoggingEnabled()
+  return is1PEventLoggingEnabled() && getGrowthBookApiHost() !== undefined
+}
+
+function getGrowthBookApiHost(): string | undefined {
+  const baseUrl =
+    process.env.USER_TYPE === 'ant'
+      ? process.env.CLAUDE_CODE_GB_BASE_URL
+      : process.env.UMMAYA_GROWTHBOOK_BASE_URL
+  const trimmed = baseUrl?.trim()
+  return trimmed ? trimmed : undefined
 }
 
 /**
- * Hostname of ANTHROPIC_BASE_URL when it points at a non-Anthropic proxy.
- *
- * Enterprise-proxy deployments (Epic, Marble, etc.) typically use
- * apiKeyHelper auth, which means isAnthropicAuthEnabled() returns false and
- * organizationUUID/accountUUID/email are all absent from GrowthBook
- * attributes. Without this, there's no stable attribute to target them on
- * — only per-device IDs. See src/utils/auth.ts isAnthropicAuthEnabled().
- *
- * Returns undefined for unset/default (api.anthropic.com) so the attribute
- * is absent for direct-API users. Hostname only — no path/query/creds.
+ * Hostname of ANTHROPIC_BASE_URL when it points at an operator-approved proxy.
  */
 export function getApiBaseUrlHost(): string | undefined {
   const baseUrl = process.env.ANTHROPIC_BASE_URL
   if (!baseUrl) return undefined
   try {
     const host = new URL(baseUrl).host
-    if (host === 'api.anthropic.com') return undefined
+    const firstPartyHosts = (process.env.UMMAYA_FIRST_PARTY_API_HOSTS ?? '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+    if (firstPartyHosts.includes(host)) return undefined
     return host
   } catch {
     return undefined
@@ -500,10 +504,7 @@ const getGrowthBookClient = memoize(
         `GrowthBook: Creating client with clientKey=${clientKey}, attributes: ${jsonStringify(attributes)}`,
       )
     }
-    const baseUrl =
-      process.env.USER_TYPE === 'ant'
-        ? process.env.CLAUDE_CODE_GB_BASE_URL || 'https://api.anthropic.com/'
-        : 'https://api.anthropic.com/'
+    const baseUrl = getGrowthBookApiHost() ?? 'http://127.0.0.1:9'
 
     // Skip auth if trust hasn't been established yet
     // This prevents executing apiKeyHelper commands before the trust dialog

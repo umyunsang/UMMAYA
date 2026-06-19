@@ -42,31 +42,6 @@ function readTomlTableVersion(path, tableName) {
   return match[1]
 }
 
-function readHomebrewCaskVersion(path) {
-  const text = readFileSync(path, 'utf8')
-  const match = text.match(/^\s*version\s+"([^"]+)"\s*$/m)
-  if (!match) {
-    throw new Error(`${path} missing cask version`)
-  }
-  return match[1]
-}
-
-function readHomebrewCaskSha256(path) {
-  const text = readFileSync(path, 'utf8')
-  const single = text.match(/^\s*sha256\s+"([^"]+)"\s*$/m)
-  if (single) {
-    return [single[1]]
-  }
-
-  const arch = text.match(
-    /^\s*sha256\s+arm:\s+"([0-9a-f]{64})",\s*\n\s*intel:\s+"([0-9a-f]{64})"\s*$/m,
-  )
-  if (!arch) {
-    throw new Error(`${path} missing cask sha256`)
-  }
-  return [arch[1], arch[2]]
-}
-
 function assertSameVersion(label, actual, expected) {
   if (actual !== expected) {
     throw new Error(`${label} version ${actual} does not match package.json ${expected}`)
@@ -102,14 +77,6 @@ assertSameVersion(
   packageLock.packages?.['']?.version,
   rootPackageVersion,
 )
-
-const caskSha256Values = readHomebrewCaskSha256('Casks/ummaya.rb')
-assertSameVersion('Casks/ummaya.rb', readHomebrewCaskVersion('Casks/ummaya.rb'), rootPackageVersion)
-for (const caskSha256 of caskSha256Values) {
-  if (!/^[0-9a-f]{64}$/.test(caskSha256)) {
-    throw new Error(`Casks/ummaya.rb sha256 is not a 64-character lowercase hex digest`)
-  }
-}
 
 const launcherText = readFileSync('bin/ummaya', 'utf8')
 const launcherContracts = [

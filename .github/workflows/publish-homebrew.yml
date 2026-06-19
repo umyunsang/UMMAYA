@@ -55,11 +55,12 @@ jobs:
 
       - name: Render cask
         run: |
+          mkdir -p dist/homebrew
           node scripts/render-homebrew-cask.mjs \
             "${{ steps.version.outputs.version }}" \
             "${UMMAYA_CASK_SHA256_arm64}" \
             "${UMMAYA_CASK_SHA256_x64}" \
-            Casks/ummaya.rb
+            dist/homebrew/ummaya.rb
 
       - name: Fetch Homebrew tap token from Infisical
         continue-on-error: true
@@ -105,7 +106,7 @@ jobs:
       - name: Commit cask
         run: |
           mkdir -p tap/Casks
-          cp Casks/ummaya.rb tap/Casks/ummaya.rb
+          cp dist/homebrew/ummaya.rb tap/Casks/ummaya.rb
           cd tap
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -13,7 +13,8 @@ import {
   MAX_TRANSCRIPT_READ_BYTES,
 } from '../../utils/sessionStorage.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-// UMMAYA Spec 1633 / Epic #2293 — components/Feedback deleted (claude.ai 1P telemetry); inline minimal redact stub.
+// UMMAYA Spec 1633 / Epic #2293 — inline minimal redact stub for transcript
+// sharing endpoints supplied by a runtime operator.
 const redactSensitiveInfo = (text: string): string => text.replace(/sk-[a-zA-Z0-9_-]+/g, 'sk-REDACTED').replace(/Bearer\s+\S+/gi, 'Bearer REDACTED')
 
 type TranscriptShareResult = {
@@ -84,9 +85,13 @@ export async function submitTranscriptShare(
       'User-Agent': getUserAgent(),
       ...authResult.headers,
     }
+    const endpoint = process.env.UMMAYA_TRANSCRIPT_SHARE_ENDPOINT?.trim()
+    if (!endpoint) {
+      return { success: false }
+    }
 
     const response = await axios.post(
-      'https://api.anthropic.com/api/claude_code_shared_session_transcripts',
+      endpoint,
       { content, appearance_id: appearanceId },
       {
         headers,

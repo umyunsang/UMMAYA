@@ -37,25 +37,26 @@ type InternalMetricsPayload = {
   metrics: Metric[]
 }
 
+function getMetricsExportEndpoint(): string | undefined {
+  const baseUrl =
+    process.env.UMMAYA_METRICS_BASE_URL ??
+    (process.env.USER_TYPE === 'ant'
+      ? process.env.ANT_CLAUDE_CODE_METRICS_ENDPOINT
+      : undefined)
+  const trimmed = baseUrl?.trim()
+  return trimmed
+    ? `${trimmed.replace(/\/$/, '')}/api/claude_code/metrics`
+    : undefined
+}
+
 export class BigQueryMetricsExporter implements PushMetricExporter {
-  private readonly endpoint: string
+  private readonly endpoint: string | undefined
   private readonly timeout: number
   private pendingExports: Promise<void>[] = []
   private isShutdown = false
 
   constructor(options: { timeout?: number } = {}) {
-    const defaultEndpoint = 'https://api.anthropic.com/api/claude_code/metrics'
-
-    if (
-      process.env.USER_TYPE === 'ant' &&
-      process.env.ANT_CLAUDE_CODE_METRICS_ENDPOINT
-    ) {
-      this.endpoint =
-        process.env.ANT_CLAUDE_CODE_METRICS_ENDPOINT +
-        '/api/claude_code/metrics'
-    } else {
-      this.endpoint = defaultEndpoint
-    }
+    this.endpoint = getMetricsExportEndpoint()
 
     this.timeout = options.timeout || 5000
   }
@@ -97,6 +98,12 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
         logForDebugging(
           'BigQuery metrics export: trust not established, skipping',
         )
+        resultCallback({ code: ExportResultCode.SUCCESS })
+        return
+      }
+
+      if (!this.endpoint) {
+        logForDebugging('BigQuery metrics export: endpoint not configured')
         resultCallback({ code: ExportResultCode.SUCCESS })
         return
       }

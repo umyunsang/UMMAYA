@@ -30,7 +30,7 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
   const hasBillingAccess = hasClaudeAiBillingAccess()
 
   if (!hasBillingAccess && isTeamOrEnterprise) {
-    // Mirror apps/claude-ai useHasUnlimitedOverage(): if overage is enabled
+    // Mirror the web billing surface: if overage is enabled
     // with no monthly cap, there is nothing to request. On fetch error, fall
     // through and let the user ask (matching web's "err toward show" behavior).
     let extraUsage: ExtraUsage | null | undefined
@@ -101,9 +101,7 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
     }
   }
 
-  const url = isTeamOrEnterprise
-    ? 'https://claude.ai/admin-settings/usage'
-    : 'https://claude.ai/settings/usage'
+  const url = 'https://ummaya-docs.pages.dev/'
 
   try {
     const opened = await openBrowser(url)

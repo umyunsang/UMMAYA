@@ -1,13 +1,3 @@
-/**
- * Plugin install counts data layer
- *
- * This module fetches and caches plugin install counts from the official
- * Claude plugins statistics repository. The cache is refreshed if older
- * than 24 hours.
- *
- * Cache location: ~/.claude/plugins/install-counts-cache.json
- */
-
 import axios from 'axios'
 import { randomBytes } from 'crypto'
 import { readFile, rename, unlink, writeFile } from 'fs/promises'
@@ -23,7 +13,7 @@ import { getPluginsDirectory } from './pluginDirectories.js'
 const INSTALL_COUNTS_CACHE_VERSION = 1
 const INSTALL_COUNTS_CACHE_FILENAME = 'install-counts-cache.json'
 const INSTALL_COUNTS_URL =
-  'https://raw.githubusercontent.com/anthropics/claude-plugins-official/refs/heads/stats/stats/plugin-installs.json'
+  process.env.UMMAYA_PLUGIN_INSTALL_COUNTS_URL?.trim()
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 
 /**
@@ -184,6 +174,9 @@ async function saveInstallCountsCache(
 async function fetchInstallCountsFromGitHub(): Promise<
   Array<{ plugin: string; unique_installs: number }>
 > {
+  if (!INSTALL_COUNTS_URL) {
+    return []
+  }
   logForDebugging(`Fetching install counts from ${INSTALL_COUNTS_URL}`)
 
   const started = performance.now()

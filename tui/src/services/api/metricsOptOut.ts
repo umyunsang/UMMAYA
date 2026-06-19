@@ -26,6 +26,18 @@ const CACHE_TTL_MS = 60 * 60 * 1000
 // N `claude -p` invocations into ~1 API call/day.
 const DISK_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
+function getMetricsEnabledEndpoint(): string | undefined {
+  const baseUrl =
+    process.env.UMMAYA_METRICS_BASE_URL ??
+    process.env.ANT_CLAUDE_CODE_METRICS_ENDPOINT ??
+    process.env.ANTHROPIC_BASE_URL ??
+    process.env.CLAUDE_CODE_API_BASE_URL
+  const trimmed = baseUrl?.trim()
+  return trimmed
+    ? `${trimmed.replace(/\/$/, '')}/api/claude_code/organizations/metrics_enabled`
+    : undefined
+}
+
 /**
  * Internal function to call the API and check if metrics are enabled
  * This is wrapped by memoizeWithTTLAsync to add caching behavior
@@ -42,7 +54,10 @@ async function _fetchMetricsEnabled(): Promise<MetricsEnabledResponse> {
     ...authResult.headers,
   }
 
-  const endpoint = `https://api.anthropic.com/api/claude_code/organizations/metrics_enabled`
+  const endpoint = getMetricsEnabledEndpoint()
+  if (!endpoint) {
+    throw new Error('Metrics opt-out endpoint is not configured for UMMAYA')
+  }
   const response = await axios.get<MetricsEnabledResponse>(endpoint, {
     headers,
     timeout: 5000,
@@ -55,6 +70,10 @@ async function _checkMetricsEnabledAPI(): Promise<MetricsStatus> {
   // Returning enabled:false sheds load at the consumer (bigqueryExporter skips
   // export). Matches the non-subscriber early-return shape below.
   if (isEssentialTrafficOnly()) {
+    return { enabled: false, hasError: false }
+  }
+
+  if (!getMetricsEnabledEndpoint()) {
     return { enabled: false, hasError: false }
   }
 

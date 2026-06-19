@@ -1,12 +1,3 @@
-/**
- * Files API client for managing files
- *
- * This module provides functionality to download and upload files to Anthropic Public Files API.
- * Used by the Claude Code agent to download file attachments at session startup.
- *
- * API Reference: https://docs.anthropic.com/en/api/files-content
- */
-
 import axios from 'axios'
 import { randomUUID } from 'crypto'
 import * as fs from 'fs/promises'
@@ -27,13 +18,12 @@ import {
 const FILES_API_BETA_HEADER = 'files-api-2025-04-14,oauth-2025-04-20'
 const ANTHROPIC_VERSION = '2023-06-01'
 
-// API base URL - uses ANTHROPIC_BASE_URL set by env-manager for the appropriate environment
-// Falls back to public API for standalone usage
 function getDefaultApiBaseUrl(): string {
   return (
+    process.env.UMMAYA_FILES_API_BASE_URL ||
     process.env.ANTHROPIC_BASE_URL ||
     process.env.CLAUDE_CODE_API_BASE_URL ||
-    'https://api.anthropic.com'
+    'http://127.0.0.1:9/ummaya-disabled-files-api'
   )
 }
 
@@ -60,7 +50,7 @@ export type File = {
 export type FilesApiConfig = {
   /** OAuth token for authentication (from session JWT) */
   oauthToken: string
-  /** Base URL for the API (default: https://api.anthropic.com) */
+  /** Base URL for the API. Defaults to a disabled local endpoint. */
   baseUrl?: string
   /** Session ID for creating session-specific directories */
   sessionId: string
@@ -123,7 +113,7 @@ async function retryWithBackoff<T>(
 }
 
 /**
- * Downloads a single file from the Anthropic Public Files API
+ * Downloads a single file from the configured runtime Files API.
  *
  * @param fileId - The file ID (e.g., "file_011CNha8iCJcU1wXNR6q4V8w")
  * @param config - Files API configuration

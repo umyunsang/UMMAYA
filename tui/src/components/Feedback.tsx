@@ -32,7 +32,7 @@ import TextInput from './TextInput.js';
 
 // This value was determined experimentally by testing the URL length limit
 const GITHUB_URL_LIMIT = 7250;
-const GITHUB_ISSUES_REPO_URL = "external" === 'ant' ? 'https://github.com/anthropics/claude-cli-internal/issues' : 'https://github.com/anthropics/claude-code/issues';
+const GITHUB_ISSUES_REPO_URL = 'https://github.com/umyunsang/UMMAYA/issues';
 type Props = {
   abortSignal: AbortSignal;
   messages: Message[];
@@ -540,7 +540,13 @@ async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise
       'User-Agent': getUserAgent(),
       ...authResult.headers
     };
-    const response = await axios.post('https://api.anthropic.com/api/claude_cli_feedback', {
+    const endpoint = process.env.UMMAYA_FEEDBACK_ENDPOINT?.trim();
+    if (!endpoint) {
+      return {
+        success: false
+      };
+    }
+    const response = await axios.post(endpoint, {
       content: jsonStringify(data)
     }, {
       headers,

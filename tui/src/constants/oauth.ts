@@ -34,6 +34,9 @@ export const CLAUDE_AI_INFERENCE_SCOPE = 'user:inference' as const
 export const CLAUDE_AI_PROFILE_SCOPE = 'user:profile' as const
 const CONSOLE_SCOPE = 'org:create_api_key' as const
 export const OAUTH_BETA_HEADER = 'oauth-2025-04-20' as const
+const UMMAYA_DISABLED_OAUTH_BASE_URL =
+  'http://127.0.0.1:9/ummaya-disabled-oauth' as const
+const UMMAYA_DOCS_ORIGIN = 'https://ummaya-docs.pages.dev' as const
 
 // Console OAuth scopes - for API key creation via Console
 export const CONSOLE_OAUTH_SCOPES = [
@@ -61,12 +64,6 @@ type OauthConfig = {
   BASE_API_URL: string
   CONSOLE_AUTHORIZE_URL: string
   CLAUDE_AI_AUTHORIZE_URL: string
-  /**
-   * The claude.ai web origin. Separate from CLAUDE_AI_AUTHORIZE_URL because
-   * that now routes through claude.com/cai/* for attribution — deriving
-   * .origin from it would give claude.com, breaking links to /code,
-   * /settings/connectors, and other claude.ai web pages.
-   */
   CLAUDE_AI_ORIGIN: string
   TOKEN_URL: string
   API_KEY_URL: string
@@ -80,26 +77,24 @@ type OauthConfig = {
   MCP_PROXY_PATH: string
 }
 
-// Production OAuth configuration - Used in normal operation
+// Production OAuth configuration. UMMAYA uses FriendliAI API-key login, so
+// OAuth-shaped endpoints fail closed unless an explicit operator override is
+// configured below.
 const PROD_OAUTH_CONFIG = {
-  BASE_API_URL: 'https://api.anthropic.com',
-  CONSOLE_AUTHORIZE_URL: 'https://platform.claude.com/oauth/authorize',
-  // Bounces through claude.com/cai/* so CLI sign-ins connect to claude.com
-  // visits for attribution. 307s to claude.ai/oauth/authorize in two hops.
-  CLAUDE_AI_AUTHORIZE_URL: 'https://claude.com/cai/oauth/authorize',
-  CLAUDE_AI_ORIGIN: 'https://claude.ai',
-  TOKEN_URL: 'https://platform.claude.com/v1/oauth/token',
-  API_KEY_URL: 'https://api.anthropic.com/api/oauth/claude_cli/create_api_key',
-  ROLES_URL: 'https://api.anthropic.com/api/oauth/claude_cli/roles',
-  CONSOLE_SUCCESS_URL:
-    'https://platform.claude.com/buy_credits?returnUrl=/oauth/code/success%3Fapp%3Dclaude-code',
-  CLAUDEAI_SUCCESS_URL:
-    'https://platform.claude.com/oauth/code/success?app=claude-code',
-  MANUAL_REDIRECT_URL: 'https://platform.claude.com/oauth/code/callback',
+  BASE_API_URL: UMMAYA_DISABLED_OAUTH_BASE_URL,
+  CONSOLE_AUTHORIZE_URL: `${UMMAYA_DISABLED_OAUTH_BASE_URL}/oauth/authorize`,
+  CLAUDE_AI_AUTHORIZE_URL: `${UMMAYA_DISABLED_OAUTH_BASE_URL}/oauth/authorize`,
+  CLAUDE_AI_ORIGIN: UMMAYA_DOCS_ORIGIN,
+  TOKEN_URL: `${UMMAYA_DISABLED_OAUTH_BASE_URL}/v1/oauth/token`,
+  API_KEY_URL: `${UMMAYA_DISABLED_OAUTH_BASE_URL}/api/oauth/ummaya_cli/create_api_key`,
+  ROLES_URL: `${UMMAYA_DISABLED_OAUTH_BASE_URL}/api/oauth/ummaya_cli/roles`,
+  CONSOLE_SUCCESS_URL: `${UMMAYA_DOCS_ORIGIN}/en/`,
+  CLAUDEAI_SUCCESS_URL: `${UMMAYA_DOCS_ORIGIN}/en/`,
+  MANUAL_REDIRECT_URL: `${UMMAYA_DISABLED_OAUTH_BASE_URL}/oauth/code/callback`,
   CLIENT_ID: '9d1c250a-e61b-44d9-88ed-5944d1962f5e',
   // No suffix for production config
   OAUTH_FILE_SUFFIX: '',
-  MCP_PROXY_URL: 'https://mcp-proxy.anthropic.com',
+  MCP_PROXY_URL: UMMAYA_DISABLED_OAUTH_BASE_URL,
   MCP_PROXY_PATH: '/v1/mcp/{server_id}',
 } as const
 
@@ -107,44 +102,22 @@ const PROD_OAUTH_CONFIG = {
  * Client ID Metadata Document URL for MCP OAuth (CIMD / SEP-991).
  * When an MCP auth server advertises client_id_metadata_document_supported: true,
  * Claude Code uses this URL as its client_id instead of Dynamic Client Registration.
- * The URL must point to a JSON document hosted by Anthropic.
+ * The URL must point to a JSON document hosted by the runtime operator. UMMAYA
+ * disables this by default because there is no public hosted OAuth metadata
+ * endpoint for the FriendliAI API-key login path.
  * See: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-00
  */
 export const MCP_CLIENT_METADATA_URL =
-  'https://claude.ai/oauth/claude-code-client-metadata'
+  `${UMMAYA_DISABLED_OAUTH_BASE_URL}/oauth/ummaya-client-metadata`
 
-// Staging OAuth configuration - only included in ant builds with staging flag
-// Uses literal check for dead code elimination
 const STAGING_OAUTH_CONFIG =
   process.env.USER_TYPE === 'ant'
     ? ({
-        BASE_API_URL: 'https://api-staging.anthropic.com',
-        CONSOLE_AUTHORIZE_URL:
-          'https://platform.staging.ant.dev/oauth/authorize',
-        CLAUDE_AI_AUTHORIZE_URL:
-          'https://claude-ai.staging.ant.dev/oauth/authorize',
-        CLAUDE_AI_ORIGIN: 'https://claude-ai.staging.ant.dev',
-        TOKEN_URL: 'https://platform.staging.ant.dev/v1/oauth/token',
-        API_KEY_URL:
-          'https://api-staging.anthropic.com/api/oauth/claude_cli/create_api_key',
-        ROLES_URL:
-          'https://api-staging.anthropic.com/api/oauth/claude_cli/roles',
-        CONSOLE_SUCCESS_URL:
-          'https://platform.staging.ant.dev/buy_credits?returnUrl=/oauth/code/success%3Fapp%3Dclaude-code',
-        CLAUDEAI_SUCCESS_URL:
-          'https://platform.staging.ant.dev/oauth/code/success?app=claude-code',
-        MANUAL_REDIRECT_URL:
-          'https://platform.staging.ant.dev/oauth/code/callback',
-        CLIENT_ID: '22422756-60c9-4084-8eb7-27705fd5cf9a',
+        ...PROD_OAUTH_CONFIG,
         OAUTH_FILE_SUFFIX: '-staging-oauth',
-        MCP_PROXY_URL: 'https://mcp-proxy-staging.anthropic.com',
-        MCP_PROXY_PATH: '/v1/mcp/{server_id}',
       } as const)
     : undefined
 
-// Three local dev servers: :8000 api-proxy (`api dev start -g ccr`),
-// :4000 claude-ai frontend, :3000 Console frontend. Env vars let
-// scripts/claude-localhost override if your layout differs.
 function getLocalOauthConfig(): OauthConfig {
   const api =
     process.env.CLAUDE_LOCAL_OAUTH_API_BASE?.replace(/\/$/, '') ??
@@ -173,14 +146,12 @@ function getLocalOauthConfig(): OauthConfig {
   }
 }
 
-// Allowed base URLs for CLAUDE_CODE_CUSTOM_OAUTH_URL override.
-// Only FedStart/PubSec deployments are permitted to prevent OAuth tokens
-// from being sent to arbitrary endpoints.
-const ALLOWED_OAUTH_BASE_URLS = [
-  'https://beacon.claude-ai.staging.ant.dev',
-  'https://claude.fedstart.com',
-  'https://claude-staging.fedstart.com',
-]
+const ALLOWED_OAUTH_BASE_URLS = (
+  process.env.UMMAYA_ALLOWED_OAUTH_BASE_URLS ?? ''
+)
+  .split(',')
+  .map(url => url.trim().replace(/\/$/, ''))
+  .filter(Boolean)
 
 // Default to prod config, override with test/staging if enabled
 export function getOauthConfig(): OauthConfig {
@@ -195,8 +166,6 @@ export function getOauthConfig(): OauthConfig {
     }
   })()
 
-  // Allow overriding all OAuth URLs to point to an approved FedStart deployment.
-  // Only allowlisted base URLs are accepted to prevent credential leakage.
   const oauthBaseUrl = process.env.CLAUDE_CODE_CUSTOM_OAUTH_URL
   if (oauthBaseUrl) {
     const base = oauthBaseUrl.replace(/\/$/, '')

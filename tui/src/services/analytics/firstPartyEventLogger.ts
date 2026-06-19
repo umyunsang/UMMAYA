@@ -239,9 +239,6 @@ export type GrowthBookExperimentData = {
   experimentMetadata?: Record<string, unknown>
 }
 
-// api.anthropic.com only serves the "production" GrowthBook environment
-// (see starling/starling/cli/cli.py DEFAULT_ENVIRONMENTS). Staging and
-// development environments are not exported to the prod API.
 function getEnvironmentForGrowthBook(): string {
   return 'production'
 }

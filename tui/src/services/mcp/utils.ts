@@ -273,7 +273,7 @@ export function describeMcpConfigFilePath(scope: ConfigScope): string {
     case 'enterprise':
       return getEnterpriseMcpFilePath()
     case 'claudeai':
-      return 'claude.ai'
+      return 'UMMAYA remote'
     default:
       return scope
   }
@@ -292,7 +292,7 @@ export function getScopeLabel(scope: ConfigScope): string {
     case 'enterprise':
       return 'Enterprise config (managed by your organization)'
     case 'claudeai':
-      return 'claude.ai config'
+      return 'UMMAYA remote config'
     default:
       return scope
   }

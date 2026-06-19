@@ -191,6 +191,18 @@ def test_homebrew_artifact_workflow_renders_cask_from_ci_artifacts() -> None:
     assert "Casks/ummaya.rb does not match generated Homebrew artifacts" not in workflow
 
 
+def test_homebrew_tap_cask_is_generated_from_public_artifacts() -> None:
+    publish_tap = (ROOT / ".github/workflows/publish-homebrew.yml").read_text(encoding="utf-8")
+    renderer = (ROOT / "scripts/render-homebrew-cask.mjs").read_text(encoding="utf-8")
+    package_check = (ROOT / "scripts/check-npm-package.mjs").read_text(encoding="utf-8")
+
+    assert "dist/homebrew/ummaya.rb" in publish_tap
+    assert "cp dist/homebrew/ummaya.rb tap/Casks/ummaya.rb" in publish_tap
+    assert "outputPath = 'dist/homebrew/ummaya.rb'" in renderer
+    assert "readHomebrewCask" not in package_check
+    assert "Casks/ummaya.rb" not in package_check
+
+
 def test_installer_health_check_exercises_launcher_contract() -> None:
     installer = (ROOT / "install.sh").read_text(encoding="utf-8")
 

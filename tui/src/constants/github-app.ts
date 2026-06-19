@@ -1,7 +1,7 @@
 export const PR_TITLE = 'Add UMMAYA GitHub Workflow'
 
 export const GITHUB_ACTION_SETUP_DOCS_URL =
-  'https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md'
+  'https://ummaya-docs.pages.dev/en/'
 
 export const WORKFLOW_CONTENT = `name: UMMAYA
 
@@ -35,23 +35,16 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run UMMAYA
-        id: claude
-        uses: anthropics/claude-code-action@v1
-        with:
-          friendli_api_key: \${{ secrets.FRIENDLI_TOKEN }}
+      - name: Install UMMAYA
+        run: npm install -g ummaya
 
-          # This is an optional setting that allows UMMAYA to read CI results on PRs
-          additional_permissions: |
-            actions: read
+      - name: Verify UMMAYA
+        id: ummaya
+        env:
+          FRIENDLI_TOKEN: \${{ secrets.FRIENDLI_TOKEN }}
+        run: ummaya --version
 
-          # Optional: Give a custom prompt to UMMAYA. If this is not specified, UMMAYA will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
-
-          # Optional: Add ummaya_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://ummaya-docs.pages.dev/en/ for available options
-          # ummaya_args: '--allowed-tools Bash(gh pr:*)'
+      # See https://ummaya-docs.pages.dev/en/ for available options
 
 `
 
@@ -130,15 +123,15 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run UMMAYA Review
-        id: claude-review
-        uses: anthropics/claude-code-action@v1
-        with:
-          friendli_api_key: \${{ secrets.FRIENDLI_TOKEN }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@ummaya-plugins'
-          prompt: '/code-review:code-review \${{ github.repository }}/pull/\${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://ummaya-docs.pages.dev/en/ for available options
+      - name: Install UMMAYA
+        run: npm install -g ummaya
+
+      - name: Verify UMMAYA Review Runtime
+        id: ummaya-review
+        env:
+          FRIENDLI_TOKEN: \${{ secrets.FRIENDLI_TOKEN }}
+        run: ummaya --version
+
+      # See https://ummaya-docs.pages.dev/en/ for available options
 
 `

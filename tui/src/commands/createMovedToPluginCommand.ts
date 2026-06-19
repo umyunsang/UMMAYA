@@ -52,7 +52,7 @@ export function createMovedToPluginCommand({
 
 2. After installation, use /${pluginName}:${pluginCommand} to run this command
 
-3. For more information, see: https://github.com/anthropics/claude-code-marketplace/blob/main/${pluginName}/README.md
+3. For more information, see: https://ummaya-docs.pages.dev/en/
 
 Do not attempt to run the command. Simply inform the user about the plugin installation.`,
           },

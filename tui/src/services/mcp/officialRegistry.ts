@@ -34,10 +34,14 @@ export async function prefetchOfficialMcpUrls(): Promise<void> {
   if (process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC) {
     return
   }
+  const registryUrl = process.env.UMMAYA_MCP_REGISTRY_URL?.trim()
+  if (!registryUrl) {
+    return
+  }
 
   try {
     const response = await axios.get<RegistryResponse>(
-      'https://api.anthropic.com/mcp-registry/v0/servers?version=latest&visibility=commercial',
+      registryUrl,
       { timeout: 5000 },
     )
 

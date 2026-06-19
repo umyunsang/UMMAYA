@@ -3072,8 +3072,9 @@ const usageReport: Command = {
     let reportUrl = `file://${htmlPath}`
     let uploadHint = ''
 
-    if (process.env.USER_TYPE === 'ant') {
-      // Try to upload to S3
+    const s3Prefix = process.env.UMMAYA_INSIGHTS_UPLOAD_S3_PREFIX?.trim()
+    const publicBase = process.env.UMMAYA_INSIGHTS_UPLOAD_PUBLIC_BASE?.trim()
+    if (s3Prefix && publicBase) {
       const timestamp = new Date()
         .toISOString()
         .replace(/[-:]/g, '')
@@ -3081,8 +3082,8 @@ const usageReport: Command = {
         .slice(0, 15)
       const username = process.env.SAFEUSER || process.env.USER || 'unknown'
       const filename = `${username}_insights_${timestamp}.html`
-      const s3Path = `s3://anthropic-serve/atamkin/cc-user-reports/${filename}`
-      const s3Url = `https://s3-frontend.infra.ant.dev/anthropic-serve/atamkin/cc-user-reports/${filename}`
+      const s3Path = `${s3Prefix.replace(/\/$/, '')}/${filename}`
+      const s3Url = `${publicBase.replace(/\/$/, '')}/${filename}`
 
       reportUrl = s3Url
       try {

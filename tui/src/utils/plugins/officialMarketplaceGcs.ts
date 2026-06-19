@@ -1,13 +1,3 @@
-/**
- * inc-5046: fetch the official marketplace from a GCS mirror instead of
- * git-cloning GitHub on every startup.
- *
- * Backend (anthropic#317037) publishes a marketplace-only zip alongside the
- * titanium squashfs, keyed by base repo SHA. This module fetches the `latest`
- * pointer, compares against a local sentinel, and downloads+extracts the zip
- * when there's a new SHA. Callers decide fallback behavior on failure.
- */
-
 import axios from 'axios'
 import { chmod, mkdir, readFile, rename, rm, writeFile } from 'fs/promises'
 import { dirname, join, resolve, sep } from 'path'
@@ -20,13 +10,7 @@ import { errorMessage, getErrnoCode } from '../errors.js'
 
 type SafeString = AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 
-// CDN-fronted domain for the public GCS bucket (same bucket the native
-// binary ships from — nativeInstaller/download.ts:24 uses the raw GCS URL).
-// `{sha}.zip` is content-addressed so CDN can cache it indefinitely;
-// `latest` has Cache-Control: max-age=300 so CDN staleness is bounded.
-// Backend (anthropic#317037) populates this prefix.
-const GCS_BASE =
-  'https://downloads.claude.ai/claude-code-releases/plugins/claude-plugins-official'
+const GCS_BASE = process.env.UMMAYA_OFFICIAL_MARKETPLACE_BASE_URL?.trim()
 
 // Zip arc paths are seed-dir-relative (marketplaces/claude-plugins-official/…)
 // so the titanium seed machinery can use the same zip. Strip this prefix when
@@ -48,6 +32,9 @@ export async function fetchOfficialMarketplaceFromGcs(
   installLocation: string,
   marketplacesCacheDir: string,
 ): Promise<string | null> {
+  if (!GCS_BASE) {
+    return null
+  }
   // Defense in depth: this function does `rm(installLocation, {recursive})`
   // during the atomic swap. A corrupted known_marketplaces.json (gh-32793 —
   // Windows path read on WSL, literal tilde, manual edit) could point at the
@@ -158,7 +145,7 @@ export async function fetchOfficialMarketplaceFromGcs(
     // values below are static enums or a git SHA — not code/filepaths/PII.
     logEvent('tengu_plugin_remote_fetch', {
       source: 'marketplace_gcs' as SafeString,
-      host: 'downloads.claude.ai' as SafeString,
+      host: new URL(GCS_BASE).host as SafeString,
       is_official: true,
       outcome: outcome as SafeString,
       duration_ms: Math.round(performance.now() - start),

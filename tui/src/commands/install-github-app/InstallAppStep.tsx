@@ -47,7 +47,7 @@ export function InstallAppStep(t0) {
   }
   let t5;
   if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Box marginBottom={1}><Text underline={true}>https://github.com/apps/claude</Text></Box>;
+    t5 = <Box marginBottom={1}><Text underline={true}>https://ummaya-docs.pages.dev/en/</Text></Box>;
     $[4] = t5;
   } else {
     t5 = $[4];

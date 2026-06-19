@@ -4,7 +4,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 
-const [version, arm64Sha256, x64Sha256, outputPath = 'Casks/ummaya.rb'] = process.argv.slice(2)
+const [version, arm64Sha256, x64Sha256, outputPath = 'dist/homebrew/ummaya.rb'] =
+  process.argv.slice(2)
 
 if (!version || !arm64Sha256 || !x64Sha256) {
   throw new Error(

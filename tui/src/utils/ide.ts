@@ -1419,9 +1419,11 @@ async function installFromArtifactory(command: string): Promise<string> {
     throw new Error('No artifactory auth token found in ~/.npmrc')
   }
 
-  // Fetch the version from artifactory
-  const versionUrl =
-    'https://artifactory.infra.ant.dev/artifactory/armorcode-claude-code-internal/claude-vscode-releases/stable'
+  const vsixBaseUrl = process.env.UMMAYA_VSCODE_EXTENSION_BASE_URL?.trim()
+  if (!vsixBaseUrl) {
+    throw new Error('UMMAYA_VSCODE_EXTENSION_BASE_URL is not configured')
+  }
+  const versionUrl = `${vsixBaseUrl}/stable`
 
   try {
     const versionResponse = await axios.get(versionUrl, {
@@ -1435,8 +1437,7 @@ async function installFromArtifactory(command: string): Promise<string> {
       throw new Error('No version found in artifactory response')
     }
 
-    // Download the .vsix file from artifactory
-    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/armorcode-claude-code-internal/claude-vscode-releases/${version}/claude-code.vsix`
+    const vsixUrl = `${vsixBaseUrl}/${version}/ummaya.vsix`
     const tempVsixPath = join(
       os.tmpdir(),
       `claude-code-${version}-${Date.now()}.vsix`,

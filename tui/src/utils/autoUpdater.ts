@@ -28,7 +28,7 @@ import {
 import { jsonParse } from './slowOperations.js'
 
 const GCS_BUCKET_URL =
-  'https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases'
+  process.env.UMMAYA_NATIVE_DOWNLOAD_BASE_URL?.trim()
 
 class AutoUpdaterError extends ClaudeError {}
 
@@ -376,6 +376,9 @@ export async function getNpmDistTags(): Promise<NpmDistTags> {
 export async function getLatestVersionFromGcs(
   channel: ReleaseChannel,
 ): Promise<string | null> {
+  if (!GCS_BUCKET_URL) {
+    return null
+  }
   try {
     const response = await axios.get(`${GCS_BUCKET_URL}/${channel}`, {
       timeout: 5000,

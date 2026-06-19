@@ -5,7 +5,22 @@ All notable changes to UMMAYA are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.10] - 2026-06-19
+
+### Fixed
+
+- Completed the all-platform release after the v0.2.6-v0.2.9 publication
+  attempts were superseded by Homebrew/provenance review failures.
+- Removed the tracked main-repo Homebrew Cask copy so source provenance no
+  longer drifts from CI-built public tarball SHAs; release workflows now render
+  tap Casks from the downloaded public artifact checksums.
+- Replaced remaining shipped Chrome-flow links to upstream product-owned domains
+  with UMMAYA documentation URLs and added domain-level visible-branding coverage.
+
 ## [v0.2.9] - 2026-06-19
+
+> Superseded publication attempt. Do not treat this as the completed
+> all-platform release; v0.2.10 is the corrected release.
 
 ### Fixed
 
@@ -17,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.8] - 2026-06-19
 
+> Superseded publication attempt. npm/tag metadata exists, but Homebrew
+> provenance gates were not complete.
+
 ### Fixed
 
 - Rebuilt the release after v0.2.7 npm publication exposed a remaining Homebrew
@@ -27,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.7] - 2026-06-19
 
+> Superseded publication attempt. npm/tag metadata exists, but Homebrew
+> provenance gates were not complete.
+
 ### Fixed
 
 - Re-ran the release from the final hardening commit so npm provenance, tag target,
@@ -35,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lockfile changes, preventing stale local tarball SHAs from blocking publication.
 
 ## [v0.2.6] - 2026-06-19
+
+> Superseded publication attempt. npm/tag metadata exists, but Homebrew
+> provenance gates were not complete.
 
 ### Fixed
 

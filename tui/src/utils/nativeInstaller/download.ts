@@ -1,11 +1,3 @@
-/**
- * Download functionality for native installer
- *
- * Handles downloading Claude binaries from various sources:
- * - Artifactory NPM packages
- * - GCS bucket
- */
-
 import { feature } from 'bun:bundle'
 import axios from 'axios'
 import { createHash } from 'crypto'
@@ -23,9 +15,10 @@ import { jsonStringify, writeFileSync_DEPRECATED } from '../slowOperations.js'
 import { getBinaryName, getPlatform } from './installer.js'
 
 const GCS_BUCKET_URL =
-  'https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases'
+  process.env.UMMAYA_NATIVE_DOWNLOAD_BASE_URL?.trim()
 export const ARTIFACTORY_REGISTRY_URL =
-  'https://artifactory.infra.ant.dev/artifactory/api/npm/npm-all/'
+  process.env.UMMAYA_NATIVE_NPM_REGISTRY_URL?.trim() ??
+  'https://registry.npmjs.org/'
 
 export async function getLatestVersionFromArtifactory(
   tag: string = 'latest',
@@ -144,7 +137,9 @@ export async function getLatestVersion(
     return getLatestVersionFromArtifactory(npmTag)
   }
 
-  // Use GCS for external users
+  if (!GCS_BUCKET_URL) {
+    throw new Error('UMMAYA_NATIVE_DOWNLOAD_BASE_URL is not configured')
+  }
   return getLatestVersionFromBinaryRepo(channel, GCS_BUCKET_URL)
 }
 
@@ -488,11 +483,12 @@ export async function downloadVersion(
   version: string,
   stagingPath: string,
 ): Promise<'npm' | 'binary'> {
-  // Test-fixture versions route to the private sentinel bucket. DCE'd in all
-  // shipped builds — the string 'claude-code-ci-sentinel' and the gcloud call
-  // never exist in compiled binaries. Same gcloud-token pattern as
-  // remoteSkillLoader.ts:175-195.
   if (feature('ALLOW_TEST_VERSIONS') && /^99\.99\./.test(version)) {
+    const testDownloadBaseUrl =
+      process.env.UMMAYA_NATIVE_TEST_DOWNLOAD_BASE_URL?.trim()
+    if (!testDownloadBaseUrl) {
+      throw new Error('UMMAYA_NATIVE_TEST_DOWNLOAD_BASE_URL is not configured')
+    }
     const { stdout } = await execFileNoThrowWithCwd('gcloud', [
       'auth',
       'print-access-token',
@@ -500,7 +496,7 @@ export async function downloadVersion(
     await downloadVersionFromBinaryRepo(
       version,
       stagingPath,
-      'https://storage.googleapis.com/claude-code-ci-sentinel',
+      testDownloadBaseUrl,
       { headers: { Authorization: `Bearer ${stdout.trim()}` } },
     )
     return 'binary'
@@ -512,7 +508,9 @@ export async function downloadVersion(
     return 'npm'
   }
 
-  // Use GCS for external users
+  if (!GCS_BUCKET_URL) {
+    throw new Error('UMMAYA_NATIVE_DOWNLOAD_BASE_URL is not configured')
+  }
   await downloadVersionFromBinaryRepo(version, stagingPath, GCS_BUCKET_URL)
   return 'binary'
 }

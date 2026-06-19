@@ -28,7 +28,7 @@ class DomainBlockedError extends Error {
 class DomainCheckFailedError extends Error {
   constructor(domain: string) {
     super(
-      `Unable to verify if domain ${domain} is safe to fetch. This may be due to network restrictions or enterprise security policies blocking claude.ai.`,
+      `Unable to verify if domain ${domain} is safe to fetch. This may be due to network restrictions or enterprise security policies blocking the configured UMMAYA domain-check endpoint.`,
     )
     this.name = 'DomainCheckFailedError'
   }
@@ -68,10 +68,6 @@ const URL_CACHE = new LRUCache<string, CacheEntry>({
   ttl: CACHE_TTL_MS,
 })
 
-// Separate cache for preflight domain checks. URL_CACHE is URL-keyed, so
-// fetching two paths on the same domain triggers two identical preflight
-// HTTP round-trips to api.anthropic.com. This hostname-keyed cache avoids
-// that. Only 'allowed' is cached — blocked/failed re-check on next attempt.
 const DOMAIN_CHECK_CACHE = new LRUCache<string, true>({
   max: 128,
   ttl: 5 * 60 * 1000, // 5 minutes — shorter than URL_CACHE TTL
@@ -180,10 +176,21 @@ export async function checkDomainBlocklist(
     return { status: 'allowed' }
   }
   try {
-    const response = await axios.get(
-      `https://api.anthropic.com/api/web/domain_info?domain=${encodeURIComponent(domain)}`,
-      { timeout: DOMAIN_CHECK_TIMEOUT_MS },
+    const baseUrl = process.env.UMMAYA_DOMAIN_CHECK_BASE_URL?.trim()
+    if (!baseUrl) {
+      return {
+        status: 'check_failed',
+        error: new Error('UMMAYA_DOMAIN_CHECK_BASE_URL is not configured'),
+      }
+    }
+    const endpoint = new URL(
+      '/api/web/domain_info',
+      baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`,
     )
+    endpoint.searchParams.set('domain', domain)
+    const response = await axios.get(endpoint.toString(), {
+      timeout: DOMAIN_CHECK_TIMEOUT_MS,
+    })
     if (response.status === 200) {
       if (response.data.can_fetch === true) {
         DOMAIN_CHECK_CACHE.set(domain, true)
@@ -380,9 +387,6 @@ export async function getURLMarkdownContent(
 
     const hostname = parsedUrl.hostname
 
-    // Check if the user has opted to skip the blocklist check
-    // This is for enterprise customers with restrictive security policies
-    // that prevent outbound connections to claude.ai
     const settings = getSettings_DEPRECATED()
     if (!settings.skipWebFetchPreflight) {
       const checkResult = await checkDomainBlocklist(hostname)

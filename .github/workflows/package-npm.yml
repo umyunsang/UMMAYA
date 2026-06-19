@@ -14,7 +14,6 @@ on:
       - "tui/src/**"
       - "docs/plugins/security-review.md"
       - "tests/fixtures/plugin_validation/checklist_manifest.yaml"
-      - "Casks/ummaya.rb"
       - "install.sh"
       - "scripts/check-npm-package.mjs"
       - "scripts/build-homebrew-cask-artifact.mjs"

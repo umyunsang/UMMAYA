@@ -10,6 +10,7 @@ const ROOT = join(import.meta.dir, '../..')
 const paintSurfaceFiles = [
   'src/services/tips/tipRegistry.ts',
   'src/components/Spinner.tsx',
+  'src/components/messages/AssistantTextMessage.tsx',
   'src/components/skills/SkillsMenu.tsx',
   'src/components/design-system/LoadingState.tsx',
   'src/projectOnboardingState.ts',
@@ -77,10 +78,12 @@ const paintSurfaceFiles = [
   'src/bridge/replBridge.ts',
   'src/bridge/types.ts',
   'src/constants/github-app.ts',
+  'src/constants/product.ts',
   'src/constants/prompts.ts',
   'src/constants/system.ts',
   'src/coordinator/coordinatorMode.ts',
   'src/commands.ts',
+  'src/commands/extra-usage/extra-usage-core.ts',
   'src/commands/chrome/chrome.tsx',
   'src/commands/copy/index.ts',
   'src/commands/cost/cost.ts',
@@ -91,6 +94,7 @@ const paintSurfaceFiles = [
   'src/commands/init-verifiers.ts',
   'src/commands/install.tsx',
   'src/commands/install-github-app/install-github-app.tsx',
+  'src/commands/install-github-app/ApiKeyStep.tsx',
   'src/commands/install-github-app/setupGitHubActions.ts',
   'src/commands/install-github-app/index.ts',
   'src/commands/install-slack-app/index.ts',
@@ -115,6 +119,7 @@ const paintSurfaceFiles = [
   'src/commands/thinkback/index.ts',
   'src/commands/thinkback/thinkback.tsx',
   'src/commands/ultraplan.tsx',
+  'src/commands/upgrade/upgrade.tsx',
   'src/commands/voice/voice.ts',
   'src/commands/passes/index.ts',
   'src/commands/insights.ts',
@@ -128,6 +133,8 @@ const paintSurfaceFiles = [
   'src/hooks/useVoice.ts',
   'src/main.tsx',
   'src/utils/claudeDesktop.ts',
+  'src/utils/desktopDeepLink.ts',
+  'src/utils/fastMode.ts',
   'src/services/mcp/auth.ts',
   'src/services/notifier.ts',
   'src/services/rateLimitMessages.ts',
@@ -279,7 +286,23 @@ const bannedVisibleCopy = [
   '--claudeai',
   'add-from-claude-desktop',
   'Claude Desktop',
+  'Claude Code Remote session URLs',
+  'Get the base URL for Claude AI',
+  'Fast mode requires the native binary',
+  'Create a new key at https://platform.claude.com/settings/keys',
+  'Credit balance too low · Add funds',
+  'Failed to open Claude Desktop',
   '*.anthropic.com',
+]
+
+const bannedVisibleDomains = [
+  'https://claude.ai',
+  'https://claude.com',
+  'https://platform.claude.com',
+  'https://claude-ai.staging.ant.dev',
+  'https://clau.de',
+  'https://www.anthropic.com',
+  'https://anthropic.com',
 ]
 
 describe('UMMAYA paint surface branding', () => {
@@ -291,6 +314,21 @@ describe('UMMAYA paint surface branding', () => {
       for (const phrase of bannedVisibleCopy) {
         if (source.includes(phrase)) {
           violations.push(`${file}: ${phrase}`)
+        }
+      }
+    }
+
+    expect(violations).toEqual([])
+  })
+
+  it('keeps migrated visible links off upstream product-owned domains', () => {
+    const violations: string[] = []
+
+    for (const file of paintSurfaceFiles) {
+      const source = readFileSync(join(ROOT, file), 'utf8')
+      for (const domain of bannedVisibleDomains) {
+        if (source.includes(domain)) {
+          violations.push(`${file}: ${domain}`)
         }
       }
     }
