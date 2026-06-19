@@ -171,6 +171,13 @@ def test_homebrew_wrapper_exports_backend_contract() -> None:
     assert "--frozen" in builder
     assert "--no-dev" in builder
     assert "smokeWrapper" in builder
+    assert "createTar" in builder
+    assert "portable: true" in builder
+    assert "mtime: ARCHIVE_MTIME" in builder
+    assert "'tar'" in builder
+    assert "--no-recursion" not in builder
+    assert "--uname" not in builder
+    assert "run('gzip'" not in builder
 
 
 def test_installer_health_check_exercises_launcher_contract() -> None:

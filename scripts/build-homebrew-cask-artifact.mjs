@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createHash } from 'node:crypto'
+import { create as createTar } from 'tar'
 import {
   chmodSync,
   copyFileSync,
@@ -12,7 +13,6 @@ import {
   mkdirSync,
   mkdtempSync,
   readdirSync,
-  renameSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -127,6 +127,16 @@ function normalizeArchiveMetadata(root, entries) {
       utimesSync(absolutePath, ARCHIVE_MTIME, ARCHIVE_MTIME)
     }
   }
+}
+
+function archiveModeFor(entry) {
+  if (entry.type === 'Directory') {
+    return 0o755
+  }
+  if (entry.type === 'SymbolicLink') {
+    return 0o777
+  }
+  return entry.stat.mode & 0o111 ? 0o755 : 0o644
 }
 
 function packageVersion() {
@@ -355,30 +365,30 @@ async function main() {
     const artifactPath = join(outDir, artifactName)
     const archiveEntries = collectArchiveEntries(artifactRoot)
     normalizeArchiveMetadata(artifactRoot, archiveEntries)
-    const archiveListPath = join(workdir, 'archive-files.txt')
-    const tarPath = join(outDir, `ummaya-${version}-macos-${args.arch}.tar`)
-    writeFileSync(archiveListPath, `${archiveEntries.join('\n')}\n`)
-    rmSync(tarPath, { force: true })
     rmSync(artifactPath, { force: true })
-    run('tar', [
-      '--no-recursion',
-      '--uid',
-      '0',
-      '--gid',
-      '0',
-      '--uname',
-      'root',
-      '--gname',
-      'wheel',
-      '-cf',
-      tarPath,
-      '-C',
-      artifactRoot,
-      '-T',
-      archiveListPath,
-    ])
-    run('gzip', ['-n', '-9', tarPath])
-    renameSync(`${tarPath}.gz`, artifactPath)
+    await createTar(
+      {
+        cwd: artifactRoot,
+        file: artifactPath,
+        gzip: { level: 9 },
+        jobs: 1,
+        mtime: ARCHIVE_MTIME,
+        noDirRecurse: true,
+        portable: true,
+        strict: true,
+        onWriteEntry(entry) {
+          entry.stat.mtime = ARCHIVE_MTIME
+          entry.stat.atime = ARCHIVE_MTIME
+          entry.stat.ctime = ARCHIVE_MTIME
+          entry.stat.uid = 0
+          entry.stat.gid = 0
+          entry.stat.uname = 'root'
+          entry.stat.gname = 'wheel'
+          entry.stat.mode = archiveModeFor(entry)
+        },
+      },
+      archiveEntries,
+    )
     const digest = await sha256(artifactPath)
     writeFileSync(`${artifactPath}.sha256`, `${digest}  ${artifactName}\n`)
     writeFileSync(
