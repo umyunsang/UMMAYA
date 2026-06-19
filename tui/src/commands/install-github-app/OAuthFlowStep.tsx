@@ -111,8 +111,7 @@ export function OAuthFlowStep({
         const timer_0 = setTimeout(setShowPastePrompt, 3000, true);
         timersRef.current.add(timer_0);
       }, {
-        loginWithClaudeAi: true,
-        // Always use Claude AI for subscription tokens
+        loginWithFriendliAi: true,
         inferenceOnly: true,
         expiresIn: 365 * 24 * 60 * 60 // 1 year
       });

@@ -7,7 +7,7 @@ import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithK
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box } from '../../ink.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { FRIENDLI_PRIMARY_ENV, getAnthropicApiKey, isAnthropicAuthEnabled } from '../../utils/auth.js';
+import { FRIENDLI_PRIMARY_ENV, getFriendliApiKey, isFriendliAuthEnabled } from '../../utils/auth.js';
 import { openBrowser } from '../../utils/browser.js';
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js';
 import { getGithubRepo } from '../../utils/git.js';
@@ -50,11 +50,11 @@ function secretListContains(lines: string[], secretName: string): boolean {
 function InstallGitHubApp(props: {
   onDone: (message: string) => void;
 }): React.ReactNode {
-  const [existingApiKey] = useState(() => getAnthropicApiKey());
+  const [existingApiKey] = useState(() => getFriendliApiKey());
   const [state, setState] = useState({
     ...INITIAL_STATE,
     useExistingKey: !!existingApiKey,
-    selectedApiKeyOption: (existingApiKey ? 'existing' : isAnthropicAuthEnabled() ? 'oauth' : 'new') as 'existing' | 'new' | 'oauth'
+    selectedApiKeyOption: (existingApiKey ? 'existing' : isFriendliAuthEnabled() ? 'oauth' : 'new') as 'existing' | 'new' | 'oauth'
   });
   useExitOnCtrlCDWithKeybindings();
   React.useEffect(() => {
@@ -545,7 +545,7 @@ function InstallGitHubApp(props: {
     case 'check-existing-secret':
       return <CheckExistingSecretStep useExistingSecret={state.useExistingSecret} secretName={state.secretName} onToggleUseExistingSecret={handleToggleUseExistingSecret} onSecretNameChange={handleSecretNameChange} onSubmit={handleSubmit} />;
     case 'api-key':
-      return <ApiKeyStep existingApiKey={existingApiKey} useExistingKey={state.useExistingKey} apiKeyOrOAuthToken={state.apiKeyOrOAuthToken} onApiKeyChange={handleApiKeyChange} onToggleUseExistingKey={handleToggleUseExistingKey} onSubmit={handleSubmit} onCreateOAuthToken={isAnthropicAuthEnabled() ? handleCreateOAuthToken : undefined} selectedOption={state.selectedApiKeyOption} onSelectOption={handleApiKeyOptionChange} />;
+      return <ApiKeyStep existingApiKey={existingApiKey} useExistingKey={state.useExistingKey} apiKeyOrOAuthToken={state.apiKeyOrOAuthToken} onApiKeyChange={handleApiKeyChange} onToggleUseExistingKey={handleToggleUseExistingKey} onSubmit={handleSubmit} onCreateOAuthToken={isFriendliAuthEnabled() ? handleCreateOAuthToken : undefined} selectedOption={state.selectedApiKeyOption} onSelectOption={handleApiKeyOptionChange} />;
     case 'creating':
       return <CreatingStep currentWorkflowInstallStep={state.currentWorkflowInstallStep} secretExists={state.secretExists} useExistingSecret={state.useExistingSecret} secretName={state.secretName} skipWorkflow={state.workflowAction === 'skip'} selectedWorkflows={state.selectedWorkflows} />;
     case 'success':
