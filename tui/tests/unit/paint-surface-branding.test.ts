@@ -212,8 +212,15 @@ const bannedGitHubAppProviderCopy = [
   'selected_claude_workflow',
   'selected_claude_review_workflow',
   'anthropics/claude-cli',
+  'github.com/anthropics/claude-code-action',
+  'anthropics/claude-code-action',
+  'claude-code-action',
   'Claude GitHub App',
   'Claude PR assistance',
+  'Claude workflow',
+  'Claude Code Review',
+  'Claude PR Assistant',
+  'A Claude workflow file',
 ]
 
 function inlineSourceMapContent(source: string): string {
