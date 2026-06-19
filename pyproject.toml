@@ -102,6 +102,7 @@ dev = [
     "pip-audit>=2.10.0",
     "vulture>=2.16",
     "pip-licenses>=5.0",
+    "httpx2>=2.4.0",
 ]
 # spec 026 FR-C09 — Langfuse Prompt Management is an OPT-IN integration.
 # It must never be a core runtime dependency (AGENTS.md hard rule: no new
