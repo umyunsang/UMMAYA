@@ -1,6 +1,6 @@
 {
   "name": "ummaya",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "description": "Conversational multi-agent harness for Korean public-service channels",
   "license": "Apache-2.0",
   "type": "module",
@@ -33,7 +33,8 @@
     "!tui/src/**/*.test.tsx",
     "!tui/src/**/*.snap",
     "!src/ummaya/**/tests/**",
-    "!src/ummaya/**/*.pyc"
+    "!src/ummaya/**/*.pyc",
+    "!src/ummaya/llm/_cc_reference/**"
   ],
   "scripts": {
     "demo:readme": "bash docs/demo/record-readme-demo.sh",
@@ -42,8 +43,8 @@
     "docs:generate": "uv run python scripts/docs_generate.py",
     "docs:check": "uv run python scripts/docs_generate.py --check && cd docs-site && bun run build",
     "docs:build": "cd docs-site && bun run build",
-    "package:dry-run": "mkdir -p package-evidence && npm pack --dry-run --json > package-evidence/npm-pack-dry-run.json",
-    "package:check": "npm run package:dry-run && node scripts/check-npm-package.mjs package-evidence/npm-pack-dry-run.json",
+    "package:dry-run": "mkdir -p package-evidence && npm pack --json --pack-destination package-evidence > package-evidence/npm-pack.json",
+    "package:check": "npm run package:dry-run && node scripts/check-npm-package.mjs package-evidence/npm-pack.json",
     "package:homebrew-cask": "node scripts/build-homebrew-cask-artifact.mjs --arch arm64 && node scripts/build-homebrew-cask-artifact.mjs --arch x64"
   },
   "engines": {

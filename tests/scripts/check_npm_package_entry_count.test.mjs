@@ -2,9 +2,16 @@
 
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import test from 'node:test'
 
 const requiredPackagePaths = [
@@ -87,11 +94,46 @@ function syntheticPackReport(entryCount) {
   ]
 }
 
-function runPackageCheck(entryCount) {
+function writePackageFile(packageRoot, path, content) {
+  const target = join(packageRoot, path)
+  mkdirSync(dirname(target), { recursive: true })
+  writeFileSync(target, content)
+}
+
+function createSyntheticTarball(tempDir, report) {
+  const packageRoot = join(tempDir, 'package')
+  mkdirSync(packageRoot, { recursive: true })
+
+  for (const entry of report[0].files) {
+    writePackageFile(packageRoot, entry.path, `clean fixture for ${entry.path}\n`)
+  }
+
+  const tarballPath = join(tempDir, report[0].filename)
+  const result = spawnSync('tar', ['-czf', tarballPath, '-C', tempDir, 'package'], {
+    encoding: 'utf8',
+  })
+  assert.equal(result.status, 0, `failed to create synthetic tarball\nstderr:\n${result.stderr}`)
+}
+
+function runPackageCheck(entryCount, packedFileOverrides = new Map()) {
   const tempDir = mkdtempSync(join(tmpdir(), 'ummaya-package-gate-'))
   try {
+    const report = syntheticPackReport(entryCount)
+    report[0].filename = report[0].id
+    createSyntheticTarball(tempDir, report)
+    for (const [path, content] of packedFileOverrides) {
+      writePackageFile(join(tempDir, 'package'), path, content)
+    }
+    if (packedFileOverrides.size > 0) {
+      const tarballPath = join(tempDir, report[0].filename)
+      const result = spawnSync('tar', ['-czf', tarballPath, '-C', tempDir, 'package'], {
+        encoding: 'utf8',
+      })
+      assert.equal(result.status, 0, `failed to update synthetic tarball\nstderr:\n${result.stderr}`)
+    }
+
     const reportPath = join(tempDir, 'npm-pack.json')
-    writeFileSync(reportPath, JSON.stringify(syntheticPackReport(entryCount), null, 2))
+    writeFileSync(reportPath, JSON.stringify(report, null, 2))
     return spawnSync(process.execPath, ['scripts/check-npm-package.mjs', reportPath], {
       cwd: process.cwd(),
       encoding: 'utf8',
@@ -118,4 +160,20 @@ test('rejects a 2801-entry package under the default entry gate', () => {
 
   assert.notEqual(result.status, 0, 'expected package check to fail above the entry gate')
   assert.match(result.stderr, /npm package entry count 2801 exceeds/)
+})
+
+test('rejects upstream residue inside packed tarball content', () => {
+  const result = runPackageCheck(
+    2742,
+    new Map([
+      [
+        'src/ummaya/package_gate_fixture/module_0000.py',
+        'loginWithClaudeAi\n//# sourceMappingURL=data:application/json\n',
+      ],
+    ]),
+  )
+
+  assert.notEqual(result.status, 0, 'expected package check to fail on packed tarball residue')
+  assert.match(result.stderr, /module_0000\.py: loginWithClaudeAi/)
+  assert.match(result.stderr, /module_0000\.py: sourceMappingURL=data:application\/json/)
 })

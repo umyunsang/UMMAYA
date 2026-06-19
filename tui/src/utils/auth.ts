@@ -134,8 +134,6 @@ export function isTeamPremiumSubscriber(): boolean { return false }
 
 export function isEnterpriseSubscriber(): boolean { return false }
 
-export function isAnthropicAuthEnabled(): boolean { return false }
-
 export function isFriendliAuthEnabled(): boolean { return false }
 
 export function is1PApiCustomer(): boolean { return false }
@@ -165,15 +163,11 @@ export function getAuthTokenSource(): {
 
 export function getRateLimitTier(): 0 { return 0 }
 
-export function getAnthropicApiKey(): null | string {
-  return getAnthropicApiKeyWithSource().key
-}
-
 export function getFriendliApiKey(): null | string {
-  return getAnthropicApiKeyWithSource().key
+  return getFriendliApiKeyWithSource().key
 }
 
-export function getAnthropicApiKeyWithSource(
+export function getFriendliApiKeyWithSource(
   _opts: { skipRetrievingKeyFromApiKeyHelper?: boolean } = {},
 ): { key: null | string; source: ApiKeySource } {
   const envKey = process.env[FRIENDLI_PRIMARY_ENV]?.trim()
@@ -191,7 +185,7 @@ export function getAnthropicApiKeyWithSource(
 
 export function hasAnthropicApiKeyAuth(): boolean {
   return (
-    getAnthropicApiKeyWithSource({
+    getFriendliApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     }).key !== null
   )
@@ -280,7 +274,7 @@ export function assertFriendliApiKeyForUse(
   }
 
   if (env === process.env) {
-    const { key } = getAnthropicApiKeyWithSource()
+    const { key } = getFriendliApiKeyWithSource()
     if (key) {
       env[FRIENDLI_PRIMARY_ENV] = key
       return key
@@ -291,9 +285,9 @@ export function assertFriendliApiKeyForUse(
 }
 
 export default {
-  getClaudeAIOAuthTokens, isClaudeAISubscriber, isConsumerSubscriber, isMaxSubscriber, isProSubscriber, isTeamSubscriber, isTeamPremiumSubscriber, isEnterpriseSubscriber, isAnthropicAuthEnabled, is1PApiCustomer,
+  getClaudeAIOAuthTokens, isClaudeAISubscriber, isConsumerSubscriber, isMaxSubscriber, isProSubscriber, isTeamSubscriber, isTeamPremiumSubscriber, isEnterpriseSubscriber, isFriendliAuthEnabled, is1PApiCustomer,
   isUsing3PServices, isOverageProvisioningAllowed, hasProfileScope, getAccountInformation, getOauthAccountInfo, getOauthOrgUUID, getSubscriptionType, getAuthTokenSource, getRateLimitTier,
-  getAnthropicApiKey, getAnthropicApiKeyWithSource, hasAnthropicApiKeyAuth, saveApiKey, removeApiKey, getApiKeyFromApiKeyHelper, getApiKeyFromConfigOrMacOSKeychain, getConfiguredApiKeyHelper,
+  getFriendliApiKey, getFriendliApiKeyWithSource, hasAnthropicApiKeyAuth, saveApiKey, removeApiKey, getApiKeyFromApiKeyHelper, getApiKeyFromConfigOrMacOSKeychain, getConfiguredApiKeyHelper,
   getApiKeyHelperElapsedMs, checkAndRefreshOAuthTokenIfNeeded, refreshAndGetAwsCredentials, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, prefetchApiKeyFromApiKeyHelperIfSafe,
   clearApiKeyHelperCache, clearAwsCredentialsCache, clearGcpCredentialsCache, clearOAuthTokenCache, handleOAuth401Error, saveOAuthTokensIfNeeded, validateForceLoginOrg, assertFriendliApiKeyForUse,
 }

@@ -1,5 +1,5 @@
 import {
-  getAnthropicApiKey,
+  getFriendliApiKey,
   getAuthTokenSource,
   getSubscriptionType,
   isClaudeAISubscriber,
@@ -21,7 +21,7 @@ export function hasConsoleBillingAccess(): boolean {
 
   // Check if user has a configured authentication source
   const authSource = getAuthTokenSource()
-  const hasApiKey = getAnthropicApiKey() !== null
+  const hasApiKey = getFriendliApiKey() !== null
 
   // If user has no authentication at all (logged out), don't show costs
   if (!authSource.hasToken && !hasApiKey) {

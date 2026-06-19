@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { getOauthConfig, OAUTH_BETA_HEADER } from 'src/constants/oauth.js'
 import type { OAuthProfileResponse } from 'src/services/oauth/types.js'
-import { getAnthropicApiKey } from 'src/utils/auth.js'
+import { getFriendliApiKey } from 'src/utils/auth.js'
 import { getGlobalConfig } from 'src/utils/config.js'
 import { logError } from 'src/utils/log.js'
 export async function getOauthProfileFromApiKey(): Promise<
@@ -10,7 +10,7 @@ export async function getOauthProfileFromApiKey(): Promise<
   // Assumes interactive session
   const config = getGlobalConfig()
   const accountUuid = config.oauthAccount?.accountUuid
-  const apiKey = getAnthropicApiKey()
+  const apiKey = getFriendliApiKey()
 
   // Need both account UUID and API key to check
   if (!accountUuid || !apiKey) {

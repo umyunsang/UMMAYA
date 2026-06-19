@@ -206,6 +206,15 @@ const githubAppPublicSurfaceFiles = [
   ...sourceFilesUnder('src/commands/install-github-app'),
 ]
 
+const shippedSourceFiles = sourceFilesUnder('src')
+
+const bannedProviderSurfaceTokens = [
+  'loginWithClaudeAi',
+  'getAnthropicApiKey',
+  'isAnthropicAuthEnabled',
+  'Claude AI',
+] as const
+
 const bannedGitHubAppProviderCopy = [
   'ANTHROPIC_API_KEY',
   'CLAUDE_API_KEY',
@@ -223,10 +232,6 @@ const bannedGitHubAppProviderCopy = [
   'github.com/anthropics/claude-code-action',
   'anthropics/claude-code-action',
   'claude-code-action',
-  'loginWithClaudeAi',
-  'getAnthropicApiKey',
-  'isAnthropicAuthEnabled',
-  'Claude AI',
   'Claude GitHub App',
   'Claude PR assistance',
   'Claude workflow',
@@ -427,6 +432,21 @@ describe('UMMAYA paint surface branding', () => {
     expect(sanitized.tip).toBe('')
   })
 
+  it('keeps shipped public source free of upstream auth provider tokens', () => {
+    const violations: string[] = []
+
+    for (const file of shippedSourceFiles) {
+      const source = readFileSync(join(ROOT, file), 'utf8')
+      for (const phrase of bannedProviderSurfaceTokens) {
+        if (source.includes(phrase)) {
+          violations.push(`${file}: ${phrase}`)
+        }
+      }
+    }
+
+    expect(violations).toEqual([])
+  })
+
   it('keeps GitHub App setup on UMMAYA Friendli credentials and workflow names', () => {
     const violations: string[] = []
 
@@ -453,10 +473,10 @@ describe('UMMAYA paint surface branding', () => {
     expect(violations).toEqual([])
   })
 
-  it('keeps GitHub App public source files free of inline source maps', () => {
+  it('keeps shipped public source files free of inline source maps', () => {
     const violations: string[] = []
 
-    for (const file of githubAppPublicSurfaceFiles) {
+    for (const file of shippedSourceFiles) {
       const source = readFileSync(join(ROOT, file), 'utf8')
       if (source.includes('sourceMappingURL=data:application/json')) {
         violations.push(file)
