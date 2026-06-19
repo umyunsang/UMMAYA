@@ -3067,7 +3067,6 @@ dependencies = [
     { name = "fonttools" },
     { name = "httpx" },
     { name = "kiwipiepy" },
-    { name = "msgpack" },
     { name = "numpy" },
     { name = "odfdo" },
     { name = "openai" },
@@ -3097,6 +3096,7 @@ dependencies = [
 dev = [
     { name = "httpx2" },
     { name = "hypothesis" },
+    { name = "msgpack" },
     { name = "mypy" },
     { name = "pip-audit" },
     { name = "pip-licenses" },
@@ -3123,6 +3123,7 @@ langfuse = [
 dev = [
     { name = "hypothesis" },
     { name = "jsonschema" },
+    { name = "msgpack" },
     { name = "mypy" },
     { name = "pip-audit" },
     { name = "pip-licenses" },
@@ -3149,7 +3150,7 @@ requires-dist = [
     { name = "hypothesis", extras = ["pydantic"], marker = "extra == 'dev'", specifier = ">=6.100" },
     { name = "kiwipiepy", specifier = ">=0.17" },
     { name = "langfuse", marker = "extra == 'langfuse'", specifier = ">=2.60" },
-    { name = "msgpack", specifier = ">=1.2.1" },
+    { name = "msgpack", marker = "extra == 'dev'", specifier = ">=1.2.1" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.20.0" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "odfdo", specifier = ">=3.22.8,<4" },
@@ -3193,6 +3194,7 @@ provides-extras = ["dev", "langfuse", "gateway"]
 dev = [
     { name = "hypothesis", extras = ["pydantic"], specifier = ">=6.100" },
     { name = "jsonschema", specifier = ">=4.26.0" },
+    { name = "msgpack", specifier = ">=1.2.1" },
     { name = "mypy", specifier = ">=1.20.0" },
     { name = "pip-audit", specifier = ">=2.10.0" },
     { name = "pip-licenses", specifier = ">=5.0" },
