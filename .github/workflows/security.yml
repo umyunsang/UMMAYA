@@ -56,7 +56,11 @@ jobs:
         # virtualenv; it never runs at UMMAYA runtime (no end-user execution path
         # invokes `pip`). Removing the audit ignore once a fix version ships.
         # Tracking: TODO (re-evaluate weekly until pip ships a fix release).
-        run: uv run pip-audit --ignore-vuln CVE-2026-3219
+        # CVE-2025-3000 (torch <=2.12.0) has no patched version published as of
+        # 2026-06-19. It is scoped to torch.jit.script; UMMAYA does not call
+        # torch.jit or TorchScript on user-controlled input. Remove this ignore
+        # when PyTorch publishes a patched CPU wheel.
+        run: uv run pip-audit --ignore-vuln CVE-2026-3219 --ignore-vuln CVE-2025-3000
 
   license-check:
     name: License Compliance (Apache-2.0)

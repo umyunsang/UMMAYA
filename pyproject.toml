@@ -56,7 +56,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "python-pptx>=1.0.2",
     "defusedxml>=0.7.1",
-    "pypdf>=6.12.2",
+    "pypdf>=6.13.3",
     "pypdfium2>=5.9.0",
     # spec 2802 — local-only read engine for legacy HWP inspection. Direct HWP
     # writing remains blocked until a separate conversion/write ADR passes.
@@ -112,6 +112,9 @@ langfuse = [
 ]
 gateway = [
     "fastapi>=0.115",
+    # Security floor for the ASGI layer; keep explicit even though FastAPI
+    # pulls Starlette transitively so vulnerability audits cannot resolve lower.
+    "starlette>=1.3.1",
     "uvicorn[standard]>=0.30",
 ]
 

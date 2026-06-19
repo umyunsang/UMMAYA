@@ -429,10 +429,20 @@ entries:
     cause: W2,W14
     spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2"
     notes: "Log selection labels are UMMAYA-facing while preserving the CC selector behavior."
+  - path: tui/src/components/ScrollKeybindingHandler.tsx
+    cause: W14
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § UI L2; specs/2639-s3-ui-guard/spec.md"
+    notes: "Comment-only terminal selection and scroll wording cleanup from the real-use TUI audit; runtime behavior is unchanged."
+    expected_sha256: 2d751caa56cdc06adfdd727221219ef027b5f6211a7a2a69b2bbfcfa0427c57b
   - path: tui/src/components/LogoV2/ChannelsNotice.tsx
     cause: W2,W7
     spec_ref: "docs/requirements/ummaya-migration-tree.md § 마스코트 · 브랜딩 확정; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
     notes: "Claude channels notice is replaced by UMMAYA channel language."
+  - path: tui/src/components/LogoV2/EmergencyTip.tsx
+    cause: W2,W7
+    spec_ref: "docs/requirements/ummaya-migration-tree.md § 마스코트 · 브랜딩 확정; specs/cc-migration-audit/scope-S3-components-screens.md § 7"
+    notes: "Dynamic top-of-feed notices are sanitized so upstream provider or SaaS copy cannot surface in the UMMAYA terminal."
+    expected_sha256: 03e6b435d81d7019fb4f0ee960514b100b59bba17959754fa2a0e803c5ab7e27
   - path: tui/src/components/LogoV2/GuestPassesUpsell.tsx
     cause: W7,W13
     spec_ref: "tui/src/components/.never-port.md; specs/cc-migration-audit/scope-S3-components-screens.md § 7"

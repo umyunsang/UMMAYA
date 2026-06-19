@@ -36,6 +36,15 @@
     "tool_id": "djtc_subway_segment_fare_time_check"
   },
   {
+    "docs_path": "docs/api/../design/document-harness.md",
+    "permission_tier": 3,
+    "primitive": "document",
+    "schema_path": "docs/api/../../src/ummaya/_canonical/document-tools.schema.json",
+    "source": "UMMAYA harness",
+    "tier": "harness",
+    "tool_id": "document"
+  },
+  {
     "docs_path": "docs/api/verified-data-go-kr/README.md",
     "permission_tier": 1,
     "primitive": "find",
