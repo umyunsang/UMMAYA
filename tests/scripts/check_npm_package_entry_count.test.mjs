@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -32,6 +32,23 @@ const requiredPackagePaths = [
   'tests/fixtures/plugin_validation/checklist_manifest.yaml',
 ]
 
+function sourceFilesUnder(relativeDir) {
+  return readdirSync(relativeDir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const relativePath = join(relativeDir, entry.name)
+      if (entry.isDirectory()) return sourceFilesUnder(relativePath)
+      if (!entry.isFile()) return []
+      return /\.(tsx?|jsx?)$/.test(entry.name) ? [relativePath] : []
+    })
+    .sort()
+}
+
+const githubAppPublicSurfacePaths = [
+  'tui/src/constants/github-app.ts',
+  'tui/src/components/WorkflowMultiselectDialog.tsx',
+  ...sourceFilesUnder('tui/src/commands/install-github-app'),
+]
+
 function rootPackageVersion() {
   return JSON.parse(readFileSync('package.json', 'utf8')).version
 }
@@ -45,13 +62,15 @@ function defaultPackageGateEnv() {
 }
 
 function syntheticPackReport(entryCount) {
+  const baselinePaths = [...requiredPackagePaths, ...githubAppPublicSurfacePaths]
+
   assert.ok(
-    entryCount >= requiredPackagePaths.length,
-    'entry count must include all required package paths',
+    entryCount >= baselinePaths.length,
+    'entry count must include all required package and GitHub App surface paths',
   )
 
   const version = rootPackageVersion()
-  const paths = [...requiredPackagePaths]
+  const paths = [...baselinePaths]
   for (let index = 0; paths.length < entryCount; index += 1) {
     paths.push(`src/ummaya/package_gate_fixture/module_${String(index).padStart(4, '0')}.py`)
   }

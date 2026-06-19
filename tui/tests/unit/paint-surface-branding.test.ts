@@ -1,11 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'bun:test'
-import { readFileSync } from 'fs'
+import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { sanitizeTopOfFeedTipForUmmaya } from '../../src/components/LogoV2/EmergencyTip.js'
 
 const ROOT = join(import.meta.dir, '../..')
+
+function sourceFilesUnder(relativeDir: string): string[] {
+  const absoluteDir = join(ROOT, relativeDir)
+  return readdirSync(absoluteDir, { withFileTypes: true })
+    .flatMap(entry => {
+      const relativePath = join(relativeDir, entry.name)
+      if (entry.isDirectory()) return sourceFilesUnder(relativePath)
+      if (!entry.isFile()) return []
+      return /\.(tsx?|jsx?)$/.test(entry.name) ? [relativePath] : []
+    })
+    .sort()
+}
 
 const paintSurfaceFiles = [
   'src/services/tips/tipRegistry.ts',
@@ -191,11 +203,7 @@ const paintSurfaceFiles = [
 const githubAppPublicSurfaceFiles = [
   'src/constants/github-app.ts',
   'src/components/WorkflowMultiselectDialog.tsx',
-  'src/commands/install-github-app/install-github-app.tsx',
-  'src/commands/install-github-app/CheckExistingSecretStep.tsx',
-  'src/commands/install-github-app/ExistingWorkflowStep.tsx',
-  'src/commands/install-github-app/SuccessStep.tsx',
-  'src/commands/install-github-app/setupGitHubActions.ts',
+  ...sourceFilesUnder('src/commands/install-github-app'),
 ]
 
 const bannedGitHubAppProviderCopy = [
@@ -438,6 +446,19 @@ describe('UMMAYA paint surface branding', () => {
     )
     expect(githubAppConstants).toContain('jobs:\n  ummaya:')
     expect(githubAppConstants).toContain('jobs:\n  ummaya-review:')
+    expect(violations).toEqual([])
+  })
+
+  it('keeps GitHub App public source files free of inline source maps', () => {
+    const violations: string[] = []
+
+    for (const file of githubAppPublicSurfaceFiles) {
+      const source = readFileSync(join(ROOT, file), 'utf8')
+      if (source.includes('sourceMappingURL=data:application/json')) {
+        violations.push(file)
+      }
+    }
+
     expect(violations).toEqual([])
   })
 

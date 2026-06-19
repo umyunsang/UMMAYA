@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: Apache-2.0
 
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 const reportPath = process.argv[2]
 if (!reportPath) {
@@ -20,6 +21,27 @@ const maxEntries = Number(process.env.UMMAYA_NPM_MAX_ENTRIES ?? 2_800)
 
 const files = pack.files.map((entry) => entry.path)
 const fileSet = new Set(files)
+
+function sourceFilesUnder(relativeDir) {
+  return readdirSync(relativeDir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const relativePath = join(relativeDir, entry.name)
+      if (entry.isDirectory()) return sourceFilesUnder(relativePath)
+      if (!entry.isFile()) return []
+      return /\.(tsx?|jsx?)$/.test(entry.name) ? [relativePath] : []
+    })
+    .sort()
+}
+
+function inlineSourceMapContent(source) {
+  const marker = 'sourceMappingURL=data:application/json;charset=utf-8;base64,'
+  const line = source.split('\n').find((item) => item.includes(marker))
+  if (!line) return ''
+
+  const encoded = line.slice(line.indexOf(marker) + marker.length).trim()
+  const decoded = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8'))
+  return decoded.sourcesContent?.join('\n') ?? ''
+}
 
 function readJsonVersion(path) {
   return JSON.parse(readFileSync(path, 'utf8')).version
@@ -154,6 +176,68 @@ if (forbidden.length > 0) {
   throw new Error(`npm package contains forbidden paths:\n${forbidden.join('\n')}`)
 }
 
+const githubAppPublicSurfaceFiles = [
+  'tui/src/constants/github-app.ts',
+  'tui/src/components/WorkflowMultiselectDialog.tsx',
+  ...sourceFilesUnder('tui/src/commands/install-github-app'),
+]
+
+const missingGitHubAppPublicSurface = githubAppPublicSurfaceFiles.filter(
+  (path) => !fileSet.has(path),
+)
+if (missingGitHubAppPublicSurface.length > 0) {
+  throw new Error(
+    `npm package missing GitHub App public surface paths:\n${missingGitHubAppPublicSurface.join('\n')}`,
+  )
+}
+
+const bannedGitHubAppPublicSurfaceCopy = [
+  'ANTHROPIC_API_KEY',
+  'CLAUDE_API_KEY',
+  'CLAUDE_CODE_OAUTH_TOKEN',
+  'FRIENDLI_TOKEN: \\${{ secrets.FRIENDLI_TOKEN }}',
+  'secrets.FRIENDLI_TOKEN',
+  'anthropic_api_key',
+  'claude_code_oauth_token',
+  '.github/workflows/claude.yml',
+  '.github/workflows/claude-code-review.yml',
+  'add-claude-github-actions',
+  'selected_claude_workflow',
+  'selected_claude_review_workflow',
+  'anthropics/claude-cli',
+  'github.com/anthropics/claude-code-action',
+  'anthropics/claude-code-action',
+  'claude-code-action',
+  'https://github.com/apps/claude',
+  'Claude GitHub App',
+  'Claude PR assistance',
+  'Claude workflow',
+  'Claude Code Review',
+  'Claude PR Assistant',
+  'A Claude workflow file',
+]
+
+const githubAppPublicSurfaceViolations = []
+for (const path of githubAppPublicSurfaceFiles) {
+  const source = readFileSync(path, 'utf8')
+  const hasInlineSourceMap = source.includes('sourceMappingURL=data:application/json')
+  if (hasInlineSourceMap) {
+    githubAppPublicSurfaceViolations.push(`${path}: inline source map`)
+  }
+
+  const searchableSource = `${source}\n${inlineSourceMapContent(source)}`
+  for (const phrase of bannedGitHubAppPublicSurfaceCopy) {
+    if (searchableSource.includes(phrase)) {
+      githubAppPublicSurfaceViolations.push(`${path}: ${phrase}`)
+    }
+  }
+}
+if (githubAppPublicSurfaceViolations.length > 0) {
+  throw new Error(
+    `npm package GitHub App public surface contains upstream residue:\n${githubAppPublicSurfaceViolations.join('\n')}`,
+  )
+}
+
 if (pack.size > maxPackedBytes) {
   throw new Error(`npm package packed size ${pack.size} exceeds ${maxPackedBytes}`)
 }
@@ -167,5 +251,5 @@ if (files.length > maxEntries) {
 }
 
 console.log(
-  `check-npm-package: clean (${pack.size} packed bytes, ${pack.unpackedSize} unpacked bytes, ${files.length} files)`,
+  `check-npm-package: clean (${pack.size} packed bytes, ${pack.unpackedSize} unpacked bytes, ${files.length} files, ${githubAppPublicSurfaceFiles.length} GitHub App public surface files)`,
 )
