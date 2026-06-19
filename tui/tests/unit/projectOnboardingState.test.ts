@@ -7,24 +7,44 @@ import { tmpdir } from 'node:os'
 import { runWithCwdOverride } from '../../src/utils/cwd.js'
 import {
   getCurrentProjectConfig,
+  getGlobalConfig,
+  isProjectConfigKey,
   saveCurrentProjectConfig,
+  saveGlobalConfig,
 } from '../../src/utils/config.js'
-import { maybeMarkProjectOnboardingComplete } from '../../src/projectOnboardingState.js'
+import { ensureStartupOnboardingComplete } from '../../src/interactiveHelpers.js'
+import {
+  maybeMarkProjectOnboardingComplete,
+  resetProjectOnboardingMemoForTesting,
+  shouldShowProjectOnboarding,
+} from '../../src/projectOnboardingState.js'
 
 function resetProjectOnboardingConfig(): void {
   saveCurrentProjectConfig(current => {
     const { hasCompletedProjectOnboarding: _completed, ...rest } = current
     return {
       ...rest,
+      hasCompletedProjectOnboarding: undefined,
       projectOnboardingSeenCount: 0,
     }
   })
+}
+
+function resetStartupOnboardingConfig(): void {
+  saveGlobalConfig(current => ({
+    ...current,
+    hasCompletedOnboarding: undefined,
+    lastOnboardingVersion: undefined,
+    theme: undefined,
+  }))
 }
 
 describe('project onboarding state', () => {
   beforeEach(() => {
     process.env.NODE_ENV = 'test'
     resetProjectOnboardingConfig()
+    resetStartupOnboardingConfig()
+    resetProjectOnboardingMemoForTesting()
   })
 
   it('marks onboarding complete when the first prompt is sent from an empty workspace', () => {
@@ -44,5 +64,30 @@ describe('project onboarding state', () => {
     } finally {
       rmSync(workspace, { force: true, recursive: true })
     }
+  })
+
+  it('does not show project onboarding on clean startup', () => {
+    const workspace = mkdtempSync(join(tmpdir(), 'ummaya-onboarding-seen-'))
+
+    try {
+      runWithCwdOverride(workspace, () => {
+        expect(shouldShowProjectOnboarding()).toBe(false)
+      })
+    } finally {
+      rmSync(workspace, { force: true, recursive: true })
+    }
+  })
+
+  it('recognizes the onboarding seen count as project configuration', () => {
+    expect(isProjectConfigKey('projectOnboardingSeenCount')).toBe(true)
+  })
+
+  it('completes startup onboarding without rendering the welcome setup flow', () => {
+    ensureStartupOnboardingComplete()
+
+    const config = getGlobalConfig()
+    expect(config.hasCompletedOnboarding).toBe(true)
+    expect(config.theme).toBe('dark')
+    expect(config.lastOnboardingVersion).toBeTruthy()
   })
 })

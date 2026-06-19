@@ -18,7 +18,6 @@ import { useEffect, useState } from 'react';
 import { getSteps, shouldShowProjectOnboarding, incrementProjectOnboardingSeenCount } from '../../projectOnboardingState.js';
 import { CondensedLogo } from './CondensedLogo.js';
 import { OffscreenFreeze } from '../OffscreenFreeze.js';
-import { checkForReleaseNotesSync } from '../../utils/releaseNotes.js';
 import { getDumpPromptsPath } from 'src/services/api/dumpPrompts.js';
 import { isEnvTruthy } from 'src/utils/envUtils.js';
 import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/utils/startupProfiler.js';
@@ -85,20 +84,18 @@ export function LogoV2() {
     }
     return config.numStartups === 1 ? announcements[0] : announcements[Math.floor(Math.random() * announcements.length)];
   });
-  const {
-    hasReleaseNotes
-  } = checkForReleaseNotesSync(config.lastReleaseNotesSeen);
+  const hasReleaseNotes = false;
   let t2;
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
     t2 = () => {
+      if (showOnboarding) {
+        incrementProjectOnboardingSeenCount();
+      }
       const currentConfig = getGlobalConfig();
       if (currentConfig.lastReleaseNotesSeen === MACRO.VERSION) {
         return;
       }
       saveGlobalConfig(_temp3);
-      if (showOnboarding) {
-        incrementProjectOnboardingSeenCount();
-      }
     };
     $[2] = t2;
   } else {

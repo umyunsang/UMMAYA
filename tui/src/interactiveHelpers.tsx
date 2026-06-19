@@ -35,9 +35,16 @@ import { hasAutoModeOptIn, hasSkipDangerousModePermissionPrompt } from './utils/
 export function completeOnboarding(): void {
   saveGlobalConfig(current => ({
     ...current,
+    theme: current.theme ?? 'dark',
     hasCompletedOnboarding: true,
     lastOnboardingVersion: MACRO.VERSION
   }));
+}
+export function ensureStartupOnboardingComplete(): void {
+  const config = getGlobalConfig();
+  if (!config.theme || !config.hasCompletedOnboarding) {
+    completeOnboarding();
+  }
 }
 export function showDialog<T = void>(root: Root, renderer: (done: (result: T) => void) => React.ReactNode): Promise<T> {
   return new Promise<T>(resolve => {
@@ -109,21 +116,8 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   ) {
     return false;
   }
-  const config = getGlobalConfig();
-  let onboardingShown = false;
-  if (!config.theme || !config.hasCompletedOnboarding // always show onboarding at least once
-  ) {
-    onboardingShown = true;
-    const {
-      Onboarding
-    } = await import('./components/Onboarding.js');
-    await showSetupDialog(root, done => <Onboarding onDone={() => {
-      completeOnboarding();
-      void done();
-    }} />, {
-      onChangeAppState
-    });
-  }
+  const onboardingShown = false;
+  ensureStartupOnboardingComplete();
 
   // Always show the trust dialog in interactive sessions, regardless of permission mode.
   // The trust dialog is the workspace trust boundary — it warns about untrusted repos

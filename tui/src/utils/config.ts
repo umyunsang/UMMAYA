@@ -675,6 +675,7 @@ export const PROJECT_CONFIG_KEYS = [
   'allowedTools',
   'hasTrustDialogAccepted',
   'hasCompletedProjectOnboarding',
+  'projectOnboardingSeenCount',
 ] as const
 
 export type ProjectConfigKey = (typeof PROJECT_CONFIG_KEYS)[number]

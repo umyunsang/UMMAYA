@@ -20,6 +20,10 @@ type Props = {
   onDone(): void;
   commands?: Command[];
 };
+export function persistTrustDialogAcceptanceForCurrentWorkspace(): void {
+  setSessionTrustAccepted(true);
+  saveCurrentProjectConfig(_temp5);
+}
 export function TrustDialog(t0) {
   const $ = _c(33);
   const {
@@ -171,11 +175,7 @@ export function TrustDialog(t0) {
         hasOtelHeadersHelper,
         hasDangerousEnvVars
       });
-      if (isHomeDir_0) {
-        setSessionTrustAccepted(true);
-      } else {
-        saveCurrentProjectConfig(_temp5);
-      }
+      persistTrustDialogAcceptanceForCurrentWorkspace();
       onDone();
     };
     $[16] = hasAnyBashExecution;

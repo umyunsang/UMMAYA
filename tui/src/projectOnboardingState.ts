@@ -61,24 +61,15 @@ export function maybeMarkProjectOnboardingComplete(): void {
   })
 }
 
-export const shouldShowProjectOnboarding = memoize((): boolean => {
-  const projectConfig = getCurrentProjectConfig()
-  // Short-circuit on cached config before isProjectOnboardingComplete()
-  // hits the filesystem — this runs during first render.
-  if (
-    projectConfig.hasCompletedProjectOnboarding ||
-    projectConfig.projectOnboardingSeenCount >= 4 ||
-    process.env.IS_DEMO
-  ) {
-    return false
-  }
-
-  return !isProjectOnboardingComplete()
-})
+export const shouldShowProjectOnboarding = memoize((): boolean => false)
 
 export function incrementProjectOnboardingSeenCount(): void {
   saveCurrentProjectConfig(current => ({
     ...current,
     projectOnboardingSeenCount: current.projectOnboardingSeenCount + 1,
   }))
+}
+
+export function resetProjectOnboardingMemoForTesting(): void {
+  shouldShowProjectOnboarding.cache.clear?.()
 }
