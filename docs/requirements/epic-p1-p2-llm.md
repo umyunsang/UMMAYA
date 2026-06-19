@@ -66,7 +66,7 @@ Remove all Anthropic-specific bootstrap, telemetry, auth, and migration cruft. R
 ## P2 file-level scope
 
 ### API endpoints (replace or remove)
-- `tui/src/services/services/api/claude.ts` — **replace**: rewire to FriendliAI `/v1/chat/completions`
+- `tui/src/services/api/ummaya.ts` — **replace**: rewire to FriendliAI `/v1/chat/completions`
 - `tui/src/services/services/api/client.ts` — **replace**: swap base URL + auth header to `FRIENDLI_API_KEY`
 - `tui/src/services/services/api/bootstrap.ts` — **strip**: Anthropic-side bootstrap handshake
 - `tui/src/services/services/api/usage.ts` — **strip**: Anthropic usage/billing endpoint

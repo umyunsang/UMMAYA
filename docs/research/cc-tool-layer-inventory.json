@@ -1,0 +1,3105 @@
+{
+  "schema_version": "cc-tool-layer-inventory.v1",
+  "generated_at": "2026-06-12T00:00:00.000Z",
+  "permission_mode_boundaries": [
+    "default",
+    "plan",
+    "acceptEdits",
+    "bypass-blocked"
+  ],
+  "bypass_permissions_policy": {
+    "cannot_override": [
+      "AX",
+      "PIPA",
+      "identity"
+    ],
+    "enforcement": "bypassPermissions cannot override protected AX, PIPA, or identity walls."
+  },
+  "exposure_policy_matrix": [
+    {
+      "policy_id": "tier-0",
+      "trust_tier": 0,
+      "category": "read-only local context",
+      "allowed_exposure_states": [
+        "always-loaded",
+        "deferred-searchable",
+        "hidden",
+        "unsupported"
+      ],
+      "permission_mode_matrix": {
+        "default": "Allowed only when bounded to workspace roots and transcript policy.",
+        "plan": "Allowed for read-only planning with the same workspace boundary.",
+        "acceptEdits": "No extra mutation authority; remains read-only.",
+        "bypass-blocked": "Not applicable unless the read path crosses protected data."
+      },
+      "bypass_permissions_overrides_protected_walls": false,
+      "bypass_permissions_restriction": "bypassPermissions is bypass-blocked for protected AX, PIPA, and identity walls.",
+      "protected_primitive_routing_allowed": false
+    },
+    {
+      "policy_id": "tier-1",
+      "trust_tier": 1,
+      "category": "local mutation",
+      "allowed_exposure_states": [
+        "permission-gated-callable",
+        "hidden",
+        "unsupported"
+      ],
+      "permission_mode_matrix": {
+        "default": "Requires explicit one-shot approval before mutation.",
+        "plan": "Plan-only; mutation is blocked.",
+        "acceptEdits": "Allowed only through user edit approval or explicit one-shot approval.",
+        "bypass-blocked": "Raw document and protected data mutation bypasses are blocked."
+      },
+      "bypass_permissions_overrides_protected_walls": false,
+      "bypass_permissions_restriction": "bypassPermissions is bypass-blocked for protected AX, PIPA, and identity walls.",
+      "protected_primitive_routing_allowed": false
+    },
+    {
+      "policy_id": "tier-2",
+      "trust_tier": 2,
+      "category": "shell/system execution",
+      "allowed_exposure_states": [
+        "permission-gated-callable",
+        "hidden",
+        "unsupported"
+      ],
+      "permission_mode_matrix": {
+        "default": "Requires command analysis and explicit one-shot approval.",
+        "plan": "Plan-only; command execution is blocked.",
+        "acceptEdits": "No automatic shell authority from edit approval.",
+        "bypass-blocked": "Destructive, credential, or protected-data commands are blocked."
+      },
+      "bypass_permissions_overrides_protected_walls": false,
+      "bypass_permissions_restriction": "bypassPermissions is bypass-blocked for protected AX, PIPA, and identity walls.",
+      "protected_primitive_routing_allowed": false
+    },
+    {
+      "policy_id": "tier-3",
+      "trust_tier": 3,
+      "category": "external network/source acquisition",
+      "allowed_exposure_states": [
+        "permission-gated-callable",
+        "hidden",
+        "unsupported"
+      ],
+      "permission_mode_matrix": {
+        "default": "Requires explicit approval or approved source policy with URL evidence.",
+        "plan": "Allowed only as cited source planning when policy pre-approves it.",
+        "acceptEdits": "Cannot convert untrusted source text into approved document facts.",
+        "bypass-blocked": "Secret egress and protected data fetches are blocked."
+      },
+      "bypass_permissions_overrides_protected_walls": false,
+      "bypass_permissions_restriction": "bypassPermissions is bypass-blocked for protected AX, PIPA, and identity walls.",
+      "protected_primitive_routing_allowed": false
+    },
+    {
+      "policy_id": "tier-4",
+      "trust_tier": 4,
+      "category": "agent/research orchestration",
+      "allowed_exposure_states": [
+        "permission-gated-callable",
+        "hidden",
+        "unsupported"
+      ],
+      "permission_mode_matrix": {
+        "default": "Requires bounded delegation within the parent permission scope.",
+        "plan": "Can draft plans but cannot inherit broader tool authority.",
+        "acceptEdits": "No lateral transfer of edit authority to child agents.",
+        "bypass-blocked": "Bypass cannot widen parent scope or protected walls."
+      },
+      "bypass_permissions_overrides_protected_walls": false,
+      "bypass_permissions_restriction": "bypassPermissions is bypass-blocked for protected AX, PIPA, and identity walls.",
+      "protected_primitive_routing_allowed": false
+    },
+    {
+      "policy_id": "tier-5",
+      "trust_tier": 5,
+      "category": "protected national AX action",
+      "allowed_exposure_states": [
+        "always-loaded",
+        "permission-gated-callable",
+        "hidden",
+        "unsupported"
+      ],
+      "permission_mode_matrix": {
+        "default": "Requires identity, consent, delegation, and agency policy citation.",
+        "plan": "Can plan protected actions but cannot execute them.",
+        "acceptEdits": "Document edits do not grant protected AX action authority.",
+        "bypass-blocked": "Protected AX, PIPA, and identity walls are bypass-immune."
+      },
+      "bypass_permissions_overrides_protected_walls": false,
+      "bypass_permissions_restriction": "bypassPermissions is bypass-blocked for protected AX, PIPA, and identity walls.",
+      "protected_primitive_routing_allowed": true
+    }
+  ],
+  "source_refs": [
+    ".references/claude-code-sourcemap/restored-src/src/tools.ts",
+    ".references/claude-code-sourcemap/restored-src/src/tools/",
+    ".references/claude-code-sourcemap/restored-src/src/services/tools/StreamingToolExecutor.ts",
+    ".references/claude-code-sourcemap/restored-src/src/services/tools/toolExecution.ts",
+    ".references/claude-code-sourcemap/restored-src/src/services/tools/toolOrchestration.ts",
+    ".references/claude-code-sourcemap/restored-src/src/services/tools/toolHooks.ts",
+    "tui/src/tools.ts",
+    "tui/src/tools/ToolSearchTool/ccSupportTools.ts",
+    "tui/src/tools/",
+    "tui/src/services/tools/StreamingToolExecutor.ts",
+    "tui/src/services/tools/toolExecution.ts",
+    "tui/src/services/tools/toolOrchestration.ts",
+    "tui/src/services/tools/toolHooks.ts"
+  ],
+  "runtime": [
+    {
+      "name": "StreamingToolExecutor",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/StreamingToolExecutor.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/StreamingToolExecutor.ts",
+      "ummaya_path": "tui/src/services/tools/StreamingToolExecutor.ts",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "accepted_divergence": "No accepted divergence; runtime source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ]
+    },
+    {
+      "name": "toolExecution",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/toolExecution.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/toolExecution.ts",
+      "ummaya_path": "tui/src/services/tools/toolExecution.ts",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/toolExecution.json",
+      "accepted_divergence": "Runtime tool-loop source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ]
+    },
+    {
+      "name": "toolOrchestration",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/toolOrchestration.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/toolOrchestration.ts",
+      "ummaya_path": "tui/src/services/tools/toolOrchestration.ts",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/toolOrchestration.json",
+      "accepted_divergence": "Runtime tool-loop source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ]
+    },
+    {
+      "name": "toolHooks",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/toolHooks.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/services/tools/toolHooks.ts",
+      "ummaya_path": "tui/src/services/tools/toolHooks.ts",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "accepted_divergence": "No accepted divergence; runtime source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "tool_name": "AdapterTool",
+      "cc_group": "ummaya-primitive",
+      "source_path": "tui/src/tools/AdapterTool/",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/AdapterTool/",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/AdapterTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 5,
+      "exposure_policy_id": "tier-5",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-5: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "AgentTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/AgentTool/AgentTool.tsx",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/AgentTool/AgentTool.tsx",
+      "ummaya_path": "tui/src/tools/AgentTool/AgentTool.tsx",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/AgentTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "AskUserQuestionTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx",
+      "ummaya_path": "tui/src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/AskUserQuestionTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "BashTool",
+      "cc_group": "shell-system",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/BashTool/BashTool.tsx",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/BashTool/BashTool.tsx",
+      "ummaya_path": "tui/src/tools/BashTool/BashTool.tsx",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/BashTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-2: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "BriefTool",
+      "cc_group": "web-source",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/BriefTool/BriefTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/BriefTool/BriefTool.ts",
+      "ummaya_path": "tui/src/tools/BriefTool/BriefTool.ts",
+      "feature_status": "default",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-3: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "CalculatorTool",
+      "cc_group": "agent-task",
+      "source_path": "tui/src/tools/CalculatorTool/",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/CalculatorTool/",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/CalculatorTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ConfigTool",
+      "cc_group": "shell-system",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ConfigTool/ConfigTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ConfigTool/ConfigTool.ts",
+      "ummaya_path": "tui/src/tools/ConfigTool/ConfigTool.ts",
+      "feature_status": "ant-only",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "different",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-2: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "CronCreateTool",
+      "cc_group": "schedule-remote",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/CronCreateTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/CronCreateTool.ts",
+      "ummaya_path": "tui/src/tools/ScheduleCronTool/CronCreateTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "CronDeleteTool",
+      "cc_group": "schedule-remote",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/CronDeleteTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/CronDeleteTool.ts",
+      "ummaya_path": "tui/src/tools/ScheduleCronTool/CronDeleteTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "CronListTool",
+      "cc_group": "schedule-remote",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/CronListTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/CronListTool.ts",
+      "ummaya_path": "tui/src/tools/ScheduleCronTool/CronListTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "CtxInspectTool",
+      "cc_group": "shell-system",
+      "source_path": "blocked",
+      "cc_source_path": "missing",
+      "ummaya_path": "missing",
+      "feature_status": "feature-gated",
+      "parity_status": "missing",
+      "status": "missing",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "UMMAYA implementation path is missing.",
+      "registered_capability": false,
+      "exposure_state": "unsupported",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-2; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA implementation path is missing.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "DateParserTool",
+      "cc_group": "agent-task",
+      "source_path": "tui/src/tools/DateParserTool/",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/DateParserTool/",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/DateParserTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "DocumentPrimitive",
+      "cc_group": "ummaya-primitive",
+      "source_path": "tui/src/tools/DocumentPrimitive/DocumentPrimitive.ts",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/DocumentPrimitive/DocumentPrimitive.ts",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/DocumentPrimitive.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "always-loaded",
+      "trust_tier": 5,
+      "exposure_policy_id": "tier-5",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-5: protected primitive routing; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": true,
+      "protected_primitive_reason": "protected primitive routing: document and binary mutation must pass through DocumentPrimitive approval and cannot use raw file-write bypasses.",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "EnterPlanModeTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts",
+      "ummaya_path": "tui/src/tools/EnterPlanModeTool/EnterPlanModeTool.ts",
+      "feature_status": "default",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "EnterWorktreeTool",
+      "cc_group": "shell-system",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts",
+      "ummaya_path": "tui/src/tools/EnterWorktreeTool/EnterWorktreeTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-2: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ExitPlanModeTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ExitPlanModeTool/",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ExitPlanModeTool/",
+      "ummaya_path": "tui/src/tools/ExitPlanModeTool/",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/ExitPlanModeTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ExitPlanModeV2Tool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts",
+      "ummaya_path": "tui/src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts",
+      "feature_status": "default",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ExitWorktreeTool",
+      "cc_group": "shell-system",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts",
+      "ummaya_path": "tui/src/tools/ExitWorktreeTool/ExitWorktreeTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-2: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ExportPDFTool",
+      "cc_group": "agent-task",
+      "source_path": "tui/src/tools/ExportPDFTool/",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/ExportPDFTool/",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/ExportPDFTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "FileEditTool",
+      "cc_group": "file-search-edit",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/FileEditTool/FileEditTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/FileEditTool/FileEditTool.ts",
+      "ummaya_path": "tui/src/tools/FileEditTool/FileEditTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/FileEditTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 1,
+      "exposure_policy_id": "tier-1",
+      "permission_mode_boundary": "acceptEdits",
+      "permission_policy": "tier-1: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "FileReadTool",
+      "cc_group": "file-search-edit",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/FileReadTool/FileReadTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/FileReadTool/FileReadTool.ts",
+      "ummaya_path": "tui/src/tools/FileReadTool/FileReadTool.ts",
+      "feature_status": "default",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "deferred-searchable",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "FileWriteTool",
+      "cc_group": "file-search-edit",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/FileWriteTool/FileWriteTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/FileWriteTool/FileWriteTool.ts",
+      "ummaya_path": "tui/src/tools/FileWriteTool/FileWriteTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/FileWriteTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 1,
+      "exposure_policy_id": "tier-1",
+      "permission_mode_boundary": "acceptEdits",
+      "permission_policy": "tier-1: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "GlobTool",
+      "cc_group": "file-search-edit",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/GlobTool/GlobTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/GlobTool/GlobTool.ts",
+      "ummaya_path": "tui/src/tools/GlobTool/GlobTool.ts",
+      "feature_status": "default",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "deferred-searchable",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "GrepTool",
+      "cc_group": "file-search-edit",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/GrepTool/GrepTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/GrepTool/GrepTool.ts",
+      "ummaya_path": "tui/src/tools/GrepTool/GrepTool.ts",
+      "feature_status": "default",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "deferred-searchable",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ListMcpResourcesTool",
+      "cc_group": "mcp",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts",
+      "ummaya_path": "tui/src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/ListMcpResourcesTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-3: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "trusted-configured",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ListPeersTool",
+      "cc_group": "schedule-remote",
+      "source_path": "blocked",
+      "cc_source_path": "missing",
+      "ummaya_path": "missing",
+      "feature_status": "feature-gated",
+      "parity_status": "missing",
+      "status": "missing",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "UMMAYA implementation path is missing.",
+      "registered_capability": false,
+      "exposure_state": "unsupported",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-4; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA implementation path is missing.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "LookupPrimitive",
+      "cc_group": "ummaya-primitive",
+      "source_path": "tui/src/tools/LookupPrimitive/LookupPrimitive.ts",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/LookupPrimitive/LookupPrimitive.ts",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/LookupPrimitive.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "always-loaded",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "LSPTool",
+      "cc_group": "test-dev-only",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/LSPTool/LSPTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/LSPTool/LSPTool.ts",
+      "ummaya_path": "tui/src/tools/LSPTool/LSPTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "McpAuthTool",
+      "cc_group": "mcp",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/McpAuthTool/",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/McpAuthTool/",
+      "ummaya_path": "tui/src/tools/McpAuthTool/",
+      "feature_status": "unsupported",
+      "parity_status": "unsupported",
+      "status": "unsupported",
+      "diff_status": "different",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "Tool is blocked from callable UMMAYA exposure by the scope contract.",
+      "registered_capability": false,
+      "exposure_state": "unsupported",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-3; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "trusted-configured",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Tool is blocked from callable UMMAYA exposure by the scope contract.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "MCPTool",
+      "cc_group": "mcp",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/MCPTool/",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/MCPTool/",
+      "ummaya_path": "tui/src/tools/MCPTool/",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/MCPTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-3: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "trusted-configured",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "MonitorTool",
+      "cc_group": "schedule-remote",
+      "source_path": "tui/src/tools/MonitorTool/MonitorTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/MonitorTool/MonitorTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "NotebookEditTool",
+      "cc_group": "file-search-edit",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/NotebookEditTool/NotebookEditTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/NotebookEditTool/NotebookEditTool.ts",
+      "ummaya_path": "tui/src/tools/NotebookEditTool/NotebookEditTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/NotebookEditTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 1,
+      "exposure_policy_id": "tier-1",
+      "permission_mode_boundary": "acceptEdits",
+      "permission_policy": "tier-1: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "OverflowTestTool",
+      "cc_group": "test-dev-only",
+      "source_path": "tui/src/tools/OverflowTestTool/OverflowTestTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/OverflowTestTool/OverflowTestTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "PowerShellTool",
+      "cc_group": "shell-system",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/PowerShellTool/",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/PowerShellTool/",
+      "ummaya_path": "tui/src/tools/PowerShellTool/PowerShellTool.tsx",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "different",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-2: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "PushNotificationTool",
+      "cc_group": "schedule-remote",
+      "source_path": "blocked",
+      "cc_source_path": "missing",
+      "ummaya_path": "missing",
+      "feature_status": "feature-gated",
+      "parity_status": "missing",
+      "status": "missing",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "UMMAYA implementation path is missing.",
+      "registered_capability": false,
+      "exposure_state": "unsupported",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-4; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA implementation path is missing.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ReadMcpResourceTool",
+      "cc_group": "mcp",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts",
+      "ummaya_path": "tui/src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/ReadMcpResourceTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-3: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "trusted-configured",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "RemoteTriggerTool",
+      "cc_group": "schedule-remote",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts",
+      "ummaya_path": "tui/src/tools/RemoteTriggerTool/RemoteTriggerTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "REPLTool",
+      "cc_group": "shell-system",
+      "source_path": "tui/src/tools/REPLTool/REPLTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/REPLTool/REPLTool.ts",
+      "feature_status": "ant-only",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-2: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ResolveLocationPrimitive",
+      "cc_group": "ummaya-primitive",
+      "source_path": "tui/src/tools/ResolveLocationPrimitive/ResolveLocationPrimitive.ts",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/ResolveLocationPrimitive/ResolveLocationPrimitive.ts",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/ResolveLocationPrimitive.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "always-loaded",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ScheduleCronTool",
+      "cc_group": "schedule-remote",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ScheduleCronTool/",
+      "ummaya_path": "tui/src/tools/ScheduleCronTool/",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SendMessageTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/SendMessageTool/SendMessageTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/SendMessageTool/SendMessageTool.ts",
+      "ummaya_path": "tui/src/tools/SendMessageTool/SendMessageTool.ts",
+      "feature_status": "default",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SendUserFileTool",
+      "cc_group": "web-source",
+      "source_path": "tui/src/tools/SendUserFileTool/SendUserFileTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/SendUserFileTool/SendUserFileTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-3: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SkillTool",
+      "cc_group": "skill-workflow",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/SkillTool/SkillTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/SkillTool/SkillTool.ts",
+      "ummaya_path": "tui/src/tools/SkillTool/SkillTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/SkillTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SleepTool",
+      "cc_group": "schedule-remote",
+      "source_path": "tui/src/tools/SleepTool/SleepTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/SleepTool/SleepTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SnipTool",
+      "cc_group": "agent-task",
+      "source_path": "tui/src/tools/SnipTool/SnipTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/SnipTool/SnipTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SubmitPrimitive",
+      "cc_group": "ummaya-primitive",
+      "source_path": "tui/src/tools/SubmitPrimitive/SubmitPrimitive.ts",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/SubmitPrimitive/SubmitPrimitive.ts",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/SubmitPrimitive.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "always-loaded",
+      "trust_tier": 5,
+      "exposure_policy_id": "tier-5",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-5: protected primitive routing; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": true,
+      "protected_primitive_reason": "protected primitive routing: protected AX submission remains visible as the intent boundary, but execution still requires identity, consent, and agency policy checks.",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SubscribePRTool",
+      "cc_group": "schedule-remote",
+      "source_path": "blocked",
+      "cc_source_path": "missing",
+      "ummaya_path": "missing",
+      "feature_status": "feature-gated",
+      "parity_status": "missing",
+      "status": "missing",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "UMMAYA implementation path is missing.",
+      "registered_capability": false,
+      "exposure_state": "unsupported",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-4; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA implementation path is missing.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SuggestBackgroundPRTool",
+      "cc_group": "agent-task",
+      "source_path": "tui/src/tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.ts",
+      "feature_status": "ant-only",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "SyntheticOutputTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/SyntheticOutputTool/",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/SyntheticOutputTool/",
+      "ummaya_path": "tui/src/tools/SyntheticOutputTool/",
+      "feature_status": "unsupported",
+      "parity_status": "unsupported",
+      "status": "unsupported",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "Tool is blocked from callable UMMAYA exposure by the scope contract.",
+      "registered_capability": false,
+      "exposure_state": "unsupported",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-4; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Tool is blocked from callable UMMAYA exposure by the scope contract.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TaskCreateTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskCreateTool/TaskCreateTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskCreateTool/TaskCreateTool.ts",
+      "ummaya_path": "tui/src/tools/TaskCreateTool/TaskCreateTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TaskCreateTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TaskGetTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskGetTool/TaskGetTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskGetTool/TaskGetTool.ts",
+      "ummaya_path": "tui/src/tools/TaskGetTool/TaskGetTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TaskGetTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TaskListTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskListTool/TaskListTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskListTool/TaskListTool.ts",
+      "ummaya_path": "tui/src/tools/TaskListTool/TaskListTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TaskListTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TaskOutputTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskOutputTool/TaskOutputTool.tsx",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskOutputTool/TaskOutputTool.tsx",
+      "ummaya_path": "tui/src/tools/TaskOutputTool/TaskOutputTool.tsx",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TaskOutputTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TaskStopTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskStopTool/TaskStopTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskStopTool/TaskStopTool.ts",
+      "ummaya_path": "tui/src/tools/TaskStopTool/TaskStopTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TaskStopTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TaskUpdateTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskUpdateTool/TaskUpdateTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TaskUpdateTool/TaskUpdateTool.ts",
+      "ummaya_path": "tui/src/tools/TaskUpdateTool/TaskUpdateTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TaskUpdateTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TeamCreateTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TeamCreateTool/TeamCreateTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TeamCreateTool/TeamCreateTool.ts",
+      "ummaya_path": "tui/src/tools/TeamCreateTool/TeamCreateTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TeamDeleteTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TeamDeleteTool/TeamDeleteTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TeamDeleteTool/TeamDeleteTool.ts",
+      "ummaya_path": "tui/src/tools/TeamDeleteTool/TeamDeleteTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TerminalCaptureTool",
+      "cc_group": "shell-system",
+      "source_path": "tui/src/tools/TerminalCaptureTool/TerminalCaptureTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/TerminalCaptureTool/TerminalCaptureTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 2,
+      "exposure_policy_id": "tier-2",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-2: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "workspace",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TestingPermissionTool",
+      "cc_group": "test-dev-only",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/testing/TestingPermissionTool.tsx",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/testing/TestingPermissionTool.tsx",
+      "ummaya_path": "tui/src/tools/testing/TestingPermissionTool.tsx",
+      "feature_status": "test-only",
+      "parity_status": "source-parity",
+      "status": "source-parity",
+      "diff_status": "identical",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "unsupported",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-0; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "No accepted divergence; source digest matches restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TodoWriteTool",
+      "cc_group": "agent-task",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TodoWriteTool/TodoWriteTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/TodoWriteTool/TodoWriteTool.ts",
+      "ummaya_path": "tui/src/tools/TodoWriteTool/TodoWriteTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TodoWriteTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "ToolSearchTool",
+      "cc_group": "skill-workflow",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ToolSearchTool/ToolSearchTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/ToolSearchTool/ToolSearchTool.ts",
+      "ummaya_path": "tui/src/tools/ToolSearchTool/ToolSearchTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/ToolSearchTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TranslateTool",
+      "cc_group": "agent-task",
+      "source_path": "tui/src/tools/TranslateTool/",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/TranslateTool/",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/TranslateTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "plan",
+      "permission_policy": "tier-4: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "TungstenTool",
+      "cc_group": "test-dev-only",
+      "source_path": "tui/src/tools/TungstenTool/TungstenTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/TungstenTool/TungstenTool.ts",
+      "feature_status": "ant-only",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 0,
+      "exposure_policy_id": "tier-0",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-0: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "VerifyPlanExecutionTool",
+      "cc_group": "agent-task",
+      "source_path": "tui/src/tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "VerifyPrimitive",
+      "cc_group": "ummaya-primitive",
+      "source_path": "tui/src/tools/VerifyPrimitive/VerifyPrimitive.ts",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/VerifyPrimitive/VerifyPrimitive.ts",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/VerifyPrimitive.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "always-loaded",
+      "trust_tier": 5,
+      "exposure_policy_id": "tier-5",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-5: protected primitive routing; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": true,
+      "protected_primitive_reason": "protected primitive routing: protected AX identity and verification checks remain visible as the consent boundary, but PIPA and identity walls are bypass-immune.",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "WebBrowserTool",
+      "cc_group": "web-source",
+      "source_path": "blocked",
+      "cc_source_path": "missing",
+      "ummaya_path": "missing",
+      "feature_status": "feature-gated",
+      "parity_status": "missing",
+      "status": "missing",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "UMMAYA implementation path is missing.",
+      "registered_capability": false,
+      "exposure_state": "unsupported",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "blocked: tier-3; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA implementation path is missing.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "WebFetchTool",
+      "cc_group": "web-source",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/WebFetchTool/WebFetchTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/WebFetchTool/WebFetchTool.ts",
+      "ummaya_path": "tui/src/tools/WebFetchTool/WebFetchTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/WebFetchTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-3: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "WebSearchTool",
+      "cc_group": "web-source",
+      "source_path": ".references/claude-code-sourcemap/restored-src/src/tools/WebSearchTool/WebSearchTool.ts",
+      "cc_source_path": ".references/claude-code-sourcemap/restored-src/src/tools/WebSearchTool/WebSearchTool.ts",
+      "ummaya_path": "tui/src/tools/WebSearchTool/WebSearchTool.ts",
+      "feature_status": "default",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "different",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/WebSearchTool.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 3,
+      "exposure_policy_id": "tier-3",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-3: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Source differs from restored Claude Code; Task 4 records a bounded diff artifact.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "WorkflowTool",
+      "cc_group": "skill-workflow",
+      "source_path": "tui/src/tools/WorkflowTool/WorkflowTool.ts",
+      "cc_source_path": "missing",
+      "ummaya_path": "tui/src/tools/WorkflowTool/WorkflowTool.ts",
+      "feature_status": "feature-gated",
+      "parity_status": "registry-hidden",
+      "status": "registry-hidden",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": "not-applicable",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "hidden",
+      "trust_tier": 4,
+      "exposure_policy_id": "tier-4",
+      "permission_mode_boundary": "not-applicable",
+      "permission_policy": "tier-4: bounded exposure; docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "Capability exists but remains hidden until Task 5 exposure policy and later registry work allow it.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    },
+    {
+      "tool_name": "WorkspaceToolAdapter",
+      "cc_group": "ummaya-primitive",
+      "source_path": "tui/src/tools/WorkspaceToolAdapter/",
+      "cc_source_path": "not-present-in-cc",
+      "ummaya_path": "tui/src/tools/WorkspaceToolAdapter/",
+      "feature_status": "UMMAYA-specific",
+      "parity_status": "modified",
+      "status": "modified",
+      "diff_status": "not-applicable",
+      "parity_diff_artifact": ".omo/evidence/cc-original-tool-layer-port/parity/WorkspaceToolAdapter.json",
+      "blocked_reason": "",
+      "registered_capability": true,
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 5,
+      "exposure_policy_id": "tier-5",
+      "permission_mode_boundary": "bypass-blocked",
+      "permission_policy": "tier-5: explicit permission gauntlet; docs/vision.md Permission Pipeline and docs/requirements/cc-tool-layer-scope-contract.md",
+      "default_roots": "not-applicable",
+      "mcp_server_class": "not-mcp",
+      "protected_primitive_routing": false,
+      "protected_primitive_reason": "",
+      "accepted_divergence": "UMMAYA tool-surface swap; not present in restored Claude Code.",
+      "tests": [
+        "tui/tests/tools/ccToolInventory.test.ts::emits restored cc tool groups from source tree",
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ],
+      "evidence": [
+        ".omo/evidence/cc-original-tool-layer-port/task-3-inventory.json",
+        ".omo/evidence/cc-original-tool-layer-port/task-4-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-5-green.txt",
+        ".omo/evidence/cc-original-tool-layer-port/task-13-green.txt"
+      ],
+      "test_evidence": [
+        "tui/tests/tools/ccToolParityClassification.test.ts::classifies_each_tool_with_a_supported_status",
+        "tui/tests/tools/ccToolExposurePolicy.test.ts::requires_permission_for_tier_one_and_above",
+        "tui/tests/tools/featureGatedToolPolicy.test.ts::remote_schedule_workflow_tools_are_hidden_or_permission_gated"
+      ]
+    }
+  ]
+}

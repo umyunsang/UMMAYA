@@ -180,7 +180,7 @@ const SPECIAL_VAR_NAMES = new Set([
  * expansion, brace expressions).
  *
  * This set is not exhaustive — it documents KNOWN dangerous types. The real
- * safety property is the allowlist in walkArgument/walkCommand: any type NOT
+ * safety property is the allowlist in walkArgument/walkCommand: types NOT
  * explicitly handled there also triggers too-complex.
  */
 const DANGEROUS_TYPES = new Set([
@@ -355,7 +355,7 @@ function maskBracesInQuotedContexts(cmd: string): string {
         i++
       }
     } else {
-      // Unquoted: `\` escapes any next char.
+      // Unquoted: `\` escapes the next char.
       if (c === '\\' && i + 1 < cmd.length) {
         out.push(c, cmd[i + 1]!)
         i += 2
@@ -374,7 +374,7 @@ const DOLLAR = String.fromCharCode(0x24)
 
 /**
  * Parse a bash command string and extract a flat list of simple commands.
- * Returns 'too-complex' if the command uses any shell feature we can't
+ * Returns 'too-complex' if the command uses a shell feature we can't
  * statically analyze. Returns 'parse-unavailable' if tree-sitter WASM isn't
  * loaded — caller should fall back to conservative behavior.
  */
@@ -460,7 +460,7 @@ export function parseForSecurityFromAst(
 }
 
 function walkProgram(root: Node): ParseForSecurityResult {
-  // ERROR-node check folded into collectCommands — any unhandled node type
+  // ERROR-node check folded into collectCommands — each unhandled node type
   // (including ERROR) falls through to tooComplex() in the default branch.
   // Avoids a separate full-tree walk for error detection.
   const commands: SimpleCommand[] = []
@@ -477,7 +477,7 @@ function walkProgram(root: Node): ParseForSecurityResult {
 
 /**
  * Recursively collect leaf `command` nodes from a structural wrapper node.
- * Returns an error result on any disallowed node type, or null on success.
+ * Returns an error result on a disallowed node type, or null on success.
  */
 function collectCommands(
   node: Node,
@@ -485,7 +485,7 @@ function collectCommands(
   varScope: Map<string, string>,
 ): ParseForSecurityResult | null {
   if (node.type === 'command') {
-    // Pass `commands` as the innerCommands accumulator — any $() extracted
+    // Pass `commands` as the innerCommands accumulator — extracted $()
     // during walkCommand gets appended alongside the outer command.
     const result = walkCommand(node, [], commands, varScope)
     if (result.kind !== 'simple') return result
@@ -798,7 +798,7 @@ function collectCommands(
       }
       if (child.type === 'do_group') {
         // while body: recurse with scope COPY (body assignments don't leak
-        // past done). The COPY contains any `read VAR` tracking from the
+        // past done). The COPY contains `read VAR` tracking from the
         // condition (already in real varScope at this point).
         const bodyScope = new Map(varScope)
         for (const c of child.children) {
@@ -994,7 +994,7 @@ function walkTestExpr(
     case 'regex':
     case 'extglob_pattern':
       // RHS of =~ or ==/!= in [[ ]]. Pattern text only — no code execution.
-      // Parser emits these as leaf nodes with no children (any $(...) or ${...}
+      // Parser emits these as leaf nodes with no children ($(...) or ${...}
       // inside the pattern is a sibling, not a child, and is walked separately).
       argv.push(node.text)
       return null
@@ -1322,8 +1322,8 @@ function walkCommand(
   //   argv = ['git', 'push', '--force']  ← correct, path validation sees 'push'
   //   .text = 'git $SUB --force'         ← deny rule 'git push:*' doesn't match
   //
-  // Detection: any `$<identifier>` in node.text means a simple_expansion was
-  // resolved (or we'd have returned too-complex). This catches $VAR at any
+  // Detection: `$<identifier>` in node.text means a simple_expansion was
+  // resolved (or we'd have returned too-complex). This catches $VAR at each
   // position — command_name, word, string interior, concatenation part.
   // `$(...)` doesn't match (paren, not identifier start). `'$VAR'` in single
   // quotes: tree-sitter's .text includes the quotes, so a naive check would
@@ -1408,7 +1408,7 @@ function walkArgument(
   switch (node.type) {
     case 'word': {
       // Unescape backslash sequences. In unquoted context, bash's quote
-      // removal turns `\X` → `X` for any character X. tree-sitter preserves
+      // removal turns `\X` → `X` for character X. tree-sitter preserves
       // the raw text. Required for checkSemantics: `\eval` must match
       // EVAL_LIKE_BUILTINS, `\zmodload` must match ZSH_DANGEROUS_BUILTINS.
       // Also makes argv accurate: `find -exec {} \;` → argv has `;` not
@@ -1513,7 +1513,7 @@ function walkString(
   let result = ''
   let cursor = -1
   // SECURITY: Track whether the string contains a runtime-unknown
-  // placeholder ($() output or unknown-value tracked var) vs any literal
+  // placeholder ($() output or unknown-value tracked var) vs literal
   // content. A string that is ONLY a placeholder (`"$(cmd)"`, `"$VAR"`
   // where VAR holds an unknown sentinel) produces an argv element that IS
   // the placeholder — which downstream path validation resolves as a
@@ -1670,7 +1670,7 @@ const ARITH_LEAF_RE =
  *
  * When safe, the caller puts the full `$((…))` span into argv as a literal
  * string. bash will expand it to an integer at runtime; the static string
- * won't match any sensitive path/deny patterns.
+ * won't match sensitive path/deny patterns.
  */
 function walkArithmetic(node: Node): ParseForSecurityResult | null {
   for (const child of node.children) {
@@ -1863,7 +1863,7 @@ function walkVariableAssignment(
   //     scope-model gaps: `||` reset, env-prefix chain (PS4='' && PS4='$'
   //     PS4+='(id)' cmd reads stale parent value), subshell.
   //   - bash's decode_prompt_string runs BEFORE promptvars, so `\044(id)`
-  //     (octal for `$`) becomes `$(id)` at trace time — any literal-char
+  //     (octal for `$`) becomes `$(id)` at trace time — literal-char
   //     check must model prompt-escape decoding exactly.
   //   - assignment paths exist outside walkVariableAssignment (for_statement
   //     sets loopVar directly, see that handler's PS4 check).
@@ -1909,8 +1909,8 @@ function walkVariableAssignment(
   // literal `~/x`. Later `cd $VAR` → our argv `['cd','~/x']`, bash runs
   // `cd /home/user/x`. Tilde expansion also happens after `=` and `:` in
   // assignment values (e.g. PATH=~/bin:~/sbin). We can't model it — reject
-  // any value containing `~` that isn't already quoted-literal (where bash
-  // doesn't expand). Conservative: any `~` in value → reject.
+  // values containing `~` that aren't already quoted-literal (where bash
+  // doesn't expand). Conservative: `~` in value → reject.
   if (value.includes('~')) {
     return {
       kind: 'too-complex',
@@ -1955,7 +1955,7 @@ function resolveSimpleExpansion(
   if (varName === null) return tooComplex(node)
   // Tracked vars: check stored value. Literal strings (VAR=/tmp) are
   // returned DIRECTLY so downstream path validation sees the real path.
-  // Non-literal values (containing any placeholder — loop vars, $() output,
+  // Non-literal values (containing a placeholder — loop vars, $() output,
   // read vars, composites like `VAR="prefix$(cmd)"`) are ONLY safe inside
   // strings; as bare args they'd hide the runtime path/flag from validation.
   //
@@ -2228,7 +2228,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         // SECURITY (SAST Mar 2026): the previous loop only skipped `--long`
         // flags, so `timeout -k 5 10 eval ...` broke out with name='timeout'
         // and the wrapped eval was never checked. Now handle known short
-        // flags AND fail closed on any unrecognized flag — an unknown flag
+        // flags AND fail closed on unrecognized flags — an unknown flag
         // means we can't locate the wrapped command, so we must not silently
         // fall through to name='timeout'.
         let i = 1
@@ -2351,7 +2351,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         // SECURITY: previous handling only stripped ONE flag and fell through
         // to slice(2) for anything unrecognized, so `stdbuf --output 0 eval`
         // → ['0','eval',...] → name='0' hid eval. Now iterate all known flag
-        // forms and fail closed on any unknown flag.
+        // forms and fail closed on unknown flags.
         let i = 1
         while (i < a.length) {
           const arg = a[i]!
@@ -2390,7 +2390,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
     // UNQUOTED empty expansion at command position (`V="" && $V cmd`) is a
     // bypass: bash drops the empty field and runs `cmd` as argv[0], while
     // our name="" skips every builtin check below. resolveSimpleExpansion
-    // rejects the $V case; this catches any other path to empty argv[0]
+    // rejects the $V case; this catches other paths to empty argv[0]
     // (concatenation of empties, walkString whitespace-quirk, future bugs).
     if (name === '') {
       return {
@@ -2437,7 +2437,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
           }
         }
         // Combined short flags: `-ra` is bash shorthand for `-r -a`.
-        // Check if any danger flag character appears in a combined flag
+        // Check if a danger flag character appears in a combined flag
         // string. The danger flag's NAME operand is the next argument.
         if (
           arg.length > 2 &&
@@ -2636,7 +2636,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         // `fc -l`, `fc -ln` list history — safe. `fc -e ed` invokes an
         // editor then executes. `fc -s [pat=rep]` RE-EXECUTES the last
         // matching command (optionally with substitution) — as dangerous
-        // as eval. Block any short-opt containing `e` or `s`.
+        // as eval. Block short-opts containing `e` or `s`.
         // to avoid introducing FPs for `fc -l` (list history).
       } else if (
         name === 'compgen' &&
@@ -2645,7 +2645,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         // `compgen -c/-f/-v` only list completions — safe. `compgen -C cmd`
         // immediately executes cmd; `-F func` calls a shell function; `-W list`
         // word-expands its argument (including $(cmd) even from single-quoted
-        // raw_string). Block any short-opt containing C/F/W (case-sensitive:
+        // raw_string). Block short-opts containing C/F/W (case-sensitive:
         // -c/-f are safe).
       } else {
         return {

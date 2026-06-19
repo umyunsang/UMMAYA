@@ -358,7 +358,15 @@ export async function* runToolUse(
     // Only use fallback if the tool was found via alias (deprecated name)
     if (
       fallbackTool &&
-      (fallbackTool.aliases?.includes(toolName) || isAdapterToolName(toolName))
+      (fallbackTool.aliases?.includes(toolName) ||
+        isAdapterToolName(toolName) ||
+        (
+          isDeferredTool(fallbackTool) &&
+          isToolSearchToolAvailable(toolUseContext.options.tools) &&
+          extractDiscoveredToolNames(toolUseContext.messages ?? []).has(
+            fallbackTool.name,
+          )
+        ))
     ) {
       tool = fallbackTool
     }

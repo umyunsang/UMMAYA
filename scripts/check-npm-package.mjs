@@ -16,7 +16,7 @@ if (!pack || !Array.isArray(pack.files)) {
 
 const maxPackedBytes = Number(process.env.UMMAYA_NPM_MAX_PACKED_BYTES ?? 15_000_000)
 const maxUnpackedBytes = Number(process.env.UMMAYA_NPM_MAX_UNPACKED_BYTES ?? 70_000_000)
-const maxEntries = Number(process.env.UMMAYA_NPM_MAX_ENTRIES ?? 2_700)
+const maxEntries = Number(process.env.UMMAYA_NPM_MAX_ENTRIES ?? 2_800)
 
 const files = pack.files.map((entry) => entry.path)
 const fileSet = new Set(files)
@@ -155,6 +155,8 @@ const required = [
   'tui/src/runtime/bundle-package/package.json',
   'tui/src/stubs/macro-preload.ts',
   'docs/plugins/security-review.md',
+  'specs/2803-document-production-hardening/contracts/document-tools.schema.json',
+  'tests/fixtures/documents/public_forms/baselines.yaml',
   'tests/fixtures/plugin_validation/checklist_manifest.yaml',
 ]
 
@@ -164,7 +166,7 @@ const deny = [
   /^\.references\//,
   /^\.specify\//,
   /(^|\/)secrets(\/|$)/,
-  /^specs\//,
+  /^specs\/(?!2803-document-production-hardening\/contracts\/document-tools\.schema\.json$)/,
   /(^|\/)node_modules(\/|$)/,
   /(^|\/)\.venv(\/|$)/,
   /(^|\/)dist(\/|$)/,

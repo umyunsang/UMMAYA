@@ -404,10 +404,10 @@ mock.module(join(TUI_ROOT, 'src/utils/messages.ts'), buildMessagesMockModule)
 
 // Dynamic import AFTER mock.module() so the mocked bindings are in place
 // when the legacy backend-chat provider resolves bridgeSingleton /
-// toolSerialization. Production deps intentionally use services/api/claude.ts;
+// toolSerialization. Production deps intentionally use services/api/ummaya.ts;
 // this file now guards only the compatibility provider.
 const { queryModelWithStreaming } = await import(
-  join(TUI_ROOT, 'src/services/api/ummaya.js')
+  join(TUI_ROOT, 'src/services/api/backendChat.js')
 )
 
 // ---------------------------------------------------------------------------
@@ -495,7 +495,10 @@ describe('thinking persistence guard', () => {
       ) as Array<{
         message: { content: Array<{ type?: string; text?: string; thinking?: string }> }
       }>
-      const terminal = assistantMessages[assistantMessages.length - 1]!
+      const terminal = assistantMessages.at(-1)
+      if (terminal === undefined) {
+        throw new Error('Expected terminal assistant message')
+      }
       expect(terminal.message.content.some((b) => b.type === 'thinking')).toBe(false)
       expect(terminal.message.content).toEqual([
         { type: 'text', text: '답변입니다' },
@@ -548,7 +551,10 @@ describe('document harness streaming prelude parity', () => {
     })
     expect(streamedTextDeltas).toHaveLength(1)
 
-    const terminal = assistantMessages(results).at(-1)!
+    const terminal = assistantMessages(results).at(-1)
+    if (terminal === undefined) {
+      throw new Error('Expected terminal assistant message')
+    }
     expect(terminal.message.content).toContainEqual({
       type: 'text',
       text: '먼저 다운로드 폴더에서 HWPX 양식 파일을 찾고 문서 검사 도구를 사용하겠습니다.',
@@ -657,7 +663,13 @@ describe('stream-event projection I2', () => {
     )
     expect(toolUseStart).toBeDefined()
 
-    const cb = toolUseStart!.event.content_block!
+    if (toolUseStart === undefined) {
+      throw new Error('Expected tool_use content_block_start')
+    }
+    const cb = toolUseStart.event.content_block
+    if (cb === undefined) {
+      throw new Error('Expected tool_use content block')
+    }
     expect(cb.id).toBe(callId)
     expect(cb.name).toBe(toolName)
     expect(cb.input).toEqual(toolArgs)
@@ -746,7 +758,10 @@ describe('CC provider contract I3', () => {
     const assistantMessages = results.filter(
       (r) => (r as { type?: string }).type === 'assistant',
     ) as AssistantMsgItem[]
-    const finalAssistant = assistantMessages[assistantMessages.length - 1]!
+    const finalAssistant = assistantMessages.at(-1)
+    if (finalAssistant === undefined) {
+      throw new Error('Expected final assistant message')
+    }
     expect(finalAssistant.message.content).toEqual([
       {
         type: 'tool_use',

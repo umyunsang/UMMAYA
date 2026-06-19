@@ -15,7 +15,7 @@
 **Unified Multi-Ministry Agent for Your Administration.**
 읽으면, **엄마야**.
 
-UMMAYA is a terminal agent for Korean public-service workflows. You describe the outcome in natural language, and UMMAYA routes the request through four main tools: `find`, `locate`, `check`, and `send`.
+UMMAYA is a terminal agent for Korean public-service workflows. You describe the outcome in natural language, and UMMAYA routes the request through five main tools: `find`, `locate`, `check`, `send`, and `document`.
 
 Read the full documentation at [ummaya-docs.pages.dev/ko](https://ummaya-docs.pages.dev/ko/). Start with the [Korean user guide](https://ummaya-docs.pages.dev/ko/start/why-ummaya/) if you want the product purpose first, or use [llms.txt](https://ummaya-docs.pages.dev/llms.txt) when an agent needs machine-readable project context.
 
@@ -92,7 +92,7 @@ Live public-information flows are shown most often in the demo because they can 
 
 ## Main Tools
 
-UMMAYA keeps the model-facing surface small. Instead of exposing dozens of agency-specific APIs directly to the LLM, it gives the agent four durable primitives and lets adapters handle ministry-specific details behind them.
+UMMAYA keeps the model-facing surface small. Instead of exposing dozens of agency-specific APIs directly to the LLM, it gives the agent five durable primitives and lets adapters handle ministry-specific details behind them.
 
 ### `locate`
 
@@ -142,6 +142,18 @@ Typical use:
 
 `send` is where UMMAYA moves beyond answer generation: if a live or permitted channel exists it calls that channel; if only a mock or official handoff is available it preserves the same receipt-shaped boundary and says so clearly.
 
+### `document`
+
+`document` is the public-form authoring harness. Korean administrative work often ends in a filled form — HWP, HWPX, PDF, OOXML, or ODF — and `document` inspects the source form, extracts its field schema, copies it for safe editing, fills and styles fields, validates against the public-form rules, and renders the result.
+
+Typical use:
+
+```text
+전입신고서 양식을 열어서 내 정보로 채워줘. 제출 전에 어떤 칸이 비었는지도 확인해줘.
+```
+
+`document` does not silently write a government form. Authoring is gated: the harness requires Evidence Fabric coverage and an explicit in-session approval before it fills or renders, and the terminal surfaces an approval review so a person confirms the work before it is committed.
+
 ## Permissioned Work
 
 UMMAYA separates public information from protected action.
@@ -152,6 +164,7 @@ UMMAYA separates public information from protected action.
 | Location resolution | Use live geocoding/address/region adapters when available. |
 | Identity and delegation | Use `check` to call the wrapped identity/consent channel, such as Mobile ID, MyData, certificates, or OmniOne-style QR/app verification. |
 | Certificates, payment, submission, correction | Use `send` with the delegation context when a live or mock channel is registered; otherwise hand off to the official path. |
+| Public-form authoring | Use `document` to inspect, fill, and render a Korean public form; stop for Evidence Fabric coverage and explicit approval before writing. |
 | API failure, zero result, missing authority | Stop clearly instead of inventing a result. |
 
 This is not a separate safety pitch. It is part of how `check` and `send` work: the model plans the task, calls the right wrapped public-service tools, and stops at the authority boundary instead of acting like a reference-only RAG answerer.

@@ -44,7 +44,7 @@
 import type {
   ChatMessage,
   ChatMessageToolCall,
-} from '../ipc/frames.generated.js'
+} from './chatMessageTypes.js'
 
 // ---------------------------------------------------------------------------
 // Loose input types — mirror the CC ``Message`` shape WITHOUT importing

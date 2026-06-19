@@ -1,15 +1,42 @@
 import { describe, expect, test } from 'bun:test'
-import { homedir } from 'node:os'
 import { getWorkspaceTools } from '../../src/tools/WorkspaceToolAdapter/WorkspaceToolAdapter.js'
 import { ToolSearchTool } from '../../src/tools/ToolSearchTool/ToolSearchTool.js'
-
-function toolByName(name: string) {
-  const tool = getWorkspaceTools().find(candidate => candidate.name === name)
-  if (!tool) throw new Error(`Missing workspace tool: ${name}`)
-  return tool
-}
+import {
+  pureLoc,
+  toolByName,
+  workspaceAdapterSource,
+} from './workspaceToolAdapter.helpers.js'
 
 describe('workspace tool adapters', () => {
+  test('keeps adapter orchestration split across cohesive policy modules', async () => {
+    const moduleNames = [
+      'allowedRootPolicy.ts',
+      'documentFormatGuards.ts',
+      'inputNormalization.ts',
+      'mcpExposurePolicy.ts',
+      'toolDefFactory.ts',
+    ]
+    const existenceChecks = await Promise.all(
+      moduleNames.map(async fileName => ({
+        fileName,
+        exists: await Bun.file(
+          `src/tools/WorkspaceToolAdapter/${fileName}`,
+        ).exists(),
+      })),
+    )
+    const missingModules = existenceChecks
+      .filter(check => !check.exists)
+      .map(check => check.fileName)
+    const adapterSource = await workspaceAdapterSource('WorkspaceToolAdapter.ts')
+
+    expect(missingModules).toEqual([])
+    expect(pureLoc(adapterSource)).toBeLessThanOrEqual(250)
+    expect(adapterSource).not.toContain('buildTool(')
+    expect(adapterSource).not.toContain('DOCUMENT_FORMAT_PATH_RE')
+    expect(adapterSource).not.toContain('normalizedDocumentGlobPattern')
+    expect(adapterSource).not.toContain('validateWorkspacePathInsideAllowedRoots')
+  })
+
   test('namespaces imported Claude Code file tools under workspace adapters', () => {
     const names = getWorkspaceTools().map(tool => tool.name)
 
@@ -29,7 +56,7 @@ describe('workspace tool adapters', () => {
     expect(names).not.toContain('Bash')
   })
 
-  test('keeps path discovery available on turn one and defers heavier adapters', () => {
+  test('keeps workspace read search available on turn one and defers heavier adapters', () => {
     const glob = toolByName('workspace_glob')
     const grep = toolByName('workspace_grep')
     const read = toolByName('workspace_read')
@@ -37,8 +64,10 @@ describe('workspace tool adapters', () => {
 
     expect(glob.alwaysLoad).toBe(true)
     expect(glob.shouldDefer).not.toBe(true)
-    expect(grep.shouldDefer).toBe(true)
-    expect(read.shouldDefer).toBe(true)
+    expect(grep.alwaysLoad).toBe(true)
+    expect(grep.shouldDefer).not.toBe(true)
+    expect(read.alwaysLoad).toBe(true)
+    expect(read.shouldDefer).not.toBe(true)
     expect(bash.shouldDefer).toBe(true)
     expect(bash.alwaysLoad).not.toBe(true)
   })
@@ -139,122 +168,7 @@ describe('workspace tool adapters', () => {
     ).resolves.toEqual({ result: true })
   })
 
-  test('infers Downloads path for natural workspace glob folder hints', async () => {
-    const glob = toolByName('workspace_glob')
-    const input: Record<string, unknown> = { pattern: '**/*.hwpx' }
-
-    await expect(
-      glob.validateInput?.(
-        input,
-        {
-          messages: [
-            {
-              type: 'user',
-              message: {
-                role: 'user',
-                content:
-                  '다운로드 폴더에 있는 주간활동일지 HWPX 문서를 찾아서 13주차로 작성해줘.',
-              },
-            },
-          ],
-        } as never,
-      ),
-    ).resolves.toEqual({ result: true })
-
-    expect(input.path).toBe(`${homedir()}/Downloads`)
-  })
-
-  test('normalizes malformed HWPX glob patterns from natural document search hints', async () => {
-    const glob = toolByName('workspace_glob')
-    const input: Record<string, unknown> = { pattern: '**/*.hwp *.hwpx' }
-
-    await expect(
-      glob.validateInput?.(
-        input,
-        {
-          messages: [
-            {
-              type: 'user',
-              message: {
-                role: 'user',
-                content:
-                  '다운로드 폴더에 있는 주간활동일지 HWPX 문서를 찾아서 13주차로 작성해줘.',
-              },
-            },
-          ],
-        } as never,
-      ),
-    ).resolves.toEqual({ result: true })
-
-    expect(input.pattern).toBe('**/*.hwpx')
-    expect(input.path).toBe(`${homedir()}/Downloads`)
-  })
-
-  test('widens HWPX basename prefix globs for document title substring searches', async () => {
-    const glob = toolByName('workspace_glob')
-    const input: Record<string, unknown> = { pattern: '**/주간활동일지*.hwpx' }
-
-    await expect(
-      glob.validateInput?.(
-        input,
-        {
-          messages: [
-            {
-              type: 'user',
-              message: {
-                role: 'user',
-                content:
-                  '다운로드 폴더에 있는 SW중심대학사업 현장미러형연계프로젝트 주간활동일지 HWPX 문서를 찾아줘.',
-              },
-            },
-          ],
-        } as never,
-      ),
-    ).resolves.toEqual({ result: true })
-
-    expect(input.pattern).toBe('**/*주간활동일지*.hwpx')
-    expect(input.path).toBe(`${homedir()}/Downloads`)
-  })
-
-  test('widens HWP basename prefix globs for downloaded public-form searches', async () => {
-    const glob = toolByName('workspace_glob')
-    const input: Record<string, unknown> = { pattern: '**/참가서약서*.hwp' }
-
-    await expect(
-      glob.validateInput?.(
-        input,
-        {
-          messages: [
-            {
-              type: 'user',
-              message: {
-                role: 'user',
-                content:
-                  '다운로드 폴더에 있는 2026년도 AX 아이디어 경진대회 참가서약서 HWP 문서를 찾아줘.',
-              },
-            },
-          ],
-        } as never,
-      ),
-    ).resolves.toEqual({ result: true })
-
-    expect(input.pattern).toBe('**/*참가서약서*.hwp')
-    expect(input.path).toBe(`${homedir()}/Downloads`)
-  })
-
-  test('keeps explicit workspace glob paths unchanged', async () => {
-    const glob = toolByName('workspace_glob')
-    const input: Record<string, unknown> = {
-      pattern: '**/*.hwpx',
-      path: '/tmp',
-    }
-
-    await glob.validateInput?.(input, { messages: [] } as never)
-
-    expect(input.path).toBe('/tmp')
-  })
-
-  test('loads deferred workspace adapters through ToolSearch', async () => {
+  test('ToolSearch can select always-loaded read while counting only deferred workspace adapters', async () => {
     const result = await ToolSearchTool.call(
       { query: 'select:workspace_read', max_results: 1 },
       {
@@ -266,6 +180,6 @@ describe('workspace tool adapters', () => {
     )
 
     expect(result.data.matches).toEqual(['workspace_read'])
-    expect(result.data.total_deferred_tools).toBe(5)
+    expect(result.data.total_deferred_tools).toBe(3)
   })
 })

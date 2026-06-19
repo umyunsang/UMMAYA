@@ -15,7 +15,7 @@
 //   - copyFile(src, dest, COPYFILE_EXCL) — fails if dest already exists;
 //     skips rather than overwriting.
 //   - fsync(dest fd) — durability before unlink.
-//   - --prune: any error during unlink phase throws + aborts (no partial-prune).
+//   - --prune: an unlink-phase error throws + aborts (no partial-prune).
 //   - src JSONL never truncated: if copyFile throws, src is untouched.
 //
 // Zero new runtime dependencies (AGENTS.md hard rule).
@@ -33,7 +33,7 @@ import { getUmmayaSessionsDir } from './ummayaPaths.js'
 export interface MigrateSessionsOpts {
   /**
    * When true, unlink each successfully copied source file after fsync.
-   * If any unlink fails, the entire prune phase aborts and throws — no
+   * If an unlink fails, the entire prune phase aborts and throws — no
    * partial-prune state is left.
    */
   prune?: boolean
@@ -248,7 +248,7 @@ export async function migrateSessions(
   }
 
   // --- Prune phase (only runs when prune: true) ---
-  // Invariant: any unlink failure aborts the entire prune phase and throws.
+  // Invariant: unlink failure aborts the entire prune phase and throws.
   // This prevents partial-prune state.
   if (prune && copied.length > 0) {
     for (const src of copied) {

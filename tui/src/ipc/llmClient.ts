@@ -29,8 +29,13 @@ import type {
   UmmayaContentBlockParam,
   UmmayaStopReason,
 } from './llmTypes.js'
+import {
+  extractTextualToolCallProposals,
+  parseTrailingRawJsonToolCallProposal,
+} from '../utils/rawJsonToolCall.js'
 
 export const UMMAYA_DEFAULT_MODEL = 'LGAI-EXAONE/K-EXAONE-236B-A23B'
+const TEXTUAL_TOOL_CALL_OPEN = '<tool_call>'
 
 export type LLMClientErrorClass = 'llm' | 'tool' | 'network'
 
@@ -78,6 +83,9 @@ const _tracer = trace.getTracer('ummaya.tui.llm', '0.1.0')
 interface _TurnAccumulator {
   messageId: string | null
   contentBlocks: UmmayaContentBlockParam[]
+  accumulatedText: string
+  emittedTextLength: number
+  shouldBufferTextDeltas: boolean
   usage: UmmayaUsage
   stopReason: UmmayaStopReason
   /** Index of the current text block. It is opened lazily on the first
@@ -105,6 +113,9 @@ function _defaultAccumulator(): _TurnAccumulator {
   return {
     messageId: null,
     contentBlocks: [],
+    accumulatedText: '',
+    emittedTextLength: 0,
+    shouldBufferTextDeltas: false,
     usage: { input_tokens: 0, output_tokens: 0 },
     stopReason: 'end_turn',
     blockIndex: -1,
@@ -115,13 +126,21 @@ function _defaultAccumulator(): _TurnAccumulator {
   }
 }
 
+function firstToolCallTextOffset(text: string): number {
+  const braceOffset = text.indexOf('{')
+  const tagOffset = text.indexOf(TEXTUAL_TOOL_CALL_OPEN)
+  if (braceOffset < 0) return tagOffset
+  if (tagOffset < 0) return braceOffset
+  return Math.min(braceOffset, tagOffset)
+}
+
 // ---------------------------------------------------------------------------
 // Helper: extract usage from an AssistantChunkFrame done-trailer.
 //
 // Spec 032 does not currently define a typed usage payload on the frame itself;
 // the Python backend is expected to embed usage counts in the frame's `trailer`
 // extra fields or in a sibling ephemeral dict.  Until the backend-side contract
-// is finalised in Spec 032 US4, we read from `(frame as any).usage` first
+// is finalised in Spec 032 US4, we read from the typed legacy `usage` field first
 // (a forward-compatible extension field the backend may include) and fall back
 // to zeros.  A TODO(T091) marks the binding point for the actual backend wiring.
 // ---------------------------------------------------------------------------
@@ -417,6 +436,103 @@ export class LLMClient {
         } satisfies UmmayaRawMessageStreamEvent
       }
 
+      const appendVisibleTextDelta = function* (
+        text: string,
+        previousTextLength: number,
+      ): Generator<UmmayaRawMessageStreamEvent, void, unknown> {
+        if (text.length === 0) return
+        yield* ensureTextBlock()
+        yield {
+          type: 'content_block_delta',
+          index: acc.blockIndex,
+          delta: { type: 'text_delta', text },
+        } satisfies UmmayaRawMessageStreamEvent
+
+        const existing = acc.contentBlocks[acc.blockIndex]
+        if (existing && existing.type === 'text') {
+          existing.text += text
+        } else {
+          acc.contentBlocks[acc.blockIndex] = { type: 'text', text }
+        }
+        acc.emittedTextLength = previousTextLength + text.length
+      }
+
+      const appendAssistantText = function* (
+        text: string,
+      ): Generator<UmmayaRawMessageStreamEvent, void, unknown> {
+        if (text.length === 0) return
+        const previousTextLength = acc.accumulatedText.length
+        const bufferOffset = firstToolCallTextOffset(text)
+        const startsBuffering = !acc.shouldBufferTextDeltas && bufferOffset >= 0
+        if (startsBuffering) acc.shouldBufferTextDeltas = true
+        acc.accumulatedText += text
+        if (startsBuffering) {
+          if (bufferOffset > 0) {
+            yield* appendVisibleTextDelta(
+              text.slice(0, bufferOffset),
+              previousTextLength,
+            )
+          }
+          return
+        }
+        if (!acc.shouldBufferTextDeltas) {
+          yield* appendVisibleTextDelta(text, previousTextLength)
+        }
+      }
+
+      const flushBufferedText = function* (): Generator<
+        UmmayaRawMessageStreamEvent,
+        void,
+        unknown
+      > {
+        if (acc.accumulatedText.length <= acc.emittedTextLength) return
+        yield* appendVisibleTextDelta(
+          acc.accumulatedText.slice(acc.emittedTextLength),
+          acc.emittedTextLength,
+        )
+      }
+
+      const flushPreludeBeforeRawJsonToolUse = function* (
+        prelude: string,
+      ): Generator<UmmayaRawMessageStreamEvent, void, unknown> {
+        if (prelude.length <= acc.emittedTextLength) return
+        yield* appendVisibleTextDelta(
+          prelude.slice(acc.emittedTextLength),
+          acc.emittedTextLength,
+        )
+      }
+
+      const appendRawJsonToolUseBlock = function* (params: {
+        readonly name: string
+        readonly input: Record<string, unknown>
+        readonly id?: string
+      }): Generator<UmmayaRawMessageStreamEvent, void, unknown> {
+        const toolBlockIndex = acc.contentBlocks.length
+        acc.toolBlockCounter += 1
+        const toolUseId = params.id ?? 'call_raw_json_tool_0'
+        yield {
+          type: 'content_block_start',
+          index: toolBlockIndex,
+          content_block: {
+            type: 'tool_use',
+            id: toolUseId,
+            name: params.name,
+            input: params.input,
+          },
+        } satisfies UmmayaRawMessageStreamEvent
+        yield {
+          type: 'content_block_stop',
+          index: toolBlockIndex,
+        } satisfies UmmayaRawMessageStreamEvent
+        acc.contentBlocks[toolBlockIndex] = {
+          type: 'tool_use',
+          id: toolUseId,
+          name: params.name,
+          input: params.input,
+        }
+        acc.stopReason = 'tool_use'
+      }
+
       for await (const frame of this.bridge.frames()) {
         // Filter: only process frames for this turn's correlation_id.
         if (frame.correlation_id !== correlationId) continue
@@ -483,21 +599,7 @@ export class LLMClient {
 
             // Emit text delta (even if delta is empty — forward compat).
             if (chunk.delta.length > 0) {
-              yield* ensureTextBlock()
-              yield {
-                type: 'content_block_delta',
-                index: acc.blockIndex,
-                delta: { type: 'text_delta', text: chunk.delta },
-              } satisfies UmmayaRawMessageStreamEvent
-
-              // Accumulate text into the content block for the final object.
-              const existing = acc.contentBlocks[acc.blockIndex]
-              if (existing && existing.type === 'text') {
-                existing.text += chunk.delta
-              } else {
-                // First delta for this block index.
-                acc.contentBlocks[acc.blockIndex] = { type: 'text', text: chunk.delta }
-              }
+              yield* appendAssistantText(chunk.delta)
             }
           } else {
             // done=true: terminal chunk (V2 invariant satisfied here).
@@ -510,18 +612,37 @@ export class LLMClient {
 
             // Emit any final delta text if present.
             if (chunk.delta.length > 0) {
-              yield* ensureTextBlock()
-              yield {
-                type: 'content_block_delta',
-                index: acc.blockIndex,
-                delta: { type: 'text_delta', text: chunk.delta },
-              } satisfies UmmayaRawMessageStreamEvent
-              const existing = acc.contentBlocks[acc.blockIndex]
-              if (existing && existing.type === 'text') {
-                existing.text += chunk.delta
-              } else {
-                acc.contentBlocks[acc.blockIndex] = { type: 'text', text: chunk.delta }
+              yield* appendAssistantText(chunk.delta)
+            }
+
+            const textualToolUse = extractTextualToolCallProposals({
+              text: acc.accumulatedText,
+            })
+            const rawJsonToolUse = textualToolUse === undefined
+              ? parseTrailingRawJsonToolCallProposal({
+                  text: acc.accumulatedText,
+                })
+              : undefined
+            if (textualToolUse !== undefined || rawJsonToolUse !== undefined) {
+              const prelude = textualToolUse?.text ?? rawJsonToolUse?.prelude ?? ''
+              yield* flushPreludeBeforeRawJsonToolUse(prelude)
+              yield* closeOpenBlock()
+              const proposals = textualToolUse?.proposals ??
+                (rawJsonToolUse !== undefined ? [rawJsonToolUse.proposal] : [])
+              for (let index = 0; index < proposals.length; index += 1) {
+                const proposal = proposals[index]
+                if (!proposal) continue
+                yield* appendRawJsonToolUseBlock({
+                  name: proposal.name,
+                  input: proposal.input,
+                  id: textualToolUse !== undefined
+                    ? `call_textual_tool_${index}`
+                    : 'call_raw_json_tool_0',
+                })
               }
+              acc.accumulatedText = prelude
+            } else if (acc.shouldBufferTextDeltas) {
+              yield* flushBufferedText()
             }
 
             // Extract usage from the done-frame.
@@ -557,6 +678,9 @@ export class LLMClient {
         else if (frame.kind === 'tool_call') {
           const toolFrame = frame as ToolCallFrame
           yield* ensureMessageStart(`tool-${correlationId}`)
+          if (acc.shouldBufferTextDeltas) {
+            yield* flushBufferedText()
+          }
           yield* closeOpenBlock()
           // tool_call frames may arrive interleaved with text streaming AND
           // thinking streaming in a multi-turn / parallel-tool / K-EXAONE

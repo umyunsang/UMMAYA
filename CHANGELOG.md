@@ -5,6 +5,35 @@ All notable changes to UMMAYA are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.5] - 2026-06-19
+
+### Added
+
+- Public document harness: a single model-facing `document` tool wraps Korean public-form
+  authoring (HWP/HWPX/PDF/OOXML/ODF) through internal operations — inspect, extract,
+  form-schema, copy-for-edit, apply-fill, apply-style, render, validate-public-form, and
+  save. Authoring is gated on Evidence Fabric coverage plus explicit approval.
+- TUI document approval review surface so document authoring stops for an in-session
+  approval before the harness writes, fills, or renders a public form.
+
+### Changed
+
+- Modernized adapter route selection: intent extraction → decision service → feasibility
+  → retrieval policy → cards/projection now ranks the concrete adapter set surfaced to
+  the model.
+
+### Fixed
+
+- Preserved issued document approval tokens across the TUI approval flow so an approved
+  authoring session is not re-prompted.
+
+## [v0.2.4] - 2026-05-31
+
+### Fixed
+
+- Synced the Homebrew cask artifact SHA with the published 0.2.4 macOS archive and cleaned
+  release artifacts so the npm tarball, Python wheel, TUI bundle, and Cask metadata agree.
+
 ## [v0.2.3] - 2026-05-26
 
 ### Fixed

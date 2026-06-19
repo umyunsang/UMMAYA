@@ -19,7 +19,7 @@
     "consumed_by": "`ummaya.llm.config.LLMClientConfig.token`",
     "default": "—",
     "range": "Bearer token",
-    "required": "No (user session)",
+    "required": "No (user-owned)",
     "source_doc": "[FriendliAI Suite](https://suite.friendli.ai)",
     "variable": "UMMAYA_FRIENDLI_TOKEN"
   },
@@ -62,14 +62,6 @@
     "required": "No",
     "source_doc": "[Live adapter gateway](#ummaya_live_adapter_proxy_timeout_seconds)",
     "variable": "UMMAYA_LIVE_ADAPTER_PROXY_TIMEOUT_SECONDS"
-  },
-  {
-    "consumed_by": "`ummaya.tools.live_proxy.invoke_live_adapter_proxy`",
-    "default": "—",
-    "range": "Bearer token",
-    "required": "No (operator-managed)",
-    "source_doc": "[Live adapter gateway](#ummaya_live_adapter_proxy_token)",
-    "variable": "UMMAYA_LIVE_ADAPTER_PROXY_TOKEN"
   },
   {
     "consumed_by": "`ummaya.gateway.app._require_gateway_token`",

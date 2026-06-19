@@ -33,11 +33,6 @@ import {
   isDocumentVisualRenderFailedOutput,
   renderDocumentToolResultIfPresent,
 } from '../_shared/documentToolResultRender.js'
-import { validateKmaAviationToolChoice } from '../_shared/kmaAviationGuard.js'
-import { validateKmaAnalysisToolChoice } from '../_shared/kmaAnalysisGuard.js'
-import { validateNmcAedToolChoice } from '../_shared/nmcAedGuard.js'
-import { validateProtectedCheckToolChoice } from '../_shared/protectedCheckGuard.js'
-import { validateDirectPublicDataToolChoice } from '../_shared/directPublicDataGuard.js'
 import {
   renderVerboseInputJson,
   renderVerboseOutputJson,
@@ -657,7 +652,6 @@ export const LookupPrimitive = buildTool({
     }
   },
 
-  // UMMAYA hotfix #2518 follow-up — CC pattern (tools/BashTool/UI.tsx:renderToolUseMessage).
   // Return an args preview so the citizen can see which tool was dispatched.
   // Spec 2521 (2026-05-01) — fetch-only surface; legacy mode='search'
   // payloads from older sessions surface as the bare tool_id.
@@ -703,21 +697,6 @@ export const LookupPrimitive = buildTool({
         errorCode: PrimitiveErrorCode.AdapterNotFound,
       }
     }
-
-    const protectedChoice = validateProtectedCheckToolChoice(input.tool_id, context)
-    if (protectedChoice) return protectedChoice
-    const directPublicDataChoice = validateDirectPublicDataToolChoice(
-      input.tool_id,
-      context,
-      input.params,
-    )
-    if (directPublicDataChoice) return directPublicDataChoice
-    const kmaAviationChoice = validateKmaAviationToolChoice(input.tool_id, context)
-    if (kmaAviationChoice) return kmaAviationChoice
-    const kmaAnalysisChoice = validateKmaAnalysisToolChoice(input.tool_id, context)
-    if (kmaAnalysisChoice) return kmaAnalysisChoice
-    const nmcAedChoice = validateNmcAedToolChoice(input.tool_id, context)
-    if (nmcAedChoice) return nmcAedChoice
 
     // Tier 1 — synced backend manifest (FR-017).
     if (isManifestSynced()) {
@@ -805,8 +784,6 @@ export const LookupPrimitive = buildTool({
     if (options.verbose || options.isTranscriptMode) {
       return renderVerboseOutputJson(gatedOutput)
     }
-    // UMMAYA hotfix #2519 (CC-original migration, 2026-04-30):
-    //
     // After the dispatchPrimitive register-and-await rewrite, output.result
     // is the actual primitive output (the inner of the backend envelope:
     // src/ummaya/tools/find.py LookupSearchResult / LookupRecord /
@@ -886,7 +863,7 @@ export const LookupPrimitive = buildTool({
   async call(input, context) {
     const result = await dispatchPrimitive<Output>({
       primitive: 'find',
-      args: input as Record<string, unknown>,
+      args: input,
       context,
       registry: getOrCreatePendingCallRegistry(),
       bridge: getOrCreateUmmayaBridge(),

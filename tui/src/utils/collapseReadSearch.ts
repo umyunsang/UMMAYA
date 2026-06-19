@@ -54,7 +54,7 @@ export type SearchOrReadResult = {
   isMemoryWrite: boolean
   /**
    * True for meta-operations that should be absorbed into a collapse group
-   * without incrementing any count (Snip, ToolSearch). They remain visible
+   * without incrementing the count (Snip, ToolSearch). They remain visible
    * in verbose mode via the groupMessages iteration.
    */
   isAbsorbedSilently: boolean
@@ -212,7 +212,7 @@ export function getToolSearchOrReadInfo(
   }
   // The tool's isSearchOrReadCommand method handles its own input validation via safeParse,
   // so passing the raw input is safe. The type assertion is necessary because Tool[] uses
-  // the default generic which expects { [x: string]: any }, but we receive unknown at runtime.
+  // the default generic expects a loose record, but we receive unknown at runtime.
   const result = tool.isSearchOrReadCommand(
     toolInput as { [x: string]: unknown },
   )
@@ -481,7 +481,7 @@ export function getToolUseIdsFromCollapsedGroup(
 }
 
 /**
- * Check if any tool in a collapsed group is in progress.
+ * Check if a tool in a collapsed group is in progress.
  */
 export function hasAnyToolInProgress(
   message: CollapsedReadSearchGroup,

@@ -9,9 +9,7 @@ const WELCOME_V2_WIDTH = 58
 
 function safeVersion(): string {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const g = globalThis as any
-    if (typeof g.MACRO !== 'undefined' && g.MACRO.VERSION) return g.MACRO.VERSION
+    if (typeof MACRO !== 'undefined' && MACRO.VERSION) return MACRO.VERSION
   } catch {
     /* ignore */
   }

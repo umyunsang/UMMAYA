@@ -18,7 +18,11 @@ import type { Tool } from '../../Tool.js'
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logMCPDebug, logMCPError } from '../../utils/log.js'
-import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
+import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+import {
+  assertTrustedMcpServer,
+  checkMcpServerTrustPermission,
+} from '../MCPTool/trustPolicy.js'
 
 const inputSchema = lazySchema(() => z.object({}))
 type InputSchema = ReturnType<typeof inputSchema>
@@ -79,10 +83,21 @@ export function createMcpAuthTool(
     get inputSchema(): InputSchema {
       return inputSchema()
     },
-    async checkPermissions(input): Promise<PermissionDecision> {
-      return { behavior: 'allow', updatedInput: input }
+    async checkPermissions(input, context): Promise<PermissionResult> {
+      return checkMcpServerTrustPermission(
+        serverName,
+        input,
+        context,
+        `MCP server "${serverName}" requires trust before authentication can run.`,
+      )
     },
     async call(_input, context) {
+      assertTrustedMcpServer(
+        context.getAppState().toolPermissionContext,
+        serverName,
+        `MCP server "${serverName}" requires trust before authentication can run.`,
+      )
+
       // claude.ai connectors use a separate auth flow (handleClaudeAIAuth in
       // MCPRemoteServerMenu) that we don't invoke programmatically here —
       // just point the user at /mcp.
@@ -196,6 +211,9 @@ export function createMcpAuthTool(
           },
         }
       } catch (err) {
+        if (!(err instanceof Error)) {
+          throw err
+        }
         return {
           data: {
             status: 'error' as const,

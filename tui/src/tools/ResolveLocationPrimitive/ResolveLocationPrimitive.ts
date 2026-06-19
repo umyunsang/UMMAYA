@@ -16,8 +16,6 @@ import {
   LOCATE_TOOL_PROMPT,
 } from './prompt.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
-import { validateKmaAviationToolChoice } from '../_shared/kmaAviationGuard.js'
-import { validateDirectPublicDataToolChoice } from '../_shared/directPublicDataGuard.js'
 import {
   renderVerboseInputJson,
   renderVerboseOutputJson,
@@ -269,7 +267,7 @@ export const ResolveLocationPrimitive = buildTool({
 
   isMcp: false,
 
-  async validateInput(input: z.infer<InputSchema>, context: ToolUseContext) {
+  async validateInput(input: z.infer<InputSchema>, _context: ToolUseContext) {
     if (isRootPrimitiveToolId(input.tool_id)) {
       return {
         result: false as const,
@@ -277,14 +275,6 @@ export const ResolveLocationPrimitive = buildTool({
         errorCode: 1,
       }
     }
-    const kmaAviationChoice = validateKmaAviationToolChoice(input.tool_id, context)
-    if (kmaAviationChoice) return kmaAviationChoice
-    const directPublicDataChoice = validateDirectPublicDataToolChoice(
-      input.tool_id,
-      context,
-      input.params,
-    )
-    if (directPublicDataChoice) return directPublicDataChoice
     return { result: true as const }
   },
 

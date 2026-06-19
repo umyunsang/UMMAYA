@@ -86,7 +86,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: document-intake
+    support_component_id: document-intake
     artifact_id: artifact-hwpx-source-001
     artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
     evidence_ref: tests/tools/documents/test_intake_security.py
@@ -97,7 +97,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: hwpx-package-text-adapter
+    support_component_id: hwpx-package-text-adapter
     artifact_id: artifact-hwpx-source-001
     artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
     evidence_ref: tests/tools/documents/test_builtin_hwpx_engine.py
@@ -108,7 +108,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: hwpx-package-text-adapter
+    support_component_id: hwpx-package-text-adapter
     artifact_id: artifact-hwpx-source-001
     artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
     evidence_ref: tests/tools/documents/test_capability_profiles.py
@@ -119,7 +119,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: hwpx-package-text-adapter
+    support_component_id: hwpx-package-text-adapter
     artifact_id: artifact-hwpx-source-001
     artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
     evidence_ref: tests/tools/documents/test_adapter_registry.py
@@ -130,7 +130,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: document-permission-boundary
+    support_component_id: document-permission-boundary
     artifact_id: artifact-hwpx-source-001
     artifact_sha256: "1111111111111111111111111111111111111111111111111111111111111111"
     evidence_ref: tests/tools/documents/test_document_tool_flow.py
@@ -141,7 +141,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: hwpx-package-text-adapter
+    support_component_id: hwpx-package-text-adapter
     artifact_id: artifact-hwpx-derivative-001
     artifact_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
     document_diff_id: diff-hwpx-001
@@ -153,7 +153,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: rhwp-node-wasm-render-evidence
+    support_component_id: rhwp-node-wasm-render-evidence
     artifact_id: render-hwpx-page-001
     artifact_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
     document_diff_id: diff-hwpx-001
@@ -165,7 +165,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: hwpx-package-text-adapter
+    support_component_id: hwpx-package-text-adapter
     artifact_id: artifact-hwpx-derivative-001
     artifact_sha256: "2222222222222222222222222222222222222222222222222222222222222222"
     document_diff_id: diff-hwpx-001
@@ -177,7 +177,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: public-form-validator
+    support_component_id: public-form-validator
     artifact_id: validation-hwpx-001
     artifact_sha256: "4444444444444444444444444444444444444444444444444444444444444444"
     document_diff_id: diff-hwpx-001
@@ -189,7 +189,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: structured-document-diff
+    support_component_id: structured-document-diff
     artifact_id: diff-hwpx-001
     artifact_sha256: "3333333333333333333333333333333333333333333333333333333333333333"
     document_diff_id: diff-hwpx-001
@@ -201,7 +201,7 @@ lifecycle_records:
     status: pass
     known_format: hwpx
     format_family: hwp
-    adapter_id: cc-style-document-result-card
+    support_component_id: cc-style-document-result-card
     artifact_id: ux-hwpx-alpha9-terminal-frame
     artifact_sha256: "1212121212121212121212121212121212121212121212121212121212121212"
     document_diff_id: diff-hwpx-001

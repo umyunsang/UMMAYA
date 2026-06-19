@@ -7,6 +7,7 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { isTodoV2Enabled } from '../../utils/tasks.js'
 import { TodoListSchema } from '../../utils/todo/types.js'
 import { VERIFICATION_AGENT_TYPE } from '../AgentTool/constants.js'
+import { buildAgentSupportMetadata } from '../AgentTool/orchestrationSupport.js'
 import { TODO_WRITE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 
@@ -22,6 +23,10 @@ const outputSchema = lazySchema(() =>
     oldTodos: TodoListSchema().describe('The todo list before the update'),
     newTodos: TodoListSchema().describe('The todo list after the update'),
     verificationNudgeNeeded: z.boolean().optional(),
+    evidenceJoinKey: z.string(),
+    parentToolUseId: z.string(),
+    resumeToken: z.string(),
+    permissionFlow: z.literal('coordinator_parent_round_trip'),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -98,18 +103,32 @@ export const TodoWriteTool = buildTool({
         oldTodos,
         newTodos: todos,
         verificationNudgeNeeded,
+        ...buildAgentSupportMetadata({
+          taskId: todoKey,
+          parentToolUseId: context.toolUseId,
+        }),
       },
     }
   },
-  mapToolResultToToolResultBlockParam({ verificationNudgeNeeded }, toolUseID) {
+  mapToolResultToToolResultBlockParam(
+    {
+      verificationNudgeNeeded,
+      evidenceJoinKey,
+      parentToolUseId,
+      resumeToken,
+      permissionFlow,
+    },
+    toolUseID,
+  ) {
     const base = `Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable`
+    const support = `\n\nevidence_join_key: ${evidenceJoinKey}\nparent_tool_use_id: ${parentToolUseId}\nresume_token: ${resumeToken}\npermission_flow: ${permissionFlow}`
     const nudge = verificationNudgeNeeded
       ? `\n\nNOTE: You just closed out 3+ tasks and none of them was a verification step. Before writing your final summary, spawn the verification agent (subagent_type="${VERIFICATION_AGENT_TYPE}"). You cannot self-assign PARTIAL by listing caveats in your summary \u2014 only the verifier issues a verdict.`
       : ''
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: base + nudge,
+      content: base + support + nudge,
     }
   },
 } satisfies ToolDef<InputSchema, Output>)

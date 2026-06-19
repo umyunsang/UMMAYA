@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // UMMAYA FriendliAI client shim for the CC-restored provider.
 //
-// services/api/claude.ts is the Claude Code streaming provider shape. This
+// services/api/ummaya.ts is the Claude Code streaming provider shape. This
 // module supplies the one sanctioned swap: Anthropic SDK transport becomes
 // FriendliAI's OpenAI-compatible /chat/completions endpoint. query.ts still
 // owns the agentic loop; backend stdio remains only the tool executor for

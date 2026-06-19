@@ -138,8 +138,14 @@ Operator-managed live-adapter secrets for real local execution:
 - `UMMAYA_KAKAO_API_KEY`
 - `UMMAYA_DATA_GO_KR_API_KEY`
 
-`UMMAYA_FRIENDLI_TOKEN` is a user session credential. Public CLI users enter it through `/login`;
-do not store it in Infisical operator environments.
+`UMMAYA_FRIENDLI_TOKEN` is a user-owned model credential. Public CLI users enter it through
+`/login`, which persists the key in the user's normal UMMAYA global config for later launches;
+do not tie it to `UMMAYA_MEMDIR_USER` or store it in Infisical operator environments.
+
+Public packaged CLI runs use the hosted live-adapter gateway and must not ask the user for
+Kakao, data.go.kr, or gateway bearer credentials. `UMMAYA_LIVE_ADAPTER_PROXY_TOKEN` is retired
+from the client path; keep gateway provider keys server-side and use `UMMAYA_LIVE_ADAPTER_MODE=direct`
+only for intentional source-tree operator/developer debugging.
 
 Never commit `.env`, `secrets/`, local Codex config, local agent memory, or Claude local
 settings.

@@ -132,7 +132,7 @@ import { getGlobalConfig, saveGlobalConfig, getGlobalConfigWriteCount } from '..
 import { hasConsoleBillingAccess } from '../utils/billing.js';
 import { logEvent, type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js';
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
-import { textForResubmit, handleMessageFromStream, type StreamingToolUse, type StreamingThinking, isCompactBoundaryMessage, getMessagesAfterCompactBoundary, getContentText, createUserMessage, createAssistantMessage, createTurnDurationMessage, createAgentsKilledMessage, createApiMetricsMessage, createSystemMessage, createCommandInputMessage, formatCommandInputTags } from '../utils/messages.js';
+import { textForResubmit, handleMessageFromStream, type StreamingToolUse, type StreamingThinking, isCompactBoundaryMessage, getMessagesAfterCompactBoundary, getContentText, createUserMessage, createTurnDurationMessage, createAgentsKilledMessage, createApiMetricsMessage, createSystemMessage, createCommandInputMessage, finalizeStreamingAssistantMessage, formatCommandInputTags } from '../utils/messages.js';
 import { generateSessionTitle } from '../utils/sessionTitle.js';
 import { BASH_INPUT_TAG, COMMAND_MESSAGE_TAG, COMMAND_NAME_TAG, LOCAL_COMMAND_STDOUT_TAG } from '../constants/xml.js';
 import { escapeXml } from '../utils/xml.js';
@@ -713,7 +713,7 @@ export function REPL({
   // Incremented on transcript exit. Async v-render captures this at start;
   // each status write no-ops if stale (user left transcript mid-render —
   // the stable setState would otherwise stamp a ghost toast into the next
-  // session). Also clears any pending 4s auto-clear.
+  // session). Also clears a pending 4s auto-clear.
   const editorGenRef = useRef(0);
   const editorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const editorRenderingRef = useRef(false);
@@ -910,7 +910,7 @@ export function REPL({
   // Initialize true if remote mode with initial prompt (CCR processing it).
   const [isExternalLoading, setIsExternalLoadingRaw] = React.useState(remoteSessionConfig?.hasInitialPrompt ?? false);
 
-  // Derived: any loading source active. Read-only — no setter. Local query
+  // Derived: a loading source is active. Read-only — no setter. Local query
   // loading is driven by queryGuard (reserve/tryStart/end/cancelReservation),
   // external loading by setIsExternalLoading.
   const isLoading = isQueryActive || isExternalLoading;
@@ -1091,7 +1091,7 @@ export function REPL({
       return;
     }
 
-    // No active local JSX command, allow any update
+    // No active local JSX command, allow updates
     if (args?.clearLocalJSX) {
       setToolJSXInternal(null);
       return;
@@ -1254,7 +1254,7 @@ export function REPL({
   // eslint-disable-next-line react-hooks/exhaustive-deps -- length change covers appends; useUnseenDivider's count-drop guard clears dividerIndex on replace/rewind
   [dividerIndex, messages.length]);
   // Re-pin scroll to bottom and clear the unseen-messages baseline. Called
-  // on any user-driven return-to-live action (submit, type-into-empty,
+  // on user-driven return-to-live actions (submit, type-into-empty,
   // overlay appear/dismiss).
   const repinScroll = useCallback(() => {
     scrollRef.current?.scrollToBottom();
@@ -1326,7 +1326,7 @@ export function REPL({
     messagesLength: number;
     streamingToolUsesLength: number;
   } | null>(null);
-  // Initialize input with any early input that was captured before REPL was ready.
+  // Initialize input with early input captured before REPL was ready.
   // Using lazy initialization ensures cursor offset is set correctly in PromptInput.
   const [inputValue, setInputValueRaw] = useState(() => consumeEarlyInput());
   const inputValueRef = useRef(inputValue);
@@ -1459,18 +1459,18 @@ export function REPL({
   // throttle batches rapid updates). Cleared on message arrival (messages.ts)
   // so displayedMessages switches from deferredMessages to messages atomically.
   const [streamingText, setStreamingText] = useState<string | null>(null);
+  const streamingTextRef = useRef<string | null>(null);
+  const turnStartMessageCountRef = useRef(0);
   const reducedMotion = useAppState(s => s.settings.prefersReducedMotion) ?? false;
   const showStreamingText = !reducedMotion && !hasCursorUpViewportYankBug();
   const onStreamingText = useCallback((f: (current: string | null) => string | null) => {
+    const nextStreamingText = f(streamingTextRef.current);
+    streamingTextRef.current = nextStreamingText;
     if (!showStreamingText) return;
-    setStreamingText(f);
+    setStreamingText(nextStreamingText);
   }, [showStreamingText]);
 
-  // Hide the in-progress source line so text streams line-by-line, not
-  // char-by-char. lastIndexOf returns -1 when no newline, giving '' → null.
-  // Guard on showStreamingText so toggling reducedMotion mid-stream
-  // immediately hides the streaming preview.
-  const visibleStreamingText = streamingText && showStreamingText ? streamingText.substring(0, streamingText.lastIndexOf('\n') + 1) || null : null;
+  const visibleStreamingText = streamingText && showStreamingText ? streamingText.substring(0, streamingText.lastIndexOf('\n') + 1) || streamingText : null;
   const [lastQueryCompletionTime, setLastQueryCompletionTime] = useState(0);
   const [spinnerMessage, setSpinnerMessage] = useState<string | null>(null);
   const [spinnerColor, setSpinnerColor] = useState<keyof Theme | null>(null);
@@ -1573,6 +1573,7 @@ export function REPL({
     setUserInputOnProcessing(undefined);
     responseLengthRef.current = 0;
     apiMetricsRef.current = [];
+    streamingTextRef.current = null;
     setStreamingText(null);
     setStreamingToolUses([]);
     setSpinnerMessage(null);
@@ -1585,6 +1586,16 @@ export function REPL({
     // Promise chains for unconsumed checks (denied/aborted paths).
     clearSpeculativeChecks();
   }, [pickNewSpinnerTip]);
+
+  const finalizeStreamingAssistantIfNeeded = useCallback(() => {
+    setMessages(prev =>
+      finalizeStreamingAssistantMessage({
+        messages: prev,
+        streamingText: streamingTextRef.current,
+        turnStartMessageCount: turnStartMessageCountRef.current,
+      }),
+    );
+  }, [setMessages]);
 
   // Session backgrounding — hook is below, after getToolUseContext
 
@@ -1684,7 +1695,7 @@ export function REPL({
   // but keep it when isBriefOnly suppresses the streaming text display
   !visibleStreamingText || isBriefOnly);
 
-  // Check if any permission or ask question prompt is currently visible
+  // Check whether a permission or ask-question prompt is currently visible
   // This is used to prevent the survey from opening while prompts are active
   const hasActivePrompt = toolUseConfirmQueue.length > 0 || promptQueue.length > 0 || sandboxPermissionRequestQueue.length > 0 || elicitation.queue.length > 0 || workerSandboxPermissions.queue.length > 0;
   const feedbackSurveyOriginal = useFeedbackSurvey(messages, isLoading, submitCount, 'session', hasActivePrompt);
@@ -1825,7 +1836,7 @@ export function REPL({
       // Restore read file state from the message history
       restoreReadFileState(messages, log.projectPath ?? getOriginalCwd());
 
-      // Clear any active loading state (no queryId since we're not in a query)
+      // Clear active loading state (no queryId since we're not in a query)
       resetLoadingState();
       setAbortController(null);
       setConversationId(sessionId);
@@ -1864,7 +1875,7 @@ export function REPL({
       haikuTitleAttemptedRef.current = true;
       setHaikuTitle(undefined);
 
-      // Exit any worktree a prior /resume entered, then cd into the one
+      // Exit the worktree a prior /resume entered, then cd into the one
       // this session was in. Without the exit, resuming from worktree B
       // to non-worktree C leaves cwd/currentWorktreeSession stale;
       // resuming B→C where C is also a worktree fails entirely
@@ -1910,7 +1921,7 @@ export function REPL({
       }
 
       // Reconstruct replacement state for the resumed session. Runs after
-      // setSessionId so any NEW replacements post-resume write to the
+      // setSessionId so NEW replacements post-resume write to the
       // resumed session's tool-results dir. Gated on ref.current: the
       // initial mount already read the feature flag, so we don't re-read
       // it here (mid-session flag flips stay unobservable in both
@@ -1928,7 +1939,7 @@ export function REPL({
       // Use a callback to ensure we're not dependent on stale state
       setMessages(() => messages);
 
-      // Clear any active tool JSX
+      // Clear active tool JSX
       setToolJSX(null);
 
       // Clear input to ensure no residual state
@@ -2010,7 +2021,7 @@ export function REPL({
   // Calculate if cost dialog should be shown
   const showingCostDialog = !isLoading && showCostDialog;
 
-  // Determine which dialog should have focus (if any)
+  // Determine which dialog should have focus, when one exists
   // Permission and interactive dialogs can show even when toolJSX is set,
   // as long as shouldContinueAnimation is true. This prevents deadlocks when
   // agents set background hints while waiting for user interaction.
@@ -2105,7 +2116,7 @@ export function REPL({
   }, [focusedInputDialog, repinScroll]);
   function onCancel() {
     if (focusedInputDialog === 'elicitation') {
-      // Elicitation dialog handles its own Escape, and closing it shouldn't affect any loading state.
+      // Elicitation dialog handles its own Escape, and closing it shouldn't affect loading state.
       return;
     }
     logForDebugging(`[onCancel] focusedInputDialog=${focusedInputDialog} streamMode=${streamMode}`);
@@ -2122,14 +2133,10 @@ export function REPL({
     // generated before pressing Esc. Pushed before resetLoadingState clears
     // streamingText, and before query.ts yields the async interrupt marker,
     // giving final order [user, partial-assistant, [Request interrupted by user]].
-    if (streamingText?.trim()) {
-      setMessages(prev => [...prev, createAssistantMessage({
-        content: streamingText
-      })]);
-    }
+    finalizeStreamingAssistantIfNeeded();
     resetLoadingState();
 
-    // Clear any active token budget so the backstop doesn't fire on
+    // Clear active token budget so the backstop doesn't fire on
     // a stale budget if the query generator hasn't exited yet.
     if (feature('TOKEN_BUDGET')) {
       snapshotOutputTokensForTurn(null);
@@ -2671,7 +2678,7 @@ export function REPL({
       }
     }
 
-    // Mark onboarding as complete when any user message is sent to UMMAYA.
+    // Mark onboarding as complete when a user message is sent to UMMAYA.
     void maybeMarkProjectOnboardingComplete();
 
     // Extract a session title from the first real user message. One-shot
@@ -2844,6 +2851,7 @@ export function REPL({
         configWriteCount: getGlobalConfigWriteCount()
       })]);
     }
+    finalizeStreamingAssistantIfNeeded();
     resetLoadingState();
 
     // Log query profiling report if enabled
@@ -2896,6 +2904,7 @@ export function REPL({
       }
       apiMetricsRef.current = [];
       setStreamingToolUses([]);
+      streamingTextRef.current = null;
       setStreamingText(null);
 
       // messagesRef is updated synchronously by the setMessages wrapper
@@ -2904,6 +2913,7 @@ export function REPL({
       // React's scheduler (previously cost 20-56ms per prompt; the 56ms
       // case was a GC pause caught during the await).
       const latestMessages = messagesRef.current;
+      turnStartMessageCountRef.current = latestMessages.length;
       if (input) {
         await mrOnBeforeQuery(input, latestMessages, newMessages.length);
       }
@@ -2926,6 +2936,7 @@ export function REPL({
         // Always reset loading state in finally - this ensures cleanup even
         // if onQueryImpl throws. onTurnComplete is called separately in
         // onQueryImpl only on successful completion.
+        finalizeStreamingAssistantIfNeeded();
         resetLoadingState();
         await mrOnTurnComplete(messagesRef.current, abortController.signal.aborted);
 
@@ -2993,7 +3004,7 @@ export function REPL({
         setAbortController(null);
       }
 
-      // Auto-restore: if the user interrupted before any meaningful response
+      // Auto-restore: if the user interrupted before a meaningful response
       // arrived, rewind the conversation and restore their prompt — same as
       // opening the message selector and picking the last message.
       // This runs OUTSIDE the queryGuard.end() check because onCancel calls
@@ -3281,7 +3292,7 @@ export function REPL({
       }
     }
 
-    // Remote mode: skip empty input early before any state mutations
+    // Remote mode: skip empty input early before state mutations
     if (activeRemote.isRemoteMode && !input.trim()) {
       return;
     }
@@ -4163,7 +4174,7 @@ export function REPL({
       return 'hookEvent' in attachment && (attachment.hookEvent === 'Stop' || attachment.hookEvent === 'SubagentStop') && 'toolUseID' in attachment && attachment.toolUseID === currentToolUseID;
     });
 
-    // Check if any hook has a custom status message
+    // Check whether a hook has a custom status message
     const customMessage = currentHooks.find(p => p.data.statusMessage)?.data.statusMessage;
     if (customMessage) {
       // Use custom message with progress counter if multiple hooks

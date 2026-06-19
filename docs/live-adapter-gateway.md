@@ -29,15 +29,16 @@ UMMAYA_LIVE_ADAPTER_GATEWAY_RATE_LIMIT_PER_MINUTE=120
 UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES=65536
 ```
 
-Private/self-hosted gateways can require a bearer token:
+Private/self-hosted gateways with controlled server-to-server callers can require a bearer token:
 
 ```bash
 UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN=<redacted> \
 uv run --extra gateway ummaya-live-gateway
 ```
 
-The matching client-side setting is `UMMAYA_LIVE_ADAPTER_PROXY_TOKEN`. Public
-release clients should not need to set it.
+Do not use this static bearer-token mode for the hosted public release CLI route. Public release
+clients do not send a client-side gateway secret; the hosted gateway is protected by adapter
+allowlists, rate limits, request-size limits, observability, and provider quota controls.
 
 ## Container
 

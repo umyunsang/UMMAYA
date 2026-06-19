@@ -12,6 +12,7 @@ import {
   isTodoV2Enabled,
 } from '../../utils/tasks.js'
 import { getAgentName, getTeamName } from '../../utils/teammate.js'
+import { buildAgentSupportMetadata } from '../AgentTool/orchestrationSupport.js'
 import { TASK_CREATE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, getPrompt } from './prompt.js'
 
@@ -39,6 +40,10 @@ const outputSchema = lazySchema(() =>
       id: z.string(),
       subject: z.string(),
     }),
+    evidenceJoinKey: z.string(),
+    parentToolUseId: z.string(),
+    resumeToken: z.string(),
+    permissionFlow: z.literal('coordinator_parent_round_trip'),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -124,15 +129,24 @@ export const TaskCreateTool = buildTool({
           id: taskId,
           subject,
         },
+        ...buildAgentSupportMetadata({
+          taskId,
+          parentToolUseId: context.toolUseId,
+        }),
       },
     }
   },
   mapToolResultToToolResultBlockParam(content, toolUseID) {
-    const { task } = content as Output
+    const { task, evidenceJoinKey, parentToolUseId, resumeToken, permissionFlow } =
+      outputSchema().parse(content)
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: `Task #${task.id} created successfully: ${task.subject}`,
+      content: `Task #${task.id} created successfully: ${task.subject}
+evidence_join_key: ${evidenceJoinKey}
+parent_tool_use_id: ${parentToolUseId}
+resume_token: ${resumeToken}
+permission_flow: ${permissionFlow}`,
     }
   },
 } satisfies ToolDef<InputSchema, Output>)

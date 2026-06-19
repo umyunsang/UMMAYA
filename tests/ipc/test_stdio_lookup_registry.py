@@ -141,8 +141,12 @@ class _LookupSearchOnceLLMClient:
             yield StreamEvent(type="done")
 
 
-async def _run_lookup_search(
-    frame: ChatRequestFrame, monkeypatch: pytest.MonkeyPatch
+async def _run_find_tool_call(
+    frame: ChatRequestFrame,
+    monkeypatch: pytest.MonkeyPatch,
+    arguments: dict[str, object],
+    *,
+    tool_name: str = "find",
 ) -> _CaptureBuf:
     from ummaya.ipc import stdio as stdio_mod
     from ummaya.ipc.frame_schema import SessionEventFrame
@@ -186,8 +190,8 @@ async def _run_lookup_search(
         ts=_ts(),
         kind="tool_call",
         call_id=f"call-find-{uuid.uuid4().hex[:8]}",
-        name="find",
-        arguments={"mode": "search", "query": "부산 날씨", "top_k": 5},
+        name=tool_name,
+        arguments=arguments,
     )
     exit_frame = SessionEventFrame(
         session_id=session_id,
@@ -225,6 +229,16 @@ async def _run_lookup_search(
             r_file.close()
 
     return fake_stdout.buffer
+
+
+async def _run_lookup_search(
+    frame: ChatRequestFrame, monkeypatch: pytest.MonkeyPatch
+) -> _CaptureBuf:
+    return await _run_find_tool_call(
+        frame,
+        monkeypatch,
+        {"mode": "search", "query": "부산 날씨", "top_k": 5},
+    )
 
 
 @pytest.mark.asyncio
@@ -269,3 +283,96 @@ async def test_dispatch_primitive_lookup_rejects_legacy_search_mode(
     assert inner.get("reason") == "invalid_params", (
         f"Spec 2521: rejection reason must be 'invalid_params', got {inner.get('reason')!r}."
     )
+
+
+@pytest.mark.asyncio
+async def test_dispatch_primitive_lookup_missing_tool_id_returns_typed_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frame = _make_chat_request(
+        "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘."
+    )
+    buf = await _run_find_tool_call(
+        frame,
+        monkeypatch,
+        {"mode": "fetch", "params": {"query": "세부 정보 조회"}},
+    )
+
+    frames = buf.as_frames()
+    serialized = json.dumps(frames, ensure_ascii=False)
+    assert "LookupFetchInput" not in serialized, serialized
+    assert "input_value=''" not in serialized, serialized
+    assert "errors.pydantic.dev" not in serialized, serialized
+
+    tool_results = [f for f in frames if f.get("kind") == "tool_result"]
+    lookup_results = [f for f in tool_results if f.get("envelope", {}).get("kind") == "find"]
+    assert lookup_results, f"expected a find tool_result frame, got {frames!r}"
+
+    envelope = lookup_results[0]["envelope"]
+    inner = envelope.get("result")
+    assert isinstance(inner, dict), f"envelope.result must be typed LookupError: {envelope!r}"
+    assert inner.get("kind") == "error"
+    assert inner.get("reason") == "invalid_params"
+    assert inner.get("retryable") is False
+
+
+@pytest.mark.asyncio
+async def test_dispatch_primitive_lookup_missing_tool_id_repairs_hometax_params_query(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frame = _make_chat_request(
+        "작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘."
+    )
+    buf = await _run_find_tool_call(
+        frame,
+        monkeypatch,
+        {"mode": "fetch", "params": {"query": "종합소득세 환급"}},
+    )
+
+    frames = buf.as_frames()
+    serialized = json.dumps(frames, ensure_ascii=False)
+    assert "LookupFetchInput" not in serialized, serialized
+    assert "input_value=''" not in serialized, serialized
+    assert "errors.pydantic.dev" not in serialized, serialized
+    assert "requires a concrete adapter tool_id" not in serialized, serialized
+
+    tool_results = [f for f in frames if f.get("kind") == "tool_result"]
+    lookup_results = [f for f in tool_results if f.get("envelope", {}).get("kind") == "find"]
+    assert lookup_results, f"expected a find tool_result frame, got {frames!r}"
+
+
+@pytest.mark.asyncio
+async def test_direct_gov24_concrete_lookup_tool_call_uses_adapter_schema(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frame = _make_chat_request("정부24 주민등록등본 발급 가능 여부와 준비물을 확인해줘.")
+    buf = await _run_find_tool_call(
+        frame,
+        monkeypatch,
+        {
+            "certificate_type": "resident_registration",
+            "purpose": "민원 제출용",
+        },
+        tool_name="mock_lookup_module_gov24_certificate",
+    )
+
+    frames = buf.as_frames()
+    serialized = json.dumps(frames, ensure_ascii=False)
+    assert "Missing or invalid fields: certificate_type, purpose, params" not in serialized
+    assert "Invalid parameters for tool 'mock_lookup_module_gov24_certificate'" not in serialized
+
+    tool_results = [f for f in frames if f.get("kind") == "tool_result"]
+    lookup_results = [f for f in tool_results if f.get("envelope", {}).get("kind") == "find"]
+    assert lookup_results, f"expected a find tool_result frame, got {frames!r}"
+    result = lookup_results[0].get("envelope", {}).get("result", {})
+    assert isinstance(result, dict)
+    assert result.get("kind") == "record"
+    item = result.get("item")
+    assert isinstance(item, dict)
+    assert item.get("certificate_type") == "resident_registration"
+    assert item.get("certificate_type_ko") == "주민등록등본"
+
+    envelope = lookup_results[0]["envelope"]
+    inner = envelope.get("result")
+    assert isinstance(inner, dict), f"envelope.result must be a dict: {envelope!r}"
+    assert inner.get("kind") == "record"

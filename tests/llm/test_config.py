@@ -75,6 +75,12 @@ def test_default_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     assert config.timeout == 300.0
 
 
+def test_default_stream_idle_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UMMAYA_FRIENDLI_TOKEN", "test-token-123")
+    config = LLMClientConfig()
+    assert config.stream_idle_timeout == 90.0
+
+
 def test_default_max_retries(monkeypatch: pytest.MonkeyPatch) -> None:
     """max_retries defaults to 3."""
     monkeypatch.setenv("UMMAYA_FRIENDLI_TOKEN", "test-token-123")
@@ -119,6 +125,13 @@ def test_override_timeout_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert config.timeout == 180.0
 
 
+def test_override_stream_idle_timeout_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UMMAYA_FRIENDLI_TOKEN", "test-token-123")
+    monkeypatch.setenv("UMMAYA_LLM_STREAM_IDLE_TIMEOUT_SECONDS", "45")
+    config = LLMClientConfig()
+    assert config.stream_idle_timeout == 45.0
+
+
 # ---------------------------------------------------------------------------
 # Validation errors — invalid field values
 # ---------------------------------------------------------------------------
@@ -143,5 +156,12 @@ def test_invalid_timeout_env_negative(monkeypatch: pytest.MonkeyPatch) -> None:
     """A negative UMMAYA_LLM_TIMEOUT_SECONDS is rejected with ValidationError."""
     monkeypatch.setenv("UMMAYA_FRIENDLI_TOKEN", "test-token-123")
     monkeypatch.setenv("UMMAYA_LLM_TIMEOUT_SECONDS", "-1")
+    with pytest.raises(ValidationError):
+        LLMClientConfig()
+
+
+def test_invalid_stream_idle_timeout_env_negative(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UMMAYA_FRIENDLI_TOKEN", "test-token-123")
+    monkeypatch.setenv("UMMAYA_LLM_STREAM_IDLE_TIMEOUT_SECONDS", "-1")
     with pytest.raises(ValidationError):
         LLMClientConfig()

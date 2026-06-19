@@ -29,6 +29,11 @@ const updateUsage = (current: _NNU, delta: _NNU): _NNU => {
   return out
 }
 const accumulateUsage = (total: _NNU, current: _NNU): _NNU => updateUsage(total, current)
+export function getMessageStartUsageDelta(event: {
+  readonly message?: { readonly usage?: NonNullableUsage }
+}): NonNullableUsage | undefined {
+  return event.message?.usage
+}
 import stripAnsi from 'strip-ansi'
 import type { Command } from './commands.js'
 import { getSlashCommandToolSkills } from './commands.js'
@@ -53,10 +58,6 @@ import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import {
-  stripTextToolCallBlocks,
-  textContainsToolCall,
-} from './tools/_shared/textToolCallGuard.js'
 import type { Message } from './types/message.js'
 import type { OrphanedPermission } from './types/textInputTypes.js'
 import { createAbortController } from './utils/abortController.js'
@@ -808,10 +809,13 @@ export class QueryEngine {
           if (message.event.type === 'message_start') {
             // Reset current message usage for new message
             currentMessageUsage = EMPTY_USAGE
-            currentMessageUsage = updateUsage(
-              currentMessageUsage,
-              message.event.message.usage,
-            )
+            const messageStartUsage = getMessageStartUsageDelta(message.event)
+            if (messageStartUsage !== undefined) {
+              currentMessageUsage = updateUsage(
+                currentMessageUsage,
+                messageStartUsage,
+              )
+            }
           }
           if (message.event.type === 'message_delta') {
             currentMessageUsage = updateUsage(

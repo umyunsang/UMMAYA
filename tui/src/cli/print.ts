@@ -25,9 +25,9 @@ import type { ToolPermissionContext } from 'src/Tool.js'
 import type { ThinkingConfig } from 'src/utils/thinking.js'
 import { assembleToolPool, filterToolsByDenyRules } from 'src/tools.js'
 import {
-  stripTextToolCallBlocks,
-  textContainsToolCall,
-} from 'src/tools/_shared/textToolCallGuard.js'
+  stripToolCallProposalText,
+  textContainsToolCallProposal,
+} from 'src/utils/rawJsonToolCall.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { uniq } from 'src/utils/array.js'
 import { mergeAndFilterTools } from 'src/utils/toolPool.js'
@@ -883,12 +883,12 @@ export async function runHeadless(
         if (
           block.type !== 'text' ||
           typeof block.text !== 'string' ||
-          !textContainsToolCall(block.text)
+          !textContainsToolCallProposal(block.text)
         ) {
           return block
         }
         changed = true
-        const stripped = stripTextToolCallBlocks(block.text)
+        const stripped = stripToolCallProposalText(block.text)
         return {
           ...block,
           text:
@@ -909,9 +909,9 @@ export async function runHeadless(
     if (
       message.type === 'result' &&
       typeof message.result === 'string' &&
-      textContainsToolCall(message.result)
+      textContainsToolCallProposal(message.result)
     ) {
-      const stripped = stripTextToolCallBlocks(message.result)
+      const stripped = stripToolCallProposalText(message.result)
       return {
         ...message,
         result:

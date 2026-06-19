@@ -113,23 +113,14 @@ export async function authLogin({
   email,
   sso,
   console: useConsole,
-  claudeai,
 }: {
   email?: string
   sso?: boolean
   console?: boolean
-  claudeai?: boolean
 }): Promise<void> {
-  if (useConsole && claudeai) {
-    process.stderr.write(
-      'Error: --console and --claudeai cannot be used together.\n',
-    )
-    process.exit(1)
-  }
-
   const settings = getInitialSettings()
   // forceLoginMethod is a hard constraint (enterprise setting) — matches ConsoleOAuthFlow behavior.
-  // Without it, --console selects Console; --claudeai (or no flag) selects claude.ai.
+  // Without it, --console selects Console; otherwise use the managed account flow.
   const loginWithClaudeAi = settings.forceLoginMethod
     ? settings.forceLoginMethod === 'claudeai'
     : !useConsole
@@ -247,7 +238,7 @@ export async function authStatus(opts: {
   if (using3P) {
     authMethod = 'third_party'
   } else if (authTokenSource === 'claude.ai') {
-    authMethod = 'claude.ai'
+    authMethod = 'managed_account'
   } else if (authTokenSource === 'apiKeyHelper') {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
@@ -307,7 +298,7 @@ export async function authStatus(opts: {
     if (resolvedApiKeySource) {
       output.apiKeySource = resolvedApiKeySource
     }
-    if (authMethod === 'claude.ai') {
+    if (authMethod === 'managed_account') {
       output.email = oauthAccount?.emailAddress ?? null
       output.orgId = oauthAccount?.organizationUuid ?? null
       output.orgName = oauthAccount?.organizationName ?? null

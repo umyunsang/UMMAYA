@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createHash } from 'node:crypto'
+import {
+  enforceDocumentSourceApprovalForDispatch,
+  normalizeDocumentSourceSupportedPatchesForDispatch,
+} from './documentSourceVerification.js'
 
 const APPROVAL_TOKEN_RE = /승인|\bapprove\b/giu
 const APPROVAL_WORD_RE = /승인|\bapprove\b/iu
@@ -34,11 +38,15 @@ export function normalizeDocumentMutationPayloadsForDispatch(
   args: Record<string, unknown>,
   userText: string | undefined,
 ): Record<string, unknown> {
-  return normalizeApprovedDraftPayloadForDispatch(
+  const sourceNormalization = normalizeDocumentSourceSupportedPatchesForDispatch(
     normalizeDocumentStylePayloadsForDispatch(
       normalizeDocumentPatchPayloadsForDispatch(args),
     ),
     userText,
+  )
+  return enforceDocumentSourceApprovalForDispatch(
+    normalizeApprovedDraftPayloadForDispatch(sourceNormalization.args, userText),
+    sourceNormalization,
   )
 }
 

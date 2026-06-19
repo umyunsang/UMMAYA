@@ -40,7 +40,7 @@ const MASK_CHAR = '•';
  *   - Input is never echoed in plaintext; each character is replaced by MASK_CHAR
  *   - Backspace removes the last buffer character (not the last mask character) —
  *     the buffer and mask are always the same length
- *   - Paste detection: any input longer than 1 char is accepted but still masked
+ *   - Paste detection: input longer than 1 char is accepted but still masked
  *   - No persistence until explicit Enter confirmation
  *   - Escape discards the buffer immediately
  */

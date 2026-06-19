@@ -132,7 +132,7 @@ function serverSecretsKey(pluginId: string, serverName: string): string {
  * collision shouldn't happen, but if a user hand-edits settings.json we
  * trust the more secure source.
  *
- * Returns null only if NEITHER source has anything — callers skip
+ * Returns null only if NEITHER source provides values — callers skip
  * ${user_config.X} substitution in that case.
  *
  * @param pluginId - Plugin identifier in "plugin@marketplace" format

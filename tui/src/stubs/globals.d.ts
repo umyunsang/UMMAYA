@@ -3,8 +3,6 @@
 // TypeScript needs these to type-check the bare `MACRO.VERSION` references
 // throughout the CC 2.1.88 source.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 declare const MACRO: {
   VERSION: string
   VERSION_CHANGELOG: string
@@ -30,7 +28,9 @@ declare type PromiseWithResolvers<T> = ReturnType<PromiseConstructor['withResolv
 
 // lodash-es sub-path modules don't ship their own .d.ts files — declare them.
 declare module 'lodash-es/memoize.js' {
-  const memoize: <T extends (...args: any[]) => any>(fn: T) => T
+  const memoize: <Args extends unknown[], Result>(
+    fn: (...args: Args) => Result,
+  ) => (...args: Args) => Result
   export default memoize
 }
 declare module 'lodash-es/mapValues.js' {

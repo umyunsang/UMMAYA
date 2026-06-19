@@ -140,7 +140,7 @@ export async function readCronTasks(dir?: string): Promise<CronTask[]> {
 }
 
 /**
- * Sync check for whether the cron file has any valid tasks. Used by
+ * Sync check for whether the cron file includes valid tasks. Used by
  * cronScheduler.start() to decide whether to auto-enable. One file read.
  */
 export function hasCronTasksSync(dir?: string): boolean {

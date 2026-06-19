@@ -12,6 +12,10 @@ import {
 } from '../../utils/mcpOutputStorage.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { isOutputLineTruncated } from '../../utils/terminal.js'
+import {
+  assertNonEmptyMcpResourceUri,
+  assertTrustedMcpServerForResourceAccess,
+} from '../MCPTool/trustPolicy.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 import {
   renderToolResultMessage,
@@ -21,8 +25,16 @@ import {
 
 export const inputSchema = lazySchema(() =>
   z.object({
-    server: z.string().describe('The MCP server name'),
-    uri: z.string().describe('The resource URI to read'),
+    server: z
+      .string()
+      .trim()
+      .min(1, 'Server name cannot be empty')
+      .describe('The MCP server name'),
+    uri: z
+      .string()
+      .trim()
+      .min(1, 'Resource URI cannot be empty')
+      .describe('The resource URI to read'),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
@@ -72,8 +84,12 @@ export const ReadMcpResourceTool = buildTool({
   get outputSchema(): OutputSchema {
     return outputSchema()
   },
-  async call(input, { options: { mcpClients } }) {
+  async call(input, { options: { mcpClients }, getAppState }) {
     const { server: serverName, uri } = input
+    const permissionContext = getAppState().toolPermissionContext
+
+    assertTrustedMcpServerForResourceAccess(permissionContext, serverName)
+    assertNonEmptyMcpResourceUri(uri)
 
     const client = mcpClients.find(client => client.name === serverName)
 

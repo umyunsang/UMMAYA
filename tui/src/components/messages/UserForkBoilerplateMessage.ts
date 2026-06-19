@@ -1,7 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Stage-1 NO-OP stub — CC-fidelity placeholder. Consumer sites carry
-// `@ts-expect-error CC-fidelity TODO` and will be wired to real
+// temporary CC-fidelity type suppressions and will be wired to real
 // UMMAYA implementations in the CC TUI Fidelity Meta-Epic.
-const __stub: any = undefined
-export default __stub
-export {}
+import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
+import type { ReactNode } from 'react'
+
+type MessageStubProps = {
+  readonly addMargin: boolean
+  readonly param: TextBlockParam
+}
+
+export function UserForkBoilerplateMessage(
+  _props: MessageStubProps,
+): ReactNode {
+  return null
+}
+
+export default UserForkBoilerplateMessage

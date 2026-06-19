@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SWAP/anti-anthropic-1p(2521): minimal stub for the byte-copied
-// services/api/claude.ts which references CC's Anthropic-API error envelopes.
+// services/api/ummaya.ts which references CC's Anthropic-API error envelopes.
 // UMMAYA surfaces errors via the IPC ErrorFrame (Spec 032) and never reaches
 // these helpers. Stubs preserve the import shape only.
 

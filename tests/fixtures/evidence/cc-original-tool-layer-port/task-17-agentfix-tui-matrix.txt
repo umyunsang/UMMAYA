@@ -1,0 +1,9 @@
+UMMAYA tool-layer evidence fixture
+scenario_id: global-codefix
+selected_tool: Agent
+render_frame: blocked_state
+exposure_state: permission-gated-callable
+permission_decision: denied
+result_status: blocked
+blocked_state: blocked_by_permission
+error_summary: Agent delegation was blocked in the captured TUI artifact.

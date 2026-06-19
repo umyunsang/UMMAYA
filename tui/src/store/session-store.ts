@@ -219,7 +219,7 @@ function sessionReducer(
       }
       const messages = new Map(state.messages)
       messages.set(action.message_id, updated)
-      return { ...state, messages }
+      return { ...state, messages, message_order: state.messages.has(action.message_id) ? state.message_order : [...state.message_order, action.message_id] }
     }
 
     case 'TOOL_RESULT': {
@@ -454,32 +454,9 @@ export const resolvePermissionDecision = _resolvePermissionDecision
 export const getActivePermission = _getActivePermission
 
 // ---------------------------------------------------------------------------
-// Derived agent-loop probes — Spec 288 Codex P1 regression fix.
-//
-// The `message_order` array is only appended to by `USER_INPUT`, the first
-// `ASSISTANT_CHUNK` for a given message_id, and `ERROR`.  `TOOL_CALL` reaches
-// the reducer with its own `msg-${call_id}` message_id and creates a synthetic
-// assistant message via `getOrCreateAssistantMessage()` — but the reducer does
-// NOT push that id onto `message_order` (see lines 206-215).  That means a
-// tool call that arrives before any assistant chunk lives in `messages` but
-// not in `message_order`, so a probe that only peeks the last entry of
-// `message_order` misreports the loop as idle.
-//
-// The previous in-tree probes in `tui.tsx` had exactly this bug:
-//   - `isAgentLoopActive` returned false when the in-flight work was a
-//     tool-call-only message (no streamed delta yet).  Downstream consumers
-//     read idle:
-//       * `session-exit` (ctrl+d) skipped its FR-015 active-loop confirmation.
-//       * `agent-interrupt` (ctrl+c) armed exit instead of cancelling.
-//   - `currentToolCallId` had the same iteration bug and returned null even
-//     when a tool call was genuinely in flight.
-//
-// The fix below derives both values from the full `messages` map so a message
-// that only exists in the map (not yet in `message_order`) still participates.
-// These helpers are pure functions — callers memoise them with
-// `React.useCallback` against the map reference, which the reducer already
-// rebuilds on every relevant mutation.  They are exported so unit tests can
-// exercise the probes without mounting the full provider tree.
+// Derived agent-loop probes — keep liveness tied to actual message state, not
+// only render order, so cancellation/exit checks keep working if ordering and
+// execution state ever diverge again.
 // ---------------------------------------------------------------------------
 
 /**
@@ -490,10 +467,9 @@ export const getActivePermission = _getActivePermission
  * visible to this probe even when no `ASSISTANT_CHUNK` has pushed its id into
  * the order array.
  *
- * Intentionally scans the full map (O(n) in message count).  Session size is
- * bounded in practice by the ring buffer Spec 032 caps on the IPC layer, and
- * each call site (`agent-interrupt`, `session-exit`) only runs on a citizen
- * keystroke — not on every render.
+ * Intentionally scans the full map (O(n) in message count). Session size is
+ * bounded in practice, and each call site runs on a citizen keystroke rather
+ * than every render.
  */
 export function computeIsAgentLoopActive(
   messages: ReadonlyMap<string, Message>,
@@ -518,11 +494,9 @@ export function computeIsAgentLoopActive(
  * Returns the `call_id` of the most recently registered tool call that has no
  * matching `tool_result`, or null when no tool call is in flight.
  *
- * Uses `messages` map insertion order — the reducer inserts a new assistant
- * message for `TOOL_CALL` via `messages.set(id, ...)`, which appends for a
- * fresh key and preserves position for an existing key (JS `Map` contract).
- * That matches the intent of "most recent" without relying on
- * `message_order`, which `TOOL_CALL` does not update.
+ * Uses `messages` map insertion order, which appends for a fresh key and
+ * preserves position for an existing key (JS `Map` contract). That matches the
+ * intent of "most recent" without depending on render ordering.
  */
 export function computeCurrentToolCallId(
   messages: ReadonlyMap<string, Message>,

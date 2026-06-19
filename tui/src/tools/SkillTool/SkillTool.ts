@@ -523,7 +523,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     }
 
     // Auto-allow skills that only use safe properties.
-    // This is an allowlist: if a skill has any property NOT in this set with a
+    // This is an allowlist: if a skill includes a property NOT in this set with a
     // meaningful value, it requires permission. This ensures new properties added
     // in the future default to requiring permission.
     if (
@@ -869,7 +869,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
 } satisfies ToolDef<InputSchema, Output, Progress>)
 
 // Allowlist of PromptCommand property keys that are safe and don't require permission.
-// If a skill has any property NOT in this set with a meaningful value, it requires
+// If a skill defines a property NOT in this set with a meaningful value, it requires
 // permission. This ensures new properties added to PromptCommand in the future
 // default to requiring permission until explicitly reviewed and added here.
 const SAFE_SKILL_PROPERTIES = new Set([

@@ -105,7 +105,7 @@ const WHEEL_DECAY_IDLE_MS = 500;
 
 /**
  * Whether a keypress should clear the virtual text selection. Mimics
- * native terminal selection: any keystroke clears, EXCEPT modified nav
+ * native terminal selection: keystrokes clear, EXCEPT modified nav
  * keys (shift/opt/cmd + arrow/home/end/page*). In native macOS contexts,
  * shift+nav extends selection, and cmd/opt+nav are often intercepted by
  * the terminal emulator for scrollback nav — neither disturbs selection.
@@ -185,7 +185,7 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
       state.mult = state.base;
     }
 
-    // Resolve any deferred flip BEFORE touching state.time/dir — we need the
+    // Resolve a deferred flip BEFORE touching state.time/dir — we need the
     // pre-flip state.dir to distinguish bounce (flip-back) from real reversal
     // (flip persisted), and state.time (= bounce timestamp) for the gap check.
     if (state.pendingFlip) {
@@ -346,7 +346,7 @@ const AUTOSCROLL_INTERVAL_MS = 50;
 // Hard cap on consecutive auto-scroll ticks. If the release event is lost
 // (mouse released outside terminal window — some emulators don't capture the
 // pointer and drop the release), isDragging stays true and the timer would
-// run until a scroll boundary. Cap bounds the damage; any new drag motion
+// run until a scroll boundary. Cap bounds the damage; new drag motion
 // event restarts the count via check()→start().
 const AUTOSCROLL_MAX_TICKS = 200; // 10s @ 50ms
 
@@ -581,7 +581,7 @@ export function ScrollKeybindingHandler({
     isActive: isActive && isModal
   });
 
-  // Esc clears selection; any other keystroke also clears it (matches
+  // Esc clears selection; other keystrokes also clear it (matches
   // native terminal behavior where selection disappears on input).
   // Ctrl+C copies when a selection exists — needed on legacy terminals
   // where ctrl+shift+c sends the same byte (\x03, shift is lost) and
@@ -900,7 +900,7 @@ export type ModalPagerAction = 'lineUp' | 'lineDown' | 'halfPageUp' | 'halfPageD
 export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' | 'shift' | 'upArrow' | 'downArrow' | 'home' | 'end'>): ModalPagerAction | null {
   if (key.meta) return null;
   // Special keys first — arrows/home/end arrive with empty or junk input,
-  // so these must be checked before any input-string logic. shift is
+  // so these must be checked before input-string logic. shift is
   // reserved for selection-extend (selectionFocusMoveForKey); ctrl+home/end
   // already has a useKeybindings route to scroll:top/bottom.
   if (!key.ctrl && !key.shift) {

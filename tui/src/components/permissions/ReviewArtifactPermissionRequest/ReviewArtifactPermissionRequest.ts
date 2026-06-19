@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Stage-1 NO-OP stub — CC-fidelity placeholder. Consumer sites carry
-// `@ts-expect-error CC-fidelity TODO` and will be wired to real
+// temporary CC-fidelity type suppressions and will be wired to real
 // UMMAYA implementations in the CC TUI Fidelity Meta-Epic.
-const __stub: any = undefined
-export default __stub
-export {}
+import type { ComponentType } from 'react'
+import type { PermissionRequestProps } from '../PermissionRequest.js'
+
+export const ReviewArtifactPermissionRequest:
+  | ComponentType<PermissionRequestProps>
+  | undefined = undefined
+
+export default ReviewArtifactPermissionRequest

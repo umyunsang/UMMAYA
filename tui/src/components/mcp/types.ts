@@ -1,44 +1,22 @@
 // [P0 reconstructed · rebuild-stubs.ts · symbol-complete stub]
 // Aggregated from every consumer import across src/.
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createStub } from '../../stubs/any-stub'
 
-const __noop = (..._args: unknown[]): any => undefined as any;
-const __stub: any = new Proxy(function () {} as any, {
-  get(_t, p) {
-    if (p === Symbol.toPrimitive) return () => ""
-    if (p === Symbol.iterator) return function* () {}
-    if (p === Symbol.asyncIterator) return async function* () {}
-    if (p === Symbol.toStringTag) return "Stub"
-    if (p === Symbol.for("nodejs.util.inspect.custom")) return () => "<Stub>"
-    if (p === "inspect") return () => "<Stub>"
-    if (p === "then") return undefined
-    if (p === "toString") return () => ""
-    if (p === "valueOf") return () => undefined
-    if (p === "toJSON") return () => null
-    if (p === "length") return 0
-    if (p === "name") return "Stub"
-    if (p === "message") return ""
-    if (p === "stack") return ""
-    if (p === "constructor") return Object
-    return __stub
-  },
-  apply() { return __stub },
-  construct() { return __stub },
-});
+const __stub = createStub()
 
-export type AgentMcpServerInfo = any;
-export const AgentMcpServerInfo: any = __stub;
-export type ClaudeAIServerInfo = any;
-export const ClaudeAIServerInfo: any = __stub;
-export type HTTPServerInfo = any;
-export const HTTPServerInfo: any = __stub;
-export type MCPViewState = any;
-export const MCPViewState: any = __stub;
-export type SSEServerInfo = any;
-export const SSEServerInfo: any = __stub;
-export type ServerInfo = any;
-export const ServerInfo: any = __stub;
-export type StdioServerInfo = any;
-export const StdioServerInfo: any = __stub;
+export type AgentMcpServerInfo = unknown;
+export const AgentMcpServerInfo = __stub;
+export type ClaudeAIServerInfo = unknown;
+export const ClaudeAIServerInfo = __stub;
+export type HTTPServerInfo = unknown;
+export const HTTPServerInfo = __stub;
+export type MCPViewState = unknown;
+export const MCPViewState = __stub;
+export type SSEServerInfo = unknown;
+export const SSEServerInfo = __stub;
+export type ServerInfo = unknown;
+export const ServerInfo = __stub;
+export type StdioServerInfo = unknown;
+export const StdioServerInfo = __stub;
 
 export default __stub;

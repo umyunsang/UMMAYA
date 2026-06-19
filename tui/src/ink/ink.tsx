@@ -73,6 +73,32 @@ export type Options = {
   waitUntilExit?: () => Promise<void>;
   onFrame?: (event: FrameEvent) => void;
 };
+
+type InkReconcilerRuntime = typeof reconciler & {
+  createContainer(
+    root: dom.DOMElement,
+    tag: typeof ConcurrentRoot,
+    hydrationCallbacks: null,
+    isStrictMode: boolean,
+    concurrentUpdatesByDefaultOverride: null,
+    identifierPrefix: string,
+    onUncaughtError: () => void,
+    onCaughtError: () => void,
+    onRecoverableError: () => void,
+    onDefaultTransitionIndicator: () => void,
+  ): FiberRoot;
+  updateContainerSync(
+    node: ReactNode,
+    container: FiberRoot,
+    parentComponent: null,
+    callback: () => void,
+  ): void;
+  flushSyncWork(): void;
+  flushSyncFromReconciler(): void;
+};
+
+const inkReconciler = reconciler as InkReconcilerRuntime;
+
 export default class Ink {
   private readonly log: LogUpdate;
   private readonly terminal: Terminal;
@@ -257,9 +283,7 @@ export default class Ink {
       }
     };
 
-    // @ts-expect-error @types/react-reconciler@0.32.3 declares 11 args with transitionCallbacks,
-    // but react-reconciler 0.33.0 source only accepts 10 args (no transitionCallbacks)
-    this.container = reconciler.createContainer(this.rootNode, ConcurrentRoot, null, false, null, 'id', noop,
+    this.container = inkReconciler.createContainer(this.rootNode, ConcurrentRoot, null, false, null, 'id', noop,
     // onUncaughtError
     noop,
     // onCaughtError
@@ -789,8 +813,7 @@ export default class Ink {
   }
   pause(): void {
     // Flush pending React updates and render before pausing.
-    // @ts-expect-error flushSyncFromReconciler exists in react-reconciler 0.31 but not in @types/react-reconciler
-    reconciler.flushSyncFromReconciler();
+    inkReconciler.flushSyncFromReconciler();
     this.onRender();
     this.isPaused = true;
   }
@@ -1447,10 +1470,8 @@ export default class Ink {
         </TerminalWriteProvider>
       </App>;
 
-    // @ts-expect-error updateContainerSync exists in react-reconciler but not in @types/react-reconciler
-    reconciler.updateContainerSync(tree, this.container, null, noop);
-    // @ts-expect-error flushSyncWork exists in react-reconciler but not in @types/react-reconciler
-    reconciler.flushSyncWork();
+    inkReconciler.updateContainerSync(tree, this.container, null, noop);
+    inkReconciler.flushSyncWork();
   }
   unmount(error?: Error | number | null): void {
     if (this.isUnmounted) {
@@ -1514,10 +1535,8 @@ export default class Ink {
       this.drainTimer = null;
     }
 
-    // @ts-expect-error updateContainerSync exists in react-reconciler but not in @types/react-reconciler
-    reconciler.updateContainerSync(null, this.container, null, noop);
-    // @ts-expect-error flushSyncWork exists in react-reconciler but not in @types/react-reconciler
-    reconciler.flushSyncWork();
+    inkReconciler.updateContainerSync(null, this.container, null, noop);
+    inkReconciler.flushSyncWork();
     instances.delete(this.options.stdout);
 
     // Free the root yoga node, then clear its reference. Children are already

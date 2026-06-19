@@ -9,6 +9,10 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { logMCPError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { isOutputLineTruncated } from '../../utils/terminal.js'
+import {
+  assertTrustedMcpServerForResourceAccess,
+  isTrustedMcpServer,
+} from '../MCPTool/trustPolicy.js'
 import { DESCRIPTION, LIST_MCP_RESOURCES_TOOL_NAME, PROMPT } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
 
@@ -16,6 +20,8 @@ const inputSchema = lazySchema(() =>
   z.object({
     server: z
       .string()
+      .trim()
+      .min(1, 'Server name cannot be empty')
       .optional()
       .describe('Optional server name to filter resources by'),
   }),
@@ -49,7 +55,7 @@ export const ListMcpResourcesTool = buildTool({
   },
   shouldDefer: true,
   name: LIST_MCP_RESOURCES_TOOL_NAME,
-  searchHint: 'list resources from connected MCP servers',
+  searchHint: 'list resources from connected MCP servers with trust boundary checks',
   maxResultSizeChars: 100_000,
   async description() {
     return DESCRIPTION
@@ -63,12 +69,19 @@ export const ListMcpResourcesTool = buildTool({
   get outputSchema(): OutputSchema {
     return outputSchema()
   },
-  async call(input, { options: { mcpClients } }) {
+  async call(input, { options: { mcpClients }, getAppState }) {
     const { server: targetServer } = input
+    const permissionContext = getAppState().toolPermissionContext
+
+    if (targetServer !== undefined) {
+      assertTrustedMcpServerForResourceAccess(permissionContext, targetServer)
+    }
 
     const clientsToProcess = targetServer
       ? mcpClients.filter(client => client.name === targetServer)
-      : mcpClients
+      : mcpClients.filter(client =>
+          isTrustedMcpServer(permissionContext, client.name),
+        )
 
     if (targetServer && clientsToProcess.length === 0) {
       throw new Error(
@@ -88,6 +101,9 @@ export const ListMcpResourcesTool = buildTool({
           const fresh = await ensureConnectedClient(client)
           return await fetchResourcesForClient(fresh)
         } catch (error) {
+          if (!(error instanceof Error)) {
+            throw error
+          }
           // One server's reconnect failure shouldn't sink the whole result.
           logMCPError(client.name, errorMessage(error))
           return []

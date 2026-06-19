@@ -36,7 +36,7 @@ export type ConnectionErrorDetails = {
 
 /**
  * Extracts connection error details from the error cause chain.
- * The Anthropic SDK wraps underlying errors in the `cause` property.
+ * The legacy SDK wraps underlying errors in the `cause` property.
  * This function walks the cause chain to find the root error code/message.
  */
 export function extractConnectionErrorDetails(
@@ -96,7 +96,7 @@ export function getSSLErrorHint(error: unknown): string | null {
   if (!details?.isSSLError) {
     return null
   }
-  return `SSL certificate error (${details.code}). If you are behind a corporate proxy or TLS-intercepting firewall, set NODE_EXTRA_CA_CERTS to your CA bundle path, or ask IT to allowlist *.anthropic.com. Run /doctor for details.`
+  return `SSL certificate error (${details.code}). If you are behind a corporate proxy or TLS-intercepting firewall, set NODE_EXTRA_CA_CERTS to your CA bundle path, or ask IT to allowlist the configured UMMAYA provider endpoint. Run /doctor for details.`
 }
 
 /**
@@ -136,7 +136,7 @@ export function sanitizeAPIError(apiError: APIError): string {
  * The actual message lives at different nesting levels depending on the provider:
  *
  * - Bedrock/proxy: `{ error: { message: "..." } }`
- * - Standard Anthropic API: `{ error: { error: { message: "..." } } }`
+ * - Provider API: `{ error: { error: { message: "..." } } }`
  *   (the outer `.error` is the response body, the inner `.error` is the API error)
  *
  * See also: `getErrorMessage` in `logging.ts` which handles the same shapes.
@@ -163,7 +163,7 @@ function hasNestedError(value: unknown): value is NestedAPIError {
  * a top-level `.message`.
  *
  * Checks two nesting levels (deeper first for specificity):
- * 1. `error.error.error.message` — standard Anthropic API shape
+ * 1. `error.error.error.message` — provider API shape
  * 2. `error.error.message` — Bedrock shape
  */
 function extractNestedErrorMessage(error: APIError): string | null {
@@ -176,7 +176,7 @@ function extractNestedErrorMessage(error: APIError): string | null {
   const narrowed: NestedAPIError = error
   const nested = narrowed.error
 
-  // Standard Anthropic API shape: { error: { error: { message } } }
+  // Provider API shape: { error: { error: { message } } }
   const deepMsg = nested?.error?.message
   if (typeof deepMsg === 'string' && deepMsg.length > 0) {
     const sanitized = sanitizeMessageHTML(deepMsg)

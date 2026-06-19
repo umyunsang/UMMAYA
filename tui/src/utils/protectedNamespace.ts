@@ -4,6 +4,8 @@
 // CC consumer references (envUtils.ts:142) imply CC has runtime equivalents but they're
 // not in restored-src — UMMAYA NO-OP is justified until TUI Fidelity Meta-Epic
 // decides on UMMAYA-original implementation.
-const __stub: any = undefined
-export default __stub
-export {}
+export function checkProtectedNamespace(): boolean {
+  return false
+}
+
+export default checkProtectedNamespace

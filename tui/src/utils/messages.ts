@@ -432,6 +432,24 @@ export function createAssistantMessage({
   })
 }
 
+export function finalizeStreamingAssistantMessage(params: {
+  readonly messages: readonly Message[]
+  readonly streamingText: string | null
+  readonly turnStartMessageCount: number
+}): readonly Message[] {
+  const { messages, streamingText, turnStartMessageCount } = params
+  if (streamingText === null || streamingText.trim() === '') {
+    return messages
+  }
+
+  const turnMessages = messages.slice(turnStartMessageCount)
+  if (turnMessages.some(message => message.type === 'assistant')) {
+    return messages
+  }
+
+  return [...messages, createAssistantMessage({ content: streamingText })]
+}
+
 export function createAssistantAPIErrorMessage({
   content,
   apiError,

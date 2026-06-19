@@ -19,7 +19,7 @@ export function hasConsoleBillingAccess(): boolean {
   // we already show a warning on launch in that case
   if (isSubscriber) return false
 
-  // Check if user has any form of authentication
+  // Check if user has a configured authentication source
   const authSource = getAuthTokenSource()
   const hasApiKey = getAnthropicApiKey() !== null
 

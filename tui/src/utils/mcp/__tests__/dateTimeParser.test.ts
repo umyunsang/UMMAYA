@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const TUI_SRC_ROOT = resolve(__dirname, '..', '..', '..')
 
 beforeAll(() => {
-  mock.module(resolve(TUI_SRC_ROOT, 'services/api/claude.js'), () => ({
+  mock.module(resolve(TUI_SRC_ROOT, 'services/api/ummaya.js'), () => ({
     queryHaiku: async ({ userPrompt }: { userPrompt: string }) => {
       // Match the Korean fixture inputs from spec FR-011 + contract test plan
       let text = 'INVALID'

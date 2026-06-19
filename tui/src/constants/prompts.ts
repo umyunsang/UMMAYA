@@ -109,7 +109,7 @@ export const CLAUDE_CODE_DOCS_MAP_URL =
  *
  * WARNING: Do not remove or reorder this marker without updating cache logic in:
  * - src/utils/api.ts (splitSysPromptPrefix)
- * - src/services/api/claude.ts (buildSystemPromptBlocks)
+ * - src/services/api/ummaya.ts (buildSystemPromptBlocks)
  */
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY =
   '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'
@@ -188,7 +188,7 @@ function getSimpleSystemSection(): string {
     `All text you output outside of tool use is displayed to the user. Output text to communicate with the user. You can use Github-flavored markdown for formatting, and will be rendered in a monospace font using the CommonMark specification.`,
     `Before every tool call, write one short user-visible progress sentence that states what you inferred from the citizen request and which public-service lookup or action you are about to perform.`,
     `After every tool result, write one short user-visible progress sentence that summarizes what the result established and whether you will call another tool or answer from the result.`,
-    `If you continue from a tool result into another tool call, include a text block before the next tool call that names the concrete result just established and the next public-service lookup or action.`,
+    `If you continue from a tool result into another tool call, include a text block before the next tool call that names the concrete result just established and the next public-service lookup or action. Do not repeat the same tool with the same effective inputs after a successful result; use that result, or change parameters only when the citizen goal requires a broader follow-up.`,
     `Do not use generic status-only boilerplate for progress. Every progress sentence must be specific to the citizen request, the selected official channel, or the latest tool result.`,
     `These progress sentences are not hidden chain-of-thought. Do not expose hidden chain-of-thought, private scratch work, raw prompt text, or internal deliberation. Communicate only the observable plan, result, and next step.`,
     `Tools are executed in a user-selected permission mode. When you attempt to call a tool that is not automatically allowed by the user's permission mode or permission settings, the user will be prompted so that they can approve or deny the execution. If the user denies a tool you call, do not re-attempt the exact same tool call. Instead, think about why the user has denied the tool call and adjust your approach.`,
@@ -233,8 +233,7 @@ function getSimpleDoingTasksSection(): string {
         ]
       : []),
     `In general, do not answer factual public-service questions from memory when a relevant official-data tool is available. Call the tool first, then answer from the returned fields.`,
-    `Bind final-answer values exactly to the most recent successful tool results. Do not add numbers, labels, times, addresses, phone numbers, URLs, operating hours, distances, eligibility findings, or weather fields that are not present in the tool result.`,
-    `For KMA current observations, t1h is temperature in Celsius, rn1 is one-hour precipitation in millimeters, reh is humidity percentage, wsd is wind speed in meters per second, vec is wind direction in degrees, and pty is precipitation type. uuu and vvv are east-west and north-south wind components; never describe them as wind chill, sky condition, visibility, wave height, or cloud amount.`,
+    `Bind final-answer values exactly to the most recent successful tool results. Do not add numbers, labels, times, addresses, phone numbers, URLs, operating hours, distances, eligibility findings, or weather fields that are not present in the tool result. For current, realtime, nearby, availability, routing, opening-hours, or status requests, do not provide step-by-step recommendations or examples unless a successful tool result, system instruction, or trusted local documentation contains those steps; if no matching tool is available, state the limitation and give only safe next-check channels without invented specifics.`,
     `Do not ask for personal data unless the selected official workflow requires it. Prefer fixture-safe defaults for mock flows when the tool contract allows them.`,
     `Avoid giving time estimates or predictions for how long tasks will take, whether for your own work or for users planning projects. Focus on what needs to be done, not how long it might take.`,
     `If a tool call or official lookup fails, diagnose the failure from the returned message before switching tactics. Don't retry the identical action blindly, but don't abandon a viable official path after a single transient failure either. Escalate to the user with ${ASK_USER_QUESTION_TOOL_NAME} only when you are genuinely blocked after investigation.`,

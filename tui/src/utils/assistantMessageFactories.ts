@@ -1,4 +1,8 @@
-import type { BetaContentBlock, BetaUsage as Usage } from 'src/sdk-compat.js'
+import type {
+  BetaContentBlock,
+  BetaUsage as Usage,
+  ThinkingBlock,
+} from 'src/sdk-compat.js'
 import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
 import { randomUUID } from 'crypto'
 import { NO_CONTENT_MESSAGE } from '../constants/messages.js'
@@ -21,6 +25,8 @@ const EMPTY_USAGE: Usage = {
   speed: null,
 }
 
+type AssistantContentBlock = BetaContentBlock | ThinkingBlock
+
 function baseCreateAssistantMessage({
   content,
   isApiErrorMessage = false,
@@ -30,7 +36,7 @@ function baseCreateAssistantMessage({
   isVirtual,
   usage = EMPTY_USAGE,
 }: {
-  content: BetaContentBlock[]
+  content: AssistantContentBlock[]
   isApiErrorMessage?: boolean
   apiError?: AssistantMessage['apiError']
   error?: SDKAssistantMessageError
@@ -68,7 +74,7 @@ export function createAssistantMessage({
   usage,
   isVirtual,
 }: {
-  content: string | BetaContentBlock[]
+  content: string | AssistantContentBlock[]
   usage?: Usage
   isVirtual?: true
 }): AssistantMessage {

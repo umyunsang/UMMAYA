@@ -30,12 +30,25 @@ const FIXTURES_DIR = join(__dirname, 'fixtures')
 // Helpers
 // ---------------------------------------------------------------------------
 
-function loadNdjsonFixture(filename: string): object[] {
+function loadNdjsonFixture(filename: string): unknown[] {
   const raw = readFileSync(join(FIXTURES_DIR, filename), 'utf-8')
   return raw
     .split('\n')
     .filter(line => line.trim().length > 0)
     .map(line => JSON.parse(line))
+}
+
+function isBackpressureSignalFrame(
+  value: unknown,
+): value is BackpressureSignalFrame {
+  if (typeof value !== 'object' || value === null) return false
+  if (!('kind' in value) || value.kind !== 'backpressure') return false
+  if (!('signal' in value)) return false
+  return (
+    value.signal === 'pause' ||
+    value.signal === 'resume' ||
+    value.signal === 'throttle'
+  )
 }
 
 function makeThrottleFrame(retryAfterMs: number): BackpressureSignalFrame {
@@ -117,13 +130,17 @@ describe('BackpressureHud', () => {
   test('renders exact Korean text from backpressure.throttle.ndjson fixture', () => {
     const lines = loadNdjsonFixture('backpressure.throttle.ndjson')
     const throttleLine = lines.find(
-      (l: any) => l.signal === 'throttle',
-    ) as BackpressureSignalFrame | undefined
+      (line): line is BackpressureSignalFrame =>
+        isBackpressureSignalFrame(line) && line.signal === 'throttle',
+    )
     expect(throttleLine).toBeDefined()
-    expect(throttleLine!.retry_after_ms).toBe(15000)
+    if (throttleLine === undefined) {
+      throw new Error('Expected throttle frame in fixture')
+    }
+    expect(throttleLine.retry_after_ms).toBe(15000)
 
     const { lastFrame } = render(
-      React.createElement(BackpressureHud, { frame: throttleLine! }),
+      React.createElement(BackpressureHud, { frame: throttleLine }),
     )
     const output = lastFrame()
 
@@ -231,13 +248,9 @@ describe('BackpressureHud', () => {
   // -------------------------------------------------------------------------
   // Test 7: SC-003 render budget — p95 < 16 ms
   //
-  // Gated behind UMMAYA_PERF_GATE=1 because wall-clock p95 measurements are
-  // flaky on shared CI runners under concurrent load; the assertion still
-  // runs locally (set the env var) and on dedicated perf runners.
   // -------------------------------------------------------------------------
 
-  const perfGateEnabled = process.env.UMMAYA_PERF_GATE === '1'
-  test.skipIf(!perfGateEnabled)('SC-003: render p95 under 16 ms', () => {
+  test('SC-003: render p95 under 16 ms', () => {
     const frame = makeThrottleFrame(15000)
     const ITERATIONS = 100
     const times: number[] = []
@@ -278,12 +291,16 @@ describe('BackpressureHud', () => {
   test('resume line from fixture renders nothing', () => {
     const lines = loadNdjsonFixture('backpressure.throttle.ndjson')
     const resumeLine = lines.find(
-      (l: any) => l.signal === 'resume',
-    ) as BackpressureSignalFrame | undefined
+      (line): line is BackpressureSignalFrame =>
+        isBackpressureSignalFrame(line) && line.signal === 'resume',
+    )
     expect(resumeLine).toBeDefined()
+    if (resumeLine === undefined) {
+      throw new Error('Expected resume frame in fixture')
+    }
 
     const { lastFrame } = render(
-      React.createElement(BackpressureHud, { frame: resumeLine! }),
+      React.createElement(BackpressureHud, { frame: resumeLine }),
     )
     expect(lastFrame()).toBe('')
   })

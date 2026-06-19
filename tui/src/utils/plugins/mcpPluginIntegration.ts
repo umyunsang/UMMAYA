@@ -434,7 +434,7 @@ export async function extractMcpServersFromPlugins(
  * config (assistant-mode channels). Channel-specific wins on collision so
  * plugins that declare the same key at both levels get the more specific value.
  *
- * Returns undefined when neither source has anything — resolvePluginMcpEnvironment
+ * Returns undefined when neither source provides values — resolvePluginMcpEnvironment
  * skips substituteUserConfigVariables in that case.
  */
 function buildMcpUserConfig(

@@ -1,44 +1,22 @@
 // [P0 reconstructed · rebuild-stubs.ts · symbol-complete stub]
 // Aggregated from every consumer import across src/.
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createStub } from '../stubs/any-stub'
 
-const __noop = (..._args: unknown[]): any => undefined as any;
-const __stub: any = new Proxy(function () {} as any, {
-  get(_t, p) {
-    if (p === Symbol.toPrimitive) return () => ""
-    if (p === Symbol.iterator) return function* () {}
-    if (p === Symbol.asyncIterator) return async function* () {}
-    if (p === Symbol.toStringTag) return "Stub"
-    if (p === Symbol.for("nodejs.util.inspect.custom")) return () => "<Stub>"
-    if (p === "inspect") return () => "<Stub>"
-    if (p === "then") return undefined
-    if (p === "toString") return () => ""
-    if (p === "valueOf") return () => undefined
-    if (p === "toJSON") return () => null
-    if (p === "length") return 0
-    if (p === "name") return "Stub"
-    if (p === "message") return ""
-    if (p === "stack") return ""
-    if (p === "constructor") return Object
-    return __stub
-  },
-  apply() { return __stub },
-  construct() { return __stub },
-});
+const __stub = createStub()
 
-export type NotebookCell = any;
-export const NotebookCell: any = __stub;
-export type NotebookCellOutput = any;
-export const NotebookCellOutput: any = __stub;
-export type NotebookCellSource = any;
-export const NotebookCellSource: any = __stub;
-export type NotebookCellSourceOutput = any;
-export const NotebookCellSourceOutput: any = __stub;
-export type NotebookCellType = any;
-export const NotebookCellType: any = __stub;
-export type NotebookContent = any;
-export const NotebookContent: any = __stub;
-export type NotebookOutputImage = any;
-export const NotebookOutputImage: any = __stub;
+export type NotebookCell = unknown;
+export const NotebookCell = __stub;
+export type NotebookCellOutput = unknown;
+export const NotebookCellOutput = __stub;
+export type NotebookCellSource = unknown;
+export const NotebookCellSource = __stub;
+export type NotebookCellSourceOutput = unknown;
+export const NotebookCellSourceOutput = __stub;
+export type NotebookCellType = unknown;
+export const NotebookCellType = __stub;
+export type NotebookContent = unknown;
+export const NotebookContent = __stub;
+export type NotebookOutputImage = unknown;
+export const NotebookOutputImage = __stub;
 
 export default __stub;

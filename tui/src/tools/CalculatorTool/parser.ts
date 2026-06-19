@@ -2,11 +2,11 @@
  * Restricted-grammar expression parser + evaluator using the shunting-yard algorithm.
  *
  * Allowed characters: 0-9  .  +  -  *  /  %  (  )  whitespace
- * Disallowed: any letter, underscore, $, !,  ^, &, |, ~, <, >, =, etc.
+ * Disallowed: letters, underscore, $, !,  ^, &, |, ~, <, >, =, etc.
  *
  * Numeric representation strategy:
  *   - Parse every numeric literal as a string to avoid IEEE-754 precision loss.
- *   - Track whether any division produces a non-integer result.
+ *   - Track whether division produces a non-integer result.
  *   - Arithmetic is carried out with BigInt when all operands are integers
  *     (denominator check for /); otherwise falls back to JS number with
  *     toFixed(precision) rounding, which is sufficient for the "up to 28 digits"

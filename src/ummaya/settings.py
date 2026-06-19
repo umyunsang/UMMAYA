@@ -104,9 +104,6 @@ class UmmayaSettings(BaseSettings):
     live_adapter_proxy_timeout_seconds: float = Field(default=30.0, gt=0)
     """HTTP timeout for operator-managed live adapter proxy calls."""
 
-    live_adapter_proxy_token: str = Field(default="")
-    """Optional bearer token for private/self-hosted live adapter gateways."""
-
     live_adapter_gateway_token: str = Field(default="")
     """Optional bearer token required by the hosted live adapter gateway server."""
 

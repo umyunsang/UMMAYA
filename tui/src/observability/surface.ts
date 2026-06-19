@@ -32,11 +32,11 @@ const SURFACE_ATTRIBUTE_KEY = 'ummaya.ui.surface';
 const TRACER_NAME = 'ummaya/ui-l2';
 
 /**
- * Emit `ummaya.ui.surface=<surface>` on the active span if any. When no span
+ * Emit `ummaya.ui.surface=<surface>` on the active span when present. When no span
  * is active (e.g., outside a tracing context), open and immediately close a
  * one-shot span so the surface activation is recorded.
  *
- * The function is fail-soft: any OTEL provider failure becomes a console
+ * The function is fail-soft: OTEL provider failures become a console
  * warning rather than a crash so a logging fault never blocks the UI.
  */
 export function emitSurfaceActivation(surface: UiSurface, attrs?: Record<string, string | number | boolean>): void {

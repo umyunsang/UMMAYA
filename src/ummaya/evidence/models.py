@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from ummaya.evidence.tool_layer_models import ToolLayerEvidenceEvent
 from ummaya.tools.routing.decision_types import RouteStopReason
 
 EvidenceStatus = Literal["pass", "fail", "skip"]
@@ -132,6 +133,7 @@ class RunEvidence(BaseModel):
     scenario_ids: tuple[str, ...]
     route_trace_records: tuple[RouteTraceRecord, ...] = Field(default_factory=tuple)
     route_selection_assertions: tuple[RouteSelectionAssertion, ...] = Field(default_factory=tuple)
+    tool_layer_events: tuple[ToolLayerEvidenceEvent, ...] = Field(default_factory=tuple)
     gates: tuple[EvidenceGate, ...]
     trace_join_keys: tuple[str, ...] = (
         "scenario_id",

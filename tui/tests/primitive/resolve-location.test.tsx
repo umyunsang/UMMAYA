@@ -12,6 +12,7 @@ import { CoordPill } from '@/components/primitive/CoordPill'
 import { AdmCodeBadge } from '@/components/primitive/AdmCodeBadge'
 import { AddressBlock } from '@/components/primitive/AddressBlock'
 import { POIMarker } from '@/components/primitive/POIMarker'
+import { stripSnapshotAnsi } from './snapshotFrame'
 
 import coordFixture from '../fixtures/resolve_location/coord-pill.json'
 import admFixture from '../fixtures/resolve_location/adm-code-badge.json'
@@ -33,7 +34,7 @@ describe('CoordPill', () => {
     expect(frame).toContain('[GPS]')
     expect(frame).toContain('37.566826')
     expect(frame).toContain('126.978656')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -46,7 +47,7 @@ describe('AdmCodeBadge', () => {
     expect(frame).toContain('[ADM]')
     expect(frame).toContain(admCode.code)
     expect(frame).toContain(admCode.name)
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -59,7 +60,7 @@ describe('AddressBlock', () => {
     expect(frame).toContain('[Address]')
     expect(frame).toContain(address.road ?? '')
     expect(frame).toContain(address.zip ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -71,6 +72,6 @@ describe('POIMarker', () => {
     const frame = lastFrame() ?? ''
     expect(frame).toContain(poi.name)
     expect(frame).toContain(poi.category ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })

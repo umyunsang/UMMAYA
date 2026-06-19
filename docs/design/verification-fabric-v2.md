@@ -105,6 +105,23 @@ invokes the deterministic Python runner directly.
   "task_ids": ["ummaya/national-ax-core"],
   "scenario_count": 16,
   "scenario_ids": ["..."],
+  "tool_layer_events": [
+    {
+      "selected_tool": "Agent",
+      "exposure_state": "permission-gated-callable",
+      "trust_tier": 4,
+      "permission_decision": "denied",
+      "source_url": null,
+      "source_local_handle": ".omo/evidence/cc-original-tool-layer-port/task-17-agentfix-tui-matrix.txt",
+      "source_citation_id": "cite-task-17-agent-fixture",
+      "provenance_id": "prov-...",
+      "result_status": "blocked",
+      "blocked_state": "blocked_by_permission",
+      "render_frame": "blocked_state",
+      "correlation_id": "corr-route-...",
+      "frame_hash": "..."
+    }
+  ],
   "gates": [
     {"name": "contract", "status": "pass"},
     {"name": "scenario", "status": "pass"},
@@ -119,6 +136,15 @@ invokes the deterministic Python runner directly.
 
 The CI runner is deterministic and local. It does not call FriendliAI, KMA,
 data.go.kr, identity providers, payment services, or any public-service channel.
+Recovered Claude Code support-tool exposure is recorded in hidden run evidence,
+not in prompt-facing scenario text. Route traces alone do not create
+`tool_layer_events`; events must come from explicit UX/tool artifacts and join
+back to scenario route evidence through `scenario_id`, `trace_id`,
+`correlation_id`, and `frame_hash`. Each event records exposure state, trust
+tier, permission decision, source citation/provenance, result or blocked state,
+and render-frame boundary.
+Untrusted source text and prompt-injection-like source content are stored only as
+evidence metadata with `source_instruction_visibility: evidence_only`.
 
 ## Commands
 

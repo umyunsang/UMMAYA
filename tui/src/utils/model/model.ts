@@ -1,5 +1,5 @@
 // UMMAYA Epic #2112: legacy model-dispatch matrix removed; collapsed to K-EXAONE single branch.
-// Public function signatures preserved per FR-006 caller-reach rule (callers in services/api/claude.ts,
+// Public function signatures preserved per FR-006 caller-reach rule (callers in services/api/ummaya.ts,
 // memdir/findRelevantMemories.ts, utils/attachments.ts, commands/insights.ts, services/tokenEstimation.ts,
 // components/messages/AssistantTextMessage.tsx are bucket B — kept alive until P2 issue #2147 lands).
 //
@@ -77,19 +77,19 @@ export function getBestModel(): ModelName {
   return getDefaultMainLoopModel()
 }
 
-// [Deferred to P2 — issue #2147]: thin alias preserved for services/api/claude.ts
-// import-graph stability. Removed together with services/api/claude.ts in Phase P2.
+// [Deferred to P2 — issue #2147]: thin alias preserved for services/api/ummaya.ts
+// import-graph stability. Removed together with services/api/ummaya.ts in Phase P2.
 export function getDefaultOpusModel(): ModelName {
   return getDefaultMainLoopModel()
 }
 
-// [Deferred to P2 — issue #2147]: thin alias preserved for services/api/claude.ts
+// [Deferred to P2 — issue #2147]: thin alias preserved for services/api/ummaya.ts
 // import-graph stability.
 export function getDefaultSonnetModel(): ModelName {
   return getDefaultMainLoopModel()
 }
 
-// [Deferred to P2 — issue #2147]: thin alias preserved for services/api/claude.ts
+// [Deferred to P2 — issue #2147]: thin alias preserved for services/api/ummaya.ts
 // import-graph stability.
 export function getDefaultHaikuModel(): ModelName {
   return getDefaultMainLoopModel()
@@ -130,7 +130,7 @@ export function getDefaultMainLoopModel(): ModelName {
  * fail-safe single branch keyed on K-EXAONE detection.
  *
  * [Deferred to P2 — issue #2147]: this function is preserved as an export for
- * services/api/claude.ts callers; removed together with that file in Phase P2.
+ * services/api/ummaya.ts callers; removed together with that file in Phase P2.
  */
 export function firstPartyNameToCanonical(name: ModelName): ModelShortName {
   const lowered = name.toLowerCase()

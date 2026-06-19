@@ -197,7 +197,7 @@ function forceExit(exitCode: number): never {
     failsafeTimer = undefined
   }
   // Drain stdin LAST, right before exit. cleanupTerminalModes() sent
-  // DISABLE_MOUSE_TRACKING early, but the terminal round-trip plus any
+  // DISABLE_MOUSE_TRACKING early, but the terminal round-trip plus queued
   // events already in flight means bytes can arrive during the seconds
   // of async cleanup between then and now. Draining here catches them.
   // Use the Ink class method (not the standalone drainStdin()) so we
@@ -240,7 +240,7 @@ export const setupGracefulShutdown = memoize(() => {
   // the signal then falls back to its default action (terminate) and our
   // process.on('SIGTERM') handler never runs.
   //
-  // Trigger: any short-lived signal-exit v4 subscriber (e.g. execa per child
+  // Trigger: a short-lived signal-exit v4 subscriber (e.g. execa per child
   // process, or an Ink instance that unmounts). When its unsubscribe runs and
   // it was the last v4 subscriber, v4.unload() calls removeListener on every
   // signal in its list (SIGTERM, SIGINT, SIGHUP, …), tripping the Bun bug and
@@ -380,7 +380,7 @@ export function resetShutdownState(): void {
 }
 
 /**
- * Returns the in-flight shutdown promise, if any. Only for use in tests
+ * Returns the in-flight shutdown promise when present. Only for use in tests
  * to await completion before restoring mocks.
  */
 export function getPendingShutdownForTesting(): Promise<void> | undefined {
@@ -428,7 +428,7 @@ export async function gracefulShutdown(
   // Set the exit code that will be used when process naturally exits
   process.exitCode = exitCode
 
-  // Exit alt screen and print resume hint FIRST, before any async operations.
+  // Exit alt screen and print resume hint FIRST, before async operations.
   // This ensures the hint is visible even if the process is killed during
   // cleanup (e.g., SIGKILL during macOS reboot). Without this, the resume
   // hint would only appear after cleanup functions, hooks, and analytics

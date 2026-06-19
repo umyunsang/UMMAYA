@@ -2,7 +2,7 @@
 // Research use — adapted from Claude Code 2.1.88 src/services/awaySummary.ts
 //
 // UMMAYA Epic #2077 — awaySummary restored from CC source. Now that
-// services/api/claude.ts is restored with queryModelWithoutStreaming routing
+// services/api/ummaya.ts is restored with queryModelWithoutStreaming routing
 // through the stdio bridge, this file can call it directly as in CC 2.1.88.
 // Prior stub (Epic #1633) returned null unconditionally.
 
@@ -14,7 +14,7 @@ import { getAssistantMessageText } from '../utils/messageContent.js'
 import { createUserMessage } from '../utils/userMessageFactories.js'
 import { getSmallFastModel } from '../utils/model/model.js'
 import { asSystemPrompt } from '../utils/systemPromptType.js'
-import { queryModelWithoutStreaming } from './api/claude.js'
+import { queryModelWithoutStreaming } from './api/ummaya.js'
 import { getSessionMemoryContent } from './SessionMemory/sessionMemoryUtils.js'
 
 // Recap only needs recent context — truncate to avoid "prompt too long" on

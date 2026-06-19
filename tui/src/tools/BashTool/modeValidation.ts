@@ -3,6 +3,9 @@ import type { ToolPermissionContext } from '../../Tool.js'
 import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import type { BashTool } from './BashTool.js'
+import { getDestructiveCommandWarning } from './destructiveCommandWarning.js'
+import { getBypassImmuneShellPermissionResult } from './shellPermissionGauntlet.js'
+import { BASH_TOOL_NAME } from './toolName.js'
 
 const ACCEPT_EDITS_ALLOWED_COMMANDS = [
   'mkdir',
@@ -73,8 +76,17 @@ export function checkPermissionMode(
   input: z.infer<typeof BashTool.inputSchema>,
   toolPermissionContext: ToolPermissionContext,
 ): PermissionResult {
-  // Skip if in bypass mode (handled elsewhere)
   if (toolPermissionContext.mode === 'bypassPermissions') {
+    const bypassImmuneResult = getBypassImmuneShellPermissionResult(
+      input.command,
+      BASH_TOOL_NAME,
+      toolPermissionContext,
+      getDestructiveCommandWarning,
+    )
+    if (bypassImmuneResult !== null) {
+      return bypassImmuneResult
+    }
+
     return {
       behavior: 'passthrough',
       message: 'Bypass mode is handled in main permission flow',

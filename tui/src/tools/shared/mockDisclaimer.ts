@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // UMMAYA-original — Audit-2 P0 fix · mock disclaimer helpers.
 //
-// Citizen-safety directive: any tool result whose payload contains
+// Citizen-safety directive: each tool result whose payload contains
 // ``_mode === "mock"`` MUST display a prominent disclaimer so citizens
 // immediately recognise that no real administrative action was taken.
 //

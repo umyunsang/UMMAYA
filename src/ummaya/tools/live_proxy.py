@@ -117,14 +117,11 @@ async def invoke_live_adapter_proxy(
         )
 
     timeout = _configured_timeout(settings.live_adapter_proxy_timeout_seconds)
-    token = os.environ.get("UMMAYA_LIVE_ADAPTER_PROXY_TOKEN", settings.live_adapter_proxy_token)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "User-Agent": f"UMMAYA/{get_version()} live-adapter-client",
     }
-    if token.strip():
-        headers["Authorization"] = f"Bearer {token.strip()}"
 
     payload: dict[str, object] = {
         "schema_version": "ummaya.live_adapter.v1",

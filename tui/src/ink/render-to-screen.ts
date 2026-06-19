@@ -45,6 +45,31 @@ let output: Output | undefined
 const timing = { reconcile: 0, yoga: 0, paint: 0, scan: 0, calls: 0 }
 const LOG_EVERY = 20
 
+type SearchRendererContainer = ReturnType<typeof reconciler.createContainer>
+type SearchReconcilerRuntime = typeof reconciler & {
+  createContainer(
+    root: DOMElement,
+    tag: typeof LegacyRoot,
+    hydrationCallbacks: null,
+    isStrictMode: boolean,
+    concurrentUpdatesByDefaultOverride: null,
+    identifierPrefix: string,
+    onUncaughtError: () => void,
+    onCaughtError: () => void,
+    onRecoverableError: () => void,
+    onDefaultTransitionIndicator: () => void,
+  ): SearchRendererContainer
+  updateContainerSync(
+    element: ReactElement | null,
+    container: SearchRendererContainer,
+    parentComponent: null,
+    callback: () => void,
+  ): void
+  flushSyncWork(): void
+}
+
+const searchReconciler = reconciler as SearchReconcilerRuntime
+
 /** Render a React element (wrapped in all contexts the component needs —
  *  caller's job) to an isolated Screen buffer at the given width. Returns
  *  the Screen + natural height (from yoga). Used for search: render ONE
@@ -66,8 +91,7 @@ export function renderToScreen(
     stylePool = new StylePool()
     charPool = new CharPool()
     hyperlinkPool = new HyperlinkPool()
-    // @ts-expect-error react-reconciler 0.33 takes 10 args; @types says 11
-    container = reconciler.createContainer(
+    container = searchReconciler.createContainer(
       root,
       LegacyRoot,
       null,
@@ -82,10 +106,8 @@ export function renderToScreen(
   }
 
   const t0 = performance.now()
-  // @ts-expect-error updateContainerSync exists but not in @types
-  reconciler.updateContainerSync(el, container, null, noop)
-  // @ts-expect-error flushSyncWork exists but not in @types
-  reconciler.flushSyncWork()
+  searchReconciler.updateContainerSync(el, container, null, noop)
+  searchReconciler.flushSyncWork()
   const t1 = performance.now()
 
   // Yoga layout. Root might not have a yogaNode if the tree is empty.
@@ -117,10 +139,8 @@ export function renderToScreen(
   const t3 = performance.now()
 
   // Unmount so next call gets a fresh tree. Leaves root/container/pools.
-  // @ts-expect-error updateContainerSync exists but not in @types
-  reconciler.updateContainerSync(null, container, null, noop)
-  // @ts-expect-error flushSyncWork exists but not in @types
-  reconciler.flushSyncWork()
+  searchReconciler.updateContainerSync(null, container, null, noop)
+  searchReconciler.flushSyncWork()
 
   timing.reconcile += t1 - t0
   timing.yoga += t2 - t1

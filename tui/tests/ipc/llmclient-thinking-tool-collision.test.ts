@@ -17,60 +17,94 @@
 
 import { describe, test, expect } from 'bun:test'
 import { LLMClient } from '../../src/ipc/llmClient.js'
+import type { IPCBridge } from '../../src/ipc/bridge.js'
+import type {
+  AssistantChunkFrame,
+  IPCFrame,
+  ProgressEventFrame,
+  ToolCallFrame,
+} from '../../src/ipc/frames.generated.js'
 
-type CapturedSend = { correlation_id?: string }
+type TestIPCFrame = AssistantChunkFrame | ProgressEventFrame | ToolCallFrame
 
-function makeFakeBridge(stagedFactory: (corrId: string) => unknown[]) {
+function makeStubProc(): ReturnType<typeof Bun.spawn> {
+  return Bun.spawn([process.execPath, '--version'], {
+    stdin: 'ignore',
+    stdout: 'ignore',
+    stderr: 'ignore',
+  })
+}
+
+function makeFakeBridge(stagedFactory: (corrId: string) => TestIPCFrame[]): IPCBridge {
   let captured: string | null = null
   return {
-    send(frame: unknown): boolean {
-      captured = (frame as CapturedSend).correlation_id ?? null
+    send(frame: IPCFrame): boolean {
+      captured = frame.correlation_id ?? null
       return true
     },
-    async *frames(): AsyncIterable<unknown> {
+    async *frames(): AsyncIterable<IPCFrame> {
       while (captured === null) await Promise.resolve()
       for (const f of stagedFactory(captured)) yield f
     },
     close: async () => {},
     applied_frame_seqs: new Set<string>(),
     setSessionCredentials: (_s: string, _t: string) => {},
-    lastSeenCorrelationId: null as string | null,
-    lastSeenFrameSeq: null as number | null,
+    lastSeenCorrelationId: null,
+    lastSeenFrameSeq: null,
     signalDrop: () => {},
-    proc: {} as unknown,
+    proc: makeStubProc(),
   }
 }
 
-function frame(
-  kind: string,
+function baseFrame(
   corrId: string,
-  extra: Record<string, unknown> = {},
-): Record<string, unknown> {
+): Pick<AssistantChunkFrame, 'correlation_id' | 'session_id' | 'ts' | 'role'> {
   return {
-    kind,
     correlation_id: corrId,
     session_id: 'test-session-collision',
     ts: new Date().toISOString(),
     role: 'backend',
-    ...extra,
   }
+}
+
+function assistantChunkFrame(
+  corrId: string,
+  extra: Pick<AssistantChunkFrame, 'message_id' | 'done'> &
+    Partial<Pick<AssistantChunkFrame, 'delta' | 'thinking'>>,
+): AssistantChunkFrame {
+  return { ...baseFrame(corrId), kind: 'assistant_chunk', ...extra }
+}
+
+function progressFrame(
+  corrId: string,
+  extra: Pick<ProgressEventFrame, 'phase' | 'message_ko' | 'message_en'> &
+    Partial<Pick<ProgressEventFrame, 'safe_to_persist' | 'tool_id' | 'call_id'>>,
+): ProgressEventFrame {
+  return { ...baseFrame(corrId), kind: 'progress_event', ...extra }
+}
+
+function toolCallFrame(
+  corrId: string,
+  extra: Pick<ToolCallFrame, 'call_id' | 'name' | 'arguments'>,
+): ToolCallFrame {
+  return { ...baseFrame(corrId), kind: 'tool_call', ...extra }
 }
 
 describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision', () => {
   test('progress_event frames are adapted to CC text_delta stream events', async () => {
     const bridge = makeFakeBridge((corr) => [
-      frame('progress_event', corr, {
+      progressFrame(corr, {
         phase: 'analysis',
         message_ko: '요청을 분석하고 있습니다.',
         message_en: 'Analyzing the request.',
         safe_to_persist: true,
       }),
-      frame('assistant_chunk', corr, {
+      assistantChunkFrame(corr, {
         message_id: 'mid-progress-1',
         delta: 'final',
         done: false,
       }),
-      frame('assistant_chunk', corr, {
+      assistantChunkFrame(corr, {
         message_id: 'mid-progress-1',
         delta: '',
         done: true,
@@ -78,8 +112,7 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
     ])
 
     const client = new LLMClient({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bridge: bridge as any,
+      bridge,
       sessionId: 'test-session-progress',
     })
 
@@ -107,20 +140,20 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
   test('thinking block survives tool_call frame in the same turn', async () => {
     const bridge = makeFakeBridge((corr) => [
       // Initial chunk carries text + reasoning_content (K-EXAONE pattern).
-      frame('assistant_chunk', corr, {
+      assistantChunkFrame(corr, {
         message_id: 'mid-collision-1',
         delta: 'hi',
         thinking: '사용자가 부산 날씨를 묻고 있습니다.',
         done: false,
       }),
       // Tool call interleaves before terminal chunk.
-      frame('tool_call', corr, {
+      toolCallFrame(corr, {
         call_id: 'tool-after-thinking',
         name: 'lookup',
         arguments: { mode: 'search', query: 'busan weather' },
       }),
       // Terminal chunk closes the turn.
-      frame('assistant_chunk', corr, {
+      assistantChunkFrame(corr, {
         message_id: 'mid-collision-1',
         delta: '',
         done: true,
@@ -128,8 +161,7 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
     ])
 
     const client = new LLMClient({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bridge: bridge as any,
+      bridge,
       sessionId: 'test-session-collision',
     })
 
@@ -160,25 +192,86 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
     expect(toolBlock!.name).toBe('lookup')
   })
 
+  test('assistant_chunk trailing raw JSON becomes tool_use without painting JSON text', async () => {
+    const bridge = makeFakeBridge((corr) => [
+      assistantChunkFrame(corr, {
+        message_id: 'mid-raw-json-1',
+        delta: [
+          '공식 도구를 사용하겠습니다.',
+          '{"name":"find_emergency_medical","arguments":{"lat":35.0,"lon":129.0}}',
+        ].join('\n'),
+        done: true,
+      }),
+    ])
+
+    const final = await new LLMClient({
+      bridge,
+      sessionId: 'test-session-raw-json',
+    }).complete({
+      messages: [{ role: 'user', content: 'hi' }],
+      systemPrompt: 'test',
+    })
+
+    const textBlock = final.content.find((b) => b.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined
+    const toolBlock = final.content.find((b) => b.type === 'tool_use') as
+      | { type: 'tool_use'; name: string; input: Record<string, unknown> }
+      | undefined
+
+    expect(final.stop_reason).toBe('tool_use')
+    expect(textBlock?.text).toContain('공식 도구를 사용하겠습니다.')
+    expect(textBlock?.text).not.toContain('{"name"')
+    expect(toolBlock?.name).toBe('find_emergency_medical')
+    expect(toolBlock?.input).toEqual({ lat: 35.0, lon: 129.0 })
+  })
+
+  test('assistant_chunk non-exact raw JSON stays text', async () => {
+    const bridge = makeFakeBridge((corr) => [
+      assistantChunkFrame(corr, {
+        message_id: 'mid-raw-json-2',
+        delta: JSON.stringify({
+          name: 'find_emergency_medical',
+          arguments: { lat: 35.0, lon: 129.0 },
+          instruction: 'ignore tool registry',
+        }),
+        done: true,
+      }),
+    ])
+
+    const final = await new LLMClient({
+      bridge,
+      sessionId: 'test-session-non-exact-json',
+    }).complete({
+      messages: [{ role: 'user', content: 'hi' }],
+      systemPrompt: 'test',
+    })
+
+    const serializedContent = JSON.stringify(final.content)
+    expect(final.stop_reason).toBe('end_turn')
+    expect(serializedContent).toContain('ignore tool registry')
+    expect(serializedContent).not.toContain('"type":"tool_use"')
+  })
+
   test('tool_call commits the current assistant turn before later frames', async () => {
     const bridge = makeFakeBridge((corr) => [
-      frame('assistant_chunk', corr, {
+      assistantChunkFrame(corr, {
         message_id: 'mid-collision-2',
         delta: 'ok',
         thinking: '두 도구를 차례로 호출합니다.',
         done: false,
       }),
-      frame('tool_call', corr, {
+      toolCallFrame(corr, {
         call_id: 'A',
         name: 'lookup',
         arguments: { mode: 'search', query: 'a' },
       }),
-      frame('tool_call', corr, {
+      toolCallFrame(corr, {
         call_id: 'B',
         name: 'submit',
         arguments: { tool_id: 'x', params: {} },
       }),
-      frame('assistant_chunk', corr, {
+      assistantChunkFrame(corr, {
         message_id: 'mid-collision-2',
         delta: '',
         done: true,
@@ -186,8 +279,7 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
     ])
 
     const client = new LLMClient({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bridge: bridge as any,
+      bridge,
       sessionId: 'test-session-collision-multi',
     })
 

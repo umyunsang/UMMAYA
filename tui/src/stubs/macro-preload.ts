@@ -7,7 +7,16 @@
 // succeeds and the splash renders.
 //
 // Referenced from `bunfig.toml` `preload = ["./src/stubs/macro-preload.ts"]`.
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+type ProcessExit = typeof process.exit
+
+declare global {
+  namespace NodeJS {
+    interface Process {
+      _origExit?: ProcessExit
+    }
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 // bun:bundle virtual module plugin
@@ -17,10 +26,8 @@
 // implementation when the bundler path supports plugin-time resolution.
 // ═══════════════════════════════════════════════════════════════════════
 try {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bunGlobal = (globalThis as any).Bun
-  if (bunGlobal && typeof bunGlobal.plugin === 'function') {
-    bunGlobal.plugin({
+  if (typeof Bun !== 'undefined' && typeof Bun.plugin === 'function') {
+    Bun.plugin({
       name: 'ummaya-bun-bundle-shim',
       setup(build: {
         onResolve: (
@@ -56,7 +63,7 @@ try {
 // byte-stable across machines.
 import pkg from '../../package.json' with { type: 'json' }
 
-;(globalThis as any).MACRO = {
+const runtimeMacro = {
   VERSION: pkg.version,
   VERSION_CHANGELOG: 'https://github.com/umyunsang/UMMAYA/releases',
   BUILD_TIME: process.env.UMMAYA_BUILD_TIME ?? new Date(0).toISOString(),
@@ -65,7 +72,9 @@ import pkg from '../../package.json' with { type: 'json' }
     'Please open a GitHub issue at https://github.com/umyunsang/UMMAYA/issues',
   PACKAGE_URL: 'https://github.com/umyunsang/UMMAYA',
   NATIVE_PACKAGE_URL: 'https://github.com/umyunsang/UMMAYA',
-}
+} satisfies typeof MACRO
+
+Reflect.set(globalThis, 'MACRO', runtimeMacro)
 
 // ═══════════════════════════════════════════════════════════════════════
 // TTY detection shim
@@ -147,9 +156,10 @@ if (process.env.UMMAYA_DEBUG_PRELOAD === '1') {
   // the documented isTTY exit but a downstream caller is still firing
   // process.exit(1) without a stack trace). Wraps once per process; the
   // original is preserved on `process._origExit`.
-  if (!(process as any)._origExit) {
-    ;(process as any)._origExit = process.exit.bind(process)
-    process.exit = ((code?: number) => {
+  if (!process._origExit) {
+    const originalExit: ProcessExit = process.exit.bind(process)
+    process._origExit = originalExit
+    const patchedExit: ProcessExit = code => {
       try {
         const stack = new Error('process.exit caller').stack ?? ''
         require('fs').writeSync(
@@ -159,7 +169,8 @@ if (process.env.UMMAYA_DEBUG_PRELOAD === '1') {
       } catch {
         /* stderr torn down */
       }
-      return (process as any)._origExit(code)
-    }) as typeof process.exit
+      return originalExit(code)
+    }
+    process.exit = patchedExit
   }
 }

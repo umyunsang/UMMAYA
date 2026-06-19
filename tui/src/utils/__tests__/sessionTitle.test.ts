@@ -19,7 +19,7 @@ const TUI_SRC_ROOT = resolve(__dirname, '..', '..')
 let mockText = '{"title":"Test session title"}'
 
 beforeAll(() => {
-  mock.module(resolve(TUI_SRC_ROOT, 'services/api/claude.js'), () => ({
+  mock.module(resolve(TUI_SRC_ROOT, 'services/api/ummaya.js'), () => ({
     queryHaiku: async () => ({
       message: { content: [{ type: 'text', text: mockText }] },
     }),

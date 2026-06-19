@@ -4,11 +4,10 @@
 // assert FIFO order + p99 ≤ 50 ms per chunk (US1 scenarios 1, 2, 5; FR-001,
 // FR-005, FR-006).
 
-import { describe, expect, test, afterEach } from 'bun:test'
-import { join, dirname } from 'node:path'
+import { describe, expect, test } from 'bun:test'
+import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createBridge } from '../../src/ipc/bridge'
-import { encodeFrame } from '../../src/ipc/codec'
 import type { IPCFrame } from '../../src/ipc/frames.generated'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -17,11 +16,42 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 // Stub backend script path
 // ---------------------------------------------------------------------------
 
-// We use the real Python backend in --ipc stdio mode (echo handler).
-// This avoids a separate stub script while still testing the bridge end-to-end.
-// The echo handler in ummaya.ipc.stdio mirrors every user_input with an
-// assistant_chunk, making it ideal as a test fixture.
-const BACKEND_CMD = ['uv', 'run', '--directory', join(__dirname, '../../../'), 'python', '-m', 'ummaya.cli', '--ipc', 'stdio']
+const ECHO_BACKEND_SCRIPT = `
+const decoder = new TextDecoder()
+let buffer = ''
+let frameSeq = 0
+
+function writeFrame(frame) {
+  process.stdout.write(JSON.stringify(frame) + '\\n')
+}
+
+for await (const chunk of Bun.stdin.stream()) {
+  buffer += decoder.decode(chunk, { stream: true })
+  const lines = buffer.split('\\n')
+  buffer = lines.pop() ?? ''
+  for (const line of lines) {
+    if (line.trim().length === 0) continue
+    const frame = JSON.parse(line)
+    if (frame.kind !== 'user_input') continue
+    writeFrame({
+      kind: 'assistant_chunk',
+      version: '1.0',
+      role: 'backend',
+      session_id: frame.session_id,
+      correlation_id: frame.correlation_id,
+      ts: new Date().toISOString(),
+      frame_seq: frameSeq++,
+      message_id: crypto.randomUUID(),
+      delta: '[echo] ' + frame.text,
+      done: true,
+    })
+  }
+}
+`
+
+// Fast bridge tests must exercise the TypeScript subprocess bridge itself, not
+// `uv`/Python cold start. Python stdio coverage lives in backend IPC tests.
+const BACKEND_CMD = ['bun', '--eval', ECHO_BACKEND_SCRIPT]
 
 function makeUserInputFrame(sid: string, text: string): IPCFrame {
   return {
@@ -38,15 +68,17 @@ function makeUserInputFrame(sid: string, text: string): IPCFrame {
 // Tests
 // ---------------------------------------------------------------------------
 
-// UMMAYA_IPC_HANDLER=echo selects the test-friendly echo handler in
-// src/ummaya/ipc/stdio.py — matches these tests' FIFO / lifecycle assertions
-// without requiring a FriendliAI session on the CI runner.
 const ECHO_ENV = {
   UMMAYA_IPC_HANDLER: 'echo',
   UMMAYA_DATA_GO_KR_API_KEY: 'test-dummy',
   UMMAYA_FRIENDLI_TOKEN: 'test-dummy',
   UMMAYA_KAKAO_API_KEY: 'test-dummy',
 }
+
+test('fast bridge lifecycle fixture does not depend on Python cold start', () => {
+  expect(BACKEND_CMD[0]).not.toBe('uv')
+  expect(BACKEND_CMD).not.toContain('python')
+})
 
 describe('bridge: process lifecycle', () => {
   test('backend spawns and starts within 5 s', async () => {
@@ -136,8 +168,8 @@ describe('bridge: FIFO frame ordering (FR-005)', () => {
 
     expect(received).toHaveLength(10)
     // FIFO: each delta should contain the corresponding message text
-    for (let j = 0; j < 10; j++) {
-      expect(received[j]).toContain(texts[j]!)
+    for (const [j, expected] of texts.entries()) {
+      expect(received[j] ?? '').toContain(expected)
     }
     // p99 latency ≤ 50 ms (FR-006) — measured here as processing overhead only
     // (network RTT to local subprocess is negligible)

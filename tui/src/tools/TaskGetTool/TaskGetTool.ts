@@ -7,6 +7,7 @@ import {
   isTodoV2Enabled,
   TaskStatusSchema,
 } from '../../utils/tasks.js'
+import { buildAgentSupportMetadata } from '../AgentTool/orchestrationSupport.js'
 import { TASK_GET_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 
@@ -29,6 +30,10 @@ const outputSchema = lazySchema(() =>
         blockedBy: z.array(z.string()),
       })
       .nullable(),
+    evidenceJoinKey: z.string(),
+    parentToolUseId: z.string(),
+    resumeToken: z.string(),
+    permissionFlow: z.literal('coordinator_parent_round_trip'),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -70,8 +75,12 @@ export const TaskGetTool = buildTool({
   renderToolUseMessage() {
     return null
   },
-  async call({ taskId }) {
+  async call({ taskId }, context) {
     const taskListId = getTaskListId()
+    const supportMetadata = buildAgentSupportMetadata({
+      taskId,
+      parentToolUseId: context.toolUseId,
+    })
 
     const task = await getTask(taskListId, taskId)
 
@@ -79,6 +88,7 @@ export const TaskGetTool = buildTool({
       return {
         data: {
           task: null,
+          ...supportMetadata,
         },
       }
     }
@@ -93,16 +103,22 @@ export const TaskGetTool = buildTool({
           blocks: task.blocks,
           blockedBy: task.blockedBy,
         },
+        ...supportMetadata,
       },
     }
   },
   mapToolResultToToolResultBlockParam(content, toolUseID) {
-    const { task } = content as Output
+    const { task, evidenceJoinKey, parentToolUseId, resumeToken, permissionFlow } =
+      outputSchema().parse(content)
     if (!task) {
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
-        content: 'Task not found',
+        content: `Task not found
+evidence_join_key: ${evidenceJoinKey}
+parent_tool_use_id: ${parentToolUseId}
+resume_token: ${resumeToken}
+permission_flow: ${permissionFlow}`,
       }
     }
 
@@ -110,6 +126,10 @@ export const TaskGetTool = buildTool({
       `Task #${task.id}: ${task.subject}`,
       `Status: ${task.status}`,
       `Description: ${task.description}`,
+      `Evidence join key: ${evidenceJoinKey}`,
+      `Parent tool use ID: ${parentToolUseId}`,
+      `Resume token: ${resumeToken}`,
+      `Permission flow: ${permissionFlow}`,
     ]
 
     if (task.blockedBy.length > 0) {

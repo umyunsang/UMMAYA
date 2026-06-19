@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // UMMAYA keeps Claude Code's query/provider boundary: query.ts owns the
 // agentic loop and this helper preserves the SDK-shaped retry generator used
-// by services/api/claude.ts. Provider-specific retry policy can be widened
+// by services/api/ummaya.ts. Provider-specific retry policy can be widened
 // later, but the control-flow shape must stay generator-based so query.ts sees
 // the same stream/system-message contract as the CC restored source.
 

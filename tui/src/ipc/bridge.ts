@@ -255,6 +255,14 @@ class AsyncQueue<T> {
           this._resolve = resolve
         })
       },
+      return: (): Promise<IteratorResult<T>> => {
+        if (this._resolve) {
+          const r = this._resolve
+          this._resolve = null
+          r({ value: undefined as unknown as T, done: true })
+        }
+        return Promise.resolve({ value: undefined as unknown as T, done: true })
+      },
     }
   }
 }

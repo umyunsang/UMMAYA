@@ -46,6 +46,10 @@ type WebSocketLike = Pick<
   | 'binaryType'
 >
 
+type BunWebSocketConstructor = {
+  new (url: string | URL, options?: Bun.WebSocketOptions): WebSocket
+}
+
 // Envoy per-request buffer cap. Week-1 Datadog payloads won't hit this, but
 // design for it so git-push doesn't need a relay rewrite.
 const MAX_CHUNK_BYTES = 512 * 1024
@@ -363,10 +367,10 @@ function openTunnel(
       headers,
       agent: getWebSocketProxyAgent(wsUrl),
       ...getWebSocketTLSOptions(),
-    }) as unknown as WebSocketLike
+    })
   } else {
-    ws = new globalThis.WebSocket(wsUrl, {
-      // @ts-expect-error — Bun extension; not in lib.dom WebSocket types
+    const BunWebSocket = globalThis.WebSocket as BunWebSocketConstructor
+    ws = new BunWebSocket(wsUrl, {
       headers,
       proxy: getWebSocketProxyUrl(wsUrl),
       tls: getWebSocketTLSOptions() || undefined,

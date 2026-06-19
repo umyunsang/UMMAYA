@@ -1,108 +1,86 @@
 // [P0 reconstructed · rebuild-stubs.ts · symbol-complete stub]
 // Aggregated from every consumer import across src/.
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createStub } from '../stubs/any-stub'
 
-const __noop = (..._args: unknown[]): any => undefined as any;
-const __stub: any = new Proxy(function () {} as any, {
-  get(_t, p) {
-    if (p === Symbol.toPrimitive) return () => ""
-    if (p === Symbol.iterator) return function* () {}
-    if (p === Symbol.asyncIterator) return async function* () {}
-    if (p === Symbol.toStringTag) return "Stub"
-    if (p === Symbol.for("nodejs.util.inspect.custom")) return () => "<Stub>"
-    if (p === "inspect") return () => "<Stub>"
-    if (p === "then") return undefined
-    if (p === "toString") return () => ""
-    if (p === "valueOf") return () => undefined
-    if (p === "toJSON") return () => null
-    if (p === "length") return 0
-    if (p === "name") return "Stub"
-    if (p === "message") return ""
-    if (p === "stack") return ""
-    if (p === "constructor") return Object
-    return __stub
-  },
-  apply() { return __stub },
-  construct() { return __stub },
-});
+const __stub = createStub()
 
-export type AssistantMessage = any;
-export const AssistantMessage: any = __stub;
-export type AttachmentMessage = any;
-export const AttachmentMessage: any = __stub;
-export type CollapsedReadSearchGroup = any;
-export const CollapsedReadSearchGroup: any = __stub;
-export type CollapsibleMessage = any;
-export const CollapsibleMessage: any = __stub;
-export type CompactMetadata = any;
-export const CompactMetadata: any = __stub;
-export type GroupedToolUseMessage = any;
-export const GroupedToolUseMessage: any = __stub;
-export type HookResultMessage = any;
-export const HookResultMessage: any = __stub;
-export type Message = any;
-export const Message: any = __stub;
-export type MessageOrigin = any;
-export const MessageOrigin: any = __stub;
-export type NormalizedAssistantMessage = any;
-export const NormalizedAssistantMessage: any = __stub;
-export type NormalizedMessage = any;
-export const NormalizedMessage: any = __stub;
-export type NormalizedUserMessage = any;
-export const NormalizedUserMessage: any = __stub;
-export type PartialCompactDirection = any;
-export const PartialCompactDirection: any = __stub;
-export type ProgressMessage = any;
-export const ProgressMessage: any = __stub;
-export type RenderableMessage = any;
-export const RenderableMessage: any = __stub;
-export type RequestStartEvent = any;
-export const RequestStartEvent: any = __stub;
-export type StopHookInfo = any;
-export const StopHookInfo: any = __stub;
-export type StreamEvent = any;
-export const StreamEvent: any = __stub;
-export type SystemAPIErrorMessage = any;
-export const SystemAPIErrorMessage: any = __stub;
-export type SystemAgentsKilledMessage = any;
-export const SystemAgentsKilledMessage: any = __stub;
-export type SystemApiMetricsMessage = any;
-export const SystemApiMetricsMessage: any = __stub;
-export type SystemAwaySummaryMessage = any;
-export const SystemAwaySummaryMessage: any = __stub;
-export type SystemBridgeStatusMessage = any;
-export const SystemBridgeStatusMessage: any = __stub;
-export type SystemCompactBoundaryMessage = any;
-export const SystemCompactBoundaryMessage: any = __stub;
-export type SystemFileSnapshotMessage = any;
-export const SystemFileSnapshotMessage: any = __stub;
-export type SystemInformationalMessage = any;
-export const SystemInformationalMessage: any = __stub;
-export type SystemLocalCommandMessage = any;
-export const SystemLocalCommandMessage: any = __stub;
-export type SystemMemorySavedMessage = any;
-export const SystemMemorySavedMessage: any = __stub;
-export type SystemMessage = any;
-export const SystemMessage: any = __stub;
-export type SystemMessageLevel = any;
-export const SystemMessageLevel: any = __stub;
-export type SystemMicrocompactBoundaryMessage = any;
-export const SystemMicrocompactBoundaryMessage: any = __stub;
-export type SystemPermissionRetryMessage = any;
-export const SystemPermissionRetryMessage: any = __stub;
-export type SystemScheduledTaskFireMessage = any;
-export const SystemScheduledTaskFireMessage: any = __stub;
-export type SystemStopHookSummaryMessage = any;
-export const SystemStopHookSummaryMessage: any = __stub;
-export type SystemThinkingMessage = any;
-export const SystemThinkingMessage: any = __stub;
-export type SystemTurnDurationMessage = any;
-export const SystemTurnDurationMessage: any = __stub;
-export type TombstoneMessage = any;
-export const TombstoneMessage: any = __stub;
-export type ToolUseSummaryMessage = any;
-export const ToolUseSummaryMessage: any = __stub;
-export type UserMessage = any;
-export const UserMessage: any = __stub;
+export type AssistantMessage = unknown;
+export const AssistantMessage = __stub;
+export type AttachmentMessage = unknown;
+export const AttachmentMessage = __stub;
+export type CollapsedReadSearchGroup = unknown;
+export const CollapsedReadSearchGroup = __stub;
+export type CollapsibleMessage = unknown;
+export const CollapsibleMessage = __stub;
+export type CompactMetadata = unknown;
+export const CompactMetadata = __stub;
+export type GroupedToolUseMessage = unknown;
+export const GroupedToolUseMessage = __stub;
+export type HookResultMessage = unknown;
+export const HookResultMessage = __stub;
+export type Message = unknown;
+export const Message = __stub;
+export type MessageOrigin = unknown;
+export const MessageOrigin = __stub;
+export type NormalizedAssistantMessage = unknown;
+export const NormalizedAssistantMessage = __stub;
+export type NormalizedMessage = unknown;
+export const NormalizedMessage = __stub;
+export type NormalizedUserMessage = unknown;
+export const NormalizedUserMessage = __stub;
+export type PartialCompactDirection = unknown;
+export const PartialCompactDirection = __stub;
+export type ProgressMessage = unknown;
+export const ProgressMessage = __stub;
+export type RenderableMessage = unknown;
+export const RenderableMessage = __stub;
+export type RequestStartEvent = unknown;
+export const RequestStartEvent = __stub;
+export type StopHookInfo = unknown;
+export const StopHookInfo = __stub;
+export type StreamEvent = unknown;
+export const StreamEvent = __stub;
+export type SystemAPIErrorMessage = unknown;
+export const SystemAPIErrorMessage = __stub;
+export type SystemAgentsKilledMessage = unknown;
+export const SystemAgentsKilledMessage = __stub;
+export type SystemApiMetricsMessage = unknown;
+export const SystemApiMetricsMessage = __stub;
+export type SystemAwaySummaryMessage = unknown;
+export const SystemAwaySummaryMessage = __stub;
+export type SystemBridgeStatusMessage = unknown;
+export const SystemBridgeStatusMessage = __stub;
+export type SystemCompactBoundaryMessage = unknown;
+export const SystemCompactBoundaryMessage = __stub;
+export type SystemFileSnapshotMessage = unknown;
+export const SystemFileSnapshotMessage = __stub;
+export type SystemInformationalMessage = unknown;
+export const SystemInformationalMessage = __stub;
+export type SystemLocalCommandMessage = unknown;
+export const SystemLocalCommandMessage = __stub;
+export type SystemMemorySavedMessage = unknown;
+export const SystemMemorySavedMessage = __stub;
+export type SystemMessage = unknown;
+export const SystemMessage = __stub;
+export type SystemMessageLevel = unknown;
+export const SystemMessageLevel = __stub;
+export type SystemMicrocompactBoundaryMessage = unknown;
+export const SystemMicrocompactBoundaryMessage = __stub;
+export type SystemPermissionRetryMessage = unknown;
+export const SystemPermissionRetryMessage = __stub;
+export type SystemScheduledTaskFireMessage = unknown;
+export const SystemScheduledTaskFireMessage = __stub;
+export type SystemStopHookSummaryMessage = unknown;
+export const SystemStopHookSummaryMessage = __stub;
+export type SystemThinkingMessage = unknown;
+export const SystemThinkingMessage = __stub;
+export type SystemTurnDurationMessage = unknown;
+export const SystemTurnDurationMessage = __stub;
+export type TombstoneMessage = unknown;
+export const TombstoneMessage = __stub;
+export type ToolUseSummaryMessage = unknown;
+export const ToolUseSummaryMessage = __stub;
+export type UserMessage = unknown;
+export const UserMessage = __stub;
 
 export default __stub;

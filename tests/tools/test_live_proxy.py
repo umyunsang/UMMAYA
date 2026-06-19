@@ -192,5 +192,36 @@ async def test_invoke_live_adapter_proxy_retries_retryable_gateway_error(
     assert route.call_count == 2
 
 
+@pytest.mark.asyncio
+@respx.mock
+async def test_invoke_live_adapter_proxy_omits_authorization_when_legacy_proxy_token_is_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Given: a packaged client still has the retired proxy-token env var.
+    monkeypatch.setenv("UMMAYA_LIVE_ADAPTER_PROXY_URL", "https://gateway.example/v1/adapters")
+    monkeypatch.setenv("UMMAYA_LIVE_ADAPTER_PROXY_TOKEN", "legacy-client-token")
+
+    tool = _make_proxyable_tool()
+    route = respx.post("https://gateway.example/v1/adapters/kma_current_observation").mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "result": {"kind": "record", "item": {"value": "proxied"}}},
+        )
+    )
+
+    # When: the public client invokes the hosted gateway.
+    result = await invoke_live_adapter_proxy(
+        tool=tool,
+        params={"q": "다대포"},
+        request_id="req-no-client-secret",
+        session_identity="session-1",
+    )
+
+    # Then: no client-side bearer secret is sent to the gateway.
+    assert result == {"kind": "record", "item": {"value": "proxied"}}
+    assert route.call_count == 1
+    assert "authorization" not in route.calls[0].request.headers
+
+
 async def _noop_sleep(_: float) -> None:
     return None

@@ -113,20 +113,34 @@ export interface Timestamp {
   nanos?: number | undefined
 }
 
+type JsonObject = Record<string, unknown>
+
+const emptyJsonObject: JsonObject = {}
+const emptyTimestampPartial: DeepPartial<Timestamp> = {}
+
+function jsonObject(value: unknown): JsonObject {
+  return isJsonObject(value) ? value : emptyJsonObject
+}
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === 'object' && value !== null
+}
+
 function createBaseTimestamp(): Timestamp {
   return { seconds: 0, nanos: 0 }
 }
 
 export const Timestamp: MessageFns<Timestamp> = {
-  fromJSON(object: any): Timestamp {
+  fromJSON(object: unknown): Timestamp {
+    const value = jsonObject(object)
     return {
-      seconds: isSet(object.seconds) ? globalThis.Number(object.seconds) : 0,
-      nanos: isSet(object.nanos) ? globalThis.Number(object.nanos) : 0,
+      seconds: isSet(value['seconds']) ? globalThis.Number(value['seconds']) : 0,
+      nanos: isSet(value['nanos']) ? globalThis.Number(value['nanos']) : 0,
     }
   },
 
   toJSON(message: Timestamp): unknown {
-    const obj: any = {}
+    const obj: Record<string, unknown> = {}
     if (message.seconds !== undefined) {
       obj.seconds = Math.round(message.seconds)
     }
@@ -137,7 +151,7 @@ export const Timestamp: MessageFns<Timestamp> = {
   },
 
   create<I extends Exact<DeepPartial<Timestamp>, I>>(base?: I): Timestamp {
-    return Timestamp.fromPartial(base ?? ({} as any))
+    return Timestamp.fromPartial(base ?? emptyTimestampPartial)
   },
   fromPartial<I extends Exact<DeepPartial<Timestamp>, I>>(
     object: I,
@@ -175,12 +189,12 @@ type Exact<P, I extends P> = P extends Builtin
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
-function isSet(value: any): boolean {
+function isSet(value: unknown): boolean {
   return value !== null && value !== undefined
 }
 
 interface MessageFns<T> {
-  fromJSON(object: any): T
+  fromJSON(object: unknown): T
   toJSON(message: T): unknown
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T
   fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T

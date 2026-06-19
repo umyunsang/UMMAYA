@@ -70,6 +70,9 @@ logs/
 *.sqlite
 *.db
 weekly-activity-log-*.md
+.debug-journal.md
+outputs/
+fixtures/token-count-*.json
 
 # Research (keep structure, ignore large outputs)
 research/experiments/results/*.csv

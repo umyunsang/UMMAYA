@@ -58,7 +58,7 @@ type OutputSchema = ReturnType<typeof outputSchema>
 export type Output = z.infer<OutputSchema>
 
 // ---------------------------------------------------------------------------
-// The UMMAYA model identifier (matches services/api/claude.ts)
+// The UMMAYA model identifier (matches services/api/ummaya.ts)
 // ---------------------------------------------------------------------------
 
 const UMMAYA_MODEL = 'LGAI-EXAONE/K-EXAONE-236B-A23B'

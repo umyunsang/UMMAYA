@@ -8,14 +8,15 @@ and are referenced here by opaque IDs plus SHA-256 hashes.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from ummaya.evidence.document_authoring_cases import DocumentAuthoringCase
+from ummaya.evidence.json_types import JsonObject, parse_json_object
 from ummaya.evidence.models import RunEvidence
 from ummaya.tools.documents.models import DocumentFormatFamily, KnownDocumentFormat
 
@@ -127,7 +128,7 @@ class DocumentLifecycleEvidenceRecord(BaseModel):
     status: DocumentHarnessLifecycleStatus
     known_format: KnownDocumentFormat
     format_family: DocumentFormatFamily
-    adapter_id: str | None = None
+    support_component_id: str | None = None
     artifact_id: str | None = None
     artifact_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     document_diff_id: str | None = None
@@ -299,11 +300,14 @@ def authoring_cases_from_scenario(
     return scenario.authoring_cases
 
 
-def _load_yaml_mapping(path: Path) -> Mapping[str, object]:
+def _load_yaml_mapping(path: Path) -> JsonObject:
     resolved = path if path.is_absolute() else _REPO_ROOT / path
     if not resolved.exists():
         raise DocumentHarnessEvidenceError(f"document harness scenario not found: {path}")
     loaded = yaml.safe_load(resolved.read_text(encoding="utf-8"))
-    if not isinstance(loaded, Mapping):
-        raise DocumentHarnessEvidenceError(f"document harness scenario must be a mapping: {path}")
-    return cast(Mapping[str, object], loaded)
+    try:
+        return parse_json_object(loaded)
+    except ValidationError as exc:
+        raise DocumentHarnessEvidenceError(
+            f"document harness scenario must be a JSON mapping: {path}"
+        ) from exc

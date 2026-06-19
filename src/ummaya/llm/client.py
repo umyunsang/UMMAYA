@@ -633,7 +633,38 @@ class LLMClient:
 
                         # Yield events; watch for mid-stream 429 envelopes (T016)
                         rate_limited_mid_stream = False
-                        async for line in response.aiter_lines():
+                        line_iter = response.aiter_lines()
+                        next_data_line_deadline = (
+                            time.monotonic() + self._config.stream_idle_timeout
+                        )
+                        while True:
+                            try:
+                                timeout_remaining = next_data_line_deadline - time.monotonic()
+                                if timeout_remaining <= 0:
+                                    raise TimeoutError
+                                line = await asyncio.wait_for(
+                                    anext(line_iter),
+                                    timeout=timeout_remaining,
+                                )
+                            except StopAsyncIteration:
+                                break
+                            except TimeoutError as exc:
+                                _duration_ms = (time.monotonic() - _stream_start) * 1000
+                                self._metrics_record_call(
+                                    success=False,
+                                    duration_ms=_duration_ms,
+                                )
+                                _metrics_recorded = True
+                                raise StreamInterruptedError(
+                                    "Stream idle timeout after "
+                                    f"{self._config.stream_idle_timeout:g}s "
+                                    "without a new SSE data line"
+                                ) from exc
+                            if not line.startswith("data: "):
+                                continue
+                            next_data_line_deadline = (
+                                time.monotonic() + self._config.stream_idle_timeout
+                            )
                             if self._is_rate_limit_envelope(line):
                                 rate_limited_mid_stream = True
                                 delay = self._compute_rate_limit_delay(response, attempt, policy)

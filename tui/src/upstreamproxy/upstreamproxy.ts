@@ -13,7 +13,7 @@
  *      so a supervisor restart can retry)
  *   6. Exposes HTTPS_PROXY / SSL_CERT_FILE env vars for all agent subprocesses
  *
- * Every step fails open: any error logs a warning and disables the proxy.
+ * Every step fails open: each error logs a warning and disables the proxy.
  * A broken proxy setup must never break an otherwise-working session.
  *
  * Design doc: api-go/ccr/docs/plans/CCR_AUTH_DESIGN.md § "Week-1 pilot scope".

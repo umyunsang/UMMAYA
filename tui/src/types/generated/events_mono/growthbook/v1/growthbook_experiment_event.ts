@@ -40,6 +40,20 @@ export interface GrowthbookExperimentEvent {
   event_metadata_vars?: string | undefined
 }
 
+type JsonObject = Record<string, unknown>
+
+const emptyJsonObject: JsonObject = {}
+const emptyGrowthbookExperimentEventPartial: DeepPartial<GrowthbookExperimentEvent> =
+  {}
+
+function jsonObject(value: unknown): JsonObject {
+  return isJsonObject(value) ? value : emptyJsonObject
+}
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === 'object' && value !== null
+}
+
 function createBaseGrowthbookExperimentEvent(): GrowthbookExperimentEvent {
   return {
     event_id: '',
@@ -59,49 +73,50 @@ function createBaseGrowthbookExperimentEvent(): GrowthbookExperimentEvent {
 
 export const GrowthbookExperimentEvent: MessageFns<GrowthbookExperimentEvent> =
   {
-    fromJSON(object: any): GrowthbookExperimentEvent {
+    fromJSON(object: unknown): GrowthbookExperimentEvent {
+      const value = jsonObject(object)
       return {
-        event_id: isSet(object.event_id)
-          ? globalThis.String(object.event_id)
+        event_id: isSet(value['event_id'])
+          ? globalThis.String(value['event_id'])
           : '',
-        timestamp: isSet(object.timestamp)
-          ? fromJsonTimestamp(object.timestamp)
+        timestamp: isSet(value['timestamp'])
+          ? fromJsonTimestamp(value['timestamp'])
           : undefined,
-        experiment_id: isSet(object.experiment_id)
-          ? globalThis.String(object.experiment_id)
+        experiment_id: isSet(value['experiment_id'])
+          ? globalThis.String(value['experiment_id'])
           : '',
-        variation_id: isSet(object.variation_id)
-          ? globalThis.Number(object.variation_id)
+        variation_id: isSet(value['variation_id'])
+          ? globalThis.Number(value['variation_id'])
           : 0,
-        environment: isSet(object.environment)
-          ? globalThis.String(object.environment)
+        environment: isSet(value['environment'])
+          ? globalThis.String(value['environment'])
           : '',
-        user_attributes: isSet(object.user_attributes)
-          ? globalThis.String(object.user_attributes)
+        user_attributes: isSet(value['user_attributes'])
+          ? globalThis.String(value['user_attributes'])
           : '',
-        experiment_metadata: isSet(object.experiment_metadata)
-          ? globalThis.String(object.experiment_metadata)
+        experiment_metadata: isSet(value['experiment_metadata'])
+          ? globalThis.String(value['experiment_metadata'])
           : '',
-        device_id: isSet(object.device_id)
-          ? globalThis.String(object.device_id)
+        device_id: isSet(value['device_id'])
+          ? globalThis.String(value['device_id'])
           : '',
-        auth: isSet(object.auth)
-          ? PublicApiAuth.fromJSON(object.auth)
+        auth: isSet(value['auth'])
+          ? PublicApiAuth.fromJSON(value['auth'])
           : undefined,
-        session_id: isSet(object.session_id)
-          ? globalThis.String(object.session_id)
+        session_id: isSet(value['session_id'])
+          ? globalThis.String(value['session_id'])
           : '',
-        anonymous_id: isSet(object.anonymous_id)
-          ? globalThis.String(object.anonymous_id)
+        anonymous_id: isSet(value['anonymous_id'])
+          ? globalThis.String(value['anonymous_id'])
           : '',
-        event_metadata_vars: isSet(object.event_metadata_vars)
-          ? globalThis.String(object.event_metadata_vars)
+        event_metadata_vars: isSet(value['event_metadata_vars'])
+          ? globalThis.String(value['event_metadata_vars'])
           : '',
       }
     },
 
     toJSON(message: GrowthbookExperimentEvent): unknown {
-      const obj: any = {}
+      const obj: Record<string, unknown> = {}
       if (message.event_id !== undefined) {
         obj.event_id = message.event_id
       }
@@ -144,7 +159,9 @@ export const GrowthbookExperimentEvent: MessageFns<GrowthbookExperimentEvent> =
     create<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(
       base?: I,
     ): GrowthbookExperimentEvent {
-      return GrowthbookExperimentEvent.fromPartial(base ?? ({} as any))
+      return GrowthbookExperimentEvent.fromPartial(
+        base ?? emptyGrowthbookExperimentEventPartial,
+      )
     },
     fromPartial<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(
       object: I,
@@ -201,7 +218,7 @@ function fromTimestamp(t: Timestamp): Date {
   return new globalThis.Date(millis)
 }
 
-function fromJsonTimestamp(o: any): Date {
+function fromJsonTimestamp(o: unknown): Date {
   if (o instanceof globalThis.Date) {
     return o
   } else if (typeof o === 'string') {
@@ -211,12 +228,12 @@ function fromJsonTimestamp(o: any): Date {
   }
 }
 
-function isSet(value: any): boolean {
+function isSet(value: unknown): boolean {
   return value !== null && value !== undefined
 }
 
 interface MessageFns<T> {
-  fromJSON(object: any): T
+  fromJSON(object: unknown): T
   toJSON(message: T): unknown
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T
   fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T

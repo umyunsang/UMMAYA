@@ -1,24 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-// Spec 288 Codex P1 regression — `computeIsAgentLoopActive` +
-// `computeCurrentToolCallId` derive liveness from the full `messages` map
-// rather than the last entry of `message_order`.
-//
-// The bug these tests lock down: the reducer's `TOOL_CALL` branch adds a new
-// assistant message to the `messages` Map but does NOT append its id to
-// `message_order` (see session-store.ts around the `TOOL_CALL` case).  A probe
-// that only reads `message_order` therefore returns `false` for a tool call
-// that arrives BEFORE any `ASSISTANT_CHUNK` — causing `session-exit` to skip
-// its FR-015 active-loop confirmation and `agent-interrupt` (ctrl+c) to arm
-// exit instead of cancelling the active loop.
-//
-// Test cases (per Codex review follow-up on PR #1591):
-//   1. TOOL_CALL with no matching TOOL_RESULT yet — probe returns true.
-//   2. ASSISTANT_CHUNK with done:false — probe returns true.
-//   3. ASSISTANT_CHUNK done:true + matching TOOL_RESULT — probe returns false.
-//   4. TOOL_CALL arrives before any ASSISTANT_CHUNK — probe returns true
-//      (the canonical Codex bug case — message is in `messages` but missing
-//      from `message_order`).
-
 import { beforeEach, describe, expect, it } from 'bun:test'
 import {
   computeCurrentToolCallId,
@@ -45,16 +24,7 @@ describe('computeIsAgentLoopActive — derived probe (Spec 288 Codex P1)', () =>
     resetStore()
   })
 
-  // -------------------------------------------------------------------------
-  // Case 1 — a TOOL_CALL with no matching TOOL_RESULT means the loop is alive
-  // even when the assistant chunk has already marked itself done.
-  // -------------------------------------------------------------------------
   it('returns true when a TOOL_CALL has no matching TOOL_RESULT yet', () => {
-    // Stream an assistant chunk first so the message is in both `messages`
-    // and `message_order` with `done:true`, then attach a tool call.  Without
-    // the derived probe a legacy last-entry check would see `done:true` and
-    // report idle; this test proves the derived probe still sees the pending
-    // tool call.
     dispatchSessionAction({
       type: 'ASSISTANT_CHUNK',
       message_id: 'assist-1',
@@ -128,24 +98,12 @@ describe('computeIsAgentLoopActive — derived probe (Spec 288 Codex P1)', () =>
     expect(computeCurrentToolCallId(messages)).toBeNull()
   })
 
-  // -------------------------------------------------------------------------
-  // Case 4 — CANONICAL CODEX BUG CASE.
-  //
-  // Tool call arrives BEFORE any assistant chunk — the reducer creates a
-  // synthetic assistant message in `messages` but the TOOL_CALL branch does
-  // not touch `message_order`.  The legacy last-entry probe reads user-1 (the
-  // last entry of `message_order`), sees `role:'user', done:true`, and wrongly
-  // reports the loop idle.  The derived probe scans the full `messages` map
-  // so the TOOL_CALL-only synthetic message participates.
-  // -------------------------------------------------------------------------
   it('returns true when a TOOL_CALL arrives before any ASSISTANT_CHUNK (Codex bug case)', () => {
     dispatchSessionAction({
       type: 'USER_INPUT',
       message_id: 'user-2',
       text: 'run a tool please',
     })
-    // Backend emits a TOOL_CALL with `msg-${call_id}` message_id per the
-    // dispatchFrame mapping in tui.tsx.  No ASSISTANT_CHUNK has arrived yet.
     dispatchSessionAction({
       type: 'TOOL_CALL',
       message_id: 'msg-call-c',
@@ -157,15 +115,56 @@ describe('computeIsAgentLoopActive — derived probe (Spec 288 Codex P1)', () =>
     })
 
     const snap = getSessionSnapshot()
-    // Sanity check on the bug shape itself — the synthetic tool-call message
-    // is in `messages` but MISSING from `message_order`.  This is the exact
-    // state the legacy probe failed to see.
     expect(snap.messages.has('msg-call-c')).toBe(true)
-    expect(snap.message_order).not.toContain('msg-call-c')
+    expect(snap.message_order).toContain('msg-call-c')
 
     // Derived probe sees the in-flight tool call via the map scan.
     expect(computeIsAgentLoopActive(snap.messages)).toBe(true)
     expect(computeCurrentToolCallId(snap.messages)).toBe('call-c')
+  })
+
+  it('render-orders a CIV-003 tool-call-only assistant after the prior Stage A turns', () => {
+    const priorPrompts = [
+      '작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘.',
+      '개인사업자 부가세 신고해야 하는데 매출 자료 모아서 납부까지 진행해줘.',
+      '아파트 팔았는데 양도소득세 얼마나 나오는지 계산하고 신고 절차까지 안내해줘.',
+      '이사했어. 전입신고하고 자동차, 건강보험, 학교 관련 주소도 한 번에 바꿔줘.',
+      '아기가 태어났어. 출생신고, 아동수당, 첫만남이용권, 건강보험 피부양자 등록까지 도와줘.',
+    ] as const
+
+    priorPrompts.forEach((prompt, index) => {
+      dispatchSessionAction({
+        type: 'USER_INPUT',
+        message_id: `user-prior-${index}`,
+        text: prompt,
+      })
+      dispatchSessionAction({
+        type: 'ASSISTANT_CHUNK',
+        message_id: `assistant-prior-${index}`,
+        delta: `prior visible answer ${index}`,
+        done: true,
+      })
+    })
+    dispatchSessionAction({
+      type: 'USER_INPUT',
+      message_id: 'user-civ003',
+      text: '아버지가 돌아가셨어. 사망신고, 장례 지원, 국민연금 유족급여, 재산 관련 절차를 순서대로 알려줘.',
+    })
+    dispatchSessionAction({
+      type: 'TOOL_CALL',
+      message_id: 'msg-call-civ003-bfc',
+      tool_call: {
+        call_id: 'call-civ003-bfc',
+        name: 'bfc_funeral_area_fee',
+        arguments: { page_no: 1, num_of_rows: 10 },
+      },
+    })
+
+    const snap = getSessionSnapshot()
+    expect(snap.messages.has('msg-call-civ003-bfc')).toBe(true)
+    expect(snap.message_order).toContain('msg-call-civ003-bfc')
+    expect(computeIsAgentLoopActive(snap.messages)).toBe(true)
+    expect(computeCurrentToolCallId(snap.messages)).toBe('call-civ003-bfc')
   })
 
   // -------------------------------------------------------------------------

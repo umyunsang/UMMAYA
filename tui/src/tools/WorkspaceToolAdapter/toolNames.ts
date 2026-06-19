@@ -1,0 +1,6 @@
+export const WORKSPACE_GLOB_TOOL_NAME = 'workspace_glob'
+export const WORKSPACE_GREP_TOOL_NAME = 'workspace_grep'
+export const WORKSPACE_READ_TOOL_NAME = 'workspace_read'
+export const WORKSPACE_WRITE_TOOL_NAME = 'workspace_write'
+export const WORKSPACE_EDIT_TOOL_NAME = 'workspace_edit'
+export const WORKSPACE_BASH_TOOL_NAME = 'workspace_bash'

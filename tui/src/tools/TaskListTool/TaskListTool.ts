@@ -7,6 +7,7 @@ import {
   listTasks,
   TaskStatusSchema,
 } from '../../utils/tasks.js'
+import { buildAgentSupportMetadata } from '../AgentTool/orchestrationSupport.js'
 import { TASK_LIST_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, getPrompt } from './prompt.js'
 
@@ -24,6 +25,10 @@ const outputSchema = lazySchema(() =>
         blockedBy: z.array(z.string()),
       }),
     ),
+    evidenceJoinKey: z.string(),
+    parentToolUseId: z.string(),
+    resumeToken: z.string(),
+    permissionFlow: z.literal('coordinator_parent_round_trip'),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -62,7 +67,7 @@ export const TaskListTool = buildTool({
   renderToolUseMessage() {
     return null
   },
-  async call() {
+  async call(_input, context) {
     const taskListId = getTaskListId()
 
     const allTasks = (await listTasks(taskListId)).filter(
@@ -85,16 +90,25 @@ export const TaskListTool = buildTool({
     return {
       data: {
         tasks,
+        ...buildAgentSupportMetadata({
+          taskId: taskListId,
+          parentToolUseId: context.toolUseId,
+        }),
       },
     }
   },
   mapToolResultToToolResultBlockParam(content, toolUseID) {
-    const { tasks } = content as Output
+    const { tasks, evidenceJoinKey, parentToolUseId, resumeToken, permissionFlow } =
+      outputSchema().parse(content)
     if (tasks.length === 0) {
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
-        content: 'No tasks found',
+        content: `No tasks found
+evidence_join_key: ${evidenceJoinKey}
+parent_tool_use_id: ${parentToolUseId}
+resume_token: ${resumeToken}
+permission_flow: ${permissionFlow}`,
       }
     }
 
@@ -110,7 +124,11 @@ export const TaskListTool = buildTool({
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: lines.join('\n'),
+      content: `${lines.join('\n')}
+evidence_join_key: ${evidenceJoinKey}
+parent_tool_use_id: ${parentToolUseId}
+resume_token: ${resumeToken}
+permission_flow: ${permissionFlow}`,
     }
   },
 } satisfies ToolDef<InputSchema, Output>)

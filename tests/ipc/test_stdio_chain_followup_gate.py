@@ -737,6 +737,20 @@ def test_hometax_lookup_generic_tool_id_is_canonicalized_from_query() -> None:
     assert normalized["params"] == {"year": 2025, "resident_id_prefix": "000000"}
 
 
+def test_gov24_certificate_lookup_missing_params_are_filled_from_query() -> None:
+    normalized = _normalize_lookup_args_for_query(
+        "find",
+        {"tool_id": "mock_lookup_module_gov24_certificate", "params": {}},
+        "정부24 주민등록등본 발급 가능 여부와 준비물을 확인해줘.",
+    )
+
+    assert normalized["tool_id"] == "mock_lookup_module_gov24_certificate"
+    assert normalized["params"] == {
+        "certificate_type": "resident_registration",
+        "purpose": "주민등록등본 발급 가능 여부와 준비물 확인",
+    }
+
+
 def test_lookup_result_count_uses_adapter_schema_field_name() -> None:
     """Citizen-stated counts are preserved through the adapter input schema."""
     normalized = _normalize_lookup_args_for_query(
@@ -952,8 +966,7 @@ def test_hometax_simplified_verify_drops_taxreturn_submit_scope() -> None:
     assert session_context["scope_list"] == ["find:hometax.simplified"]
 
 
-def test_hometax_taxreturn_submit_requirement_uses_fixture_defaults() -> None:
-    """The submit gate can recover the mock tax-return payload without asking PII."""
+def test_hometax_taxreturn_submit_requirement_keeps_adapter_contract_without_payload() -> None:
     requirement = _submit_requirement_for_query(
         "작년 종합소득세 신고서를 제출하기 전 검토하고 최종 제출까지 진행해줘"
     )
@@ -962,12 +975,18 @@ def test_hometax_taxreturn_submit_requirement_uses_fixture_defaults() -> None:
     assert requirement["tool_id"] == "mock_submit_module_hometax_taxreturn"
     assert requirement["scope"] == "send:hometax.tax-return"
     params = json.loads(requirement["params_json"])
-    assert params == {
-        "tax_year": 2025,
-        "income_type": "종합소득",
-        "total_income_krw": 42_000_000,
-        "session_id": "HOMETAX-TAXRETURN-SESSION-001",
-    }
+    assert params == {}
+
+
+def test_hometax_taxreturn_submit_requirement_does_not_synthesize_payload_from_query() -> None:
+    requirement = _submit_requirement_for_query(
+        "작년 종합소득세 신고서를 제출하기 전 검토하고 최종 제출까지 진행해줘"
+    )
+
+    assert requirement is not None
+    assert requirement["tool_id"] == "mock_submit_module_hometax_taxreturn"
+    assert requirement["scope"] == "send:hometax.tax-return"
+    assert json.loads(requirement["params_json"]) == {}
 
 
 def test_hometax_taxreturn_suppresses_irrelevant_resolve_location() -> None:
@@ -1538,8 +1557,7 @@ def test_hometax_lookup_strips_model_noise_from_delegation_context() -> None:
     assert delegation_context == {"token": {"scope": "find:hometax.simplified"}}
 
 
-def test_hometax_taxreturn_submit_args_override_model_classification() -> None:
-    """The Hometax tax-return mock uses the fixture's comprehensive-tax payload."""
+def test_hometax_taxreturn_submit_args_preserve_model_payload_values() -> None:
     normalized = _normalize_submit_args_for_query(
         "send",
         {
@@ -1557,10 +1575,10 @@ def test_hometax_taxreturn_submit_args_override_model_classification() -> None:
 
     params = normalized["params"]
     assert isinstance(params, dict)
-    assert params["tax_year"] == 2025
-    assert params["income_type"] == "종합소득"
-    assert params["total_income_krw"] == 42_000_000
-    assert params["session_id"] == "HOMETAX-TAXRETURN-SESSION-001"
+    assert params["tax_year"] == 2024
+    assert params["income_type"] == "근로소득"
+    assert params["total_income_krw"] == 1
+    assert params["session_id"] == "MODEL-GUESSED-SESSION-001"
     assert "delegation_context" in params
 
 
@@ -1624,7 +1642,47 @@ def test_hometax_taxreturn_after_lookup_without_submit_is_rejected() -> None:
 
     assert msg is not None
     assert msg["tool_id"] == "mock_submit_module_hometax_taxreturn"
-    assert "HOMETAX-TAXRETURN-SESSION-001" in msg["message"]
+    assert "adapter schema" in msg["message"]
+    assert "HOMETAX-TAXRETURN-SESSION-001" not in msg["message"]
+
+
+def test_submit_followup_recovery_points_to_schema_without_static_send_recipe() -> None:
+    msg = _check_submit_terminated_without_submit(
+        [
+            _msg_assistant_tool_call(
+                "check",
+                {
+                    "tool_id": "mock_verify_module_modid",
+                    "params": {
+                        "scope_list": [
+                            "find:hometax.simplified",
+                            "send:hometax.tax-return",
+                        ]
+                    },
+                },
+            ),
+            _msg_tool_result("check", {"status": "verified"}),
+            _msg_assistant_tool_call("find", _hometax_lookup_args()),
+            _msg_tool_result(
+                "find",
+                {
+                    "kind": "find",
+                    "result": {
+                        "kind": "record",
+                        "data": {"medical_expenses": 1_250_000},
+                    },
+                },
+            ),
+        ],
+        "작년 종합소득세 신고서를 제출하기 전 검토하고 최종 제출까지 진행해줘",
+        _auth_with_scope("find:hometax.simplified,send:hometax.tax-return"),
+    )
+
+    assert msg is not None
+    assert msg["tool_id"] == "mock_submit_module_hometax_taxreturn"
+    assert "send(tool_id=" not in msg["message"]
+    assert "HOMETAX-TAXRETURN-SESSION-001" not in msg["message"]
+    assert "adapter schema" in msg["message"]
 
 
 def test_welfare_application_after_verify_without_submit_is_rejected() -> None:
@@ -1649,8 +1707,9 @@ def test_welfare_application_after_verify_without_submit_is_rejected() -> None:
 
     assert msg is not None
     assert msg["tool_id"] == "mock_welfare_application_submit_v1"
-    assert "DI-TEST-HANPARENT-001" in msg["message"]
-    assert '"household_size": 2' in msg["message"]
+    assert "adapter schema" in msg["message"]
+    assert "DI-TEST-HANPARENT-001" not in msg["message"]
+    assert '"household_size": 2' not in msg["message"]
 
 
 def test_welfare_lookup_args_are_filled_from_citizen_query() -> None:
@@ -1703,8 +1762,9 @@ def test_traffic_fine_payment_after_verify_without_submit_is_rejected() -> None:
 
     assert msg is not None
     assert msg["tool_id"] == "mock_traffic_fine_pay_v1"
-    assert "MOCK-FINE-2026-001" in msg["message"]
-    assert "virtual_account" in msg["message"]
+    assert "adapter schema" in msg["message"]
+    assert "MOCK-FINE-2026-001" not in msg["message"]
+    assert "virtual_account" not in msg["message"]
 
 
 def test_traffic_fine_verify_normalizes_lookup_and_payment_scope_aliases() -> None:
@@ -1743,7 +1803,6 @@ def test_traffic_fine_verify_normalizes_lookup_and_payment_scope_aliases() -> No
 
 
 def test_mydata_action_after_verify_without_submit_is_rejected() -> None:
-    """Public MyData consent requests must continue from verify into submit."""
     msg = _check_submit_terminated_without_submit(
         [
             _msg_assistant_tool_call(
@@ -1761,8 +1820,9 @@ def test_mydata_action_after_verify_without_submit_is_rejected() -> None:
 
     assert msg is not None
     assert msg["tool_id"] == "mock_submit_module_public_mydata_action"
-    assert "PUBLIC-MYDATA-MOCK" in msg["message"]
-    assert "MYDATA-ACTION-SESSION-001" in msg["message"]
+    assert "adapter schema" in msg["message"]
+    assert "PUBLIC-MYDATA-MOCK" not in msg["message"]
+    assert "MYDATA-ACTION-SESSION-001" not in msg["message"]
 
 
 def test_submit_followup_gate_passes_after_successful_submit() -> None:
@@ -1838,7 +1898,6 @@ def test_duplicate_submit_after_success_is_rejected() -> None:
 
 
 def test_gov24_submit_args_are_filled_from_citizen_query() -> None:
-    """Known mock submit payload fields from the user request are restored before dispatch."""
     args = _normalize_submit_args_for_query(
         "send",
         {
@@ -1853,15 +1912,10 @@ def test_gov24_submit_args_are_filled_from_citizen_query() -> None:
 
     params = args["params"]
     assert isinstance(params, dict)
-    assert params["minwon_type"] == "주민등록등본"
-    assert params["applicant_name"] == "홍길동"
-    assert params["delivery_method"] == "online"
-    assert params["session_id"] == "GOV24-MINWON-SESSION-001"
-    assert "delegation_context" in params
+    assert params == {"delegation_context": {"token": {"scope": "send:gov24.minwon"}}}
 
 
 def test_gov24_submit_args_are_filled_for_natural_demo_request() -> None:
-    """Gov24 submit calls get schema-required fields even when the model emits only auth."""
     args = _normalize_submit_args_for_query(
         "send",
         {
@@ -1873,11 +1927,22 @@ def test_gov24_submit_args_are_filled_for_natural_demo_request() -> None:
 
     params = args["params"]
     assert isinstance(params, dict)
-    assert params["minwon_type"] == "주민등록등본"
-    assert params["applicant_name"] == "MOCK_APPLICANT"
-    assert params["delivery_method"] == "online"
-    assert params["session_id"] == "GOV24-MINWON-SESSION-001"
-    assert "delegation_context" in params
+    assert params == {"delegation_context": {"token": {"scope": "send:gov24.minwon"}}}
+
+
+def test_gov24_submit_args_do_not_fill_demo_payload_without_explicit_fields() -> None:
+    args = _normalize_submit_args_for_query(
+        "send",
+        {
+            "tool_id": "mock_submit_module_gov24_minwon",
+            "params": {"delegation_context": {"token": {"scope": "send:gov24.minwon"}}},
+        },
+        "정부24에서 주민등록등본 온라인 발급 신청을 진행해줘. 접수번호가 나오면 알려줘.",
+    )
+
+    params = args["params"]
+    assert isinstance(params, dict)
+    assert params == {"delegation_context": {"token": {"scope": "send:gov24.minwon"}}}
 
 
 def test_adapter_invocation_failed_tool_result_is_error() -> None:
@@ -1915,8 +1980,7 @@ def test_gov24_generic_submit_tool_id_is_canonicalized() -> None:
     assert args["tool_id"] == "mock_submit_module_gov24_minwon"
     params = args["params"]
     assert isinstance(params, dict)
-    assert params["minwon_type"] == "주민등록등본"
-    assert params["session_id"] == "GOV24-MINWON-SESSION-001"
+    assert params == {"delegation_context": {"token": {"scope": "send:gov24.minwon"}}}
 
 
 def test_gov24_minwon_drops_certificate_lookup_scope_alias() -> None:

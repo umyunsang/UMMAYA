@@ -47,17 +47,18 @@ export function isProjectOnboardingComplete(): boolean {
 }
 
 export function maybeMarkProjectOnboardingComplete(): void {
-  // Short-circuit on cached config — isProjectOnboardingComplete() hits
-  // the filesystem, and REPL.tsx calls this on every prompt submit.
   if (getCurrentProjectConfig().hasCompletedProjectOnboarding) {
     return
   }
-  if (isProjectOnboardingComplete()) {
-    saveCurrentProjectConfig(current => ({
+  saveCurrentProjectConfig(current => {
+    if (current.hasCompletedProjectOnboarding) {
+      return current
+    }
+    return {
       ...current,
       hasCompletedProjectOnboarding: true,
-    }))
-  }
+    }
+  })
 }
 
 export const shouldShowProjectOnboarding = memoize((): boolean => {

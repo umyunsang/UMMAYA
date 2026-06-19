@@ -23,7 +23,7 @@ describe('useCanUseTool — stub removed, CC port active', () => {
     const defaultExport = mod.default
 
     // CC port: `function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext)`
-    // Stub: `const ccCompatDefault = (..._args: unknown[]): any => { ... }` (rest param)
+    // Legacy stub shape used rest params and a permissive return escape hatch.
     expect(typeof defaultExport).toBe('function')
 
     // The CC port has exactly 2 formal parameters.

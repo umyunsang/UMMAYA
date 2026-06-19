@@ -147,8 +147,7 @@ export async function dispatchPrimitive<O = unknown>(
   // it does not synthesize the follow-up assistant turn for this Tool.call().
   // ------------------------------------------------------------------
 
-  const toolUseId =
-    (opts.context as Record<string, unknown>)['toolUseId'] as string | undefined
+  const toolUseId = opts.context.toolUseId
   if (!toolUseId) {
     span.setAttribute('ummaya.tui.primitive.error', 'missing_tool_use_id')
     span.end()
@@ -282,7 +281,7 @@ export async function dispatchPrimitive<O = unknown>(
   // Classification rules (all OR'd, evaluated against ``inner`` only):
   //   - ``inner.family === "mismatch_error"`` — VerifyMismatchError dump.
   //   - ``inner.kind === "error"`` — lookup / submit error sentinel.
-  //   - ``inner.reason ∈ FATAL_REASONS`` — defense-in-depth: any adapter that
+  //   - ``inner.reason ∈ FATAL_REASONS`` — defense-in-depth: an adapter that
   //     emits a known-fatal reason code is classified as failure even if it
   //     forgot to set ``kind``/``family``.
   const FATAL_REASONS = new Set([

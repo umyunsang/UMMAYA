@@ -11,6 +11,7 @@ import { TerminalSizeContext } from '@/ink/components/TerminalSizeContext'
 import { SubmitReceipt } from '@/components/primitive/SubmitReceipt'
 import { SubmitErrorBanner } from '@/components/primitive/SubmitErrorBanner'
 import { SubmitPrimitive } from '@/tools/SubmitPrimitive/SubmitPrimitive'
+import { stripSnapshotAnsi } from './snapshotFrame'
 
 import receiptFixture from '../fixtures/submit/submit-receipt.json'
 import errorFixture from '../fixtures/submit/submit-error.json'
@@ -36,7 +37,7 @@ describe('SubmitReceipt', () => {
     expect(frame).toContain(payload.timestamp)
     // FR-026: mock_reason present → MOCK chip visible
     expect(frame).toContain(`[MOCK: ${payload.mock_reason}]`)
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -50,7 +51,7 @@ describe('SubmitErrorBanner', () => {
     // Long messages wrap in terminal output; check a distinguishing prefix
     expect(compact).toContain('This application requires authenticated identity')
     expect(compact).toContain('Use /verify to authenticate')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 

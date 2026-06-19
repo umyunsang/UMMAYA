@@ -4,6 +4,7 @@ import { buildTool, type ToolDef } from '../../Tool.js'
 import { stopTask } from '../../tasks/stopTask.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
+import { buildAgentSupportMetadata } from '../AgentTool/orchestrationSupport.js'
 import { DESCRIPTION, TASK_STOP_TOOL_NAME } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
 
@@ -30,6 +31,10 @@ const outputSchema = lazySchema(() =>
       .string()
       .optional()
       .describe('The command or description of the stopped task'),
+    evidenceJoinKey: z.string(),
+    parentToolUseId: z.string(),
+    resumeToken: z.string(),
+    permissionFlow: z.literal('coordinator_parent_round_trip'),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -118,6 +123,10 @@ export const TaskStopTool = buildTool({
       getAppState,
       setAppState,
     })
+    const supportMetadata = buildAgentSupportMetadata({
+      taskId: result.taskId,
+      parentToolUseId: getAppState().tasks?.[id]?.toolUseId,
+    })
 
     return {
       data: {
@@ -125,6 +134,7 @@ export const TaskStopTool = buildTool({
         task_id: result.taskId,
         task_type: result.taskType,
         command: result.command,
+        ...supportMetadata,
       },
     }
   },

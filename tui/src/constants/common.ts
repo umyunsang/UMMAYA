@@ -32,8 +32,6 @@ export function getLocalMonthYear(): string {
   return date.toLocaleString('en-US', { month: 'long', year: 'numeric' })
 }
 
-// UMMAYA hotfix (2026-05-04, KMA base_time hallucination guard):
-// inject KST wall-clock into user context so KMA `base_time` is not guessed.
 export interface KstTimeParts {
   iso: string
   hm: string

@@ -92,8 +92,8 @@ import { validateUuid } from './utils/uuid.js';
 
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
-// claude.ai MCP proxy removed in P1+P2 (Spec 1633); UMMAYA does not consume
-// Anthropic's enterprise MCP configs. The eligibility check is now a no-op.
+// Managed MCP proxy removed in P1+P2 (Spec 1633); UMMAYA does not consume
+// upstream enterprise MCP configs. The eligibility check is now a no-op.
 const fetchClaudeAIMcpConfigsIfEligible = async (): Promise<Record<string, never>> => ({});
 import { clearServerCache } from 'src/services/mcp/client.js';
 import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupClaudeAiMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getClaudeCodeMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
@@ -137,6 +137,27 @@ import { getTmuxInstallInstructions, isTmuxAvailable, parsePRReference } from '.
 
 
 
+type ModuleRequire = (specifier: string) => unknown
+type InspectorModule = {
+  url: () => string | undefined
+}
+
+function isModuleRequire(value: unknown): value is ModuleRequire {
+  return typeof value === 'function'
+}
+
+function isInspectorModule(value: unknown): value is InspectorModule {
+  return typeof value === 'object' && value !== null && 'url' in value && typeof value.url === 'function'
+}
+
+function getInspectorFromGlobal(): InspectorModule | undefined {
+  const globalRequire: unknown = Reflect.get(globalThis, 'require')
+  if (!isModuleRequire(globalRequire)) return undefined
+
+  const inspector = globalRequire('inspector')
+  return isInspectorModule(inspector) ? inspector : undefined
+}
+
 // Check if running in debug/inspection mode
 function isBeingDebugged() {
   const isBun = isRunningWithBun();
@@ -161,9 +182,8 @@ function isBeingDebugged() {
   // Check if inspector is available and active (indicates debugging)
   try {
     // Dynamic import would be better but is async - use global object instead
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const inspector = (global as any).require('inspector');
-    const hasInspectorUrl = !!inspector.url();
+    const inspector = getInspectorFromGlobal();
+    const hasInspectorUrl = !!inspector?.url();
     return hasInspectorUrl || hasInspectArg || hasInspectEnv;
   } catch {
     // Ignore error and fall back to argument detection
@@ -1095,12 +1115,12 @@ async function run(): Promise<CommanderCommand> {
     });
     void assertMinVersion();
 
-    // claude.ai config fetch: -p mode only (interactive uses useManageMCPConnections
+    // UMMAYA connector config fetch: -p mode only (interactive uses useManageMCPConnections
     // two-phase loading). Kicked off here to overlap with setup(); awaited
     // before runHeadless so single-turn -p sees connectors. Skipped under
     // enterprise/strict MCP to preserve policy boundaries.
     const claudeaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() &&
-    // --bare / SIMPLE: skip claude.ai proxy servers (datadog, Gmail,
+    // --bare / SIMPLE: skip managed connector proxy servers (datadog, Gmail,
     // Slack, BigQuery, PubMed — 6-14s each to connect). Scripted calls
     // that need MCP pass --mcp-config explicitly.
     !isBareMode() ? fetchClaudeAIMcpConfigsIfEligible().then(configs => {
@@ -1109,7 +1129,7 @@ async function run(): Promise<CommanderCommand> {
         blocked
       } = filterMcpServersByPolicy(configs);
       if (blocked.length > 0) {
-        process.stderr.write(`Warning: claude.ai MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
+        process.stderr.write(`Warning: UMMAYA MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
       }
       return allowed;
     }) : Promise.resolve({});
@@ -2477,16 +2497,14 @@ async function run(): Promise<CommanderCommand> {
 
 
   const auth = program.command('auth').description('Show UMMAYA FriendliAI session-auth status').configureHelp(createSortedHelpConfig());
-  auth.command('login').description('Show how to log in with /login inside the TUI').option('--email <email>', 'Ignored in UMMAYA').option('--sso', 'Ignored in UMMAYA').option('--console', 'Ignored in UMMAYA').option('--claudeai', 'Ignored in UMMAYA').action(async ({
+  auth.command('login').description('Show how to log in with /login inside the TUI').option('--email <email>', 'Ignored in UMMAYA').option('--sso', 'Ignored in UMMAYA').option('--console', 'Ignored in UMMAYA').action(async ({
     email,
     sso,
     console: useConsole,
-    claudeai
   }: {
     email?: string;
     sso?: boolean;
     console?: boolean;
-    claudeai?: boolean;
   }) => {
     const {
       authLogin

@@ -1,0 +1,200 @@
+import { z } from 'zod/v4'
+import type { Tool } from '../../../Tool.js'
+import type {
+  OpenAITool,
+  ProviderOptions,
+  ProviderRequest,
+  QueryModelParams,
+} from './types.js'
+import { latestUserText, transcriptToOpenAIMessages } from './messages.js'
+import {
+  selectProviderToolChoiceName,
+  selectProviderTools,
+} from './toolSelection.js'
+import type { ProviderTurnEvidenceContext } from './evidence.js'
+import {
+  hasCurrentTurnLocationContext,
+  selectionTextWithPriorLocationContext,
+} from './selectionContext.js'
+import { providerReasoningRequestPayload } from './reasoning.js'
+
+function forcedToolChoiceSystemInstruction(toolName: string): string {
+  if (toolName === 'workspace_bash') {
+    return [
+      `Mandatory tool call: the host selected ${toolName} for this turn.`,
+      'Do not answer with prose, do not ask a follow-up question, and do not choose another tool.',
+      `Emit exactly one ${toolName} tool call with valid JSON arguments.`,
+      'For sequenced shell requests, emit the next concrete shell command requested by the user rather than a status summary.',
+      'If the user asks to attempt a destructive command and says they will deny the permission prompt, still emit that destructive command so the host permission gate can prompt and enforce the denial.',
+      'Do not replace a requested delete command with ls/find/path-existence prose, and preserve leading dots in hidden paths such as .omo/...',
+    ].join(' ')
+  }
+  return `Mandatory tool call: the host selected ${toolName} for this turn. Do not answer with prose, do not ask a follow-up question, and do not choose another tool. Emit exactly one ${toolName} tool call with valid JSON arguments.`
+}
+
+function schemaForTool(tool: Tool): Record<string, unknown> {
+  if (tool.inputJSONSchema) {
+    return normalizeProviderParameterSchema(tool.inputJSONSchema)
+  }
+  const generatedSchema = z.toJSONSchema(tool.inputSchema)
+  return normalizeProviderParameterSchema(
+    isJsonObject(generatedSchema) ? generatedSchema : {},
+  )
+}
+
+function normalizeProviderParameterSchema(
+  schema: Record<string, unknown>,
+): Record<string, unknown> {
+  const normalized = normalizeSchemaNode(schema, schema, new Set<string>())
+  if (isJsonObject(normalized)) return normalized
+  return providerSafeUnresolvedRefSchema()
+}
+
+function normalizeSchemaNode(
+  value: unknown,
+  root: Record<string, unknown>,
+  refStack: ReadonlySet<string>,
+): unknown {
+  if (Array.isArray(value)) {
+    return value.map(item => normalizeSchemaNode(item, root, refStack))
+  }
+  if (!isJsonObject(value)) return value
+
+  const ref = typeof value.$ref === 'string' ? value.$ref : undefined
+  if (ref !== undefined) {
+    const inlined = inlineLocalSchemaRef(ref, value, root, refStack)
+    if (inlined !== undefined) return inlined
+    return providerSafeUnresolvedRefSchema()
+  }
+
+  const normalized: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) {
+    if (key === '$defs' || key === 'definitions') continue
+    normalized[key] = normalizeSchemaNode(child, root, refStack)
+  }
+  return normalized
+}
+
+function inlineLocalSchemaRef(
+  ref: string,
+  schemaWithRef: Record<string, unknown>,
+  root: Record<string, unknown>,
+  refStack: ReadonlySet<string>,
+): unknown | undefined {
+  if (refStack.has(ref)) return undefined
+  const resolved = resolveLocalSchemaRef(root, ref)
+  if (resolved === undefined) return undefined
+  const nextStack = new Set(refStack)
+  nextStack.add(ref)
+  const normalizedResolved = normalizeSchemaNode(resolved, root, nextStack)
+  if (!isJsonObject(normalizedResolved)) return normalizedResolved
+
+  const normalizedSiblings: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(schemaWithRef)) {
+    if (key === '$ref' || key === '$defs' || key === 'definitions') continue
+    normalizedSiblings[key] = normalizeSchemaNode(child, root, nextStack)
+  }
+  return {
+    ...normalizedResolved,
+    ...normalizedSiblings,
+  }
+}
+
+function resolveLocalSchemaRef(
+  root: Record<string, unknown>,
+  ref: string,
+): unknown | undefined {
+  if (ref === '#') return root
+  if (!ref.startsWith('#/')) return undefined
+
+  let current: unknown = root
+  for (const segment of ref.slice(2).split('/').map(decodeJsonPointerSegment)) {
+    if (!isJsonObject(current)) return undefined
+    current = current[segment]
+  }
+  return current
+}
+
+function decodeJsonPointerSegment(segment: string): string {
+  return segment.replace(/~1/g, '/').replace(/~0/g, '~')
+}
+
+function providerSafeUnresolvedRefSchema(): Record<string, unknown> {
+  return {
+    type: 'object',
+    description:
+      'Provider-safe open object for an unresolved local schema reference.',
+    properties: {},
+    additionalProperties: true,
+  }
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function toolToOpenAI(tool: Tool): OpenAITool {
+  return {
+    type: 'function',
+    function: {
+      name: tool.name,
+      description: tool.searchHint ?? tool.name,
+      parameters: schemaForTool(tool),
+    },
+  }
+}
+
+function toolChoiceFor(
+  toolName: string | undefined,
+): ProviderRequest['tool_choice'] {
+  if (toolName === undefined) return undefined
+  return {
+    type: 'function',
+    function: { name: toolName },
+  }
+}
+
+export function buildProviderRequest(
+  params: QueryModelParams,
+  evidenceContext?: ProviderTurnEvidenceContext,
+): ProviderRequest {
+  const forcedToolName =
+    params.options.toolChoice?.type === 'tool'
+      ? params.options.toolChoice.name
+      : undefined
+  const userText = selectionTextWithPriorLocationContext(params.messages)
+  const selectedToolChoiceName = selectProviderToolChoiceName({
+    tools: params.tools,
+    userText,
+    forcedToolName,
+  })
+  const tools = selectProviderTools({
+    tools: params.tools,
+    userText,
+    forcedToolName: selectedToolChoiceName,
+    disabledToolNames: params.options.disabledProviderToolNames ?? [],
+    querySource: params.options.querySource,
+    hasCurrentTurnLocationContext: hasCurrentTurnLocationContext(params.messages),
+    evidenceContext,
+  })
+  const toolChoice = toolChoiceFor(selectedToolChoiceName)
+  const toolPayload = tools.map(toolToOpenAI)
+  return {
+    model: params.options.model,
+    stream: true,
+    ...providerReasoningRequestPayload(),
+    messages: transcriptToOpenAIMessages(
+      params.messages,
+      params.systemPrompt,
+      selectedToolChoiceName
+        ? forcedToolChoiceSystemInstruction(selectedToolChoiceName)
+        : undefined,
+    ),
+    ...(toolPayload.length > 0 ? { tools: toolPayload } : {}),
+    ...(toolChoice ? { tool_choice: toolChoice } : {}),
+  }
+}
+
+export function getAPIMetadata(): Record<string, string> {
+  return { user_id: 'ummaya-local' }
+}

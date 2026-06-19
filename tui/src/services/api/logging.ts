@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SWAP/anti-anthropic-1p(2521): minimal stub for the byte-copied
-// services/api/claude.ts which references CC's Anthropic-API request/response
+// services/api/ummaya.ts which references CC's Anthropic-API request/response
 // telemetry. UMMAYA uses OTEL spans (Spec 021) and audit ledger (Spec 024)
 // instead. Stubs preserve the import shape; functions are no-ops because the
 // byte-copy has zero callers in UMMAYA.

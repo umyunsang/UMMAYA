@@ -9,6 +9,7 @@ import { render } from 'ink-testing-library'
 import { ThemeProvider } from '@/theme/provider'
 import { AuthContextCard } from '@/components/primitive/AuthContextCard'
 import { AuthWarningBanner } from '@/components/primitive/AuthWarningBanner'
+import { stripSnapshotAnsi } from './snapshotFrame'
 
 import authCardFixture from '../fixtures/verify/auth-context-card.json'
 import authWarningFixture from '../fixtures/verify/auth-warning-banner.json'
@@ -28,7 +29,7 @@ describe('AuthContextCard', () => {
     expect(frame).toContain(payload.korea_tier)
     expect(frame).toContain(payload.identity_label)
     expect(frame).toContain(payload.nist_aal_hint ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -44,6 +45,6 @@ describe('AuthWarningBanner', () => {
     expect(compact).toContain(payload.message)
     // Remediation text may wrap; check a distinguishing prefix
     expect(compact).toContain('Renew your GongdongInjeungseo')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })

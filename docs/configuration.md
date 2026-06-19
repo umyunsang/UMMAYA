@@ -44,13 +44,12 @@ Column definitions:
 |----------|----------|---------|-------|-------------|------------|
 | `UMMAYA_ENV` | No | `dev` | `dev` \| `ci` \| `prod` | `ummaya.config.guard.current_env` | This doc |
 | `UMMAYA_KAKAO_API_KEY` | No (operator-managed) | — | REST API key string | `ummaya.settings.UmmayaSettings.kakao_api_key` | [Kakao Developers Console](https://developers.kakao.com) |
-| `UMMAYA_FRIENDLI_TOKEN` | No (user session) | — | Bearer token | `ummaya.llm.config.LLMClientConfig.token` | [FriendliAI Suite](https://suite.friendli.ai) |
+| `UMMAYA_FRIENDLI_TOKEN` | No (user-owned) | — | Bearer token | `ummaya.llm.config.LLMClientConfig.token` | [FriendliAI Suite](https://suite.friendli.ai) |
 | `UMMAYA_DATA_GO_KR_API_KEY` | No (operator-managed) | — | API key string | `ummaya.settings.UmmayaSettings.data_go_kr_api_key` | [공공데이터포털](https://www.data.go.kr) |
 | `UMMAYA_KMA_API_HUB_AUTH_KEY` | No (operator-managed) | — | API Hub auth key string | `ummaya.settings.UmmayaSettings.kma_api_hub_auth_key`; KMA VilageFcst adapters | [KMA API Hub](https://apihub.kma.go.kr/) |
 | `UMMAYA_LIVE_ADAPTER_MODE` | No | `auto` | `auto` \| `proxy` \| `direct` | `ummaya.tools.live_proxy.should_use_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_mode) |
 | `UMMAYA_LIVE_ADAPTER_PROXY_URL` | No | `https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters` | HTTPS URL | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_url) |
 | `UMMAYA_LIVE_ADAPTER_PROXY_TIMEOUT_SECONDS` | No | `30.0` | Float > 0 | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_timeout_seconds) |
-| `UMMAYA_LIVE_ADAPTER_PROXY_TOKEN` | No (operator-managed) | — | Bearer token | `ummaya.tools.live_proxy.invoke_live_adapter_proxy` | [Live adapter gateway](#ummaya_live_adapter_proxy_token) |
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN` | No (operator-managed) | — | Bearer token | `ummaya.gateway.app._require_gateway_token` | [Live adapter gateway](#ummaya_live_adapter_gateway_token) |
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_RATE_LIMIT_PER_MINUTE` | No | `120` | Integer >= 1 | `ummaya.gateway.app._enforce_gateway_rate_limit` | [Live adapter gateway](#ummaya_live_adapter_gateway_rate_limit_per_minute) |
 | `UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES` | No | `65536` | Integer >= 1024 | `ummaya.gateway.app.request_size_guard` | [Live adapter gateway](#ummaya_live_adapter_gateway_max_body_bytes) |
@@ -195,9 +194,10 @@ REST API key.
 ### <a id="ummaya_friendli_token"></a>`UMMAYA_FRIENDLI_TOKEN`
 
 FriendliAI Serverless API bearer token for K-EXAONE inference. Public CLI users provide this
-through `/login`; it is a user session credential, not an
-operator-managed Infisical secret. Backend-only developers may export it locally for live LLM
-tests. The startup guard does not require it; `LLMClientConfig.token` validates it at LLM use time.
+through `/login`; it is a user-owned credential persisted in the user's normal UMMAYA global
+config for later launches, not a per-session memdir value and not an operator-managed Infisical
+secret. Backend-only developers may export it locally for live LLM tests. The startup guard does
+not require it; `LLMClientConfig.token` validates it at LLM use time.
 
 Source: [FriendliAI Suite](https://suite.friendli.ai) → API Keys.
 
@@ -250,10 +250,11 @@ Base URL for the operator-managed live adapter gateway. The CLI posts validated 
 parameters to `{UMMAYA_LIVE_ADAPTER_PROXY_URL}/{tool_id}` and expects the same Lookup/Locate
 envelope shape a local adapter would return.
 
-This value is not a secret and may be packaged as a default. It must point to a service whose
-server-side runtime holds `UMMAYA_KAKAO_API_KEY`, `UMMAYA_KMA_API_HUB_AUTH_KEY`,
-`UMMAYA_DATA_GO_KR_API_KEY`, and any other operator-managed public API credentials in a
-secret manager.
+This value is not a secret and may be packaged as a default. Public CLI clients do not send a
+static bearer secret to this gateway. The service must keep `UMMAYA_KAKAO_API_KEY`,
+`UMMAYA_KMA_API_HUB_AUTH_KEY`, `UMMAYA_DATA_GO_KR_API_KEY`, and any other operator-managed public
+API credentials in a server-side secret manager, then protect the route with adapter allowlists,
+rate limits, request-size limits, observability, and provider quota controls.
 
 ---
 
@@ -263,19 +264,13 @@ Positive HTTP timeout, in seconds, for the operator-managed live adapter gateway
 
 ---
 
-### <a id="ummaya_live_adapter_proxy_token"></a>`UMMAYA_LIVE_ADAPTER_PROXY_TOKEN`
-
-Optional bearer token for private or self-hosted live adapter gateways. Public release users
-should not need to set this. If a gateway requires it, provision it through the operator's
-deployment environment or secure credential store rather than checking it into the package.
-
----
-
 ### <a id="ummaya_live_adapter_gateway_token"></a>`UMMAYA_LIVE_ADAPTER_GATEWAY_TOKEN`
 
 Optional server-side bearer token enforced by `ummaya-live-gateway`. When set, gateway
-requests must include `Authorization: Bearer <token>`. Keep this value in the gateway
-deployment secret store only. Do not package it into npm/Homebrew artifacts.
+requests must include `Authorization: Bearer <token>`. Use this only for private/self-hosted
+gateways with controlled server-to-server callers. Do not set it on the hosted public release
+gateway unless a non-static account/session broker exists, and never package it into npm/Homebrew
+artifacts.
 
 ---
 
@@ -463,7 +458,7 @@ RequiredVar(
 
 - 변수명 규칙(`UMMAYA_*` + 승인된 예외)을 준수하는지.
 - 표의 `Consumed by`가 실제 모듈 경로와 일치하는지.
-- `UMMAYA_FRIENDLI_TOKEN`은 사용자 세션 키로 분리되어 있는지.
+- `UMMAYA_FRIENDLI_TOKEN`은 `/login`으로 저장되는 사용자 단위 모델 인증값이며 세션/메모리 경로와 분리되어 있는지.
 - 운영자 키(`UMMAYA_KAKAO_API_KEY`, `UMMAYA_KMA_API_HUB_AUTH_KEY`,
   `UMMAYA_DATA_GO_KR_API_KEY`, per-tool 키)는 환경 변수 정책을 만족하는지.
 - 필요한 경우 해당 기능/권한/세션 테스트로 회귀를 확인했는지.

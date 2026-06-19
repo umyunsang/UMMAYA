@@ -22,6 +22,15 @@ import { getFsImplementation } from './fsOperations.js'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'
 
+declare global {
+  namespace NodeJS {
+    interface Process {
+      _getActiveHandles(): unknown[]
+      _getActiveRequests(): unknown[]
+    }
+  }
+}
+
 export type HeapDumpResult = {
   success: boolean
   heapPath?: string
@@ -103,12 +112,8 @@ export async function captureMemoryDiagnostics(
   }
 
   // Get active handles/requests count (these are internal APIs but stable)
-  const activeHandles = (
-    process as unknown as { _getActiveHandles: () => unknown[] }
-  )._getActiveHandles().length
-  const activeRequests = (
-    process as unknown as { _getActiveRequests: () => unknown[] }
-  )._getActiveRequests().length
+  const activeHandles = process._getActiveHandles().length
+  const activeRequests = process._getActiveRequests().length
 
   // Try to count open file descriptors (Linux/macOS)
   let openFileDescriptors: number | undefined
@@ -287,8 +292,7 @@ async function writeHeapSnapshot(filepath: string): Promise<void> {
     // Use synchronous I/O despite potentially large filesize so that we avoid cloning the string for cross-thread usage.
     //
     /* eslint-disable custom-rules/no-sync-fs -- intentionally sync to avoid cloning large heap snapshot string for cross-thread usage */
-    // @ts-expect-error 2nd argument is in the next version of Bun
-    writeFileSync(filepath, Bun.generateHeapSnapshot('v8', 'arraybuffer'), {
+    writeFileSync(filepath, new Uint8Array(Bun.generateHeapSnapshot('v8', 'arraybuffer')), {
       mode: 0o600,
     })
     /* eslint-enable custom-rules/no-sync-fs */

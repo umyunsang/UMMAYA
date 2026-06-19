@@ -135,11 +135,20 @@ export function loadPackageDotenv(root, env = process.env) {
 
 export function buildBackendCommand(root) {
   const packagedPython = join(root, '.venv', 'bin', 'python')
-  if (existsSync(packagedPython)) {
+  if (canImportUmmayaCli(packagedPython)) {
     return [packagedPython, '-m', 'ummaya.cli', '--ipc', 'stdio']
   }
 
   return ['uv', '--directory', root, 'run', '--frozen', '--no-dev', 'ummaya', '--ipc', 'stdio']
+}
+
+export function canImportUmmayaCli(pythonPath) {
+  if (!existsSync(pythonPath)) return false
+  const result = spawnSync(pythonPath, ['-c', 'import ummaya.cli'], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'ignore', 'ignore'],
+  })
+  return !result.error && result.status === 0
 }
 
 export function configurePackageEnv(root, env = process.env) {

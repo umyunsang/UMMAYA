@@ -61,6 +61,13 @@ npm package state after implementation:
   - compressed size: 9,938,016 bytes
   - unpacked size: 34,545,264 bytes
   - entry count: 2,331
+- 2026-06-15 package gate adjustment: current valid runtime source packaging
+  reports 2,742 entries after normal TUI and backend source growth, with no
+  evidence of `.omo`, `.evidence`, cache, `node_modules`, docs-site, script,
+  test, coverage, or snapshot pollution. The default entry-count gate is
+  therefore 2,800 entries, preserving a 58-entry buffer while leaving the
+  packed and unpacked byte gates unchanged. `UMMAYA_NPM_MAX_ENTRIES` remains
+  available for intentional operator overrides.
 - Clean global install smoke passed for `ummaya --version`.
 
 Homebrew state after implementation:

@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { sanitizeTopOfFeedTipForUmmaya } from '../../src/components/LogoV2/EmergencyTip.js'
 
 const ROOT = join(import.meta.dir, '../..')
 
@@ -119,6 +120,7 @@ const paintSurfaceFiles = [
   'src/commands/insights.ts',
   'src/cli/update.ts',
   'src/cli/handlers/auth.ts',
+  'src/services/api/errorUtils.ts',
   'src/cli/handlers/mcp.tsx',
   'src/hooks/useChromeExtensionNotification.tsx',
   'src/hooks/notifs/useCanSwitchToExistingSubscription.tsx',
@@ -272,6 +274,9 @@ const bannedVisibleCopy = [
   'Claude GitHub App',
   'Claude.ai account',
   'Claude subscription required',
+  'claude.ai MCP',
+  '--claudeai',
+  '*.anthropic.com',
 ]
 
 describe('UMMAYA paint surface branding', () => {
@@ -303,5 +308,14 @@ describe('UMMAYA paint surface branding', () => {
     expect(registrySource).not.toContain('.claude/skills/')
     expect(spinnerSource).toContain("interrupting UMMAYA's current work")
     expect(spinnerSource).not.toContain("interrupting Claude's current work")
+  })
+
+  it('blocks upstream provider model notices from the top-of-feed tip slot', () => {
+    const sanitized = sanitizeTopOfFeedTipForUmmaya({
+      tip: 'Claude Fable 5 is currently unavailable. Please use Opus 4.8 or another available model. Learn more: https://www.anthropic.com/news/fable-mythos-access',
+      color: 'warning',
+    })
+
+    expect(sanitized.tip).toBe('')
   })
 })

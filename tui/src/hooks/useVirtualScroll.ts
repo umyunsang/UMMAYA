@@ -184,7 +184,7 @@ export function useVirtualScroll(
   // items have warm useMemo (marked.lexer, highlighting); recomputing range
   // from scaled/pessimistic estimates causes mount/unmount churn (~3ms per
   // fresh mount = ~150ms visible as a second flash). The pre-resize range is
-  // as good as any — items visible at old width are what the user wants at
+  // a suitable proxy — items visible at old width are what the user wants at
   // new width. Frozen for 2 renders: render #1 has skipMeasurement (Yoga
   // still pre-resize), render #2's useLayoutEffect reads post-resize Yoga
   // into heightCache. Render #3 has accurate heights → normal recompute.

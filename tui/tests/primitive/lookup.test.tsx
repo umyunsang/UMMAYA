@@ -15,6 +15,7 @@ import { CollectionList } from '@/components/primitive/CollectionList'
 import { DetailView } from '@/components/primitive/DetailView'
 import { ErrorBanner } from '@/components/primitive/ErrorBanner'
 import { LookupPrimitive } from '@/tools/LookupPrimitive/LookupPrimitive'
+import { stripSnapshotAnsi } from './snapshotFrame'
 
 import pointCardFixture from '../fixtures/lookup/point-card.json'
 import timeseriesFixture from '../fixtures/lookup/timeseries-table.json'
@@ -48,7 +49,7 @@ describe('PointCard', () => {
     expect(frame).toContain(payload.title)
     expect(frame).toContain(payload.subtitle ?? '')
     expect(frame).toContain(payload.fields[0]?.label ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -60,7 +61,7 @@ describe('TimeseriesTable', () => {
     expect(frame).toContain('Timestamp')
     expect(frame).toContain(payload.unit ?? '')
     expect(frame).toContain(payload.rows[0]?.ts ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -70,7 +71,7 @@ describe('CollectionList', () => {
     const { lastFrame } = render(wrap(<CollectionList payload={payload} />))
     const frame = lastFrame() ?? ''
     expect(frame).toContain(payload.items[0]?.title ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -81,7 +82,7 @@ describe('DetailView', () => {
     const frame = lastFrame() ?? ''
     expect(frame).toContain(payload.fields[0]?.label ?? '')
     expect(frame).toContain(payload.fields[0]?.value ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 
@@ -93,7 +94,7 @@ describe('ErrorBanner (lookup)', () => {
     expect(frame).toContain(payload.title)
     expect(frame).toContain(payload.description)
     expect(frame).toContain(payload.retry_hint ?? '')
-    expect(frame).toMatchSnapshot()
+    expect(stripSnapshotAnsi(frame)).toMatchSnapshot()
   })
 })
 

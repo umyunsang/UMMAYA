@@ -42,6 +42,7 @@ from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from pydantic import TypeAdapter, ValidationError
 
+from ummaya.evidence.source_provenance_redaction import redact_source_text
 from ummaya.ipc.document_intent_normalization import (
     _normalize_document_root_call_for_user_intent,
 )
@@ -78,6 +79,31 @@ _LEGACY_SCOPE_VERB_ALIASES: Final[dict[str, str]] = {
     "submit": "send",
     "verify": "check",
 }
+
+
+class _BackendSecretRedactionFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = self._redact_log_value(record.msg)
+        if isinstance(record.args, tuple):
+            record.args = tuple(self._redact_log_value(arg) for arg in record.args)
+        elif isinstance(record.args, dict):
+            record.args = {key: self._redact_log_value(value) for key, value in record.args.items()}
+        return True
+
+    @staticmethod
+    def _redact_log_value(value: object) -> object:
+        if isinstance(value, str):
+            redacted, _categories = redact_source_text(value)
+            return redacted if redacted is not None else ""
+        if isinstance(value, (bool, int, float)) or value is None:
+            return value
+        text = str(value)
+        redacted, categories = redact_source_text(text)
+        if categories or redacted != text:
+            return redacted if redacted is not None else ""
+        return value
+
+
 _CANONICAL_SCOPE_ALIASES: Final[dict[str, str]] = {
     "find:mock_lookup_module_hometax_simplified": "find:hometax.simplified",
     "find:mock.lookup_module_hometax_simplified": "find:hometax.simplified",
@@ -3602,82 +3628,47 @@ def _submit_requirement_for_query(user_query: str) -> dict[str, str] | None:
         and _query_contains_any(user_query, ("신고", "신고서", "제출"))
     )
     if asks_submit and asks_hometax_tax_return:
-        session_id = _extract_session_id(user_query, "HOMETAX-TAXRETURN-SESSION-001")
-        params = {
-            "tax_year": _extract_tax_year(user_query),
-            "income_type": "종합소득",
-            "total_income_krw": 42_000_000,
-            "session_id": session_id,
-        }
         return {
             "tool_id": "mock_submit_module_hometax_taxreturn",
             "verify_tool_id": "mock_verify_module_modid",
             "scope": "send:hometax.tax-return",
             "pre_submit_lookup_tool_id": "mock_lookup_module_hometax_simplified",
-            "params_json": _stdlib_json.dumps(params, ensure_ascii=False),
+            "params_json": "{}",
         }
 
     if asks_submit and _query_contains_any(user_query, ("정부24", "주민등록등본", "등본", "민원")):
-        session_id = _extract_session_id(user_query, "GOV24-MINWON-SESSION-001")
-        params = {
-            "minwon_type": "주민등록등본",
-            "applicant_name": "홍길동" if "홍길동" in user_query else "MOCK_APPLICANT",
-            "delivery_method": "online",
-            "session_id": session_id,
-        }
         return {
             "tool_id": "mock_submit_module_gov24_minwon",
             "verify_tool_id": "mock_verify_module_simple_auth",
             "scope": "send:gov24.minwon",
-            "params_json": _stdlib_json.dumps(params, ensure_ascii=False),
+            "params_json": "{}",
         }
 
     if asks_submit and _query_contains_any(
         user_query,
         ("복지 급여", "복지신청", "한부모가족", "한부모", "아동양육비"),
     ):
-        applicant_match = re.search(r"DI-[A-Z0-9-]+", user_query)
-        household_match = re.search(r"(\d+)\s*명", user_query)
-        params = {
-            "applicant_id": applicant_match.group(0)
-            if applicant_match
-            else "DI-MOCK-WELFARE-APPLICANT",
-            "benefit_code": "WLF00001068",
-            "application_type": "new",
-            "household_size": int(household_match.group(1)) if household_match else 1,
-        }
         return {
             "tool_id": "mock_welfare_application_submit_v1",
             "verify_tool_id": "mock_verify_mydata",
             "scope": "send:mydata.welfare_application",
-            "params_json": _stdlib_json.dumps(params, ensure_ascii=False),
+            "params_json": "{}",
         }
 
     if asks_submit and _query_contains_any(user_query, ("과태료", "교통범칙금", "범칙금")):
-        params = {
-            "fine_reference": "MOCK-FINE-2026-001",
-            "payment_method": "virtual_account",
-        }
         return {
             "tool_id": "mock_traffic_fine_pay_v1",
             "verify_tool_id": "mock_verify_ganpyeon_injeung",
             "scope": "send:traffic.fine-pay",
-            "params_json": _stdlib_json.dumps(params, ensure_ascii=False),
+            "params_json": "{}",
         }
 
     if asks_submit and _query_contains_any(user_query, ("마이데이터", "공공마이데이터")):
-        session_id = _extract_session_id(user_query, "MYDATA-ACTION-SESSION-001")
-        params = {
-            "action_type": "transfer_consent",
-            "target_institution_code": "PUBLIC-MYDATA-MOCK",
-            "applicant_di": "DI-MOCK-MYDATA-001",
-            "session_id": session_id,
-        }
         return {
             "tool_id": "mock_submit_module_public_mydata_action",
             "verify_tool_id": "mock_verify_mydata",
             "scope": "send:public_mydata.action",
-            "params_json": _stdlib_json.dumps(params, ensure_ascii=False),
+            "params_json": "{}",
         }
 
     return None
@@ -3706,17 +3697,18 @@ def _check_submit_terminated_without_submit(
         tool_id=pre_submit_lookup_tool_id,
     ):
         return None
-    params_json = requirement["params_json"]
     tool_id = requirement["tool_id"]
+    scope = requirement["scope"]
     return {
         **requirement,
         "message": (
             "Send follow-up missing: the citizen asked to complete a write, "
             "payment, consent, or filing flow and verification has already run, "
             f"but {tool_id!r} has not succeeded. RECOVERY: in the next turn call "
-            f"send(tool_id={tool_id!r}, params={params_json}). The backend will "
-            "inject the cached DelegationContext. Do NOT ask for additional mock "
-            "fields and do NOT end with guidance-only prose."
+            f"send using tool_id {tool_id!r}, the verified {scope!r} delegation "
+            "context, and params that satisfy the registered adapter schema. "
+            "The backend will inject the cached DelegationContext. Do NOT invent "
+            "mock fixture fields and do NOT end with guidance-only prose."
         ),
     }
 
@@ -3809,17 +3801,10 @@ def _canonicalize_submit_tool_id(
 def _apply_submit_canonical_params(
     params: dict[str, object],
     canonical: dict[str, object],
-    tool_id: str,
+    _tool_id: str,
 ) -> bool:
-    """Apply submit fixture defaults, overwriting Hometax mock guesses."""
     changed = False
-    overwrite = tool_id == "mock_submit_module_hometax_taxreturn"
     for key, value in canonical.items():
-        if overwrite:
-            if params.get(key) != value:
-                params[key] = value
-                changed = True
-            continue
         if key not in params or params.get(key) in (None, ""):
             params[key] = value
             changed = True
@@ -3862,11 +3847,14 @@ def _normalize_submit_args_for_query(
 
 def _strip_hometax_lookup_context_noise(params: dict[str, object]) -> bool:
     """Remove model-invented lookup fields from delegation_context."""
+    changed = False
+    if "query" in params:
+        params.pop("query", None)
+        changed = True
     delegation_context = params.get("delegation_context")
     if not isinstance(delegation_context, dict):
-        return False
+        return changed
     cleaned = dict(delegation_context)
-    changed = False
     for key in ("year", "resident_id_prefix"):
         if key in cleaned:
             cleaned.pop(key, None)
@@ -3912,6 +3900,58 @@ def _normalize_hometax_lookup_args_for_query(
     return normalized
 
 
+def _gov24_certificate_type_from_query(user_query: str) -> str | None:
+    if _query_contains_any(user_query, ("가족관계증명서", "가족 관계")):
+        return "family_relations"
+    if _query_contains_any(user_query, ("사업자등록증", "사업자 등록")):
+        return "business_registration"
+    if _query_contains_any(user_query, ("주민등록등본", "등본")):
+        return "resident_registration"
+    return None
+
+
+def _gov24_certificate_purpose_from_query(user_query: str, certificate_type: str) -> str:
+    if certificate_type == "resident_registration" and _query_contains_any(
+        user_query,
+        ("가능 여부", "준비물", "확인", "알려", "방법"),
+    ):
+        return "주민등록등본 발급 가능 여부와 준비물 확인"
+    if certificate_type == "family_relations":
+        return "가족관계증명서 발급 정보 확인"
+    if certificate_type == "business_registration":
+        return "사업자등록증 발급 정보 확인"
+    return "정부24 증명서 발급 정보 확인"
+
+
+def _normalize_gov24_certificate_lookup_args_for_query(
+    args_obj: dict[str, object],
+    user_query: str,
+) -> dict[str, object]:
+    if args_obj.get("tool_id") != "mock_lookup_module_gov24_certificate":
+        return args_obj
+    if not _query_contains_any(
+        user_query, ("정부24", "주민등록등본", "등본", "가족관계증명서", "사업자등록증")
+    ):
+        return args_obj
+    certificate_type = _gov24_certificate_type_from_query(user_query)
+    if certificate_type is None:
+        return args_obj
+    raw_params = args_obj.get("params")
+    params = dict(raw_params) if isinstance(raw_params, dict) else {}
+    changed = not isinstance(raw_params, dict)
+    if params.get("certificate_type") in (None, ""):
+        params["certificate_type"] = certificate_type
+        changed = True
+    if params.get("purpose") in (None, ""):
+        params["purpose"] = _gov24_certificate_purpose_from_query(user_query, certificate_type)
+        changed = True
+    if not changed:
+        return args_obj
+    normalized = dict(args_obj)
+    normalized["params"] = params
+    return normalized
+
+
 def _canonicalize_lookup_tool_id_for_query(
     args_obj: dict[str, object],
     user_query: str,
@@ -3922,7 +3962,15 @@ def _canonicalize_lookup_tool_id_for_query(
         return args_obj
     sensitive_lookup = _sensitive_lookup_requirement_for_query(user_query)
     if sensitive_lookup is None:
-        return args_obj
+        if not _query_contains_any(
+            user_query,
+            ("홈택스", "연말정산", "간소화", "종합소득세", "소득세 신고", "세금 신고"),
+        ):
+            return args_obj
+        sensitive_lookup = {
+            **_SENSITIVE_LOOKUP_AUTH_REQUIREMENTS["mock_lookup_module_hometax_simplified"],
+            "tool_id": "mock_lookup_module_hometax_simplified",
+        }
     normalized = dict(args_obj)
     normalized["tool_id"] = sensitive_lookup["tool_id"]
     logger.info(
@@ -4001,6 +4049,7 @@ def _normalize_lookup_args_for_query(
         return args_obj
     args_obj = _canonicalize_lookup_tool_id_for_query(args_obj, user_query)
     args_obj = _normalize_hometax_lookup_args_for_query(args_obj, user_query)
+    args_obj = _normalize_gov24_certificate_lookup_args_for_query(args_obj, user_query)
     args_obj = _normalize_lookup_result_count_args(
         args_obj,
         user_query,
@@ -4034,6 +4083,21 @@ def _normalize_lookup_args_for_query(
     normalized = dict(args_obj)
     normalized["params"] = params
     return normalized
+
+
+def _lookup_context_from_args(args_obj: dict[str, object]) -> str:
+    chunks: list[str] = []
+    for key in ("query", "request", "instruction", "purpose_ko"):
+        value = args_obj.get(key)
+        if isinstance(value, str) and value.strip():
+            chunks.append(value.strip())
+    raw_params = args_obj.get("params")
+    if isinstance(raw_params, dict):
+        for key in ("query", "request", "instruction", "purpose_ko"):
+            value = raw_params.get(key)
+            if isinstance(value, str) and value.strip():
+                chunks.append(value.strip())
+    return " ".join(chunks)
 
 
 _KOREAN_COUNT_WORDS: Final[dict[str, int]] = {
@@ -5732,6 +5796,7 @@ async def run(  # noqa: C901
                 _fh.setFormatter(
                     logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
                 )
+                _fh.addFilter(_BackendSecretRedactionFilter())
                 _root.addHandler(_fh)
                 _root.setLevel(min(_root.level or logging.INFO, logging.INFO))
                 logger.info(
@@ -6847,6 +6912,14 @@ async def run(  # noqa: C901
                         LookupFetchInput,
                     )
 
+                    lookup_context = _session_latest_user_utterances.get(
+                        session_id, ""
+                    ) or _lookup_context_from_args(args_obj)
+                    args_obj = _normalize_lookup_args_for_query(
+                        fname,
+                        args_obj,
+                        lookup_context,
+                    )
                     requested_mode = args_obj.get("mode")
                     if requested_mode is not None and str(requested_mode) != "fetch":
                         logger.warning(
@@ -6887,17 +6960,31 @@ async def run(  # noqa: C901
                                 lookup_params,
                                 auth_context,
                             )
-                        inp_lk = LookupFetchInput(
-                            mode="fetch",
-                            tool_id=str(args_obj.get("tool_id", "")),
-                            params=lookup_params,
-                        )
-                        raw = await find(
-                            inp_lk,
-                            registry=registry,
-                            executor=executor,
-                            session_identity=session_id,
-                        )
+                        lookup_tool_id = str(args_obj.get("tool_id") or "").strip()
+                        if not lookup_tool_id or lookup_tool_id in _ROOT_PRIMITIVE_TOOL_IDS:
+                            raw = LookupError(
+                                kind="error",
+                                reason=LookupErrorReason.invalid_params,
+                                message=(
+                                    "find(mode='fetch') requires a concrete adapter tool_id "
+                                    "from the current available adapter set. No concrete "
+                                    "adapter was selected, so UMMAYA stopped this malformed "
+                                    "tool call instead of retrying it."
+                                ),
+                                retryable=False,
+                            )
+                        else:
+                            inp_lk = LookupFetchInput(
+                                mode="fetch",
+                                tool_id=lookup_tool_id,
+                                params=lookup_params,
+                            )
+                            raw = await find(
+                                inp_lk,
+                                registry=registry,
+                                executor=executor,
+                                session_identity=session_id,
+                            )
                         result_payload = {
                             "kind": "find",
                             "result": _serialize_primitive_result(raw),
@@ -9432,10 +9519,13 @@ async def run(  # noqa: C901
             user_query=_session_latest_user_utterances.get(frame.session_id, ""),
         )
         dispatch_args = _normalize_root_primitive_adapter_envelope(dispatch_name, dispatch_args)
+        lookup_context = _session_latest_user_utterances.get(
+            frame.session_id, ""
+        ) or _lookup_context_from_args(dispatch_args)
         dispatch_args = _normalize_lookup_args_for_query(
             dispatch_name,
             dispatch_args,
-            _session_latest_user_utterances.get(frame.session_id, ""),
+            lookup_context,
         )
 
         kma_aviation_choice_msg = _check_kma_aviation_tool_choice_prerequisite(

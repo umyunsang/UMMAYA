@@ -22,10 +22,16 @@ describe('UMMAYA system prompt migration', () => {
       expect(prompt).toContain(
         'include a text block before the next tool call',
       )
+      expect(prompt).toContain(
+        'Do not repeat the same tool with the same effective inputs after a successful result',
+      )
       expect(prompt).toContain('Do not use generic status-only boilerplate')
       expect(prompt).toContain('Do not expose hidden chain-of-thought')
       expect(prompt).toContain('Bind final-answer values exactly')
-      expect(prompt).toContain('For KMA current observations')
+      expect(prompt).toContain(
+        'For current, realtime, nearby, availability, routing, opening-hours, or status requests',
+      )
+      expect(prompt).not.toContain('For KMA current observations')
       expect(prompt).not.toContain('with software engineering tasks')
       expect(prompt).not.toContain(
         'The user will primarily request you to perform software engineering tasks',

@@ -1,12 +1,9 @@
-import { feature } from 'bun:bundle'
 import type { BetaToolUseBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import { randomUUID } from 'crypto'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import {
   FORK_BOILERPLATE_TAG,
   FORK_DIRECTIVE_PREFIX,
 } from '../../constants/xml.js'
-import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'
 import type {
   AssistantMessage,
   Message as MessageType,
@@ -14,6 +11,7 @@ import type {
 import { logForDebugging } from '../../utils/debug.js'
 import { createUserMessage } from '../../utils/messages.js'
 import type { BuiltInAgentDefinition } from './loadAgentsDir.js'
+export { isForkSubagentEnabled } from './forkSubagentGate.js'
 
 /**
  * Fork subagent feature gate.
@@ -29,15 +27,6 @@ import type { BuiltInAgentDefinition } from './loadAgentsDir.js'
  * Mutually exclusive with coordinator mode — coordinator already owns the
  * orchestration role and has its own delegation model.
  */
-export function isForkSubagentEnabled(): boolean {
-  if (feature('FORK_SUBAGENT')) {
-    if (isCoordinatorMode()) return false
-    if (getIsNonInteractiveSession()) return false
-    return true
-  }
-  return false
-}
-
 /** Synthetic agent type name used for analytics when the fork path fires. */
 export const FORK_SUBAGENT_TYPE = 'fork'
 

@@ -45,11 +45,6 @@ export interface PendingCall {
  */
 export class PendingCallRegistry {
   private _pending = new Map<string, PendingCall>()
-  // UMMAYA hotfix #2519 — race-safe buffering for ToolResultFrame frames
-  // that arrive BEFORE the matching dispatchPrimitive call has registered
-  // (the backend's _dispatch_primitive runs as a parallel asyncio.Task and
-  // can complete in <1s for cached / mock adapters, often beating the
-  // SDK's tool_use block parse → Tool.call() invocation timeline).
   private _buffered = new Map<string, ToolResultFrame>()
 
   /**

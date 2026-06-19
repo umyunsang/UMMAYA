@@ -3,6 +3,7 @@ import { isReplBridgeActive } from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import type { Tool } from '../../Tool.js'
 import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
+import { formatDeferredToolSearchLine } from './supportIntentHints.js'
 
 // Dead code elimination: Brief tool name only needed when KAIROS or KAIROS_BRIEF is on
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -48,7 +49,13 @@ Result format: each matched tool appears as one <function>{"description": "...",
 Query forms:
 - "select:Read,Edit,Grep" — fetch these exact tools by name
 - "notebook jupyter" — keyword search, up to max_results best matches
-- "+slack send" — require "slack" in the name, rank by remaining terms`
+- "+slack send" — require "slack" in the name, rank by remaining terms
+
+Support-tool query examples:
+- "source verification web search" — fetch WebSearch/WebFetch for current evidence and URL source checks
+- "MCP resources" — fetch ListMcpResourcesTool/ReadMcpResourceTool for trusted MCP resource boundaries
+- "Agent progress cancel" — fetch Agent or task tools for delegated research with visible progress/cancel state
+- "workspace write permission" or "shell permission" — fetch workspace write/shell tools when a visible permission or blocked boundary is required`
 
 /**
  * Check if a tool should be deferred (requires ToolSearch to load).
@@ -109,11 +116,10 @@ export function isDeferredTool(tool: Tool): boolean {
 
 /**
  * Format one deferred-tool line for the <available-deferred-tools> user
- * message. Search hints (tool.searchHint) are not rendered — the
- * hints A/B (exp_xenhnnmn0smrx4, stopped Mar 21) showed no benefit.
+ * message. Search hints stay text-only so the block cannot inject markup.
  */
 export function formatDeferredToolLine(tool: Tool): string {
-  return tool.name
+  return formatDeferredToolSearchLine(tool)
 }
 
 export function getPrompt(): string {

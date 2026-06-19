@@ -19,10 +19,10 @@ CC_SOURCE_PATH=".references/claude-code-sourcemap/restored-src/src/services/api/
 CC_STREAM_RANGE_START=1980
 CC_STREAM_RANGE_END=2295
 
-# Procedure-A files that must be byte-copied from CC source
 PROC_A_FILES=(
-  "tui/src/services/api/claude.ts"
+  "tui/src/services/api/ummaya.ts"
 )
+PROC_A_BYTE_COPY_HISTORY_PATH="tui/src/services/api/claude.ts"
 
 # Procedure-B files that require CC reference citations
 PROC_B_FILES=(
@@ -223,21 +223,29 @@ check_procedure_a() {
 
   # Find the byte-copy commit for this file in git log
   local byte_copy_commit=""
-  byte_copy_commit="$(git log --oneline --all --grep="^byte-copy(2521):" -- "$ummaya_path" 2>/dev/null | head -1 | awk '{print $1}')"
+  byte_copy_commit="$(git log --oneline --all --grep="^byte-copy(2521):" -- "$PROC_A_BYTE_COPY_HISTORY_PATH" 2>/dev/null | head -1 | awk '{print $1}')"
 
   if [[ -z "$byte_copy_commit" ]]; then
-    vlog "Procedure-A: no byte-copy(2521) commit found for $ummaya_path"
-    ERRORS+=("No byte-copy(2521) commit found for $ummaya_path")
-    FILE_BYTE_MATCH[$file_idx]="false"
-    mark_drift
+    vlog "Procedure-A: no byte-copy(2521) commit found for $PROC_A_BYTE_COPY_HISTORY_PATH"
+    local restored_sha
+    restored_sha="$(sha256_file "$CC_SOURCE_PATH")"
+    vlog "  Restored CC SHA:        $restored_sha"
+    vlog "  Expected CC SHA:        $CC_CLAUDE_SHA"
+    if [[ "$restored_sha" == "$CC_CLAUDE_SHA" ]]; then
+      FILE_BYTE_MATCH[$file_idx]="true"
+    else
+      ERRORS+=("Restored CC SHA mismatch for $CC_SOURCE_PATH: got $restored_sha, expected $CC_CLAUDE_SHA")
+      FILE_BYTE_MATCH[$file_idx]="false"
+      mark_drift
+    fi
     return
   fi
 
-  vlog "Procedure-A: found byte-copy commit $byte_copy_commit for $ummaya_path"
+  vlog "Procedure-A: found byte-copy commit $byte_copy_commit for $PROC_A_BYTE_COPY_HISTORY_PATH"
 
   # SHA of the file at the byte-copy commit
   local sha_at_commit
-  sha_at_commit="$(sha256_at_commit "$byte_copy_commit" "$ummaya_path")"
+  sha_at_commit="$(sha256_at_commit "$byte_copy_commit" "$PROC_A_BYTE_COPY_HISTORY_PATH")"
 
   vlog "  SHA at byte-copy commit: $sha_at_commit"
   vlog "  Expected CC SHA:         $CC_CLAUDE_SHA"
@@ -248,7 +256,7 @@ check_procedure_a() {
   else
     vlog "  byte_copy_sha_match=false — DRIFT"
     FILE_BYTE_MATCH[$file_idx]="false"
-    ERRORS+=("Byte-copy SHA mismatch for $ummaya_path: got $sha_at_commit, expected $CC_CLAUDE_SHA")
+    ERRORS+=("Byte-copy SHA mismatch for $PROC_A_BYTE_COPY_HISTORY_PATH: got $sha_at_commit, expected $CC_CLAUDE_SHA")
     mark_drift
   fi
 }
@@ -263,7 +271,7 @@ check_swap_commits() {
 
   # Find the byte-copy commit for this file (may be empty for Procedure-B files)
   local byte_copy_commit_sc=""
-  byte_copy_commit_sc="$(git log --oneline --all --grep="^byte-copy(2521):" -- "tui/src/services/api/claude.ts" 2>/dev/null | head -1 | awk '{print $1}')"
+  byte_copy_commit_sc="$(git log --oneline --all --grep="^byte-copy(2521):" -- "$PROC_A_BYTE_COPY_HISTORY_PATH" 2>/dev/null | head -1 | awk '{print $1}')"
 
   # Only inspect commits AFTER the byte-copy commit (the 2521 methodology range).
   # Pre-byte-copy commits are out of scope and do not generate warnings.
@@ -521,7 +529,7 @@ check_stream_channels() {
     "message_stop:n/a:2295"
   )
 
-  local ummaya_claude_ts="tui/src/services/api/claude.ts"
+  local ummaya_provider_ts="tui/src/services/api/ummaya.ts"
   local ummaya_llm_client="tui/src/ipc/llmClient.ts"
 
   for channel_entry in "${CANONICAL_CHANNELS[@]}"; do
@@ -548,12 +556,11 @@ check_stream_channels() {
       fi
     done
 
-    # Check for handler in claude.ts (Procedure-A byte-copy)
-    if [[ $handler_found -eq 0 && -f "$ummaya_claude_ts" ]]; then
-      if grep -q "case '${kind}'\|case '${subtype}'" "$ummaya_claude_ts" 2>/dev/null; then
+    if [[ $handler_found -eq 0 && -f "$ummaya_provider_ts" ]]; then
+      if grep -q "case '${kind}'\|case '${subtype}'" "$ummaya_provider_ts" 2>/dev/null; then
         handler_found=1
-        ummaya_handler_path="${ummaya_claude_ts}:${cc_line}"
-        vlog "  Channel $kind/$subtype: handler found in $ummaya_claude_ts"
+        ummaya_handler_path="${ummaya_provider_ts}:${cc_line}"
+        vlog "  Channel $kind/$subtype: handler found in $ummaya_provider_ts"
       fi
     fi
 
@@ -813,7 +820,7 @@ else
     md_cc_line="$(echo "$channel_entry" | cut -d: -f3)"
 
     md_status="byte-copied"
-    md_handler="tui/src/services/api/claude.ts:${md_cc_line}"
+    md_handler="tui/src/services/api/ummaya.ts:${md_cc_line}"
 
     # Check skip status
     for pb_file in "${PROC_B_FILES[@]}"; do

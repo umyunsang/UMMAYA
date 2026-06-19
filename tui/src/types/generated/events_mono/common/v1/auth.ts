@@ -13,27 +13,41 @@ export interface PublicApiAuth {
   account_uuid?: string | undefined
 }
 
+type JsonObject = Record<string, unknown>
+
+const emptyJsonObject: JsonObject = {}
+const emptyPublicApiAuthPartial: DeepPartial<PublicApiAuth> = {}
+
+function jsonObject(value: unknown): JsonObject {
+  return isJsonObject(value) ? value : emptyJsonObject
+}
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === 'object' && value !== null
+}
+
 function createBasePublicApiAuth(): PublicApiAuth {
   return { account_id: 0, organization_uuid: '', account_uuid: '' }
 }
 
 export const PublicApiAuth: MessageFns<PublicApiAuth> = {
-  fromJSON(object: any): PublicApiAuth {
+  fromJSON(object: unknown): PublicApiAuth {
+    const value = jsonObject(object)
     return {
-      account_id: isSet(object.account_id)
-        ? globalThis.Number(object.account_id)
+      account_id: isSet(value['account_id'])
+        ? globalThis.Number(value['account_id'])
         : 0,
-      organization_uuid: isSet(object.organization_uuid)
-        ? globalThis.String(object.organization_uuid)
+      organization_uuid: isSet(value['organization_uuid'])
+        ? globalThis.String(value['organization_uuid'])
         : '',
-      account_uuid: isSet(object.account_uuid)
-        ? globalThis.String(object.account_uuid)
+      account_uuid: isSet(value['account_uuid'])
+        ? globalThis.String(value['account_uuid'])
         : '',
     }
   },
 
   toJSON(message: PublicApiAuth): unknown {
-    const obj: any = {}
+    const obj: Record<string, unknown> = {}
     if (message.account_id !== undefined) {
       obj.account_id = Math.round(message.account_id)
     }
@@ -49,7 +63,7 @@ export const PublicApiAuth: MessageFns<PublicApiAuth> = {
   create<I extends Exact<DeepPartial<PublicApiAuth>, I>>(
     base?: I,
   ): PublicApiAuth {
-    return PublicApiAuth.fromPartial(base ?? ({} as any))
+    return PublicApiAuth.fromPartial(base ?? emptyPublicApiAuthPartial)
   },
   fromPartial<I extends Exact<DeepPartial<PublicApiAuth>, I>>(
     object: I,
@@ -88,12 +102,12 @@ type Exact<P, I extends P> = P extends Builtin
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
-function isSet(value: any): boolean {
+function isSet(value: unknown): boolean {
   return value !== null && value !== undefined
 }
 
 interface MessageFns<T> {
-  fromJSON(object: any): T
+  fromJSON(object: unknown): T
   toJSON(message: T): unknown
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T
   fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T

@@ -1442,7 +1442,7 @@ export interface ToolDefinitionFunction {
  * JSON Schema (Draft 2020-12) for the tool input. Pydantic accepts any dict shape; deeper schema validation is delegated to LLMClient.
  */
 export interface Parameters {
-  [k: string]: any;
+  [k: string]: unknown;
 }
 /**
  * backend -> TUI: streaming assistant text delta.
@@ -1527,7 +1527,7 @@ export interface ToolCallFrame {
  * Tool-specific arguments. Concrete adapter calls carry adapter schema fields directly.
  */
 export interface Arguments1 {
-  [k: string]: any;
+  [k: string]: unknown;
 }
 /**
  * backend -> TUI (render): the output of a tool invocation.
@@ -1553,7 +1553,7 @@ export interface ToolResultFrame {
  */
 export interface ToolResultEnvelope {
   kind: Kind6;
-  [k: string]: any;
+  [k: string]: unknown;
 }
 /**
  * backend -> TUI: Spec 027 coordinator phase update.
@@ -1663,7 +1663,7 @@ export interface SessionEventFrame {
  * Event-specific payload. For list: {sessions: [{id, created_at, turn_count}]}. For resume: {id: str}. For others: {}.
  */
 export interface Payload {
-  [k: string]: any;
+  [k: string]: unknown;
 }
 /**
  * backend -> TUI: a backend error surfaced to the TUI for rendering.
@@ -1689,7 +1689,7 @@ export interface ErrorFrame {
  * Structured error details. UMMAYA_* env var values MUST be redacted.
  */
 export interface Details {
-  [k: string]: any;
+  [k: string]: unknown;
 }
 /**
  * Begins a streamed payload (assistant output, tool result chunking).
@@ -2020,13 +2020,13 @@ export interface AdapterManifestEntry {
  * Full backend Pydantic JSON Schema for adapter input parameters. Credential-only fields such as authKey must be omitted by adapters.
  */
 export interface InputSchemaJson {
-  [k: string]: any;
+  [k: string]: unknown;
 }
 /**
  * Full backend Pydantic JSON Schema for adapter output data.
  */
 export interface OutputSchemaJson {
-  [k: string]: any;
+  [k: string]: unknown;
 }
 /**
  * TUI -> backend: citizen requests revocation of a prior consent receipt.

@@ -680,7 +680,7 @@ async function installFromGitHub(
 /**
  * Resolve a git-subdir `url` field to a clonable git URL.
  * Accepts GitHub owner/repo shorthand (converted to ssh or https depending on
- * CLAUDE_CODE_REMOTE) or any URL that passes validateGitUrl (https, http,
+ * CLAUDE_CODE_REMOTE) or a URL that passes validateGitUrl (https, http,
  * file, git@ ssh).
  */
 function resolveGitSubdirUrl(url: string): string {
@@ -1335,7 +1335,7 @@ async function validatePluginPaths(
  * - Hooks: Loads from hooks/hooks.json if present
  *
  * The function is tolerant of missing components - a plugin can have
- * any combination of the above directories/files. Missing component files
+ * whichever combination of the above directories/files exists. Missing component files
  * are reported as errors but don't prevent plugin loading.
  *
  * @param pluginPath - Absolute path to the plugin directory
@@ -1343,7 +1343,7 @@ async function validatePluginPaths(
  * @param enabled - Initial enabled state (may be overridden by settings)
  * @param fallbackName - Name to use if manifest doesn't specify one
  * @param strict - When true, adds errors for duplicate hook files (default: true)
- * @returns Object containing the LoadedPlugin and any errors encountered
+ * @returns Object containing the LoadedPlugin and errors encountered
  */
 export async function createPluginFromPath(
   pluginPath: string,
@@ -1464,7 +1464,7 @@ export async function createPluginFromPath(
       if (validPaths.length > 0) {
         plugin.commandsPaths = validPaths
       }
-      // Set commandsMetadata if there are any commands (file-based or inline)
+      // Set commandsMetadata when commands exist (file-based or inline)
       if (Object.keys(commandsMetadata).length > 0) {
         plugin.commandsMetadata = commandsMetadata
       }
@@ -1928,7 +1928,7 @@ async function loadPluginsFromMarketplaces({
   // loads the plugin unchecked — a silent fail-open. This guard restores
   // fail-closed: unknown source + active policy → block.
   //
-  // Allowlist: any value (including []) is active — empty allowlist = deny all.
+  // Allowlist: a configured value (including []) is active — empty allowlist = deny all.
   // Blocklist: empty [] is a semantic no-op — only non-empty counts as active.
   const strictAllowlist = getStrictKnownMarketplaces()
   const blocklist = getBlockedMarketplaces()
@@ -2185,7 +2185,7 @@ async function loadPluginFromMarketplaceEntryCacheOnly(
  *   omits `version`. Avoids re-cloning external plugins just to discover the
  *   version we already recorded at install time.
  *
- * Returns both the loaded plugin and any errors encountered during loading.
+ * Returns both the loaded plugin and errors encountered during loading.
  * Errors include missing component files and hook load failures.
  */
 async function loadPluginFromMarketplaceEntry(
@@ -2923,7 +2923,7 @@ async function finishLoadingPluginFromPath(
  * They appear with source='plugin-name@inline' and are always enabled for the current session.
  *
  * @param sessionPluginPaths - Array of plugin directory paths from CLI
- * @returns LoadedPlugin objects and any errors encountered
+ * @returns LoadedPlugin objects and encountered errors
  */
 async function loadSessionOnlyPlugins(
   sessionPluginPaths: Array<string>,
@@ -3056,7 +3056,7 @@ export function mergePluginSources(sources: {
   })
   // Session first, then non-overridden marketplace, then builtin.
   // Downstream first-match consumers see session plugins before
-  // installed ones for any that slipped past the name filter.
+  // installed ones for entries that slipped past the name filter.
   return {
     plugins: [...sessionPlugins, ...marketplacePlugins, ...sources.builtin],
     errors,

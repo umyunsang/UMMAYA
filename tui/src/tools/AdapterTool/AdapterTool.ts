@@ -18,13 +18,6 @@ import {
 import { getOrCreateUmmayaBridge } from '../../ipc/bridgeSingleton.js'
 import { getOrCreatePendingCallRegistry } from '../../ipc/pendingCallSingleton.js'
 import { dispatchPrimitive } from '../_shared/dispatchPrimitive.js'
-import { validateKmaAviationToolChoice } from '../_shared/kmaAviationGuard.js'
-import { validateKmaAnalysisToolChoice } from '../_shared/kmaAnalysisGuard.js'
-import { validateNmcAedToolChoice } from '../_shared/nmcAedGuard.js'
-import {
-  normalizeDirectPublicDataToolInput,
-  validateDirectPublicDataToolChoice,
-} from '../_shared/directPublicDataGuard.js'
 import {
   applyDocumentVisualRenderGateToOutput,
   extractDocumentToolResultPayload,
@@ -78,76 +71,6 @@ const DOCUMENT_ARTIFACT_FOLLOWUP_TOOL_NAMES = new Set([
 // the same way Claude Code shows a diff the moment an edit lands. See
 // specs/2802-public-doc-harness/deep-research-migration-document-render.md.
 const MECHANICAL_DOCUMENT_TOOL_NAMES = new Set(['document_copy_for_edit'])
-const KMA_URL_AIR_TOOL_NAMES = new Set([
-  'kma_apihub_url_air_amos_minute',
-  'kma_apihub_url_air_metar_decoded',
-])
-const KMA_ANALYSIS_TOOL_NAMES = new Set([
-  'kma_apihub_url_high_resolution_grid_point',
-  'kma_apihub_url_aws_objective_analysis_grid',
-  'kma_apihub_url_analysis_weather_chart_image',
-])
-const TAGO_BUS_TOOL_NAMES = new Set([
-  'tago_bus_station_search',
-  'tago_bus_arrival_search',
-  'tago_bus_route_search',
-  'tago_bus_route_station_search',
-  'tago_bus_location_search',
-])
-const KMA_GIMHAE_AIRPORT_RE = /(김해공항|gimhae|rkpk)/iu
-const KMA_GIMPO_AIRPORT_RE = /(김포공항|gimpo|rkss)/iu
-const KMA_AIRPORT_NAME_RE = /(공항|\bairport\b|\brk[a-z]{2}\b|station\s*\d{2,3})/iu
-const KMA_AIRPORT_AVIATION_RE =
-  /(amos|metar|speci|rvr|항공기상|공항기상|활주로|runway|aviation|비행기|항공편|비행편|이륙|착륙|결항|지연|운항|뜰\s*만|뜨나|뜰\s*수|flight|take\s*off|landing|delay|cancel)/iu
-const KMA_RUNWAY_AREA_RE =
-  /(amos|활주로|rvr|runway|시정|visibility|공항기상관측|매분)/iu
-const KMA_ANALYSIS_DATA_RE =
-  /(분석자료|이미\s*분석|고해상도\s*격자|객관분석|aws\s*객관|지도\s*자료|일기도|분석일기도|비구름|바람\s*흐름|synoptic|weather\s*chart|objective\s*analysis|high[-\s]?resolution|grid)/iu
-const KMA_ANALYSIS_MAP_RE =
-  /(일기도|분석일기도|지도\s*자료|비구름|바람\s*흐름|synoptic|weather\s*chart)/iu
-const KMA_ANALYSIS_POINT_RE =
-  /(주변|근처|특정지점|좌표|위도|경도|\blat\b|\blon\b|공항\s*주변)/iu
-const KMA_LIFESTYLE_WEATHER_RE =
-  /(날씨|현재\s*기상|실황|관측|예보|기온|습도|풍속|지금\s*비|비\s*(와|오|올|내리)|우산|강수|소나기|산책|퇴근|current\s+weather|forecast|rain|umbrella|precipitation|temperature)/iu
-const AIRKOREA_AIR_QUALITY_RE =
-  /(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)/iu
-const KMA_LIFESTYLE_WEATHER_TOOL_NAMES = new Set([
-  'kma_current_observation',
-  'kma_ultra_short_term_forecast',
-  'kma_short_term_forecast',
-])
-const HIRA_MEDICAL_DETAIL_RE =
-  /((병원|의료기관|의원).*(상세|진료과|진료과목|진료시간|주차)|(상세|진료시간|주차|응급실).*(병원|의료기관|의원)|ykiho|detail)/iu
-const MOIS_EMERGENCY_CALL_BOX_RE =
-  /(안전\s*비상벨|비상벨|긴급\s*신고함|긴급신고함|방범벨|emergency\s+call\s+box)/iu
-const GYERYONG_ASSISTIVE_CHARGER_RE =
-  /((전동보장구|전동\s*휠체어|보장구|장애인).*(충전|충전소|충전장소)|(충전|충전소|충전장소).*(전동보장구|전동\s*휠체어|보장구|장애인)|계룡시?.*(충전소|충전\s*장소))/iu
-const MOF_OCEAN_WATER_QUALITY_RE =
-  /(해양\s*수질|해양수질|수질\s*자동\s*측정|용존산소|\bpH\b|water\s+quality|ocean\s+water)/iu
-const PPS_SHOPPING_RE = /(종합\s*쇼핑몰|쇼핑몰|계약\s*물품|물품\s*조회|shopping\s*mall)/iu
-const PPS_BID_RE = /(입찰|나라장터|조달청|\bbid\b|procurement|tender)/iu
-const PROTECTED_QUERY_RE =
-  /(본인확인|인증|간편인증|모바일\s*(?:신분증|id)|mobile\s*id|마이데이터|mydata|증명원|소득금액증명|소득금액증명원|주민등록등본|민원|발급)/iu
-const PROTECTED_MOBILE_ID_RE = /(mobile\s*id|모바일\s*(?:신분증|id)|mobile_id)/iu
-const PROTECTED_SIMPLE_AUTH_RE =
-  /(simple_auth|간편인증|ganpyeon|소득금액증명|증명원|민원|발급)/iu
-const PROTECTED_MYDATA_RE = /(mydata|마이데이터)/iu
-const GOV24_MINWON_SUBMIT_RE =
-  /(?=.*(?:정부24|gov24))(?=.*(?:주민등록등본|등본|민원|발급))(?=.*(?:신청|접수|발급|submit|apply|issue))/iu
-const PROTECTED_CHECK_TOOL_NAMES = [
-  'mock_verify_module_simple_auth',
-  'mock_verify_ganpyeon_injeung',
-  'mock_verify_mobile_id',
-  'mock_verify_mydata',
-] as const
-const TAGO_BUS_RE =
-  /(버스|시내버스|정류장|정류소|노선|도착|언제\s*와|몇\s*분|bus|route|arrival|station)/iu
-const AED_REQUEST_RE = /(aed|자동심장|심장충격|제세동)/iu
-const EMERGENCY_REQUEST_RE = /(응급|응급실|\ber\b|emergency)/iu
-const MEDICAL_COLLAPSE_RE =
-  /(사람이\s*쓰러|쓰러졌|쓰러져|의식\s*잃|의식을\s*잃|심정지|호흡이\s*없|숨을\s*안|collapsed|unconscious|cardiac\s*arrest)/iu
-const TRAFFIC_HAZARD_RE =
-  /(교통사고|사고\s*위험|사고다발|위험\s*(구간|도로|지점)|어린이보호구역|보호구역|도로\s*구간|accident|hazard|hotspot)/iu
 const SAFE_DOCUMENT_ARTIFACT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/u
 const EXPLICIT_DOCUMENT_ARTIFACT_MARKER_RE =
   /(?:^|[\s"'`(])(?:artifact_id|artifact\s*id|artifact|아티팩트)\s*[:=]?\s*([A-Za-z0-9][A-Za-z0-9_.-]{0,127})(?=$|[^A-Za-z0-9_.-])/iu
@@ -1030,21 +953,20 @@ function rootInputFor(entry: AdapterManifestEntry, input: Record<string, unknown
   }
 }
 
-function validateAdapterContractInput(
-  toolId: string,
+function concreteAdapterCallInputFor(
+  entry: AdapterManifestEntry,
   input: Record<string, unknown>,
+): Record<string, unknown> {
+  if (input.tool_id !== entry.tool_id) return input
+  const params = input.params
+  return isJsonObject(params) ? params : input
+}
+
+function validateAdapterContractInput(
+  _toolId: string,
+  _input: Record<string, unknown>,
 ) {
-  if (toolId !== 'kma_apihub_url_analysis_weather_chart_image') return undefined
-  const analTime = input.anal_time
-  if (typeof analTime === 'string' && /^\d{12}$/u.test(analTime)) return undefined
-  return {
-    result: false as const,
-    message:
-      'KMA analysis weather-chart schema mismatch: anal_time is required as UTC YYYYMMDDHHMM. ' +
-      "Use a 12-digit official analysis time with minutes, for example '202605281200', not a 10-digit KST hour. " +
-      'If the citizen asks for now/today, choose the latest completed official UTC analysis slot and report upstream failure directly if APIHub has no chart.',
-    errorCode: 1,
-  }
+  return undefined
 }
 
 export function isAdapterToolName(name: string): boolean {
@@ -1068,368 +990,398 @@ function searchTokens(text: string): string[] {
   return text.toLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? []
 }
 
-function expandedQueryTokens(query: string): Set<string> {
-  const tokens = new Set(searchTokens(query))
-  const compact = query.toLowerCase()
-  const airportAviationQuery = isAirportAviationQuery(query)
-  if (/[날씨기상비강수기온습도풍속예보관측실황]/u.test(compact)) {
-    for (const token of [
-      '날씨',
-      '기상',
-      '현재',
-      '관측',
-      '실황',
-      'weather',
-      'current',
-      'observation',
-      'forecast',
-      'temperature',
-      'precipitation',
-      'humidity',
-      'wind',
-      'kma',
-      '초단기실황',
-      '초단기예보',
-      '단기예보',
-      '우산',
-      'nx',
-      'ny',
-      'base_date',
-      'base_time',
-    ]) {
-      tokens.add(token)
+const KOREAN_TRAILING_PARTICLES = [
+  '으로부터',
+  '에서부터',
+  '에게서',
+  '한테서',
+  '까지',
+  '부터',
+  '으로',
+  '에서',
+  '에게',
+  '한테',
+  '처럼',
+  '보다',
+  '하고',
+  '이며',
+  '이고',
+  '로',
+  '와',
+  '과',
+  '은',
+  '는',
+  '이',
+  '가',
+  '을',
+  '를',
+  '의',
+  '에',
+  '도',
+  '만',
+] as const
+
+const LOW_SIGNAL_DISCOVERY_TOKENS = new Set([
+  '지금',
+  '현재',
+  '오늘',
+  '내일',
+  '모레',
+  '이번',
+  '근처',
+  '주변',
+  '어디',
+  '어떻게',
+  'now',
+  'current',
+  'today',
+  'tomorrow',
+  'latest',
+  'nearby',
+  'realtime',
+  'real-time',
+])
+
+const KMA_LIFESTYLE_WEATHER_RE =
+  /(날씨|현재\s*기상|실황|관측|예보|기온|습도|풍속|지금\s*비|비\s*(?:와|오|올|내리)|우산|강수|소나기|산책|퇴근|current\s+weather|forecast|rain|umbrella|precipitation|temperature)/iu
+const HEALTHCARE_RE =
+  /(응급|응급실|응급의료|야간\s*진료|야간진료|병원|의원|의료기관|진료\s*가능|\bemergency\b|\ber\b|\bhospital\b|\bclinic\b)/iu
+const AIR_QUALITY_RE =
+  /(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)/iu
+const KMA_ANALYSIS_RE =
+  /(분석자료|이미\s*분석|고해상도\s*격자|객관분석|AWS\s*객관|지도\s*자료|일기도|분석일기도|비구름|바람\s*흐름|날씨\s*흐름|전국\s*날씨|synoptic|weather\s*chart|objective\s*analysis|high[-\s]?resolution|grid)/iu
+const AIRPORT_AVIATION_RE =
+  /(AMOS|METAR|SPECI|RVR|항공기상|공항기상|활주로|runway|aviation|비행기|항공편|비행편|이륙|착륙|결항|지연|운항|뜰\s*만|뜨나|뜰\s*수|flight|take\s*off|landing|delay|cancel)/iu
+const POI_LOCATION_RE =
+  /(근처|주변|주위|인근|가까운|우리\s*동네|여기|이\s*근처|현재\s*위치|내\s*위치|역|터미널|공항|캠퍼스|대학교|대학|해수욕장|시장|공원|랜드마크)/iu
+const ADMIN_LOCATION_RE =
+  /(?:[가-힣]{2,}(?:시|군|구|동|읍|면)\b|[가-힣0-9]{2,}(?<!으)(?:로|길)\b)/iu
+const COORDINATE_PAIR_RE =
+  /[+-]?\d{1,2}(?:\.\d+)?\s*,\s*[+-]?\d{2,3}(?:\.\d+)?/u
+const PRIOR_LOCATION_CONTEXT_RE = /\[prior_location_context\]/u
+const GOV24_RE = /(정부24|gov24|주민등록등본|등본|증명서|민원)/iu
+const GOV24_READ_ONLY_RE = /(가능\s*여부|준비물|확인|조회|안내|알려)/iu
+const GOV24_ACTION_RE = /(신청|진행|제출|접수|발급\s*신청|apply|submit|issue)/iu
+const WELFARE_RE =
+  /(생활비|기초생활|주거급여|긴급복지|저소득|차상위|복지혜택|지원금|진료비\s*바우처|출산휴가|임신|아동수당|첫만남이용권)/iu
+const CIVIL_BIRTH_HANDOFF_RE =
+  /(출생신고|아기가\s*태어|아동수당|첫만남이용권|피부양자\s*등록)/iu
+const UTILITY_RE = /(전기|수도|도시가스|요금|자동이체|공과금|고지서|납부)/iu
+const HOUSING_HANDOFF_RE =
+  /(생애최초\s*주택구입|주택구입|대출|취득세|등기|전입)/iu
+const CIVIL_DEATH_RE = /(사망|돌아가|장례|유족|상속|재산|국민연금)/iu
+
+const LOCATION_TOOL_IDS = new Set([
+  'locate',
+  'kakao_address_search',
+  'kakao_keyword_search',
+  'kakao_coord_to_region',
+  'juso_adm_cd_lookup',
+  'sgis_adm_cd_lookup',
+])
+const KMA_LIFESTYLE_WEATHER_TOOL_IDS = new Set([
+  'kma_current_observation',
+  'kma_ultra_short_term_forecast',
+  'kma_short_term_forecast',
+  'kma_forecast_fetch',
+])
+const EMERGENCY_TOOL_IDS = new Set([
+  'nmc_emergency_search',
+  'nmc_aed_site_locate',
+  'hira_hospital_search',
+  'hira_medical_institution_detail',
+])
+const GOV24_LOOKUP_TOOL_IDS = new Set(['mock_lookup_module_gov24_certificate'])
+const GOV24_ACTION_TOOL_IDS = new Set([
+  'mock_lookup_module_gov24_certificate',
+  'mock_verify_module_simple_auth',
+  'mock_verify_ganpyeon_injeung',
+  'mock_verify_mobile_id',
+  'mock_submit_module_gov24_minwon',
+])
+const WELFARE_TOOL_IDS = new Set([
+  'mohw_welfare_eligibility_search',
+  'mock_welfare_application_submit_v1',
+])
+const UTILITY_TOOL_IDS = new Set([
+  'kepco_contract_power_usage',
+  'mock_kftc_opengiro_bill_send_v1',
+  'mock_kftc_opengiro_payment_send_v1',
+])
+const CIVIL_DEATH_TOOL_IDS = new Set([
+  'bfc_funeral_area_fee',
+  'reb_real_estate_stat_table',
+  'mohw_welfare_eligibility_search',
+])
+
+type ProviderRoutingIntent = {
+  readonly hasCoordinateLocationAnchor: boolean
+  readonly hasAdminLocationAnchor: boolean
+  readonly hasPriorLocationContext: boolean
+  readonly hasLocationAnchor: boolean
+  readonly hasLifestyleWeather: boolean
+  readonly hasEmergencyMedical: boolean
+  readonly hasGov24ReadOnly: boolean
+  readonly hasGov24Action: boolean
+  readonly hasWelfare: boolean
+  readonly hasCivilBirthHandoff: boolean
+  readonly hasUtility: boolean
+  readonly hasHousingHandoff: boolean
+  readonly hasCivilDeath: boolean
+}
+
+type AdapterSelectionOptions = {
+  readonly hasCurrentTurnLocationContext?: boolean
+}
+
+function hasHangul(text: string): boolean {
+  return /\p{Script=Hangul}/u.test(text)
+}
+
+function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
+  const hasEmergencyMedical = HEALTHCARE_RE.test(query)
+  const hasGov24 = GOV24_RE.test(query)
+  const hasGov24Action = hasGov24 && GOV24_ACTION_RE.test(query)
+  const hasCoordinateLocationAnchor = COORDINATE_PAIR_RE.test(query)
+  const hasAdminLocationAnchor = ADMIN_LOCATION_RE.test(query)
+  const hasPoiLocationAnchor = POI_LOCATION_RE.test(query)
+  const hasPriorLocationContext = PRIOR_LOCATION_CONTEXT_RE.test(query)
+  return {
+    hasCoordinateLocationAnchor,
+    hasAdminLocationAnchor,
+    hasPriorLocationContext,
+    hasLocationAnchor:
+      hasCoordinateLocationAnchor ||
+      hasPoiLocationAnchor ||
+      hasAdminLocationAnchor ||
+      hasPriorLocationContext,
+    hasLifestyleWeather:
+      KMA_LIFESTYLE_WEATHER_RE.test(query) &&
+      !hasEmergencyMedical &&
+      !AIR_QUALITY_RE.test(query) &&
+      !KMA_ANALYSIS_RE.test(query) &&
+      !AIRPORT_AVIATION_RE.test(query),
+    hasEmergencyMedical,
+    hasGov24ReadOnly:
+      hasGov24 &&
+      GOV24_READ_ONLY_RE.test(query) &&
+      !hasGov24Action,
+    hasGov24Action,
+    hasWelfare: WELFARE_RE.test(query),
+    hasCivilBirthHandoff: CIVIL_BIRTH_HANDOFF_RE.test(query),
+    hasUtility: UTILITY_RE.test(query),
+    hasHousingHandoff: HOUSING_HANDOFF_RE.test(query),
+    hasCivilDeath: CIVIL_DEATH_RE.test(query),
+  }
+}
+
+function addSetValues(target: Set<string>, values: ReadonlySet<string>): void {
+  for (const value of values) target.add(value)
+}
+
+function restrictiveToolIdsForIntent(
+  intent: ProviderRoutingIntent,
+  options: AdapterSelectionOptions = {},
+): Set<string> | undefined {
+  const allowed = new Set<string>()
+  let restrictive = false
+
+  if (intent.hasGov24ReadOnly) {
+    restrictive = true
+    addSetValues(allowed, GOV24_LOOKUP_TOOL_IDS)
+  } else if (intent.hasGov24Action) {
+    restrictive = true
+    addSetValues(allowed, GOV24_ACTION_TOOL_IDS)
+  }
+
+  if (intent.hasLifestyleWeather) {
+    restrictive = true
+    if (
+      options.hasCurrentTurnLocationContext !== true &&
+      !intent.hasPriorLocationContext
+    ) {
+      addSetValues(allowed, LOCATION_TOOL_IDS)
+    }
+    addSetValues(allowed, KMA_LIFESTYLE_WEATHER_TOOL_IDS)
+  }
+
+  if (intent.hasEmergencyMedical) {
+    restrictive = true
+    if (
+      options.hasCurrentTurnLocationContext !== true &&
+      !intent.hasPriorLocationContext &&
+      intent.hasLocationAnchor
+    ) {
+      addSetValues(allowed, LOCATION_TOOL_IDS)
+    }
+    if (
+      options.hasCurrentTurnLocationContext === true ||
+      intent.hasPriorLocationContext ||
+      intent.hasCoordinateLocationAnchor ||
+      intent.hasAdminLocationAnchor
+    ) {
+      addSetValues(allowed, EMERGENCY_TOOL_IDS)
     }
   }
-  const medicalEmergencyQuery = isMedicalEmergencyQuery(query)
-  const collapseOrAedQuery = isCollapseOrAedQuery(query)
-  if (EMERGENCY_REQUEST_RE.test(compact) && medicalEmergencyQuery) {
-    for (const token of [
-      '응급',
-      '응급실',
-      '응급의료',
-      '응급의료센터',
-      '실시간',
-      '병상',
-      '야간',
-      'emergency',
-      'room',
-      'er',
-      'nmc',
-    ]) {
-      tokens.add(token)
-    }
+
+  if (intent.hasWelfare) {
+    restrictive = true
+    addSetValues(allowed, WELFARE_TOOL_IDS)
   }
-  if (collapseOrAedQuery) {
-    for (const token of [
-      '응급',
-      '응급실',
-      '응급의료',
-      '응급의료센터',
-      'aed',
-      '자동심장충격기',
-      '자동제세동기',
-      '심장충격기',
-      '응급처치',
-      '심정지',
-      '의식불명',
-      'emergency',
-      'room',
-      'er',
-      'defibrillator',
-      'cardiac',
-      'arrest',
-      'nmc',
-    ]) {
-      tokens.add(token)
-    }
+
+  if (intent.hasCivilBirthHandoff) {
+    restrictive = true
   }
-  if (/(병원|의료|진료|약국|hospital|clinic|medical)/u.test(compact)) {
-    for (const token of [
-      '병원',
-      '의료기관',
-      '진료',
-      '진료과목',
-      '야간',
-      '약국',
-      'hospital',
-      'clinic',
-      'medical',
-      'nearby',
-    ]) {
-      tokens.add(token)
-    }
+
+  if (intent.hasUtility) {
+    restrictive = true
+    addSetValues(allowed, UTILITY_TOOL_IDS)
   }
-  if (HIRA_MEDICAL_DETAIL_RE.test(query)) {
-    for (const token of [
-      '상세정보',
-      '진료과',
-      '진료과목',
-      '진료시간',
-      '주차',
-      '요양기호',
-      'ykiho',
-      'hira',
-      'detail',
-      'specialty',
-    ]) {
-      tokens.add(token)
-    }
+
+  if (intent.hasHousingHandoff) {
+    restrictive = true
   }
-  if (MOIS_EMERGENCY_CALL_BOX_RE.test(query)) {
-    for (const token of [
-      '안전비상벨',
-      '비상벨',
-      '긴급신고함',
-      '방범',
-      '행정안전부',
-      'mois',
-      'emergency',
-      'call',
-      'box',
-    ]) {
-      tokens.add(token)
-    }
+
+  if (intent.hasCivilDeath) {
+    restrictive = true
+    addSetValues(allowed, CIVIL_DEATH_TOOL_IDS)
   }
-  if (GYERYONG_ASSISTIVE_CHARGER_RE.test(query)) {
-    for (const token of [
-      '계룡시',
-      '전동보장구',
-      '전동휠체어',
-      '보장구',
-      '장애인',
-      '충전소',
-      '충전장소',
-      'accessibility',
-      'charger',
-    ]) {
-      tokens.add(token)
-    }
+
+  return restrictive ? allowed : undefined
+}
+
+function routingIntentBoostForTool(
+  toolId: string,
+  intent: ProviderRoutingIntent,
+): number {
+  if (intent.hasGov24ReadOnly && GOV24_LOOKUP_TOOL_IDS.has(toolId)) return 1200
+  if (intent.hasGov24Action && GOV24_ACTION_TOOL_IDS.has(toolId)) return 1000
+  if (intent.hasLifestyleWeather) {
+    if (toolId === 'kakao_keyword_search') return 1100
+    if (toolId === 'kakao_address_search') return 1000
+    if (toolId === 'kma_current_observation') return 900
+    if (toolId === 'kma_ultra_short_term_forecast') return 800
+    if (toolId === 'kma_short_term_forecast') return 650
+    if (LOCATION_TOOL_IDS.has(toolId)) return 260
   }
-  if (MOF_OCEAN_WATER_QUALITY_RE.test(query)) {
-    for (const token of [
-      '해양수산부',
-      '해양수질',
-      '수질자동측정망',
-      '관측소',
-      'sea3003',
-      '용존산소',
-      'water',
-      'quality',
-      'ocean',
-    ]) {
-      tokens.add(token)
-    }
+  if (intent.hasEmergencyMedical && intent.hasLocationAnchor) {
+    if (toolId === 'nmc_emergency_search') return 1200
+    if (toolId === 'nmc_aed_site_locate') return 950
+    if (toolId === 'kakao_keyword_search') return 900
+    if (toolId === 'kakao_address_search') return 800
+    if (toolId === 'kakao_coord_to_region') return 500
+    if (toolId === 'hira_hospital_search') return 250
+    if (toolId === 'hira_medical_institution_detail') return 200
+    if (LOCATION_TOOL_IDS.has(toolId)) return 300
   }
-  if (isPpsBidQuery(query)) {
-    for (const token of [
-      '조달청',
-      '나라장터',
-      '입찰공고',
-      '공사입찰',
-      'bidntcenm',
-      'inqrybgndt',
-      'inqryenddt',
-      'pps',
-      'bid',
-      'procurement',
-    ]) {
-      tokens.add(token)
-    }
+  if (intent.hasWelfare && WELFARE_TOOL_IDS.has(toolId)) return 1000
+  if (intent.hasUtility && UTILITY_TOOL_IDS.has(toolId)) return 1000
+  if (intent.hasCivilDeath && CIVIL_DEATH_TOOL_IDS.has(toolId)) return 1000
+  return 0
+}
+
+function koreanParticleStrippedVariants(token: string): string[] {
+  if (!hasHangul(token)) return []
+  const variants: string[] = []
+  let current = token
+  for (let i = 0; i < 2; i += 1) {
+    const nextSuffix = KOREAN_TRAILING_PARTICLES.find(
+      suffix => current.length > suffix.length + 1 && current.endsWith(suffix),
+    )
+    if (!nextSuffix) break
+    current = current.slice(0, -nextSuffix.length)
+    variants.push(current)
   }
-  if (isProtectedCheckQuery(query)) {
-    for (const token of [
-      '본인확인',
-      '인증',
-      '간편인증',
-      '모바일신분증',
-      '모바일id',
-      '소득금액증명원',
-      '증명원',
-      '홈택스',
-      '정부24',
-      'check',
-      'verify',
-      'identity',
-      'simple',
-      'auth',
-      'mobile',
-      'id',
-      'mydata',
-    ]) {
-      tokens.add(token)
-    }
-  }
-  if (isTagoBusQuery(query)) {
-    for (const token of [
-      '국토교통부',
-      'tago',
-      '버스',
-      '시내버스',
-      '버스정류소',
-      '정류장',
-      '정류소',
-      '노선',
-      '노선번호',
-      '버스도착',
-      '도착',
-      'nodeid',
-      'nodenm',
-      'nodeno',
-      'routeid',
-      'routeno',
-      'citycode',
-      'bus',
-      'station',
-      'route',
-      'arrival',
-    ]) {
-      tokens.add(token)
-    }
-  }
-  if (collapseOrAedQuery) {
-    for (const token of ['aed', '자동심장충격기', '자동제세동기', '심장충격기', '위치']) {
-      tokens.add(token)
-    }
-  }
-  if (/(미세먼지|초미세|대기질|공기질|airquality|air quality)/u.test(compact)) {
-    for (const token of ['미세먼지', '대기질', '대기오염', 'airkorea', 'air', 'quality']) {
-      tokens.add(token)
-    }
-  }
-  if (/(법률|변호사|무료상담|상담)/u.test(compact)) {
-    for (const token of ['법률', '변호사', '마을변호사', '상담', 'legal', 'lawyer']) {
-      tokens.add(token)
-    }
-  }
-  if (/(장례|화장|봉안|장사|funeral)/u.test(compact)) {
-    for (const token of ['장례', '장례식장', '시설사용료', 'funeral', 'fee']) {
-      tokens.add(token)
-    }
-  }
-  if (/(취업|채용|공고|공무원|job|recruit)/u.test(compact)) {
-    for (const token of ['취업', '채용', '공고', '공무원', 'public', 'job']) {
-      tokens.add(token)
-    }
-  }
-  if (/(대학|등록금|유학생|tuition|university)/u.test(compact)) {
-    for (const token of ['대학', '등록금', '유학생', '대학알리미', 'tuition', 'university']) {
-      tokens.add(token)
-    }
-  }
-  if (/(전력|전기|한전|계약종별|power|kepco)/u.test(compact)) {
-    for (const token of ['전력', '전기사용량', '계약종별', '한전', 'kepco', 'power', 'usage']) {
-      tokens.add(token)
-    }
-  }
-  if (/(특보|예비특보|경보|주의보|태풍|warning|alert)/u.test(compact)) {
-    for (const token of ['특보', '예비특보', '경보', '주의보', '기상청', 'weather', 'alert']) {
-      tokens.add(token)
-    }
-  }
-  if (airportAviationQuery) {
-    for (const token of [
-      'metar',
-      'speci',
-      'amos',
-      '항공기상',
-      '공항기상',
-      '항공',
-      '비행기',
-      '항공편',
-      '운항',
-      '이륙',
-      '시정',
-      'rvr',
-      'wind',
-      'visibility',
-    ]) {
-      tokens.add(token)
-    }
-    if (KMA_GIMPO_AIRPORT_RE.test(query) && KMA_RUNWAY_AREA_RE.test(query)) {
-      for (const token of [
-        'amos',
-        '공항기상관측',
-        '매분자료',
-        '활주로',
-        '김포공항',
-        'stn110',
-        'runway',
-        'visibility',
-      ]) {
-        tokens.add(token)
-      }
-    }
-  }
-  if (KMA_ANALYSIS_DATA_RE.test(query)) {
-    for (const token of [
-      '분석자료',
-      '고해상도',
-      '격자자료',
-      '객관분석',
-      'aws',
-      '분석일기도',
-      '지도',
-      '비구름',
-      '바람흐름',
-      'objective',
-      'analysis',
-      'grid',
-      'chart',
-    ]) {
-      tokens.add(token)
-    }
-  }
-  if (/(교통사고|사고\s*위험|사고다발|위험\s*(구간|도로|지점)|어린이보호구역|보호구역|도로\s*구간|accident|hazard|hotspot)/u.test(compact)) {
-    for (const token of [
-      '교통사고',
-      '사고',
-      '위험',
-      '위험지점',
-      '사고다발',
-      '사고다발구역',
-      '어린이보호구역',
-      '행정동코드',
-      'koroad',
-      'accident',
-      'hazard',
-      'hotspot',
-    ]) {
-      tokens.add(token)
-    }
-  }
-  if (/(주소|위치|좌표|행정|[가-힣]+(시|군|구|동|읍|면|로|길))/u.test(compact)) {
-    for (const token of [
-      'locate',
-      '위치',
-      '주소',
-      '좌표',
-      '행정동',
-      '법정동',
-      'geocode',
-      'address',
-      'kakao',
-    ]) {
-      tokens.add(token)
-    }
-  }
-  if (
-    !airportAviationQuery &&
-    /(근처|주변|인근|가까운|역|터미널|공항|캠퍼스|대학교|대학|해수욕장|시장|공원|랜드마크|nearby|around)/u.test(compact)
-  ) {
-    for (const token of [
-      '장소',
-      '키워드',
-      'poi',
-      '랜드마크',
-      '역',
-      'keyword',
-      'station',
-      'place',
-    ]) {
-      tokens.add(token)
+  return variants
+}
+
+function expandedTokensForText(text: string): Set<string> {
+  const tokens = new Set<string>()
+  for (const token of searchTokens(text)) {
+    tokens.add(token)
+    for (const variant of koreanParticleStrippedVariants(token)) {
+      tokens.add(variant)
     }
   }
   return tokens
+}
+
+function expandedQueryTokens(query: string): Set<string> {
+  return expandedTokensForText(query)
+}
+
+function isUsefulDiscoveryToken(token: string): boolean {
+  const compact = token.replace(/[_-]/gu, '')
+  if (compact.length === 0) return false
+  if (LOW_SIGNAL_DISCOVERY_TOKENS.has(token)) return false
+  if (hasHangul(compact)) return compact.length >= 2
+  if (compact === 'er') return true
+  return compact.length >= 3
+}
+
+function isSingleHangulPlaceSuffixMatch(
+  fieldToken: string,
+  queryToken: string,
+): boolean {
+  return (
+    hasHangul(fieldToken) &&
+    fieldToken.length === 1 &&
+    hasHangul(queryToken) &&
+    queryToken.length >= 3 &&
+    queryToken.endsWith(fieldToken)
+  )
+}
+
+function fieldMatchesToken(
+  fieldTokens: Set<string>,
+  fieldText: string,
+  queryToken: string,
+): boolean {
+  if (fieldTokens.has(queryToken) || fieldText.includes(queryToken)) {
+    return true
+  }
+  if (!isUsefulDiscoveryToken(queryToken)) return false
+  for (const fieldToken of fieldTokens) {
+    if (isSingleHangulPlaceSuffixMatch(fieldToken, queryToken)) {
+      return true
+    }
+    if (!isUsefulDiscoveryToken(fieldToken)) continue
+    if (fieldToken.includes(queryToken) || queryToken.includes(fieldToken)) {
+      return true
+    }
+  }
+  return false
+}
+
+function requiredInputFieldsFor(entry: AdapterManifestEntry): string[] {
+  return asStringArray(asJsonObject(entry.input_schema_json).required)
+}
+
+function isOpaqueProviderIdentifierField(fieldName: string): boolean {
+  return (
+    fieldName === 'ykiho' ||
+    fieldName === 'id' ||
+    fieldName.endsWith('_id')
+  )
+}
+
+function isOpaqueIdentifierOnlyInitialCandidate(
+  entry: AdapterManifestEntry,
+  queryTokens: Set<string>,
+  query: string,
+): boolean {
+  const requiredFields = requiredInputFieldsFor(entry)
+  if (requiredFields.length === 0) return false
+  if (!requiredFields.every(isOpaqueProviderIdentifierField)) return false
+
+  const normalizedQuery = query.toLowerCase()
+  if (normalizedQuery.includes(entry.tool_id.toLowerCase())) return false
+  return !requiredFields.some(fieldName => queryTokens.has(fieldName.toLowerCase()))
+}
+
+type AdapterScore = {
+  score: number
+  qualifyingDiscoveryMatches: number
 }
 
 type ScoredAdapterEntry = {
@@ -1437,374 +1389,92 @@ type ScoredAdapterEntry = {
   score: number
 }
 
-function queryExplicitlyMentionsCoordinates(query: string): boolean {
-  return /좌표|위도|경도|\blat\b|\blon\b|\blongitude\b|\blatitude\b|wgs84|coord|coord2region|reverse geocode|q0|q1/i.test(query)
-}
-
-function isReverseGeocodeAdapter(toolId: string): boolean {
-  return toolId === 'kakao_coord_to_region' || toolId === 'sgis_adm_cd_lookup'
-}
-
-function queryTargetsKoroadHazardDataset(query: string): boolean {
-  return /(사고\s*위험|위험\s*(구간|도로|지점)|도로\s*구간|어린이보호구역|보호구역|스쿨존|행정동코드|adm_cd|hazard|hotspot)/iu.test(query)
-}
-
-function isAirportAviationQuery(query: string): boolean {
-  return KMA_AIRPORT_NAME_RE.test(query) && KMA_AIRPORT_AVIATION_RE.test(query)
-}
-
-function isMedicalEmergencyQuery(query: string): boolean {
-  return (
-    (EMERGENCY_REQUEST_RE.test(query) ||
-      AED_REQUEST_RE.test(query) ||
-      MEDICAL_COLLAPSE_RE.test(query)) &&
-    !MOIS_EMERGENCY_CALL_BOX_RE.test(query)
-  )
-}
-
-function isCollapseOrAedQuery(query: string): boolean {
-  return (
-    (AED_REQUEST_RE.test(query) || MEDICAL_COLLAPSE_RE.test(query)) &&
-    !MOIS_EMERGENCY_CALL_BOX_RE.test(query)
-  )
-}
-
-function isLocationAdapter(entry: AdapterManifestEntry): boolean {
-  return entry.primitive === 'locate' || ROOT_PRIMITIVE_TOOL_NAMES.has(entry.tool_id)
-}
-
-function isKmaAnalysisQuery(query: string): boolean {
-  return KMA_ANALYSIS_DATA_RE.test(query)
-}
-
-function isLifestyleWeatherQuery(query: string): boolean {
-  return (
-    KMA_LIFESTYLE_WEATHER_RE.test(query) &&
-    !isAirKoreaAirQualityQuery(query) &&
-    !isAirportAviationQuery(query) &&
-    !isKmaAnalysisQuery(query) &&
-    !isMedicalEmergencyQuery(query) &&
-    !TRAFFIC_HAZARD_RE.test(query) &&
-    !MOF_OCEAN_WATER_QUALITY_RE.test(query)
-  )
-}
-
-function isAirKoreaAirQualityQuery(query: string): boolean {
-  return AIRKOREA_AIR_QUALITY_RE.test(query)
-}
-
-function isPpsBidQuery(query: string): boolean {
-  return PPS_BID_RE.test(query) && !PPS_SHOPPING_RE.test(query)
-}
-
-function isProtectedCheckQuery(query: string): boolean {
-  return PROTECTED_QUERY_RE.test(query)
-}
-
-function protectedCheckToolPreference(query: string): string[] {
-  const preferred = [
-    PROTECTED_MOBILE_ID_RE.test(query) ? 'mock_verify_mobile_id' : undefined,
-    PROTECTED_SIMPLE_AUTH_RE.test(query) ? 'mock_verify_module_simple_auth' : undefined,
-    PROTECTED_SIMPLE_AUTH_RE.test(query) ? 'mock_verify_ganpyeon_injeung' : undefined,
-    PROTECTED_MYDATA_RE.test(query) ? 'mock_verify_mydata' : undefined,
-    ...PROTECTED_CHECK_TOOL_NAMES,
-  ].filter((toolName): toolName is string => typeof toolName === 'string')
-  return [...new Set(preferred)]
-}
-
-function isGov24MinwonSubmitQuery(query: string): boolean {
-  return GOV24_MINWON_SUBMIT_RE.test(query)
-}
-
-function gov24MinwonToolPreference(): string[] {
-  return [
-    'mock_verify_module_simple_auth',
-    'mock_submit_module_gov24_minwon',
-    'mock_lookup_module_gov24_certificate',
-    'mock_verify_ganpyeon_injeung',
-    'mock_verify_mobile_id',
-  ]
-}
-
-function isTagoBusQuery(query: string): boolean {
-  return TAGO_BUS_RE.test(query)
-}
-
-function isKmaAnalysisMapQuery(query: string): boolean {
-  return KMA_ANALYSIS_MAP_RE.test(query)
-}
-
-function isKmaAnalysisPointQuery(query: string): boolean {
-  return KMA_ANALYSIS_POINT_RE.test(query) && !isKmaAnalysisMapQuery(query)
-}
-
-function queryPrefersPoiLocation(query: string): boolean {
-  return /(근처|주변|인근|가까운|역|터미널|공항|캠퍼스|대학교|대학|해수욕장|시장|공원|랜드마크|nearby|around)/iu.test(query)
-}
-
 function scoreAdapterEntry(
   entry: AdapterManifestEntry,
   queryTokens: Set<string>,
   query: string,
-): number {
+): AdapterScore {
+  const toolId = entry.tool_id.toLowerCase()
+  const name = entry.name.toLowerCase()
   const searchHint = entry.search_hint.toLowerCase()
   const description = (entry.llm_description ?? '').toLowerCase()
   const haystack = [
-    entry.tool_id,
-    entry.name,
+    toolId,
+    name,
     entry.primitive,
     searchHint,
     description,
   ].join(' ').toLowerCase()
-  const hintTokens = new Set(searchTokens(searchHint))
+  const toolIdTokens = expandedTokensForText(toolId)
+  const nameTokens = expandedTokensForText(name)
+  const hintTokens = expandedTokensForText(searchHint)
   let score = 0
+  let qualifyingDiscoveryMatches = 0
   for (const token of queryTokens) {
     if (!token) continue
-    if (entry.tool_id.toLowerCase().includes(token)) score += 12
-    if (hintTokens.has(token)) score += 8
-    else if (searchHint.includes(token)) score += 4
+    let matchedDiscovery = false
+    if (fieldMatchesToken(toolIdTokens, toolId, token)) {
+      score += 12
+      matchedDiscovery = true
+    }
+    if (fieldMatchesToken(hintTokens, searchHint, token)) {
+      score += 8
+      matchedDiscovery = true
+    }
+    if (fieldMatchesToken(nameTokens, name, token)) {
+      score += 4
+      matchedDiscovery = true
+    }
     if (description.includes(token)) score += 2
     if (haystack.includes(token)) score += 1
-  }
-  if (query.toLowerCase().includes(entry.tool_id.toLowerCase())) score += 1000
-  if (
-    isReverseGeocodeAdapter(entry.tool_id) &&
-    !queryExplicitlyMentionsCoordinates(query)
-  ) {
-    score = Math.max(0, score - 24)
-  }
-  if (queryTargetsKoroadHazardDataset(query)) {
-    if (entry.tool_id === 'koroad_accident_hazard_search') score += 32
-    if (entry.tool_id === 'koroad_accident_search') score = 0
-  }
-  if (isKmaAnalysisQuery(query)) {
-    if (entry.tool_id === 'kma_apihub_url_analysis_weather_chart_image') {
-      score += isKmaAnalysisMapQuery(query) ? 900 : isKmaAnalysisPointQuery(query) ? -20 : 150
-    }
-    if (entry.tool_id === 'kma_apihub_url_high_resolution_grid_point') {
-      score += isKmaAnalysisPointQuery(query) ? 900 : 450
-    }
-    if (entry.tool_id === 'kma_apihub_url_aws_objective_analysis_grid') {
-      score += isKmaAnalysisPointQuery(query) ? 800 : 400
-    }
-    if (isKmaAnalysisPointQuery(query) && queryPrefersPoiLocation(query)) {
-      if (entry.tool_id === 'kakao_keyword_search') score += 30
-      if (entry.tool_id === 'kakao_address_search') score = Math.max(1, score - 15)
+    if (matchedDiscovery && isUsefulDiscoveryToken(token)) {
+      qualifyingDiscoveryMatches += 1
     }
   }
-  if (isLifestyleWeatherQuery(query)) {
-    if (entry.tool_id === 'kakao_keyword_search') score += 1100
-    if (entry.tool_id === 'kakao_address_search') score += 1000
-    if (entry.tool_id === 'kma_current_observation') score += 900
-    if (entry.tool_id === 'kma_ultra_short_term_forecast') score += 800
-    if (entry.tool_id === 'kma_short_term_forecast') score += 650
-    if (entry.tool_id === 'kakao_coord_to_region') score += 260
-    if (entry.tool_id === 'juso_adm_cd_lookup') score += 260
-    if (entry.tool_id === 'sgis_adm_cd_lookup') score += 260
+  if (query.toLowerCase().includes(toolId)) {
+    score += 1000
+    qualifyingDiscoveryMatches += 1
   }
-  if (isAirKoreaAirQualityQuery(query)) {
-    if (entry.tool_id === 'airkorea_ctprvn_air_quality') score += 1400
-    if (isLocationAdapter(entry)) score = Math.max(0, score - 120)
-    if (entry.tool_id.startsWith('kma_')) score = Math.max(0, score - 160)
-  }
-  if (HIRA_MEDICAL_DETAIL_RE.test(query)) {
-    if (entry.tool_id === 'hira_medical_institution_detail') score += 650
-  }
-  if (MOIS_EMERGENCY_CALL_BOX_RE.test(query)) {
-    if (entry.tool_id === 'mois_emergency_call_box_lookup') score += 1000
-  }
-  if (GYERYONG_ASSISTIVE_CHARGER_RE.test(query)) {
-    if (entry.tool_id === 'gyeryong_assistive_device_charging_place_locate') {
-      score += 1000
-    }
-  }
-  if (MOF_OCEAN_WATER_QUALITY_RE.test(query)) {
-    if (entry.tool_id === 'mof_ocean_water_quality_check') score += 1000
-  }
-  if (isPpsBidQuery(query)) {
-    if (entry.tool_id === 'pps_bid_public_info') score += 1000
-  }
-  if (isGov24MinwonSubmitQuery(query)) {
-    const preference = gov24MinwonToolPreference()
-    const index = preference.indexOf(entry.tool_id)
-    if (index >= 0) score += 1400 - index * 40
-    if (isLocationAdapter(entry)) score = Math.max(0, score - 180)
-  }
-  if (isProtectedCheckQuery(query) && entry.primitive === 'check') {
-    const preference = protectedCheckToolPreference(query)
-    const index = preference.indexOf(entry.tool_id)
-    score += index >= 0 ? 1000 - index * 20 : 500
-  }
-  if (isTagoBusQuery(query)) {
-    if (entry.tool_id === 'tago_bus_station_search') score += 1050
-    if (entry.tool_id === 'tago_bus_arrival_search') score += 1000
-    if (entry.tool_id === 'tago_bus_route_station_search') score += 950
-    if (entry.tool_id === 'tago_bus_route_search') score += 850
-    if (entry.tool_id === 'tago_bus_location_search') score += 650
-  }
-  if (isCollapseOrAedQuery(query)) {
-    if (entry.tool_id === 'nmc_aed_site_locate') score += 900
-    if (entry.tool_id === 'nmc_emergency_search') score += 700
-    if (queryPrefersPoiLocation(query) && entry.tool_id === 'kakao_keyword_search') score += 120
-  }
-  if (
-    KMA_GIMPO_AIRPORT_RE.test(query) &&
-    KMA_RUNWAY_AREA_RE.test(query) &&
-    KMA_AIRPORT_AVIATION_RE.test(query) &&
-    entry.tool_id === 'kma_apihub_url_air_amos_minute'
-  ) {
-    score += 500
-  }
-  return score
-}
-
-function filterSpecialCaseRanked(
-  query: string,
-  ranked: ScoredAdapterEntry[],
-): ScoredAdapterEntry[] {
-  let filtered = ranked
-  if (isAirKoreaAirQualityQuery(query)) {
-    const allowed = filtered.filter(
-      candidate => candidate.entry.tool_id === 'airkorea_ctprvn_air_quality',
-    )
-    if (allowed.length > 0) return allowed
-  }
-  if (isKmaAnalysisQuery(query)) {
-    const allowLocation = isKmaAnalysisPointQuery(query)
-    const preferPoiLocation = queryPrefersPoiLocation(query)
-    filtered = filtered
-      .filter(candidate => {
-        if (KMA_ANALYSIS_TOOL_NAMES.has(candidate.entry.tool_id)) return true
-        return allowLocation && isLocationAdapter(candidate.entry)
-      })
-      .map(candidate => {
-        if (!allowLocation || !isLocationAdapter(candidate.entry)) return candidate
-        let score = Math.max(1, candidate.score - 10)
-        if (preferPoiLocation && candidate.entry.tool_id === 'kakao_keyword_search') {
-          score += 30
-        } else if (preferPoiLocation && candidate.entry.tool_id === 'kakao_address_search') {
-          score = Math.max(1, score - 15)
-        }
-        return { ...candidate, score }
-      })
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score
-        return a.entry.tool_id.localeCompare(b.entry.tool_id)
-      })
-  }
-  if (isLifestyleWeatherQuery(query)) {
-    const allowed = filtered.filter(
-      candidate =>
-        KMA_LIFESTYLE_WEATHER_TOOL_NAMES.has(candidate.entry.tool_id) ||
-        isLocationAdapter(candidate.entry),
-    )
-    if (allowed.length > 0) {
-      filtered = allowed.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score
-        return a.entry.tool_id.localeCompare(b.entry.tool_id)
-      })
-    }
-  }
-  if (isPpsBidQuery(query)) {
-    const allowed = filtered.filter(candidate => candidate.entry.tool_id === 'pps_bid_public_info')
-    if (allowed.length > 0) {
-      filtered = allowed.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score
-        return a.entry.tool_id.localeCompare(b.entry.tool_id)
-      })
-    }
-  }
-  if (isGov24MinwonSubmitQuery(query)) {
-    const preference = gov24MinwonToolPreference()
-    const allowed = filtered.filter(candidate => preference.includes(candidate.entry.tool_id))
-    if (allowed.length > 0) {
-      return allowed.sort((a, b) => {
-        const aRank = preference.indexOf(a.entry.tool_id)
-        const bRank = preference.indexOf(b.entry.tool_id)
-        if (aRank !== bRank) return aRank - bRank
-        if (b.score !== a.score) return b.score - a.score
-        return a.entry.tool_id.localeCompare(b.entry.tool_id)
-      })
-    }
-  }
-  if (isProtectedCheckQuery(query)) {
-    const preference = protectedCheckToolPreference(query)
-    const allowed = filtered.filter(candidate => candidate.entry.primitive === 'check')
-    if (allowed.length > 0) {
-      filtered = allowed.sort((a, b) => {
-        const aIndex = preference.indexOf(a.entry.tool_id)
-        const bIndex = preference.indexOf(b.entry.tool_id)
-        const aRank = aIndex >= 0 ? aIndex : Number.MAX_SAFE_INTEGER
-        const bRank = bIndex >= 0 ? bIndex : Number.MAX_SAFE_INTEGER
-        if (aRank !== bRank) return aRank - bRank
-        if (b.score !== a.score) return b.score - a.score
-        return a.entry.tool_id.localeCompare(b.entry.tool_id)
-      })
-    }
-  }
-  if (isTagoBusQuery(query)) {
-    const allowed = filtered.filter(candidate => TAGO_BUS_TOOL_NAMES.has(candidate.entry.tool_id))
-    if (allowed.length > 0) {
-      filtered = allowed.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score
-        return a.entry.tool_id.localeCompare(b.entry.tool_id)
-      })
-    }
-  }
-  if (isCollapseOrAedQuery(query)) {
-    const allowed = filtered.filter(candidate => {
-      if (candidate.entry.tool_id === 'nmc_aed_site_locate') return true
-      if (candidate.entry.tool_id === 'nmc_emergency_search') return true
-      return isLocationAdapter(candidate.entry)
-    })
-    if (allowed.some(candidate => candidate.entry.tool_id === 'nmc_aed_site_locate')) {
-      filtered = allowed.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score
-        return a.entry.tool_id.localeCompare(b.entry.tool_id)
-      })
-    }
-  }
-  if (KMA_GIMHAE_AIRPORT_RE.test(query) && KMA_AIRPORT_AVIATION_RE.test(query)) {
-    filtered = filtered.filter(
-      candidate => candidate.entry.tool_id !== 'kma_apihub_url_air_amos_minute',
-    )
-  }
-  if (isAirportAviationQuery(query)) {
-    const hasAirUrlCandidate = filtered.some(candidate =>
-      KMA_URL_AIR_TOOL_NAMES.has(candidate.entry.tool_id),
-    )
-    if (hasAirUrlCandidate) {
-      filtered = filtered.filter(
-        candidate =>
-          !isLocationAdapter(candidate.entry) &&
-          candidate.entry.tool_id !== 'kma_current_observation',
-      )
-    }
-  }
-  return filtered
+  return { score, qualifyingDiscoveryMatches }
 }
 
 export function selectTopKAdapterToolNamesForQuery(
   query: string,
   maxResults = 5,
+  options: AdapterSelectionOptions = {},
 ): string[] {
   const normalizedQuery = query.trim()
   if (!normalizedQuery || maxResults <= 0) return []
   const queryTokens = expandedQueryTokens(normalizedQuery)
-  const ranked = filterSpecialCaseRanked(
-    normalizedQuery,
-    listAdapters()
+  const routingIntent = extractProviderRoutingIntent(normalizedQuery)
+  const restrictiveToolIds = restrictiveToolIdsForIntent(routingIntent, options)
+  const ranked = listAdapters()
     .filter(entry => !ROOT_PRIMITIVE_TOOL_NAMES.has(entry.tool_id))
-    .map(entry => ({
-      entry,
-      score: scoreAdapterEntry(entry, queryTokens, normalizedQuery),
-    }))
-    .filter(candidate => candidate.score > 0)
+    .map(entry => {
+      const result = scoreAdapterEntry(entry, queryTokens, normalizedQuery)
+      const routingBoost = routingIntentBoostForTool(entry.tool_id, routingIntent)
+      return {
+        entry,
+        score: result.score + routingBoost,
+        qualifyingDiscoveryMatches:
+          result.qualifyingDiscoveryMatches + (routingBoost > 0 ? 1 : 0),
+      }
+    })
+    .filter(candidate =>
+      (restrictiveToolIds === undefined ||
+        restrictiveToolIds.has(candidate.entry.tool_id)) &&
+      candidate.score > 0 &&
+      candidate.qualifyingDiscoveryMatches > 0 &&
+      !isOpaqueIdentifierOnlyInitialCandidate(
+        candidate.entry,
+        queryTokens,
+        normalizedQuery,
+      )
+    )
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score
       return a.entry.tool_id.localeCompare(b.entry.tool_id)
-    }),
-  )
+    })
 
   return pickDiverseAdapterToolNames(ranked, maxResults)
 }
@@ -1900,18 +1570,6 @@ function buildAdapterTool(entry: AdapterManifestEntry): Tool {
     },
 
     async validateInput(input, context) {
-      const directPublicDataChoice = validateDirectPublicDataToolChoice(
-        entry.tool_id,
-        context,
-        input,
-      )
-      if (directPublicDataChoice) return directPublicDataChoice
-      const kmaAviationChoice = validateKmaAviationToolChoice(entry.tool_id, context)
-      if (kmaAviationChoice) return kmaAviationChoice
-      const kmaAnalysisChoice = validateKmaAnalysisToolChoice(entry.tool_id, context)
-      if (kmaAnalysisChoice) return kmaAnalysisChoice
-      const nmcAedChoice = validateNmcAedToolChoice(entry.tool_id, context)
-      if (nmcAedChoice) return nmcAedChoice
       if (!resolveAdapter(entry.tool_id)) {
         return {
           result: false as const,
@@ -1940,15 +1598,14 @@ function buildAdapterTool(entry: AdapterManifestEntry): Tool {
         input,
         context.messages,
       )
-      const directPublicDataInput = normalizeDirectPublicDataToolInput(
-        entry.tool_id,
-        context,
+      const adapterCallInput = concreteAdapterCallInputFor(
+        entry,
         normalizedDocumentInput,
       )
       const result = await dispatchPrimitive({
         primitive,
         toolName: entry.tool_id,
-        args: directPublicDataInput,
+        args: adapterCallInput,
         context,
         registry: getOrCreatePendingCallRegistry(),
         bridge: getOrCreateUmmayaBridge(),

@@ -1591,7 +1591,7 @@ function isRedirectLiteralStart(P: ParseState): boolean {
   // Shell terminators and operators
   if (c === '|' || c === '&' || c === ';' || c === '(' || c === ')')
     return false
-  // Redirect operators (< > with any suffix; <( >( handled by caller)
+  // Redirect operators (< > with suffixes; <( >( handled by caller)
   if (c === '<' || c === '>') {
     // <( >( are process substitutions — those ARE literals
     return peek(P.L, 1) === '('
@@ -1707,11 +1707,11 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
     })
     const kids = fd ? [fd, op, startNode] : [op, startNode]
     const startIdx = fd ? fd.startIndex : op.startIndex
-    // SECURITY: tree-sitter nests any pipeline/list/file_redirect appearing
+    // SECURITY: tree-sitter nests pipeline/list/file_redirect nodes appearing
     // between heredoc_start and the newline as a CHILD of heredoc_redirect.
     // `ls <<'EOF' | rm -rf /tmp/evil` must not silently drop the rm. Parse
     // trailing words and file_redirects properly (ast.ts walkHeredocRedirect
-    // fails closed on any unrecognized child via tooComplex). Pipeline / list
+    // fails closed on unrecognized children via tooComplex). Pipeline / list
     // operators (| && || ;) are structurally complex — emit ERROR so the same
     // fail-closed path rejects them.
     while (true) {
@@ -2753,7 +2753,7 @@ function parseExpansionBody(P: ParseState): TsNode[] {
       }
       // Pattern: per grammar _expansion_regex_replacement, pattern is
       // choice(regex, string, cmd_sub, seq(string, regex)). If it STARTS
-      // with ", emit (string) and any trailing chars become (regex).
+      // with ", emit (string) and trailing chars become (regex).
       // `${v//"${old}"/}` → (string(expansion)); `${v//"${c}"\//}` →
       // (string)(regex).
       if (peek(P.L) === '"') {
@@ -3468,7 +3468,7 @@ function parseCasePattern(P: ParseState): TsNode[] {
       if (peek(P.L) === c) advance(P.L)
       continue
     }
-    // Paren counting: any ( inside pattern opens a scope; don't break at ) or |
+    // Paren counting: ( inside pattern opens a scope; don't break at ) or |
     // until balanced. Handles extglob *(a|b) and nested shapes *([0-9])([0-9]).
     if (c === '(') {
       parenDepth++

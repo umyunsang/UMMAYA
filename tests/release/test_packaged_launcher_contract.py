@@ -63,7 +63,8 @@ def test_packaged_launcher_prefers_existing_python_venv(tmp_path: Path) -> None:
     package_root = tmp_path / "package"
     python_path = package_root / ".venv" / "bin" / "python"
     python_path.parent.mkdir(parents=True)
-    python_path.write_text("", encoding="utf-8")
+    python_path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    python_path.chmod(0o755)
 
     payload = _run_node(
         f"""
@@ -77,6 +78,39 @@ def test_packaged_launcher_prefers_existing_python_venv(tmp_path: Path) -> None:
     )
 
     expected = [str(python_path), "-m", "ummaya.cli", "--ipc", "stdio"]
+    assert payload["command"] == expected
+    assert json.loads(str(payload["env"]["UMMAYA_BACKEND_CMD_JSON"])) == expected
+
+
+def test_packaged_launcher_ignores_unimportable_python_venv(tmp_path: Path) -> None:
+    package_root = tmp_path / "package"
+    python_path = package_root / ".venv" / "bin" / "python"
+    python_path.parent.mkdir(parents=True)
+    python_path.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    python_path.chmod(0o755)
+
+    payload = _run_node(
+        f"""
+        import {{ buildBackendCommand, configurePackageEnv }} from './bin/ummaya'
+
+        const env = {{}}
+        const root = {json.dumps(str(package_root))}
+        configurePackageEnv(root, env)
+        console.log(JSON.stringify({{env, command: buildBackendCommand(root)}}))
+        """,
+    )
+
+    expected = [
+        "uv",
+        "--directory",
+        str(package_root),
+        "run",
+        "--frozen",
+        "--no-dev",
+        "ummaya",
+        "--ipc",
+        "stdio",
+    ]
     assert payload["command"] == expected
     assert json.loads(str(payload["env"]["UMMAYA_BACKEND_CMD_JSON"])) == expected
 

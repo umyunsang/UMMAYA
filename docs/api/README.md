@@ -33,7 +33,7 @@ operations.
 
 ## How to use this catalog
 
-1. **Find an adapter** — scan Matrix A (by source) when the ministry is known, Matrix B (by primitive) when the verb (`find` / `locate` / `send` / `check`) is known. Both matrices are sorted alphabetically by `tool_id`.
+1. **Find an adapter** — scan Matrix A (by source) when the ministry is known, Matrix B (by primitive) when the verb (`find` / `locate` / `send` / `check` / `document`) is known. Both matrices are sorted alphabetically by `tool_id`. The `document` primitive is the public-form authoring harness; see [`design/document-harness.md`](../design/document-harness.md) for its operation pipeline and permission gate.
 2. **Read the spec** — open the linked Markdown file. The seven mandatory sections give classification, envelope reference, bilingual search hints, endpoint, permission rationale, worked example, and constraints.
 3. **Consume the schema** — the JSON Schema file linked from each row is Draft 2020-12 and validates against any generic schema validator. Re-run `python scripts/build_schemas.py --check` to verify the on-disk schemas still match the source Pydantic models.
 
@@ -41,6 +41,7 @@ operations.
 
 | Source | tool_id | Primitive | Tier | Permission | Spec | Schema |
 |---|---|---|---|---|---|---|
+| UMMAYA harness | `document` | `document` | harness | 3 (heavy gate + approval) | [design/document-harness.md](../design/document-harness.md) | [`_canonical/document-tools.schema.json`](../../src/ummaya/_canonical/document-tools.schema.json) |
 | KOROAD | `koroad_accident_search` | `find` | live | 1 | [koroad/accident_search.md](./koroad/accident_search.md) | [koroad_accident_search.json](./schemas/koroad_accident_search.json) |
 | KOROAD | `koroad_accident_hazard_search` | `find` | live | 1 | [koroad/accident_hazard_search.md](./koroad/accident_hazard_search.md) | [koroad_accident_hazard_search.json](./schemas/koroad_accident_hazard_search.json) |
 | KMA | `kma_current_observation` | `find` | live | 1 | [kma/current_observation.md](./kma/current_observation.md) | [kma_current_observation.json](./schemas/kma_current_observation.json) |

@@ -6,7 +6,7 @@
  * (oauth-authed, same store), write to ~/.claude/uploads/{sessionId}/, and
  * return @path refs to prepend. Claude's Read tool takes it from there.
  *
- * Best-effort: any failure (no token, network, non-2xx, disk) logs debug and
+ * Best-effort: each failure (no token, network, non-2xx, disk) logs debug and
  * skips that attachment. The message still reaches Claude, just without @path.
  */
 
@@ -63,7 +63,7 @@ function uploadsDir(): string {
 
 /**
  * Fetch + write one attachment. Returns the absolute path on success,
- * undefined on any failure.
+ * undefined when resolution fails.
  */
 async function resolveOne(att: InboundAttachment): Promise<string | undefined> {
   const token = getBridgeAccessToken()
@@ -129,7 +129,7 @@ export async function resolveInboundAttachments(
   const ok = paths.filter((p): p is string => p !== undefined)
   if (ok.length === 0) return ''
   // Quoted form — extractAtMentionedFiles truncates unquoted @refs at the
-  // first space, which breaks any home dir with spaces (/Users/John Smith/).
+  // first space, which breaks home dirs with spaces (/Users/John Smith/).
   return ok.map(p => `@"${p}"`).join(' ') + ' '
 }
 

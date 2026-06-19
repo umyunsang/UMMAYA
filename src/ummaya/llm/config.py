@@ -16,6 +16,7 @@ class LLMClientConfig(BaseSettings):
         UMMAYA_FRIENDLI_MODEL       — model identifier
         UMMAYA_LLM_SESSION_BUDGET   — per-session token budget
         UMMAYA_LLM_TIMEOUT_SECONDS  — HTTP stream timeout budget
+        UMMAYA_LLM_STREAM_IDLE_TIMEOUT_SECONDS — max idle gap between stream lines
     """
 
     model_config = SettingsConfigDict(
@@ -59,6 +60,11 @@ class LLMClientConfig(BaseSettings):
         ),
         description="HTTP request timeout in seconds.",
     )
+    stream_idle_timeout: float = Field(
+        default=90.0,
+        validation_alias="UMMAYA_LLM_STREAM_IDLE_TIMEOUT_SECONDS",
+        description="Maximum idle time between streaming response lines in seconds.",
+    )
     max_retries: int = Field(
         default=3,
         description="Maximum number of retry attempts on transient failures.",
@@ -80,12 +86,11 @@ class LLMClientConfig(BaseSettings):
             raise ValueError("session_budget must be > 0")
         return value
 
-    @field_validator("timeout")
+    @field_validator("timeout", "stream_idle_timeout")
     @classmethod
     def timeout_must_be_positive(cls, value: float) -> float:
-        """Enforce timeout > 0."""
         if value <= 0:
-            raise ValueError("timeout must be > 0")
+            raise ValueError("timeout values must be > 0")
         return value
 
     @field_validator("max_retries")

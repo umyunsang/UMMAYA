@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ToolUseContext } from '../../Tool.js'
-
 const DOCUMENT_READ_ONLY_OPERATIONS = new Set(['inspect', 'extract', 'validate'])
 
 type PrimitiveName = 'find' | 'locate' | 'check' | 'send' | 'document'
@@ -9,14 +7,18 @@ type PrimitiveName = 'find' | 'locate' | 'check' | 'send' | 'document'
 export interface PrimitiveArgumentsOpts {
   readonly primitive: PrimitiveName
   readonly args: Record<string, unknown>
-  readonly context: ToolUseContext
+  readonly context: {
+    readonly messages?: readonly unknown[]
+  }
 }
 
 export function argumentsForPrimitive(
   opts: PrimitiveArgumentsOpts,
 ): Record<string, unknown> {
   if (opts.primitive !== 'document') return opts.args
-  if (isReadOnlyDocumentOperation(opts.args)) return opts.args
+  if (isReadOnlyDocumentOperation(opts.args) && hasDocumentDispatchContract(opts.args)) {
+    return opts.args
+  }
   const userQuery = latestUserTextFromContext(opts.context)
   if (!userQuery) return opts.args
   return {
@@ -32,7 +34,22 @@ function isReadOnlyDocumentOperation(args: Record<string, unknown>): boolean {
   return DOCUMENT_READ_ONLY_OPERATIONS.has(operation)
 }
 
-function latestUserTextFromContext(context: ToolUseContext): string | undefined {
+function hasDocumentDispatchContract(args: Record<string, unknown>): boolean {
+  const correlationId = args.correlation_id
+  const instruction = args.instruction
+  const document = recordFrom(args.document)
+  if (typeof correlationId !== 'string' || correlationId.trim() === '') return false
+  if (typeof instruction !== 'string' || instruction.trim() === '') return false
+  if (document === undefined) return false
+  const path = document.path
+  const artifactId = document.artifact_id
+  return (
+    (typeof path === 'string' && path.trim() !== '') ||
+    (typeof artifactId === 'string' && artifactId.trim() !== '')
+  )
+}
+
+function latestUserTextFromContext(context: PrimitiveArgumentsOpts['context']): string | undefined {
   const messages = context.messages ?? []
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = recordFrom(messages[index])

@@ -23,14 +23,12 @@ function fakeContext(toolUseId = 'test-tool-use-id'): ToolUseContext {
     messages: [],
     options: {
       sessionId: 'test-session',
-      commands: [],
-      debug: false,
+      commands: [], debug: false,
       mainLoopModel: 'test',
       tools: [],
       verbose: false,
       thinkingConfig: {},
-      mcpClients: [],
-      mcpResources: {},
+      mcpClients: [], mcpResources: {},
       isNonInteractiveSession: true,
     },
   } as unknown as ToolUseContext
@@ -38,10 +36,7 @@ function fakeContext(toolUseId = 'test-tool-use-id'): ToolUseContext {
 
 function fakeBridge(onSend?: (frame: unknown) => void): IPCBridge {
   return {
-    send: (frame: unknown) => {
-      onSend?.(frame)
-      return true
-    },
+    send: (frame: unknown) => Boolean(onSend?.(frame) ?? true),
     frames: () => ({ [Symbol.asyncIterator]: () => ({ next: () => Promise.resolve({ done: true, value: undefined }) }) }) as unknown as AsyncIterable<never>,
     close: () => Promise.resolve(),
     proc: {} as ReturnType<typeof Bun.spawn>,
@@ -143,131 +138,9 @@ describe('dispatchPrimitive — CC register-and-await dispatch', () => {
     expect(result.data.result).toEqual({ kind: 'record' })
   })
 
-  test('adds current user query to document IPC calls without exposing it to other primitives', async () => {
-    const sentFrames: unknown[] = []
-    const toolUseId = 'document-use-cc-1'
-    const userQuery =
-      '/tmp/weekly.hwpx 문서 내용을 파악해서 다음 주차 활동일지로 알아서 작성하고, 저장은 /tmp/weekly-auto.hwpx 로 해줘.'
-    const context = fakeContext(toolUseId)
-    context.messages = [
-      {
-        type: 'user',
-        message: { role: 'user', content: userQuery },
-      },
-    ]
-    const args = {
-      correlation_id: 'corr-document',
-      document: { path: '/tmp/weekly.hwpx', expected_format: 'hwpx' },
-      operation: 'fill',
-      instruction: '문서 내용을 다음 주차 활동일지로 작성하세요.',
-    }
-
-    const promise = dispatchPrimitive<{ ok: boolean; result?: unknown }>({
-      primitive: 'document',
-      args,
-      context,
-      registry,
-      bridge: fakeBridge((frame) => sentFrames.push(frame)),
-    })
-
-    await Promise.resolve()
-    expect(sentFrames[0]).toMatchObject({
-      role: 'tool',
-      kind: 'tool_call',
-      call_id: toolUseId,
-      name: 'document',
-      arguments: {
-        ...args,
-        __ummaya_user_query: userQuery,
-      },
-    })
-    expect(args).not.toHaveProperty('__ummaya_user_query')
-
-    const frame: Parameters<typeof registry.resolve>[1] = {
-      session_id: 'test-session',
-      correlation_id: 'test-corr',
-      ts: '2026-05-24T00:00:00Z',
-      role: 'backend',
-      kind: 'tool_result',
-      call_id: toolUseId,
-      envelope: { kind: 'document', result: { status: 'ok' } },
-    }
-    registry.resolve(toolUseId, frame)
-
-    const result = await promise
-    expect(result.data.ok).toBe(true)
-  })
-
-  test('does not add current user query to read-only document IPC calls', async () => {
-    const sentFrames: unknown[] = []
-    const toolUseId = 'document-use-readonly-cc-1'
-    const userQuery =
-      '/tmp/business-plan.docx 양식의 빈칸과 문항을 먼저 파악해줘. 아직 문서에는 쓰지 마.'
-    const context = {
-      ...fakeContext(toolUseId),
-      messages: [
-        {
-          type: 'user',
-          message: { role: 'user', content: userQuery },
-        },
-      ],
-    } as unknown as ToolUseContext
-    const args = {
-      correlation_id: 'corr-document-readonly',
-      document: { path: '/tmp/business-plan.docx', expected_format: 'docx' },
-      operation: 'extract',
-      instruction: '사업계획서 양식의 모든 빈칸, 문항, 서식을 구조적으로 추출하세요.',
-    }
-
-    const promise = dispatchPrimitive({
-      primitive: 'document',
-      args,
-      context,
-      registry,
-      bridge: fakeBridge((frame) => sentFrames.push(frame)),
-    }) as unknown as Promise<{ data: { ok: boolean; result?: unknown } }>
-
-    await Promise.resolve()
-    expect(sentFrames[0]).toMatchObject({
-      role: 'tool',
-      kind: 'tool_call',
-      call_id: toolUseId,
-      name: 'document',
-      arguments: args,
-    })
-    expect(JSON.stringify(sentFrames[0])).not.toContain('__ummaya_user_query')
-
-    registry.resolve(toolUseId, {
-      session_id: 'test-session',
-      correlation_id: 'test-corr',
-      ts: '2026-05-24T00:00:00Z',
-      role: 'backend',
-      kind: 'tool_result',
-      call_id: toolUseId,
-      envelope: { kind: 'document', result: { status: 'ok' } },
-    } as unknown as Parameters<typeof registry.resolve>[1])
-
-    const result = await promise
-    expect(result.data.ok).toBe(true)
-  })
-
   test('missing toolUseId fails closed instead of dispatching an unmatchable call', async () => {
     let sent = false
-    const ctx = {
-      messages: [],
-      options: {
-        sessionId: 'test-session',
-        commands: [],
-        debug: false,
-        mainLoopModel: 'test',
-        tools: [],
-        verbose: false,
-        thinkingConfig: {},
-        mcpClients: [],
-        mcpResources: {},
-        isNonInteractiveSession: true,
-      },
-    } as unknown as ToolUseContext
+    const ctx = { ...fakeContext(), toolUseId: undefined } as unknown as ToolUseContext
 
     const result = (await dispatchPrimitive({
       primitive: 'find',

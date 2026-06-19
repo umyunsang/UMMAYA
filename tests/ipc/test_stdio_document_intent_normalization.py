@@ -47,3 +47,32 @@ def test_draft_without_writing_keeps_extract_read_only(tmp_path: Path) -> None:
     normalized = _normalize_document_root_call_for_user_intent("document", args, query)
 
     assert normalized == args
+
+
+def test_d1_read_only_inspect_negated_write_terms_force_inspect_from_fill(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "readonly-inspect.docx"
+    source.write_bytes(b"fixture")
+    query = f"{source} 문서의 구조와 빈칸만 확인해줘. 절대 수정하거나 저장하지 마."
+    args = {
+        "tool_id": "document",
+        "params": {
+            "correlation_id": "d1-readonly",
+            "document": {"path": str(source), "expected_format": "docx"},
+            "operation": "fill",
+            "instruction": "문서 빈칸을 채우세요.",
+            "patches": [{"path": "/body/0", "value": "mutating value"}],
+            "destination_path": str(tmp_path / "mutated.docx"),
+        },
+    }
+
+    normalized = _normalize_document_root_call_for_user_intent("document", args, query)
+
+    assert normalized is not args
+    params = normalized["params"]
+    assert params["operation"] == "inspect"
+    assert params["instruction"] == query
+    assert params["document"]["path"] == str(source)
+    assert "patches" not in params
+    assert "destination_path" not in params
