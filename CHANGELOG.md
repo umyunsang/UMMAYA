@@ -5,6 +5,23 @@ All notable changes to UMMAYA are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.6] - 2026-06-19
+
+### Fixed
+
+- Removed remaining public CLI help references to upstream Claude Desktop and internal
+  Claude environment/file names from the UMMAYA startup and MCP command surfaces.
+- Bundled public-form conformance baselines as wheel resources so installed packages do
+  not depend on repository-relative test fixtures at runtime.
+- Hardened release launcher tests so Python virtualenv detection proves the exact
+  `import ummaya.cli` probe before selecting a packaged backend.
+
+### Security
+
+- Added npm and Bun runtime dependency audit gates to CI, removed stale Python audit
+  exceptions, upgraded PyTorch CPU wheels to 2.12.1, and patched the npm/Bun runtime tree
+  for current high/critical advisories.
+
 ## [v0.2.5] - 2026-06-19
 
 ### Added

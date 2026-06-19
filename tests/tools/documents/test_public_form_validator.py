@@ -52,6 +52,15 @@ def test_public_form_baseline_manifest_covers_format_authorities() -> None:
     )
 
 
+def test_public_form_baseline_manifest_falls_back_to_bundled_resource(
+    tmp_path: Path,
+) -> None:
+    catalog = load_conformance_baselines(tmp_path / "missing-baselines.yaml")
+
+    assert catalog.catalog_id == "public-form-conformance-baselines-v1"
+    assert catalog.by_template_id("birth-benefit-application-hwpx").format == "hwpx"
+
+
 def test_validator_marks_known_good_derivative_ready_for_review() -> None:
     baseline = load_conformance_baselines().by_template_id("birth-benefit-application-hwpx")
     extraction = _matching_birth_benefit_extraction()

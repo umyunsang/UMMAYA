@@ -313,7 +313,6 @@ export async function mcpAddJsonHandler(name: string, json: string, options: {
   }
 }
 
-// mcp add-from-claude-desktop (lines 4881–4927)
 export async function mcpAddFromDesktopHandler(options: {
   scope?: string;
 }): Promise<void> {

@@ -7,6 +7,7 @@ starting the interactive TUI.
 from __future__ import annotations
 
 import json
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -62,8 +63,22 @@ def test_packaged_launcher_overrides_stale_backend_env(tmp_path: Path) -> None:
 def test_packaged_launcher_prefers_existing_python_venv(tmp_path: Path) -> None:
     package_root = tmp_path / "package"
     python_path = package_root / ".venv" / "bin" / "python"
+    probe_log = tmp_path / "python-probe.log"
     python_path.parent.mkdir(parents=True)
-    python_path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    python_path.write_text(
+        "\n".join(
+            [
+                "#!/bin/sh",
+                f"printf '%s\\n' \"$@\" >> {shlex.quote(str(probe_log))}",
+                'if [ "$#" -eq 2 ] && [ "$1" = "-c" ] && [ "$2" = "import ummaya.cli" ]; then',
+                "  exit 0",
+                "fi",
+                "exit 1",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     python_path.chmod(0o755)
 
     payload = _run_node(
@@ -80,6 +95,12 @@ def test_packaged_launcher_prefers_existing_python_venv(tmp_path: Path) -> None:
     expected = [str(python_path), "-m", "ummaya.cli", "--ipc", "stdio"]
     assert payload["command"] == expected
     assert json.loads(str(payload["env"]["UMMAYA_BACKEND_CMD_JSON"])) == expected
+    assert probe_log.read_text(encoding="utf-8").splitlines() == [
+        "-c",
+        "import ummaya.cli",
+        "-c",
+        "import ummaya.cli",
+    ]
 
 
 def test_packaged_launcher_ignores_unimportable_python_venv(tmp_path: Path) -> None:

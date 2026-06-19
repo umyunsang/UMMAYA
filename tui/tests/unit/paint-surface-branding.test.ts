@@ -127,6 +127,7 @@ const paintSurfaceFiles = [
   'src/hooks/useDiffInIDE.ts',
   'src/hooks/useVoice.ts',
   'src/main.tsx',
+  'src/utils/claudeDesktop.ts',
   'src/services/mcp/auth.ts',
   'src/services/notifier.ts',
   'src/services/rateLimitMessages.ts',
@@ -276,6 +277,8 @@ const bannedVisibleCopy = [
   'Claude subscription required',
   'claude.ai MCP',
   '--claudeai',
+  'add-from-claude-desktop',
+  'Claude Desktop',
   '*.anthropic.com',
 ]
 
@@ -317,5 +320,15 @@ describe('UMMAYA paint surface branding', () => {
     })
 
     expect(sanitized.tip).toBe('')
+  })
+
+  it('keeps public CLI help text off upstream internal filenames and env vars', () => {
+    const source = readFileSync(join(ROOT, 'src/main.tsx'), 'utf8')
+    const bareHelp = source.match(/\.option\('--bare', '([^']+)'/)?.[1] ?? ''
+
+    expect(bareHelp).not.toContain('CLAUDE.md')
+    expect(bareHelp).not.toContain('CLAUDE_CODE_SIMPLE')
+    expect(source).toContain("mcp.command('add-from-desktop')")
+    expect(source).not.toContain("mcp.command('add-from-claude-desktop')")
   })
 })

@@ -137,7 +137,6 @@ import type {
   SDKControlMcpSetServersResponse,
   SDKControlReloadPluginsResponse,
 } from 'src/entrypoints/sdk/controlTypes.js'
-import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import { cwd } from 'process'
 import { getCwd } from 'src/utils/cwd.js'
@@ -1154,7 +1153,7 @@ function runHeadlessStreaming(
         type: 'system',
         subtype: 'status',
         status: null,
-        permissionMode: newMode as PermissionMode,
+        permissionMode: newMode as InternalPermissionMode,
         uuid: randomUUID(),
         session_id: getSessionId(),
       })

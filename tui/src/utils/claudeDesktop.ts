@@ -15,7 +15,7 @@ export async function getClaudeDesktopConfigPath(): Promise<string> {
 
   if (!SUPPORTED_PLATFORMS.includes(platform)) {
     throw new Error(
-      `Unsupported platform: ${platform} - Claude Desktop integration only works on macOS and WSL.`,
+      `Unsupported platform: ${platform} - desktop MCP config import only works on macOS and WSL.`,
     )
   }
 
@@ -56,7 +56,7 @@ export async function getClaudeDesktopConfigPath(): Promise<string> {
     try {
       const userDirs = await readdir(usersDir, { withFileTypes: true })
 
-      // Look for Claude Desktop config in each user directory
+      // Look for the desktop MCP config in each user directory
       for (const user of userDirs) {
         if (
           user.name === 'Public' ||
@@ -91,7 +91,7 @@ export async function getClaudeDesktopConfigPath(): Promise<string> {
   }
 
   throw new Error(
-    'Could not find Claude Desktop config file in Windows. Make sure Claude Desktop is installed on Windows.',
+    'Could not find a desktop MCP config file in Windows.',
   )
 }
 
@@ -100,7 +100,7 @@ export async function readClaudeDesktopMcpServers(): Promise<
 > {
   if (!SUPPORTED_PLATFORMS.includes(getPlatform())) {
     throw new Error(
-      'Unsupported platform - Claude Desktop integration only works on macOS and WSL.',
+      'Unsupported platform - desktop MCP config import only works on macOS and WSL.',
     )
   }
   try {

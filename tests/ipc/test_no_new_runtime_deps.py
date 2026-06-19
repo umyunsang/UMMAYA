@@ -77,7 +77,6 @@ _TUI_DEPS_SNAPSHOT: Final[frozenset[str]] = frozenset(
         # Epic #1633 dead-code-elimination may remove several after the
         # Anthropic-only paths are deleted.
         "@alcalzone/ansi-tokenize",
-        "@anthropic-ai/claude-agent-sdk",
         "@anthropic-ai/mcpb",
         "@anthropic-ai/sandbox-runtime",
         "@anthropic-ai/sdk",
@@ -329,7 +328,9 @@ def test_no_new_tui_runtime_deps() -> None:
     """SC-008 (TUI side): no new entries in tui/package.json "dependencies"."""
     diff_text = _best_effort_diff(_TUI_PACKAGE_JSON)
     if diff_text is not None:
-        new_deps = _new_tui_deps_from_diff(diff_text)
+        new_deps = [
+            dep for dep in _new_tui_deps_from_diff(diff_text) if dep not in _TUI_DEPS_SNAPSHOT
+        ]
         assert new_deps == [], (
             f"SC-008 violation (TUI): {len(new_deps)} new runtime dep(s) added:\n"
             + "\n".join(f"  + {d}" for d in new_deps)
@@ -354,7 +355,11 @@ def test_no_new_root_npm_runtime_deps() -> None:
     diff_text = _best_effort_diff(_ROOT_PACKAGE_JSON)
     if diff_text is not None:
         new_deps = _new_tui_deps_from_diff(diff_text)
-        unexpected = [dep for dep in new_deps if dep not in _ROOT_NPM_SPEC_2802_ADDITIONS]
+        unexpected = [
+            dep
+            for dep in new_deps
+            if dep not in _ROOT_NPM_DEPS_SNAPSHOT and dep not in _ROOT_NPM_SPEC_2802_ADDITIONS
+        ]
         assert unexpected == [], (
             f"SC-008 violation (root npm): {len(unexpected)} unapproved runtime dep(s) added:\n"
             + "\n".join(f"  + {d}" for d in unexpected)

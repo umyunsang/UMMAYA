@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from importlib import resources
 from pathlib import Path
 from typing import Literal, cast
 
@@ -108,7 +109,24 @@ def load_conformance_baselines(
     path: Path = CONFORMANCE_BASELINE_FIXTURE_PATH,
 ) -> ConformanceBaselineCatalog:
     """Load checked-in public-form conformance baselines from YAML."""
-    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    raw = yaml.safe_load(_read_conformance_baseline_text(path))
     if not isinstance(raw, dict):
         raise ValueError(f"Conformance baseline manifest must be a YAML object: {path}")
     return ConformanceBaselineCatalog.model_validate(cast(dict[str, object], raw))
+
+
+def _read_conformance_baseline_text(path: Path) -> str:
+    if path.is_file():
+        return path.read_text(encoding="utf-8")
+
+    try:
+        bundled = resources.files("ummaya._canonical").joinpath("baselines.yaml")
+        with resources.as_file(bundled) as resource_path:
+            if Path(resource_path).is_file():
+                return Path(resource_path).read_text(encoding="utf-8")
+    except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+        pass
+
+    raise FileNotFoundError(
+        f"Conformance baseline manifest not found in source tree or bundled wheel resource: {path}"
+    )

@@ -1,6 +1,6 @@
 [project]
 name = "ummaya"
-version = "0.2.5"
+version = "0.2.6"
 description = "Conversational multi-agent platform for Korean public APIs"
 readme = "README.md"
 license = "Apache-2.0"
@@ -154,6 +154,7 @@ packages = ["src/ummaya"]
 # Bundle the document production hardening tool contract so installed wheels
 # can register model-visible document tools without depending on the source tree.
 "specs/2803-document-production-hardening/contracts/document-tools.schema.json" = "ummaya/_canonical/document-tools.schema.json"
+"src/ummaya/_canonical/baselines.yaml" = "ummaya/_canonical/baselines.yaml"
 # Bundle the 50-item validation checklist YAML so ummaya-plugin-validate
 # CLI can find it without depending on the source-tree layout.
 "tests/fixtures/plugin_validation/checklist_manifest.yaml" = "ummaya/_canonical/checklist_manifest.yaml"
@@ -332,7 +333,7 @@ min_confidence = 80
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.2.5"
+version = "0.2.6"
 tag_format = "v$version"
 
 # PyTorch CPU-only wheel for Docker image size discipline (SC-1: ≤ 2 GB).
