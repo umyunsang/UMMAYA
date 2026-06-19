@@ -43,6 +43,8 @@
     "docs:generate": "uv run python scripts/docs_generate.py",
     "docs:check": "uv run python scripts/docs_generate.py --check && cd docs-site && bun run build",
     "docs:build": "cd docs-site && bun run build",
+    "prepack": "node scripts/strip-npm-source-maps.mjs --strip",
+    "postpack": "node scripts/strip-npm-source-maps.mjs --restore",
     "package:dry-run": "mkdir -p package-evidence && npm pack --json --pack-destination package-evidence > package-evidence/npm-pack.json",
     "package:check": "npm run package:dry-run && node scripts/check-npm-package.mjs package-evidence/npm-pack.json",
     "package:homebrew-cask": "node scripts/build-homebrew-cask-artifact.mjs --arch arm64 && node scripts/build-homebrew-cask-artifact.mjs --arch x64"

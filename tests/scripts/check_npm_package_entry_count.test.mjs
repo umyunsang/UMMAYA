@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -176,4 +177,49 @@ test('rejects upstream residue inside packed tarball content', () => {
   assert.notEqual(result.status, 0, 'expected package check to fail on packed tarball residue')
   assert.match(result.stderr, /module_0000\.py: loginWithClaudeAi/)
   assert.match(result.stderr, /module_0000\.py: sourceMappingURL=data:application\/json/)
+})
+
+test('strips and restores inline source maps for npm pack lifecycle', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ummaya-source-map-strip-'))
+  try {
+    const fixture = join(tempDir, 'tui/src/components/Fake.tsx')
+    const original = [
+      'export const label = "UMMAYA"',
+      '//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozfQ==',
+      'export const visibleLabel = label',
+      '',
+    ].join('\n')
+    writePackageFile(tempDir, 'tui/src/components/Fake.tsx', original)
+
+    const stripResult = spawnSync(
+      process.execPath,
+      ['scripts/strip-npm-source-maps.mjs', '--root', tempDir, '--strip'],
+      { cwd: process.cwd(), encoding: 'utf8' },
+    )
+    assert.equal(
+      stripResult.status,
+      0,
+      `expected strip to pass\nstdout:\n${stripResult.stdout}\nstderr:\n${stripResult.stderr}`,
+    )
+    assert.equal(
+      readFileSync(fixture, 'utf8'),
+      'export const label = "UMMAYA"\nexport const visibleLabel = label\n',
+    )
+    assert.equal(existsSync(join(tempDir, '.ummaya-npm-prepack-backup/manifest.json')), true)
+
+    const restoreResult = spawnSync(
+      process.execPath,
+      ['scripts/strip-npm-source-maps.mjs', '--root', tempDir, '--restore'],
+      { cwd: process.cwd(), encoding: 'utf8' },
+    )
+    assert.equal(
+      restoreResult.status,
+      0,
+      `expected restore to pass\nstdout:\n${restoreResult.stdout}\nstderr:\n${restoreResult.stderr}`,
+    )
+    assert.equal(readFileSync(fixture, 'utf8'), original)
+    assert.equal(existsSync(join(tempDir, '.ummaya-npm-prepack-backup')), false)
+  } finally {
+    rmSync(tempDir, { force: true, recursive: true })
+  }
 })
