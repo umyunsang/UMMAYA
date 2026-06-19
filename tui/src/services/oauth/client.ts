@@ -31,6 +31,18 @@ import type {
   UserRolesResponse,
 } from './types.js'
 
+type BuildAuthUrlInput = {
+  readonly codeChallenge: string
+  readonly state: string
+  readonly port: number
+  readonly isManual: boolean
+  readonly loginWithFriendliAi?: boolean
+  readonly inferenceOnly?: boolean
+  readonly orgUUID?: string
+  readonly loginHint?: string
+  readonly loginMethod?: string
+}
+
 /**
  * Check if the user has Claude.ai authentication scope
  * @private Only call this if you're OAuth / auth related code!
@@ -49,24 +61,12 @@ export function buildAuthUrl({
   port,
   isManual,
   loginWithFriendliAi,
-  loginWithClaudeAi,
   inferenceOnly,
   orgUUID,
   loginHint,
   loginMethod,
-}: {
-  codeChallenge: string
-  state: string
-  port: number
-  isManual: boolean
-  loginWithFriendliAi?: boolean
-  loginWithClaudeAi?: boolean
-  inferenceOnly?: boolean
-  orgUUID?: string
-  loginHint?: string
-  loginMethod?: string
-}): string {
-  const authUrlBase = (loginWithFriendliAi ?? loginWithClaudeAi)
+}: BuildAuthUrlInput): string {
+  const authUrlBase = loginWithFriendliAi
     ? getOauthConfig().CLAUDE_AI_AUTHORIZE_URL
     : getOauthConfig().CONSOLE_AUTHORIZE_URL
 
@@ -153,7 +153,7 @@ export async function refreshOAuthToken(
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
     client_id: getOauthConfig().CLIENT_ID,
-    // Request specific scopes, defaulting to the full Claude AI set. The
+    // Request specific scopes, defaulting to the full FriendliAI set. The
     // backend's refresh-token grant allows scope expansion beyond what the
     // initial authorize granted (see ALLOWED_SCOPE_EXPANSIONS), so this is
     // safe even for tokens issued before scopes were added to the app's

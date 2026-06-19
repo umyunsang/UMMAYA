@@ -17,7 +17,7 @@ import { getOauthConfig } from '../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getClaudeAIOAuthTokens,
-  isAnthropicAuthEnabled,
+  isFriendliAuthEnabled,
 } from '../utils/auth.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getUserAgent } from '../utils/http.js'
@@ -99,7 +99,7 @@ export function isVoiceStreamAvailable(): boolean {
   // voice_stream uses the same OAuth as Claude Code — available when the
   // user is authenticated with Anthropic (Claude.ai subscriber or has
   // valid OAuth tokens).
-  if (!isAnthropicAuthEnabled()) {
+  if (!isFriendliAuthEnabled()) {
     return false
   }
   const tokens = getClaudeAIOAuthTokens()

@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: Apache-2.0
 
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
 
 const reportPath = process.argv[2]
 if (!reportPath) {
   throw new Error('Usage: scripts/check-npm-package.mjs <npm-pack-json>')
 }
 
-const report = JSON.parse(readFileSync(reportPath, 'utf8'))
+const reportAbsolutePath = resolve(reportPath)
+const report = JSON.parse(readFileSync(reportAbsolutePath, 'utf8'))
 const pack = Array.isArray(report) ? report[0] : report
 if (!pack || !Array.isArray(pack.files)) {
   throw new Error('npm pack report must contain a files array')
@@ -31,16 +34,6 @@ function sourceFilesUnder(relativeDir) {
       return /\.(tsx?|jsx?)$/.test(entry.name) ? [relativePath] : []
     })
     .sort()
-}
-
-function inlineSourceMapContent(source) {
-  const marker = 'sourceMappingURL=data:application/json;charset=utf-8;base64,'
-  const line = source.split('\n').find((item) => item.includes(marker))
-  if (!line) return ''
-
-  const encoded = line.slice(line.indexOf(marker) + marker.length).trim()
-  const decoded = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8'))
-  return decoded.sourcesContent?.join('\n') ?? ''
 }
 
 function readJsonVersion(path) {
@@ -68,6 +61,61 @@ function assertSameVersion(label, actual, expected) {
   if (actual !== expected) {
     throw new Error(`${label} version ${actual} does not match package.json ${expected}`)
   }
+}
+
+function resolveTarballPath(packReport) {
+  const filename = packReport.filename ?? packReport.id
+  if (!filename) {
+    throw new Error('npm pack report must contain a tarball filename')
+  }
+
+  const candidates = [
+    isAbsolute(filename) ? filename : join(dirname(reportAbsolutePath), filename),
+    resolve(filename),
+  ]
+  const tarballPath = candidates.find((candidate) => existsSync(candidate))
+  if (!tarballPath) {
+    throw new Error(`npm package tarball not found for ${filename}`)
+  }
+  return tarballPath
+}
+
+function packedFilesUnder(packageRoot, relativeDir = '') {
+  return readdirSync(join(packageRoot, relativeDir), { withFileTypes: true })
+    .flatMap((entry) => {
+      const relativePath = join(relativeDir, entry.name)
+      if (entry.isDirectory()) return packedFilesUnder(packageRoot, relativePath)
+      if (!entry.isFile()) return []
+      return [relativePath]
+    })
+    .sort()
+}
+
+function isTextContent(content) {
+  return !content.includes(0)
+}
+
+function scanTextFiles(packageRoot) {
+  const violations = []
+  const bannedPackageContent = [
+    'loginWithClaudeAi', 'getAnthropicApiKey', 'isAnthropicAuthEnabled', 'Claude AI',
+    'sourceMappingURL=data:application/json',
+  ]
+  let scannedTextFileCount = 0
+
+  for (const path of packedFilesUnder(packageRoot)) {
+    const content = readFileSync(join(packageRoot, path))
+    if (!isTextContent(content)) continue
+
+    scannedTextFileCount += 1
+    const source = content.toString('utf8')
+    for (const phrase of bannedPackageContent) {
+      if (source.includes(phrase)) {
+        violations.push(`${path}: ${phrase}`)
+      }
+    }
+  }
+  return { scannedTextFileCount, violations }
 }
 
 const rootPackageVersion = readJsonVersion('package.json')
@@ -102,15 +150,9 @@ assertSameVersion(
 
 const launcherText = readFileSync('bin/ummaya', 'utf8')
 const launcherContracts = [
-  'configurePackageEnv',
-  'UMMAYA_PACKAGE_ROOT',
-  'UMMAYA_BACKEND_CMD_JSON',
-  'UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE',
-  'UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS',
-  '.venv',
-  '--directory',
-  '--frozen',
-  '--no-dev',
+  'configurePackageEnv', 'UMMAYA_PACKAGE_ROOT', 'UMMAYA_BACKEND_CMD_JSON',
+  'UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE', 'UMMAYA_TUI_PRIMITIVE_TIMEOUT_MS',
+  '.venv', '--directory', '--frozen', '--no-dev',
 ]
 for (const expected of launcherContracts) {
   if (!launcherText.includes(expected)) {
@@ -125,24 +167,12 @@ if (launcherText.includes('UMMAYA_BACKEND_CMD_JSON ??=')) {
 }
 
 const required = [
-  'bin/ummaya',
-  'package.json',
-  'bun.lock',
-  'npm-shrinkwrap.json',
-  'README.md',
-  'LICENSE',
-  'assets/ummaya-banner-dark.svg',
-  'assets/ummaya-banner-light.svg',
-  'assets/ummaya-logo.svg',
-  'pyproject.toml',
-  'uv.lock',
-  'src/ummaya/__init__.py',
-  'prompts/manifest.yaml',
-  'tui/src/entrypoints/cli.tsx',
-  'tui/src/runtime/bun-bundle.ts',
-  'tui/src/runtime/bundle-package/index.ts',
-  'tui/src/runtime/bundle-package/package.json',
-  'tui/src/stubs/macro-preload.ts',
+  'bin/ummaya', 'package.json', 'bun.lock', 'npm-shrinkwrap.json', 'README.md',
+  'LICENSE', 'assets/ummaya-banner-dark.svg', 'assets/ummaya-banner-light.svg',
+  'assets/ummaya-logo.svg', 'pyproject.toml', 'uv.lock', 'src/ummaya/__init__.py',
+  'prompts/manifest.yaml', 'tui/src/entrypoints/cli.tsx',
+  'tui/src/runtime/bun-bundle.ts', 'tui/src/runtime/bundle-package/index.ts',
+  'tui/src/runtime/bundle-package/package.json', 'tui/src/stubs/macro-preload.ts',
   'docs/plugins/security-review.md',
   'specs/2803-document-production-hardening/contracts/document-tools.schema.json',
   'tests/fixtures/documents/public_forms/baselines.yaml',
@@ -150,20 +180,12 @@ const required = [
 ]
 
 const deny = [
-  /(^|\/)\.env($|[./])/,
-  /^\.github\//,
-  /^\.references\//,
-  /^\.specify\//,
+  /(^|\/)\.env($|[./])/, /^\.github\//, /^\.references\//, /^\.specify\//,
   /(^|\/)secrets(\/|$)/,
   /^specs\/(?!2803-document-production-hardening\/contracts\/document-tools\.schema\.json$)/,
-  /(^|\/)node_modules(\/|$)/,
-  /(^|\/)\.venv(\/|$)/,
-  /(^|\/)dist(\/|$)/,
-  /(^|\/)coverage\.xml$/,
-  /(^|\/)\.DS_Store$/,
-  /(^|\/)__pycache__(\/|$)/,
-  /(^|\/)__tests__(\/|$)/,
-  /\.(test|snap)\.(ts|tsx|js|jsx|snap)$/,
+  /(^|\/)node_modules(\/|$)/, /(^|\/)\.venv(\/|$)/, /(^|\/)dist(\/|$)/,
+  /(^|\/)coverage\.xml$/, /(^|\/)\.DS_Store$/, /(^|\/)__pycache__(\/|$)/,
+  /(^|\/)__tests__(\/|$)/, /\.(test|snap)\.(ts|tsx|js|jsx|snap)$/,
 ]
 
 const missing = required.filter((path) => !fileSet.has(path))
@@ -177,8 +199,7 @@ if (forbidden.length > 0) {
 }
 
 const githubAppPublicSurfaceFiles = [
-  'tui/src/constants/github-app.ts',
-  'tui/src/components/WorkflowMultiselectDialog.tsx',
+  'tui/src/constants/github-app.ts', 'tui/src/components/WorkflowMultiselectDialog.tsx',
   ...sourceFilesUnder('tui/src/commands/install-github-app'),
 ]
 
@@ -192,54 +213,58 @@ if (missingGitHubAppPublicSurface.length > 0) {
 }
 
 const bannedGitHubAppPublicSurfaceCopy = [
-  'ANTHROPIC_API_KEY',
-  'CLAUDE_API_KEY',
-  'CLAUDE_CODE_OAUTH_TOKEN',
-  'FRIENDLI_TOKEN: \\${{ secrets.FRIENDLI_TOKEN }}',
-  'secrets.FRIENDLI_TOKEN',
-  'anthropic_api_key',
-  'claude_code_oauth_token',
-  '.github/workflows/claude.yml',
-  '.github/workflows/claude-code-review.yml',
-  'add-claude-github-actions',
-  'selected_claude_workflow',
-  'selected_claude_review_workflow',
-  'anthropics/claude-cli',
-  'github.com/anthropics/claude-code-action',
-  'anthropics/claude-code-action',
-  'claude-code-action',
-  'loginWithClaudeAi',
-  'getAnthropicApiKey',
-  'isAnthropicAuthEnabled',
-  'Claude AI',
-  'https://github.com/apps/claude',
-  'Claude GitHub App',
-  'Claude PR assistance',
-  'Claude workflow',
-  'Claude Code Review',
-  'Claude PR Assistant',
+  'ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN',
+  'FRIENDLI_TOKEN: \\${{ secrets.FRIENDLI_TOKEN }}', 'secrets.FRIENDLI_TOKEN',
+  'anthropic_api_key', 'claude_code_oauth_token', '.github/workflows/claude.yml',
+  '.github/workflows/claude-code-review.yml', 'add-claude-github-actions',
+  'selected_claude_workflow', 'selected_claude_review_workflow',
+  'anthropics/claude-cli', 'github.com/anthropics/claude-code-action',
+  'anthropics/claude-code-action', 'claude-code-action', 'loginWithClaudeAi',
+  'getAnthropicApiKey', 'isAnthropicAuthEnabled', 'Claude AI',
+  'https://github.com/apps/claude', 'Claude GitHub App', 'Claude PR assistance',
+  'Claude workflow', 'Claude Code Review', 'Claude PR Assistant',
   'A Claude workflow file',
 ]
 
-const githubAppPublicSurfaceViolations = []
-for (const path of githubAppPublicSurfaceFiles) {
-  const source = readFileSync(path, 'utf8')
-  const hasInlineSourceMap = source.includes('sourceMappingURL=data:application/json')
-  if (hasInlineSourceMap) {
-    githubAppPublicSurfaceViolations.push(`${path}: inline source map`)
+const tarballPath = resolveTarballPath(pack)
+const extractRoot = mkdtempSync(join(tmpdir(), 'ummaya-npm-package-'))
+execFileSync('tar', ['-xzf', tarballPath, '-C', extractRoot])
+let scannedTextFileCount = 0
+try {
+  const packageRoot = join(extractRoot, 'package')
+  if (!existsSync(packageRoot)) {
+    throw new Error(`npm package tarball ${tarballPath} did not extract package/`)
   }
 
-  const searchableSource = `${source}\n${inlineSourceMapContent(source)}`
-  for (const phrase of bannedGitHubAppPublicSurfaceCopy) {
-    if (searchableSource.includes(phrase)) {
-      githubAppPublicSurfaceViolations.push(`${path}: ${phrase}`)
+  const scanResult = scanTextFiles(packageRoot)
+  scannedTextFileCount = scanResult.scannedTextFileCount
+  if (scanResult.violations.length > 0) {
+    throw new Error(
+      `npm package contains forbidden packed content:\n${scanResult.violations.join('\n')}`,
+    )
+  }
+
+  const githubAppPublicSurfaceViolations = []
+  for (const path of githubAppPublicSurfaceFiles) {
+    const packedPath = join(packageRoot, path)
+    if (!existsSync(packedPath)) {
+      throw new Error(`npm package tarball missing reported path: ${path}`)
+    }
+
+    const source = readFileSync(packedPath, 'utf8')
+    for (const phrase of bannedGitHubAppPublicSurfaceCopy) {
+      if (source.includes(phrase)) {
+        githubAppPublicSurfaceViolations.push(`${path}: ${phrase}`)
+      }
     }
   }
-}
-if (githubAppPublicSurfaceViolations.length > 0) {
-  throw new Error(
-    `npm package GitHub App public surface contains upstream residue:\n${githubAppPublicSurfaceViolations.join('\n')}`,
-  )
+  if (githubAppPublicSurfaceViolations.length > 0) {
+    throw new Error(
+      `npm package GitHub App public surface contains upstream residue:\n${githubAppPublicSurfaceViolations.join('\n')}`,
+    )
+  }
+} finally {
+  rmSync(extractRoot, { force: true, recursive: true })
 }
 
 if (pack.size > maxPackedBytes) {
@@ -255,5 +280,5 @@ if (files.length > maxEntries) {
 }
 
 console.log(
-  `check-npm-package: clean (${pack.size} packed bytes, ${pack.unpackedSize} unpacked bytes, ${files.length} files, ${githubAppPublicSurfaceFiles.length} GitHub App public surface files)`,
+  `check-npm-package: clean (${pack.size} packed bytes, ${pack.unpackedSize} unpacked bytes, ${files.length} files, ${scannedTextFileCount} packed text files scanned, ${githubAppPublicSurfaceFiles.length} GitHub App public surface files)`,
 )

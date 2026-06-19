@@ -11,6 +11,16 @@ import type {
   SubscriptionType,
 } from './types.js'
 
+type OAuthFlowOptions = {
+  readonly loginWithFriendliAi?: boolean
+  readonly inferenceOnly?: boolean
+  readonly expiresIn?: number
+  readonly orgUUID?: string
+  readonly loginHint?: string
+  readonly loginMethod?: string
+  readonly skipBrowserOpen?: boolean
+}
+
 /**
  * OAuth service that handles the OAuth 2.0 authorization code flow with PKCE.
  *
@@ -31,22 +41,7 @@ export class OAuthService {
 
   async startOAuthFlow(
     authURLHandler: (url: string, automaticUrl?: string) => Promise<void>,
-    options?: {
-      loginWithFriendliAi?: boolean
-      loginWithClaudeAi?: boolean
-      inferenceOnly?: boolean
-      expiresIn?: number
-      orgUUID?: string
-      loginHint?: string
-      loginMethod?: string
-      /**
-       * Don't call openBrowser(). Caller takes both URLs via authURLHandler
-       * and decides how/where to open them. Used by the SDK control protocol
-       * (claude_authenticate) where the SDK client owns the user's display,
-       * not this process.
-       */
-      skipBrowserOpen?: boolean
-    },
+    options?: OAuthFlowOptions,
   ): Promise<OAuthTokens> {
     // Create OAuth callback listener and start it
     this.authCodeListener = new AuthCodeListener()
@@ -57,12 +52,11 @@ export class OAuthService {
     const state = crypto.generateState()
 
     // Build auth URLs for both automatic and manual flows
-    const loginWithFriendliAi = options?.loginWithFriendliAi ?? options?.loginWithClaudeAi
     const opts = {
       codeChallenge,
       state,
       port: this.port,
-      loginWithFriendliAi,
+      loginWithFriendliAi: options?.loginWithFriendliAi,
       inferenceOnly: options?.inferenceOnly,
       orgUUID: options?.orgUUID,
       loginHint: options?.loginHint,

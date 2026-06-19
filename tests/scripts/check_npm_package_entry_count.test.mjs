@@ -2,9 +2,17 @@
 
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import test from 'node:test'
 
 const requiredPackagePaths = [
@@ -87,11 +95,46 @@ function syntheticPackReport(entryCount) {
   ]
 }
 
-function runPackageCheck(entryCount) {
+function writePackageFile(packageRoot, path, content) {
+  const target = join(packageRoot, path)
+  mkdirSync(dirname(target), { recursive: true })
+  writeFileSync(target, content)
+}
+
+function createSyntheticTarball(tempDir, report) {
+  const packageRoot = join(tempDir, 'package')
+  mkdirSync(packageRoot, { recursive: true })
+
+  for (const entry of report[0].files) {
+    writePackageFile(packageRoot, entry.path, `clean fixture for ${entry.path}\n`)
+  }
+
+  const tarballPath = join(tempDir, report[0].filename)
+  const result = spawnSync('tar', ['-czf', tarballPath, '-C', tempDir, 'package'], {
+    encoding: 'utf8',
+  })
+  assert.equal(result.status, 0, `failed to create synthetic tarball\nstderr:\n${result.stderr}`)
+}
+
+function runPackageCheck(entryCount, packedFileOverrides = new Map()) {
   const tempDir = mkdtempSync(join(tmpdir(), 'ummaya-package-gate-'))
   try {
+    const report = syntheticPackReport(entryCount)
+    report[0].filename = report[0].id
+    createSyntheticTarball(tempDir, report)
+    for (const [path, content] of packedFileOverrides) {
+      writePackageFile(join(tempDir, 'package'), path, content)
+    }
+    if (packedFileOverrides.size > 0) {
+      const tarballPath = join(tempDir, report[0].filename)
+      const result = spawnSync('tar', ['-czf', tarballPath, '-C', tempDir, 'package'], {
+        encoding: 'utf8',
+      })
+      assert.equal(result.status, 0, `failed to update synthetic tarball\nstderr:\n${result.stderr}`)
+    }
+
     const reportPath = join(tempDir, 'npm-pack.json')
-    writeFileSync(reportPath, JSON.stringify(syntheticPackReport(entryCount), null, 2))
+    writeFileSync(reportPath, JSON.stringify(report, null, 2))
     return spawnSync(process.execPath, ['scripts/check-npm-package.mjs', reportPath], {
       cwd: process.cwd(),
       encoding: 'utf8',
@@ -118,4 +161,65 @@ test('rejects a 2801-entry package under the default entry gate', () => {
 
   assert.notEqual(result.status, 0, 'expected package check to fail above the entry gate')
   assert.match(result.stderr, /npm package entry count 2801 exceeds/)
+})
+
+test('rejects upstream residue inside packed tarball content', () => {
+  const result = runPackageCheck(
+    2742,
+    new Map([
+      [
+        'src/ummaya/package_gate_fixture/module_0000.py',
+        'loginWithClaudeAi\n//# sourceMappingURL=data:application/json\n',
+      ],
+    ]),
+  )
+
+  assert.notEqual(result.status, 0, 'expected package check to fail on packed tarball residue')
+  assert.match(result.stderr, /module_0000\.py: loginWithClaudeAi/)
+  assert.match(result.stderr, /module_0000\.py: sourceMappingURL=data:application\/json/)
+})
+
+test('strips and restores inline source maps for npm pack lifecycle', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ummaya-source-map-strip-'))
+  try {
+    const fixture = join(tempDir, 'tui/src/components/Fake.tsx')
+    const original = [
+      'export const label = "UMMAYA"',
+      '//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozfQ==',
+      'export const visibleLabel = label',
+      '',
+    ].join('\n')
+    writePackageFile(tempDir, 'tui/src/components/Fake.tsx', original)
+
+    const stripResult = spawnSync(
+      process.execPath,
+      ['scripts/strip-npm-source-maps.mjs', '--root', tempDir, '--strip'],
+      { cwd: process.cwd(), encoding: 'utf8' },
+    )
+    assert.equal(
+      stripResult.status,
+      0,
+      `expected strip to pass\nstdout:\n${stripResult.stdout}\nstderr:\n${stripResult.stderr}`,
+    )
+    assert.equal(
+      readFileSync(fixture, 'utf8'),
+      'export const label = "UMMAYA"\nexport const visibleLabel = label\n',
+    )
+    assert.equal(existsSync(join(tempDir, '.ummaya-npm-prepack-backup/manifest.json')), true)
+
+    const restoreResult = spawnSync(
+      process.execPath,
+      ['scripts/strip-npm-source-maps.mjs', '--root', tempDir, '--restore'],
+      { cwd: process.cwd(), encoding: 'utf8' },
+    )
+    assert.equal(
+      restoreResult.status,
+      0,
+      `expected restore to pass\nstdout:\n${restoreResult.stdout}\nstderr:\n${restoreResult.stderr}`,
+    )
+    assert.equal(readFileSync(fixture, 'utf8'), original)
+    assert.equal(existsSync(join(tempDir, '.ummaya-npm-prepack-backup')), false)
+  } finally {
+    rmSync(tempDir, { force: true, recursive: true })
+  }
 })

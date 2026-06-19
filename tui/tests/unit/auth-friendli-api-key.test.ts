@@ -108,7 +108,7 @@ const {
   FRIENDLI_PRIMARY_ENV,
   assertFriendliApiKeyForUse,
   clearApiKeyHelperCache,
-  getAnthropicApiKeyWithSource,
+  getFriendliApiKeyWithSource,
   removeApiKey,
   saveApiKey,
 } = auth
@@ -194,7 +194,7 @@ describe('auth.ts FriendliAI API-key swap', () => {
     resetCallReceipts()
 
     // When
-    const result = getAnthropicApiKeyWithSource()
+    const result = getFriendliApiKeyWithSource()
 
     // Then
     expect(result).toEqual({ key: 'env-token', source: FRIENDLI_PRIMARY_ENV })
@@ -222,7 +222,7 @@ describe('auth.ts FriendliAI API-key swap', () => {
     expect(execaCalls[0]?.options.input).toContain(Buffer.from(token).toString('hex'))
 
     delete process.env[FRIENDLI_PRIMARY_ENV]
-    expect(getAnthropicApiKeyWithSource()).toEqual({
+    expect(getFriendliApiKeyWithSource()).toEqual({
       key: token,
       source: '/login managed key',
     })
@@ -250,7 +250,7 @@ describe('auth.ts FriendliAI API-key swap', () => {
     resetCallReceipts()
 
     // When
-    const result = getAnthropicApiKeyWithSource()
+    const result = getFriendliApiKeyWithSource()
 
     // Then
     expect(result).toEqual({
@@ -277,7 +277,7 @@ describe('auth.ts FriendliAI API-key swap', () => {
     resetCallReceipts()
 
     // When
-    const result = getAnthropicApiKeyWithSource()
+    const result = getFriendliApiKeyWithSource()
 
     // Then
     expect(result).toEqual({
@@ -298,7 +298,7 @@ describe('auth.ts FriendliAI API-key swap', () => {
     // Then
     expect(getGlobalConfig().primaryApiKey).toBe(token)
     delete process.env[FRIENDLI_PRIMARY_ENV]
-    expect(getAnthropicApiKeyWithSource()).toEqual({
+    expect(getFriendliApiKeyWithSource()).toEqual({
       key: token,
       source: '/login managed key',
     })
@@ -308,7 +308,7 @@ describe('auth.ts FriendliAI API-key swap', () => {
     // Given
     await saveApiKey('remove-token')
     delete process.env[FRIENDLI_PRIMARY_ENV]
-    expect(getAnthropicApiKeyWithSource().key).toBe('remove-token')
+    expect(getFriendliApiKeyWithSource().key).toBe('remove-token')
     resetCallReceipts()
 
     // When
@@ -318,7 +318,7 @@ describe('auth.ts FriendliAI API-key swap', () => {
     expect(process.env[FRIENDLI_PRIMARY_ENV]).toBeUndefined()
     expect(keychainStoredValue).toBeNull()
     expect(getGlobalConfig().primaryApiKey).toBeUndefined()
-    expect(getAnthropicApiKeyWithSource()).toEqual({ key: null, source: 'none' })
+    expect(getFriendliApiKeyWithSource()).toEqual({ key: null, source: 'none' })
     expect(
       execaCalls.some(
         call =>

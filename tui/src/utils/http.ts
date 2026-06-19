@@ -5,7 +5,7 @@
 import axios from 'axios'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import {
-  getAnthropicApiKey,
+  getFriendliApiKey,
   getClaudeAIOAuthTokens,
   handleOAuth401Error,
   isClaudeAISubscriber,
@@ -79,7 +79,7 @@ export function getAuthHeaders(): AuthHeaders {
   }
   // TODO: this will fail if the API key is being set to an LLM Gateway key
   // should we try to query keychain / credentials for a valid Anthropic key?
-  const apiKey = getAnthropicApiKey()
+  const apiKey = getFriendliApiKey()
   if (!apiKey) {
     return {
       headers: {},

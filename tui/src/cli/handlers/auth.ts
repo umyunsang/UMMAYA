@@ -23,7 +23,7 @@ import type { OAuthTokens } from '../../services/oauth/types.js'
 import {
   clearOAuthTokenCache,
   FRIENDLI_PRIMARY_ENV,
-  getAnthropicApiKeyWithSource,
+  getFriendliApiKeyWithSource,
   getAuthTokenSource,
   getOauthAccountInfo,
   getSubscriptionType,
@@ -121,7 +121,7 @@ export async function authLogin({
   const settings = getInitialSettings()
   // forceLoginMethod is a hard constraint (enterprise setting) — matches ConsoleOAuthFlow behavior.
   // Without it, --console selects Console; otherwise use the managed account flow.
-  const loginWithClaudeAi = settings.forceLoginMethod
+  const loginWithFriendliAi = settings.forceLoginMethod
     ? settings.forceLoginMethod === 'claudeai'
     : !useConsole
   const orgUUID = settings.forceLoginOrgUUID
@@ -162,7 +162,7 @@ export async function authLogin({
       })
 
       logEvent('tengu_oauth_success', {
-        loginWithClaudeAi: shouldUseClaudeAIAuth(tokens.scopes),
+        loginWithFriendliAi: shouldUseClaudeAIAuth(tokens.scopes),
       })
       process.stdout.write('Login successful.\n')
       process.exit(0)
@@ -181,7 +181,7 @@ export async function authLogin({
   const oauthService = new OAuthService()
 
   try {
-    logEvent('tengu_oauth_flow_start', { loginWithClaudeAi })
+    logEvent('tengu_oauth_flow_start', { loginWithFriendliAi })
 
     const result = await oauthService.startOAuthFlow(
       async url => {
@@ -189,7 +189,7 @@ export async function authLogin({
         process.stdout.write(`If the browser didn't open, visit: ${url}\n`)
       },
       {
-        loginWithClaudeAi,
+        loginWithFriendliAi,
         loginHint: email,
         loginMethod: resolvedLoginMethod,
         orgUUID,
@@ -204,7 +204,7 @@ export async function authLogin({
       process.exit(1)
     }
 
-    logEvent('tengu_oauth_success', { loginWithClaudeAi })
+    logEvent('tengu_oauth_success', { loginWithFriendliAi })
 
     process.stdout.write('Login successful.\n')
     process.exit(0)
@@ -225,7 +225,7 @@ export async function authStatus(opts: {
   text?: boolean
 }): Promise<void> {
   const { source: authTokenSource, hasToken } = getAuthTokenSource()
-  const { source: apiKeySource } = getAnthropicApiKeyWithSource()
+  const { source: apiKeySource } = getFriendliApiKeyWithSource()
   const hasApiKeyEnvVar = !!process.env[FRIENDLI_PRIMARY_ENV]
   const oauthAccount = getOauthAccountInfo()
   const subscriptionType = getSubscriptionType()

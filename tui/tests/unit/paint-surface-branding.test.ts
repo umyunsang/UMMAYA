@@ -206,6 +206,15 @@ const githubAppPublicSurfaceFiles = [
   ...sourceFilesUnder('src/commands/install-github-app'),
 ]
 
+const shippedSourceFiles = sourceFilesUnder('src')
+
+const bannedProviderSurfaceTokens = [
+  'loginWithClaudeAi',
+  'getAnthropicApiKey',
+  'isAnthropicAuthEnabled',
+  'Claude AI',
+] as const
+
 const bannedGitHubAppProviderCopy = [
   'ANTHROPIC_API_KEY',
   'CLAUDE_API_KEY',
@@ -223,10 +232,6 @@ const bannedGitHubAppProviderCopy = [
   'github.com/anthropics/claude-code-action',
   'anthropics/claude-code-action',
   'claude-code-action',
-  'loginWithClaudeAi',
-  'getAnthropicApiKey',
-  'isAnthropicAuthEnabled',
-  'Claude AI',
   'Claude GitHub App',
   'Claude PR assistance',
   'Claude workflow',
@@ -234,18 +239,6 @@ const bannedGitHubAppProviderCopy = [
   'Claude PR Assistant',
   'A Claude workflow file',
 ]
-
-function inlineSourceMapContent(source: string): string {
-  const marker = 'sourceMappingURL=data:application/json;charset=utf-8;base64,'
-  const line = source.split('\n').find(item => item.includes(marker))
-  if (!line) return ''
-
-  const encoded = line.slice(line.indexOf(marker) + marker.length).trim()
-  const decoded = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8')) as {
-    sourcesContent?: string[]
-  }
-  return decoded.sourcesContent?.join('\n') ?? ''
-}
 
 const bannedVisibleCopy = [
   'Create skills by adding .md files to .claude/skills/',
@@ -427,14 +420,28 @@ describe('UMMAYA paint surface branding', () => {
     expect(sanitized.tip).toBe('')
   })
 
+  it('keeps shipped public source free of upstream auth provider tokens', () => {
+    const violations: string[] = []
+
+    for (const file of shippedSourceFiles) {
+      const source = readFileSync(join(ROOT, file), 'utf8')
+      for (const phrase of bannedProviderSurfaceTokens) {
+        if (source.includes(phrase)) {
+          violations.push(`${file}: ${phrase}`)
+        }
+      }
+    }
+
+    expect(violations).toEqual([])
+  })
+
   it('keeps GitHub App setup on UMMAYA Friendli credentials and workflow names', () => {
     const violations: string[] = []
 
     for (const file of githubAppPublicSurfaceFiles) {
       const source = readFileSync(join(ROOT, file), 'utf8')
-      const searchableSource = `${source}\n${inlineSourceMapContent(source)}`
       for (const phrase of bannedGitHubAppProviderCopy) {
-        if (searchableSource.includes(phrase)) {
+        if (source.includes(phrase)) {
           violations.push(`${file}: ${phrase}`)
         }
       }
@@ -453,17 +460,17 @@ describe('UMMAYA paint surface branding', () => {
     expect(violations).toEqual([])
   })
 
-  it('keeps GitHub App public source files free of inline source maps', () => {
-    const violations: string[] = []
+  it('keeps package-time source-map stripping wired into npm pack', () => {
+    const rootPackage = JSON.parse(
+      readFileSync(join(ROOT, '../package.json'), 'utf8'),
+    ) as { scripts?: Record<string, string> }
 
-    for (const file of githubAppPublicSurfaceFiles) {
-      const source = readFileSync(join(ROOT, file), 'utf8')
-      if (source.includes('sourceMappingURL=data:application/json')) {
-        violations.push(file)
-      }
-    }
-
-    expect(violations).toEqual([])
+    expect(rootPackage.scripts?.prepack).toBe(
+      'node scripts/strip-npm-source-maps.mjs --strip',
+    )
+    expect(rootPackage.scripts?.postpack).toBe(
+      'node scripts/strip-npm-source-maps.mjs --restore',
+    )
   })
 
   it('keeps public WebFetch user agent off upstream client identity', () => {
