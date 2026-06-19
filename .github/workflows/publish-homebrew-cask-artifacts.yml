@@ -128,17 +128,13 @@ jobs:
           path: dist/homebrew
           merge-multiple: true
 
-      - name: Verify committed cask matches artifacts
+      - name: Render release cask from artifacts
         run: |
           version="$(node -p "require('./package.json').version")"
           arm64_sha="$(node -e 'const fs = require("node:fs"); const json = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); console.log(json.sha256);' "dist/homebrew/ummaya-${version}-macos-arm64.json")"
           x64_sha="$(node -e 'const fs = require("node:fs"); const json = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); console.log(json.sha256);' "dist/homebrew/ummaya-${version}-macos-x64.json")"
-          expected="$(mktemp)"
-          node scripts/render-homebrew-cask.mjs "${version}" "${arm64_sha}" "${x64_sha}" "${expected}"
-          if ! diff -u Casks/ummaya.rb "${expected}"; then
-            echo "::error::Casks/ummaya.rb does not match generated Homebrew artifacts"
-            exit 1
-          fi
+          node scripts/render-homebrew-cask.mjs "${version}" "${arm64_sha}" "${x64_sha}" "dist/homebrew/ummaya.rb"
+          ruby -c "dist/homebrew/ummaya.rb"
 
       - name: Resolve tag
         id: release
@@ -173,6 +169,7 @@ jobs:
             dist/homebrew/ummaya-*-macos-*.tar.gz \
             dist/homebrew/ummaya-*-macos-*.tar.gz.sha256 \
             dist/homebrew/ummaya-*-macos-*.json \
+            dist/homebrew/ummaya.rb \
             --clobber
 
       - name: Build docs site

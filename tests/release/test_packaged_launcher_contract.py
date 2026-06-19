@@ -180,6 +180,17 @@ def test_homebrew_wrapper_exports_backend_contract() -> None:
     assert "run('gzip'" not in builder
 
 
+def test_homebrew_artifact_workflow_renders_cask_from_ci_artifacts() -> None:
+    workflow = (ROOT / ".github/workflows/publish-homebrew-cask-artifacts.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Render release cask from artifacts" in workflow
+    assert "dist/homebrew/ummaya.rb" in workflow
+    assert 'ruby -c "dist/homebrew/ummaya.rb"' in workflow
+    assert "Casks/ummaya.rb does not match generated Homebrew artifacts" not in workflow
+
+
 def test_installer_health_check_exercises_launcher_contract() -> None:
     installer = (ROOT / "install.sh").read_text(encoding="utf-8")
 
