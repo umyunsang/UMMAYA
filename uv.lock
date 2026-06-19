@@ -3052,7 +3052,7 @@ wheels = [
 
 [[package]]
 name = "ummaya"
-version = "0.2.10"
+version = "0.2.11"
 source = { editable = "." }
 dependencies = [
     { name = "defusedxml" },

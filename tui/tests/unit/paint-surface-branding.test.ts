@@ -95,7 +95,14 @@ const paintSurfaceFiles = [
   'src/commands/install.tsx',
   'src/commands/install-github-app/install-github-app.tsx',
   'src/commands/install-github-app/ApiKeyStep.tsx',
+  'src/commands/install-github-app/CheckExistingSecretStep.tsx',
+  'src/commands/install-github-app/CreatingStep.tsx',
+  'src/commands/install-github-app/ErrorStep.tsx',
+  'src/commands/install-github-app/ExistingWorkflowStep.tsx',
+  'src/commands/install-github-app/InstallAppStep.tsx',
+  'src/commands/install-github-app/SuccessStep.tsx',
   'src/commands/install-github-app/setupGitHubActions.ts',
+  'src/commands/install-github-app/WarningsStep.tsx',
   'src/commands/install-github-app/index.ts',
   'src/commands/install-slack-app/index.ts',
   'src/commands/logout/index.ts',
@@ -176,9 +183,50 @@ const paintSurfaceFiles = [
   'src/utils/attachments.ts',
   'src/utils/stats.ts',
   'src/utils/settings/types.ts',
+  'src/utils/http.ts',
   'src/utils/windowsPaths.ts',
   'src/skills/bundled/stuck.ts',
 ]
+
+const githubAppPublicSurfaceFiles = [
+  'src/constants/github-app.ts',
+  'src/components/WorkflowMultiselectDialog.tsx',
+  'src/commands/install-github-app/install-github-app.tsx',
+  'src/commands/install-github-app/CheckExistingSecretStep.tsx',
+  'src/commands/install-github-app/ExistingWorkflowStep.tsx',
+  'src/commands/install-github-app/SuccessStep.tsx',
+  'src/commands/install-github-app/setupGitHubActions.ts',
+]
+
+const bannedGitHubAppProviderCopy = [
+  'ANTHROPIC_API_KEY',
+  'CLAUDE_API_KEY',
+  'CLAUDE_CODE_OAUTH_TOKEN',
+  'FRIENDLI_TOKEN: \\${{ secrets.FRIENDLI_TOKEN }}',
+  'secrets.FRIENDLI_TOKEN',
+  'anthropic_api_key',
+  'claude_code_oauth_token',
+  '.github/workflows/claude.yml',
+  '.github/workflows/claude-code-review.yml',
+  'add-claude-github-actions',
+  'selected_claude_workflow',
+  'selected_claude_review_workflow',
+  'anthropics/claude-cli',
+  'Claude GitHub App',
+  'Claude PR assistance',
+]
+
+function inlineSourceMapContent(source: string): string {
+  const marker = 'sourceMappingURL=data:application/json;charset=utf-8;base64,'
+  const line = source.split('\n').find(item => item.includes(marker))
+  if (!line) return ''
+
+  const encoded = line.slice(line.indexOf(marker) + marker.length).trim()
+  const decoded = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8')) as {
+    sourcesContent?: string[]
+  }
+  return decoded.sourcesContent?.join('\n') ?? ''
+}
 
 const bannedVisibleCopy = [
   'Create skills by adding .md files to .claude/skills/',
@@ -358,6 +406,45 @@ describe('UMMAYA paint surface branding', () => {
     })
 
     expect(sanitized.tip).toBe('')
+  })
+
+  it('keeps GitHub App setup on UMMAYA Friendli credentials and workflow names', () => {
+    const violations: string[] = []
+
+    for (const file of githubAppPublicSurfaceFiles) {
+      const source = readFileSync(join(ROOT, file), 'utf8')
+      const searchableSource = `${source}\n${inlineSourceMapContent(source)}`
+      for (const phrase of bannedGitHubAppProviderCopy) {
+        if (searchableSource.includes(phrase)) {
+          violations.push(`${file}: ${phrase}`)
+        }
+      }
+    }
+
+    const githubAppConstants = readFileSync(
+      join(ROOT, 'src/constants/github-app.ts'),
+      'utf8',
+    )
+
+    expect(githubAppConstants).toContain(
+      'UMMAYA_FRIENDLI_TOKEN: \\${{ secrets.UMMAYA_FRIENDLI_TOKEN }}',
+    )
+    expect(githubAppConstants).toContain('jobs:\n  ummaya:')
+    expect(githubAppConstants).toContain('jobs:\n  ummaya-review:')
+    expect(violations).toEqual([])
+  })
+
+  it('keeps public WebFetch user agent off upstream client identity', () => {
+    const httpSource = readFileSync(join(ROOT, 'src/utils/http.ts'), 'utf8')
+    const webFetchUserAgent = httpSource.match(
+      /export function getWebFetchUserAgent\(\): string \{[\s\S]*?\n\}/,
+    )?.[0]
+
+    expect(webFetchUserAgent).toBeDefined()
+    expect(webFetchUserAgent).toContain('UMMAYA-User')
+    expect(webFetchUserAgent).toContain('ummaya/${MACRO.VERSION}')
+    expect(webFetchUserAgent).not.toContain('getClaudeCodeUserAgent')
+    expect(webFetchUserAgent).not.toContain('claude-code')
   })
 
   it('keeps public CLI help text off upstream internal filenames and env vars', () => {
