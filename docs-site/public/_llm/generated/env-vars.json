@@ -48,7 +48,7 @@
     "variable": "UMMAYA_LIVE_ADAPTER_MODE"
   },
   {
-    "consumed_by": "`ummaya.tools.live_proxy.invoke_live_adapter_proxy`",
+    "consumed_by": "`ummaya.tools.live_proxy.invoke_live_adapter_proxy`; `tui/src/ipc/hostedGatewayBridge.ts`",
     "default": "`https://ummaya-live-gateway-ygjh3ipzqq-du.a.run.app/v1/adapters`",
     "range": "HTTPS URL",
     "required": "No",
@@ -88,12 +88,20 @@
     "variable": "UMMAYA_LIVE_ADAPTER_GATEWAY_MAX_BODY_BYTES"
   },
   {
-    "consumed_by": "`bin/ummaya`, `ummaya.tools.live_proxy.should_use_live_adapter_proxy`",
+    "consumed_by": "`bin/ummaya`; `tui/src/ipc/hostedGatewayBridge.ts`; `ummaya.tools.live_proxy.should_use_live_adapter_proxy`",
     "default": "—",
     "range": "Absolute package path",
     "required": "No (internal wrapper)",
     "source_doc": "[Live adapter gateway](#ummaya_package_root)",
     "variable": "UMMAYA_PACKAGE_ROOT"
+  },
+  {
+    "consumed_by": "`bin/ummaya`; `tui/src/ipc/bridgeSingleton.ts`",
+    "default": "`hosted-gateway` in packaged npm/Homebrew launches; `stdio` in source-tree/local backend debug paths",
+    "range": "`hosted-gateway` or `stdio`",
+    "required": "No",
+    "source_doc": "[Live adapter gateway](#ummaya_backend_transport)",
+    "variable": "UMMAYA_BACKEND_TRANSPORT"
   },
   {
     "consumed_by": "`false` (case-insensitive; `1`/`yes` also accepted)",
@@ -321,10 +329,10 @@
   },
   {
     "consumed_by": "`bin/ummaya`; TUI-side `tui/src/ipc/bridge.ts`",
-    "default": "Set by packaged launcher to `[\"uv\",\"--directory\",<packageRoot>,\"run\",\"--frozen\",\"--no-dev\",\"ummaya\",\"--ipc\",\"stdio\"]`, or to `<packageRoot>/.venv/bin/python -m ummaya.cli --ipc stdio` when that venv exists",
-    "range": "JSON string array spawned by the TUI as the backend process; preferred over `UMMAYA_BACKEND_CMD` because paths with spaces stay unambiguous",
+    "default": "Unset in packaged npm/Homebrew launches; source-tree default is handled by `UMMAYA_BACKEND_CMD` / `tui/src/ipc/bridge.ts`",
+    "range": "JSON string array spawned only when `UMMAYA_BACKEND_TRANSPORT=stdio`; packaged launchers clear stale values unless `UMMAYA_ALLOW_BACKEND_CMD_OVERRIDE=1` is set for explicit debug",
     "required": "No",
-    "source_doc": "Release packaging",
+    "source_doc": "Local backend debug",
     "variable": "UMMAYA_BACKEND_CMD_JSON"
   },
   {
