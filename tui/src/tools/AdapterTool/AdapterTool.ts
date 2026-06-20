@@ -1173,6 +1173,9 @@ const PUBLIC_SAFETY_TOOL_IDS = new Set([
   'mois_emergency_call_box_lookup',
   'gyeryong_assistive_device_charging_place_locate',
 ])
+const AIR_QUALITY_TOOL_IDS = new Set([
+  'airkorea_ctprvn_air_quality',
+])
 const INFORMATION_NOTICE_TOOL_IDS = new Set([
   'mfds_easy_drug_info_lookup',
   'mpm_public_job_lookup',
@@ -1206,6 +1209,7 @@ type ProviderRoutingIntent = {
   readonly hasCivilDeath: boolean
   readonly hasDjtcSubwaySegment: boolean
   readonly hasWeatherNegativeConstraint: boolean
+  readonly hasAirQuality: boolean
   readonly hasTrafficHazard: boolean
   readonly hasTagoBus: boolean
   readonly hasMojVillageLawyer: boolean
@@ -1240,6 +1244,7 @@ function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
     hasGov24 && !hasGov24NegativeConstraint && GOV24_ACTION_RE.test(query)
   const hasDjtcSubwaySegment = DJTC_SUBWAY_SEGMENT_RE.test(query)
   const hasWeatherNegativeConstraint = WEATHER_NEGATIVE_CONSTRAINT_RE.test(query)
+  const hasAirQuality = AIR_QUALITY_RE.test(query)
   const hasTrafficHazard = TRAFFIC_HAZARD_RE.test(query)
   const hasTagoBus = TAGO_BUS_RE.test(query)
   const hasMofOceanWater = MOF_OCEAN_WATER_RE.test(query)
@@ -1281,6 +1286,7 @@ function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
     hasCivilDeath: CIVIL_DEATH_RE.test(query),
     hasDjtcSubwaySegment,
     hasWeatherNegativeConstraint,
+    hasAirQuality,
     hasTrafficHazard,
     hasTagoBus,
     hasMojVillageLawyer: MOJ_VILLAGE_LAWYER_RE.test(query),
@@ -1382,6 +1388,11 @@ function restrictiveToolIdsForIntent(
     addSetValues(allowed, TRAFFIC_TOOL_IDS)
   }
 
+  if (intent.hasAirQuality) {
+    restrictive = true
+    addSetValues(allowed, AIR_QUALITY_TOOL_IDS)
+  }
+
   if (intent.hasMojVillageLawyer || intent.hasCcourtPublication) {
     restrictive = true
     addSetValues(allowed, LEGAL_PUBLIC_DATA_TOOL_IDS)
@@ -1446,6 +1457,9 @@ function routingIntentBoostForTool(
   if (intent.hasCivilDeath && CIVIL_DEATH_TOOL_IDS.has(toolId)) return 1000
   if (intent.hasDjtcSubwaySegment && DJTC_SUBWAY_SEGMENT_TOOL_IDS.has(toolId)) {
     return 1400
+  }
+  if (intent.hasAirQuality && toolId === 'airkorea_ctprvn_air_quality') {
+    return 1300
   }
   if (intent.hasTrafficHazard) {
     if (toolId === 'koroad_accident_hazard_search') return 1250

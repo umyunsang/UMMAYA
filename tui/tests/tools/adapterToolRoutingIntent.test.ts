@@ -36,6 +36,7 @@ function ingestAdversarialPublicDataManifest(): void {
     frame_seq: 0,
     entries: [
       entry('kma_current_observation', '날씨 기상 현재 관측 대체 후보'),
+      entry('airkorea_ctprvn_air_quality', 'AirKorea 에어코리아 대기질 미세먼지 서울 중구'),
       entry('mock_lookup_module_gov24_certificate', '정부24 증명서 민원 mock'),
       entry('mock_kftc_opengiro_payment_send_v1', '결제 납부 요금 지로 mock'),
       entry('moj_village_lawyer_lookup', '법무부 마을변호사 부산 사하구'),
@@ -129,5 +130,20 @@ describe('adapter tool routing intent', () => {
     expect(names).toContain('mss_sme_support_notice_lookup')
     expect(names).toContain('pps_shopping_mall_product_lookup')
     expect(names).not.toContain('mock_lookup_module_gov24_certificate')
+  })
+
+  test('covers explicit multi-agency public-data batches without weather substitution', () => {
+    ingestAdversarialPublicDataManifest()
+
+    const names = selectTopKAdapterToolNamesForQuery(
+      '다음 5개를 각각 해당 기관 어댑터로만 확인해줘: 1 서울 중구 미세먼지는 AirKorea, 2 부산 사하구 마을변호사는 법무부, 3 계룡시 공지나 행사는 계룡시, 4 공정위 대기업집단 현황은 FTC, 5 조달청 물품분류는 PPS. 실패나 0건이면 그대로 말하고 다른 기관 자료로 대체하지 마.',
+      5,
+    )
+
+    expect(names).toContain('airkorea_ctprvn_air_quality')
+    expect(names).toContain('moj_village_lawyer_lookup')
+    expect(names).toContain('pps_shopping_mall_product_lookup')
+    expect(names).toContain('ftc_large_group_status')
+    expect(names).not.toContain('kma_current_observation')
   })
 })
