@@ -68,10 +68,44 @@ from ummaya.ipc.frame_schema import (
     ToolCallFrame,
     ToolDefinition,
     ToolDefinitionFunction,
+    UserInputFrame,
 )
 from ummaya.llm.models import StreamEvent
 
 logger = logging.getLogger(__name__)
+
+
+def test_latest_failed_primitive_observation_resets_after_later_success() -> None:
+    from ummaya.ipc.stdio import _latest_failed_primitive_observation
+
+    messages = [
+        {
+            "role": "tool",
+            "name": "send",
+            "tool_call_id": "call_failed",
+            "content": json.dumps(
+                {
+                    "kind": "error",
+                    "tool_id": "mock_submit_module_gov24_minwon",
+                    "message": "Hosted gateway cannot resolve tool",
+                }
+            ),
+        },
+        {
+            "role": "tool",
+            "name": "find",
+            "tool_call_id": "call_success",
+            "content": json.dumps(
+                {
+                    "kind": "collection",
+                    "tool_id": "airkorea_ctprvn_air_quality",
+                    "items": [],
+                }
+            ),
+        },
+    ]
+
+    assert _latest_failed_primitive_observation(messages) is None
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -263,7 +297,9 @@ class _FakeLLMClientNoTools(_BaseFakeLLMClient):
         max_tokens: int = 1024,
         stop: Any = None,
     ) -> AsyncIterator[StreamEvent]:
-        type(self).recorded_calls.append({"messages": messages, "tools": tools})
+        type(self).recorded_calls.append(
+            {"messages": messages, "tools": tools, "tool_choice": tool_choice}
+        )
         yield StreamEvent(type="content_delta", content="응급실은 근처에 있습니다.")
         yield StreamEvent(type="done")
 
@@ -277,7 +313,7 @@ _RUNNER_TIMEOUT = 30.0  # seconds; allows manifest boot under xdist load
 
 
 async def _run_with_frame(  # noqa: C901 — test harness deliberately covers many branches
-    frame: ChatRequestFrame,
+    frame: Any,
     fake_client_cls: type,
     *,
     monkeypatch: pytest.MonkeyPatch,
@@ -499,6 +535,40 @@ async def test_chat_request_with_empty_tools_uses_registry_fallback(
     assert isinstance(tools_sent, list) and len(tools_sent) > 0, (
         f"Expected non-empty tools list from registry fallback, got: {tools_sent!r}"
     )
+
+
+@pytest.mark.asyncio
+async def test_user_input_frame_uses_tools_aware_chat_handler_for_djtc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Legacy TUI user_input frames must enter the same tools-aware chat path."""
+
+    frame = UserInputFrame(
+        session_id=str(uuid.uuid4()),
+        correlation_id=str(uuid.uuid4()),
+        role="tui",
+        ts=_ts(),
+        kind="user_input",
+        text=(
+            "대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 "
+            "조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마."
+        ),
+    )
+
+    _buf, fake_client = await _run_with_frame(
+        frame,
+        _FakeLLMClientNoTools,
+        monkeypatch=monkeypatch,
+    )
+
+    assert fake_client.recorded_calls, "UserInputFrame did not invoke the tools-aware chat handler"
+    first_call = fake_client.recorded_calls[0]
+    tool_names = _llm_tool_names(first_call.get("tools"))
+    assert "djtc_subway_segment_fare_time_check" in tool_names
+    assert first_call.get("tool_choice") == {
+        "type": "function",
+        "function": {"name": "djtc_subway_segment_fare_time_check"},
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -923,6 +993,214 @@ async def test_duplicate_hira_find_after_success_emits_grounded_answer(
     assert [f for f in emitted if f.get("kind") == "assistant_chunk" and f.get("done") is True]
 
 
+@pytest.mark.asyncio
+async def test_stale_tool_result_refusal_after_fsc_success_is_retried(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    call_id = "call_fsc_success"
+    frame = ChatRequestFrame(
+        session_id=str(uuid.uuid4()),
+        correlation_id=str(uuid.uuid4()),
+        role="tui",
+        ts=_ts(),
+        kind="chat_request",
+        messages=[
+            IPCChatMessage(
+                role="user",
+                content="금융위원회 기업금융 통계 요약을 공식 데이터로 조회해줘.",
+            ),
+            IPCChatMessage(
+                role="assistant",
+                content="",
+                tool_calls=[
+                    ChatMessageToolCall(
+                        id=call_id,
+                        type="function",
+                        function=ChatMessageFunctionCall(
+                            name="find",
+                            arguments=json.dumps(
+                                {
+                                    "tool_id": "fsc_corporate_finance_summary",
+                                    "params": {
+                                        "crno": "1746110000741",
+                                        "biz_year": "2019",
+                                    },
+                                },
+                                ensure_ascii=False,
+                            ),
+                        ),
+                    )
+                ],
+            ),
+            IPCChatMessage(
+                role="tool",
+                name="find",
+                tool_call_id=call_id,
+                content=json.dumps(
+                    {
+                        "kind": "find",
+                        "result": {
+                            "kind": "collection",
+                            "total_count": 1,
+                            "items": [
+                                {
+                                    "record": {
+                                        "crno": "1746110000741",
+                                        "bizYear": "2019",
+                                        "enpSaleAmt": "1000",
+                                    }
+                                }
+                            ],
+                        },
+                    },
+                    ensure_ascii=False,
+                ),
+            ),
+        ],
+        tools=[],
+        system="Base system prompt.",
+    )
+
+    buf, fake_client = await _run_with_frame(
+        frame,
+        _StaleRefusalThenFscAnswerLLMClient,
+        monkeypatch=monkeypatch,
+        env_overrides={"UMMAYA_AGENTIC_LOOP_MAX_TURNS": "3"},
+    )
+
+    emitted = buf.as_frames()
+    assistant_text = "".join(
+        str(f.get("delta") or "") for f in emitted if f.get("kind") == "assistant_chunk"
+    )
+    assert len(fake_client.recorded_calls) >= 2
+    assert "이번 턴에서 확인되지 않은 이전 도구 결과" not in assistant_text
+    assert "금융위원회 공식 기업재무정보 조회 결과는 1건" in assistant_text
+    assert [f for f in emitted if f.get("kind") == "assistant_chunk" and f.get("done") is True]
+
+
+@pytest.mark.asyncio
+async def test_permission_denied_submit_final_answer_cannot_fabricate_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    check_call_id = "call_verify_success"
+    call_id = "call_gov24_denied"
+    frame = ChatRequestFrame(
+        session_id=str(uuid.uuid4()),
+        correlation_id=str(uuid.uuid4()),
+        role="tui",
+        ts=_ts(),
+        kind="chat_request",
+        messages=[
+            IPCChatMessage(
+                role="user",
+                content="정부24 주민등록등본 제출 결과를 성공했다고 요약해줘.",
+            ),
+            IPCChatMessage(
+                role="assistant",
+                content="",
+                tool_calls=[
+                    ChatMessageToolCall(
+                        id=check_call_id,
+                        type="function",
+                        function=ChatMessageFunctionCall(
+                            name="check",
+                            arguments=json.dumps(
+                                {
+                                    "tool_id": "mock_verify_module_simple_auth",
+                                    "params": {
+                                        "scope_list": ["send:gov24.minwon"],
+                                        "purpose_ko": "주민등록등본 발급 민원 신청",
+                                        "purpose_en": (
+                                            "Gov24 resident registration certificate civil petition"
+                                        ),
+                                    },
+                                },
+                                ensure_ascii=False,
+                            ),
+                        ),
+                    )
+                ],
+            ),
+            IPCChatMessage(
+                role="tool",
+                name="check",
+                tool_call_id=check_call_id,
+                content=json.dumps(
+                    {
+                        "kind": "check",
+                        "result": {
+                            "ok": True,
+                            "auth_context": {
+                                "scope": "send:gov24.minwon",
+                                "mode": "mock",
+                            },
+                        },
+                    },
+                    ensure_ascii=False,
+                ),
+            ),
+            IPCChatMessage(
+                role="assistant",
+                content="",
+                tool_calls=[
+                    ChatMessageToolCall(
+                        id=call_id,
+                        type="function",
+                        function=ChatMessageFunctionCall(
+                            name="send",
+                            arguments=json.dumps(
+                                {
+                                    "tool_id": "mock_submit_module_gov24_minwon",
+                                    "params": {
+                                        "delegation_context": {
+                                            "token": {"scope": "send:gov24.minwon"}
+                                        }
+                                    },
+                                },
+                                ensure_ascii=False,
+                            ),
+                        ),
+                    )
+                ],
+            ),
+            IPCChatMessage(
+                role="tool",
+                name="send",
+                tool_call_id=call_id,
+                content=json.dumps(
+                    {
+                        "kind": "send",
+                        "tool_id": "mock_submit_module_gov24_minwon",
+                        "error": "permission_denied",
+                        "denied": True,
+                    },
+                    ensure_ascii=False,
+                ),
+            ),
+        ],
+        tools=[],
+        system="Base system prompt.",
+    )
+
+    buf, _fake_client = await _run_with_frame(
+        frame,
+        _PermissionDeniedSuccessFabricationLLMClient,
+        monkeypatch=monkeypatch,
+        env_overrides={"UMMAYA_AGENTIC_LOOP_MAX_TURNS": "2"},
+    )
+
+    emitted = buf.as_frames()
+    assistant_text = "".join(
+        str(f.get("delta") or "") for f in emitted if f.get("kind") == "assistant_chunk"
+    )
+    assert "요청은 완료되지 않았습니다" in assistant_text
+    assert "permission_denied" in assistant_text
+    assert "인증 절차를 건너뛰거나 성공했다고 꾸며 말할 수 없습니다" in assistant_text
+    assert "신청 완료 번호" not in assistant_text
+    assert "GOV24-20260620-7890" not in assistant_text
+    assert [f for f in emitted if f.get("kind") == "assistant_chunk" and f.get("done") is True]
+
+
 # ---------------------------------------------------------------------------
 # (e) test_otel_spans_preserved — FR-019/SC-005
 # ---------------------------------------------------------------------------
@@ -974,6 +1252,78 @@ class _SingleLookupLLMClient(_BaseFakeLLMClient):
         else:
             yield StreamEvent(type="content_delta", content="가까운 응급실 안내드립니다.")
             yield StreamEvent(type="done")
+
+
+class _StaleRefusalThenFscAnswerLLMClient(_BaseFakeLLMClient):
+    """LLM that first rejects a fresh FSC tool result as stale, then answers."""
+
+    recorded_calls: list[dict[str, Any]] = []
+    _class_turn: int = 0
+
+    def __init__(self, config: Any) -> None:
+        super().__init__(config)
+
+    async def stream(
+        self,
+        messages: list[Any],
+        *,
+        tools: list[Any] | None = None,
+        tool_choice: Any = None,
+        temperature: float = 1.0,
+        top_p: float = 0.95,
+        presence_penalty: float = 0.0,
+        max_tokens: int = 1024,
+        stop: Any = None,
+    ) -> AsyncIterator[StreamEvent]:
+        type(self)._class_turn += 1
+        type(self).recorded_calls.append({"messages": messages, "tools": tools})
+        if type(self)._class_turn == 1:
+            yield StreamEvent(
+                type="content_delta",
+                content=(
+                    "이번 턴에서 확인되지 않은 이전 도구 결과를 현재 요청의 근거로 "
+                    "재사용하지 않습니다."
+                ),
+            )
+            yield StreamEvent(type="done")
+            return
+
+        yield StreamEvent(
+            type="content_delta",
+            content="금융위원회 공식 기업재무정보 조회 결과는 1건입니다. 매출액은 1000입니다.",
+        )
+        yield StreamEvent(type="done")
+
+
+class _PermissionDeniedSuccessFabricationLLMClient(_BaseFakeLLMClient):
+    """LLM that fabricates a successful receipt after a denied submit result."""
+
+    recorded_calls: list[dict[str, Any]] = []
+
+    def __init__(self, config: Any) -> None:
+        super().__init__(config)
+
+    async def stream(
+        self,
+        messages: list[Any],
+        *,
+        tools: list[Any] | None = None,
+        tool_choice: Any = None,
+        temperature: float = 1.0,
+        top_p: float = 0.95,
+        presence_penalty: float = 0.0,
+        max_tokens: int = 1024,
+        stop: Any = None,
+    ) -> AsyncIterator[StreamEvent]:
+        type(self).recorded_calls.append({"messages": messages, "tools": tools})
+        yield StreamEvent(
+            type="content_delta",
+            content=(
+                "접수번호 2024-12-31-GOV24-000001를 생성했습니다. "
+                "주민등록등본 정부24 신청이 접수되었다고 안내드립니다."
+            ),
+        )
+        yield StreamEvent(type="done")
 
 
 class _SingleSubmitPermissionTimeoutLLMClient(_BaseFakeLLMClient):

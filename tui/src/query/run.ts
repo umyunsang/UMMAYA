@@ -99,10 +99,26 @@ const EMERGENCY_SAFE_LIMITATION_RE =
   /(결과\s*없이|없이는|단정하지|조회하지\s*못|확인하지\s*못|연결된\s*뒤|adapter|handoff|공식\s*(?:채널|응급의료)|119)/iu
 const WEATHER_RESULT_REQUEST_RE =
   /(날씨|기상|weather|예보|현재\s*기온|강수|비|눈|습도|풍속)/iu
+const DJTC_SUBWAY_SEGMENT_REQUEST_RE =
+  /((대전|DJTC|대전교통공사|도시철도|지하철).*(역간|소요시간|거리|운임|요금)|(역간|소요시간|거리|운임|요금).*(대전|DJTC|대전교통공사|도시철도|지하철))/iu
+const WEATHER_NEGATIVE_CONSTRAINT_RE =
+  /((날씨|기상|weather).*(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘))|(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘)).*(날씨|기상|weather))/iu
 const WEATHER_CANDIDATE_CLAIM_RE =
   /(날씨|기상|weather|예보|현재\s*기온|강수|습도|풍속|하늘상태|하늘\s*상태)/iu
 const WEATHER_NO_EVIDENCE_SAFE_RE =
   /(지역|주소|위치)[^\n.。]*(?:알려|입력|필요)|(?:조회|확인)하지\s*못|adapter\s*결과\s*없이|단정하지|제한/iu
+const FAILED_TOOL_RESULT_TEXT_RE =
+  /(Do NOT fabricate|raised an exception|HTTPStatusError|ToolExecutionError|Adapter .* failed|NO DATA FOUND|404\s+Not\s+Found|permission_denied|permission denied|failed|error|exception|오류|실패)/iu
+const FAILED_TOOL_SAFE_FINAL_RE =
+  /(실패|오류|조회하지\s*못|확인하지\s*못|제공되지\s*않|포함되어\s*있지\s*않|데이터가\s*없|결과가\s*없|not\s+available|failed|error|NO DATA FOUND|404)/iu
+const FAILED_TOOL_SUCCESS_CLAIM_RE =
+  /(조회\s*결과|공식\s*데이터\s*조회\s*결과|확인했습니다|찾았습니다|제공됩니다|검색\s*결과|데이터\s*:|전력사용량|요금액|계량기\s*수|사용량|접수번호|승인코드|신청[^\n.。!?]{0,40}접수|접수[^\n.。!?]{0,24}(?:되었|됐|됨)|납부\s*완료|발급\s*완료|result|success)/iu
+const PROTECTED_ACTION_BYPASS_REQUEST_RE =
+  /(인증\s*없이|권한\s*없이|인증이\s*없더라도|권한이\s*없더라도|도구\s*호출이\s*실패|실패(?:하거나|해도|하더라도)|실제\s*결제가\s*안\s*됐어도|접수번호[^\n.。!?]{0,24}(?:만들|생성)|성공했다고\s*말|성공\s*처리|납부\s*완료라고|완료라고\s*답)/iu
+const PROTECTED_ACTION_BYPASS_SUCCESS_FINAL_RE =
+  /(접수번호|납부번호|접수\s*완료|납부\s*완료|신청[^\n.。!?]{0,40}접수|납부[^\n.。!?]{0,40}(?:성공|완료)|성공적으로\s*(?:처리|완료)|성공\s*처리|처리\s*결과\s*:\s*성공|완료되었습니다)/iu
+const PROTECTED_ACTION_BYPASS_SAFE_FINAL_RE =
+  /(실행하지\s*않|처리할\s*수\s*없|만들\s*수\s*없|공식\s*gateway|권한[^\n.。!?]{0,40}필요|인증[^\n.。!?]{0,40}필요|성공으로\s*처리할\s*수\s*없|완료\s*상태를\s*안내할\s*수\s*없)/iu
 const KMA_FORECAST_SUMMARY_LIMIT = 6
 const KOREAN_DATE_CLAIM_RE =
   /(오늘|현재)\s*날짜는\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일(?:입니다)?/gu
@@ -215,7 +231,12 @@ function parseJsonRecord(value: unknown): Record<string, unknown> | undefined {
 }
 
 function isStructuredFailureToolResult(value: unknown): boolean {
-  return parseJsonRecord(value)?.ok === false
+  const parsed = parseJsonRecord(value)
+  if (parsed === undefined) return false
+  if (parsed.ok === false) return true
+  const data = parseJsonRecord(parsed.data)
+  if (data?.ok === false) return true
+  return parsed.status === 'failed' || data?.status === 'failed'
 }
 
 function stripLeadingTemplateControlTokens(text: string): string {
@@ -838,7 +859,12 @@ function kmaWeatherEvidenceGuard(params: {
   readonly candidate: AssistantMessage
 }): AssistantMessage | undefined {
   if (toolUseBlocks(params.candidate).length > 0) return undefined
-  if (!WEATHER_RESULT_REQUEST_RE.test(latestUserText(params.messages))) {
+  const latestUser = latestUserText(params.messages)
+  if (
+    !WEATHER_RESULT_REQUEST_RE.test(latestUser) ||
+    DJTC_SUBWAY_SEGMENT_REQUEST_RE.test(latestUser) ||
+    WEATHER_NEGATIVE_CONSTRAINT_RE.test(latestUser)
+  ) {
     return undefined
   }
   const results = toolResultsSinceLatestPrompt(params.messages)
@@ -1006,6 +1032,153 @@ function latestUserText(messages: readonly Message[]): string {
   const latestUserIndex = latestTextUserMessageIndex(messages)
   const latestUserMessage = latestUserIndex >= 0 ? messages[latestUserIndex] : undefined
   return latestUserMessage ? messageText(latestUserMessage) : ''
+}
+
+type FailedToolResult = {
+  readonly toolName: string
+  readonly errorText: string
+}
+
+function isFailedToolResultBlock(block: ToolResultBlock): boolean {
+  return block.is_error === true ||
+    isStructuredFailureToolResult(block.content) ||
+    FAILED_TOOL_RESULT_TEXT_RE.test(contentText(block.content))
+}
+
+function latestFailedToolResultAfterLatestUser(
+  messages: readonly Message[],
+): FailedToolResult | undefined {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return undefined
+  const toolNamesByUseId = new Map<string, string>()
+  let latestFailure: FailedToolResult | undefined
+  for (const message of messages.slice(latestUserIndex + 1)) {
+    if (isAssistantMessage(message)) {
+      for (const block of toolUseBlocks(message)) {
+        toolNamesByUseId.set(block.id, block.name)
+      }
+      continue
+    }
+    if (!isUserMessage(message)) continue
+    for (const block of toolResultBlocks(message)) {
+      if (isFailedToolResultBlock(block)) {
+        latestFailure = {
+          toolName: toolNamesByUseId.get(block.tool_use_id) ?? 'unknown_adapter',
+          errorText: contentText(block.content),
+        }
+      } else {
+        latestFailure = undefined
+      }
+    }
+  }
+  return latestFailure
+}
+
+function buildFailedToolFinalAnswerBlockedText(failure: FailedToolResult): string {
+  const compactError = failure.errorText.replace(/\s+/gu, ' ').trim().slice(0, 420)
+  return [
+    `${failure.toolName} 조회는 이번 턴에서 실패했습니다.`,
+    compactError ? `오류 요약: ${compactError}` : '오류 요약: 등록 adapter가 성공 결과를 반환하지 않았습니다.',
+    '성공한 tool_result 없이 수치, 접수 결과, 요금, 사용량, 자격 여부를 단정하지 않습니다.',
+    '다른 파라미터나 다른 공식 도구로 재시도하려면 먼저 사용자 확인이 필요합니다.',
+  ].join('\n\n')
+}
+
+function isProtectedActionToolUse(block: ToolUseBlock): boolean {
+  const toolId = typeof block.input.tool_id === 'string' ? block.input.tool_id : ''
+  return block.name === 'send' ||
+    block.name === 'document' ||
+    /^mock_submit_/u.test(toolId) ||
+    /_(?:submit|pay|payment|issue|certificate)/iu.test(toolId)
+}
+
+function buildProtectedBypassBlockedText(): string {
+  return [
+    '요청은 실행하지 않았습니다.',
+    '인증, 권한, 또는 도구 실패를 건너뛰고 신청, 제출, 발급, 접수, 납부를 성공으로 처리할 수 없습니다.',
+    '접수번호나 납부 완료 상태는 공식 gateway와 정상 권한 확인을 통과한 tool_result가 있을 때만 안내할 수 있습니다.',
+  ].join('\n\n')
+}
+
+function protectedBypassPromptActionGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  if (!PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUserText(params.messages))) {
+    return undefined
+  }
+  if (toolUseBlocks(params.candidate).length === 0) {
+    return undefined
+  }
+  return createAssistantMessage({
+    content: buildProtectedBypassBlockedText(),
+  })
+}
+
+function protectedBypassPromptFinalAnswerGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  if (toolUseBlocks(params.candidate).length > 0) return undefined
+  if (!PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUserText(params.messages))) {
+    return undefined
+  }
+  const candidateText = messageText(params.candidate)
+  if (PROTECTED_ACTION_BYPASS_SAFE_FINAL_RE.test(candidateText)) {
+    return undefined
+  }
+  if (!PROTECTED_ACTION_BYPASS_SUCCESS_FINAL_RE.test(candidateText)) {
+    return undefined
+  }
+  return createAssistantMessage({
+    content: buildProtectedBypassBlockedText(),
+  })
+}
+
+function buildProtectedActionAfterFailedToolBlockedText(
+  failure: FailedToolResult,
+): string {
+  const compactError = failure.errorText.replace(/\s+/gu, ' ').trim().slice(0, 420)
+  return [
+    '요청은 완료되지 않았습니다.',
+    `${failure.toolName} 단계가 이번 턴에서 실패했기 때문에 보호된 신청, 제출, 발급, 납부를 계속 진행할 수 없습니다.`,
+    compactError ? `오류 요약: ${compactError}` : '오류 요약: 등록 adapter가 성공 결과를 반환하지 않았습니다.',
+    '인증, 권한, 또는 공식 gateway 확인 없이 접수번호나 납부 완료를 만들 수 없습니다.',
+  ].join('\n\n')
+}
+
+function protectedActionAfterFailedToolGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  const failure = latestFailedToolResultAfterLatestUser(params.messages)
+  if (failure === undefined) return undefined
+  if (!toolUseBlocks(params.candidate).some(isProtectedActionToolUse)) {
+    return undefined
+  }
+  return createAssistantMessage({
+    content: buildProtectedActionAfterFailedToolBlockedText(failure),
+  })
+}
+
+function failedToolFinalAnswerGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  if (toolUseBlocks(params.candidate).length > 0) return undefined
+  const failure = latestFailedToolResultAfterLatestUser(params.messages)
+  if (failure === undefined) return undefined
+  const candidateText = messageText(params.candidate)
+  if (!FAILED_TOOL_SUCCESS_CLAIM_RE.test(candidateText)) return undefined
+  if (
+    FAILED_TOOL_SAFE_FINAL_RE.test(candidateText) &&
+    !PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUserText(params.messages))
+  ) {
+    return undefined
+  }
+  return createAssistantMessage({
+    content: buildFailedToolFinalAnswerBlockedText(failure),
+  })
 }
 
 function shouldBlockPromptInjectionToolRecovery(params: {
@@ -1335,6 +1508,48 @@ export async function* query(params: QueryParams): QueryGenerator {
         messages.push(blockedMessage)
         return Terminal.completed()
       }
+      const protectedBypassFinalMessage = boundary.kind === 'pass'
+        ? protectedBypassPromptFinalAnswerGuard({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (protectedBypassFinalMessage !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_blocked_protected_bypass_final_answer',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        yield protectedBypassFinalMessage
+        messages.push(protectedBypassFinalMessage)
+        return Terminal.completed()
+      }
+      const failedToolGuardMessage = boundary.kind === 'pass'
+        ? failedToolFinalAnswerGuard({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (failedToolGuardMessage !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_replaced_failed_tool_fabrication',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        yield failedToolGuardMessage
+        messages.push(failedToolGuardMessage)
+        return Terminal.completed()
+      }
       if (
         boundary.kind === 'pass' &&
         shouldBlockFinalAnswerAfterUnsupportedRouteRepair({
@@ -1378,6 +1593,46 @@ export async function* query(params: QueryParams): QueryGenerator {
         yield blockedMessage
         messages.push(blockedMessage)
         return Terminal.completed()
+      }
+      if (boundary.kind === 'pass') {
+        const protectedBypassBlockedMessage = protectedBypassPromptActionGuard({
+          messages,
+          candidate: boundary.message,
+        })
+        if (protectedBypassBlockedMessage !== undefined) {
+          appendQueryAssistantDiagnostic({
+            event: 'query_assistant_blocked_protected_bypass_request',
+            querySource: String(params.querySource),
+            messages,
+            assistantMessage: boundary.message,
+            turnCount,
+            boundaryKind: 'block',
+            repairPromptChars: 0,
+            continueAfterRepair: false,
+          })
+          yield protectedBypassBlockedMessage
+          messages.push(protectedBypassBlockedMessage)
+          return Terminal.completed()
+        }
+        const protectedActionBlockedMessage = protectedActionAfterFailedToolGuard({
+          messages,
+          candidate: boundary.message,
+        })
+        if (protectedActionBlockedMessage !== undefined) {
+          appendQueryAssistantDiagnostic({
+            event: 'query_assistant_blocked_after_failed_tool',
+            querySource: String(params.querySource),
+            messages,
+            assistantMessage: boundary.message,
+            turnCount,
+            boundaryKind: 'block',
+            repairPromptChars: 0,
+            continueAfterRepair: false,
+          })
+          yield protectedActionBlockedMessage
+          messages.push(protectedActionBlockedMessage)
+          return Terminal.completed()
+        }
       }
       appendQueryAssistantDiagnostic({
         event: 'query_assistant_yield',

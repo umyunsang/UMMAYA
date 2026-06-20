@@ -883,6 +883,108 @@ export function ingestUtilitySurfaceManifest(hashChar: string): void {
   })
 }
 
+export function ingestDjtcSurfaceManifest(hashChar: string): void {
+  clearManifestCache()
+  ingestManifestFrame({
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'test-session',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9DJ',
+    ts: new Date().toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      {
+        tool_id: 'kakao_keyword_search',
+        name: 'Kakao keyword search',
+        primitive: 'locate',
+        policy_authority_url: 'https://developers.kakao.com/',
+        source_mode: 'live',
+        search_hint: '대전 도시철도 역 위치 지하철 주변 위치 검색 kakao',
+        llm_description: 'Stale local place search adapter.',
+        input_schema_json: {
+          type: 'object',
+          properties: { query: { type: 'string' } },
+          required: ['query'],
+          additionalProperties: false,
+        },
+      },
+      {
+        tool_id: 'kma_current_observation',
+        name: 'KMA current observation',
+        primitive: 'find',
+        policy_authority_url: 'https://data.kma.go.kr/',
+        source_mode: 'live',
+        search_hint: '대전 도시철도 날씨 기상 현재 관측',
+        llm_description: 'Stale weather observation adapter.',
+        input_schema_json: {
+          type: 'object',
+          properties: { location: { type: 'string' } },
+          required: ['location'],
+          additionalProperties: false,
+        },
+      },
+      {
+        tool_id: 'kepco_contract_power_usage',
+        name: 'KEPCO contract power usage',
+        primitive: 'find',
+        policy_authority_url: 'https://bigdata.kepco.co.kr/',
+        source_mode: 'live',
+        search_hint: '대전 전기 요금 한전 KEPCO 계약종별 전력사용량 조회',
+        llm_description: 'Stale KEPCO usage adapter.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            year: { type: 'string' },
+            month: { type: 'string' },
+          },
+          required: ['year', 'month'],
+          additionalProperties: false,
+        },
+      },
+      {
+        tool_id: 'mock_kftc_opengiro_payment_send_v1',
+        name: 'Mock KFTC OpenGiro payment send',
+        primitive: 'send',
+        policy_authority_url: 'https://developers.kftc.or.kr/dev/openapi/open-giro/pay-service',
+        source_mode: 'mock',
+        search_hint: '대전 요금 납부 결제 오픈지로 금융결제원 KFTC',
+        llm_description: 'Stale payment adapter.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            operation: { type: 'string' },
+            payment_reference: { type: 'string' },
+          },
+          additionalProperties: false,
+        },
+      },
+      {
+        tool_id: 'djtc_subway_segment_fare_time_check',
+        name: 'DJTC subway segment fare/time check',
+        primitive: 'find',
+        policy_authority_url: 'https://www.data.go.kr/data/15125938/openapi.do',
+        source_mode: 'live',
+        search_hint:
+          '대전교통공사 대전도시철도 역간 소요시간 거리 요금 운임 DJTC strstnno endstnno subway segment fare time distance',
+        llm_description:
+          'DJTC official subway segment fare, distance, and travel-time lookup adapter.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            strstnno: { type: 'string' },
+            endstnno: { type: 'string' },
+          },
+          required: ['strstnno', 'endstnno'],
+          additionalProperties: false,
+        },
+      },
+    ],
+    manifest_hash: hashChar.repeat(64),
+    emitter_pid: 12345,
+  })
+}
+
 export function ingestHousingHandoffManifest(hashChar: string): void {
   clearManifestCache()
   ingestManifestFrame({

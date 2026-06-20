@@ -126,3 +126,14 @@ def test_airkorea_air_quality_signal_is_not_weather_ref() -> None:
 
     assert "airkorea_air_quality" in intent.public_data_refs
     assert "kma_lifestyle_weather" not in intent.public_data_refs
+
+
+def test_djtc_subway_segment_signal_is_not_weather_ref_from_negative_constraint() -> None:
+    intent = extract_tool_selection_intent(
+        "대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 "
+        "조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마."
+    )
+
+    assert "djtc_subway_segment" in intent.public_data_refs
+    assert "kma_lifestyle_weather" not in intent.public_data_refs
+    assert "find" in intent.candidate_primitives

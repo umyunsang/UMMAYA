@@ -476,6 +476,26 @@ _NON_LOCATION_STATION_SUFFIX_WORDS_KO: Final[frozenset[str]] = frozenset(
     }
 )
 _DEFAULT_CHAT_MAX_TOKENS: Final[int] = 4096
+_FAILED_TOOL_SUCCESS_MARKERS: Final[tuple[str, ...]] = (
+    "✅ 성공",
+    "성공적인 신청",
+    "성공 가정",
+    "성공적으로 접수",
+    "성공적으로 제출",
+    "성공적으로 처리",
+    "성공적으로 완료",
+    "신청 완료 번호",
+    "접수번호:",
+    "처리 상태: 성공",
+    "납부 완료",
+    "발급 완료",
+    "submission succeeded",
+    "successfully submitted",
+)
+_FAILED_TOOL_ACTION_SUCCESS_RE: Final = re.compile(
+    r"(신청|제출|발급|접수|납부|접수번호|승인코드).{0,40}"
+    r"(완료|성공|처리되었습니다|되었습니다|되었|됐|생성)"
+)
 
 # ---------------------------------------------------------------------------
 # Internal state
@@ -896,6 +916,20 @@ def _final_answer_looks_like_generic_retry_after_success(text: str) -> bool:
     return not bool(re.search(r"\d", normalized))
 
 
+def _final_answer_looks_like_stale_tool_result_refusal(text: str) -> bool:
+    """Return true when final prose rejects a fresh tool result as stale."""
+    compact = re.sub(r"\s+", "", text)
+    if not compact:
+        return False
+    stale_markers = (
+        "이번턴에서확인되지않은이전도구결과",
+        "이전검색결과를새위치나새조건의결과처럼단정할수없습니다",
+        "최신사용자요청이후실행된tool_result에근거",
+        "해당위치와조건에맞는등록adapter결과를다시받은뒤",
+    )
+    return any(marker in compact for marker in stale_markers)
+
+
 _KMA_ANALYSIS_USER_QUERY_RE: Final = re.compile(
     r"(분석자료|이미\s*분석|고해상도\s*격자|객관분석|AWS\s*객관|지도\s*자료|"
     r"일기도|분석일기도|비구름|바람\s*흐름|synoptic|weather\s*chart|"
@@ -996,6 +1030,16 @@ _AIRKOREA_USER_QUERY_RE: Final = re.compile(
     r"pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)",
     re.IGNORECASE,
 )
+_DJTC_SUBWAY_SEGMENT_USER_QUERY_RE: Final = re.compile(
+    r"((대전|DJTC|대전교통공사|도시철도|지하철).*(소요시간|거리|운임|요금|역간)|"
+    r"(소요시간|거리|운임|요금|역간).*(대전|DJTC|대전교통공사|도시철도|지하철))",
+    re.IGNORECASE,
+)
+_WEATHER_NEGATIVE_CONSTRAINT_RE: Final = re.compile(
+    r"((날씨|기상|weather).*(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘))|"
+    r"(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘)).*(날씨|기상|weather))",
+    re.IGNORECASE,
+)
 _TAGO_BUS_USER_QUERY_RE: Final = re.compile(
     r"(버스|시내버스|정류장|정류소|노선|도착|언제\s*와|몇\s*분|bus|route|arrival|station)",
     re.IGNORECASE,
@@ -1011,6 +1055,7 @@ _TAGO_TOOL_IDS: Final[frozenset[str]] = frozenset(
     }
 )
 _AIRKOREA_TOOL_ID: Final = "airkorea_ctprvn_air_quality"
+_DJTC_SUBWAY_SEGMENT_TOOL_ID: Final = "djtc_subway_segment_fare_time_check"
 _PPS_BID_TOOL_ID: Final = "pps_bid_public_info"
 _KMA_ANALYSIS_CHART_TOOL_ID: Final = "kma_apihub_url_analysis_weather_chart_image"
 
@@ -1021,6 +1066,11 @@ def _initial_concrete_tool_choice_for_query(
 ) -> str | None:
     """Force direct first calls only for unambiguous single-adapter lookups."""
     available = set(available_tool_names)
+    direct_public_data_target = _direct_public_data_target_for_query(user_query)
+    if direct_public_data_target is not None:
+        _allowed_tool_ids, preferred_tool_id, route_label, _hint = direct_public_data_target
+        if route_label == "djtc_subway_segment" and preferred_tool_id in available:
+            return preferred_tool_id
     return _document_tool_choice_for_query(user_query, available)
 
 
@@ -1843,6 +1893,125 @@ def _tool_result_payload_is_error(payload: object) -> bool:
     return isinstance(result, dict) and _payload_dict_is_error_like(
         {str(key): value for key, value in result.items()}
     )
+
+
+def _first_nonempty_string_field(
+    payload: dict[object, object],
+    keys: tuple[str, ...],
+) -> str | None:
+    """Return the first non-empty string from a mapping for the given keys."""
+    for key in keys:
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _failed_tool_error_text(payload: object) -> str:
+    """Return the most useful error label from a failed primitive payload."""
+    error_keys = ("error", "reason", "message", "detail")
+    if not isinstance(payload, dict):
+        return "tool_result_error"
+    direct = _first_nonempty_string_field(payload, error_keys)
+    if direct is not None:
+        return direct
+    result = payload.get("result")
+    if isinstance(result, dict):
+        nested = _first_nonempty_string_field(result, error_keys)
+        if nested is not None:
+            return nested
+        structured = result.get("structured")
+        if isinstance(structured, dict):
+            result_structured = _first_nonempty_string_field(
+                structured,
+                ("error", "reason", "message", "exception_type"),
+            )
+            if result_structured is not None:
+                return result_structured
+    structured = payload.get("structured")
+    if isinstance(structured, dict):
+        top_structured = _first_nonempty_string_field(
+            structured,
+            ("error", "reason", "message", "exception_type"),
+        )
+        if top_structured is not None:
+            return top_structured
+    return "tool_result_error"
+
+
+def _latest_failed_primitive_observation(
+    llm_messages: list[Any],
+) -> dict[str, str] | None:
+    """Return the latest failed primitive observation visible to the model."""
+    for msg in reversed(llm_messages):
+        for _call_id, name, payload in reversed(_iter_tool_result_payloads(msg)):
+            if not _tool_result_payload_is_error(payload):
+                return None
+            primitive = name or ""
+            if isinstance(payload, dict):
+                kind = payload.get("kind")
+                if isinstance(kind, str) and kind.strip():
+                    primitive = kind.strip()
+                tool_id = payload.get("tool_id")
+                if not isinstance(tool_id, str) or not tool_id.strip():
+                    result = payload.get("result")
+                    tool_id = result.get("tool_id") if isinstance(result, dict) else None
+                tool_id_text = tool_id.strip() if isinstance(tool_id, str) else ""
+            else:
+                tool_id_text = ""
+            return {
+                "primitive": primitive,
+                "tool_id": tool_id_text,
+                "error": _failed_tool_error_text(payload),
+            }
+    return None
+
+
+def _final_answer_fabricates_success_after_failed_tool(text: str) -> bool:
+    """Return True when final prose turns a failed tool result into success."""
+    normalized = re.sub(r"\s+", " ", text).strip()
+    if not normalized:
+        return False
+    if any(marker in normalized for marker in _FAILED_TOOL_SUCCESS_MARKERS):
+        return True
+    if not _FAILED_TOOL_ACTION_SUCCESS_RE.search(normalized):
+        return False
+    failure_markers = (
+        "완료되지 않았",
+        "실패",
+        "거부",
+        "성공으로 처리할 수 없",
+        "성공했다고 꾸며",
+        "successfully processed cannot",
+    )
+    return not any(marker in normalized for marker in failure_markers)
+
+
+def _safe_failed_primitive_final_answer(failure: dict[str, str]) -> str:
+    """Build deterministic citizen-facing prose for a failed primitive result."""
+    error_text = failure.get("error") or "tool_result_error"
+    primitive = failure.get("primitive") or "tool"
+    tool_id = failure.get("tool_id") or ""
+    lines = [
+        "요청은 완료되지 않았습니다.",
+        "",
+        (
+            "직전 도구 호출이 실패했기 때문에 신청, 제출, 발급, 접수, 납부 결과를 "
+            "성공으로 처리할 수 없습니다."
+        ),
+        f"오류: {error_text}",
+    ]
+    if primitive:
+        lines.append(f"도구 종류: {primitive}")
+    if tool_id:
+        lines.append(f"도구 ID: {tool_id}")
+    lines.extend(
+        [
+            "",
+            "인증 절차를 건너뛰거나 성공했다고 꾸며 말할 수 없습니다.",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _payload_has_successful_document_tool_id(
@@ -2930,6 +3099,26 @@ def _locate_result_coords(result: dict[str, object]) -> tuple[float, float] | No
     return None
 
 
+def _locate_result_grid(result: dict[str, object]) -> tuple[int, int] | None:
+    """Extract KMA nx/ny grid coordinates from a locate result."""
+    candidates: list[object] = [result.get("coords"), result.get("poi"), result]
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        nx = candidate.get("nx")
+        ny = candidate.get("ny")
+        if (
+            isinstance(nx, int)
+            and not isinstance(nx, bool)
+            and isinstance(ny, int)
+            and not isinstance(ny, bool)
+            and 1 <= nx <= 149
+            and 1 <= ny <= 253
+        ):
+            return nx, ny
+    return None
+
+
 def _locate_result_adm_cd(result: dict[str, object]) -> str | None:
     """Extract a 10-digit administrative code from a locate result."""
     candidates: list[object] = [result.get("adm_cd"), result.get("region"), result]
@@ -3396,6 +3585,96 @@ def _normalize_koroad_lookup_args_from_locate_result(
     return normalized
 
 
+_KMA_SHORT_FORECAST_BASE_TIMES: Final[frozenset[str]] = frozenset(
+    {"0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"}
+)
+
+
+def _valid_kma_base_date(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 8 and value.isdigit()
+
+
+def _valid_kma_short_forecast_base_time(value: object) -> bool:
+    return isinstance(value, str) and value in _KMA_SHORT_FORECAST_BASE_TIMES
+
+
+def _normalize_kma_short_forecast_args_from_prior_locate(
+    fname: str,
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> dict[str, object]:
+    """Fill KMA short-term forecast grid/base params from the latest locate result."""
+    if fname != "find" or args_obj.get("tool_id") != "kma_short_term_forecast":
+        return args_obj
+    locate_result = _latest_successful_primitive_result(
+        llm_messages,
+        primitive="locate",
+        registry=registry,
+    )
+    if locate_result is None:
+        return args_obj
+    return _normalize_kma_short_forecast_args_from_locate_result(args_obj, locate_result)
+
+
+def _normalize_kma_short_forecast_args_from_locate_result(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+) -> dict[str, object]:
+    """Fill KMA short-term forecast grid/base params from an observed locate result."""
+
+    raw_params = args_obj.get("params")
+    params = dict(raw_params) if isinstance(raw_params, dict) else {}
+    changed = not isinstance(raw_params, dict)
+
+    grid = _locate_result_grid(locate_result)
+    if grid is not None and (params.get("nx"), params.get("ny")) != grid:
+        params["nx"], params["ny"] = grid
+        changed = True
+
+    if not _valid_kma_base_date(params.get("base_date")) or not _valid_kma_short_forecast_base_time(
+        params.get("base_time")
+    ):
+        from zoneinfo import ZoneInfo  # noqa: PLC0415
+
+        base_date, base_time, _day_note = _kma_forecast_base_slot_hint(
+            datetime.now(ZoneInfo("Asia/Seoul"))
+        )
+        params["base_date"] = base_date
+        params["base_time"] = base_time
+        changed = True
+
+    if not changed:
+        return args_obj
+    normalized = dict(args_obj)
+    normalized["params"] = params
+    logger.info(
+        "find: normalized kma_short_term_forecast params from prior locate "
+        "base_date=%s base_time=%s nx=%s ny=%s",
+        params.get("base_date"),
+        params.get("base_time"),
+        params.get("nx"),
+        params.get("ny"),
+    )
+    return normalized
+
+
+def _locate_result_with_coordinate_fallback(
+    locate_result: dict[str, object],
+    coordinate_locate_result: dict[str, object] | None,
+) -> dict[str, object]:
+    if (
+        _locate_result_coords(locate_result) is not None
+        or coordinate_locate_result is None
+        or _locate_result_coords(coordinate_locate_result) is None
+    ):
+        return locate_result
+    merged_locate_result = dict(coordinate_locate_result)
+    merged_locate_result.update(locate_result)
+    return merged_locate_result
+
+
 def _normalize_lookup_args_from_cached_locate_result(
     fname: str,
     args_obj: dict[str, object],
@@ -3413,24 +3692,16 @@ def _normalize_lookup_args_from_cached_locate_result(
         return args_obj
     tool_id = args_obj.get("tool_id")
     if tool_id == "nmc_emergency_search":
-        if (
-            _locate_result_coords(locate_result) is None
-            and coordinate_locate_result is not None
-            and _locate_result_coords(coordinate_locate_result) is not None
-        ):
-            merged_locate_result = dict(coordinate_locate_result)
-            merged_locate_result.update(locate_result)
-            locate_result = merged_locate_result
+        locate_result = _locate_result_with_coordinate_fallback(
+            locate_result,
+            coordinate_locate_result,
+        )
         return _normalize_nmc_lookup_args_from_locate_result(args_obj, locate_result)
     if tool_id == "nmc_aed_site_locate":
-        if (
-            _locate_result_coords(locate_result) is None
-            and coordinate_locate_result is not None
-            and _locate_result_coords(coordinate_locate_result) is not None
-        ):
-            merged_locate_result = dict(coordinate_locate_result)
-            merged_locate_result.update(locate_result)
-            locate_result = merged_locate_result
+        locate_result = _locate_result_with_coordinate_fallback(
+            locate_result,
+            coordinate_locate_result,
+        )
         return _normalize_nmc_aed_args_from_locate_result(args_obj, locate_result)
     if tool_id == "hira_hospital_search":
         return _normalize_hira_lookup_args_from_locate_result(
@@ -3440,6 +3711,8 @@ def _normalize_lookup_args_from_cached_locate_result(
         )
     if tool_id == "koroad_accident_hazard_search":
         return _normalize_koroad_lookup_args_from_locate_result(args_obj, locate_result)
+    if tool_id == "kma_short_term_forecast":
+        return _normalize_kma_short_forecast_args_from_locate_result(args_obj, locate_result)
     return args_obj
 
 
@@ -5069,6 +5342,14 @@ def _direct_public_data_target_for_query(
             "air_quality",
             "use AirKorea city/province air-quality evidence with sido_name such as '부산'.",
         )
+    if _DJTC_SUBWAY_SEGMENT_USER_QUERY_RE.search(user_query):
+        return (
+            frozenset({_DJTC_SUBWAY_SEGMENT_TOOL_ID}),
+            _DJTC_SUBWAY_SEGMENT_TOOL_ID,
+            "djtc_subway_segment",
+            "use DJTC subway segment fare/time/distance evidence with strstnno and endstnno. "
+            "This is a read-only fare lookup; do not use KFTC/OpenGiro payment or any send tool.",
+        )
     if _TAGO_BUS_USER_QUERY_RE.search(user_query):
         preferred = (
             "tago_bus_route_search"
@@ -5280,6 +5561,10 @@ def _query_implies_medical_collapse_aed(user_query: str) -> bool:
 def _query_implies_current_weather_observation(user_query: str) -> bool:
     """Return True when final weather prose should include current observation."""
     if not user_query:
+        return False
+    if _DJTC_SUBWAY_SEGMENT_USER_QUERY_RE.search(user_query):
+        return False
+    if _WEATHER_NEGATIVE_CONSTRAINT_RE.search(user_query):
         return False
     q = user_query.lower()
     has_weather = (
@@ -6051,99 +6336,33 @@ async def run(  # noqa: C901
             _llm_system_prompt_cached[0] = ""  # remember "tried and failed"
         return _llm_system_prompt_cached[0] or None
 
-    async def _handle_user_input_llm(frame: IPCFrame) -> None:  # noqa: C901
+    async def _handle_user_input_llm(frame: IPCFrame) -> None:
         from ummaya.ipc.frame_schema import (  # noqa: PLC0415
-            AssistantChunkFrame,
+            ChatMessage as IPCChatMessage,
+        )
+        from ummaya.ipc.frame_schema import (
+            ChatRequestFrame,
             UserInputFrame,
         )
-        from ummaya.llm.models import ChatMessage  # noqa: PLC0415
 
         if not isinstance(frame, UserInputFrame):
             return
 
-        history = _llm_sessions.setdefault(frame.session_id, [])
-        if not history:
-            system_text = await _ensure_system_prompt()
-            if system_text:
-                history.append({"role": "system", "content": system_text})
-        history.append({"role": "user", "content": frame.text})
-
-        client = await _ensure_llm_client()
-        messages: list[ChatMessage] = []
-        for m in history:
-            role = str(m.get("role", "user"))
-            content = m.get("content")
-            if role in ("system", "user", "assistant", "tool") and isinstance(content, str):
-                messages.append(
-                    ChatMessage(
-                        role=role,  # type: ignore[arg-type]
-                        content=content,
-                    )
-                )
-
-        message_id = str(uuid.uuid4())
-        assistant_text_chunks: list[str] = []
-        stream_error: Exception | None = None
-
-        try:
-            async for event in client.stream(  # type: ignore[attr-defined]
-                messages=messages, max_tokens=2048
-            ):
-                event_type = getattr(event, "type", None)
-                if event_type == "content_delta":
-                    delta = getattr(event, "content", "") or ""
-                    if delta:
-                        assistant_text_chunks.append(delta)
-                        chunk_frame = AssistantChunkFrame(
-                            session_id=frame.session_id,
-                            correlation_id=frame.correlation_id,
-                            role="llm",
-                            ts=_utcnow(),
-                            kind="assistant_chunk",
-                            message_id=message_id,
-                            delta=delta,
-                            done=False,
-                        )
-                        await write_frame(chunk_frame)
-                elif event_type == "done":
-                    break
-                elif event_type == "error":
-                    stream_error = RuntimeError(
-                        str(getattr(event, "content", "unknown stream error"))
-                    )
-                    break
-        except Exception as exc:  # noqa: BLE001
-            stream_error = exc
-
-        full_text = "".join(assistant_text_chunks)
-        if stream_error is not None:
-            err = ErrorFrame(
+        await _handle_chat_request(
+            ChatRequestFrame(
                 session_id=frame.session_id,
-                correlation_id=frame.correlation_id or str(uuid.uuid4()),
-                role="backend",
-                ts=_utcnow(),
-                kind="error",
-                code="llm_stream_error",
-                message=str(stream_error),
-                details={"message_id": message_id},
+                correlation_id=frame.correlation_id,
+                role="tui",
+                ts=frame.ts,
+                kind="chat_request",
+                messages=[IPCChatMessage(role="user", content=frame.text)],
+                tools=[],
+                system=None,
             )
-            await write_frame(err)
-            return
-
-        # Terminal chunk — done=True signals end-of-turn to the TS side.
-        terminal = AssistantChunkFrame(
-            session_id=frame.session_id,
-            correlation_id=frame.correlation_id,
-            role="llm",
-            ts=_utcnow(),
-            kind="assistant_chunk",
-            message_id=message_id,
-            delta="",
-            done=True,
         )
-        await write_frame(terminal)
 
-        history.append({"role": "assistant", "content": full_text})
+        history = _llm_sessions.setdefault(frame.session_id, [])
+        history.append({"role": "user", "content": frame.text})
 
     import os as _os_chat_env  # noqa: PLC0415
 
@@ -8055,6 +8274,13 @@ async def run(  # noqa: C901
                     )
                     buffered_visible.clear()
                     continue
+                latest_failed_tool_result = _latest_failed_primitive_observation(llm_messages)
+                if (
+                    merged_prose.strip()
+                    and latest_failed_tool_result is not None
+                    and _final_answer_fabricates_success_after_failed_tool(merged_prose)
+                ):
+                    merged_prose = _safe_failed_primitive_final_answer(latest_failed_tool_result)
                 has_successful_tool_result = _conversation_has_successful_any_primitive_result(
                     llm_messages
                 )
@@ -8171,6 +8397,26 @@ async def run(  # noqa: C901
                             "and the observation base time when present. Do not ask the "
                             "citizen to retry unless the successful tool_result is "
                             "insufficient for the request."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
+                    and _final_answer_looks_like_stale_tool_result_refusal(merged_prose)
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_final_answer_observation(
+                        "rejected stale-tool-result refusal after successful tool result",
+                        (
+                            "The previous assistant turn incorrectly treated the latest "
+                            "successful tool_result as stale. Produce a concise Korean "
+                            "final answer using the latest successful tool_result. If the "
+                            "result is broader than the citizen's requested filter, say "
+                            "which filter is unsupported or unmatched; do not call the "
+                            "observed current-turn result an older result."
                         ),
                     )
                     buffered_visible.clear()
@@ -8527,6 +8773,12 @@ async def run(  # noqa: C901
                     registry=registry,
                 )
                 args_obj = _normalize_koroad_lookup_args_from_prior_locate(
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    registry=registry,
+                )
+                args_obj = _normalize_kma_short_forecast_args_from_prior_locate(
                     fname,
                     args_obj,
                     llm_messages,

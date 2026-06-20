@@ -1716,7 +1716,7 @@
       "feature_status": "feature-gated",
       "parity_status": "registry-hidden",
       "status": "registry-hidden",
-      "diff_status": "identical",
+      "diff_status": "different",
       "parity_diff_artifact": "not-applicable",
       "blocked_reason": "",
       "registered_capability": true,

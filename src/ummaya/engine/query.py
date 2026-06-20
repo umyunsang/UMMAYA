@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
@@ -59,6 +60,29 @@ class _PendingToolCall:
     tool_call_id: str = ""
     function_name: str = ""
     function_args: str = ""
+
+
+@dataclass
+class _FailedToolResult:
+    """Latest current-turn tool failure that can constrain final prose."""
+
+    error: str
+
+
+_FAILED_TOOL_SUCCESS_MARKERS = (
+    "성공처리",
+    "성공적으로 접수",
+    "성공적으로 제출",
+    "접수 상태: 성공",
+    "제출 상태: ✅ 성공",
+    "발급 신청 제출 상태: ✅ 성공",
+    "successfully submitted",
+    "completed successfully",
+)
+_FAILED_TOOL_ACTION_SUCCESS_RE = re.compile(
+    r"(?:신청|제출|발급|접수|납부|결제|접수번호|승인코드)"
+    r"[^\n.。!?]{0,40}(?:성공|완료|접수됨|접수되|되었|됐|생성)"
+)
 
 
 def _assemble_tool_calls(
@@ -130,6 +154,33 @@ def _latest_successful_tool_payload(messages: list[ChatMessage]) -> dict[str, ob
     return None
 
 
+def _latest_failed_tool_result(messages: list[ChatMessage]) -> _FailedToolResult | None:
+    """Return the latest current-turn tool-result failure, if present."""
+
+    for message in reversed(messages):
+        if message.role != "tool" or not message.content:
+            continue
+        try:
+            data = json.loads(message.content)
+        except json.JSONDecodeError:
+            return _FailedToolResult(error=message.content)
+        if isinstance(data, dict) and _tool_payload_is_error(data):
+            return _FailedToolResult(error=str(data.get("message") or data.get("error") or data))
+        return None
+    return None
+
+
+def _tool_payload_is_error(payload: dict[str, object]) -> bool:
+    """Return True when a serialized tool payload represents failure."""
+
+    if payload.get("kind") == "error":
+        return True
+    if isinstance(payload.get("error"), str):
+        return True
+    structured = payload.get("structured")
+    return isinstance(structured, dict) and isinstance(structured.get("exception_type"), str)
+
+
 def _latest_user_utterance(messages: list[ChatMessage]) -> str:
     """Return the latest citizen utterance, ignoring repair observations."""
 
@@ -168,6 +219,35 @@ def _should_repair_successful_tool_final_answer(text: str) -> bool:
         "공식 agency 채널 안내",
     )
     return any(marker in normalized for marker in wrapper_markers)
+
+
+def _failed_tool_final_answer_fabricates_success(text: str) -> bool:
+    """Detect final prose that turns a failed tool_result into a fake success."""
+
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+    lowered = normalized.lower()
+    if any(marker in lowered for marker in _FAILED_TOOL_SUCCESS_MARKERS):
+        return True
+    return _FAILED_TOOL_ACTION_SUCCESS_RE.search(normalized) is not None
+
+
+def _safe_failed_tool_final_answer(
+    failure: _FailedToolResult,
+) -> str:
+    """Build deterministic final prose for a fabricated success after tool failure."""
+
+    error = " ".join(failure.error.strip().split())
+    if len(error) > 500:
+        error = f"{error[:497]}..."
+    return (
+        "요청은 완료되지 않았습니다.\n\n"
+        "직전 도구 호출이 실패했기 때문에 신청, 제출, 발급, 접수, 납부 결과를 "
+        "성공으로 처리할 수 없습니다.\n"
+        f"오류: {error}\n\n"
+        "인증 절차를 건너뛰거나 성공했다고 꾸며 말할 수 없습니다."
+    )
 
 
 def _remove_unneeded_mock_disclosure(
@@ -642,7 +722,10 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
         snapshot = list(ctx.state.messages)
         current_turn_messages = snapshot[ctx.turn_start_message_index :]
         latest_successful_tool_payload = _latest_successful_tool_payload(current_turn_messages)
-        buffer_final_answer = latest_successful_tool_payload is not None
+        latest_failed_tool_result = _latest_failed_tool_result(current_turn_messages)
+        buffer_final_answer = (
+            latest_successful_tool_payload is not None or latest_failed_tool_result is not None
+        )
 
         # --- Export tool definitions (sorted for cache stability) ---
         suppress_tools_this_turn = force_no_tools_next_turn
@@ -787,7 +870,15 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
 
         # --- No tool calls: yield usage, stop, and return ---
         if not assembled_calls:
-            if buffer_final_answer:
+            if latest_failed_tool_result is not None:
+                final_text = assistant_content or ""
+                if _failed_tool_final_answer_fabricates_success(final_text):
+                    final_text = _safe_failed_tool_final_answer(latest_failed_tool_result)
+                if ctx.state.messages and ctx.state.messages[-1].role == "assistant":
+                    ctx.state.messages[-1] = ChatMessage(role="assistant", content=final_text)
+                if final_text:
+                    yield QueryEvent(type="text_delta", content=final_text)
+            elif buffer_final_answer:
                 final_text = _remove_unneeded_mock_disclosure(
                     assistant_content or "",
                     latest_successful_tool_payload,

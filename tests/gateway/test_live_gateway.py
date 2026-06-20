@@ -319,6 +319,7 @@ def test_gateway_operator_key_check_requires_complete_provider_set(
 ) -> None:
     for name in (
         "UMMAYA_DATA_GO_KR_API_KEY",
+        "UMMAYA_KEPCO_POWER_DATA_API_KEY",
         "UMMAYA_KMA_API_HUB_AUTH_KEY",
         "UMMAYA_KAKAO_API_KEY",
         "UMMAYA_JUSO_CONFM_KEY",
@@ -333,10 +334,12 @@ def test_gateway_operator_key_check_requires_complete_provider_set(
     monkeypatch.setenv("UMMAYA_SGIS_KEY", "sgis-key")
 
     assert _missing_gateway_operator_keys() == (
+        "UMMAYA_KEPCO_POWER_DATA_API_KEY",
         "UMMAYA_KMA_API_HUB_AUTH_KEY",
         "UMMAYA_SGIS_SECRET",
     )
 
+    monkeypatch.setenv("UMMAYA_KEPCO_POWER_DATA_API_KEY", "kepco")
     monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "kma-api-hub")
 
     assert _missing_gateway_operator_keys() == ("UMMAYA_SGIS_SECRET",)

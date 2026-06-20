@@ -56,6 +56,7 @@ from ummaya.ipc.stdio import (
     _final_answer_looks_like_mismatched_kma_forecast_hour_label,
     _final_answer_looks_like_pending_tool_plan,
     _final_answer_looks_like_recursive_tool_message,
+    _final_answer_looks_like_stale_tool_result_refusal,
     _final_answer_looks_like_tool_call_narration,
     _final_answer_looks_like_unclosed_markdown,
     _final_answer_missing_current_weather_observation_values,
@@ -155,6 +156,14 @@ def test_current_weather_query_requires_observation() -> None:
     assert not _query_implies_current_weather_observation("내일 서울 날씨 예보")
     assert not _query_implies_current_weather_observation(
         "다대1동에서 오늘 전화해볼 만한 내과나 이비인후과 3곳 알려줘"
+    )
+    assert not _query_implies_current_weather_observation(
+        "대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 "
+        "조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마."
+    )
+    assert not _query_implies_current_weather_observation(
+        "부산 사하구 마을변호사 정보를 법무부 공식 도구로 찾고 헌법재판소 발간자료도 확인해줘. "
+        "날씨로 대체하지 말고 법무부와 헌재 도구만 써."
     )
 
 
@@ -294,6 +303,16 @@ def test_generic_retry_final_answer_after_success_is_rejected() -> None:
     assert not _final_answer_looks_like_generic_retry_after_success(
         "기상청 관측 기준 현재 기온은 15.8°C이고 강수량은 0mm입니다. "
         "정확한 특보는 기상청에서 확인할 수 있습니다."
+    )
+
+
+def test_stale_tool_result_refusal_after_success_is_rejected() -> None:
+    """A final answer must not call a latest same-turn tool result stale."""
+    assert _final_answer_looks_like_stale_tool_result_refusal(
+        "이번 턴에서 확인되지 않은 이전 도구 결과를 현재 요청의 근거로 재사용하지 않습니다."
+    )
+    assert not _final_answer_looks_like_stale_tool_result_refusal(
+        "금융위원회 공식 데이터 조회 결과는 1건입니다."
     )
 
 
@@ -1065,7 +1084,7 @@ def test_latest_citizen_user_utterance_skips_available_adapters_suffix() -> None
     )
 
 
-def test_initial_concrete_tool_choice_only_for_document_queries() -> None:
+def test_initial_concrete_tool_choice_for_document_and_djtc_queries() -> None:
     available = {
         "document",
         "find",
@@ -1075,6 +1094,7 @@ def test_initial_concrete_tool_choice_only_for_document_queries() -> None:
         "kma_apihub_url_analysis_weather_chart_image",
         "kma_apihub_url_air_metar_decoded",
         "tago_bus_route_search",
+        "djtc_subway_segment_fare_time_check",
     }
 
     assert (
@@ -1118,6 +1138,14 @@ def test_initial_concrete_tool_choice_only_for_document_queries() -> None:
             available,
         )
         is None
+    )
+    assert (
+        _initial_concrete_tool_choice_for_query(
+            "대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 "
+            "조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마.",
+            available,
+        )
+        == "djtc_subway_segment_fare_time_check"
     )
 
 
@@ -1423,6 +1451,20 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
     assert "target=procurement_bid" in message
     assert "pps_bid_public_info" not in message
     assert "kma_current_observation" not in message
+
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "send",
+        {
+            "tool_id": "mock_kftc_opengiro_payment_send_v1",
+            "params": {"payment_reference": "DJTC-ROUTE-0101-0102"},
+        },
+        "대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 조회해줘.",
+    ) or (None, "")
+    assert preferred == "djtc_subway_segment_fare_time_check"
+    assert "target=djtc_subway_segment" in message
+    assert "KFTC/OpenGiro payment" in message
+    assert "djtc_subway_segment_fare_time_check" not in message
+    assert "mock_kftc_opengiro_payment_send_v1" not in message
 
     assert (
         _check_direct_public_data_tool_choice_prerequisite(
@@ -3355,6 +3397,30 @@ def test_cached_locate_result_normalizes_inbound_concrete_hira_call() -> None:
         "yPos": 35.0465263488422,
         "radius": 2000,
     }
+
+
+def test_cached_locate_result_normalizes_inbound_kma_short_forecast_call() -> None:
+    """Concrete KMA short forecast dispatch should use cached locate grid and base slot."""
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {"tool_id": "kma_short_term_forecast", "params": {"nx": 97, "ny": 74}},
+        {
+            "kind": "poi",
+            "name": "다대1동",
+            "lat": 35.059152,
+            "lon": 128.971316,
+            "nx": 97,
+            "ny": 75,
+        },
+    )
+
+    params = normalized["params"]
+    assert params["nx"] == 97
+    assert params["ny"] == 75
+    assert isinstance(params["base_date"], str)
+    assert isinstance(params["base_time"], str)
+    assert len(params["base_date"]) == 8
+    assert params["base_time"] in {"0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"}
 
 
 def test_cached_locate_result_normalizes_inbound_concrete_nmc_call() -> None:

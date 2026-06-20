@@ -27,6 +27,7 @@ require_command gcloud
 SEED_SECRETS="${GCP_SEED_SECRETS:-1}"
 if [[ "${SEED_SECRETS}" == "1" ]]; then
   require_env UMMAYA_DATA_GO_KR_API_KEY
+  require_env UMMAYA_KEPCO_POWER_DATA_API_KEY
   require_env UMMAYA_KMA_API_HUB_AUTH_KEY
   require_env UMMAYA_KAKAO_API_KEY
   require_env UMMAYA_JUSO_CONFM_KEY
@@ -45,6 +46,7 @@ RUNTIME_SA_EMAIL="${RUNTIME_SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
 DEPLOY_SA_EMAIL="${DEPLOY_SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
 
 DATA_GO_KR_SECRET="${GCP_SECRET_DATA_GO_KR_API_KEY:-ummaya-data-go-kr-api-key}"
+KEPCO_SECRET="${GCP_SECRET_KEPCO_POWER_DATA_API_KEY:-ummaya-kepco-power-data-api-key}"
 KMA_API_HUB_SECRET="${GCP_SECRET_KMA_API_HUB_AUTH_KEY:-ummaya-kma-api-hub-auth-key}"
 KAKAO_SECRET="${GCP_SECRET_KAKAO_API_KEY:-ummaya-kakao-api-key}"
 JUSO_SECRET="${GCP_SECRET_JUSO_CONFM_KEY:-ummaya-juso-confm-key}"
@@ -139,6 +141,7 @@ create_or_seed_secret() {
 }
 
 create_or_seed_secret "${DATA_GO_KR_SECRET}" UMMAYA_DATA_GO_KR_API_KEY
+create_or_seed_secret "${KEPCO_SECRET}" UMMAYA_KEPCO_POWER_DATA_API_KEY
 create_or_seed_secret "${KMA_API_HUB_SECRET}" UMMAYA_KMA_API_HUB_AUTH_KEY
 create_or_seed_secret "${KAKAO_SECRET}" UMMAYA_KAKAO_API_KEY
 create_or_seed_secret "${JUSO_SECRET}" UMMAYA_JUSO_CONFM_KEY
@@ -194,6 +197,8 @@ GCP_RUN_RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA_EMAIL}
 GCP_WORKLOAD_IDENTITY_PROVIDER=${wif_provider_name}
 GCP_DEPLOY_SERVICE_ACCOUNT=${DEPLOY_SA_EMAIL}
 GCP_SECRET_DATA_GO_KR_API_KEY=${DATA_GO_KR_SECRET}
+GCP_SECRET_KEPCO_POWER_DATA_API_KEY=${KEPCO_SECRET}
+GCP_SECRET_KMA_API_HUB_AUTH_KEY=${KMA_API_HUB_SECRET}
 GCP_SECRET_KAKAO_API_KEY=${KAKAO_SECRET}
 GCP_SECRET_JUSO_CONFM_KEY=${JUSO_SECRET}
 GCP_SECRET_SGIS_KEY=${SGIS_KEY_SECRET}
@@ -216,6 +221,8 @@ if [[ "${GITHUB_SET_VARIABLES:-0}" == "1" ]]; then
   gh variable set GCP_WORKLOAD_IDENTITY_PROVIDER --body "${wif_provider_name}" --repo "${GITHUB_REPOSITORY}"
   gh variable set GCP_DEPLOY_SERVICE_ACCOUNT --body "${DEPLOY_SA_EMAIL}" --repo "${GITHUB_REPOSITORY}"
   gh variable set GCP_SECRET_DATA_GO_KR_API_KEY --body "${DATA_GO_KR_SECRET}" --repo "${GITHUB_REPOSITORY}"
+  gh variable set GCP_SECRET_KEPCO_POWER_DATA_API_KEY --body "${KEPCO_SECRET}" --repo "${GITHUB_REPOSITORY}"
+  gh variable set GCP_SECRET_KMA_API_HUB_AUTH_KEY --body "${KMA_API_HUB_SECRET}" --repo "${GITHUB_REPOSITORY}"
   gh variable set GCP_SECRET_KAKAO_API_KEY --body "${KAKAO_SECRET}" --repo "${GITHUB_REPOSITORY}"
   gh variable set GCP_SECRET_JUSO_CONFM_KEY --body "${JUSO_SECRET}" --repo "${GITHUB_REPOSITORY}"
   gh variable set GCP_SECRET_SGIS_KEY --body "${SGIS_KEY_SECRET}" --repo "${GITHUB_REPOSITORY}"

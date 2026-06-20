@@ -5,6 +5,7 @@ import {
   repairUmmayaDocumentToolInputForDispatch,
 } from '../tools/_shared/toolChoiceRepair.js'
 import { deriveLocationQueryFromUserText } from '../tools/_shared/locationInputRepair.js'
+import { backfillMojVillageLawyerRegionInput } from '../tools/_shared/publicAdapterInputRepair.js'
 import { createUserMessage } from '../utils/messages.js'
 import { isUnregisteredRawJsonToolUseId } from '../utils/rawJsonToolCall.js'
 import { formatZodValidationError } from '../utils/toolErrors.js'
@@ -96,6 +97,13 @@ const KMA_ORDINARY_WEATHER_TOOL_NAMES = new Set([
   'kma_forecast_fetch',
   'kma_short_term_forecast',
   'kma_ultra_short_term_forecast',
+])
+const TAGO_ROUTE_TOOL_NAME = 'tago_bus_route_search'
+const TAGO_ROUTE_FOLLOWUP_TOOL_NAMES = new Set([
+  'tago_bus_arrival_search',
+  'tago_bus_location_search',
+  'tago_bus_route_station_search',
+  'tago_bus_station_search',
 ])
 
 function stableJson(value: unknown): string {
@@ -204,6 +212,7 @@ function successfulToolCallsSinceLatestPrompt(
 
 type PriorToolResult = {
   readonly toolName: string
+  readonly input: ToolInput | undefined
   readonly content: unknown
   readonly isError: boolean
   readonly isStructuredFailure: boolean
@@ -213,13 +222,19 @@ function toolResultsSinceLatestPrompt(
   messages: readonly Message[],
 ): readonly PriorToolResult[] {
   const startIndex = latestCitizenPromptIndex(messages)
-  const toolNamesByUseId = new Map<string, string>()
+  const toolCallsByUseId = new Map<
+    string,
+    { readonly toolName: string; readonly input: ToolInput | undefined }
+  >()
   const results: PriorToolResult[] = []
   for (const message of messages.slice(startIndex + 1)) {
     if (message.type === 'assistant') {
       for (const block of message.message.content) {
         if (block.type === 'tool_use') {
-          toolNamesByUseId.set(block.id, block.name)
+          toolCallsByUseId.set(block.id, {
+            toolName: block.name,
+            input: isRecord(block.input) ? block.input : undefined,
+          })
         }
       }
       continue
@@ -229,10 +244,11 @@ function toolResultsSinceLatestPrompt(
     }
     for (const block of message.message.content) {
       if (block.type !== 'tool_result') continue
-      const toolName = toolNamesByUseId.get(block.tool_use_id)
-      if (toolName === undefined) continue
+      const toolCall = toolCallsByUseId.get(block.tool_use_id)
+      if (toolCall === undefined) continue
       results.push({
-        toolName,
+        toolName: toolCall.toolName,
+        input: toolCall.input,
         content: block.content,
         isError: block.is_error === true,
         isStructuredFailure: isStructuredFailureResult(block.content),
@@ -337,12 +353,83 @@ function createGuardToolResult(
   })
 }
 
+function recordHasZeroCollectionCount(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  const kind = value.kind
+  const items = value.items
+  const totalCount = value.total_count ?? value.totalCount
+  const totalIsZero =
+    totalCount === 0 ||
+    totalCount === '0' ||
+    totalCount === null ||
+    totalCount === undefined
+  if (
+    (kind === 'collection' || Array.isArray(items)) &&
+    Array.isArray(items) &&
+    items.length === 0 &&
+    totalIsZero
+  ) {
+    return true
+  }
+  return ['data', 'result', 'payload'].some(key =>
+    recordHasZeroCollectionCount(value[key]),
+  )
+}
+
+function isZeroCollectionToolResult(content: unknown): boolean {
+  if (recordHasZeroCollectionCount(content)) return true
+  const parsed = parseJsonRecord(content)
+  return parsed !== undefined && recordHasZeroCollectionCount(parsed)
+}
+
+function tagoNoRouteEvidenceMessage(result: PriorToolResult): string {
+  const input = result.input ?? {}
+  const routeNo = typeof input.route_no === 'string' ? input.route_no.trim() : ''
+  const cityCode = typeof input.city_code === 'string' ? input.city_code.trim() : ''
+  const target = [
+    routeNo ? `route_no=${routeNo}` : undefined,
+    cityCode ? `city_code=${cityCode}` : undefined,
+  ].filter(Boolean).join(', ')
+  return [
+    `TAGO route lookup already returned zero official rows${target ? ` for ${target}` : ''}.`,
+    'Do not substitute another route, city, stop, route_id, or arrival lookup without citizen confirmation.',
+    'Answer in Korean that no official TAGO evidence was returned and ask whether to broaden the search.',
+  ].join(' ')
+}
+
+function tagoRouteZeroResult(
+  priorResults: readonly PriorToolResult[],
+): PriorToolResult | undefined {
+  for (let index = priorResults.length - 1; index >= 0; index -= 1) {
+    const result = priorResults[index]
+    if (
+      result !== undefined &&
+      result.toolName === TAGO_ROUTE_TOOL_NAME &&
+      isZeroCollectionToolResult(result.content)
+    ) {
+      return result
+    }
+  }
+  return undefined
+}
+
+function isTagoRouteContinuationTool(toolName: string): boolean {
+  return toolName === TAGO_ROUTE_TOOL_NAME || TAGO_ROUTE_FOLLOWUP_TOOL_NAMES.has(toolName)
+}
+
 function domainRepeatGuardMessage(params: {
   readonly block: ToolUseBlock
   readonly input: ToolInput
   readonly priorResults: readonly PriorToolResult[]
   readonly successfulCalls: readonly SuccessfulToolCall[]
 }): string | undefined {
+  if (isTagoRouteContinuationTool(params.block.name)) {
+    const zeroRouteResult = tagoRouteZeroResult(params.priorResults)
+    if (zeroRouteResult !== undefined) {
+      return tagoNoRouteEvidenceMessage(zeroRouteResult)
+    }
+  }
+
   if (KAKAO_LOCATION_TOOL_NAMES.has(params.block.name)) {
     const query = typeof params.input.query === 'string'
       ? params.input.query.trim()
@@ -494,11 +581,16 @@ export async function runToolUseBlocks(params: {
       ...params.toolUseContext,
       messages: params.messages,
     }
+    const publicAdapterInput = backfillMojVillageLawyerRegionInput(
+      block.name,
+      documentRepair.input,
+      latestCitizenPromptText(params.messages),
+    )
     const inputForValidation = localTool === undefined
-      ? documentRepair.input
+      ? publicAdapterInput
       : repairDirectLocationToolInputForValidation({
           toolName: block.name,
-          input: documentRepair.input,
+          input: publicAdapterInput,
           messages: params.messages,
         })
     const parsedInput = tool.inputSchema.safeParse(inputForValidation)

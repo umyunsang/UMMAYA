@@ -5,6 +5,7 @@ from __future__ import annotations
 from ummaya.tools.routing.intent_patterns import (
     _AED_RE,
     _AIRKOREA_AIR_QUALITY_RE,
+    _DJTC_SUBWAY_SEGMENT_RE,
     _EMERGENCY_RE,
     _GYERYONG_ASSISTIVE_CHARGER_RE,
     _HIRA_MEDICAL_DETAIL_RE,
@@ -88,6 +89,7 @@ def _is_lifestyle_weather_ref(query: str, has_airport_aviation: bool, has_emerge
         and not _KMA_ANALYSIS_DATA_RE.search(query)
         and not _TRAFFIC_HAZARD_RE.search(query)
         and not _MOF_OCEAN_WATER_QUALITY_RE.search(query)
+        and not _DJTC_SUBWAY_SEGMENT_RE.search(query)
     )
 
 
@@ -136,6 +138,8 @@ def _extract_environment_public_data_refs(query: str) -> list[str]:
         refs.append("mof_ocean_water_quality")
     if _AIRKOREA_AIR_QUALITY_RE.search(query):
         refs.append("airkorea_air_quality")
+    if _DJTC_SUBWAY_SEGMENT_RE.search(query):
+        refs.append("djtc_subway_segment")
     return refs
 
 

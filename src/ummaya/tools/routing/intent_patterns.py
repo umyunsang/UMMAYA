@@ -117,6 +117,11 @@ _AIRKOREA_AIR_QUALITY_RE = re.compile(
     r"pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)",
     re.IGNORECASE,
 )
+_DJTC_SUBWAY_SEGMENT_RE = re.compile(
+    r"((대전|DJTC|대전교통공사|도시철도|지하철).*(역간|소요시간|거리|운임|요금)|"
+    r"(역간|소요시간|거리|운임|요금).*(대전|DJTC|대전교통공사|도시철도|지하철))",
+    re.IGNORECASE,
+)
 _KCUE_REGIONAL_RE = re.compile(
     r"(대학알리미|대학정보공시|학교구분코드|schl[_\s-]?div[_\s-]?cd|KCUE|"
     r"지역별\s*(등록금|재정)|외국인\s*유학생|foreign\s+student|international\s+student)",

@@ -62,6 +62,7 @@ const { runToolUseBlocks } = await import('../../src/query/toolRunner.js')
 const { getAdapterToolByName } = await import(
   '../../src/tools/AdapterTool/AdapterTool.js'
 )
+const { getAllBaseTools } = await import('../../src/tools.js')
 const { createAssistantMessage, createUserMessage } = await import(
   '../../src/utils/messages.js'
 )
@@ -71,6 +72,14 @@ const { RAW_JSON_UNREGISTERED_TOOL_USE_ID_PREFIX } = await import(
 
 const TAX_TOOL_NAME = 'mock_lookup_module_hometax_simplified'
 const VERIFY_TOOL_NAME = 'mock_verify_module_modid'
+const MOJ_TOOL_NAME = 'moj_village_lawyer_lookup'
+const TAGO_ROUTE_TOOL_NAME = 'tago_bus_route_search'
+const TAGO_ROUTE_STATION_TOOL_NAME = 'tago_bus_route_station_search'
+const ROOT_FIND_TOOL = getAllBaseTools().find(tool => tool.name === 'find')
+
+if (!ROOT_FIND_TOOL) {
+  throw new Error('Expected root find tool to be available in base tools.')
+}
 
 function makeTaxManifestFrame(): AdapterManifestSyncFrame {
   return {
@@ -150,6 +159,117 @@ function makeTaxAndVerifyManifestFrame(): AdapterManifestSyncFrame {
     ...taxFrame,
     entries: [...taxFrame.entries, ...verifyFrame.entries],
     manifest_hash: 'e'.repeat(64),
+  }
+}
+
+function makeMojManifestFrame(): AdapterManifestSyncFrame {
+  return {
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'test-session',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9TZ',
+    ts: new Date('2026-06-15T00:00:00.000Z').toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      {
+        tool_id: MOJ_TOOL_NAME,
+        name: 'MOJ village lawyer lookup',
+        primitive: 'find',
+        policy_authority_url: 'https://www.data.go.kr/data/15121954/openapi.do',
+        source_mode: 'live',
+        search_hint: '법무부 마을변호사 지역별 현황 부산 사하구',
+        llm_description: 'Search official MOJ village lawyer regional assignment rows.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            page_no: {
+              type: 'integer',
+              default: 1,
+            },
+            num_of_rows: {
+              type: 'integer',
+              default: 20,
+            },
+            state: {
+              anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
+              default: null,
+            },
+            city: {
+              anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
+              default: null,
+            },
+            village: {
+              anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
+              default: null,
+            },
+          },
+          additionalProperties: false,
+        },
+      },
+    ],
+    manifest_hash: 'f'.repeat(64),
+    emitter_pid: 12345,
+  }
+}
+
+function makeTagoManifestFrame(): AdapterManifestSyncFrame {
+  return {
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'test-session',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9TA',
+    ts: new Date('2026-06-15T00:00:00.000Z').toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      {
+        tool_id: TAGO_ROUTE_TOOL_NAME,
+        name: 'TAGO bus route lookup',
+        primitive: 'find',
+        policy_authority_url: 'https://www.data.go.kr/data/15098529/openapi.do',
+        source_mode: 'live',
+        search_hint: 'TAGO 버스노선 cityCode routeNo',
+        llm_description: 'Search official TAGO bus route data by city_code and route_no.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            city_code: { type: 'string' },
+            route_no: { type: 'string' },
+          },
+          required: ['city_code', 'route_no'],
+          additionalProperties: false,
+        },
+      },
+      {
+        tool_id: TAGO_ROUTE_STATION_TOOL_NAME,
+        name: 'TAGO bus route-station lookup',
+        primitive: 'find',
+        policy_authority_url: 'https://www.data.go.kr/data/15098529/openapi.do',
+        source_mode: 'live',
+        search_hint: 'TAGO 노선별 경유정류소 routeId nodenm',
+        llm_description: 'Search official TAGO route-station data by city_code and route_id.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            city_code: { type: 'string' },
+            route_id: { type: 'string' },
+            node_nm: {
+              anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
+              default: null,
+            },
+            updown_cd: {
+              anyOf: [{ type: 'string', minLength: 1 }, { type: 'null' }],
+              default: null,
+            },
+          },
+          required: ['city_code', 'route_id'],
+          additionalProperties: false,
+        },
+      },
+    ],
+    manifest_hash: 'a'.repeat(64),
+    emitter_pid: 12345,
   }
 }
 
@@ -373,5 +493,215 @@ describe('query runner adapter tool resolution', () => {
 
     expect(toolResultText(results)).toContain('permission_denied')
     expect(dispatchPrimitiveMock).not.toHaveBeenCalled()
+  })
+
+  test('accepts Pydantic nullable default optional fields from adapter manifest', async () => {
+    ingestManifestFrame(makeMojManifestFrame())
+    const priorMessages = [
+      createUserMessage({
+        content: '부산 사하구 마을변호사를 법무부 공식 도구로 찾아줘.',
+      }),
+    ]
+    const block = {
+      type: 'tool_use',
+      id: 'toolu-moj-optional-village',
+      name: MOJ_TOOL_NAME,
+      input: {
+        state: '부산',
+        city: '사하구',
+      },
+    }
+    const assistantMessage: AssistantMessage = createAssistantMessage({
+      content: [block],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [block],
+      assistantMessage,
+      messages: [...priorMessages, assistantMessage],
+      toolUseContext: makeToolUseContext([], priorMessages),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).not.toContain('InputValidationError')
+    expect(dispatchPrimitiveMock).toHaveBeenCalledTimes(1)
+    expect(dispatchObservations).toEqual([
+      {
+        primitive: 'find',
+        toolName: MOJ_TOOL_NAME,
+        args: {
+          page_no: 1,
+          num_of_rows: 20,
+          state: '부산',
+          city: '사하구',
+          village: null,
+        },
+      },
+    ])
+  })
+
+  test('backfills MOJ village lawyer region from citizen text on root find calls', async () => {
+    ingestManifestFrame(makeMojManifestFrame())
+    const priorMessages = [
+      createUserMessage({
+        content:
+          '날씨로 대체하지 마. 부산 사하구 마을변호사 정보를 법무부 자료로 확인해줘',
+      }),
+    ]
+    const block = {
+      type: 'tool_use',
+      id: 'toolu-moj-root-find-region-backfill',
+      name: 'find',
+      input: {
+        tool_id: MOJ_TOOL_NAME,
+        params: {},
+      },
+    }
+    const assistantMessage: AssistantMessage = createAssistantMessage({
+      content: [block],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [block],
+      assistantMessage,
+      messages: [...priorMessages, assistantMessage],
+      toolUseContext: makeToolUseContext([ROOT_FIND_TOOL], priorMessages),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).not.toContain('InputValidationError')
+    expect(dispatchPrimitiveMock).toHaveBeenCalledTimes(1)
+    expect(dispatchObservations).toEqual([
+      {
+        primitive: 'find',
+        toolName: undefined,
+        args: {
+          tool_id: MOJ_TOOL_NAME,
+          params: {
+            state: '부산',
+            city: '사하구',
+          },
+        },
+      },
+    ])
+  })
+
+  test('blocks TAGO route substitution after official zero-result evidence', async () => {
+    ingestManifestFrame(makeTagoManifestFrame())
+    const citizenPrompt = createUserMessage({
+      content: '부산 1001번 버스 노선과 정류장, 도착정보를 TAGO 공식 도구로 찾아줘.',
+    })
+    const zeroRouteBlock = {
+      type: 'tool_use',
+      id: 'toolu-tago-zero-route',
+      name: TAGO_ROUTE_TOOL_NAME,
+      input: {
+        city_code: '21',
+        route_no: '1001',
+      },
+    }
+    const zeroRouteAssistant = createAssistantMessage({
+      content: [zeroRouteBlock],
+    })
+    const zeroRouteResult = createUserMessage({
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: zeroRouteBlock.id,
+          content: JSON.stringify({
+            ok: true,
+            result: {
+              kind: 'collection',
+              items: [],
+              total_count: 0,
+            },
+          }),
+        },
+      ],
+      toolUseResult: {
+        ok: true,
+        result: {
+          kind: 'collection',
+          items: [],
+          total_count: 0,
+        },
+      },
+      sourceToolAssistantUUID: zeroRouteAssistant.uuid,
+    })
+    const substituteBlock = {
+      type: 'tool_use',
+      id: 'toolu-tago-substitute-route',
+      name: TAGO_ROUTE_TOOL_NAME,
+      input: {
+        city_code: '21',
+        route_no: '141',
+      },
+    }
+    const substituteAssistant: AssistantMessage = createAssistantMessage({
+      content: [substituteBlock],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [substituteBlock],
+      assistantMessage: substituteAssistant,
+      messages: [
+        citizenPrompt,
+        zeroRouteAssistant,
+        zeroRouteResult,
+        substituteAssistant,
+      ],
+      toolUseContext: makeToolUseContext([], [citizenPrompt]),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).toContain('TAGO route lookup already returned zero official rows')
+    expect(toolResultText(results)).toContain('route_no=1001')
+    expect(toolResultText(results)).toContain('without citizen confirmation')
+    expect(dispatchPrimitiveMock).not.toHaveBeenCalled()
+  })
+
+  test('normalizes empty nullable adapter string fields before backend dispatch', async () => {
+    ingestManifestFrame(makeTagoManifestFrame())
+    const priorMessages = [
+      createUserMessage({
+        content: '부산 1001번 버스의 전체 경유 정류장을 TAGO 공식 도구로 찾아줘.',
+      }),
+    ]
+    const block = {
+      type: 'tool_use',
+      id: 'toolu-tago-empty-node-name',
+      name: TAGO_ROUTE_STATION_TOOL_NAME,
+      input: {
+        city_code: '21',
+        route_id: 'BSB5201001000',
+        node_nm: '',
+      },
+    }
+    const assistantMessage: AssistantMessage = createAssistantMessage({
+      content: [block],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [block],
+      assistantMessage,
+      messages: [...priorMessages, assistantMessage],
+      toolUseContext: makeToolUseContext([], priorMessages),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).not.toContain('InputValidationError')
+    expect(dispatchPrimitiveMock).toHaveBeenCalledTimes(1)
+    expect(dispatchObservations).toEqual([
+      {
+        primitive: 'find',
+        toolName: TAGO_ROUTE_STATION_TOOL_NAME,
+        args: {
+          city_code: '21',
+          route_id: 'BSB5201001000',
+          node_nm: null,
+          updown_cd: null,
+        },
+      },
+    ])
   })
 })

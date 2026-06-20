@@ -271,6 +271,57 @@ async def test_tago_bus_route_station_accepts_node_name_as_response_filter() -> 
     assert node_ids == {"BSB509950000", "BSB509960000"}
 
 
+@pytest.mark.asyncio
+async def test_moj_village_lawyer_filters_fixture_rows_by_region() -> None:
+    module = module_for_tool_id("moj_village_lawyer_lookup")
+    fixture_body = (
+        FIXTURES / "15121954/probes/live-2026-05-16-direct-check/moj-village-lawyer-http.body"
+    ).read_bytes()
+
+    validated_input = module.INPUT_SCHEMA.model_validate(
+        {
+            "state": "강원",
+            "city": "고성군",
+            "page_no": 1,
+            "num_of_rows": 20,
+        }
+    )
+    raw = await module.handle(validated_input, fixture_body=fixture_body)
+    validated = normalize(raw, module.TOOL, request_id="fixture-replay", elapsed_ms=5)
+
+    assert raw["kind"] == "collection"
+    assert raw["total_count"] == 3
+    assert {item["record"]["City"] for item in raw["items"]} == {"고성군"}
+    assert isinstance(validated, LookupCollection)
+    assert validated.total_count == 3
+
+
+@pytest.mark.asyncio
+async def test_moj_village_lawyer_empty_region_filter_returns_no_rows() -> None:
+    module = module_for_tool_id("moj_village_lawyer_lookup")
+    fixture_body = (
+        FIXTURES / "15121954/probes/live-2026-05-16-direct-check/moj-village-lawyer-http.body"
+    ).read_bytes()
+
+    validated_input = module.INPUT_SCHEMA.model_validate(
+        {
+            "state": "부산",
+            "city": "사하구",
+            "page_no": 1,
+            "num_of_rows": 20,
+        }
+    )
+    raw = await module.handle(validated_input, fixture_body=fixture_body)
+    validated = normalize(raw, module.TOOL, request_id="fixture-replay", elapsed_ms=5)
+
+    assert raw["kind"] == "collection"
+    assert raw["items"] == []
+    assert raw["total_count"] == 0
+    assert isinstance(validated, LookupCollection)
+    assert validated.items == []
+    assert validated.total_count == 0
+
+
 def test_kepco_input_accepts_official_wire_param_aliases() -> None:
     """KEPCO public docs expose metroCd/cityCd/cntrCd, while model fields stay snake_case."""
 

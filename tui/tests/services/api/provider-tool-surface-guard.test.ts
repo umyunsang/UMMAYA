@@ -6,6 +6,7 @@ import {
   createDiagnosticsTarget,
   getToolNames,
   ingestCivilDeathSurfaceManifest,
+  ingestDjtcSurfaceManifest,
   ingestGov24Manifest,
   ingestHealthLocationManifest,
   ingestHousingHandoffManifest,
@@ -41,6 +42,8 @@ const HOU_FIRST_HOME_PROMPT =
   '생애최초 주택구입인데 대출, 취득세 감면, 등기, 전입까지 빠뜨리지 않게 순서대로 진행해줘.'
 const CIV_DEATH_PROMPT =
   '아버지가 돌아가셨어. 사망신고, 장례 지원, 국민연금 유족급여, 재산 관련 절차를 순서대로 알려줘.'
+const DJTC_SEGMENT_PROMPT =
+  '대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마.'
 const GOV24_READ_ONLY_PROMPT =
   '정부24 주민등록등본 발급 가능 여부와 준비물을 확인해줘.'
 const GOV24_SUBMIT_PROMPT =
@@ -90,6 +93,13 @@ const CIV_DEATH_TOOL_NAMES = [
   'bfc_funeral_area_fee',
   'reb_real_estate_stat_table',
   'mohw_welfare_eligibility_search',
+] as const
+const DJTC_SEGMENT_TOOL_NAME = 'djtc_subway_segment_fare_time_check'
+const STALE_DJTC_SUBSTITUTE_TOOL_NAMES = [
+  'kakao_keyword_search',
+  'kma_current_observation',
+  'kepco_contract_power_usage',
+  'mock_kftc_opengiro_payment_send_v1',
 ] as const
 const NONEXISTENT_SURVIVOR_PENSION_TOOL_NAMES = [
   'nps_survivor_pension_lookup',
@@ -792,6 +802,42 @@ describe('provider request tool surface guard', () => {
           selectedAdapterToolNames: selection.final_adapter_tools,
         })
         expect(serializedMessages(exchange.request)).toContain(UTL_UTILITY_PROMPT)
+      } finally {
+        ingestMetarManifest(undefined)
+        restoreRouteDiagnostics(previousDiagnostics)
+        diagnostics.cleanup()
+      }
+    })
+  })
+
+  test('exposes DJTC subway segment adapter without stale weather, utility, or payment surface', async () => {
+    // Given: a DJTC fare/time prompt includes adversarial substitute-tool negatives.
+    await withFriendliEnv(async () => {
+      const previousDiagnostics = process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE
+      const diagnostics = createDiagnosticsTarget()
+      process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE = diagnostics.path
+      ingestDjtcSurfaceManifest('j')
+      try {
+        // When: the provider request is built through the real Friendli request path.
+        const exchange = await captureProviderExchange({
+          messages: [createUserMessage({ content: DJTC_SEGMENT_PROMPT })],
+        })
+
+        // Then: the model sees the official DJTC adapter, not semantic substitutes.
+        const toolNames = getToolNames(exchange.request)
+        const selection = readAdapterSelection(diagnostics.path)
+        expect(toolNames).toContain(DJTC_SEGMENT_TOOL_NAME)
+        expect(selection.final_adapter_tools).toContain(DJTC_SEGMENT_TOOL_NAME)
+        for (const toolName of STALE_DJTC_SUBSTITUTE_TOOL_NAMES) {
+          expect(toolNames).not.toContain(toolName)
+          expect(selection.final_adapter_tools).not.toContain(toolName)
+        }
+        expectNoNonAdapterProviderTools(toolNames)
+        expectProviderToolsMatchSelectedAdapters({
+          toolNames,
+          selectedAdapterToolNames: selection.final_adapter_tools,
+        })
+        expect(serializedMessages(exchange.request)).toContain(DJTC_SEGMENT_PROMPT)
       } finally {
         ingestMetarManifest(undefined)
         restoreRouteDiagnostics(previousDiagnostics)

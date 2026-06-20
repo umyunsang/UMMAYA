@@ -53,6 +53,11 @@ import {
   isAdapterToolName,
   isRootPrimitiveToolName,
 } from '../../tools/AdapterTool/AdapterTool.js'
+import { backfillMojVillageLawyerRegionInput } from '../../tools/_shared/publicAdapterInputRepair.js'
+import {
+  latestTextUserMessageIndex,
+  messageText,
+} from '../../query/messageGuards.js'
 import { appendRouteDiagnostic } from '../../tools/AdapterTool/routeDiagnostics.js'
 import { getAllBaseTools } from '../../tools.js'
 import type { HookProgress } from '../../types/hooks.js'
@@ -141,6 +146,9 @@ export const HOOK_TIMING_DISPLAY_THRESHOLD_MS = 500
 /** Log a debug warning when hooks/permission-decision block for this long. Matches
  * BashTool's PROGRESS_THRESHOLD_MS — the collapsed view feels stuck past this. */
 const SLOW_PHASE_LOG_THRESHOLD_MS = 2000
+const GOV24_CERTIFICATE_LOOKUP_TOOL_ID = 'mock_lookup_module_gov24_certificate'
+const GOV24_READ_ONLY_CERTIFICATE_RE =
+  /(정부24|gov24).*(주민등록등본|등본|증명서).*(가능\s*여부|준비물|확인|조회|안내|알려)/iu
 
 /**
  * Classify a tool execution error into a telemetry-safe string.
@@ -265,6 +273,56 @@ function getNextImagePasteId(messages: Message[]): number {
     }
   }
   return maxId + 1
+}
+
+function latestCitizenText(messages: readonly Message[]): string {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return ''
+  const message = messages[latestUserIndex]
+  return message ? messageText(message) : ''
+}
+
+function maybeBackfillLegacyGov24CertificateLookupInput(
+  toolName: string,
+  input: Record<string, unknown>,
+  messages: readonly Message[],
+): Record<string, unknown> {
+  if (toolName !== 'find') return input
+  if (input.tool_id !== GOV24_CERTIFICATE_LOOKUP_TOOL_ID) return input
+  const params = input.params
+  if (
+    params !== undefined &&
+    (
+      typeof params !== 'object' ||
+      params === null ||
+      Array.isArray(params) ||
+      Object.keys(params).length > 0
+    )
+  ) {
+    return input
+  }
+  if (!GOV24_READ_ONLY_CERTIFICATE_RE.test(latestCitizenText(messages))) {
+    return input
+  }
+  return {
+    ...input,
+    params: {
+      certificate_type: 'resident_registration',
+      purpose: '주민등록등본 발급 가능 여부와 준비물 확인',
+    },
+  }
+}
+
+function maybeBackfillDerivedPublicAdapterInput(
+  toolName: string,
+  input: Record<string, unknown>,
+  messages: readonly Message[],
+): Record<string, unknown> {
+  return backfillMojVillageLawyerRegionInput(
+    toolName,
+    maybeBackfillLegacyGov24CertificateLookupInput(toolName, input, messages),
+    latestCitizenText(messages),
+  )
 }
 
 export type MessageUpdateLazy<M extends Message = Message> = {
@@ -647,7 +705,12 @@ async function checkPermissionsAndCallTool(
   ) => void,
 ): Promise<MessageUpdateLazy[]> {
   // Validate input types with zod (surprisingly, the model is not great at generating valid input)
-  const parsedInput = tool.inputSchema.safeParse(input)
+  const inputForValidation = maybeBackfillDerivedPublicAdapterInput(
+    tool.name,
+    input,
+    toolUseContext.messages,
+  )
+  const parsedInput = tool.inputSchema.safeParse(inputForValidation)
   if (!parsedInput.success) {
     let errorContent = formatZodValidationError(tool.name, parsedInput.error)
 

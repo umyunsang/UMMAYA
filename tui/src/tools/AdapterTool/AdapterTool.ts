@@ -825,6 +825,13 @@ function resolveRef(root: JsonObject, ref: string): JsonObject | undefined {
   return isJsonObject(resolved) ? resolved : undefined
 }
 
+function variantAllowsType(variants: readonly JsonObject[], typeName: string): boolean {
+  return variants.some(variant => {
+    const typeValue = variant.type
+    return typeValue === typeName || (Array.isArray(typeValue) && typeValue.includes(typeName))
+  })
+}
+
 function zodFromJsonSchema(schema: JsonObject, root: JsonObject): z.ZodTypeAny {
   if (typeof schema.$ref === 'string') {
     const resolved = resolveRef(root, schema.$ref)
@@ -842,7 +849,15 @@ function zodFromJsonSchema(schema: JsonObject, root: JsonObject): z.ZodTypeAny {
     const variantSchemas = variants
       .filter(isJsonObject)
       .map(variant => zodFromJsonSchema(variant, root))
-    return applyJsonSchemaMetadata(zodUnion(variantSchemas), schema)
+    const variantObjects = variants.filter(isJsonObject)
+    const unionSchema = zodUnion(variantSchemas)
+    const acceptsNullableString =
+      variantAllowsType(variantObjects, 'string') &&
+      variantAllowsType(variantObjects, 'null')
+    const normalizedSchema = acceptsNullableString
+      ? z.preprocess(value => value === '' ? null : value, unionSchema)
+      : unionSchema
+    return applyJsonSchemaMetadata(normalizedSchema, schema)
   }
 
   if (Array.isArray(schema.enum) && schema.enum.length > 0) {
@@ -889,10 +904,7 @@ function zodFromJsonSchema(schema: JsonObject, root: JsonObject): z.ZodTypeAny {
       for (const [propertyName, propertySchemaRaw] of Object.entries(properties)) {
         const propertySchema = asJsonObject(propertySchemaRaw)
         let fieldSchema = zodFromJsonSchema(propertySchema, root)
-        if (
-          !required.has(propertyName) &&
-          !Object.prototype.hasOwnProperty.call(propertySchema, 'default')
-        ) {
+        if (!required.has(propertyName)) {
           fieldSchema = fieldSchema.optional()
         }
         shape[propertyName] = fieldSchema
@@ -1062,6 +1074,8 @@ const PRIOR_LOCATION_CONTEXT_RE = /\[prior_location_context\]/u
 const GOV24_RE = /(정부24|gov24|주민등록등본|등본|증명서|민원)/iu
 const GOV24_READ_ONLY_RE = /(가능\s*여부|준비물|확인|조회|안내|알려)/iu
 const GOV24_ACTION_RE = /(신청|진행|제출|접수|발급\s*신청|apply|submit|issue)/iu
+const GOV24_NEGATIVE_CONSTRAINT_RE =
+  /((정부24|gov24|홈택스|hometax).*(대체하지\s*마|쓰지\s*마|사용하지\s*마)|(대체하지\s*마|쓰지\s*마|사용하지\s*마).*(정부24|gov24|홈택스|hometax))/iu
 const WELFARE_RE =
   /(생활비|기초생활|주거급여|긴급복지|저소득|차상위|복지혜택|지원금|진료비\s*바우처|출산휴가|임신|아동수당|첫만남이용권)/iu
 const CIVIL_BIRTH_HANDOFF_RE =
@@ -1070,6 +1084,32 @@ const UTILITY_RE = /(전기|수도|도시가스|요금|자동이체|공과금|�
 const HOUSING_HANDOFF_RE =
   /(생애최초\s*주택구입|주택구입|대출|취득세|등기|전입)/iu
 const CIVIL_DEATH_RE = /(사망|돌아가|장례|유족|상속|재산|국민연금)/iu
+const DJTC_SUBWAY_SEGMENT_RE =
+  /((대전|DJTC|대전교통공사|도시철도|지하철).*(역간|소요시간|거리|운임|요금)|(역간|소요시간|거리|운임|요금).*(대전|DJTC|대전교통공사|도시철도|지하철))/iu
+const WEATHER_NEGATIVE_CONSTRAINT_RE =
+  /((날씨|기상|weather).*(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘))|(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘)).*(날씨|기상|weather))/iu
+const TRAFFIC_HAZARD_RE =
+  /(교통사고|사고\s*위험|사고다발|위험\s*(?:구간|도로|지점)|어린이보호구역|보호구역|도로\s*구간|accident|hazard|hotspot|KOROAD|도로교통공단)/iu
+const TAGO_BUS_RE =
+  /(TAGO|버스|노선|정류장|도착정보|버스\s*도착|bus\s*(?:route|station|arrival))/iu
+const MOJ_VILLAGE_LAWYER_RE = /(마을변호사|법무부.*변호사|village\s+lawyer)/iu
+const CCOURT_PUBLICATION_RE = /(헌법재판소|헌재|기본권|발간자료|constitutional\s+court)/iu
+const MOIS_EMERGENCY_CALL_BOX_RE =
+  /(안전\s*비상벨|비상벨|비상호출함|비상\s*호출함|긴급\s*신고함|긴급신고함|방범벨|emergency\s+call\s+box)/iu
+const GYERYONG_ASSISTIVE_CHARGER_RE =
+  /((전동보장구|전동\s*휠체어|보장구|장애인).*(충전|충전소|충전장소)|(충전|충전소|충전장소).*(전동보장구|전동\s*휠체어|보장구|장애인)|계룡시?.*(충전소|충전\s*장소))/iu
+const MFDS_EASY_DRUG_RE = /(식약처|의약품|약품|타이레놀|MFDS|easy\s+drug)/iu
+const MPM_PUBLIC_JOB_RE = /(인사혁신처|공무원\s*(?:채용|공고)|공직\s*채용|MPM)/iu
+const MSS_SUPPORT_NOTICE_RE = /(중소벤처기업부|중소기업.*지원|지원사업\s*공고|MSS|SME\s+support)/iu
+const PPS_SHOPPING_RE =
+  /(조달청.*(?:쇼핑몰|물품|제품)|나라장터.*(?:쇼핑몰|물품|제품)|종합\s*쇼핑몰|쇼핑몰.*(?:노트북|물품)|PPS\s+shopping)/iu
+const PPS_BID_RE = /(입찰|나라장터|조달청|\bbid\b|procurement|tender)/iu
+const MSIT_BUSINESS_RE = /(과기정통부|과학기술정보통신부|MSIT|사업\s*공고)/iu
+const MOF_OCEAN_WATER_RE = /(해양\s*수질|해양수질|수질\s*자동\s*측정|용존산소|\bpH\b|water\s+quality|ocean\s+water)/iu
+const KCUE_REGIONAL_RE =
+  /(대학알리미|대학정보공시|학교구분코드|schl[_\s-]?div[_\s-]?cd|KCUE|지역별\s*(등록금|재정)|외국인\s*유학생|foreign\s+student|international\s+student)/iu
+const FSC_CORPORATE_FINANCE_RE = /(금융위|금융위원회|기업금융|FSC|corporate\s+finance)/iu
+const FTC_STATUS_RE = /(공정위|공정거래위원회|대기업집단|FTC|large\s+group|public\s+ym)/iu
 
 const LOCATION_TOOL_IDS = new Set([
   'locate',
@@ -1113,6 +1153,42 @@ const CIVIL_DEATH_TOOL_IDS = new Set([
   'reb_real_estate_stat_table',
   'mohw_welfare_eligibility_search',
 ])
+const DJTC_SUBWAY_SEGMENT_TOOL_IDS = new Set([
+  'djtc_subway_segment_fare_time_check',
+])
+const TRAFFIC_TOOL_IDS = new Set([
+  'koroad_accident_hazard_search',
+  'koroad_accident_search',
+  'tago_bus_route_search',
+  'tago_bus_route_station_search',
+  'tago_bus_arrival_search',
+  'tago_bus_location_search',
+  'tago_bus_station_search',
+])
+const LEGAL_PUBLIC_DATA_TOOL_IDS = new Set([
+  'moj_village_lawyer_lookup',
+  'ccourt_publication_documents',
+])
+const PUBLIC_SAFETY_TOOL_IDS = new Set([
+  'mois_emergency_call_box_lookup',
+  'gyeryong_assistive_device_charging_place_locate',
+])
+const INFORMATION_NOTICE_TOOL_IDS = new Set([
+  'mfds_easy_drug_info_lookup',
+  'mpm_public_job_lookup',
+  'mss_sme_support_notice_lookup',
+  'pps_shopping_mall_product_lookup',
+  'pps_bid_public_info',
+  'msit_business_announcement_lookup',
+])
+const PUBLIC_STATS_TOOL_IDS = new Set([
+  'mof_ocean_water_quality_check',
+  'kcue_finance_regional_tuition',
+  'kcue_student_regional_foreign',
+  'fsc_corporate_finance_summary',
+  'ftc_large_group_status',
+  'ftc_public_ym_list',
+])
 
 type ProviderRoutingIntent = {
   readonly hasCoordinateLocationAnchor: boolean
@@ -1128,6 +1204,24 @@ type ProviderRoutingIntent = {
   readonly hasUtility: boolean
   readonly hasHousingHandoff: boolean
   readonly hasCivilDeath: boolean
+  readonly hasDjtcSubwaySegment: boolean
+  readonly hasWeatherNegativeConstraint: boolean
+  readonly hasTrafficHazard: boolean
+  readonly hasTagoBus: boolean
+  readonly hasMojVillageLawyer: boolean
+  readonly hasCcourtPublication: boolean
+  readonly hasMoisEmergencyCallBox: boolean
+  readonly hasGyeryongAssistiveCharger: boolean
+  readonly hasMfdsEasyDrug: boolean
+  readonly hasMpmPublicJob: boolean
+  readonly hasMssSupportNotice: boolean
+  readonly hasPpsShopping: boolean
+  readonly hasPpsBid: boolean
+  readonly hasMsitBusiness: boolean
+  readonly hasMofOceanWater: boolean
+  readonly hasKcueRegional: boolean
+  readonly hasFscCorporateFinance: boolean
+  readonly hasFtcStatus: boolean
 }
 
 type AdapterSelectionOptions = {
@@ -1141,7 +1235,14 @@ function hasHangul(text: string): boolean {
 function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
   const hasEmergencyMedical = HEALTHCARE_RE.test(query)
   const hasGov24 = GOV24_RE.test(query)
-  const hasGov24Action = hasGov24 && GOV24_ACTION_RE.test(query)
+  const hasGov24NegativeConstraint = GOV24_NEGATIVE_CONSTRAINT_RE.test(query)
+  const hasGov24Action =
+    hasGov24 && !hasGov24NegativeConstraint && GOV24_ACTION_RE.test(query)
+  const hasDjtcSubwaySegment = DJTC_SUBWAY_SEGMENT_RE.test(query)
+  const hasWeatherNegativeConstraint = WEATHER_NEGATIVE_CONSTRAINT_RE.test(query)
+  const hasTrafficHazard = TRAFFIC_HAZARD_RE.test(query)
+  const hasTagoBus = TAGO_BUS_RE.test(query)
+  const hasMofOceanWater = MOF_OCEAN_WATER_RE.test(query)
   const hasCoordinateLocationAnchor = COORDINATE_PAIR_RE.test(query)
   const hasAdminLocationAnchor = ADMIN_LOCATION_RE.test(query)
   const hasPoiLocationAnchor = POI_LOCATION_RE.test(query)
@@ -1158,20 +1259,44 @@ function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
     hasLifestyleWeather:
       KMA_LIFESTYLE_WEATHER_RE.test(query) &&
       !hasEmergencyMedical &&
+      !hasDjtcSubwaySegment &&
+      !hasWeatherNegativeConstraint &&
+      !hasTrafficHazard &&
+      !hasTagoBus &&
+      !hasMofOceanWater &&
       !AIR_QUALITY_RE.test(query) &&
       !KMA_ANALYSIS_RE.test(query) &&
       !AIRPORT_AVIATION_RE.test(query),
     hasEmergencyMedical,
     hasGov24ReadOnly:
       hasGov24 &&
+      !hasGov24NegativeConstraint &&
       GOV24_READ_ONLY_RE.test(query) &&
       !hasGov24Action,
     hasGov24Action,
     hasWelfare: WELFARE_RE.test(query),
     hasCivilBirthHandoff: CIVIL_BIRTH_HANDOFF_RE.test(query),
-    hasUtility: UTILITY_RE.test(query),
+    hasUtility: UTILITY_RE.test(query) && !hasDjtcSubwaySegment,
     hasHousingHandoff: HOUSING_HANDOFF_RE.test(query),
     hasCivilDeath: CIVIL_DEATH_RE.test(query),
+    hasDjtcSubwaySegment,
+    hasWeatherNegativeConstraint,
+    hasTrafficHazard,
+    hasTagoBus,
+    hasMojVillageLawyer: MOJ_VILLAGE_LAWYER_RE.test(query),
+    hasCcourtPublication: CCOURT_PUBLICATION_RE.test(query),
+    hasMoisEmergencyCallBox: MOIS_EMERGENCY_CALL_BOX_RE.test(query),
+    hasGyeryongAssistiveCharger: GYERYONG_ASSISTIVE_CHARGER_RE.test(query),
+    hasMfdsEasyDrug: MFDS_EASY_DRUG_RE.test(query),
+    hasMpmPublicJob: MPM_PUBLIC_JOB_RE.test(query),
+    hasMssSupportNotice: MSS_SUPPORT_NOTICE_RE.test(query),
+    hasPpsShopping: PPS_SHOPPING_RE.test(query),
+    hasPpsBid: PPS_BID_RE.test(query) && !PPS_SHOPPING_RE.test(query),
+    hasMsitBusiness: MSIT_BUSINESS_RE.test(query),
+    hasMofOceanWater,
+    hasKcueRegional: KCUE_REGIONAL_RE.test(query),
+    hasFscCorporateFinance: FSC_CORPORATE_FINANCE_RE.test(query),
+    hasFtcStatus: FTC_STATUS_RE.test(query),
   }
 }
 
@@ -1247,6 +1372,48 @@ function restrictiveToolIdsForIntent(
     addSetValues(allowed, CIVIL_DEATH_TOOL_IDS)
   }
 
+  if (intent.hasDjtcSubwaySegment) {
+    restrictive = true
+    addSetValues(allowed, DJTC_SUBWAY_SEGMENT_TOOL_IDS)
+  }
+
+  if (intent.hasTrafficHazard || intent.hasTagoBus) {
+    restrictive = true
+    addSetValues(allowed, TRAFFIC_TOOL_IDS)
+  }
+
+  if (intent.hasMojVillageLawyer || intent.hasCcourtPublication) {
+    restrictive = true
+    addSetValues(allowed, LEGAL_PUBLIC_DATA_TOOL_IDS)
+  }
+
+  if (intent.hasMoisEmergencyCallBox || intent.hasGyeryongAssistiveCharger) {
+    restrictive = true
+    addSetValues(allowed, PUBLIC_SAFETY_TOOL_IDS)
+  }
+
+  if (
+    intent.hasMfdsEasyDrug ||
+    intent.hasMpmPublicJob ||
+    intent.hasMssSupportNotice ||
+    intent.hasPpsShopping ||
+    intent.hasPpsBid ||
+    intent.hasMsitBusiness
+  ) {
+    restrictive = true
+    addSetValues(allowed, INFORMATION_NOTICE_TOOL_IDS)
+  }
+
+  if (
+    intent.hasMofOceanWater ||
+    intent.hasKcueRegional ||
+    intent.hasFscCorporateFinance ||
+    intent.hasFtcStatus
+  ) {
+    restrictive = true
+    addSetValues(allowed, PUBLIC_STATS_TOOL_IDS)
+  }
+
   return restrictive ? allowed : undefined
 }
 
@@ -1277,6 +1444,71 @@ function routingIntentBoostForTool(
   if (intent.hasWelfare && WELFARE_TOOL_IDS.has(toolId)) return 1000
   if (intent.hasUtility && UTILITY_TOOL_IDS.has(toolId)) return 1000
   if (intent.hasCivilDeath && CIVIL_DEATH_TOOL_IDS.has(toolId)) return 1000
+  if (intent.hasDjtcSubwaySegment && DJTC_SUBWAY_SEGMENT_TOOL_IDS.has(toolId)) {
+    return 1400
+  }
+  if (intent.hasTrafficHazard) {
+    if (toolId === 'koroad_accident_hazard_search') return 1250
+    if (toolId === 'koroad_accident_search') return 700
+  }
+  if (intent.hasTagoBus) {
+    if (toolId === 'tago_bus_route_search') return 1200
+    if (toolId === 'tago_bus_station_search') return 1050
+    if (toolId === 'tago_bus_arrival_search') return 1000
+    if (toolId === 'tago_bus_route_station_search') return 950
+    if (toolId === 'tago_bus_location_search') return 850
+  }
+  if (intent.hasMojVillageLawyer && toolId === 'moj_village_lawyer_lookup') {
+    return 1250
+  }
+  if (intent.hasCcourtPublication && toolId === 'ccourt_publication_documents') {
+    return 1200
+  }
+  if (
+    intent.hasMoisEmergencyCallBox &&
+    toolId === 'mois_emergency_call_box_lookup'
+  ) {
+    return 1200
+  }
+  if (
+    intent.hasGyeryongAssistiveCharger &&
+    toolId === 'gyeryong_assistive_device_charging_place_locate'
+  ) {
+    return 1200
+  }
+  if (intent.hasMfdsEasyDrug && toolId === 'mfds_easy_drug_info_lookup') {
+    return 1250
+  }
+  if (intent.hasMpmPublicJob && toolId === 'mpm_public_job_lookup') {
+    return 1150
+  }
+  if (intent.hasMssSupportNotice && toolId === 'mss_sme_support_notice_lookup') {
+    return 1150
+  }
+  if (intent.hasPpsShopping && toolId === 'pps_shopping_mall_product_lookup') {
+    return 1150
+  }
+  if (intent.hasPpsBid && toolId === 'pps_bid_public_info') return 1150
+  if (intent.hasMsitBusiness && toolId === 'msit_business_announcement_lookup') {
+    return 1050
+  }
+  if (intent.hasMofOceanWater && toolId === 'mof_ocean_water_quality_check') {
+    return 1100
+  }
+  if (intent.hasKcueRegional && PUBLIC_STATS_TOOL_IDS.has(toolId)) {
+    if (toolId === 'kcue_finance_regional_tuition') return 1000
+    if (toolId === 'kcue_student_regional_foreign') return 950
+  }
+  if (
+    intent.hasFscCorporateFinance &&
+    toolId === 'fsc_corporate_finance_summary'
+  ) {
+    return 1000
+  }
+  if (intent.hasFtcStatus) {
+    if (toolId === 'ftc_large_group_status') return 1000
+    if (toolId === 'ftc_public_ym_list') return 800
+  }
   return 0
 }
 

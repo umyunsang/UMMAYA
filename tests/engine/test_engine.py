@@ -652,6 +652,71 @@ def test_available_adapters_context_air_quality_exposes_airkorea() -> None:
     assert "sido_name" in content
 
 
+def test_available_adapters_context_korean_dust_query_exposes_airkorea() -> None:
+    """Korean-only fine-dust wording should expose AirKorea, not weather or no-tool."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "서울 종로구 현재 미세먼지랑 초미세먼지 상태 알려줘. 도구 근거 없으면 모른다고 해."
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "airkorea_ctprvn_air_quality"
+    assert "airkorea_ctprvn_air_quality" in turn_tool_ids
+    assert "kma_current_observation" not in turn_tool_ids
+    assert "sido_name" in content
+
+
+def test_available_adapters_context_djtc_segment_query_exposes_djtc_not_kepco() -> None:
+    """Daejeon subway segment fare/time wording must not route to KEPCO."""
+
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "대전 도시철도 0101역에서 0102역까지 소요시간 거리 요금을 조회해줘."
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "djtc_subway_segment_fare_time_check"
+    assert "djtc_subway_segment_fare_time_check" in turn_tool_ids
+    assert "kepco_contract_power_usage" not in turn_tool_ids
+    assert "mock_kftc_opengiro_payment_send_v1" not in turn_tool_ids
+    assert "mock_kftc_opengiro_bill_send_v1" not in turn_tool_ids
+    assert "strstnno" in content
+    assert "endstnno" in content
+
+    adversarial_message, adversarial_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 "
+        "조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마."
+    )
+
+    assert adversarial_message is not None
+    adversarial_content = adversarial_message.content or ""
+    assert adversarial_tool_ids[0] == "djtc_subway_segment_fare_time_check"
+    assert "djtc_subway_segment_fare_time_check" in adversarial_tool_ids
+    assert "kma_current_observation" not in adversarial_tool_ids
+    assert "mock_kftc_opengiro_payment_send_v1" not in adversarial_tool_ids
+    assert "strstnno" in adversarial_content
+    assert "endstnno" in adversarial_content
+
+
 def test_available_adapters_context_natural_kcue_finance_excludes_locate() -> None:
     """Natural official university tuition wording should expose KCUE finance first."""
 

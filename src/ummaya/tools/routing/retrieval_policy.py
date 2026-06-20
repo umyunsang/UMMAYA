@@ -42,6 +42,7 @@ _LOCATION_TOOL_IDS = frozenset(
     }
 )
 _AIRKOREA_TOOL_IDS = frozenset({"airkorea_ctprvn_air_quality"})
+_DJTC_SUBWAY_SEGMENT_TOOL_IDS = frozenset({"djtc_subway_segment_fare_time_check"})
 
 
 def expand_query_for_adapter_retrieval(query: str) -> str:
@@ -69,6 +70,7 @@ def expand_query_for_intent(query: str, intent: ToolSelectionIntent) -> str:
     additions.extend(_emergency_chain_additions(intent))
     additions.extend(_pps_bid_additions(intent))
     additions.extend(_airkorea_air_quality_additions(intent))
+    additions.extend(_djtc_subway_segment_additions(intent))
     additions.extend(_kcue_regional_additions(intent))
     additions.extend(_ocean_water_quality_additions(intent))
     additions.extend(_health_detail_additions(intent))
@@ -106,6 +108,7 @@ def filter_special_case_scores(
     scored = _filter_emergency_chain_scores(intent, scored)
     scored = _filter_pps_bid_scores(intent, scored)
     scored = _filter_airkorea_air_quality_scores(intent, scored)
+    scored = _filter_djtc_subway_segment_scores(intent, scored)
     scored = _filter_kcue_regional_scores(intent, scored)
     scored = _filter_health_detail_scores(intent, scored)
     scored = _filter_public_safety_location_scores(intent, scored)
@@ -335,6 +338,24 @@ def _airkorea_air_quality_additions(intent: ToolSelectionIntent) -> list[str]:
     ]
 
 
+def _djtc_subway_segment_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("djtc_subway_segment"):
+        return []
+    return [
+        "대전교통공사",
+        "대전도시철도",
+        "역간",
+        "소요시간",
+        "거리",
+        "요금",
+        "운임",
+        "DJTC",
+        "strstnno",
+        "endstnno",
+        "subway segment fare time distance",
+    ]
+
+
 def _kcue_regional_additions(intent: ToolSelectionIntent) -> list[str]:
     if not intent.has_public_data_ref("kcue_regional"):
         return []
@@ -488,6 +509,21 @@ def _filter_airkorea_air_quality_scores(
     if not has_airkorea:
         return scored
     return [(tool_id, score + 1200.0) for tool_id, score in scored if tool_id in _AIRKOREA_TOOL_IDS]
+
+
+def _filter_djtc_subway_segment_scores(
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    if not intent.has_public_data_ref("djtc_subway_segment"):
+        return scored
+    has_djtc = any(tool_id in _DJTC_SUBWAY_SEGMENT_TOOL_IDS for tool_id, _ in scored)
+    if not has_djtc:
+        return scored
+    return [
+        (tool_id, score + 1400.0)
+        for tool_id, score in scored
+        if tool_id in _DJTC_SUBWAY_SEGMENT_TOOL_IDS
+    ]
 
 
 def _filter_kcue_regional_scores(

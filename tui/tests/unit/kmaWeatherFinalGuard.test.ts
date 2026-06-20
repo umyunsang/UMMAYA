@@ -11,6 +11,10 @@ import {
 } from '../query/query-loop-visible-progress.helpers.js'
 
 const PROMPT = '오늘 부산 사하구 날씨 알려줘'
+const DJTC_PROMPT =
+  '대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마.'
+const TAGO_NEGATIVE_WEATHER_PROMPT =
+  '부산 1001번 버스 노선과 도착정보를 TAGO 공식 도구로 조회해줘. 날씨로 대체하지 말고 TAGO만 써.'
 const KST_OVERRIDE_ENV = 'UMMAYA_OVERRIDE_KST_TIME'
 
 afterEach(() => {
@@ -347,6 +351,33 @@ function createNoEvidenceWeatherDeps() {
   }
 }
 
+function createDjtcNegativeConstraintDeps() {
+  return {
+    async *callModel() {
+      yield createAssistantMessage({
+        content: 'DJTC 공식 도구 결과 없이 날씨나 결제 도구로 대체하지 않습니다.',
+      })
+    },
+    microcompact: async (messages: readonly Message[]) => ({ messages }),
+    autocompact: async () => ({ compactionResult: null, consecutiveFailures: undefined }),
+    uuid: () => 'uuid-djtc-negative-weather-token',
+  }
+}
+
+function createTagoNegativeWeatherConstraintDeps() {
+  return {
+    async *callModel() {
+      yield createAssistantMessage({
+        content:
+          'TAGO 공식 도구 결과 없이 날씨 도구로 대체하지 않습니다. 버스 노선 adapter가 필요합니다.',
+      })
+    },
+    microcompact: async (messages: readonly Message[]) => ({ messages }),
+    autocompact: async () => ({ compactionResult: null, consecutiveFailures: undefined }),
+    uuid: () => 'uuid-tago-negative-weather-token',
+  }
+}
+
 describe('KMA current-observation final answer guard', () => {
   test('replaces unsupported sky prose with current-observation-only answer', async () => {
     process.env[KST_OVERRIDE_ENV] = '2026-06-20T11:00:00+09:00'
@@ -490,5 +521,39 @@ describe('KMA current-observation final answer guard', () => {
     expect(text).toContain('KMA adapter 결과 없이 날씨/예보를 단정하지 않습니다')
     expect(text).not.toContain('어제 기준 시각 09:30')
     expect(text).not.toContain('1400 기준')
+  })
+
+  test('does not treat DJTC negative weather-token constraints as weather requests', async () => {
+    const emitted: Message[] = []
+    for await (const message of query({
+      ...queryParams(DJTC_PROMPT, [], createDjtcNegativeConstraintDeps()),
+    })) {
+      if (message.type === 'assistant' || message.type === 'user') {
+        emitted.push(message)
+      }
+    }
+
+    const text = allAssistantText(emitted)
+    expect(text).toContain('DJTC 공식 도구 결과 없이 날씨나 결제 도구로 대체하지 않습니다.')
+    expect(text).not.toContain('KMA adapter 결과 없이 날씨/예보를 단정하지 않습니다')
+  })
+
+  test('does not treat generic negative weather-token constraints as weather requests', async () => {
+    const emitted: Message[] = []
+    for await (const message of query({
+      ...queryParams(
+        TAGO_NEGATIVE_WEATHER_PROMPT,
+        [],
+        createTagoNegativeWeatherConstraintDeps(),
+      ),
+    })) {
+      if (message.type === 'assistant' || message.type === 'user') {
+        emitted.push(message)
+      }
+    }
+
+    const text = allAssistantText(emitted)
+    expect(text).toContain('TAGO 공식 도구 결과 없이 날씨 도구로 대체하지 않습니다')
+    expect(text).not.toContain('KMA adapter 결과 없이 날씨/예보를 단정하지 않습니다')
   })
 })
