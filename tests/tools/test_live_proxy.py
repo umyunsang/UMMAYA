@@ -49,6 +49,25 @@ def test_auto_mode_routes_packaged_proxyable_tool(monkeypatch: pytest.MonkeyPatc
     assert should_use_live_adapter_proxy(_make_proxyable_tool()) is True
 
 
+def test_auto_mode_routes_packaged_kma_api_hub_host(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("UMMAYA_LIVE_ADAPTER_MODE", raising=False)
+    monkeypatch.setenv("UMMAYA_PACKAGE_ROOT", "/opt/homebrew/Caskroom/ummaya/0.1.1/package")
+
+    assert (
+        should_use_live_adapter_proxy(
+            _make_proxyable_tool(
+                endpoint=(
+                    "https://apihub.kma.go.kr/api/typ02/openApi/"
+                    "VilageFcstInfoService_2.0/getUltraSrtNcst"
+                )
+            )
+        )
+        is True
+    )
+
+
 @pytest.mark.parametrize(
     "endpoint",
     [

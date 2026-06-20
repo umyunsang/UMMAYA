@@ -30,6 +30,12 @@ class _LocateInput(BaseModel):
     query: str
 
 
+_KMA_API_HUB_ENDPOINT = (
+    "https://apihub.kma.go.kr/api/typ02/openApi/"
+    "VilageFcstInfoService_2.0/getUltraSrtNcst"
+)
+
+
 def _policy() -> AdapterRealDomainPolicy:
     return AdapterRealDomainPolicy(
         real_classification_url="https://www.data.go.kr/",
@@ -39,13 +45,16 @@ def _policy() -> AdapterRealDomainPolicy:
     )
 
 
-def _find_tool(adapter_mode: str = "live") -> GovAPITool:
+def _find_tool(
+    adapter_mode: str = "live",
+    endpoint: str = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst",
+) -> GovAPITool:
     return GovAPITool(
         id="kma_current_observation",
         name_ko="기상청 현재 관측",
         ministry="KMA",
         category=["weather"],
-        endpoint="https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst",
+        endpoint=endpoint,
         auth_type="api_key",
         input_schema=_QueryInput,
         output_schema=_FindOutput,
@@ -92,6 +101,20 @@ def test_healthz_reports_proxyable_live_adapter_count() -> None:
     assert response.json()["proxyable_live_adapter_count"] == 1
     assert ready.status_code == 200
     assert ready.json()["proxyable_live_adapter_count"] == 1
+
+
+def test_healthz_counts_kma_api_hub_adapter_as_proxyable() -> None:
+    registry = ToolRegistry()
+    tool = _find_tool(endpoint=_KMA_API_HUB_ENDPOINT)
+    registry.register(tool)
+    executor = ToolExecutor(registry=registry, live_adapter_mode="direct")
+    executor.register_adapter(tool.id, _unused_adapter)
+
+    with _client(registry, executor) as client:
+        response = client.get("/healthz")
+
+    assert response.status_code == 200
+    assert response.json()["proxyable_live_adapter_count"] == 1
 
 
 def test_manifest_endpoint_exposes_registry_without_operator_secrets() -> None:
@@ -161,6 +184,36 @@ def test_gateway_invokes_find_adapter_direct_even_if_process_env_forces_proxy(
                 "primitive": "find",
                 "params": {"q": "동아대학교"},
                 "request_id": "req-find",
+                "session_identity": "session-1",
+            },
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["result"]["kind"] == "record"
+    assert body["result"]["item"] == {"value": "live:동아대학교"}
+
+
+def test_gateway_invokes_kma_api_hub_adapter_direct_even_if_process_env_forces_proxy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("UMMAYA_LIVE_ADAPTER_MODE", "proxy")
+    registry = ToolRegistry()
+    tool = _find_tool(endpoint=_KMA_API_HUB_ENDPOINT)
+    registry.register(tool)
+    executor = ToolExecutor(registry=registry, live_adapter_mode="direct")
+    executor.register_adapter(tool.id, _find_adapter)
+
+    with _client(registry, executor) as client:
+        response = client.post(
+            f"/v1/adapters/{tool.id}",
+            json={
+                "schema_version": "ummaya.live_adapter.v1",
+                "tool_id": tool.id,
+                "primitive": "find",
+                "params": {"q": "동아대학교"},
+                "request_id": "req-find-api-hub",
                 "session_identity": "session-1",
             },
         )

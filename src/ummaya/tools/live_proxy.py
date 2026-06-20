@@ -23,6 +23,7 @@ from ummaya.tools.models import GovAPITool
 
 _PROXYABLE_HOSTS = frozenset(
     {
+        "apihub.kma.go.kr",
         "apis.data.go.kr",
         "openapi.data.go.kr",
         "dapi.kakao.com",
