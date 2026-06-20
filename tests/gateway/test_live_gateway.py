@@ -31,8 +31,7 @@ class _LocateInput(BaseModel):
 
 
 _KMA_API_HUB_ENDPOINT = (
-    "https://apihub.kma.go.kr/api/typ02/openApi/"
-    "VilageFcstInfoService_2.0/getUltraSrtNcst"
+    "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getUltraSrtNcst"
 )
 
 
