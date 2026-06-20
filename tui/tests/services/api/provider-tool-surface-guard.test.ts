@@ -1,4 +1,8 @@
 import { describe, expect, test } from 'bun:test'
+import {
+  clearManifestCache,
+  ingestManifestFrame,
+} from '../../../src/services/api/adapterManifest.js'
 import { createAssistantMessage } from '../../../src/utils/messages.js'
 import { createUserMessage } from '../../../src/utils/userMessageFactories.js'
 import {
@@ -108,6 +112,64 @@ const NONEXISTENT_SURVIVOR_PENSION_TOOL_NAMES = [
 const GOV24_LOOKUP_TOOL_NAME = 'mock_lookup_module_gov24_certificate'
 const GOV24_VERIFY_TOOL_NAME = 'mock_verify_module_simple_auth'
 const GOV24_SUBMIT_TOOL_NAME = 'mock_submit_module_gov24_minwon'
+const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
+const AIRKOREA_CTPRVN_AIR_QUALITY_TOOL_NAME = 'airkorea_ctprvn_air_quality'
+const WEATHER_AIR_QUALITY_PROMPT =
+  '오늘 부산 사하구 날씨랑 미세먼지 상태를 확인해줘. 날씨와 대기질 출처를 나눠서 알려줘.'
+
+function publicDataEntry(
+  toolId: string,
+  searchHint: string,
+  inputProperties: Record<string, unknown>,
+) {
+  return {
+    tool_id: toolId,
+    name: toolId,
+    primitive: 'find' as const,
+    policy_authority_url: 'https://www.data.go.kr/',
+    source_mode: 'live' as const,
+    search_hint: searchHint,
+    llm_description: searchHint,
+    input_schema_json: {
+      type: 'object',
+      properties: inputProperties,
+      required: Object.keys(inputProperties),
+      additionalProperties: false,
+    },
+  }
+}
+
+function ingestWeatherAirQualityManifest(): void {
+  clearManifestCache()
+  ingestManifestFrame({
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'provider-surface-weather-air',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9WA',
+    ts: new Date().toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      publicDataEntry(
+        KMA_CURRENT_OBSERVATION_TOOL_NAME,
+        '기상청 KMA 날씨 기상 현재 관측 부산 사하구',
+        { location: { type: 'string' } },
+      ),
+      publicDataEntry(
+        AIRKOREA_CTPRVN_AIR_QUALITY_TOOL_NAME,
+        'AirKorea 에어코리아 대기질 미세먼지 초미세먼지 부산',
+        { sido_name: { type: 'string' } },
+      ),
+      publicDataEntry(
+        'moj_village_lawyer_lookup',
+        '법무부 마을변호사 부산 사하구',
+        { region: { type: 'string' } },
+      ),
+    ],
+    manifest_hash: 'a'.repeat(64),
+    emitter_pid: 12345,
+  })
+}
 
 function locatedNightHospitalAfterCurrentLocationMessages() {
   return [
@@ -307,6 +369,67 @@ function expectProviderToolsMatchSelectedAdapters(params: {
 }
 
 describe('provider request tool surface guard', () => {
+  test('forces a concrete adapter choice for compositional weather and air-quality requests', async () => {
+    await withFriendliEnv(async () => {
+      ingestWeatherAirQualityManifest()
+
+      const exchange = await captureProviderExchange({
+        messages: [createUserMessage({ content: WEATHER_AIR_QUALITY_PROMPT })],
+      })
+
+      const toolNames = getToolNames(exchange.request)
+      expect(toolNames).toContain(KMA_CURRENT_OBSERVATION_TOOL_NAME)
+      expect(toolNames).toContain(AIRKOREA_CTPRVN_AIR_QUALITY_TOOL_NAME)
+      expect(toolNames).not.toContain('WebSearch')
+      expect(toolNames).not.toContain('WebFetch')
+      expect(exchange.request.tool_choice?.type).toBe('function')
+      expect(toolNames).toContain(exchange.request.tool_choice?.function.name)
+      expect(serializedMessages(exchange.request)).toContain(
+        `Mandatory tool call: the host selected ${exchange.request.tool_choice?.function.name}`,
+      )
+    })
+  })
+
+  test('moves forced adapter choice past successful prior public-data tool results', async () => {
+    await withFriendliEnv(async () => {
+      ingestWeatherAirQualityManifest()
+      const airQualityToolUseId = 'toolu-airquality-done'
+
+      const exchange = await captureProviderExchange({
+        messages: [
+          createUserMessage({ content: WEATHER_AIR_QUALITY_PROMPT }),
+          createAssistantMessage({
+            content: [{
+              type: 'tool_use',
+              id: airQualityToolUseId,
+              name: AIRKOREA_CTPRVN_AIR_QUALITY_TOOL_NAME,
+              input: { sido_name: '부산' },
+            }],
+          }),
+          createUserMessage({
+            content: [{
+              type: 'tool_result',
+              tool_use_id: airQualityToolUseId,
+              content: JSON.stringify({
+                ok: true,
+                result: { kind: 'collection', items: [] },
+              }),
+            }],
+          }),
+        ],
+      })
+
+      expect(getToolNames(exchange.request)).toContain(
+        AIRKOREA_CTPRVN_AIR_QUALITY_TOOL_NAME,
+      )
+      expect(getToolNames(exchange.request)).toContain(KMA_CURRENT_OBSERVATION_TOOL_NAME)
+      expect(exchange.request.tool_choice).toEqual({
+        type: 'function',
+        function: { name: KMA_CURRENT_OBSERVATION_TOOL_NAME },
+      })
+    })
+  })
+
   test('exposes initial TAX-001 Hometax adapters without workspace or support tools', async () => {
     // Given: a fresh TAX-001 provider turn with the tax adapter manifest synced.
     await withFriendliEnv(async () => {

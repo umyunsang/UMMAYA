@@ -1269,7 +1269,6 @@ function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
       !hasTrafficHazard &&
       !hasTagoBus &&
       !hasMofOceanWater &&
-      !AIR_QUALITY_RE.test(query) &&
       !KMA_ANALYSIS_RE.test(query) &&
       !AIRPORT_AVIATION_RE.test(query),
     hasEmergencyMedical,
@@ -1426,6 +1425,16 @@ function restrictiveToolIdsForIntent(
   }
 
   return restrictive ? allowed : undefined
+}
+
+export function hasRestrictiveAdapterRoutingIntentForQuery(
+  query: string,
+  options: AdapterSelectionOptions = {},
+): boolean {
+  return restrictiveToolIdsForIntent(
+    extractProviderRoutingIntent(query),
+    options,
+  ) !== undefined
 }
 
 function routingIntentBoostForTool(

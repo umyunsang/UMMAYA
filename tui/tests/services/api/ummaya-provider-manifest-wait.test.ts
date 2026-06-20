@@ -22,6 +22,8 @@ const { queryModelWithStreaming } = await import('../../../src/services/api/umma
 
 const TAX_PROMPT =
   '작년 종합소득세 신고하고 환급받을 수 있으면 환급 계좌까지 등록해줘.'
+const WEATHER_AIR_QUALITY_SOURCE_PROMPT =
+  '오늘 부산 사하구 날씨랑 미세먼지 상태를 확인해줘. 날씨와 대기질 출처를 나눠서 알려줘.'
 
 const providerRequestSchema = z.object({
   tools: z
@@ -78,6 +80,51 @@ describe('UMMAYA provider adapter manifest wait', () => {
       expect(serializedEvents).toContain('public-service adapter manifest')
       expect(serializedEvents).toContain('25ms')
       expect(serializedEvents).toContain('backend readiness')
+      expect(serializedEvents).not.toContain('fetch must not be called')
+    })
+  })
+
+  test('yields visible adapter manifest timeout and never fetches when TAX-001 sdk turn manifest is missing', async () => {
+    await withFriendliEnv(async () => {
+      process.env.UMMAYA_TEST_PUBLIC_SERVICE_MANIFEST_SYNC_TIMEOUT_MS = '25'
+      let fetchCallCount = 0
+
+      const events = await collectProviderEvents({
+        querySource: 'sdk',
+        userText: TAX_PROMPT,
+        fetchOverride: async () => {
+          fetchCallCount += 1
+          throw new Error('fetch must not be called before adapter manifest sync')
+        },
+      })
+
+      expect(fetchCallCount).toBe(0)
+      const serializedEvents = JSON.stringify(events)
+      expect(serializedEvents).toContain('"isApiErrorMessage":true')
+      expect(serializedEvents).toContain('public-service adapter manifest')
+      expect(serializedEvents).toContain('25ms')
+      expect(serializedEvents).not.toContain('fetch must not be called')
+    })
+  })
+
+  test('treats sdk source-worded weather and air-quality requests as public-service adapter turns', async () => {
+    await withFriendliEnv(async () => {
+      process.env.UMMAYA_TEST_PUBLIC_SERVICE_MANIFEST_SYNC_TIMEOUT_MS = '25'
+      let fetchCallCount = 0
+
+      const events = await collectProviderEvents({
+        querySource: 'sdk',
+        userText: WEATHER_AIR_QUALITY_SOURCE_PROMPT,
+        fetchOverride: async () => {
+          fetchCallCount += 1
+          throw new Error('fetch must not be called before adapter manifest sync')
+        },
+      })
+
+      expect(fetchCallCount).toBe(0)
+      const serializedEvents = JSON.stringify(events)
+      expect(serializedEvents).toContain('"isApiErrorMessage":true')
+      expect(serializedEvents).toContain('public-service adapter manifest')
       expect(serializedEvents).not.toContain('fetch must not be called')
     })
   })

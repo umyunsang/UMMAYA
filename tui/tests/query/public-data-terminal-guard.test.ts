@@ -12,7 +12,11 @@ import {
 } from './query-loop-visible-progress.helpers.js'
 
 const PROMPT = '부산 중구 미세먼지 지금 어때? 마스크 써야 해?'
+const WEATHER_AIR_QUALITY_PROMPT =
+  '오늘 부산 사하구 날씨랑 미세먼지 상태를 확인해줘. 날씨와 대기질 출처를 나눠서 알려줘.'
 const AIRKOREA_TOOL_NAME = 'airkorea_ctprvn_air_quality'
+const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
+const KMA_ULTRA_SHORT_TERM_FORECAST_TOOL_NAME = 'kma_ultra_short_term_forecast'
 const MOBILITY_PROMPT =
   '운전면허 갱신해야 하는지 확인하고 적성검사 예약, 과태료, 자동차세까지 같이 봐줘.'
 const TRAFFIC_FINE_TOOL_NAME = 'mock_traffic_fine_pay_v1'
@@ -57,6 +61,69 @@ function createAirKoreaTool(): Tools[number] {
                 },
               },
             ],
+          },
+        },
+      }
+    },
+  }
+}
+
+function createKmaCurrentObservationTool(): Tools[number] {
+  return {
+    ...createNamedTool(KMA_CURRENT_OBSERVATION_TOOL_NAME),
+    async call() {
+      return {
+        data: {
+          ok: true,
+          result: {
+            kind: 'record',
+            item: {
+              base_date: '20260620',
+              base_time: '1900',
+              t1h: '23.9',
+              rn1: '0',
+              reh: '76',
+              wsd: '3',
+              vec: '274',
+              pty: '0',
+            },
+          },
+        },
+      }
+    },
+  }
+}
+
+function createKmaUltraShortTermForecastTool(): Tools[number] {
+  return {
+    ...createNamedTool(KMA_ULTRA_SHORT_TERM_FORECAST_TOOL_NAME),
+    async call() {
+      return {
+        data: {
+          ok: true,
+          result: {
+            kind: 'record',
+            item: {
+              total_count: 2,
+              items: [
+                {
+                  base_date: '20260620',
+                  base_time: '2000',
+                  fcst_date: '20260620',
+                  fcst_time: '2100',
+                  category: 'TMP',
+                  fcst_value: '22',
+                },
+                {
+                  base_date: '20260620',
+                  base_time: '2000',
+                  fcst_date: '20260620',
+                  fcst_time: '2100',
+                  category: 'SKY',
+                  fcst_value: '3',
+                },
+              ],
+            },
           },
         },
       }
@@ -307,6 +374,79 @@ function createPublicDataTerminalDeps(
       consecutiveFailures: undefined,
     }),
     uuid: () => `uuid-public-data-${callCount}`,
+  }
+}
+
+function createWeatherAirQualityDeps(
+  onModelInput: (messages: readonly Message[]) => void,
+) {
+  let callCount = 0
+  return {
+    async *callModel(request: { readonly messages: readonly Message[] }) {
+      callCount += 1
+      onModelInput(request.messages)
+      if (callCount === 1) {
+        yield createAssistantMessage({
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu-weather-air-airkorea',
+              name: AIRKOREA_TOOL_NAME,
+              input: { sido_name: '부산' },
+            },
+          ],
+        })
+        return
+      }
+      if (callCount === 2) {
+        yield createAssistantMessage({
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu-weather-air-kma-current',
+              name: KMA_CURRENT_OBSERVATION_TOOL_NAME,
+              input: {
+                base_date: '20260620',
+                base_time: '2000',
+                nx: 97,
+                ny: 75,
+                data_type: 'JSON',
+              },
+            },
+          ],
+        })
+        return
+      }
+      if (callCount === 3) {
+        yield createAssistantMessage({
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu-weather-air-kma-forecast',
+              name: KMA_ULTRA_SHORT_TERM_FORECAST_TOOL_NAME,
+              input: {
+                base_date: '20260620',
+                base_time: '2000',
+                nx: 97,
+                ny: 75,
+                data_type: 'JSON',
+              },
+            },
+          ],
+        })
+        return
+      }
+      yield createAssistantMessage({
+        content: '날씨만 정리했습니다.',
+      })
+    },
+    microcompact: async (messages: readonly Message[]) => ({ messages }),
+    autocompact: async () => ({
+      compactionResult: null,
+      consecutiveFailures: undefined,
+    }),
+    uuid: () => `uuid-weather-air-quality-${callCount}`,
+    callCount: () => callCount,
   }
 }
 
@@ -1430,6 +1570,45 @@ describe('public-data terminal answer guard', () => {
     )
     expect(allAssistantText(emitted)).not.toContain('답변으로 제공하겠습니다')
     expect(allAssistantText(emitted)).toContain('광복동 측정소 기준 PM10 23')
+  })
+
+  test('keeps AirKorea evidence in weather and air-quality final summaries', async () => {
+    const mutableModelInputs: Message[][] = []
+    const deps = createWeatherAirQualityDeps(messages => {
+      mutableModelInputs.push([...messages])
+    })
+
+    const emitted: Message[] = []
+    for await (const message of query({
+      ...queryParams(
+        WEATHER_AIR_QUALITY_PROMPT,
+        [
+          createAirKoreaTool(),
+          createKmaCurrentObservationTool(),
+          createKmaUltraShortTermForecastTool(),
+        ],
+        deps,
+      ),
+      messages: [createUserMessage({ content: WEATHER_AIR_QUALITY_PROMPT })],
+      maxTurns: 5,
+    })) {
+      if (message.type === 'assistant' || message.type === 'user') {
+        emitted.push(message)
+      }
+    }
+
+    expect(deps.callCount()).toBe(4)
+    expect(mutableModelInputs).toHaveLength(4)
+    const text = allAssistantText(emitted)
+    expect(text).toContain('기상청 adapter 결과 기준으로 확인된 값만 정리합니다')
+    expect(text).toContain('현재관측(2026-06-20 19:00)')
+    expect(text).toContain('기온: 23.9°C')
+    expect(text).toContain('AirKorea adapter 결과 기준으로 확인된 값만 정리합니다')
+    expect(text).toContain('대기질(광복동 측정소, 2026-06-15 18:00)')
+    expect(text).toContain('PM10: 23 (좋음)')
+    expect(text).toContain('PM2.5: 11 (좋음)')
+    expect(text).toContain('통합대기환경지수(CAI): 42 (좋음)')
+    expect(text).not.toContain('날씨만 정리했습니다')
   })
 
   test('blocks extra tool dispatch after a generic final-answer repair prompt', async () => {

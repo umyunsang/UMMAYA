@@ -2,6 +2,7 @@ import { getAllBaseTools } from '../../../tools.js'
 import type { Tool, Tools } from '../../../Tool.js'
 import {
   getAdapterToolByName,
+  hasRestrictiveAdapterRoutingIntentForQuery,
   selectTopKAdapterToolNamesForQuery,
 } from '../../../tools/AdapterTool/AdapterTool.js'
 import {
@@ -21,6 +22,7 @@ import {
 } from '../../../tools/_shared/toolChoiceRepair/documentCompletionPatterns.js'
 
 const MAIN_THREAD_QUERY_SOURCE = 'repl_main_thread'
+const SDK_QUERY_SOURCE = 'sdk'
 const ADAPTER_CANDIDATE_LIMIT = 5
 const WORKSPACE_SUPPORT_TOOL_NAMES = new Set([
   'workspace_grep',
@@ -70,6 +72,10 @@ function isMainThreadQuerySource(querySource: string): boolean {
   )
 }
 
+function isUserFacingQuerySource(querySource: string): boolean {
+  return isMainThreadQuerySource(querySource) || querySource === SDK_QUERY_SOURCE
+}
+
 function filterToAdapterSurface(params: {
   readonly selected: readonly Tool[]
   readonly selectedAdapterEntries: readonly AdapterManifestEntry[]
@@ -114,7 +120,12 @@ export function shouldWaitForAdapterManifestForProviderRequest(params: {
   readonly querySource: string
   readonly userText: string
 }): boolean {
-  if (selectRecoveredSupportToolNamesForQuery(params.userText).length > 0) {
+  const hasAdapterIntent =
+    hasRestrictiveAdapterRoutingIntentForQuery(params.userText)
+  if (
+    !hasAdapterIntent &&
+    selectRecoveredSupportToolNamesForQuery(params.userText).length > 0
+  ) {
     return false
   }
   if (isExactLocalReadOnlyDocumentPrompt(params.userText)) {
@@ -122,7 +133,7 @@ export function shouldWaitForAdapterManifestForProviderRequest(params: {
   }
   return (
     params.userText.trim().length > 0 &&
-    isMainThreadQuerySource(params.querySource)
+    isUserFacingQuerySource(params.querySource)
   )
 }
 
@@ -143,9 +154,14 @@ export function selectProviderTools(params: {
   const disabledToolNames = new Set(params.disabledToolNames ?? [])
   let selected: Tool[] = []
   const selectedAdapterEntries: AdapterManifestEntry[] = []
-  const recoveredSupportToolNames = isExactLocalReadOnlyDocumentPrompt(params.userText)
-    ? []
-    : selectRecoveredSupportToolNamesForQuery(params.userText)
+  const hasAdapterIntent = hasRestrictiveAdapterRoutingIntentForQuery(
+    params.userText,
+    { hasCurrentTurnLocationContext: params.hasCurrentTurnLocationContext },
+  )
+  const recoveredSupportToolNames =
+    isExactLocalReadOnlyDocumentPrompt(params.userText) || hasAdapterIntent
+      ? []
+      : selectRecoveredSupportToolNamesForQuery(params.userText)
   const useWorkspaceOnlySurface = hasWorkspaceSupportToolName(recoveredSupportToolNames)
 
   for (const name of recoveredSupportToolNames) {
@@ -184,7 +200,7 @@ export function selectProviderTools(params: {
       return recoveredSupportToolNames.includes(tool.name)
     })
   } else if (
-    isMainThreadQuerySource(params.querySource) &&
+    isUserFacingQuerySource(params.querySource) &&
     selectedAdapterEntries.length > 0
   ) {
     selected = filterToAdapterSurface({

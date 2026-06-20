@@ -69,6 +69,7 @@ const KMA_ORDINARY_WEATHER_TOOL_NAMES = new Set([
   'kma_ultra_short_term_forecast',
 ])
 const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
+const AIRKOREA_AIR_QUALITY_TOOL_NAME = 'airkorea_ctprvn_air_quality'
 const KMA_FORECAST_TOOL_NAMES = new Set([
   'kma_forecast_fetch',
   'kma_short_term_forecast',
@@ -99,6 +100,8 @@ const EMERGENCY_SAFE_LIMITATION_RE =
   /(결과\s*없이|없이는|단정하지|조회하지\s*못|확인하지\s*못|연결된\s*뒤|adapter|handoff|공식\s*(?:채널|응급의료)|119)/iu
 const WEATHER_RESULT_REQUEST_RE =
   /(날씨|기상|weather|예보|현재\s*기온|강수|비|눈|습도|풍속)/iu
+const AIR_QUALITY_RESULT_REQUEST_RE =
+  /(미세먼지|초미세먼지|초미세|대기질|공기질|대기오염|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality)/iu
 const DJTC_SUBWAY_SEGMENT_REQUEST_RE =
   /((대전|DJTC|대전교통공사|도시철도|지하철).*(역간|소요시간|거리|운임|요금)|(역간|소요시간|거리|운임|요금).*(대전|DJTC|대전교통공사|도시철도|지하철))/iu
 const WEATHER_NEGATIVE_CONSTRAINT_RE =
@@ -351,6 +354,14 @@ type KmaForecastSummaryRow = {
   humidity?: string
   windSpeed?: string
   precipitation?: string
+}
+
+type AirQualitySummary = {
+  readonly stationName?: string
+  readonly dataTime?: string
+  readonly pm10?: string
+  readonly pm25?: string
+  readonly khai?: string
 }
 
 function toolResultsSinceLatestPrompt(
@@ -643,6 +654,79 @@ function kmaForecastItems(result: PriorToolResult): readonly Record<string, unkn
   return [...items, ...points].filter(isRecord)
 }
 
+function nestedResultRecord(envelope: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+  if (envelope === undefined) return undefined
+  if (isRecord(envelope.result)) return envelope.result
+  return isRecord(envelope.data) && isRecord(envelope.data.result)
+    ? envelope.data.result
+    : undefined
+}
+
+function airKoreaAirQualityRecords(result: PriorToolResult): readonly Record<string, unknown>[] {
+  if (result.toolName !== AIRKOREA_AIR_QUALITY_TOOL_NAME || result.isError) {
+    return []
+  }
+  const resultRecord = nestedResultRecord(parseJsonRecord(result.content))
+  const items = Array.isArray(resultRecord?.items) ? resultRecord.items : []
+  return items.flatMap(item => {
+    if (!isRecord(item)) return []
+    if (isRecord(item.record)) return [item.record]
+    return [item]
+  })
+}
+
+function airQualityMeasure(value: unknown, grade: unknown): string | undefined {
+  const measure = scalarText(value)
+  if (measure === undefined || measure.length === 0) return undefined
+  const gradeText = scalarText(grade)
+  return gradeText !== undefined && gradeText.length > 0
+    ? `${measure} (${gradeText})`
+    : measure
+}
+
+function airQualitySummary(record: Record<string, unknown>): AirQualitySummary | undefined {
+  const pm10 = airQualityMeasure(record.pm10Value, record.pm10GradeLabelKo)
+  const pm25 = airQualityMeasure(record.pm25Value, record.pm25GradeLabelKo)
+  const khai = airQualityMeasure(record.khaiValue, record.khaiGradeLabelKo)
+  if (pm10 === undefined && pm25 === undefined && khai === undefined) {
+    return undefined
+  }
+  return {
+    stationName: scalarText(record.stationName),
+    dataTime: scalarText(record.dataTime),
+    pm10,
+    pm25,
+    khai,
+  }
+}
+
+function firstAirQualitySummary(results: readonly PriorToolResult[]): AirQualitySummary | undefined {
+  for (const record of results.flatMap(airKoreaAirQualityRecords)) {
+    const summary = airQualitySummary(record)
+    if (summary !== undefined) return summary
+  }
+  return undefined
+}
+
+function airQualitySummaryLines(summary: AirQualitySummary): readonly string[] {
+  const observedAt = [
+    summary.stationName !== undefined ? `${summary.stationName} 측정소` : undefined,
+    summary.dataTime,
+  ].filter((part): part is string => part !== undefined && part.length > 0).join(', ')
+  const lines = [
+    '',
+    'AirKorea adapter 결과 기준으로 확인된 값만 정리합니다.',
+  ]
+  if (observedAt.length > 0) {
+    lines.push(`대기질(${observedAt})`)
+  }
+  if (summary.pm10 !== undefined) lines.push(`- PM10: ${summary.pm10}`)
+  if (summary.pm25 !== undefined) lines.push(`- PM2.5: ${summary.pm25}`)
+  if (summary.khai !== undefined) lines.push(`- 통합대기환경지수(CAI): ${summary.khai}`)
+  lines.push('대기질 값은 AirKorea 측정소 결과이며 날씨 값과 출처를 분리했습니다.')
+  return lines
+}
+
 function precipitationTypeText(value: string | undefined): string | undefined {
   if (value === undefined) return undefined
   const byCode: Record<string, string> = {
@@ -803,6 +887,7 @@ function kmaForecastRowText(row: KmaForecastSummaryRow): string | undefined {
 function createKmaWeatherEvidenceMessage(params: {
   readonly currentItem?: Record<string, unknown>
   readonly forecastItems: readonly Record<string, unknown>[]
+  readonly airQuality?: AirQualitySummary
 }): AssistantMessage {
   const rows = kmaForecastSummaryRows(params.forecastItems)
   const item = params.currentItem
@@ -839,6 +924,9 @@ function createKmaWeatherEvidenceMessage(params: {
       '하늘상태, 구름, 맑음/흐림, 강수확률, 체감온도는 현재관측 결과만으로 단정하지 않습니다.',
     )
   }
+  if (params.airQuality !== undefined) {
+    lines.push(...airQualitySummaryLines(params.airQuality))
+  }
   return createAssistantMessage({
     content: lines.filter(line => line !== '').join('\n'),
   })
@@ -870,6 +958,9 @@ function kmaWeatherEvidenceGuard(params: {
   const results = toolResultsSinceLatestPrompt(params.messages)
   const item = results.map(kmaCurrentObservationItem).find(item => item !== undefined)
   const forecastItems = results.flatMap(result => [...kmaForecastItems(result)])
+  const airQuality = AIR_QUALITY_RESULT_REQUEST_RE.test(latestUser)
+    ? firstAirQualitySummary(results)
+    : undefined
   if (item === undefined && forecastItems.length === 0) {
     const candidateText = messageText(params.candidate)
     const attemptedKmaWeather = results.some(result =>
@@ -886,6 +977,7 @@ function kmaWeatherEvidenceGuard(params: {
   return createKmaWeatherEvidenceMessage({
     currentItem: item,
     forecastItems,
+    airQuality,
   })
 }
 

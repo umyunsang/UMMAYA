@@ -11,6 +11,7 @@ import {
   selectProviderToolChoiceName,
   selectProviderTools,
 } from './toolSelection.js'
+import { isAdapterToolName } from '../../../tools/AdapterTool/AdapterTool.js'
 import type { ProviderTurnEvidenceContext } from './evidence.js'
 import {
   hasCurrentTurnLocationContext,
@@ -133,6 +134,86 @@ function isJsonObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function parseJsonObject(value: unknown): Record<string, unknown> | undefined {
+  if (isJsonObject(value)) return value
+  if (typeof value !== 'string') return undefined
+  try {
+    const parsed: unknown = JSON.parse(value)
+    return isJsonObject(parsed) ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function messageEnvelope(message: unknown): Record<string, unknown> | undefined {
+  if (!isJsonObject(message)) return undefined
+  return isJsonObject(message.message) ? message.message : undefined
+}
+
+function messageContentBlocks(message: unknown): readonly Record<string, unknown>[] {
+  const content = messageEnvelope(message)?.content
+  return Array.isArray(content) ? content.filter(isJsonObject) : []
+}
+
+function isToolResultBlock(block: Record<string, unknown>): boolean {
+  return block.type === 'tool_result'
+}
+
+function isStructuredFailureResult(value: unknown): boolean {
+  return parseJsonObject(value)?.ok === false
+}
+
+function isCitizenPromptMessage(message: unknown): boolean {
+  if (!isJsonObject(message) || message.type !== 'user') return false
+  const content = messageEnvelope(message)?.content
+  if (!Array.isArray(content)) return true
+  const blocks = content.filter(isJsonObject)
+  return !blocks.every(isToolResultBlock)
+}
+
+function latestCitizenPromptIndex(messages: readonly unknown[]): number {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (isCitizenPromptMessage(messages[index])) return index
+  }
+  return -1
+}
+
+function successfulToolNamesSinceLatestPrompt(
+  messages: readonly unknown[],
+): ReadonlySet<string> {
+  const startIndex = latestCitizenPromptIndex(messages)
+  const toolNamesByUseId = new Map<string, string>()
+  const successfulResultIds = new Set<string>()
+  for (const message of messages.slice(startIndex + 1)) {
+    if (!isJsonObject(message)) continue
+    for (const block of messageContentBlocks(message)) {
+      if (
+        message.type === 'assistant' &&
+        block.type === 'tool_use' &&
+        typeof block.id === 'string' &&
+        typeof block.name === 'string'
+      ) {
+        toolNamesByUseId.set(block.id, block.name)
+      }
+      if (
+        message.type === 'user' &&
+        block.type === 'tool_result' &&
+        block.is_error !== true &&
+        typeof block.tool_use_id === 'string' &&
+        !isStructuredFailureResult(block.content)
+      ) {
+        successfulResultIds.add(block.tool_use_id)
+      }
+    }
+  }
+  const names = new Set<string>()
+  for (const id of successfulResultIds) {
+    const name = toolNamesByUseId.get(id)
+    if (name !== undefined) names.add(name)
+  }
+  return names
+}
+
 function toolToOpenAI(tool: Tool): OpenAITool {
   return {
     type: 'function',
@@ -152,6 +233,16 @@ function toolChoiceFor(
     type: 'function',
     function: { name: toolName },
   }
+}
+
+function firstUnresolvedAdapterToolName(
+  tools: readonly Tool[],
+  messages: QueryModelParams['messages'],
+): string | undefined {
+  const successfulToolNames = successfulToolNamesSinceLatestPrompt(messages)
+  return tools.find(
+    tool => isAdapterToolName(tool.name) && !successfulToolNames.has(tool.name),
+  )?.name
 }
 
 export function buildProviderRequest(
@@ -177,7 +268,9 @@ export function buildProviderRequest(
     hasCurrentTurnLocationContext: hasCurrentTurnLocationContext(params.messages),
     evidenceContext,
   })
-  const toolChoice = toolChoiceFor(selectedToolChoiceName)
+  const activeToolChoiceName =
+    selectedToolChoiceName ?? firstUnresolvedAdapterToolName(tools, params.messages)
+  const toolChoice = toolChoiceFor(activeToolChoiceName)
   const toolPayload = tools.map(toolToOpenAI)
   return {
     model: params.options.model,
@@ -186,8 +279,8 @@ export function buildProviderRequest(
     messages: transcriptToOpenAIMessages(
       params.messages,
       params.systemPrompt,
-      selectedToolChoiceName
-        ? forcedToolChoiceSystemInstruction(selectedToolChoiceName)
+      activeToolChoiceName
+        ? forcedToolChoiceSystemInstruction(activeToolChoiceName)
         : undefined,
     ),
     ...(toolPayload.length > 0 ? { tools: toolPayload } : {}),

@@ -91,6 +91,18 @@ describe('adapter tool routing intent', () => {
     expect(names).not.toContain('kma_current_observation')
   })
 
+  test('keeps compositional weather and air-quality requests on KMA and AirKorea surfaces', () => {
+    ingestAdversarialPublicDataManifest()
+
+    const names = selectTopKAdapterToolNamesForQuery(
+      '오늘 부산 사하구 날씨랑 미세먼지 상태를 확인해줘. 날씨와 대기질 출처를 나눠서 알려줘.',
+      5,
+    )
+
+    expect(names).toContain('kma_current_observation')
+    expect(names).toContain('airkorea_ctprvn_air_quality')
+  })
+
   test('keeps transport requests on TAGO and KOROAD surface', () => {
     ingestAdversarialPublicDataManifest()
 
