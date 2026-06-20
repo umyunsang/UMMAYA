@@ -311,7 +311,11 @@ function priorKmaAviationResultKind(
 function isKmaGridFailureResult(result: PriorToolResult): boolean {
   if (!KMA_ORDINARY_WEATHER_TOOL_NAMES.has(result.toolName)) return false
   const text = serializeToolResult(result.content)
-  return /Missing or invalid fields|LOCATE FIRST|nx\/ny|base_date|base_time/iu.test(text)
+  return (
+    /Missing or invalid fields|LOCATE FIRST|nx\/ny/iu.test(text) ||
+    /(?:missing|required|invalid)[^.\n]*(?:base_date|base_time)/iu.test(text) ||
+    /(?:base_date|base_time)[^.\n]*(?:missing|required|invalid)/iu.test(text)
+  )
 }
 
 function createGuardToolResult(

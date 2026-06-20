@@ -185,7 +185,7 @@ export const getUserContext = memoize(
     return {
       ...(claudeMd && { claudeMd }),
       currentDate: `Today's date is ${getLocalISODate()}.`,
-      currentKstTime: `현재 KST 시각: ${kst.hm} (${kst.hhmm}). KMA base_time 발표 시각은 KST 정시 8회: 0200/0500/0800/1100/1400/1700/2000/2300 — 직전 정시 사용, 추측 금지.`,
+      currentKstTime: `현재 KST 날짜/시각: ${kst.iso} ${kst.hm} (${kst.hhmm}). 오늘 날짜는 ${kst.iso}. KMA base_date는 오늘/현재 질의에서 ${kst.iso}를 사용. KMA base_time 발표 시각은 KST 정시 8회: 0200/0500/0800/1100/1400/1700/2000/2300 — 직전 정시 사용, 추측 금지.`,
     }
   },
 )

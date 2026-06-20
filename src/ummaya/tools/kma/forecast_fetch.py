@@ -78,6 +78,7 @@ _BASE_TIME_ORDER: tuple[str, ...] = (
 _VALID_BASE_TIMES: frozenset[str] = frozenset(_BASE_TIME_ORDER)
 _NO_DATA_RESULT_CODE = "03"
 _MAX_BASE_SLOT_ATTEMPTS = 8
+_RECENT_BASE_SLOT_RETENTION_DAYS = 3
 
 # ---------------------------------------------------------------------------
 # Input schema (Pydantic v2 strict — no Any)
@@ -114,8 +115,9 @@ class KmaForecastFetchInput(BaseModel):
     base_date: str = Field(
         pattern=r"^\d{8}$",
         description=(
-            "Forecast base date in YYYYMMDD format, e.g. '20260416'. "
-            "Use today's date or yesterday if today's data is not yet published."
+            "Forecast base date in YYYYMMDD format. "
+            "Use today's date or yesterday if today's data is not yet published. "
+            "Do not copy sample dates."
         ),
     )
     base_time: str = Field(
@@ -224,6 +226,46 @@ def _candidate_base_slots(
     return slots
 
 
+def _latest_published_base_slot(
+    *,
+    now: datetime | None = None,
+    publication_lag_minutes: int = 10,
+) -> tuple[str, str]:
+    kst_now = now.astimezone(_SEOUL_TZ) if now is not None else datetime.now(_SEOUL_TZ)
+    stable_now = kst_now - timedelta(minutes=publication_lag_minutes)
+    past_times = [
+        base_time for base_time in _BASE_TIME_ORDER if int(base_time[:2]) <= stable_now.hour
+    ]
+    if past_times:
+        return stable_now.strftime("%Y%m%d"), past_times[-1]
+
+    prev_day = stable_now - timedelta(days=1)
+    return prev_day.strftime("%Y%m%d"), _BASE_TIME_ORDER[-1]
+
+
+def _base_slot_datetime(base_date: str, base_time: str) -> datetime:
+    parsed = datetime.strptime(f"{base_date}{base_time}", "%Y%m%d%H%M")
+    return parsed.replace(tzinfo=_SEOUL_TZ)
+
+
+def _coerce_recent_base_slot(
+    base_date: str,
+    base_time: str,
+    *,
+    now: datetime | None = None,
+) -> tuple[str, str]:
+    latest_date, latest_time = _latest_published_base_slot(now=now)
+    latest_dt = _base_slot_datetime(latest_date, latest_time)
+    try:
+        requested_dt = _base_slot_datetime(base_date, base_time)
+    except ValueError:
+        return latest_date, latest_time
+    earliest_dt = latest_dt - timedelta(days=_RECENT_BASE_SLOT_RETENTION_DAYS)
+    if requested_dt < earliest_dt or requested_dt > latest_dt:
+        return latest_date, latest_time
+    return base_date, base_time
+
+
 def _extract_response_header(payload: dict[str, Any]) -> tuple[dict[str, Any], str, str]:
     """Return (response body, resultCode, resultMsg) from a KMA envelope."""
     resp_body = payload["response"]
@@ -288,6 +330,10 @@ async def _fetch(  # noqa: C901
             reason=LookupErrorReason.invalid_params,
             message=f"base_date {inp.base_date!r} is not a valid YYYYMMDD calendar date.",
         )
+    initial_base_date, initial_base_time = _coerce_recent_base_slot(
+        inp.base_date,
+        inp.base_time,
+    )
 
     # Project coordinates to KMA grid
     try:
@@ -305,8 +351,8 @@ async def _fetch(  # noqa: C901
         inp.lon,
         nx,
         ny,
-        inp.base_date,
-        inp.base_time,
+        initial_base_date,
+        initial_base_time,
     )
 
     endpoint = resolve_vilage_fcst_endpoint(_OPERATION)
@@ -323,12 +369,12 @@ async def _fetch(  # noqa: C901
     request_id = str(uuid.uuid4())
     t_start = datetime.now(tz=UTC)
     resp_body: dict[str, Any] | None = None
-    used_base_date = inp.base_date
-    used_base_time = inp.base_time
+    used_base_date = initial_base_date
+    used_base_time = initial_base_time
     no_data_slots: list[str] = []
 
     try:
-        for base_date, base_time in _candidate_base_slots(inp.base_date, inp.base_time):
+        for base_date, base_time in _candidate_base_slots(initial_base_date, initial_base_time):
             query_params: dict[str, str | int] = {
                 endpoint.auth_query_param: endpoint.api_key,
                 "base_date": base_date,

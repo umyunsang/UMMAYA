@@ -218,12 +218,68 @@ function createKakaoThenKmaGridIgnoredDisableDeps(params: {
   }
 }
 
+function createKakaoThenSuccessfulKmaRepeatDeps(params: {
+  readonly kmaToolName: string
+  readonly onProviderTurn: (turn: ProviderTurn) => void
+}) {
+  let callCount = 0
+  return {
+    async *callModel(request: {
+      readonly options: { readonly disabledProviderToolNames?: readonly string[] }
+    }) {
+      callCount += 1
+      params.onProviderTurn({
+        disabledProviderToolNames:
+          request.options.disabledProviderToolNames ?? [],
+      })
+      if (callCount === 1) {
+        yield createAssistantMessage({
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu-mob002-kakao-success-repeat',
+              name: KAKAO_ADDRESS_TOOL_NAME,
+              input: {},
+            },
+          ],
+        })
+        return
+      }
+      if (callCount <= 3) {
+        yield createAssistantMessage({
+          content: [
+            {
+              type: 'tool_use',
+              id: `toolu-mob002-kma-success-repeat-${callCount}`,
+              name: params.kmaToolName,
+              input: {},
+            },
+          ],
+        })
+        return
+      }
+      yield createAssistantMessage({
+        content: [
+          {
+            type: 'text',
+            text: '기상청 예보 결과를 확인했습니다.',
+          },
+        ],
+      })
+    },
+    microcompact: async (messages: readonly Message[]) => ({ messages }),
+    autocompact: async () => ({ compactionResult: null, consecutiveFailures: undefined }),
+    uuid: () => `uuid-mob002-kma-success-repeat-${callCount}`,
+  }
+}
+
 async function runPromptWithDeps(params: {
   readonly tools: Tools
   readonly deps:
     | ReturnType<typeof createKakaoRepeatDeps>
     | ReturnType<typeof createKakaoThenKmaGridRepeatDeps>
     | ReturnType<typeof createKakaoThenKmaGridIgnoredDisableDeps>
+    | ReturnType<typeof createKakaoThenSuccessfulKmaRepeatDeps>
 }): Promise<readonly Message[]> {
   const emitted: Message[] = []
   for await (const message of query({
@@ -430,5 +486,61 @@ describe('MOB-002 Kakao continuation guard', () => {
       'Do not repeat ordinary KMA current or forecast tools',
     )
     expect(allAssistantText(emitted)).toContain('KMA 일반 날씨 도구를 반복 호출하지 않습니다')
+  })
+
+  test('does not classify successful KMA base_date and base_time fields as grid failure', async () => {
+    const providerTurns: ProviderTurn[] = []
+    const kakaoInputs: Record<string, unknown>[] = []
+    const kmaInputs: Record<string, unknown>[] = []
+
+    const emitted = await runPromptWithDeps({
+      tools: [
+        createKakaoTool(input => {
+          kakaoInputs.push(input)
+        }),
+        createKmaGridWeatherTool({
+          name: 'kma_ultra_short_term_forecast',
+          failureText: JSON.stringify({
+            ok: true,
+            result: {
+              kind: 'record',
+              item: {
+                total_count: 1,
+                items: [
+                  {
+                    base_date: '20260620',
+                    base_time: '1130',
+                    fcst_date: '20260620',
+                    fcst_time: '1200',
+                    nx: 97,
+                    ny: 75,
+                    category: 'TMP',
+                    fcst_value: '24',
+                  },
+                ],
+              },
+            },
+          }),
+          onCall: input => {
+            kmaInputs.push(input)
+          },
+        }),
+      ],
+      deps: createKakaoThenSuccessfulKmaRepeatDeps({
+        kmaToolName: 'kma_ultra_short_term_forecast',
+        onProviderTurn: turn => {
+          providerTurns.push(turn)
+        },
+      }),
+    })
+
+    expect(kakaoInputs).toEqual([{ query: '부산' }])
+    expect(kmaInputs).toHaveLength(2)
+    expect(providerTurns).toHaveLength(4)
+    expect(toolResultText(emitted)).not.toContain(
+      'Do not repeat ordinary KMA current or forecast tools',
+    )
+    expect(allAssistantText(emitted)).toContain('기상청 adapter 결과 기준으로 확인된 값만 정리합니다')
+    expect(allAssistantText(emitted)).toContain('2026-06-20 12:00: 기온 24°C')
   })
 })

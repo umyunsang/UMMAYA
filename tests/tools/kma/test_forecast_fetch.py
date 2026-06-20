@@ -11,10 +11,12 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+import ummaya.tools.kma.forecast_fetch as forecast_module
 from ummaya.tools.kma.forecast_fetch import (
     KMA_FORECAST_FETCH_TOOL,
     KmaForecastFetchInput,
     _candidate_base_slots,
+    _coerce_recent_base_slot,
     _fetch,
     _normalize_items,
     _parse_forecast_items,
@@ -189,6 +191,18 @@ class TestBaseSlotRecovery:
             ("20260415", "2300"),
             ("20260415", "2000"),
         ]
+
+    def test_stale_slot_clamps_to_latest_published_slot(self) -> None:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        base_date, base_time = _coerce_recent_base_slot(
+            "20260416",
+            "0800",
+            now=datetime(2026, 6, 20, 11, 4, tzinfo=ZoneInfo("Asia/Seoul")),
+        )
+
+        assert (base_date, base_time) == ("20260620", "0800")
 
 
 # ---------------------------------------------------------------------------
@@ -388,6 +402,7 @@ class TestFetch:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
+        monkeypatch.setattr(forecast_module, "_coerce_recent_base_slot", _preserve_requested_slot)
         fixture = _load_fixture("forecast_fetch_happy.json")
         mock_client = _make_mock_client_sequence([_no_data_payload(), fixture])
 
@@ -410,6 +425,7 @@ class TestFetch:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key")
+        monkeypatch.setattr(forecast_module, "_coerce_recent_base_slot", _preserve_requested_slot)
         mock_client = _make_mock_client_sequence([_no_data_payload()] * 8)
 
         inp = KmaForecastFetchInput(
@@ -463,3 +479,7 @@ class TestRegister:
         register(registry, executor)
         assert "kma_forecast_fetch" in registry
         assert "kma_forecast_fetch" in executor._adapters
+
+
+def _preserve_requested_slot(base_date: str, base_time: str) -> tuple[str, str]:
+    return base_date, base_time

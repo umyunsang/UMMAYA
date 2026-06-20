@@ -75,7 +75,9 @@ describe('getUserContext currentKstTime injection', () => {
 
     const ctx = await getUserContext()
     expect(ctx).toHaveProperty('currentKstTime')
-    expect(ctx.currentKstTime).toContain('현재 KST 시각: 16:00 (1600)')
+    expect(ctx.currentKstTime).toContain('현재 KST 날짜/시각: 2026-05-04 16:00 (1600)')
+    expect(ctx.currentKstTime).toContain('오늘 날짜는 2026-05-04')
+    expect(ctx.currentKstTime).toContain('KMA base_date는 오늘/현재 질의에서 2026-05-04를 사용')
     // KMA base_time enumeration must appear so a sub-agent reading the
     // citizen-facing user context still sees the publication-slot anchor.
     expect(ctx.currentKstTime).toContain('0200/0500/0800/1100/1400/1700/2000/2300')

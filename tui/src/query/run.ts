@@ -46,6 +46,7 @@ import {
   hashRouteDiagnosticText,
 } from '../tools/AdapterTool/routeDiagnostics.js'
 import { createAssistantMessage, createUserMessage } from '../utils/messages.js'
+import { getKstTimeParts } from '../constants/common.js'
 
 const ROOT_FIND_TOOL_NAME = 'find'
 const ROOT_PRIMITIVE_TOOL_NAMES = new Set([
@@ -63,6 +64,12 @@ const KMA_METAR_TOOL_NAME = 'kma_apihub_url_air_metar_decoded'
 const KMA_ORDINARY_WEATHER_TOOL_NAMES = new Set([
   'kma_apihub_upp_mtly_info_service_get_max_wind',
   'kma_current_observation',
+  'kma_forecast_fetch',
+  'kma_short_term_forecast',
+  'kma_ultra_short_term_forecast',
+])
+const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
+const KMA_FORECAST_TOOL_NAMES = new Set([
   'kma_forecast_fetch',
   'kma_short_term_forecast',
   'kma_ultra_short_term_forecast',
@@ -90,6 +97,35 @@ const EMERGENCY_SEARCH_SUCCESS_CLAIM_RE =
   /(?:응급실|응급의료|병원)[^\n.。]*(?:검색|조회|확인|찾았|추천|결과)|(?:검색|조회)\s*결과[^\n.。]*(?:응급실|응급의료|병원)/iu
 const EMERGENCY_SAFE_LIMITATION_RE =
   /(결과\s*없이|없이는|단정하지|조회하지\s*못|확인하지\s*못|연결된\s*뒤|adapter|handoff|공식\s*(?:채널|응급의료)|119)/iu
+const WEATHER_RESULT_REQUEST_RE =
+  /(날씨|기상|weather|예보|현재\s*기온|강수|비|눈|습도|풍속)/iu
+const WEATHER_CANDIDATE_CLAIM_RE =
+  /(날씨|기상|weather|예보|현재\s*기온|강수|습도|풍속|하늘상태|하늘\s*상태)/iu
+const WEATHER_NO_EVIDENCE_SAFE_RE =
+  /(지역|주소|위치)[^\n.。]*(?:알려|입력|필요)|(?:조회|확인)하지\s*못|adapter\s*결과\s*없이|단정하지|제한/iu
+const KMA_FORECAST_SUMMARY_LIMIT = 6
+const KOREAN_DATE_CLAIM_RE =
+  /(오늘|현재)\s*날짜는\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일(?:입니다)?/gu
+const KOREAN_TODAY_PAREN_DATE_RE =
+  /(오늘\s*\()\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일\s*(\))/gu
+const KOREAN_TODAY_DATE_PAREN_RE =
+  /(오늘\s*날짜\s*\()\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일\s*(\))/gu
+const KOREAN_TODAY_INLINE_DATE_RE =
+  /(오늘(?:은|의)?\s*)\d{4}년\s*\d{1,2}월\s*\d{1,2}일/gu
+const KOREAN_CURRENT_TIME_REASON_RE =
+  /(현재\s*시각)(?:은|이)?\s*\d{1,2}시(?:\s*\d{1,2}(?:분|경)?|\s*경)?\s*이므로/gu
+const KOREAN_CURRENT_TIME_CLAIM_RE =
+  /(현재\s*(?:시각|시간))(?:은|이)?\s*\d{1,2}시(?:\s*\d{1,2}(?:분|경)?|\s*경)?/gu
+const KOREAN_CURRENT_TIME_PAREN_RE =
+  /(현재\s*(?:시각|시간)\s*\()\s*\d{1,2}시(?:\s*\d{1,2}(?:분|경)?)?\s*(기준\s*\))/gu
+const KOREAN_PREVIOUS_BASE_HOUR_OBJECT_RE =
+  /직전\s*정시인\s*\d{1,2}시를/gu
+const KOREAN_PREVIOUS_BASE_HOUR_RE =
+  /직전\s*정시인\s*\d{1,2}시/gu
+const KOREAN_CURRENT_SYSTEM_TIME_ASSUMPTION_RE =
+  /현재\s*시스템\s*시각을\s*\d{1,2}시\s*이후로\s*가정하고,\s*/gu
+const KOREAN_NUMERIC_BASE_TIME_CONFIRM_RE =
+  /\b\d{3,4}\s*기준으로\s*확인하겠습니다/gu
 type ToolResultBlock = {
   readonly type: 'tool_result'
   readonly tool_use_id: string
@@ -186,12 +222,77 @@ function stripLeadingTemplateControlTokens(text: string): string {
   return text.replace(/^\s*(?:<%+|%>+)\s*/u, '')
 }
 
+function koreanTodayText(): string {
+  const [year, month, day] = getKstTimeParts().iso.split('-')
+  return `${year}년 ${Number(month)}월 ${Number(day)}일`
+}
+
+function koreanNowTimeText(): string {
+  const [hour, minute] = getKstTimeParts().hm.split(':')
+  return `${Number(hour)}시 ${minute}분`
+}
+
+function normalizeKoreanTemporalClaims(text: string): string {
+  const hasDateClaim =
+    KOREAN_DATE_CLAIM_RE.test(text) ||
+    KOREAN_TODAY_PAREN_DATE_RE.test(text) ||
+    KOREAN_TODAY_DATE_PAREN_RE.test(text) ||
+    KOREAN_TODAY_INLINE_DATE_RE.test(text) ||
+    KOREAN_CURRENT_TIME_REASON_RE.test(text) ||
+    KOREAN_CURRENT_TIME_CLAIM_RE.test(text) ||
+    KOREAN_CURRENT_TIME_PAREN_RE.test(text) ||
+    KOREAN_PREVIOUS_BASE_HOUR_OBJECT_RE.test(text) ||
+    KOREAN_PREVIOUS_BASE_HOUR_RE.test(text) ||
+    KOREAN_CURRENT_SYSTEM_TIME_ASSUMPTION_RE.test(text) ||
+    KOREAN_NUMERIC_BASE_TIME_CONFIRM_RE.test(text)
+  KOREAN_DATE_CLAIM_RE.lastIndex = 0
+  KOREAN_TODAY_PAREN_DATE_RE.lastIndex = 0
+  KOREAN_TODAY_DATE_PAREN_RE.lastIndex = 0
+  KOREAN_TODAY_INLINE_DATE_RE.lastIndex = 0
+  KOREAN_CURRENT_TIME_REASON_RE.lastIndex = 0
+  KOREAN_CURRENT_TIME_CLAIM_RE.lastIndex = 0
+  KOREAN_CURRENT_TIME_PAREN_RE.lastIndex = 0
+  KOREAN_PREVIOUS_BASE_HOUR_OBJECT_RE.lastIndex = 0
+  KOREAN_PREVIOUS_BASE_HOUR_RE.lastIndex = 0
+  KOREAN_CURRENT_SYSTEM_TIME_ASSUMPTION_RE.lastIndex = 0
+  KOREAN_NUMERIC_BASE_TIME_CONFIRM_RE.lastIndex = 0
+  if (!hasDateClaim) return text
+  const today = koreanTodayText()
+  const now = koreanNowTimeText()
+  return text
+    .replace(KOREAN_DATE_CLAIM_RE, (_match, prefix: string) => {
+      return `${prefix} 날짜는 ${today}입니다`
+    })
+    .replace(KOREAN_TODAY_PAREN_DATE_RE, (_match, prefix: string, suffix: string) => {
+      return `${prefix}${today}${suffix}`
+    })
+    .replace(KOREAN_TODAY_DATE_PAREN_RE, (_match, prefix: string, suffix: string) => {
+      return `${prefix}${today}${suffix}`
+    })
+    .replace(KOREAN_TODAY_INLINE_DATE_RE, (_match, prefix: string) => {
+      return `${prefix}${today}`
+    })
+    .replace(KOREAN_CURRENT_TIME_REASON_RE, (_match, prefix: string) => {
+      return `${prefix}은 ${now}이므로`
+    })
+    .replace(KOREAN_CURRENT_TIME_CLAIM_RE, (_match, prefix: string) => {
+      return `${prefix}은 ${now}`
+    })
+    .replace(KOREAN_CURRENT_TIME_PAREN_RE, (_match, prefix: string, suffix: string) => {
+      return `${prefix}${now} ${suffix}`
+    })
+    .replace(KOREAN_PREVIOUS_BASE_HOUR_OBJECT_RE, '최근 발표 시각을')
+    .replace(KOREAN_PREVIOUS_BASE_HOUR_RE, '최근 발표 시각')
+    .replace(KOREAN_CURRENT_SYSTEM_TIME_ASSUMPTION_RE, '현재 KST 시각 기준으로 ')
+    .replace(KOREAN_NUMERIC_BASE_TIME_CONFIRM_RE, '최근 발표 기준으로 확인하겠습니다')
+}
+
 function sanitizeVisibleAssistantControlTokens(
   message: AssistantMessage,
 ): AssistantMessage {
   const content = message.message.content
   if (typeof content === 'string') {
-    const sanitized = stripLeadingTemplateControlTokens(content)
+    const sanitized = normalizeKoreanTemporalClaims(stripLeadingTemplateControlTokens(content))
     return sanitized === content
       ? message
       : { ...message, message: { ...message.message, content: sanitized } }
@@ -202,7 +303,7 @@ function sanitizeVisibleAssistantControlTokens(
     if (!isRecord(block) || block.type !== 'text' || typeof block.text !== 'string') {
       return block
     }
-    const sanitizedText = stripLeadingTemplateControlTokens(block.text)
+    const sanitizedText = normalizeKoreanTemporalClaims(stripLeadingTemplateControlTokens(block.text))
     if (sanitizedText === block.text) return block
     changed = true
     return { ...block, text: sanitizedText }
@@ -216,6 +317,19 @@ type PriorToolResult = {
   readonly toolName: string
   readonly content: unknown
   readonly isError: boolean
+}
+
+type KmaForecastSummaryRow = {
+  key: string
+  date: string
+  time: string
+  temperature?: string
+  precipitationProbability?: string
+  sky?: string
+  precipitationType?: string
+  humidity?: string
+  windSpeed?: string
+  precipitation?: string
 }
 
 function toolResultsSinceLatestPrompt(
@@ -472,6 +586,280 @@ function createEmergencyNoClaimBlockedMessage(): AssistantMessage {
       '최신 사용자 요청 이후 nmc_emergency_search 또는 hira_hospital_search tool_result가 없으므로 공식 검색 결과처럼 안내할 수 없습니다.',
       '긴급하면 119 또는 응급의료포털/병원 공식 채널에서 즉시 확인해야 하며, 해당 adapter가 연결되면 그 결과에 근거해 다시 안내하겠습니다.',
     ].join('\n\n'),
+  })
+}
+
+function scalarText(value: unknown): string | undefined {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return String(value)
+  }
+  return undefined
+}
+
+function kmaCurrentObservationItem(result: PriorToolResult): Record<string, unknown> | undefined {
+  if (result.toolName !== KMA_CURRENT_OBSERVATION_TOOL_NAME || result.isError) {
+    return undefined
+  }
+  const envelope = parseJsonRecord(result.content)
+  const resultRecord = isRecord(envelope?.result) ? envelope.result : undefined
+  const item = isRecord(resultRecord?.item) ? resultRecord.item : undefined
+  return item
+}
+
+function kmaForecastItems(result: PriorToolResult): readonly Record<string, unknown>[] {
+  if (!KMA_FORECAST_TOOL_NAMES.has(result.toolName) || result.isError) {
+    return []
+  }
+  const envelope = parseJsonRecord(result.content)
+  const resultRecord = isRecord(envelope?.result) ? envelope.result : undefined
+  const item = isRecord(resultRecord?.item) ? resultRecord.item : undefined
+  const items = Array.isArray(item?.items) ? item.items : []
+  const points = Array.isArray(resultRecord?.points) ? resultRecord.points : []
+  return [...items, ...points].filter(isRecord)
+}
+
+function precipitationTypeText(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined
+  const byCode: Record<string, string> = {
+    '0': '없음',
+    '1': '비',
+    '2': '비/눈',
+    '3': '눈',
+    '5': '빗방울',
+    '6': '빗방울/눈날림',
+    '7': '눈날림',
+  }
+  return byCode[value] ?? value
+}
+
+function skyText(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined
+  const byCode: Record<string, string> = {
+    '1': '맑음',
+    '3': '구름많음',
+    '4': '흐림',
+  }
+  return byCode[value] ?? value
+}
+
+function formatKmaDate(value: string): string {
+  return /^\d{8}$/u.test(value)
+    ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`
+    : value
+}
+
+function formatKmaTime(value: string): string {
+  return /^\d{4}$/u.test(value) ? `${value.slice(0, 2)}:${value.slice(2, 4)}` : value
+}
+
+function assignKmaForecastField(
+  row: KmaForecastSummaryRow,
+  category: string,
+  value: string,
+): void {
+  switch (category.toUpperCase()) {
+    case 'TMP':
+    case 'T1H':
+      row.temperature = `${value}°C`
+      break
+    case 'POP':
+      row.precipitationProbability = `${value}%`
+      break
+    case 'SKY':
+      row.sky = skyText(value)
+      break
+    case 'PTY':
+      row.precipitationType = precipitationTypeText(value)
+      break
+    case 'REH':
+      row.humidity = `${value}%`
+      break
+    case 'WSD':
+      row.windSpeed = `${value}m/s`
+      break
+    case 'PCP':
+    case 'RN1':
+      row.precipitation = value
+      break
+    default:
+      break
+  }
+}
+
+function kmaTimestampParts(value: string): { readonly date: string; readonly time: string } | undefined {
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/u.exec(value)
+  if (match === null) return undefined
+  const [, date, hour, minute] = match
+  if (date === undefined || hour === undefined || minute === undefined) return undefined
+  return { date, time: `${hour}:${minute}` }
+}
+
+function assignKmaTimeseriesPoint(
+  row: KmaForecastSummaryRow,
+  item: Record<string, unknown>,
+): void {
+  const temperature = scalarText(item.temperature_c)
+  const pop = scalarText(item.pop_pct)
+  const sky = scalarText(item.sky_code)
+  const precipitation = scalarText(item.precipitation_mm)
+  const windSpeed = scalarText(item.wind_speed_m_s)
+  if (temperature !== undefined) row.temperature = `${temperature}°C`
+  if (pop !== undefined) row.precipitationProbability = `${pop}%`
+  if (sky !== undefined) row.sky = skyText(sky)
+  if (precipitation !== undefined) row.precipitation = precipitation
+  if (windSpeed !== undefined) row.windSpeed = `${windSpeed}m/s`
+}
+
+function kmaForecastSummaryRows(
+  items: readonly Record<string, unknown>[],
+): readonly KmaForecastSummaryRow[] {
+  const rows = new Map<string, KmaForecastSummaryRow>()
+  for (const item of items) {
+    const timestamp = scalarText(item.timestamp_iso)
+    const timestampParts = timestamp !== undefined ? kmaTimestampParts(timestamp) : undefined
+    if (timestampParts !== undefined) {
+      const key = `${timestampParts.date}${timestampParts.time}`
+      const row = rows.get(key) ?? {
+        key,
+        date: timestampParts.date,
+        time: timestampParts.time,
+      }
+      assignKmaTimeseriesPoint(row, item)
+      rows.set(key, row)
+      continue
+    }
+    const date = scalarText(item.fcst_date) ?? scalarText(item.base_date)
+    const time = scalarText(item.fcst_time) ?? scalarText(item.base_time)
+    const category = scalarText(item.category)
+    const value = scalarText(item.fcst_value)
+    if (
+      date === undefined ||
+      time === undefined ||
+      category === undefined ||
+      value === undefined
+    ) {
+      continue
+    }
+    const key = `${date}${time}`
+    const row = rows.get(key) ?? { key, date, time }
+    assignKmaForecastField(row, category, value)
+    rows.set(key, row)
+  }
+  return [...rows.values()]
+    .filter(row =>
+      row.temperature !== undefined ||
+      row.precipitationProbability !== undefined ||
+      row.sky !== undefined ||
+      row.precipitationType !== undefined ||
+      row.humidity !== undefined ||
+      row.windSpeed !== undefined ||
+      row.precipitation !== undefined,
+    )
+    .sort((left, right) => left.key.localeCompare(right.key))
+    .slice(0, KMA_FORECAST_SUMMARY_LIMIT)
+}
+
+function kmaForecastRowText(row: KmaForecastSummaryRow): string | undefined {
+  const fields = [
+    row.temperature !== undefined ? `기온 ${row.temperature}` : undefined,
+    row.precipitationProbability !== undefined
+      ? `강수확률 ${row.precipitationProbability}`
+      : undefined,
+    row.sky !== undefined ? `하늘 ${row.sky}` : undefined,
+    row.precipitationType !== undefined ? `강수형태 ${row.precipitationType}` : undefined,
+    row.humidity !== undefined ? `습도 ${row.humidity}` : undefined,
+    row.windSpeed !== undefined ? `풍속 ${row.windSpeed}` : undefined,
+    row.precipitation !== undefined ? `강수량 ${row.precipitation}` : undefined,
+  ].filter((field): field is string => field !== undefined)
+  if (fields.length === 0) return undefined
+  return `- ${formatKmaDate(row.date)} ${formatKmaTime(row.time)}: ${fields.join(', ')}`
+}
+
+function createKmaWeatherEvidenceMessage(params: {
+  readonly currentItem?: Record<string, unknown>
+  readonly forecastItems: readonly Record<string, unknown>[]
+}): AssistantMessage {
+  const rows = kmaForecastSummaryRows(params.forecastItems)
+  const item = params.currentItem
+  const baseDate = scalarText(item?.base_date)
+  const baseTime = scalarText(item?.base_time)
+  const observedAt = baseDate && baseTime
+    ? `${formatKmaDate(baseDate)} ${formatKmaTime(baseTime)}`
+    : '기상청 현재관측 기준'
+  const lines = ['기상청 adapter 결과 기준으로 확인된 값만 정리합니다.']
+  if (item !== undefined) {
+    lines.push(
+      '',
+      `현재관측(${observedAt})`,
+      scalarText(item.t1h) !== undefined ? `- 기온: ${scalarText(item.t1h)}°C` : '',
+      scalarText(item.rn1) !== undefined ? `- 1시간 강수량: ${scalarText(item.rn1)}mm` : '',
+      scalarText(item.reh) !== undefined ? `- 습도: ${scalarText(item.reh)}%` : '',
+      scalarText(item.wsd) !== undefined ? `- 풍속: ${scalarText(item.wsd)}m/s` : '',
+      scalarText(item.vec) !== undefined ? `- 풍향: ${scalarText(item.vec)}°` : '',
+      precipitationTypeText(scalarText(item.pty)) !== undefined
+        ? `- 강수형태: ${precipitationTypeText(scalarText(item.pty))}`
+        : '',
+    )
+  }
+  const forecastLines = rows.map(kmaForecastRowText).filter((line): line is string => line !== undefined)
+  if (forecastLines.length > 0) {
+    lines.push('', '예보 주요 시간대', ...forecastLines)
+  }
+  lines.push(
+    '',
+    '현재관측과 예보 항목을 분리했습니다. KMA VEC는 풍향 각도이며 풍속으로 해석하지 않습니다.',
+  )
+  if (forecastLines.length === 0) {
+    lines.push(
+      '하늘상태, 구름, 맑음/흐림, 강수확률, 체감온도는 현재관측 결과만으로 단정하지 않습니다.',
+    )
+  }
+  return createAssistantMessage({
+    content: lines.filter(line => line !== '').join('\n'),
+  })
+}
+
+function createKmaWeatherNoEvidenceMessage(): AssistantMessage {
+  return createAssistantMessage({
+    content: [
+      'KMA adapter 결과 없이 날씨/예보를 단정하지 않습니다.',
+      '최신 사용자 요청 이후 kma_current_observation 또는 KMA forecast tool_result가 없어 현재/예보 값을 제공하지 않습니다.',
+      '위치 확인 뒤 KMA adapter 결과가 도착하면 그 결과 기준으로 다시 정리합니다.',
+    ].join('\n'),
+  })
+}
+
+function kmaWeatherEvidenceGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  if (toolUseBlocks(params.candidate).length > 0) return undefined
+  if (!WEATHER_RESULT_REQUEST_RE.test(latestUserText(params.messages))) {
+    return undefined
+  }
+  const results = toolResultsSinceLatestPrompt(params.messages)
+  const item = results.map(kmaCurrentObservationItem).find(item => item !== undefined)
+  const forecastItems = results.flatMap(result => [...kmaForecastItems(result)])
+  if (item === undefined && forecastItems.length === 0) {
+    const candidateText = messageText(params.candidate)
+    const attemptedKmaWeather = results.some(result =>
+      result.toolName === KMA_CURRENT_OBSERVATION_TOOL_NAME ||
+      KMA_FORECAST_TOOL_NAMES.has(result.toolName),
+    )
+    if (!attemptedKmaWeather && !WEATHER_CANDIDATE_CLAIM_RE.test(candidateText)) {
+      return undefined
+    }
+    return WEATHER_NO_EVIDENCE_SAFE_RE.test(candidateText)
+      ? undefined
+      : createKmaWeatherNoEvidenceMessage()
+  }
+  return createKmaWeatherEvidenceMessage({
+    currentItem: item,
+    forecastItems,
   })
 }
 
@@ -902,6 +1290,27 @@ export async function* query(params: QueryParams): QueryGenerator {
         const blockedMessage = createEmergencyNoClaimBlockedMessage()
         yield blockedMessage
         messages.push(blockedMessage)
+        return Terminal.completed()
+      }
+      const weatherGuardMessage = boundary.kind === 'pass'
+        ? kmaWeatherEvidenceGuard({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (weatherGuardMessage !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_replaced_kma_weather_with_evidence_summary',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        yield weatherGuardMessage
+        messages.push(weatherGuardMessage)
         return Terminal.completed()
       }
       if (
