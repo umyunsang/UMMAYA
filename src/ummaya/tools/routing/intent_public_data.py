@@ -8,6 +8,7 @@ from ummaya.tools.routing.intent_patterns import (
     _DJTC_SUBWAY_SEGMENT_RE,
     _EMERGENCY_RE,
     _GYERYONG_ASSISTIVE_CHARGER_RE,
+    _HIRA_HOSPITAL_SEARCH_RE,
     _HIRA_MEDICAL_DETAIL_RE,
     _IMPLICIT_EMERGENCY_RE,
     _KCUE_REGIONAL_FINANCE_RE,
@@ -115,8 +116,7 @@ def _extract_domain_public_data_refs(query: str) -> list[str]:
     if _TRAFFIC_HAZARD_SPECIFIC_RE.search(query):
         refs.append("traffic_hazard_specific")
     refs.extend(_extract_environment_public_data_refs(query))
-    if _PPS_BID_RE.search(query) and not _PPS_SHOPPING_RE.search(query):
-        refs.append("pps_bid")
+    refs.extend(_extract_procurement_public_data_refs(query))
     has_kcue_finance = bool(_KCUE_REGIONAL_FINANCE_RE.search(query))
     has_kcue_foreign_student = bool(_KCUE_REGIONAL_FOREIGN_STUDENT_RE.search(query))
     if _KCUE_REGIONAL_RE.search(query) or has_kcue_finance or has_kcue_foreign_student:
@@ -125,10 +125,27 @@ def _extract_domain_public_data_refs(query: str) -> list[str]:
         refs.append("kcue_regional_finance")
     if has_kcue_foreign_student:
         refs.append("kcue_regional_foreign_student")
-    if _HIRA_MEDICAL_DETAIL_RE.search(query):
-        refs.append("hira_medical_detail")
+    refs.extend(_extract_health_public_data_refs(query))
     if _GYERYONG_ASSISTIVE_CHARGER_RE.search(query):
         refs.append("gyeryong_assistive_charger")
+    return refs
+
+
+def _extract_procurement_public_data_refs(query: str) -> list[str]:
+    refs: list[str] = []
+    if _PPS_BID_RE.search(query) and not _PPS_SHOPPING_RE.search(query):
+        refs.append("pps_bid")
+    if _PPS_SHOPPING_RE.search(query):
+        refs.append("pps_shopping")
+    return refs
+
+
+def _extract_health_public_data_refs(query: str) -> list[str]:
+    refs: list[str] = []
+    if _HIRA_MEDICAL_DETAIL_RE.search(query):
+        refs.append("hira_medical_detail")
+    if _HIRA_HOSPITAL_SEARCH_RE.search(query):
+        refs.append("hira_hospital_search")
     return refs
 
 

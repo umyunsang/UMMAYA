@@ -116,12 +116,26 @@ const FAILED_TOOL_SAFE_FINAL_RE =
   /(실패|오류|조회하지\s*못|확인하지\s*못|제공되지\s*않|포함되어\s*있지\s*않|데이터가\s*없|결과가\s*없|not\s+available|failed|error|NO DATA FOUND|404)/iu
 const FAILED_TOOL_SUCCESS_CLAIM_RE =
   /(조회\s*결과|공식\s*데이터\s*조회\s*결과|확인했습니다|찾았습니다|제공됩니다|검색\s*결과|데이터\s*:|전력사용량|요금액|계량기\s*수|사용량|접수번호|승인코드|신청[^\n.。!?]{0,40}접수|접수[^\n.。!?]{0,24}(?:되었|됐|됨)|납부\s*완료|발급\s*완료|result|success)/iu
+const FAILED_TOOL_UNGROUNDED_DETAIL_RE =
+  /(권장\s*조치|참고용|일반적인|홈페이지|직접\s*문의|https?:\/\/|콜센터|구청|복지로|국민행복카드|기초생활보장|주거급여|긴급복지지원|장애인\s*복지|노인\s*복지|한부모[·\s]*조손)/iu
 const PROTECTED_ACTION_BYPASS_REQUEST_RE =
   /(인증\s*없이|권한\s*없이|인증이\s*없더라도|권한이\s*없더라도|도구\s*호출이\s*실패|실패(?:하거나|해도|하더라도)|실제\s*결제가\s*안\s*됐어도|접수번호[^\n.。!?]{0,24}(?:만들|생성)|성공했다고\s*말|성공\s*처리|납부\s*완료라고|완료라고\s*답)/iu
 const PROTECTED_ACTION_BYPASS_SUCCESS_FINAL_RE =
   /(접수번호|납부번호|접수\s*완료|납부\s*완료|신청[^\n.。!?]{0,40}접수|납부[^\n.。!?]{0,40}(?:성공|완료)|성공적으로\s*(?:처리|완료)|성공\s*처리|처리\s*결과\s*:\s*성공|완료되었습니다)/iu
 const PROTECTED_ACTION_BYPASS_SAFE_FINAL_RE =
   /(실행하지\s*않|처리할\s*수\s*없|만들\s*수\s*없|공식\s*gateway|권한[^\n.。!?]{0,40}필요|인증[^\n.。!?]{0,40}필요|성공으로\s*처리할\s*수\s*없|완료\s*상태를\s*안내할\s*수\s*없)/iu
+const READ_ONLY_PUBLIC_SERVICE_REQUEST_RE =
+  /(확인|조회|검색|찾|알려|요약|설명|상담|창구|정보|받을\s*수\s*있는|which|what|find|look\s*up|search|summarize|explain)/iu
+const PROTECTED_SEND_ACTION_REQUEST_RE =
+  /(신청|제출|접수|신고|발급|납부|결제|송신|동의\s*제공|성공\s*처리|submit|send|apply|file|issue|pay)/iu
+const NON_ACTION_BOUNDARY_REQUEST_RE =
+  /(실제로\s*(?:만들|생성|접수|신청|제출|발급|납부|결제).*(?:말고|마|않|안)|(?:만들|생성|접수|신청|제출|발급|납부|결제).*실제로.*(?:말고|마|않|안)|어떤\s*인증|어떤\s*권한|필요한지만|만\s*설명|만\s*알려|하지\s*말고|하지마|하지\s*마)/iu
+const READ_ONLY_SEND_REPAIR_MARKER = 'Read-only protected-action repair:'
+const UNGROUNDED_PUBLIC_DATA_REPAIR_MARKER = 'Ungrounded public-data final repair:'
+const PUBLIC_DATA_GROUNDED_DETAIL_RE =
+  /(https?:\/\/[^\s)]+|지역번호\s*\+\s*129|\d{2,4}-\d{3,4}-\d{4}|부산\s*사하구청|사하구청|동주민센터|보건소|복지과|복지콜센터|life\.go\.kr)/giu
+const UNGROUNDED_DETAIL_NEGATED_CONTEXT_RE =
+  /(확인되지\s*않|확인하지\s*못|반환되지\s*않|포함되지\s*않|미확인|not\s+verified|not\s+returned|not\s+included)/iu
 const KMA_FORECAST_SUMMARY_LIMIT = 6
 const KOREAN_DATE_CLAIM_RE =
   /(오늘|현재)\s*날짜는\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일(?:입니다)?/gu
@@ -1166,8 +1180,21 @@ function latestFailedToolResultAfterLatestUser(
   return latestFailure
 }
 
+function failedToolSummaryText(errorText: string): string {
+  const parsed = parseJsonRecord(errorText)
+  const error = parseJsonRecord(parsed?.error)
+  const result = parseJsonRecord(parsed?.result)
+  const message =
+    typeof error?.message === 'string'
+      ? error.message
+      : typeof result?.message === 'string'
+        ? result.message
+        : errorText
+  return message.replace(/\s+/gu, ' ').trim().slice(0, 420)
+}
+
 function buildFailedToolFinalAnswerBlockedText(failure: FailedToolResult): string {
-  const compactError = failure.errorText.replace(/\s+/gu, ' ').trim().slice(0, 420)
+  const compactError = failedToolSummaryText(failure.errorText)
   return [
     `${failure.toolName} 조회는 이번 턴에서 실패했습니다.`,
     compactError ? `오류 요약: ${compactError}` : '오류 요약: 등록 adapter가 성공 결과를 반환하지 않았습니다.',
@@ -1190,6 +1217,181 @@ function buildProtectedBypassBlockedText(): string {
     '인증, 권한, 또는 도구 실패를 건너뛰고 신청, 제출, 발급, 접수, 납부를 성공으로 처리할 수 없습니다.',
     '접수번호나 납부 완료 상태는 공식 gateway와 정상 권한 확인을 통과한 tool_result가 있을 때만 안내할 수 있습니다.',
   ].join('\n\n')
+}
+
+function queryExplicitlyRequestsProtectedSend(text: string): boolean {
+  return PROTECTED_SEND_ACTION_REQUEST_RE.test(text) &&
+    !NON_ACTION_BOUNDARY_REQUEST_RE.test(text)
+}
+
+function isSendActionToolUse(block: ToolUseBlock): boolean {
+  const toolId = typeof block.input.tool_id === 'string' ? block.input.tool_id : ''
+  return block.name === 'send' ||
+    /^mock_.*submit/iu.test(block.name) ||
+    /_(?:submit)(?:_|$)/iu.test(block.name) ||
+    /^mock_.*submit/iu.test(toolId) ||
+    /_(?:submit)(?:_|$)/iu.test(toolId)
+}
+
+function buildReadOnlySendBlockedText(): string {
+  return [
+    '요청은 실행하지 않았습니다.',
+    '이 요청은 조회, 확인, 설명, 상담 창구 확인 같은 읽기 전용 요청입니다.',
+    '신청, 제출, 발급, 접수, 납부, 결제, 동의 같은 보호 작업은 명시 요청과 권한 확인이 있을 때만 진행합니다.',
+    '성공한 조회 결과가 부족하면 어떤 adapter 또는 기관 API가 실패했는지 그대로 안내해야 합니다.',
+  ].join('\n\n')
+}
+
+function hasReadOnlySendRepairPromptAfterLatestUser(
+  messages: readonly Message[],
+): boolean {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return false
+  return messages.slice(latestUserIndex + 1).some(message =>
+    messageText(message).includes(READ_ONLY_SEND_REPAIR_MARKER),
+  )
+}
+
+function buildReadOnlySendRepairPrompt(): string {
+  return [
+    `${READ_ONLY_SEND_REPAIR_MARKER} the latest citizen request is read-only, but the assistant attempted a protected send/submit action.`,
+    'Do not call send, submit, apply, issue, payment, or another protected-action adapter.',
+    'Write the final Korean answer from successful tool_results already returned after the latest citizen request.',
+    'If an adapter failed or returned no data, name that adapter or agency API exactly and do not fabricate missing eligibility, application, receipt, or contact details.',
+  ].join(' ')
+}
+
+function readOnlySendPromptActionRepairPrompt(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): string | undefined {
+  const latestUser = latestUserText(params.messages)
+  if (!READ_ONLY_PUBLIC_SERVICE_REQUEST_RE.test(latestUser)) {
+    return undefined
+  }
+  if (queryExplicitlyRequestsProtectedSend(latestUser)) {
+    return undefined
+  }
+  if (!toolUseBlocks(params.candidate).some(isSendActionToolUse)) {
+    return undefined
+  }
+  if (hasReadOnlySendRepairPromptAfterLatestUser(params.messages)) {
+    return undefined
+  }
+  return buildReadOnlySendRepairPrompt()
+}
+
+function readOnlySendPromptActionGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  const latestUser = latestUserText(params.messages)
+  if (!READ_ONLY_PUBLIC_SERVICE_REQUEST_RE.test(latestUser)) {
+    return undefined
+  }
+  if (queryExplicitlyRequestsProtectedSend(latestUser)) {
+    return undefined
+  }
+  if (!toolUseBlocks(params.candidate).some(isSendActionToolUse)) {
+    return undefined
+  }
+  return createAssistantMessage({
+    content: buildReadOnlySendBlockedText(),
+  })
+}
+
+function hasUngroundedPublicDataRepairPromptAfterLatestUser(
+  messages: readonly Message[],
+): boolean {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return false
+  return messages.slice(latestUserIndex + 1).some(message =>
+    messageText(message).includes(UNGROUNDED_PUBLIC_DATA_REPAIR_MARKER),
+  )
+}
+
+function successfulToolEvidenceSinceLatestUser(messages: readonly Message[]): string {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return ''
+  return messages
+    .slice(latestUserIndex + 1)
+    .flatMap(message => isUserMessage(message) ? toolResultBlocks(message) : [])
+    .filter(block => block.is_error !== true)
+    .map(block => contentText(block.content))
+    .join('\n')
+}
+
+function normalizeGroundedDetail(value: string): string {
+  return value.replace(/[)\].,，。]+$/gu, '').replace(/\s+/gu, '').toLowerCase()
+}
+
+function ungroundedPublicDataDetails(
+  candidateText: string,
+  evidenceText: string,
+): readonly string[] {
+  const evidence = normalizeGroundedDetail(evidenceText)
+  const ungrounded = new Set<string>()
+  for (const match of candidateText.matchAll(PUBLIC_DATA_GROUNDED_DETAIL_RE)) {
+    const value = normalizeGroundedDetail(match[0] ?? '')
+    if (value.length === 0) continue
+    const matchIndex = match.index ?? 0
+    const context = candidateText.slice(
+      Math.max(0, matchIndex - 80),
+      Math.min(candidateText.length, matchIndex + match[0].length + 80),
+    )
+    if (UNGROUNDED_DETAIL_NEGATED_CONTEXT_RE.test(context)) continue
+    if (!evidence.includes(value)) ungrounded.add(value)
+  }
+  return [...ungrounded]
+}
+
+function buildUngroundedPublicDataRepairPrompt(details: readonly string[]): string {
+  const joinedDetails = details.slice(0, 5).join(', ')
+  return [
+    `${UNGROUNDED_PUBLIC_DATA_REPAIR_MARKER} the final answer included URL, phone, or local-office details not present in the latest successful tool_results.`,
+    joinedDetails ? `Ungrounded details: ${joinedDetails}.` : '',
+    'Rewrite the final Korean answer using only fields visible in successful tool_results after the latest citizen request.',
+    'If 부산 사하구 local counseling windows, phone numbers, or URLs were not returned by the adapter, state they were not verified in this run; do not invent or substitute them.',
+  ].filter(Boolean).join(' ')
+}
+
+function ungroundedPublicDataFinalRepairPrompt(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): string | undefined {
+  if (toolUseBlocks(params.candidate).length > 0) return undefined
+  if (!READ_ONLY_PUBLIC_SERVICE_REQUEST_RE.test(latestUserText(params.messages))) {
+    return undefined
+  }
+  if (hasUngroundedPublicDataRepairPromptAfterLatestUser(params.messages)) {
+    return undefined
+  }
+  const evidenceText = successfulToolEvidenceSinceLatestUser(params.messages)
+  if (evidenceText.length === 0) return undefined
+  const details = ungroundedPublicDataDetails(messageText(params.candidate), evidenceText)
+  return details.length > 0 ? buildUngroundedPublicDataRepairPrompt(details) : undefined
+}
+
+function buildUngroundedPublicDataBlockedText(): string {
+  return [
+    '이번 턴의 tool_result에 없는 URL, 전화번호, 지역 상담 창구를 현재 결과처럼 안내하지 않습니다.',
+    '성공한 adapter 결과에 포함된 항목만 요약하고, 반환되지 않은 부산 사하구 지역 상담 창구나 연락처는 미확인으로 남겨야 합니다.',
+  ].join('\n\n')
+}
+
+function ungroundedPublicDataFinalGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  if (toolUseBlocks(params.candidate).length > 0) return undefined
+  if (!hasUngroundedPublicDataRepairPromptAfterLatestUser(params.messages)) {
+    return undefined
+  }
+  const evidenceText = successfulToolEvidenceSinceLatestUser(params.messages)
+  const details = ungroundedPublicDataDetails(messageText(params.candidate), evidenceText)
+  return details.length > 0
+    ? createAssistantMessage({ content: buildUngroundedPublicDataBlockedText() })
+    : undefined
 }
 
 function protectedBypassPromptActionGuard(params: {
@@ -1261,10 +1463,14 @@ function failedToolFinalAnswerGuard(params: {
   const failure = latestFailedToolResultAfterLatestUser(params.messages)
   if (failure === undefined) return undefined
   const candidateText = messageText(params.candidate)
-  if (!FAILED_TOOL_SUCCESS_CLAIM_RE.test(candidateText)) return undefined
+  const hasUngroundedDetail = FAILED_TOOL_UNGROUNDED_DETAIL_RE.test(candidateText)
+  if (!FAILED_TOOL_SUCCESS_CLAIM_RE.test(candidateText) && !hasUngroundedDetail) {
+    return undefined
+  }
   if (
     FAILED_TOOL_SAFE_FINAL_RE.test(candidateText) &&
-    !PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUserText(params.messages))
+    !PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUserText(params.messages)) &&
+    !hasUngroundedDetail
   ) {
     return undefined
   }
@@ -1535,6 +1741,53 @@ export async function* query(params: QueryParams): QueryGenerator {
         shouldContinueAfterRepairPrompt = true
         break
       }
+      const ungroundedPublicDataRepairPrompt = boundary.kind === 'pass'
+        ? ungroundedPublicDataFinalRepairPrompt({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (ungroundedPublicDataRepairPrompt !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_repaired_ungrounded_public_data_final',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: boundary.kind,
+          repairPromptChars: ungroundedPublicDataRepairPrompt.length,
+          continueAfterRepair: true,
+        })
+        messages.push(
+          createUserMessage({
+            content: ungroundedPublicDataRepairPrompt,
+            isMeta: true,
+          }),
+        )
+        shouldContinueAfterRepairPrompt = true
+        break
+      }
+      const ungroundedPublicDataBlockedMessage = boundary.kind === 'pass'
+        ? ungroundedPublicDataFinalGuard({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (ungroundedPublicDataBlockedMessage !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_blocked_ungrounded_public_data_final',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        yield ungroundedPublicDataBlockedMessage
+        messages.push(ungroundedPublicDataBlockedMessage)
+        return Terminal.completed()
+      }
       if (
         boundary.kind === 'pass' &&
         shouldBlockEmergencyResultClaim({
@@ -1704,6 +1957,49 @@ export async function* query(params: QueryParams): QueryGenerator {
           })
           yield protectedBypassBlockedMessage
           messages.push(protectedBypassBlockedMessage)
+          return Terminal.completed()
+        }
+        const readOnlySendRepairPrompt = readOnlySendPromptActionRepairPrompt({
+          messages,
+          candidate: boundary.message,
+        })
+        if (readOnlySendRepairPrompt !== undefined) {
+          appendQueryAssistantDiagnostic({
+            event: 'query_assistant_repaired_read_only_send_request',
+            querySource: String(params.querySource),
+            messages,
+            assistantMessage: boundary.message,
+            turnCount,
+            boundaryKind: 'pass',
+            repairPromptChars: readOnlySendRepairPrompt.length,
+            continueAfterRepair: true,
+          })
+          messages.push(
+            createUserMessage({
+              content: readOnlySendRepairPrompt,
+              isMeta: true,
+            }),
+          )
+          shouldContinueAfterRepairPrompt = true
+          break
+        }
+        const readOnlySendBlockedMessage = readOnlySendPromptActionGuard({
+          messages,
+          candidate: boundary.message,
+        })
+        if (readOnlySendBlockedMessage !== undefined) {
+          appendQueryAssistantDiagnostic({
+            event: 'query_assistant_blocked_read_only_send_request',
+            querySource: String(params.querySource),
+            messages,
+            assistantMessage: boundary.message,
+            turnCount,
+            boundaryKind: 'block',
+            repairPromptChars: 0,
+            continueAfterRepair: false,
+          })
+          yield readOnlySendBlockedMessage
+          messages.push(readOnlySendBlockedMessage)
           return Terminal.completed()
         }
         const protectedActionBlockedMessage = protectedActionAfterFailedToolGuard({

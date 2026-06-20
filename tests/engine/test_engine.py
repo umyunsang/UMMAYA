@@ -629,6 +629,33 @@ def test_available_adapters_context_pps_bid_search_exposes_search_contract() -> 
     assert "bid_ntce_no" not in content
 
 
+def test_available_adapters_context_pps_product_query_exposes_shopping_contract() -> None:
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    query = (
+        "공공조달 물품 검색에서 노트북 관련 정보를 찾아줘. "
+        "실패하면 어떤 기관 API에서 실패했는지 그대로 말해줘."
+    )
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        query
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert turn_tool_ids[0] == "pps_shopping_mall_product_lookup"
+    assert "pps_shopping_mall_product_lookup" in turn_tool_ids
+    assert "kakao_address_search" not in turn_tool_ids[:3]
+    assert "prdct_clsfc_no_nm" in content
+    assert "조달청" in content
+
+
 def test_available_adapters_context_air_quality_exposes_airkorea() -> None:
     registry = ToolRegistry()
     executor = ToolExecutor(registry)
@@ -897,6 +924,32 @@ def test_available_adapters_context_hospital_detail_keeps_detail_tool() -> None:
     assert message is not None
     assert "hira_hospital_search" in turn_tool_ids
     assert "hira_medical_institution_detail" in turn_tool_ids
+
+
+def test_available_adapters_context_nearby_internal_medicine_keeps_hira_search() -> None:
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    query = (
+        "동아대 승학캠퍼스 근처에서 오늘 전화해볼 수 있는 내과를 찾아줘. "
+        "주소와 전화번호 중심으로 정리해줘."
+    )
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        query
+    )
+
+    assert message is not None
+    content = message.content or ""
+    assert "kakao_keyword_search" in turn_tool_ids[:3]
+    assert "hira_hospital_search" in turn_tool_ids[:5]
+    assert "dgsbjt" in content
+    assert "hira_medical_institution_detail" not in turn_tool_ids[:2]
 
 
 def test_available_adapters_context_analysis_point_exposes_high_resolution() -> None:

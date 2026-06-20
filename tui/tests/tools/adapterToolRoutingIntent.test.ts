@@ -7,11 +7,11 @@ import {
   selectTopKAdapterToolNamesForQuery,
 } from '../../src/tools/AdapterTool/AdapterTool.js'
 
-function entry(toolId: string, searchHint: string) {
+function entry(toolId: string, searchHint: string, primitive: 'find' | 'locate' = 'find') {
   return {
     tool_id: toolId,
     name: toolId,
-    primitive: 'find' as const,
+    primitive,
     policy_authority_url: 'https://www.data.go.kr/',
     source_mode: 'live' as const,
     search_hint: searchHint,
@@ -36,9 +36,15 @@ function ingestAdversarialPublicDataManifest(): void {
     frame_seq: 0,
     entries: [
       entry('kma_current_observation', '날씨 기상 현재 관측 대체 후보'),
+      entry('kakao_address_search', '카카오 주소 검색 장소 위치', 'locate'),
+      entry('kakao_keyword_search', '카카오 키워드 장소 검색 캠퍼스', 'locate'),
       entry('airkorea_ctprvn_air_quality', 'AirKorea 에어코리아 대기질 미세먼지 서울 중구'),
+      entry('hira_hospital_search', '건강보험심사평가원 병원 의원 의료기관 내과 주소 전화번호'),
+      entry('hira_medical_institution_detail', '건강보험심사평가원 병원 상세 진료과목 ykiho'),
       entry('mock_lookup_module_gov24_certificate', '정부24 증명서 민원 mock'),
       entry('mock_kftc_opengiro_payment_send_v1', '결제 납부 요금 지로 mock'),
+      entry('mohw_welfare_eligibility_search', '보건복지부 복지 서비스 자격 상담 1인 가구'),
+      entry('mock_welfare_application_submit_v1', '복지 급여 신청 제출 mock', 'send'),
       entry('moj_village_lawyer_lookup', '법무부 마을변호사 부산 사하구'),
       entry('ccourt_publication_documents', '헌법재판소 발간자료 기본권'),
       entry('koroad_accident_hazard_search', 'KOROAD 교통사고 위험 지점'),
@@ -142,6 +148,56 @@ describe('adapter tool routing intent', () => {
     expect(names).toContain('mss_sme_support_notice_lookup')
     expect(names).toContain('pps_shopping_mall_product_lookup')
     expect(names).not.toContain('mock_lookup_module_gov24_certificate')
+  })
+
+  test('keeps procurement product lookup on PPS shopping instead of Kakao location', () => {
+    ingestAdversarialPublicDataManifest()
+
+    const names = selectTopKAdapterToolNamesForQuery(
+      [
+        '공공조달 물품 검색에서 노트북 관련 정보를 찾아줘.',
+        '실패하면 어떤 기관 API에서 실패했는지 그대로 말해줘.',
+      ].join(' '),
+      5,
+    )
+
+    expect(names[0]).toBe('pps_shopping_mall_product_lookup')
+    expect(names).not.toContain('kakao_address_search')
+    expect(names).not.toContain('kakao_keyword_search')
+    expect(names).not.toContain('mpm_public_job_lookup')
+  })
+
+  test('keeps nearby internal-medicine lookup on POI plus HIRA search', () => {
+    ingestAdversarialPublicDataManifest()
+
+    const names = selectTopKAdapterToolNamesForQuery(
+      [
+        '동아대 승학캠퍼스 근처에서 오늘 전화해볼 수 있는 내과를 찾아줘.',
+        '주소와 전화번호 중심으로 정리해줘.',
+      ].join(' '),
+      5,
+    )
+
+    expect(names).toContain('kakao_keyword_search')
+    expect(names).toContain('hira_hospital_search')
+    expect(names.slice(0, 2)).not.toContain('hira_medical_institution_detail')
+  })
+
+  test('keeps read-only welfare support lookup on MOHW instead of location search', () => {
+    ingestAdversarialPublicDataManifest()
+
+    const names = selectTopKAdapterToolNamesForQuery(
+      [
+        '부산 사하구에서 받을 수 있는 복지 지원이나 상담 창구를 확인해줘.',
+        '내가 1인 가구라고 가정해줘.',
+      ].join(' '),
+      5,
+    )
+
+    expect(names[0]).toBe('mohw_welfare_eligibility_search')
+    expect(names).toContain('mock_welfare_application_submit_v1')
+    expect(names).not.toContain('kakao_address_search')
+    expect(names).not.toContain('kakao_keyword_search')
   })
 
   test('covers explicit multi-agency public-data batches without weather substitution', () => {

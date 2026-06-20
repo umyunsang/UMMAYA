@@ -1077,7 +1077,7 @@ const GOV24_ACTION_RE = /(신청|진행|제출|접수|발급\s*신청|apply|subm
 const GOV24_NEGATIVE_CONSTRAINT_RE =
   /((정부24|gov24|홈택스|hometax).*(대체하지\s*마|쓰지\s*마|사용하지\s*마)|(대체하지\s*마|쓰지\s*마|사용하지\s*마).*(정부24|gov24|홈택스|hometax))/iu
 const WELFARE_RE =
-  /(생활비|기초생활|주거급여|긴급복지|저소득|차상위|복지혜택|지원금|진료비\s*바우처|출산휴가|임신|아동수당|첫만남이용권)/iu
+  /(생활비|기초생활|주거급여|긴급복지|저소득|차상위|복지\s*(?:혜택|지원|서비스|상담|창구)|사회복지|상담\s*창구|1\s*인\s*가구|일인\s*가구|고독사|지원금|진료비\s*바우처|출산휴가|임신|아동수당|첫만남이용권|welfare)/iu
 const CIVIL_BIRTH_HANDOFF_RE =
   /(출생신고|아기가\s*태어|아동수당|첫만남이용권|피부양자\s*등록)/iu
 const UTILITY_RE = /(전기|수도|도시가스|요금|자동이체|공과금|고지서|납부)/iu
@@ -1102,7 +1102,7 @@ const MFDS_EASY_DRUG_RE = /(식약처|의약품|약품|타이레놀|MFDS|easy\s+
 const MPM_PUBLIC_JOB_RE = /(인사혁신처|공무원\s*(?:채용|공고)|공직\s*채용|MPM)/iu
 const MSS_SUPPORT_NOTICE_RE = /(중소벤처기업부|중소기업.*지원|지원사업\s*공고|MSS|SME\s+support)/iu
 const PPS_SHOPPING_RE =
-  /(조달청.*(?:쇼핑몰|물품|제품)|나라장터.*(?:쇼핑몰|물품|제품)|종합\s*쇼핑몰|쇼핑몰.*(?:노트북|물품)|PPS\s+shopping)/iu
+  /(조달청.*(?:쇼핑몰|물품|제품)|나라장터.*(?:쇼핑몰|물품|제품)|종합\s*쇼핑몰|쇼핑몰.*(?:노트북|물품)|공공\s*조달\s*물품|조달\s*물품|계약\s*물품|물품\s*(?:검색|조회)|물품\s*관련|PPS\s+shopping|shopping\s*mall|product\s*(?:lookup|search))/iu
 const PPS_BID_RE = /(입찰|나라장터|조달청|\bbid\b|procurement|tender)/iu
 const MSIT_BUSINESS_RE = /(과기정통부|과학기술정보통신부|MSIT|사업\s*공고)/iu
 const MOF_OCEAN_WATER_RE = /(해양\s*수질|해양수질|수질\s*자동\s*측정|용존산소|\bpH\b|water\s+quality|ocean\s+water)/iu
@@ -1176,14 +1176,12 @@ const PUBLIC_SAFETY_TOOL_IDS = new Set([
 const AIR_QUALITY_TOOL_IDS = new Set([
   'airkorea_ctprvn_air_quality',
 ])
-const INFORMATION_NOTICE_TOOL_IDS = new Set([
-  'mfds_easy_drug_info_lookup',
-  'mpm_public_job_lookup',
-  'mss_sme_support_notice_lookup',
-  'pps_shopping_mall_product_lookup',
-  'pps_bid_public_info',
-  'msit_business_announcement_lookup',
-])
+const MFDS_EASY_DRUG_TOOL_IDS = new Set(['mfds_easy_drug_info_lookup'])
+const MPM_PUBLIC_JOB_TOOL_IDS = new Set(['mpm_public_job_lookup'])
+const MSS_SUPPORT_NOTICE_TOOL_IDS = new Set(['mss_sme_support_notice_lookup'])
+const PPS_SHOPPING_TOOL_IDS = new Set(['pps_shopping_mall_product_lookup'])
+const PPS_BID_TOOL_IDS = new Set(['pps_bid_public_info'])
+const MSIT_BUSINESS_TOOL_IDS = new Set(['msit_business_announcement_lookup'])
 const PUBLIC_STATS_TOOL_IDS = new Set([
   'mof_ocean_water_quality_check',
   'kcue_finance_regional_tuition',
@@ -1402,16 +1400,34 @@ function restrictiveToolIdsForIntent(
     addSetValues(allowed, PUBLIC_SAFETY_TOOL_IDS)
   }
 
-  if (
-    intent.hasMfdsEasyDrug ||
-    intent.hasMpmPublicJob ||
-    intent.hasMssSupportNotice ||
-    intent.hasPpsShopping ||
-    intent.hasPpsBid ||
-    intent.hasMsitBusiness
-  ) {
+  if (intent.hasMfdsEasyDrug) {
     restrictive = true
-    addSetValues(allowed, INFORMATION_NOTICE_TOOL_IDS)
+    addSetValues(allowed, MFDS_EASY_DRUG_TOOL_IDS)
+  }
+
+  if (intent.hasMpmPublicJob) {
+    restrictive = true
+    addSetValues(allowed, MPM_PUBLIC_JOB_TOOL_IDS)
+  }
+
+  if (intent.hasMssSupportNotice) {
+    restrictive = true
+    addSetValues(allowed, MSS_SUPPORT_NOTICE_TOOL_IDS)
+  }
+
+  if (intent.hasPpsShopping) {
+    restrictive = true
+    addSetValues(allowed, PPS_SHOPPING_TOOL_IDS)
+  }
+
+  if (intent.hasPpsBid) {
+    restrictive = true
+    addSetValues(allowed, PPS_BID_TOOL_IDS)
+  }
+
+  if (intent.hasMsitBusiness) {
+    restrictive = true
+    addSetValues(allowed, MSIT_BUSINESS_TOOL_IDS)
   }
 
   if (

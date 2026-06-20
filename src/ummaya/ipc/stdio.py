@@ -1025,6 +1025,11 @@ _PPS_BID_USER_QUERY_RE: Final = re.compile(
     r"(입찰|나라장터|조달청|공고|공사조회|전기공사|bid|procurement)",
     re.IGNORECASE,
 )
+_PPS_SHOPPING_USER_QUERY_RE: Final = re.compile(
+    r"(종합\s*쇼핑몰|쇼핑몰|공공\s*조달\s*물품|조달\s*물품|계약\s*물품|"
+    r"물품\s*(?:검색|조회)|물품\s*관련|shopping\s*mall|product\s*(?:lookup|search))",
+    re.IGNORECASE,
+)
 _AIRKOREA_USER_QUERY_RE: Final = re.compile(
     r"(미세먼지|초미세먼지|초미세|대기질|대기오염|공기질|마스크|"
     r"pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality|airquality)",
@@ -1054,9 +1059,27 @@ _TAGO_TOOL_IDS: Final[frozenset[str]] = frozenset(
         "tago_bus_location_search",
     }
 )
+_READ_ONLY_PUBLIC_SERVICE_QUERY_RE: Final = re.compile(
+    r"(확인|조회|검색|찾|알려|요약|설명|상담|창구|정보|받을\s*수\s*있는|"
+    r"which|what|find|look\s*up|search|summarize|explain)",
+    re.IGNORECASE,
+)
+_PROTECTED_SEND_ACTION_RE: Final = re.compile(
+    r"(신청|제출|접수|신고|발급|납부|결제|송신|동의\s*제공|성공\s*처리|"
+    r"submit|send|apply|file|issue|pay)",
+    re.IGNORECASE,
+)
+_NON_ACTION_BOUNDARY_RE: Final = re.compile(
+    r"(실제로\s*(?:만들|생성|접수|신청|제출|발급|납부|결제).*"
+    r"(?:말고|마|않|안)|(?:만들|생성|접수|신청|제출|발급|납부|결제).*"
+    r"실제로.*(?:말고|마|않|안)|어떤\s*인증|어떤\s*권한|필요한지만|"
+    r"만\s*설명|만\s*알려|하지\s*말고|하지마|하지\s*마)",
+    re.IGNORECASE,
+)
 _AIRKOREA_TOOL_ID: Final = "airkorea_ctprvn_air_quality"
 _DJTC_SUBWAY_SEGMENT_TOOL_ID: Final = "djtc_subway_segment_fare_time_check"
 _PPS_BID_TOOL_ID: Final = "pps_bid_public_info"
+_PPS_SHOPPING_TOOL_ID: Final = "pps_shopping_mall_product_lookup"
 _KMA_ANALYSIS_CHART_TOOL_ID: Final = "kma_apihub_url_analysis_weather_chart_image"
 
 
@@ -4011,6 +4034,35 @@ def _check_duplicate_submit_prerequisite(
     )
 
 
+def _query_explicitly_requests_protected_send(user_query: str) -> bool:
+    if not _PROTECTED_SEND_ACTION_RE.search(user_query):
+        return False
+    return not _NON_ACTION_BOUNDARY_RE.search(user_query)
+
+
+def _check_unrequested_send_for_read_only_query(
+    fname: str,
+    args_obj: dict[str, object],
+    user_query: str,
+) -> str | None:
+    if fname != "send":
+        return None
+    if _query_explicitly_requests_protected_send(user_query):
+        return None
+    if not _READ_ONLY_PUBLIC_SERVICE_QUERY_RE.search(user_query):
+        return None
+    if _emitted_tool_id(fname, args_obj) is None:
+        return None
+    return (
+        "The latest citizen request is read-only: it asks to find, check, explain, "
+        "summarize, or identify public-service information, not to submit, file, "
+        "pay, issue, consent, or complete a protected action. RECOVERY: do NOT "
+        "call send and do NOT show a permission prompt. Produce the final answer "
+        "from the latest successful read-only tool_result. If required evidence is "
+        "missing, say which adapter or agency API is missing or failed."
+    )
+
+
 def _check_unrequested_verify_after_public_find(
     fname: str,
     llm_messages: list[Any],
@@ -5327,6 +5379,13 @@ def _direct_public_data_target_for_query(
             "weather_chart",
             "use official KMA APIHub analyzed weather-chart evidence and do not "
             "substitute location, AirKorea, or ordinary weather evidence.",
+        )
+    if _PPS_SHOPPING_USER_QUERY_RE.search(user_query):
+        return (
+            frozenset({_PPS_SHOPPING_TOOL_ID}),
+            _PPS_SHOPPING_TOOL_ID,
+            "procurement_product",
+            "use PPS shopping mall product lookup fields such as prdct_clsfc_no_nm.",
         )
     if _PPS_BID_USER_QUERY_RE.search(user_query):
         return (
@@ -8925,6 +8984,25 @@ async def run(  # noqa: C901
                         "call_id=%s after prior success",
                         call_id[:12],
                     )
+                    continue
+
+                unrequested_send_msg = _check_unrequested_send_for_read_only_query(
+                    fname,
+                    args_obj,
+                    latest_user_utt,
+                )
+                if unrequested_send_msg is not None:
+                    logger.warning(
+                        "_handle_chat_request: suppressed unrequested %s "
+                        "call_id=%s for read-only request",
+                        fname,
+                        call_id[:12],
+                    )
+                    _append_final_answer_observation(
+                        "suppressed unrequested send for read-only request",
+                        unrequested_send_msg,
+                    )
+                    continue_free_next_turn = True
                     continue
 
                 raw_duplicate = _canonical_primitive_args(

@@ -43,6 +43,8 @@ _LOCATION_TOOL_IDS = frozenset(
 )
 _AIRKOREA_TOOL_IDS = frozenset({"airkorea_ctprvn_air_quality"})
 _DJTC_SUBWAY_SEGMENT_TOOL_IDS = frozenset({"djtc_subway_segment_fare_time_check"})
+_HIRA_HOSPITAL_SEARCH_TOOL_IDS = frozenset({"hira_hospital_search"})
+_PPS_SHOPPING_TOOL_IDS = frozenset({"pps_shopping_mall_product_lookup"})
 
 
 def expand_query_for_adapter_retrieval(query: str) -> str:
@@ -69,11 +71,13 @@ def expand_query_for_intent(query: str, intent: ToolSelectionIntent) -> str:
         additions.extend(["AED", "자동심장충격기", "자동제세동기", "국립중앙의료원"])
     additions.extend(_emergency_chain_additions(intent))
     additions.extend(_pps_bid_additions(intent))
+    additions.extend(_pps_shopping_additions(intent))
     additions.extend(_airkorea_air_quality_additions(intent))
     additions.extend(_djtc_subway_segment_additions(intent))
     additions.extend(_kcue_regional_additions(intent))
     additions.extend(_ocean_water_quality_additions(intent))
     additions.extend(_health_detail_additions(intent))
+    additions.extend(_hospital_search_additions(intent))
     additions.extend(_document_harness_additions(intent))
     additions.extend(_public_safety_location_additions(intent))
     if intent.has_public_data_ref("traffic_hazard"):
@@ -107,10 +111,12 @@ def filter_special_case_scores(
     scored = _filter_document_harness_scores(intent, scored)
     scored = _filter_emergency_chain_scores(intent, scored)
     scored = _filter_pps_bid_scores(intent, scored)
+    scored = _filter_pps_shopping_scores(intent, scored)
     scored = _filter_airkorea_air_quality_scores(intent, scored)
     scored = _filter_djtc_subway_segment_scores(intent, scored)
     scored = _filter_kcue_regional_scores(intent, scored)
     scored = _filter_health_detail_scores(intent, scored)
+    scored = _filter_hospital_search_scores(intent, scored)
     scored = _filter_public_safety_location_scores(intent, scored)
     scored = _filter_ocean_water_quality_scores(intent, scored)
     scored = _filter_kma_aviation_scores(
@@ -320,6 +326,24 @@ def _pps_bid_additions(intent: ToolSelectionIntent) -> list[str]:
     ]
 
 
+def _pps_shopping_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("pps_shopping"):
+        return []
+    return [
+        "조달청",
+        "종합쇼핑몰",
+        "공공조달",
+        "물품검색",
+        "품목정보",
+        "계약물품",
+        "prdct_clsfc_no_nm",
+        "PPS",
+        "shopping",
+        "product",
+        "procurement",
+    ]
+
+
 def _airkorea_air_quality_additions(intent: ToolSelectionIntent) -> list[str]:
     if not intent.has_public_data_ref("airkorea_air_quality"):
         return []
@@ -390,6 +414,29 @@ def _health_detail_additions(intent: ToolSelectionIntent) -> list[str]:
         "hospital",
         "detail",
     ]
+
+
+def _hospital_search_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("hira_hospital_search"):
+        return []
+    additions = [
+        "병원",
+        "의원",
+        "의료기관",
+        "내과",
+        "진료과목",
+        "전화번호",
+        "주소",
+        "HIRA",
+        "hospital",
+        "clinic",
+        "dgsbjt",
+        "xPos",
+        "yPos",
+    ]
+    if intent.has_location_ref("poi"):
+        additions.extend(["장소", "키워드", "POI", "랜드마크", "캠퍼스", "keyword"])
+    return additions
 
 
 def _document_harness_additions(intent: ToolSelectionIntent) -> list[str]:
@@ -500,6 +547,19 @@ def _filter_pps_bid_scores(
     ]
 
 
+def _filter_pps_shopping_scores(
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    if not intent.has_public_data_ref("pps_shopping"):
+        return scored
+    has_pps_shopping = any(tool_id in _PPS_SHOPPING_TOOL_IDS for tool_id, _ in scored)
+    if not has_pps_shopping:
+        return scored
+    return [
+        (tool_id, score + 1400.0) for tool_id, score in scored if tool_id in _PPS_SHOPPING_TOOL_IDS
+    ]
+
+
 def _filter_airkorea_air_quality_scores(
     intent: ToolSelectionIntent, scored: list[tuple[str, float]]
 ) -> list[tuple[str, float]]:
@@ -558,6 +618,30 @@ def _filter_health_detail_scores(
         )
         for tool_id, score in scored
     ]
+
+
+def _filter_hospital_search_scores(
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    if not intent.has_public_data_ref("hira_hospital_search"):
+        return scored
+    allowed_tool_ids = _HIRA_HOSPITAL_SEARCH_TOOL_IDS | _LOCATION_TOOL_IDS
+    if intent.has_public_data_ref("hira_medical_detail"):
+        allowed_tool_ids = allowed_tool_ids | {"hira_medical_institution_detail"}
+    has_hira_search = any(tool_id in _HIRA_HOSPITAL_SEARCH_TOOL_IDS for tool_id, _ in scored)
+    if has_hira_search:
+        scored = [(tool_id, score) for tool_id, score in scored if tool_id in allowed_tool_ids]
+    boosts = {
+        "kakao_keyword_search": 1100.0,
+        "hira_hospital_search": 950.0,
+        "hira_medical_institution_detail": 650.0,
+        "kakao_address_search": 700.0,
+        "kakao_coord_to_region": 450.0,
+        "juso_adm_cd_lookup": 260.0,
+        "sgis_adm_cd_lookup": 260.0,
+        "locate": 180.0,
+    }
+    return [(tool_id, score + boosts.get(tool_id, 0.0)) for tool_id, score in scored]
 
 
 def _filter_document_harness_scores(

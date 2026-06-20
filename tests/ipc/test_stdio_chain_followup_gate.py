@@ -45,6 +45,7 @@ from ummaya.ipc.stdio import (
     _check_sensitive_lookup_auth_prerequisite,
     _check_sensitive_lookup_terminated_without_lookup,
     _check_submit_terminated_without_submit,
+    _check_unrequested_send_for_read_only_query,
     _check_verify_terminated_without_verify,
     _check_verify_tool_choice_prerequisite,
     _conversation_has_successful_identical_primitive_call,
@@ -1452,6 +1453,20 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
     assert "pps_bid_public_info" not in message
     assert "kma_current_observation" not in message
 
+    procurement_product_query = (
+        "공공조달 물품 검색에서 노트북 관련 정보를 찾아줘. "
+        "실패하면 어떤 기관 API에서 실패했는지 그대로 말해줘."
+    )
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "kakao_address_search",
+        {"query": "노트북"},
+        procurement_product_query,
+    ) or (None, "")
+    assert preferred == "pps_shopping_mall_product_lookup"
+    assert "target=procurement_product" in message
+    assert "pps_shopping_mall_product_lookup" not in message
+    assert "kakao_address_search" not in message
+
     preferred, message = _check_direct_public_data_tool_choice_prerequisite(
         "send",
         {
@@ -1471,6 +1486,37 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
             "airkorea_ctprvn_air_quality",
             {"sido_name": "부산"},
             "부산 중구 미세먼지 지금 어때? 마스크 써야 해?",
+        )
+        is None
+    )
+
+
+def test_read_only_welfare_query_rejects_unrequested_send() -> None:
+    welfare_query = (
+        "부산 사하구에서 받을 수 있는 복지 지원이나 상담 창구를 확인해줘. "
+        "내가 1인 가구라고 가정해줘."
+    )
+    message = _check_unrequested_send_for_read_only_query(
+        "send",
+        {
+            "tool_id": "mock_welfare_application_submit_v1",
+            "params": {"program_name": "1인 가구 지원"},
+        },
+        welfare_query,
+    )
+
+    assert message is not None
+    assert "read-only" in message
+    assert "mock_welfare_application_submit_v1" not in message
+
+    assert (
+        _check_unrequested_send_for_read_only_query(
+            "send",
+            {
+                "tool_id": "mock_welfare_application_submit_v1",
+                "params": {"program_name": "1인 가구 지원"},
+            },
+            "부산 사하구 1인 가구 복지 지원을 신청해줘.",
         )
         is None
     )

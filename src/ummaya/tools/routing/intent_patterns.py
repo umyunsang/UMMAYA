@@ -109,7 +109,8 @@ _MOF_OCEAN_WATER_QUALITY_RE = re.compile(
 )
 _PPS_BID_RE = re.compile(r"(입찰|나라장터|조달청|\bbid\b|procurement|tender)", re.IGNORECASE)
 _PPS_SHOPPING_RE = re.compile(
-    r"(종합\s*쇼핑몰|쇼핑몰|계약\s*물품|물품\s*조회|shopping\s*mall)",
+    r"(종합\s*쇼핑몰|쇼핑몰|공공\s*조달\s*물품|조달\s*물품|계약\s*물품|"
+    r"물품\s*(?:검색|조회)|물품\s*관련|shopping\s*mall|product\s*(?:lookup|search))",
     re.IGNORECASE,
 )
 _AIRKOREA_AIR_QUALITY_RE = re.compile(
@@ -138,6 +139,14 @@ _KCUE_REGIONAL_FOREIGN_STUDENT_RE = re.compile(
 _HIRA_MEDICAL_DETAIL_RE = re.compile(
     r"((병원|의료기관|의원).*(상세|진료과|진료과목|진료시간|주차)|"
     r"(상세|진료시간|주차|응급실).*(병원|의료기관|의원)|ykiho|detail)",
+    re.IGNORECASE,
+)
+_HIRA_HOSPITAL_SEARCH_RE = re.compile(
+    r"((병원|의료기관|의원|내과|소아과|이비인후과|피부과|정형외과|가정의학과|진료과)."
+    r"*(근처|주변|인근|가까운|전화|주소|찾|검색|조회)|"
+    r"(근처|주변|인근|가까운|전화|주소|찾|검색|조회).*"
+    r"(병원|의료기관|의원|내과|소아과|이비인후과|피부과|정형외과|가정의학과|진료과)|"
+    r"hospital\s+search|clinic\s+search|medical\s+institution)",
     re.IGNORECASE,
 )
 _MOIS_EMERGENCY_CALL_BOX_RE = re.compile(
