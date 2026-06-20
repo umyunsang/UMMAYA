@@ -13,6 +13,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+import ummaya.tools.kma.kma_short_term_forecast as short_module
 from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.kma_short_term_forecast import (
@@ -22,6 +23,7 @@ from ummaya.tools.kma.kma_short_term_forecast import (
     _call,
     _candidate_base_slots,
     _coerce_future_base_slot,
+    _coerce_recent_base_slot,
     _normalize_items,
     _parse_response,
     register,
@@ -184,6 +186,28 @@ class TestBaseSlotRecovery:
         slots = _candidate_base_slots("20260525", "2300")
 
         assert slots[-1] == ("20260524", "2300")
+
+    def test_stale_slot_clamps_to_latest_published_slot(self):
+        kst = ZoneInfo("Asia/Seoul")
+
+        base_date, base_time = _coerce_recent_base_slot(
+            "20240617",
+            "1400",
+            now=datetime(2026, 6, 20, 11, 4, tzinfo=kst),
+        )
+
+        assert (base_date, base_time) == ("20260620", "0800")
+
+    def test_invalid_calendar_slot_clamps_to_latest_published_slot(self):
+        kst = ZoneInfo("Asia/Seoul")
+
+        base_date, base_time = _coerce_recent_base_slot(
+            "20260230",
+            "1400",
+            now=datetime(2026, 6, 20, 11, 4, tzinfo=kst),
+        )
+
+        assert (base_date, base_time) == ("20260620", "0800")
 
 
 # ---------------------------------------------------------------------------
@@ -373,6 +397,7 @@ class TestCall:
     @pytest.mark.asyncio
     async def test_no_data_retries_previous_base_slot(self, monkeypatch):
         monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        monkeypatch.setattr(short_module, "_coerce_recent_base_slot", _preserve_requested_slot)
         fixture_data = _load_fixture("kma_short_term_forecast_success.json")
         mock_client = _make_mock_client_sequence([_no_data_payload(), fixture_data])
 
@@ -383,6 +408,28 @@ class TestCall:
         assert mock_client.get.await_count == 2
         call_params = [call.kwargs["params"] for call in mock_client.get.await_args_list]
         assert [params["base_time"] for params in call_params] == ["1100", "0800"]
+
+    @pytest.mark.asyncio
+    async def test_stale_base_slot_is_coerced_before_request(self, monkeypatch):
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        fixture_data = _load_fixture("kma_short_term_forecast_success.json")
+        mock_client = _make_mock_client(fixture_data)
+
+        def fake_coerce_recent_base_slot(
+            base_date: str,
+            base_time: str,
+        ) -> tuple[str, str]:
+            assert (base_date, base_time) == ("20240617", "1400")
+            return "20260620", "0800"
+
+        monkeypatch.setattr(short_module, "_coerce_recent_base_slot", fake_coerce_recent_base_slot)
+
+        params = KmaShortTermForecastInput(base_date="20240617", base_time="1400", nx=97, ny=75)
+        await _call(params, client=mock_client)
+
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert query_params["base_date"] == "20260620"
+        assert query_params["base_time"] == "0800"
 
     @pytest.mark.asyncio
     async def test_http_status_error(self, monkeypatch):
@@ -406,6 +453,13 @@ class TestCall:
 # ---------------------------------------------------------------------------
 # TestToolDefinition
 # ---------------------------------------------------------------------------
+
+
+def _preserve_requested_slot(
+    base_date: str,
+    base_time: str,
+) -> tuple[str, str]:
+    return base_date, base_time
 
 
 class TestToolDefinition:

@@ -63,6 +63,7 @@ _BASE_TIME_ORDER: tuple[str, ...] = (
 _VALID_BASE_TIMES = frozenset(_BASE_TIME_ORDER)
 _NO_DATA_RESULT_CODE = "03"
 _MAX_BASE_SLOT_ATTEMPTS = 9
+_RECENT_BASE_SLOT_RETENTION_DAYS = 3
 
 # ---------------------------------------------------------------------------
 # Input / Output models
@@ -76,7 +77,7 @@ class KmaShortTermForecastInput(BaseModel):
 
     base_date: str = Field(
         ...,
-        description=("예보 발표 날짜 (YYYYMMDD). 보통 오늘. Example: 20260430."),
+        description=("예보 발표 날짜 (YYYYMMDD). 보통 오늘. Do not copy sample dates."),
     )
     base_time: str = Field(
         ...,
@@ -272,6 +273,30 @@ def _coerce_future_base_slot(
     return requested_key
 
 
+def _coerce_recent_base_slot(
+    base_date: str,
+    base_time: str,
+    *,
+    now: datetime | None = None,
+) -> tuple[str, str]:
+    """Clamp stale, invalid, future, or unpublished requests to the latest published slot."""
+    latest_date, latest_time = _latest_published_base_slot(now=now)
+    latest_dt = _base_slot_datetime(latest_date, latest_time)
+    try:
+        requested_dt = _base_slot_datetime(base_date, base_time)
+    except ValueError:
+        return latest_date, latest_time
+    earliest_dt = latest_dt - timedelta(days=_RECENT_BASE_SLOT_RETENTION_DAYS)
+    if requested_dt < earliest_dt or requested_dt > latest_dt:
+        return latest_date, latest_time
+    return base_date, base_time
+
+
+def _base_slot_datetime(base_date: str, base_time: str) -> datetime:
+    parsed = datetime.strptime(f"{base_date}{base_time}", "%Y%m%d%H%M")
+    return parsed.replace(tzinfo=_SEOUL_TZ)
+
+
 def _is_no_data_error(exc: ToolExecutionError) -> bool:
     """Return True when a KMA ToolExecutionError is resultCode=03/NO_DATA."""
     message = str(exc)
@@ -366,7 +391,7 @@ async def _call(  # noqa: C901
     """
     endpoint = resolve_vilage_fcst_endpoint(_OPERATION)
 
-    initial_base_date, initial_base_time = _coerce_future_base_slot(
+    initial_base_date, initial_base_time = _coerce_recent_base_slot(
         params.base_date,
         params.base_time,
     )

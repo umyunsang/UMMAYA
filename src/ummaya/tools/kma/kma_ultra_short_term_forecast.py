@@ -35,6 +35,11 @@ from ummaya.tools.kma.kma_short_term_forecast import (
     KmaShortTermForecastOutput,
     _normalize_items,
 )
+from ummaya.tools.kma.recent_slots import (
+    ULTRA_SHORT_TERM_FORECAST_SLOT_POLICY,
+    KmaBaseSlot,
+    coerce_recent_slot,
+)
 from ummaya.tools.kma.response_payload import (
     KmaPayloadDecodeError,
     apply_format_params,
@@ -63,7 +68,10 @@ class KmaUltraShortTermForecastInput(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    base_date: str = Field(..., description="발표 날짜 (YYYYMMDD). 보통 오늘. Example: 20260430.")
+    base_date: str = Field(
+        ...,
+        description="발표 날짜 (YYYYMMDD). 보통 오늘. Do not copy sample dates.",
+    )
     base_time: str = Field(
         ...,
         description=(
@@ -216,10 +224,12 @@ async def _call(
     """
     endpoint = resolve_vilage_fcst_endpoint(_OPERATION)
 
+    requested_slot = KmaBaseSlot(base_date=params.base_date, base_time=params.base_time)
+    effective_slot = coerce_recent_slot(requested_slot, ULTRA_SHORT_TERM_FORECAST_SLOT_POLICY)
     query_params: dict[str, str | int] = {
         endpoint.auth_query_param: endpoint.api_key,
-        "base_date": params.base_date,
-        "base_time": params.base_time,
+        "base_date": effective_slot.base_date,
+        "base_time": effective_slot.base_time,
         "nx": params.nx,
         "ny": params.ny,
         "numOfRows": params.num_of_rows,
@@ -229,8 +239,8 @@ async def _call(
 
     logger.debug(
         "KMA ultra-short-term forecast request: base_date=%s base_time=%s nx=%d ny=%d",
-        params.base_date,
-        params.base_time,
+        effective_slot.base_date,
+        effective_slot.base_time,
         params.nx,
         params.ny,
     )
@@ -250,8 +260,8 @@ async def _call(
         logger.info(
             "KMA ultra-short-term forecast retrieved: base_date=%s base_time=%s "
             "nx=%d ny=%d items=%d",
-            params.base_date,
-            params.base_time,
+            effective_slot.base_date,
+            effective_slot.base_time,
             params.nx,
             params.ny,
             len(output.items),

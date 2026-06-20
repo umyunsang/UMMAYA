@@ -11,6 +11,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+import ummaya.tools.kma.kma_current_observation as obs_module
 from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.kma_current_observation import (
@@ -23,6 +24,10 @@ from ummaya.tools.kma.kma_current_observation import (
     _pivot_rows_to_output,
     _previous_observation_slot,
     register,
+)
+from ummaya.tools.kma.recent_slots import (
+    CURRENT_OBSERVATION_SLOT_POLICY,
+    KmaBaseSlot,
 )
 from ummaya.tools.registry import ToolRegistry
 
@@ -392,6 +397,7 @@ class TestCall:
     @pytest.mark.asyncio
     async def test_no_data_retries_previous_hour(self, monkeypatch):
         monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        monkeypatch.setattr(obs_module, "coerce_recent_slot", _preserve_requested_slot)
         fixture_data = _load_fixture("kma_obs_success.json")
         mock_client = _make_mock_client_sequence([_no_data_payload(), fixture_data])
 
@@ -404,8 +410,34 @@ class TestCall:
         assert [params["base_time"] for params in call_params] == ["0700", "0600"]
 
     @pytest.mark.asyncio
+    async def test_stale_base_slot_is_coerced_before_request(self, monkeypatch):
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        fixture_data = _load_fixture("kma_obs_success.json")
+        mock_client = _make_mock_client(fixture_data)
+        requested_slots: list[KmaBaseSlot] = []
+
+        def fake_coerce_recent_slot(
+            requested: KmaBaseSlot,
+            policy: object,
+        ) -> KmaBaseSlot:
+            requested_slots.append(requested)
+            assert policy is CURRENT_OBSERVATION_SLOT_POLICY
+            return KmaBaseSlot(base_date="20260620", base_time="1000")
+
+        monkeypatch.setattr(obs_module, "coerce_recent_slot", fake_coerce_recent_slot)
+
+        params = KmaCurrentObservationInput(base_date="20260430", base_time="1200", nx=97, ny=75)
+        await _call(params, client=mock_client)
+
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert requested_slots == [KmaBaseSlot(base_date="20260430", base_time="1200")]
+        assert query_params["base_date"] == "20260620"
+        assert query_params["base_time"] == "1000"
+
+    @pytest.mark.asyncio
     async def test_no_data_exhaustion_raises(self, monkeypatch):
         monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        monkeypatch.setattr(obs_module, "coerce_recent_slot", _preserve_requested_slot)
         mock_client = _make_mock_client_sequence([_no_data_payload()] * 6)
 
         params = KmaCurrentObservationInput(base_date="20260413", base_time="0100", nx=61, ny=126)
@@ -446,6 +478,13 @@ class TestCall:
         params = KmaCurrentObservationInput(base_date="20260413", base_time="0600", nx=61, ny=126)
         with pytest.raises(ConfigurationError):
             await _call(params)
+
+
+def _preserve_requested_slot(
+    requested: KmaBaseSlot,
+    policy: object,
+) -> KmaBaseSlot:
+    return requested
 
 
 # ---------------------------------------------------------------------------

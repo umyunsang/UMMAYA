@@ -22,6 +22,10 @@ from ummaya.tools.kma.kma_ultra_short_term_forecast import (
     _parse_response,
     register,
 )
+from ummaya.tools.kma.recent_slots import (
+    ULTRA_SHORT_TERM_FORECAST_SLOT_POLICY,
+    KmaBaseSlot,
+)
 from ummaya.tools.models import LookupRecord
 from ummaya.tools.registry import ToolRegistry
 
@@ -295,6 +299,33 @@ class TestCall:
         query_params = mock_client.get.await_args.kwargs["params"]
         assert query_params["dataType"] == "JSON"
         assert query_params["_type"] == "json"
+
+    @pytest.mark.asyncio
+    async def test_stale_base_slot_is_coerced_before_request(self, monkeypatch):
+        monkeypatch.setenv("UMMAYA_KMA_API_HUB_AUTH_KEY", "test-key-abc")
+        fixture_data = _load_fixture("kma_ultra_short_term_success.json")
+        mock_client = _make_mock_client(fixture_data)
+        requested_slots: list[KmaBaseSlot] = []
+
+        def fake_coerce_recent_slot(
+            requested: KmaBaseSlot,
+            policy: object,
+        ) -> KmaBaseSlot:
+            requested_slots.append(requested)
+            assert policy is ULTRA_SHORT_TERM_FORECAST_SLOT_POLICY
+            return KmaBaseSlot(base_date="20260620", base_time="1030")
+
+        monkeypatch.setattr(ultra_module, "coerce_recent_slot", fake_coerce_recent_slot)
+
+        params = KmaUltraShortTermForecastInput(
+            base_date="20260430", base_time="1200", nx=97, ny=75
+        )
+        await _call(params, client=mock_client)
+
+        query_params = mock_client.get.await_args.kwargs["params"]
+        assert requested_slots == [KmaBaseSlot(base_date="20260430", base_time="1200")]
+        assert query_params["base_date"] == "20260620"
+        assert query_params["base_time"] == "1030"
 
     @pytest.mark.asyncio
     async def test_http_status_error(self, monkeypatch):

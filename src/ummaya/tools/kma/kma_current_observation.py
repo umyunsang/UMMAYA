@@ -27,6 +27,11 @@ from ummaya.tools._outbound_trace import traced_async_client
 from ummaya.tools.errors import ConfigurationError, ToolExecutionError
 from ummaya.tools.executor import ToolExecutor
 from ummaya.tools.kma.grid_coords import kma_grid_short_reference
+from ummaya.tools.kma.recent_slots import (
+    CURRENT_OBSERVATION_SLOT_POLICY,
+    KmaBaseSlot,
+    coerce_recent_slot,
+)
 from ummaya.tools.kma.response_payload import (
     KmaPayloadDecodeError,
     apply_format_params,
@@ -61,7 +66,7 @@ class KmaCurrentObservationInput(BaseModel):
         ...,
         description=(
             "관측 기준 날짜 (YYYYMMDD format, no separator). "
-            "오늘 날짜 사용. Example: 20260430. "
+            "오늘 날짜 사용. Do not copy sample dates. "
             "시스템 프롬프트의 '오늘 날짜' context 를 그대로 사용."
         ),
     )
@@ -376,9 +381,11 @@ async def _call(  # noqa: C901
     try:
         assert client is not None  # noqa: S101 — guaranteed by branch above
         no_data_slots: list[str] = []
+        requested_slot = KmaBaseSlot(base_date=params.base_date, base_time=params.base_time)
+        effective_slot = coerce_recent_slot(requested_slot, CURRENT_OBSERVATION_SLOT_POLICY)
         for base_date, base_time in _candidate_observation_slots(
-            params.base_date,
-            params.base_time,
+            effective_slot.base_date,
+            effective_slot.base_time,
         ):
             query_params: dict[str, str | int] = {
                 endpoint.auth_query_param: endpoint.api_key,
