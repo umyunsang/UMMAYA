@@ -2113,6 +2113,27 @@ export async function* query(params: QueryParams): QueryGenerator {
         shouldContinueAfterRepairPrompt = true
         break
       }
+      const aedGuardMessage = boundary.kind === 'pass'
+        ? nmcAedEvidenceGuard({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (aedGuardMessage !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_replaced_nmc_aed_with_evidence_summary',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        yield aedGuardMessage
+        messages.push(aedGuardMessage)
+        return Terminal.completed()
+      }
       const ungroundedPublicDataRepairPrompt = boundary.kind === 'pass'
         ? ungroundedPublicDataFinalRepairPrompt({
             messages,
@@ -2180,27 +2201,6 @@ export async function* query(params: QueryParams): QueryGenerator {
         const blockedMessage = createEmergencyNoClaimBlockedMessage()
         yield blockedMessage
         messages.push(blockedMessage)
-        return Terminal.completed()
-      }
-      const aedGuardMessage = boundary.kind === 'pass'
-        ? nmcAedEvidenceGuard({
-            messages,
-            candidate: boundary.message,
-          })
-        : undefined
-      if (aedGuardMessage !== undefined) {
-        appendQueryAssistantDiagnostic({
-          event: 'query_assistant_replaced_nmc_aed_with_evidence_summary',
-          querySource: String(params.querySource),
-          messages,
-          assistantMessage: boundary.message,
-          turnCount,
-          boundaryKind: 'block',
-          repairPromptChars: 0,
-          continueAfterRepair: false,
-        })
-        yield aedGuardMessage
-        messages.push(aedGuardMessage)
         return Terminal.completed()
       }
       const weatherGuardMessage = boundary.kind === 'pass'

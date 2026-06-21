@@ -133,7 +133,7 @@ function createBadFinalDeps() {
             ],
           })
         : createAssistantMessage({
-            content: '도시몰운대아파트가 가장 가깝고 다대성원아파트는 6.12km입니다.',
+            content: '도시몰운대아파트가 가장 가깝고 다대성원아파트는 6.12km입니다. 문의: 051-264-2820',
           })
     },
     microcompact: async (messages: readonly Message[]) => ({ messages }),
