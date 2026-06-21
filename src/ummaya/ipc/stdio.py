@@ -1100,6 +1100,16 @@ _TAGO_BUS_USER_QUERY_RE: Final = re.compile(
     r"(버스|시내버스|정류장|정류소|노선|도착|언제\s*와|몇\s*분|bus|route|arrival|station)",
     re.IGNORECASE,
 )
+_INTERCITY_PUBLIC_TRANSPORT_USER_QUERY_RE: Final = re.compile(
+    r"(?=.*(?:대중교통|고속버스|시외버스|버스|열차|기차|KTX|SRT|교통))"
+    r"(?:서울|인천|대전|대구|광주|부산|울산|세종|수원|성남|고양|용인|청주|천안|전주|"
+    r"포항|창원|김해|진주|여수|순천|목포|강릉|춘천|원주|제주|서귀포)"
+    r"[^\n]{0,24}(?:에서|부터)[^\n]{0,80}"
+    r"(?:서울|인천|대전|대구|광주|부산|울산|세종|수원|성남|고양|용인|청주|천안|전주|"
+    r"포항|창원|김해|진주|여수|순천|목포|강릉|춘천|원주|제주|서귀포)"
+    r"[^\n]{0,24}(?:까지|로|으로|도착|이동|가는)",
+    re.IGNORECASE,
+)
 _TAGO_ROUTE_NO_RE: Final = re.compile(r"(?:^|[^\d])(\d{1,4}(?:-\d)?)\s*번")
 _TAGO_TOOL_IDS: Final[frozenset[str]] = frozenset(
     {
@@ -5832,6 +5842,8 @@ def _direct_public_data_target_for_query(
             "use DJTC subway segment fare/time/distance evidence with strstnno and endstnno. "
             "This is a read-only fare lookup; do not use KFTC/OpenGiro payment or any send tool.",
         )
+    if _INTERCITY_PUBLIC_TRANSPORT_USER_QUERY_RE.search(user_query):
+        return None
     if _TAGO_BUS_USER_QUERY_RE.search(user_query):
         preferred = (
             "tago_bus_route_search"

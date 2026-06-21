@@ -12,6 +12,12 @@ import {
 } from './toolResultErrors.js'
 
 const UNAVAILABLE_TOOL_REPAIR_MARKER = 'Unavailable tool boundary:'
+const MAJOR_CITY_RE =
+  '(?:서울|인천|대전|대구|광주|부산|울산|세종|수원|성남|고양|용인|청주|천안|전주|포항|창원|김해|진주|여수|순천|목포|강릉|춘천|원주|제주|서귀포)'
+const INTERCITY_PUBLIC_TRANSPORT_REQUEST_RE = new RegExp(
+  `(?=.*(?:대중교통|고속버스|시외버스|버스|열차|기차|KTX|SRT|교통))${MAJOR_CITY_RE}[^\\n]{0,24}(?:에서|부터)[^\\n]{0,80}${MAJOR_CITY_RE}[^\\n]{0,24}(?:까지|로|으로|도착|이동|가는)`,
+  'iu',
+)
 
 type ToolResultBlock = {
   readonly type: 'tool_result'
@@ -30,7 +36,27 @@ export function shouldBlockFinalAnswerAfterUnavailableToolRepair(params: {
     toolUseBlocks(params.candidate).length === 0
 }
 
-export function buildUnavailableToolFinalAnswerBlockedText(): string {
+export function hasUnavailableToolResultAfterLatestUser(
+  messages: readonly Message[],
+): boolean {
+  return unavailableToolNamesAfterLatestUser(messages).length > 0
+}
+
+export function isIntercityPublicTransportRequestText(text: string): boolean {
+  return INTERCITY_PUBLIC_TRANSPORT_REQUEST_RE.test(text)
+}
+
+export function buildUnavailableToolFinalAnswerBlockedText(
+  latestUserText = '',
+): string {
+  if (isIntercityPublicTransportRequestText(latestUserText)) {
+    return [
+      '서울-대전 같은 도시 간 대중교통은 TAGO 시내버스 도구 범위가 아닙니다.',
+      '공식 공공데이터에는 국토교통부 TAGO 고속버스정보와 TAGO 시외버스정보 채널이 별도로 있으나, 현재 UMMAYA에는 해당 intercity adapter가 등록되어 있지 않습니다.',
+      '시간표, 요금, 노선 ID, 터미널 정보를 만들지 않고 고속·시외버스/철도 공식 채널 확인으로 handoff합니다.',
+    ].join('\n\n')
+  }
+
   return [
     '현재 등록된 UMMAYA 도구로는 이 요청을 직접 조회하거나 완료하지 못했습니다.',
     '검증된 도구 결과 없이 기관명, 서류 목록, 처리 결과를 단정하지 않겠습니다.',

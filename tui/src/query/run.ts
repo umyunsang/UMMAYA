@@ -1,4 +1,4 @@
-import type { QueryParams, QueryGenerator } from '../query.js'
+import type { QueryGenerator, QueryParams, QueryYield } from '../query.js'
 import type { AssistantMessage, Message } from '../types/message.js'
 import { productionDeps } from './deps.js'
 import { Terminal } from './transitions.js'
@@ -8,6 +8,8 @@ import {
   buildStalePriorToolResultFinalAnswerBlockedText,
   buildUnsupportedRouteFinalAnswerBlockedText,
   buildUnavailableToolFinalAnswerBlockedText,
+  hasUnavailableToolResultAfterLatestUser,
+  isIntercityPublicTransportRequestText,
   shouldBlockStalePriorToolResultAnswer,
   shouldBlockFinalAnswerAfterUnsupportedRouteRepair,
   shouldBlockFinalAnswerAfterUnavailableToolRepair,
@@ -56,6 +58,10 @@ const ROOT_PRIMITIVE_TOOL_NAMES = new Set([
   'check',
   'send',
   'document',
+])
+const INTERCITY_PUBLIC_TRANSPORT_TOOL_NAMES = new Set([
+  'tago_express_bus_info',
+  'tago_intercity_bus_info',
 ])
 const KAKAO_LOCATION_TOOL_NAMES = new Set([
   'kakao_address_search',
@@ -623,10 +629,38 @@ function createGenericPendingFinalAnswerToolUseBlockedMessage(): AssistantMessag
 function createUnavailableToolFinalAnswerBlockedMessage(
   messages: readonly Message[],
 ): AssistantMessage {
-  void messages
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  const latestUserText =
+    latestUserIndex >= 0 && messages[latestUserIndex] !== undefined
+      ? messageText(messages[latestUserIndex])
+      : ''
   return createAssistantMessage({
-    content: buildUnavailableToolFinalAnswerBlockedText(),
+    content: buildUnavailableToolFinalAnswerBlockedText(latestUserText),
   })
+}
+
+function hasIntercityPublicTransportTool(
+  tools: readonly { readonly name: string }[],
+): boolean {
+  return tools.some(tool => INTERCITY_PUBLIC_TRANSPORT_TOOL_NAMES.has(tool.name))
+}
+
+function shouldBlockUnavailableIntercityPublicTransportSurface(params: {
+  readonly messages: readonly Message[]
+  readonly tools: readonly { readonly name: string }[]
+}): boolean {
+  return isIntercityPublicTransportRequestText(latestUserText(params.messages)) &&
+    toolResultsSinceLatestPrompt(params.messages).length === 0 &&
+    !hasIntercityPublicTransportTool(params.tools)
+}
+
+function shouldBlockUnavailableIntercityPublicTransportToolUse(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+  readonly tools: readonly { readonly name: string }[]
+}): boolean {
+  return shouldBlockUnavailableIntercityPublicTransportSurface(params) &&
+    toolUseBlocks(params.candidate).length > 0
 }
 
 function createUnsupportedRouteFinalAnswerBlockedMessage(): AssistantMessage {
@@ -1909,6 +1943,18 @@ export async function* query(params: QueryParams): QueryGenerator {
       : false
     const guardedPreviewEnabled =
       params.toolUseContext.options.isNonInteractiveSession !== true
+    const shouldBlockUnavailableIntercitySurface =
+      shouldBlockUnavailableIntercityPublicTransportSurface({
+        messages,
+        tools: params.toolUseContext.options.tools,
+      })
+    const shouldDeferProviderStreamUntilGuard =
+      guardedPreviewEnabled &&
+      (
+        hasUnavailableToolResultAfterLatestUser(messages) ||
+        shouldBlockUnavailableIntercitySurface
+      )
+    const deferredProviderStreamEvents: QueryYield[] = []
 
     for await (const event of deps.callModel({
       messages,
@@ -1937,6 +1983,18 @@ export async function* query(params: QueryParams): QueryGenerator {
         return Terminal.aborted_streaming()
       }
       if (!isAssistantMessage(event)) {
+        if (shouldDeferProviderStreamUntilGuard) {
+          if (deferredProviderStreamEvents.length === 0) {
+            appendRouteDiagnostic('query_provider_stream_deferred_until_guard', {
+              query_hash: latestQueryHash(messages),
+              query_source: String(params.querySource),
+              turn_count: turnCount,
+              message_count: messages.length,
+            })
+          }
+          deferredProviderStreamEvents.push(event)
+          continue
+        }
         yield event
         continue
       }
@@ -2005,6 +2063,35 @@ export async function* query(params: QueryParams): QueryGenerator {
         messagesForQuery: messages,
         assistantMessage: assistantCandidate,
       })
+      if (
+        boundary.kind === 'pass' &&
+        shouldBlockUnavailableIntercityPublicTransportToolUse({
+          messages,
+          candidate: boundary.message,
+          tools: params.toolUseContext.options.tools,
+        })
+      ) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_blocked_unavailable_intercity_transport_surface',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        const blockedMessage = createUnavailableToolFinalAnswerBlockedMessage(messages)
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
+        messages.push(blockedMessage)
+        return Terminal.completed()
+      }
       if (
         boundary.kind === 'pass' &&
         shouldBlockUnsupportedRouteDetailAnswer({
@@ -2524,6 +2611,19 @@ export async function* query(params: QueryParams): QueryGenerator {
         repairPromptChars: 0,
         continueAfterRepair: false,
       })
+      if (deferredProviderStreamEvents.length > 0) {
+        appendRouteDiagnostic('query_provider_stream_flushed_after_guard', {
+          query_hash: latestQueryHash(messages),
+          query_source: String(params.querySource),
+          turn_count: turnCount,
+          message_count: messages.length,
+          buffered_event_count: deferredProviderStreamEvents.length,
+          reason: 'accepted_assistant',
+        })
+        for (const deferredEvent of deferredProviderStreamEvents) {
+          yield deferredEvent
+        }
+      }
       yield boundary.message
       assistantMessage = boundary.message
       messages.push(boundary.message)

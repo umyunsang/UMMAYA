@@ -1528,6 +1528,27 @@ def test_public_data_tool_choice_rejects_unrelated_concrete_adapters() -> None:
     ) or (None, "")
     assert preferred == "kakao_keyword_search"
     assert "target=current_weather" in message
+
+
+def test_public_data_tool_choice_does_not_force_city_bus_for_intercity_transport() -> None:
+    result = _check_direct_public_data_tool_choice_prerequisite(
+        "airkorea_ctprvn_air_quality",
+        {"sido_name": "부산"},
+        "서울에서 대전까지 대중교통으로 이동한다고 가정하고, "
+        "버스나 지하철 관련 공공 교통 정보를 찾아줘.",
+    )
+
+    assert result is None
+
+
+def test_public_data_tool_choice_rejects_more_unrelated_concrete_adapters() -> None:
+    preferred, message = _check_direct_public_data_tool_choice_prerequisite(
+        "airkorea_ctprvn_air_quality",
+        {"sido_name": "부산"},
+        "퇴근하고 해운대 산책 갈 건데 지금 비 와? 우산 챙겨야 해?",
+    ) or (None, "")
+    assert preferred == "kakao_keyword_search"
+    assert "target=current_weather" in message
     assert "KMA current observation" in message
     assert "airkorea_ctprvn_air_quality" not in message
     assert "kakao_keyword_search" not in message

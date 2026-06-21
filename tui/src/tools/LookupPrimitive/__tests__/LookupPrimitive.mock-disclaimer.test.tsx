@@ -11,6 +11,7 @@ import type React from 'react'
 import { LookupPrimitive } from '../LookupPrimitive.js'
 import type { Output } from '../LookupPrimitive.js'
 import type { ToolUseContext } from '../../../Tool.js'
+import { createUserMessage } from '../../../utils/userMessageFactories.js'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -192,5 +193,26 @@ describe('FindPrimitive validateInput — primitive self-target guard', () => {
 
     expect(result.result).toBe(false)
     expect(result.message).toContain("Root primitive 'find' is not an adapter")
+  })
+
+  test('rejects city-bus TAGO adapters for intercity public transport prompts', async () => {
+    const result = await LookupPrimitive.validateInput!(
+      { tool_id: 'tago_bus_route_search', params: {} },
+      {
+        options: {
+          tools: [LookupPrimitive],
+        },
+        messages: [
+          createUserMessage({
+            content:
+              '서울에서 대전까지 대중교통으로 이동한다고 가정하고, 버스나 지하철 관련 공공 교통 정보를 찾아줘.',
+          }),
+        ],
+      } as unknown as ToolUseContext,
+    )
+
+    expect(result.result).toBe(false)
+    expect(result.message).toContain("AdapterNotFound: 'tago_bus_route_search'")
+    expect(result.message).toContain('City-bus TAGO adapters are disabled')
   })
 })
