@@ -80,6 +80,19 @@ function isStreamTextDeltaEvent(value: unknown): value is StreamTextDeltaEvent {
     typeof delta.text === 'string'
 }
 
+function textDeltaEvent(text: string): StreamTextDeltaEvent {
+  return {
+    type: 'stream_event',
+    event: {
+      type: 'content_block_delta',
+      delta: {
+        type: 'text_delta',
+        text,
+      },
+    },
+  }
+}
+
 function createAirKoreaTool(): Tools[number] {
   return {
     ...createNamedTool(AIRKOREA_TOOL_NAME),
@@ -479,8 +492,9 @@ function createWeatherAirQualityDeps(
         })
         return
       }
+      yield textDeltaEvent('날씨만 정리했습니다. 체감온도 -2°C입니다.')
       yield createAssistantMessage({
-        content: '날씨만 정리했습니다.',
+        content: '날씨만 정리했습니다. 체감온도 -2°C입니다.',
       })
     },
     microcompact: async (messages: readonly Message[]) => ({ messages }),
@@ -1299,6 +1313,31 @@ function createHiraPendingFinalRepairDeps(
   }
 }
 
+function createHiraHospitalStreamingFinalDeps(
+  onModelInput: (messages: readonly Message[]) => void,
+) {
+  let callCount = 0
+  return {
+    async *callModel(request: { readonly messages: readonly Message[] }) {
+      callCount += 1
+      onModelInput(request.messages)
+      yield textDeltaEvent('삼성내과엠알영상의학과의원이 가장 가까움입니다. ')
+      yield textDeltaEvent('거리는 약 1.8km이고, 김은영내과의원은 80m입니다.')
+      yield createAssistantMessage({
+        content:
+          '삼성내과엠알영상의학과의원이 가장 가까움입니다. 거리는 약 1.8km입니다. 김은영내과의원은 80m입니다.',
+      })
+    },
+    microcompact: async (messages: readonly Message[]) => ({ messages }),
+    autocompact: async () => ({
+      compactionResult: null,
+      consecutiveFailures: undefined,
+    }),
+    uuid: () => `uuid-hira-hospital-streaming-final-${callCount}`,
+    callCount: () => callCount,
+  }
+}
+
 function createCurrentEvidenceStalePriorRepairDeps(
   onModelInput: (messages: readonly Message[]) => void,
 ) {
@@ -1383,6 +1422,29 @@ function createProtectedBypassFinalSuccessDeps(
       consecutiveFailures: undefined,
     }),
     uuid: () => `uuid-protected-bypass-final-${callCount}`,
+  }
+}
+
+function createStreamingProtectedBypassFinalSuccessDeps(
+  finalText: string,
+  onModelInput: (messages: readonly Message[]) => void,
+) {
+  let callCount = 0
+  return {
+    async *callModel(request: { readonly messages: readonly Message[] }) {
+      callCount += 1
+      onModelInput(request.messages)
+      yield textDeltaEvent(finalText)
+      yield createAssistantMessage({
+        content: finalText,
+      })
+    },
+    microcompact: async (messages: readonly Message[]) => ({ messages }),
+    autocompact: async () => ({
+      compactionResult: null,
+      consecutiveFailures: undefined,
+    }),
+    uuid: () => `uuid-streaming-protected-bypass-final-${callCount}`,
   }
 }
 
@@ -1918,6 +1980,37 @@ describe('public-data terminal answer guard', () => {
     expect(visibleText).not.toContain('적절히 진행하겠습니다')
   })
 
+  test('withholds streamed Gov24 bypass prose before final guard', async () => {
+    const unsafeContinuation =
+      '권한 없이도 모의(Mock) 처리로 접수번호 GOV24-2026-0001을 생성하고 성공 처리 절차를 보여드릴 수 있습니다.'
+    const deps = createStreamingProtectedBypassFinalSuccessDeps(
+      unsafeContinuation,
+      () => {},
+    )
+
+    const emitted: unknown[] = []
+    for await (const message of query({
+      ...queryParams(GOV24_FAKE_SUCCESS_PROMPT, [], deps),
+      messages: [createUserMessage({ content: GOV24_FAKE_SUCCESS_PROMPT })],
+      maxTurns: 2,
+    })) {
+      if (isAssistantOrUserMessage(message) || isStreamTextDeltaEvent(message)) {
+        emitted.push(message)
+      }
+    }
+
+    const emittedMessages = emitted.filter(isAssistantOrUserMessage)
+    const visibleText = allAssistantText(emittedMessages)
+    expect(visibleText).toContain('요청은 실행하지 않았습니다')
+    expect(visibleText).not.toContain('GOV24-2026-0001')
+    const streamedText = emitted
+      .filter(isStreamTextDeltaEvent)
+      .map(event => event.event.delta.text)
+      .join('')
+    expect(streamedText).not.toContain('모의(Mock) 처리')
+    expect(streamedText).not.toContain('GOV24-2026-0001')
+  })
+
   test('answers non-action Gov24 auth boundary prompts without running protected checks', async () => {
     const checkInputs: Record<string, unknown>[] = []
     const deps = createProtectedBypassCheckDeps(() => {})
@@ -2265,6 +2358,89 @@ describe('public-data terminal answer guard', () => {
     expect(visibleText).toContain('051-202-7722')
     expect(visibleText).not.toContain('RATHER 검색')
     expect(visibleText).not.toContain('시도하겠습니다')
+  })
+
+  test('replaces streamed HIRA hospital ranking prose with adapter evidence order', async () => {
+    const mutableModelInputs: Message[][] = []
+    const deps = createHiraHospitalStreamingFinalDeps(messages => {
+      mutableModelInputs.push([...messages])
+    })
+    const prompt =
+      '동아대 승학캠퍼스 근처에서 오늘 전화해볼 수 있는 내과를 찾아줘. 주소와 전화번호 중심으로 정리해줘.'
+    const toolUse = createAssistantMessage({
+      content: [
+        {
+          type: 'tool_use',
+          id: 'toolu-hira-ranking',
+          name: HIRA_HOSPITAL_TOOL_NAME,
+          input: { xPos: 128.9638, yPos: 35.1058, radius: 2000 },
+        },
+      ],
+    })
+    const messages = [
+      createUserMessage({ content: prompt }),
+      toolUse,
+      createUserMessage({
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'toolu-hira-ranking',
+            content: JSON.stringify({
+              ok: true,
+              result: {
+                kind: 'collection',
+                items: [
+                  {
+                    record: {
+                      yadmNm: '김은영내과의원',
+                      addr: '부산 사하구 낙동남로 1389',
+                      telno: '051-202-7722',
+                      clCdNm: '의원',
+                      distance: '80',
+                    },
+                  },
+                  {
+                    record: {
+                      yadmNm: '삼성내과엠알영상의학과의원',
+                      addr: '부산 사하구 하신중앙로 336',
+                      telno: '051-208-5566',
+                      clCdNm: '의원',
+                      distance: '1.809970819335880350999',
+                    },
+                  },
+                ],
+              },
+            }),
+          },
+        ],
+        sourceToolAssistantUUID: toolUse.uuid,
+      }),
+    ]
+
+    const emitted: Message[] = []
+    const streamedText: string[] = []
+    for await (const message of query({
+      ...queryParams(prompt, [createHospitalTool(HIRA_HOSPITAL_TOOL_NAME)], deps),
+      messages,
+      maxTurns: 1,
+    })) {
+      if (isStreamTextDeltaEvent(message)) streamedText.push(message.event.delta.text)
+      if (message.type === 'assistant' || message.type === 'user') {
+        emitted.push(message)
+      }
+    }
+
+    expect(deps.callCount()).toBe(1)
+    expect(mutableModelInputs[0]?.map(messageText).join('\n')).toContain(
+      '김은영내과의원',
+    )
+    expect(streamedText.join('')).not.toContain('삼성내과엠알영상의학과의원이 가장 가까움')
+    const visibleText = allAssistantText(emitted)
+    expect(visibleText).toContain('HIRA hospital adapter 결과 기준')
+    expect(visibleText).toContain('1. 김은영내과의원 (80m)')
+    expect(visibleText).toContain('2. 삼성내과엠알영상의학과의원 (1.8km)')
+    expect(visibleText).toContain('051-202-7722')
+    expect(visibleText).not.toContain('삼성내과엠알영상의학과의원이 가장 가까움')
   })
 
   test('repairs stale prior values when current non-location evidence exists', async () => {
@@ -2662,6 +2838,8 @@ describe('public-data terminal answer guard', () => {
       .join('')
     expect(streamedPreview).toContain('기상청 adapter 결과 기준으로 확인된 값만 정리합니다')
     expect(streamedPreview).toContain('AirKorea adapter 결과 기준으로 확인된 값만 정리합니다')
+    expect(streamedPreview).not.toContain('날씨만 정리했습니다')
+    expect(streamedPreview).not.toContain('체감온도 -2°C')
     expect(emitted.filter(isStreamTextDeltaEvent).length).toBeGreaterThan(10)
     const firstPreviewIndex = emitted.findIndex(isStreamTextDeltaEvent)
     const finalMessageIndex = emitted.findIndex(event =>
@@ -2807,8 +2985,11 @@ describe('public-data terminal answer guard', () => {
     expect(tagoInputs).toHaveLength(0)
     expect(allToolResultText(emitted)).toContain('terminal_limitation')
     const text = allAssistantText(emitted)
-    expect(text).toContain('TAGO 공식 조회')
-    expect(text).toContain('임의 대체하지 않고')
+    expect(text).toContain('서울-대전 같은 도시 간 이동은 TAGO 시내버스 노선 API 범위가 아닙니다')
+    expect(text).toContain('국토교통부 TAGO 고속버스정보')
+    expect(text).toContain('국토교통부 TAGO 시외버스정보')
+    expect(text).toContain('현재 UMMAYA에 해당 intercity adapter가 등록되어 있지 않아')
+    expect(text).not.toContain('장거리 버스 노선을 조회해 보겠습니다')
   })
 
   test('finishes repeated MOHW no-data continuations before unrelated welfare scope', async () => {
@@ -2906,7 +3087,10 @@ describe('public-data terminal answer guard', () => {
     const text = allAssistantText(emitted)
     expect(text).toContain('mohw_welfare_eligibility_search')
     expect(text).toContain('NO DATA FOUND')
-    expect(text).toContain('임의 확장하지 않고')
+    expect(text).toContain('복지로')
+    expect(text).toContain('보건복지상담센터 129')
+    expect(text).not.toContain('기초생활보장')
+    expect(text).not.toContain('부산광역시 사하구청')
   })
 
   test('finishes PPS zero-product continuations before unrelated procurement terms', async () => {

@@ -450,8 +450,9 @@ function tagoNoRouteEvidenceMessage(result: PriorToolResult): string {
   ].filter(Boolean).join(', ')
   return [
     `TAGO route lookup already returned zero official rows${target ? ` for ${target}` : ''}.`,
+    'This is city-bus route evidence, not Seoul-to-Daejeon intercity transport evidence.',
     'Do not substitute another route, city, stop, route_id, or arrival lookup without citizen confirmation.',
-    'Answer in Korean that no official TAGO evidence was returned and ask whether to broaden the search.',
+    'Answer in Korean that TAGO express-bus and intercity-bus public-data channels are separate unregistered adapter surfaces in this UMMAYA build, then hand off to official rail or express/intercity bus channels.',
   ].join(' ')
 }
 
@@ -475,7 +476,7 @@ function mohwNoDataEvidenceMessage(): string {
   return [
     'MOHW/SSIS welfare lookup already returned NO DATA FOUND for two official query attempts in this request.',
     'Do not broaden to unrelated life stages, benefit categories, or pregnancy/childcare scopes without citizen confirmation.',
-    'Answer in Korean that mohw_welfare_eligibility_search returned no official rows and ask whether to retry with a different target or official channel.',
+    'Answer in Korean that mohw_welfare_eligibility_search returned no official rows, do not invent local benefit names or phone numbers, and hand off only to Bokjiro service search or the official 129 welfare counseling boundary.',
   ].join(' ')
 }
 

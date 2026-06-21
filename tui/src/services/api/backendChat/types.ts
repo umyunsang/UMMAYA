@@ -55,7 +55,7 @@ export function hasAssistantPayload(
   persistThinking: boolean,
 ): boolean {
   return (
-    state.accumulated.trimStart().length > 0 ||
+    state.accumulated.length > 0 ||
     state.pendingContentBlocks.length > 0 ||
     (persistThinking && state.accumulatedThinking.length > 0)
   )

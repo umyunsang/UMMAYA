@@ -21,18 +21,17 @@ export function createFinalAssistantMessage({
   readonly pendingContentBlocks: readonly PendingToolUseBlock[]
   readonly persistThinking: boolean
 }): unknown {
-  const trimmedText = accumulated.trimStart()
   const blocks: FinalAssistantBlock[] = []
   if (persistThinking && accumulatedThinking.length > 0) {
     blocks.push({ type: 'thinking', thinking: accumulatedThinking })
   }
-  if (trimmedText.length > 0) {
-    blocks.push({ type: 'text', text: trimmedText })
+  if (accumulated.length > 0) {
+    blocks.push({ type: 'text', text: accumulated })
   }
   blocks.push(...pendingContentBlocks)
 
   const finalMessage = createAssistantMessage({
-    content: blocks.length > 0 ? blocks : trimmedText,
+    content: blocks.length > 0 ? blocks : accumulated,
   })
   finalMessage.uuid = messageUuid
   finalMessage.message.id = innerMessageId

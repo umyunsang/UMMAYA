@@ -123,6 +123,15 @@ _DJTC_SUBWAY_SEGMENT_RE = re.compile(
     r"(역간|소요시간|거리|운임|요금).*(대전|DJTC|대전교통공사|도시철도|지하철))",
     re.IGNORECASE,
 )
+_INTERCITY_TRANSPORT_RE = re.compile(
+    r"((서울|부산|대구|인천|광주|대전|울산|세종|수원|청주|전주|천안|아산|창원|포항)"
+    r"[^.\n]{0,32}(에서|출발)[^.\n]{0,32}"
+    r"(서울|부산|대구|인천|광주|대전|울산|세종|수원|청주|전주|천안|아산|창원|포항)"
+    r"[^.\n]{0,32}(까지|도착)|"
+    r"(고속버스|시외버스|KTX|SRT|열차|(?<!도시)철도|기차|도시\s*간|장거리)"
+    r".*(시간표|배차|운행|요금|대중교통|공공\s*교통|이동))",
+    re.IGNORECASE,
+)
 _KCUE_REGIONAL_RE = re.compile(
     r"(대학알리미|대학정보공시|학교구분코드|schl[_\s-]?div[_\s-]?cd|KCUE|"
     r"지역별\s*(등록금|재정)|외국인\s*유학생|foreign\s+student|international\s+student)",

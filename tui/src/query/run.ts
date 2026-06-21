@@ -49,6 +49,10 @@ import { createAssistantMessage, createUserMessage } from '../utils/messages.js'
 import { getKstTimeParts } from '../constants/common.js'
 import { streamGuardedAssistantMessage } from './guardedAssistantPreview.js'
 
+type QueryYield = QueryGenerator extends AsyncGenerator<infer Yielded, unknown, unknown>
+  ? Yielded
+  : never
+
 const ROOT_FIND_TOOL_NAME = 'find'
 const ROOT_PRIMITIVE_TOOL_NAMES = new Set([
   'find',
@@ -72,6 +76,7 @@ const KMA_ORDINARY_WEATHER_TOOL_NAMES = new Set([
 const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
 const AIRKOREA_AIR_QUALITY_TOOL_NAME = 'airkorea_ctprvn_air_quality'
 const NMC_AED_TOOL_NAME = 'nmc_aed_site_locate'
+const HIRA_HOSPITAL_TOOL_NAME = 'hira_hospital_search'
 const KMA_FORECAST_TOOL_NAMES = new Set([
   'kma_forecast_fetch',
   'kma_short_term_forecast',
@@ -79,7 +84,7 @@ const KMA_FORECAST_TOOL_NAMES = new Set([
 ])
 const REGISTERED_EMERGENCY_RESULT_TOOL_NAMES = new Set([
   'nmc_emergency_search',
-  'hira_hospital_search',
+  HIRA_HOSPITAL_TOOL_NAME,
 ])
 let recoveredRawJsonToolUseSequence = 0
 const PERMISSION_DENIED_TEXT_RE =
@@ -105,6 +110,8 @@ const WEATHER_RESULT_REQUEST_RE =
 const AIR_QUALITY_RESULT_REQUEST_RE =
   /(미세먼지|초미세먼지|초미세|대기질|공기질|대기오염|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality)/iu
 const AED_RESULT_REQUEST_RE = /(AED|자동심장충격기|제세동기)/iu
+const HOSPITAL_RESULT_REQUEST_RE =
+  /(병원|의원|내과|소아과|안과|이비인후과|피부과|정형외과|진료|의료기관|주소|전화|hospital|clinic|medical)/iu
 const DJTC_SUBWAY_SEGMENT_REQUEST_RE =
   /((대전|DJTC|대전교통공사|도시철도|지하철).*(역간|소요시간|거리|운임|요금)|(역간|소요시간|거리|운임|요금).*(대전|DJTC|대전교통공사|도시철도|지하철))/iu
 const WEATHER_NEGATIVE_CONSTRAINT_RE =
@@ -420,6 +427,25 @@ function toolResultsSinceLatestPrompt(
     }
   }
   return results
+}
+
+function shouldDeferProviderStreamUntilGuard(messages: readonly Message[]): boolean {
+  if (PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUserText(messages))) {
+    return true
+  }
+  const results = toolResultsSinceLatestPrompt(messages)
+  return results.some(result =>
+    result.isError ||
+    result.toolName === AIRKOREA_AIR_QUALITY_TOOL_NAME ||
+    result.toolName === KMA_CURRENT_OBSERVATION_TOOL_NAME ||
+    result.toolName === NMC_AED_TOOL_NAME ||
+    KMA_FORECAST_TOOL_NAMES.has(result.toolName) ||
+    REGISTERED_EMERGENCY_RESULT_TOOL_NAMES.has(result.toolName),
+  )
+}
+
+function isProviderStreamEvent(event: unknown): boolean {
+  return isRecord(event) && event.type === 'stream_event'
 }
 
 function systemPromptForTurn(
@@ -1094,6 +1120,127 @@ function nmcAedEvidenceGuard(params: {
   return records.length === 0 ? undefined : createNmcAedEvidenceMessage(records)
 }
 
+function hiraHospitalRecords(result: PriorToolResult): readonly Record<string, unknown>[] {
+  if (result.toolName !== HIRA_HOSPITAL_TOOL_NAME || result.isError) {
+    return []
+  }
+  const resultRecord = nestedResultRecord(parseJsonRecord(result.content))
+  const items = Array.isArray(resultRecord?.items) ? resultRecord.items : []
+  return items.flatMap(item => {
+    if (!isRecord(item)) return []
+    return isRecord(item.record) ? [item.record] : [item]
+  })
+}
+
+function formatHiraDistance(
+  value: string,
+  unitHint: 'km' | 'm' | 'unknown',
+): string {
+  const compact = value.trim()
+  if (/km|킬로미터|m|미터/iu.test(compact)) return compact
+  const numeric = Number(compact)
+  if (!Number.isFinite(numeric)) return compact
+  if (
+    unitHint === 'km' ||
+    (unitHint === 'unknown' && numeric > 0 && numeric < 20 && compact.includes('.'))
+  ) {
+    return `${numeric.toFixed(1)}km`
+  }
+  if (numeric >= 1000) return `${(numeric / 1000).toFixed(1)}km`
+  return `${Math.round(numeric)}m`
+}
+
+function hiraHospitalDistanceText(record: Record<string, unknown>): string | undefined {
+  const distanceKm = scalarText(record.distance_km)
+  if (distanceKm !== undefined && distanceKm.trim().length > 0) {
+    return formatHiraDistance(distanceKm, 'km')
+  }
+  const distance = scalarText(record.distance)
+  if (distance !== undefined && distance.trim().length > 0) {
+    return formatHiraDistance(distance, 'unknown')
+  }
+  const distanceLabel = scalarText(record.distanceLabel)
+  if (distanceLabel !== undefined && distanceLabel.trim().length > 0) {
+    return formatHiraDistance(distanceLabel, 'unknown')
+  }
+  return undefined
+}
+
+function hiraHospitalName(record: Record<string, unknown>): string | undefined {
+  return scalarText(record.yadmNm) ??
+    scalarText(record.name) ??
+    scalarText(record.hospital_name)
+}
+
+function hiraHospitalAddress(record: Record<string, unknown>): string | undefined {
+  return scalarText(record.addr) ??
+    scalarText(record.address) ??
+    scalarText(record.roadAddress)
+}
+
+function hiraHospitalPhone(record: Record<string, unknown>): string | undefined {
+  return scalarText(record.telno) ??
+    scalarText(record.phone) ??
+    scalarText(record.telephone)
+}
+
+function hiraHospitalSummaryLines(
+  records: readonly Record<string, unknown>[],
+): readonly string[] {
+  return records.slice(0, 5).flatMap((record, index) => {
+    const name = hiraHospitalName(record)
+    if (name === undefined || name.length === 0) return []
+    const distance = hiraHospitalDistanceText(record)
+    const title = distance === undefined
+      ? `${index + 1}. ${name}`
+      : `${index + 1}. ${name} (${distance})`
+    return [
+      title,
+      hiraHospitalAddress(record) !== undefined
+        ? `- 주소: ${hiraHospitalAddress(record)}`
+        : undefined,
+      hiraHospitalPhone(record) !== undefined
+        ? `- 전화번호: ${hiraHospitalPhone(record)}`
+        : undefined,
+      scalarText(record.clCdNm) !== undefined
+        ? `- 종별: ${scalarText(record.clCdNm)}`
+        : undefined,
+    ].filter((line): line is string => line !== undefined)
+  })
+}
+
+function createHiraHospitalEvidenceMessage(
+  records: readonly Record<string, unknown>[],
+): AssistantMessage {
+  const hasDistance = records.some(record => hiraHospitalDistanceText(record) !== undefined)
+  const lines = [
+    'HIRA hospital adapter 결과 기준으로 확인된 값만 정리합니다.',
+    hasDistance
+      ? 'HIRA adapter가 거리 오름차순으로 반환한 순서를 그대로 표시합니다.'
+      : '이번 결과에는 거리값이 없어 가까운 순서를 단정하지 않습니다.',
+    '',
+    ...hiraHospitalSummaryLines(records),
+    '',
+    '오늘 진료 가능 여부나 접수 가능 여부가 tool_result에 없으면 전화로 확인해야 합니다.',
+  ]
+  return createAssistantMessage({
+    content: lines.filter(line => line !== '').join('\n'),
+  })
+}
+
+function hiraHospitalEvidenceGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  if (toolUseBlocks(params.candidate).length > 0) return undefined
+  if (!HOSPITAL_RESULT_REQUEST_RE.test(latestUserText(params.messages))) {
+    return undefined
+  }
+  const records = toolResultsSinceLatestPrompt(params.messages)
+    .flatMap(result => hiraHospitalRecords(result))
+  return records.length === 0 ? undefined : createHiraHospitalEvidenceMessage(records)
+}
+
 function hasSuccessfulRegisteredEmergencyResult(
   messages: readonly Message[],
 ): boolean {
@@ -1166,13 +1313,13 @@ function domainGuardFinalAnswerForToolResults(
   if (text.includes('TAGO route lookup already returned zero official rows')) {
     return createAssistantMessage({
       content:
-        'TAGO 공식 조회에서 해당 노선/도시 조합의 결과가 0건으로 확인되었습니다. 다른 노선, 도시, 정류장, 도착정보로 임의 대체하지 않고 여기서 조회를 멈춥니다. 더 넓은 검색을 원하면 출발지, 도착지, 버스 노선 또는 교통수단 범위를 다시 지정해야 합니다.',
+        'TAGO 시내버스 노선 조회에서 해당 노선/도시 조합의 결과가 0건으로 확인되었습니다. 서울-대전 같은 도시 간 이동은 TAGO 시내버스 노선 API 범위가 아닙니다. 공식 공공데이터에는 국토교통부 TAGO 고속버스정보와 국토교통부 TAGO 시외버스정보가 별도 채널로 존재하지만, 현재 UMMAYA에 해당 intercity adapter가 등록되어 있지 않아 시간표, 요금, 노선ID를 만들지 않습니다. 철도와 고속·시외버스 공식 예매/운행 채널 확인으로 handoff합니다.',
     })
   }
   if (text.includes('MOHW/SSIS welfare lookup already returned NO DATA FOUND')) {
     return createAssistantMessage({
       content:
-        'mohw_welfare_eligibility_search가 이번 요청에서 두 차례 NO DATA FOUND를 반환했습니다. 임신·출산, 양육, 다른 생애주기나 복지 범주로 임의 확장하지 않고 여기서 조회를 멈춥니다. 다른 대상 조건이나 공식 채널 범위로 다시 검색할지는 사용자가 확인해야 합니다.',
+        'mohw_welfare_eligibility_search가 이번 요청에서 두 차례 NO DATA FOUND를 반환했습니다. tool_result에 없는 지역 복지 항목, 구청 전화번호, 지원 자격을 만들지 않습니다. 공식 fallback은 복지로 서비스 검색 또는 보건복지상담센터 129에서 1인 가구, 거주지, 연령, 소득 조건을 다시 확인하는 것입니다. UMMAYA는 현재 확보한 MOHW/SSIS 결과가 없다고만 보고하고 신청이나 제출은 실행하지 않습니다.',
     })
   }
   if (text.includes('PPS shopping mall product lookup already returned official product rows')) {
@@ -1909,6 +2056,38 @@ export async function* query(params: QueryParams): QueryGenerator {
       : false
     const guardedPreviewEnabled =
       params.toolUseContext.options.isNonInteractiveSession !== true
+    const shouldDeferProviderStream =
+      shouldDeferProviderStreamUntilGuard(messages)
+    const deferredProviderStreamEvents: QueryYield[] = []
+    let loggedProviderStreamDefer = false
+    const deferProviderStreamEvent = (event: QueryYield): void => {
+      deferredProviderStreamEvents.push(event)
+      if (loggedProviderStreamDefer) return
+      loggedProviderStreamDefer = true
+      appendRouteDiagnostic('query_provider_stream_deferred_until_guard', {
+        query_hash: latestQueryHash(messages),
+        query_source: String(params.querySource),
+        turn_count: turnCount,
+        message_count: messages.length,
+      })
+    }
+    function* flushDeferredProviderStreamEvents(
+      reason: string,
+    ): Generator<QueryYield, void, unknown> {
+      if (deferredProviderStreamEvents.length === 0) return
+      appendRouteDiagnostic('query_provider_stream_flushed_after_guard', {
+        query_hash: latestQueryHash(messages),
+        query_source: String(params.querySource),
+        turn_count: turnCount,
+        message_count: messages.length,
+        buffered_event_count: deferredProviderStreamEvents.length,
+        reason,
+      })
+      while (deferredProviderStreamEvents.length > 0) {
+        const event = deferredProviderStreamEvents.shift()
+        if (event !== undefined) yield event
+      }
+    }
 
     for await (const event of deps.callModel({
       messages,
@@ -1937,6 +2116,10 @@ export async function* query(params: QueryParams): QueryGenerator {
         return Terminal.aborted_streaming()
       }
       if (!isAssistantMessage(event)) {
+        if (shouldDeferProviderStream && isProviderStreamEvent(event)) {
+          deferProviderStreamEvent(event as QueryYield)
+          continue
+        }
         yield event
         continue
       }
@@ -2165,6 +2348,33 @@ export async function* query(params: QueryParams): QueryGenerator {
           enabled: guardedPreviewEnabled,
         })
         messages.push(aedGuardMessage)
+        return Terminal.completed()
+      }
+      const hospitalGuardMessage = boundary.kind === 'pass'
+        ? hiraHospitalEvidenceGuard({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (hospitalGuardMessage !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_replaced_hira_hospital_with_evidence_summary',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        yield* streamGuardedAssistantMessage({
+          message: hospitalGuardMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
+        messages.push(hospitalGuardMessage)
         return Terminal.completed()
       }
       const ungroundedPublicDataRepairPrompt = boundary.kind === 'pass'
@@ -2524,6 +2734,9 @@ export async function* query(params: QueryParams): QueryGenerator {
         repairPromptChars: 0,
         continueAfterRepair: false,
       })
+      if (boundary.kind === 'pass') {
+        yield* flushDeferredProviderStreamEvents('accepted_assistant')
+      }
       yield boundary.message
       assistantMessage = boundary.message
       messages.push(boundary.message)
@@ -2533,6 +2746,7 @@ export async function* query(params: QueryParams): QueryGenerator {
 
     if (shouldContinueAfterRepairPrompt) continue
     if (!assistantMessage) {
+      yield* flushDeferredProviderStreamEvents('completed_without_assistant')
       appendQueryCompletedWithoutAssistantDiagnostic({
         querySource: String(params.querySource),
         messages,

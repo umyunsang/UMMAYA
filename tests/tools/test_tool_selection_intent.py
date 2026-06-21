@@ -11,7 +11,7 @@ from ummaya.tools.routing.intent import (
     ToolSelectionIntent,
     extract_tool_selection_intent,
 )
-from ummaya.tools.search import _expand_query_for_adapter_retrieval
+from ummaya.tools.search import _expand_query_for_adapter_retrieval, _filter_special_case_scores
 
 
 def test_extracts_explicit_tool_id_and_public_data_operation_without_scores() -> None:
@@ -137,3 +137,25 @@ def test_djtc_subway_segment_signal_is_not_weather_ref_from_negative_constraint(
     assert "djtc_subway_segment" in intent.public_data_refs
     assert "kma_lifestyle_weather" not in intent.public_data_refs
     assert "find" in intent.candidate_primitives
+
+
+def test_intercity_public_transport_signal_does_not_retain_city_bus_scores() -> None:
+    intent = extract_tool_selection_intent(
+        "서울에서 대전까지 대중교통으로 이동한다고 가정하고, "
+        "버스나 지하철 관련 공공 교통 정보를 찾아줘."
+    )
+
+    assert "intercity_transport" in intent.public_data_refs
+    assert "djtc_subway_segment" not in intent.public_data_refs
+
+    filtered = _filter_special_case_scores(
+        intent,
+        [
+            ("tago_bus_route_search", 80.0),
+            ("tago_bus_station_search", 70.0),
+            ("tago_bus_arrival_search", 60.0),
+            ("djtc_subway_segment_fare_time_check", 50.0),
+        ],
+    )
+
+    assert filtered == []

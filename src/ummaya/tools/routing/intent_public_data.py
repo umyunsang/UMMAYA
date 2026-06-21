@@ -11,6 +11,7 @@ from ummaya.tools.routing.intent_patterns import (
     _HIRA_HOSPITAL_SEARCH_RE,
     _HIRA_MEDICAL_DETAIL_RE,
     _IMPLICIT_EMERGENCY_RE,
+    _INTERCITY_TRANSPORT_RE,
     _KCUE_REGIONAL_FINANCE_RE,
     _KCUE_REGIONAL_FOREIGN_STUDENT_RE,
     _KCUE_REGIONAL_RE,
@@ -157,6 +158,8 @@ def _extract_environment_public_data_refs(query: str) -> list[str]:
         refs.append("airkorea_air_quality")
     if _DJTC_SUBWAY_SEGMENT_RE.search(query):
         refs.append("djtc_subway_segment")
+    if _INTERCITY_TRANSPORT_RE.search(query):
+        refs.append("intercity_transport")
     return refs
 
 

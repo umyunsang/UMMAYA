@@ -744,6 +744,25 @@ def test_available_adapters_context_djtc_segment_query_exposes_djtc_not_kepco() 
     assert "endstnno" in adversarial_content
 
 
+def test_available_adapters_context_intercity_transport_does_not_expose_city_bus() -> None:
+    registry = ToolRegistry()
+    executor = ToolExecutor(registry)
+    register_all_tools(registry, executor)
+    engine = QueryEngine(
+        llm_client=_FailingMockClient(),
+        tool_registry=registry,
+        tool_executor=executor,
+    )
+
+    message, turn_tool_ids = engine._build_available_adapters_context(  # noqa: SLF001
+        "서울에서 대전까지 대중교통으로 이동한다고 가정하고, "
+        "버스나 지하철 관련 공공 교통 정보를 찾아줘."
+    )
+
+    assert message is None
+    assert turn_tool_ids == ()
+
+
 def test_available_adapters_context_natural_kcue_finance_excludes_locate() -> None:
     """Natural official university tuition wording should expose KCUE finance first."""
 

@@ -13,8 +13,8 @@ import {
 import { createUserMessage } from '../../src/utils/userMessageFactories.js'
 
 mock.module(new URL('../../src/components/Markdown.js', import.meta.url).pathname, () => ({
-  Markdown: ({ children }: { readonly children: React.ReactNode }) => <Text>{children}</Text>,
-  StreamingMarkdown: ({ children }: { readonly children: React.ReactNode }) => <Text>{children}</Text>,
+  Markdown: ({ children }: { readonly children: React.ReactNode }) => <Text>assistant:{children}</Text>,
+  StreamingMarkdown: ({ children }: { readonly children: React.ReactNode }) => <Text>streaming:{children}</Text>,
 }))
 
 const { Messages } = await import('../../src/components/Messages.js')
@@ -41,6 +41,15 @@ function createNamedTool(name: string): Tools[number] {
     userFacingName: () => name,
     toAutoClassifierInput: () => '',
   }
+}
+
+function visiblePrefixBefore(frame: string, text: string): string {
+  const line = frame.split('\n').find(candidate => candidate.includes(text))
+  expect(line).toBeDefined()
+  if (line === undefined) {
+    throw new Error(`Expected frame to contain assistant text: ${text}`)
+  }
+  return line.slice(0, line.indexOf(text))
 }
 
 describe('Messages streaming text order', () => {
@@ -143,5 +152,68 @@ describe('Messages streaming text order', () => {
     expect(textIndex).toBeGreaterThanOrEqual(0)
     expect(toolIndex).toBeGreaterThanOrEqual(0)
     expect(textIndex).toBeLessThan(toolIndex)
+  })
+
+  test('preserves assistant row chrome when streaming text completes', () => {
+    const assistantText = 'Visible assistant projection should stay stable.'
+    const live = render(
+      <ThemeProvider>
+        <TerminalWriteProvider value={() => {}}>
+          <TerminalSizeContext.Provider value={{ columns: 100, rows: 30 }}>
+            <Messages
+              messages={[
+                createUserMessage({ content: 'Check assistant row projection.' }),
+              ]}
+              tools={[]}
+              commands={[]}
+              verbose={false}
+              toolJSX={null}
+              toolUseConfirmQueue={[]}
+              inProgressToolUseIDs={new Set()}
+              isMessageSelectorVisible={false}
+              conversationId="streaming-text-projection-live"
+              screen="prompt"
+              streamingToolUses={[]}
+              showAllInTranscript={false}
+              hideLogo={true}
+              isLoading={true}
+              streamingText={assistantText}
+            />
+          </TerminalSizeContext.Provider>
+        </TerminalWriteProvider>
+      </ThemeProvider>,
+    )
+    const completed = render(
+      <ThemeProvider>
+        <TerminalWriteProvider value={() => {}}>
+          <TerminalSizeContext.Provider value={{ columns: 100, rows: 30 }}>
+            <Messages
+              messages={[
+                createUserMessage({ content: 'Check assistant row projection.' }),
+                createAssistantMessage({ content: assistantText }),
+              ]}
+              tools={[]}
+              commands={[]}
+              verbose={false}
+              toolJSX={null}
+              toolUseConfirmQueue={[]}
+              inProgressToolUseIDs={new Set()}
+              isMessageSelectorVisible={false}
+              conversationId="streaming-text-projection-completed"
+              screen="prompt"
+              streamingToolUses={[]}
+              showAllInTranscript={false}
+              hideLogo={true}
+              isLoading={false}
+              streamingText={null}
+            />
+          </TerminalSizeContext.Provider>
+        </TerminalWriteProvider>
+      </ThemeProvider>,
+    )
+
+    const livePrefix = visiblePrefixBefore(live.lastFrame() ?? '', assistantText)
+    const completedPrefix = visiblePrefixBefore(completed.lastFrame() ?? '', assistantText)
+    expect(livePrefix).toBe(completedPrefix)
   })
 })
