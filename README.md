@@ -17,9 +17,9 @@
 
 **Unified Multi-Ministry Agent for Your Administration.** Pronounced `ummaya`.
 
-UMMAYA is a terminal agent for Korean public-service workflows. You describe the outcome in natural language; UMMAYA locates the right public-service context, calls wrapped tools, shows the work, and stops when identity, consent, or official authority is required.
+UMMAYA is an open-source terminal AI agent for Korean public-service workflows. You describe the outcome in natural language; UMMAYA locates the public-service context, calls wrapped tools, shows progress, and stops when identity, consent, or official authority is required.
 
-It is a client-side reference implementation for national administrative AX workflows: Claude Code-style tool loop and permission UX, with `FriendliAI Serverless + K-EXAONE` as the model path and Korean public-service adapters as the tool surface.
+It is also a Korean civic AI agent, public-service tool-calling harness, and government-workflow agent CLI. Technically, UMMAYA is a client-side reference implementation for national administrative AX: a Claude Code-style tool loop and permission UX, `K-EXAONE` on FriendliAI, and Korean public-service adapters behind `find`, `locate`, `check`, `send`, and `document`.
 
 > UMMAYA is an independent academic and R&D project. It is not affiliated with, endorsed by, or operated by Anthropic, LG AI Research, FriendliAI, the Korean government, or any public agency.
 
@@ -108,7 +108,7 @@ The model license and UMMAYA source-code license are separate. UMMAYA does not g
 
 - Korean docs: [ummaya-docs.pages.dev/ko](https://ummaya-docs.pages.dev/ko/)
 - Product purpose: [Korean user guide](https://ummaya-docs.pages.dev/ko/start/why-ummaya/)
-- Agent-readable discovery: [llms.txt](https://ummaya-docs.pages.dev/llms.txt)
+- Agent-readable discovery: [llms.txt for LLM tools](https://ummaya-docs.pages.dev/llms.txt)
 - Architecture source of truth: [docs/vision.md](docs/vision.md)
 - Requirements tree: [docs/requirements/ummaya-migration-tree.md](docs/requirements/ummaya-migration-tree.md)
 - Adapter docs: [docs/api/](docs/api/)
