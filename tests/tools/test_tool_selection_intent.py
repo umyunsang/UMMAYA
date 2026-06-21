@@ -158,3 +158,20 @@ def test_intercity_public_transport_signal_does_not_retain_city_bus_scores() -> 
     filtered = filter_special_case_scores(intent, scored)
 
     assert [tool_id for tool_id, _score in filtered] == []
+
+
+def test_road_hazard_intercity_wording_is_not_public_transport_intent() -> None:
+    query = "서울에서 대전까지 가는 도로 교통사고 위험 구간을 KOROAD로 찾아줘."
+    intent = extract_tool_selection_intent(query)
+
+    assert "intercity_public_transport" not in intent.public_data_refs
+    scored = [
+        ("koroad_accident_hazard_search", 15.0),
+        ("tago_bus_route_search", 10.0),
+    ]
+
+    from ummaya.tools.routing.retrieval_policy import filter_special_case_scores
+
+    filtered = filter_special_case_scores(intent, scored)
+
+    assert ("koroad_accident_hazard_search", 15.0) in filtered

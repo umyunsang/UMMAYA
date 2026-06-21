@@ -2611,7 +2611,7 @@ export async function* query(params: QueryParams): QueryGenerator {
         repairPromptChars: 0,
         continueAfterRepair: false,
       })
-      if (deferredProviderStreamEvents.length > 0) {
+      if (boundary.kind === 'pass' && deferredProviderStreamEvents.length > 0) {
         appendRouteDiagnostic('query_provider_stream_flushed_after_guard', {
           query_hash: latestQueryHash(messages),
           query_source: String(params.querySource),

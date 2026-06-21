@@ -136,6 +136,18 @@ describe('adapter tool routing intent', () => {
     expect(names).not.toContain('koroad_accident_hazard_search')
   })
 
+  test('keeps road-hazard intercity wording on KOROAD instead of handoff', () => {
+    ingestAdversarialPublicDataManifest()
+
+    const names = selectTopKAdapterToolNamesForQuery(
+      '서울에서 대전까지 가는 도로 교통사고 위험 구간을 KOROAD로 찾아줘.',
+      5,
+    )
+
+    expect(names).toContain('koroad_accident_hazard_search')
+    expect(names).not.toContain('tago_bus_route_search')
+  })
+
   test('keeps public-safety requests on MOIS and Gyeryong surface', () => {
     ingestAdversarialPublicDataManifest()
 

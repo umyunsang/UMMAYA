@@ -153,6 +153,28 @@ function createPostUnavailableStreamingCandidateDeps(
   }
 }
 
+function createPostUnavailableWorkspaceSummaryBlockDeps(
+  onModelInput: (messages: readonly Message[]) => void,
+) {
+  let callCount = 0
+  const unsafeSummary =
+    'Read 1 file (ctrl+o to expand)\n정부24 주민등록등본 발급 절차를 정리했습니다.'
+  return {
+    async *callModel(request: { readonly messages: readonly Message[] }) {
+      callCount += 1
+      onModelInput(request.messages)
+      yield textDeltaEvent(unsafeSummary)
+      yield createAssistantMessage({ content: unsafeSummary })
+    },
+    microcompact: async (messages: readonly Message[]) => ({ messages }),
+    autocompact: async () => ({
+      compactionResult: null,
+      consecutiveFailures: undefined,
+    }),
+    uuid: () => `uuid-post-unavailable-workspace-block-${callCount}`,
+  }
+}
+
 function createInitialUnavailableIntercityDeps(
   onModelInput: (messages: readonly Message[]) => void,
 ) {
@@ -198,6 +220,15 @@ describe('unavailable tool repair boundary', () => {
     expect(visibleText).toContain('TAGO 고속버스정보')
     expect(visibleText).toContain('TAGO 시외버스정보')
     expect(visibleText).not.toContain('서류 목록')
+  })
+
+  test('does not use intercity transport handoff for road-hazard prompts', () => {
+    const visibleText = buildUnavailableToolFinalAnswerBlockedText(
+      '서울에서 대전까지 가는 도로 교통사고 위험 구간을 KOROAD로 찾아줘.',
+    )
+
+    expect(visibleText).not.toContain('서울-대전 같은 도시 간 대중교통')
+    expect(visibleText).toContain('현재 등록된 UMMAYA 도구로는')
   })
 
   test('blocks unverified final answers after primitive AdapterNotFound tool results', async () => {
@@ -291,6 +322,66 @@ describe('unavailable tool repair boundary', () => {
     expect(visibleText).not.toContain('서울고속버스터미널')
     expect(streamedPreview).not.toContain('서울고속버스터미널')
     expect(visibleText).toContain('서울-대전 같은 도시 간 대중교통')
+  })
+
+  test('drops deferred provider stream when support boundary blocks', async () => {
+    const mutableModelInputs: Message[][] = []
+    const deps = createPostUnavailableWorkspaceSummaryBlockDeps(messages => {
+      mutableModelInputs.push([...messages])
+    })
+    const unavailableAssistant = createAssistantMessage({
+      content: [
+        {
+          type: 'tool_use',
+          id: 'toolu-adapterless-find',
+          name: 'find',
+          input: { mode: 'fetch' },
+        },
+      ],
+    })
+    const messages = [
+      createUserMessage({ content: MOVE_IN_PROMPT }),
+      unavailableAssistant,
+      createUserMessage({
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'toolu-adapterless-find',
+            content: [
+              "AdapterNotFound: 'find' is not in the synced backend manifest or the internal tools list.",
+              'No concrete adapter was selected.',
+            ].join(' '),
+            is_error: true,
+          },
+        ],
+        sourceToolAssistantUUID: unavailableAssistant.uuid,
+      }),
+    ]
+
+    const emitted: unknown[] = []
+    for await (const message of query({
+      ...queryParams(MOVE_IN_PROMPT, [createAdapterNotFoundFindTool()], deps),
+      messages,
+      maxTurns: 2,
+    })) {
+      if (isAssistantOrUserMessage(message) || isStreamTextDeltaEvent(message)) {
+        emitted.push(message)
+      }
+    }
+
+    const emittedMessages = emitted.filter(isAssistantOrUserMessage)
+    const visibleText = allAssistantText(emittedMessages)
+    const streamedPreview = emitted
+      .filter(isStreamTextDeltaEvent)
+      .map(event => event.event.delta.text)
+      .join('')
+
+    expect(mutableModelInputs).toHaveLength(1)
+    expect(visibleText).not.toContain('Read 1 file')
+    expect(streamedPreview).not.toContain('Read 1 file')
+    expect(visibleText).toContain(
+      '로컬 파일/워크스페이스 결과는 이 시민 업무의 근거로 사용하지 않습니다.',
+    )
   })
 
   test('blocks initial intercity tool-use when no intercity adapter is registered', async () => {

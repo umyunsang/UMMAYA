@@ -67,8 +67,12 @@ const CITY_BUS_TAGO_TOOL_IDS = new Set([
 ])
 const MAJOR_CITY_RE =
   '(?:서울|인천|대전|대구|광주|부산|울산|세종|수원|성남|고양|용인|청주|천안|전주|포항|창원|김해|진주|여수|순천|목포|강릉|춘천|원주|제주|서귀포)'
+const ROAD_HAZARD_RE =
+  '(?:교통사고|사고\\s*위험|사고다발|위험\\s*(?:구간|도로|지점)|도로교통공단|KOROAD|accident|hazard)'
+const PUBLIC_TRANSPORT_RE =
+  '(?:대중\\s*교통|교통편|교통\\s*수단|고속\\s*버스|시외\\s*버스|버스|열차|기차|KTX|SRT|철도|지하철)'
 const INTERCITY_PUBLIC_TRANSPORT_REQUEST_RE = new RegExp(
-  `(?=.*(?:대중교통|고속버스|시외버스|버스|열차|기차|KTX|SRT|교통))${MAJOR_CITY_RE}[^\\n]{0,24}(?:에서|부터)[^\\n]{0,80}${MAJOR_CITY_RE}[^\\n]{0,24}(?:까지|로|으로|도착|이동|가는)`,
+  `(?!.*${ROAD_HAZARD_RE})(?=.*${PUBLIC_TRANSPORT_RE})${MAJOR_CITY_RE}[^\\n]{0,24}(?:에서|부터)[^\\n]{0,80}${MAJOR_CITY_RE}[^\\n]{0,24}(?:까지|로|으로|도착|이동|가는)`,
   'iu',
 )
 
