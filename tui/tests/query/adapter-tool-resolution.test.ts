@@ -75,6 +75,7 @@ const VERIFY_TOOL_NAME = 'mock_verify_module_modid'
 const MOJ_TOOL_NAME = 'moj_village_lawyer_lookup'
 const TAGO_ROUTE_TOOL_NAME = 'tago_bus_route_search'
 const TAGO_ROUTE_STATION_TOOL_NAME = 'tago_bus_route_station_search'
+const NMC_AED_TOOL_NAME = 'nmc_aed_site_locate'
 const ROOT_FIND_TOOL = getAllBaseTools().find(tool => tool.name === 'find')
 
 if (!ROOT_FIND_TOOL) {
@@ -143,6 +144,42 @@ function makeVerifyManifestFrame(): AdapterManifestSyncFrame {
             purpose_ko: { type: 'string' },
           },
           required: ['scope_list'],
+          additionalProperties: false,
+        },
+      },
+    ],
+    manifest_hash: 'd'.repeat(64),
+    emitter_pid: 12345,
+  }
+}
+
+function makeNmcAedManifestFrame(): AdapterManifestSyncFrame {
+  return {
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'test-session',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9NMC',
+    ts: new Date('2026-06-15T00:00:00.000Z').toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      {
+        tool_id: NMC_AED_TOOL_NAME,
+        name: 'NMC AED site locate',
+        primitive: 'find',
+        policy_authority_url: 'https://www.e-gen.or.kr/',
+        source_mode: 'live',
+        search_hint: 'AED 자동심장충격기 제세동기 응급의료 사하구 다대포',
+        llm_description: 'Locate AED sites from the NMC official service.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            q0: { type: 'string' },
+            q1: { type: 'string' },
+            origin_lat: { type: 'number' },
+            origin_lon: { type: 'number' },
+          },
+          required: ['q0', 'q1'],
           additionalProperties: false,
         },
       },
@@ -702,6 +739,76 @@ describe('query runner adapter tool resolution', () => {
           route_id: 'BSB5201001000',
           node_nm: null,
           updown_cd: null,
+        },
+      },
+    ])
+  })
+
+  test('backfills direct AED concrete calls with prior locate origin coordinates', async () => {
+    ingestManifestFrame(makeNmcAedManifestFrame())
+    const citizenPrompt = createUserMessage({
+      content: '다대포해수욕장 근처 AED 위치를 찾아줘. 가장 가까운 곳부터 알려줘.',
+    })
+    const locateBlock = {
+      type: 'tool_use',
+      id: 'toolu-kakao-dadaepo',
+      name: 'kakao_keyword_search',
+      input: { query: '다대포해수욕장' },
+    }
+    const locateAssistant = createAssistantMessage({
+      content: [locateBlock],
+    })
+    const locateResult = createUserMessage({
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: locateBlock.id,
+          content: JSON.stringify({
+            ok: true,
+            result: {
+              kind: 'poi',
+              name: '다대포해수욕장',
+              lat: 35.0465263488422,
+              lon: 128.962741189119,
+              source: 'kakao',
+            },
+          }),
+        },
+      ],
+      sourceToolAssistantUUID: locateAssistant.uuid,
+    })
+    const aedBlock = {
+      type: 'tool_use',
+      id: 'toolu-nmc-aed-direct',
+      name: NMC_AED_TOOL_NAME,
+      input: {
+        q0: '부산광역시',
+        q1: '사하구',
+      },
+    }
+    const aedAssistant: AssistantMessage = createAssistantMessage({
+      content: [aedBlock],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [aedBlock],
+      assistantMessage: aedAssistant,
+      messages: [citizenPrompt, locateAssistant, locateResult, aedAssistant],
+      toolUseContext: makeToolUseContext([], [citizenPrompt]),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).not.toContain('InputValidationError')
+    expect(dispatchPrimitiveMock).toHaveBeenCalledTimes(1)
+    expect(dispatchObservations).toEqual([
+      {
+        primitive: 'find',
+        toolName: NMC_AED_TOOL_NAME,
+        args: {
+          q0: '부산광역시',
+          q1: '사하구',
+          origin_lat: 35.0465263488422,
+          origin_lon: 128.962741189119,
         },
       },
     ])

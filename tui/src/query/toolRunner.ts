@@ -101,6 +101,7 @@ const KMA_ORDINARY_WEATHER_TOOL_NAMES = new Set([
 const TAGO_ROUTE_TOOL_NAME = 'tago_bus_route_search'
 const MOHW_WELFARE_TOOL_NAME = 'mohw_welfare_eligibility_search'
 const PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME = 'pps_shopping_mall_product_lookup'
+const NMC_AED_TOOL_NAME = 'nmc_aed_site_locate'
 const TAGO_ROUTE_FOLLOWUP_TOOL_NAMES = new Set([
   'tago_bus_arrival_search',
   'tago_bus_location_search',
@@ -639,6 +640,87 @@ function repairDirectLocationToolInputForValidation(params: {
   return query === undefined ? params.input : { ...params.input, query }
 }
 
+function finiteCoordinate(value: unknown): number | undefined {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined
+  }
+  if (typeof value !== 'string') return undefined
+  const parsed = Number(value.trim())
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function coordinatesFromRecord(
+  value: unknown,
+): { readonly lat: number; readonly lon: number } | undefined {
+  if (!isRecord(value)) return undefined
+  const lat =
+    finiteCoordinate(value.lat) ??
+    finiteCoordinate(value.latitude) ??
+    finiteCoordinate(value.y) ??
+    finiteCoordinate(value.yPos)
+  const lon =
+    finiteCoordinate(value.lon) ??
+    finiteCoordinate(value.lng) ??
+    finiteCoordinate(value.longitude) ??
+    finiteCoordinate(value.x) ??
+    finiteCoordinate(value.xPos)
+  if (lat !== undefined && lon !== undefined) {
+    return { lat, lon }
+  }
+  return (
+    coordinatesFromRecord(value.result) ??
+    coordinatesFromRecord(value.data) ??
+    coordinatesFromRecord(value.coords) ??
+    coordinatesFromRecord(value.poi)
+  )
+}
+
+function latestKakaoLocateOrigin(
+  messages: readonly Message[],
+): { readonly lat: number; readonly lon: number } | undefined {
+  const results = toolResultsSinceLatestPrompt(messages)
+  for (let index = results.length - 1; index >= 0; index -= 1) {
+    const result = results[index]
+    if (
+      result === undefined ||
+      result.isError ||
+      result.isStructuredFailure ||
+      !KAKAO_LOCATION_TOOL_NAMES.has(result.toolName)
+    ) {
+      continue
+    }
+    const parsed = parseJsonRecord(result.content)
+    const origin = coordinatesFromRecord(parsed ?? result.content)
+    if (origin !== undefined) return origin
+  }
+  return undefined
+}
+
+function hasAedOrigin(input: ToolInput): boolean {
+  return (
+    finiteCoordinate(input.origin_lat) !== undefined &&
+    finiteCoordinate(input.origin_lon) !== undefined
+  )
+}
+
+function repairNmcAedOriginToolInput(params: {
+  readonly toolName: string
+  readonly input: ToolInput
+  readonly messages: readonly Message[]
+}): ToolInput {
+  if (params.toolName !== NMC_AED_TOOL_NAME || hasAedOrigin(params.input)) {
+    return params.input
+  }
+  const origin = latestKakaoLocateOrigin(params.messages)
+  return origin === undefined
+    ? params.input
+    : {
+        ...params.input,
+        origin_lat: origin.lat,
+        origin_lon: origin.lon,
+      }
+}
+
 function derivePpsProductQueryFromUserText(text: string): string | undefined {
   const normalized = text.normalize('NFKC')
   const keywordMatch = /(노트북|랩탑|휴대용\s*컴퓨터|컴퓨터|PC|전산장비|프린터|모니터|복사기)/iu.exec(normalized)
@@ -753,9 +835,14 @@ export async function runToolUseBlocks(params: {
       documentRepair.input,
       latestCitizenPromptText(params.messages),
     )
-    const ppsProductInput = repairPpsProductToolInput({
+    const aedOriginInput = repairNmcAedOriginToolInput({
       toolName: block.name,
       input: publicAdapterInput,
+      messages: params.messages,
+    })
+    const ppsProductInput = repairPpsProductToolInput({
+      toolName: block.name,
+      input: aedOriginInput,
       messages: params.messages,
     })
     const inputForValidation = localTool === undefined
