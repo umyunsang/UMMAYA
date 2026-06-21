@@ -48,6 +48,8 @@ const CIV_DEATH_PROMPT =
   '아버지가 돌아가셨어. 사망신고, 장례 지원, 국민연금 유족급여, 재산 관련 절차를 순서대로 알려줘.'
 const DJTC_SEGMENT_PROMPT =
   '대전 도시철도 0101역에서 0102역까지 소요시간, 거리, 요금을 DJTC 공식 도구로 조회해줘. 한전이나 날씨나 결제 도구로 대체하지 마.'
+const INTERCITY_PUBLIC_TRANSPORT_PROMPT =
+  '서울에서 대전까지 대중교통으로 이동한다고 가정하고, 버스나 지하철 관련 공공 교통 정보를 찾아줘.'
 const GOV24_READ_ONLY_PROMPT =
   '정부24 주민등록등본 발급 가능 여부와 준비물을 확인해줘.'
 const GOV24_SUBMIT_PROMPT =
@@ -104,6 +106,13 @@ const STALE_DJTC_SUBSTITUTE_TOOL_NAMES = [
   'kma_current_observation',
   'kepco_contract_power_usage',
   'mock_kftc_opengiro_payment_send_v1',
+] as const
+const CITY_BUS_TRANSPORT_TOOL_NAMES = [
+  'tago_bus_route_search',
+  'tago_bus_station_search',
+  'tago_bus_arrival_search',
+  'tago_bus_route_station_search',
+  'tago_bus_location_search',
 ] as const
 const NONEXISTENT_SURVIVOR_PENSION_TOOL_NAMES = [
   'nps_survivor_pension_lookup',
@@ -167,6 +176,58 @@ function ingestWeatherAirQualityManifest(): void {
       ),
     ],
     manifest_hash: 'a'.repeat(64),
+    emitter_pid: 12345,
+  })
+}
+
+function ingestCityBusTransportManifest(): void {
+  clearManifestCache()
+  ingestManifestFrame({
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'provider-surface-city-bus',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9TB',
+    ts: new Date().toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      publicDataEntry(
+        'tago_bus_route_search',
+        'TAGO 버스 노선 route 시내버스 1001 부산 대전',
+        { route_no: { type: 'string' } },
+      ),
+      publicDataEntry(
+        'tago_bus_station_search',
+        'TAGO 버스 정류장 station 시내버스',
+        { city_code: { type: 'string' } },
+      ),
+      publicDataEntry(
+        'tago_bus_arrival_search',
+        'TAGO 버스 도착정보 arrival 시내버스',
+        { node_id: { type: 'string' } },
+      ),
+      publicDataEntry(
+        'tago_bus_route_station_search',
+        'TAGO 버스 노선별 정류소 시내버스',
+        { route_id: { type: 'string' } },
+      ),
+      publicDataEntry(
+        'tago_bus_location_search',
+        'TAGO 버스 위치정보 시내버스',
+        { route_id: { type: 'string' } },
+      ),
+      publicDataEntry(
+        'koroad_accident_hazard_search',
+        'KOROAD 교통사고 위험 지점',
+        { region: { type: 'string' } },
+      ),
+      publicDataEntry(
+        'kma_current_observation',
+        '기상청 KMA 날씨 기상 현재 관측',
+        { location: { type: 'string' } },
+      ),
+    ],
+    manifest_hash: 'b'.repeat(64),
     emitter_pid: 12345,
   })
 }
@@ -961,6 +1022,41 @@ describe('provider request tool surface guard', () => {
           selectedAdapterToolNames: selection.final_adapter_tools,
         })
         expect(serializedMessages(exchange.request)).toContain(DJTC_SEGMENT_PROMPT)
+      } finally {
+        ingestMetarManifest(undefined)
+        restoreRouteDiagnostics(previousDiagnostics)
+        diagnostics.cleanup()
+      }
+    })
+  })
+
+  test('does not expose city-bus TAGO tools for intercity public transport', async () => {
+    await withFriendliEnv(async () => {
+      const previousDiagnostics = process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE
+      const diagnostics = createDiagnosticsTarget()
+      process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE = diagnostics.path
+      ingestCityBusTransportManifest()
+      try {
+        const exchange = await captureProviderExchange({
+          messages: [createUserMessage({ content: INTERCITY_PUBLIC_TRANSPORT_PROMPT })],
+        })
+
+        const toolNames = getToolNames(exchange.request)
+        const selection = readAdapterSelection(diagnostics.path)
+        for (const toolName of CITY_BUS_TRANSPORT_TOOL_NAMES) {
+          expect(toolNames).not.toContain(toolName)
+          expect(selection.final_adapter_tools).not.toContain(toolName)
+        }
+        expect(toolNames).not.toContain('koroad_accident_hazard_search')
+        expect(toolNames).not.toContain('kma_current_observation')
+        expect(selection.final_adapter_tools).toEqual([])
+        expectProviderToolsMatchSelectedAdapters({
+          toolNames,
+          selectedAdapterToolNames: selection.final_adapter_tools,
+        })
+        expect(serializedMessages(exchange.request)).toContain(
+          INTERCITY_PUBLIC_TRANSPORT_PROMPT,
+        )
       } finally {
         ingestMetarManifest(undefined)
         restoreRouteDiagnostics(previousDiagnostics)

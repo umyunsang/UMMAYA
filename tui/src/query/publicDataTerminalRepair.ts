@@ -16,6 +16,8 @@ import {
 
 export {
   buildUnavailableToolFinalAnswerBlockedText,
+  hasUnavailableToolResultAfterLatestUser,
+  isIntercityPublicTransportRequestText,
   shouldBlockFinalAnswerAfterUnavailableToolRepair,
 } from './unavailableToolRepair.js'
 

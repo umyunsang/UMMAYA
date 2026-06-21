@@ -58,6 +58,24 @@ type ContextWithCitation = ToolUseContext & {
   ummayaCitations?: AdapterCitation[]
 }
 
+const CITY_BUS_TAGO_TOOL_IDS = new Set([
+  'tago_bus_route_search',
+  'tago_bus_station_search',
+  'tago_bus_arrival_search',
+  'tago_bus_route_station_search',
+  'tago_bus_location_search',
+])
+const MAJOR_CITY_RE =
+  '(?:서울|인천|대전|대구|광주|부산|울산|세종|수원|성남|고양|용인|청주|천안|전주|포항|창원|김해|진주|여수|순천|목포|강릉|춘천|원주|제주|서귀포)'
+const ROAD_HAZARD_RE =
+  '(?:교통사고|사고\\s*위험|사고다발|위험\\s*(?:구간|도로|지점)|도로교통공단|KOROAD|accident|hazard)'
+const PUBLIC_TRANSPORT_RE =
+  '(?:대중\\s*교통|교통편|교통\\s*수단|고속\\s*버스|시외\\s*버스|버스|열차|기차|KTX|SRT|철도|지하철)'
+const INTERCITY_PUBLIC_TRANSPORT_REQUEST_RE = new RegExp(
+  `(?!.*${ROAD_HAZARD_RE})(?=.*${PUBLIC_TRANSPORT_RE})${MAJOR_CITY_RE}[^\\n]{0,24}(?:에서|부터)[^\\n]{0,80}${MAJOR_CITY_RE}[^\\n]{0,24}(?:까지|로|으로|도착|이동|가는)`,
+  'iu',
+)
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object'
     ? value as Record<string, unknown>
@@ -119,6 +137,55 @@ function normalizeDistanceUnit(value: unknown): 'm' | 'km' | null {
   if (['m', 'meter', 'meters'].includes(normalized)) return 'm'
   if (['km', 'kilometer', 'kilometers'].includes(normalized)) return 'km'
   return null
+}
+
+function contentText(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return ''
+  return content
+    .map(block => {
+      const record = asRecord(block)
+      if (record?.type === 'text' && typeof record.text === 'string') {
+        return record.text
+      }
+      return ''
+    })
+    .filter(text => text.length > 0)
+    .join('\n')
+}
+
+function latestCitizenText(context: ToolUseContext): string {
+  for (let index = context.messages.length - 1; index >= 0; index -= 1) {
+    const message = context.messages[index]
+    if (message === undefined || message.type !== 'user' || message.isMeta === true) {
+      continue
+    }
+    const content = message.message.content
+    if (
+      Array.isArray(content) &&
+      content.every(block => asRecord(block)?.type === 'tool_result')
+    ) {
+      continue
+    }
+    return contentText(content)
+  }
+  return ''
+}
+
+function shouldRejectCityBusTagoForIntercityRequest(
+  toolId: string,
+  context: ToolUseContext,
+): boolean {
+  return CITY_BUS_TAGO_TOOL_IDS.has(toolId) &&
+    INTERCITY_PUBLIC_TRANSPORT_REQUEST_RE.test(latestCitizenText(context))
+}
+
+function cityBusTagoIntercityRejectionMessage(toolId: string): string {
+  return [
+    `AdapterNotFound: '${toolId}' is not in the synced backend manifest or the internal tools list.`,
+    'City-bus TAGO adapters are disabled for city-to-city public transport requests.',
+    'Use a registered TAGO express/intercity adapter when available, or hand off without fabricating timetable, fare, route, station, or transfer results.',
+  ].join(' ')
 }
 
 function isNmcRecord(record: Record<string, unknown>): boolean {
@@ -694,6 +761,13 @@ export const LookupPrimitive = buildTool({
       return {
         result: false,
         message: rootPrimitiveSelfTargetMessage(input.tool_id, 'find'),
+        errorCode: PrimitiveErrorCode.AdapterNotFound,
+      }
+    }
+    if (shouldRejectCityBusTagoForIntercityRequest(input.tool_id, context)) {
+      return {
+        result: false,
+        message: cityBusTagoIntercityRejectionMessage(input.tool_id),
         errorCode: PrimitiveErrorCode.AdapterNotFound,
       }
     }

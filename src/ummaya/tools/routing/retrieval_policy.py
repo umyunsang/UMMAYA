@@ -45,6 +45,27 @@ _AIRKOREA_TOOL_IDS = frozenset({"airkorea_ctprvn_air_quality"})
 _DJTC_SUBWAY_SEGMENT_TOOL_IDS = frozenset({"djtc_subway_segment_fare_time_check"})
 _HIRA_HOSPITAL_SEARCH_TOOL_IDS = frozenset({"hira_hospital_search"})
 _PPS_SHOPPING_TOOL_IDS = frozenset({"pps_shopping_mall_product_lookup"})
+_INTERCITY_PUBLIC_TRANSPORT_TOOL_IDS = frozenset(
+    {
+        "tago_express_bus_info",
+        "tago_intercity_bus_info",
+    }
+)
+_CITY_BUS_TAGO_TOOL_IDS = frozenset(
+    {
+        "tago_bus_station_search",
+        "tago_bus_arrival_search",
+        "tago_bus_route_search",
+        "tago_bus_route_station_search",
+        "tago_bus_location_search",
+    }
+)
+_INTERCITY_PUBLIC_TRANSPORT_BLOCKED_TOOL_IDS = _CITY_BUS_TAGO_TOOL_IDS | frozenset(
+    {
+        "koroad_accident_hazard_search",
+        "koroad_accident_search",
+    }
+)
 
 
 def expand_query_for_adapter_retrieval(query: str) -> str:
@@ -74,6 +95,7 @@ def expand_query_for_intent(query: str, intent: ToolSelectionIntent) -> str:
     additions.extend(_pps_shopping_additions(intent))
     additions.extend(_airkorea_air_quality_additions(intent))
     additions.extend(_djtc_subway_segment_additions(intent))
+    additions.extend(_intercity_public_transport_additions(intent))
     additions.extend(_kcue_regional_additions(intent))
     additions.extend(_ocean_water_quality_additions(intent))
     additions.extend(_health_detail_additions(intent))
@@ -114,6 +136,7 @@ def filter_special_case_scores(
     scored = _filter_pps_shopping_scores(intent, scored)
     scored = _filter_airkorea_air_quality_scores(intent, scored)
     scored = _filter_djtc_subway_segment_scores(intent, scored)
+    scored = _filter_intercity_public_transport_scores(intent, scored)
     scored = _filter_kcue_regional_scores(intent, scored)
     scored = _filter_health_detail_scores(intent, scored)
     scored = _filter_hospital_search_scores(intent, scored)
@@ -380,6 +403,25 @@ def _djtc_subway_segment_additions(intent: ToolSelectionIntent) -> list[str]:
     ]
 
 
+def _intercity_public_transport_additions(intent: ToolSelectionIntent) -> list[str]:
+    if not intent.has_public_data_ref("intercity_public_transport"):
+        return []
+    return [
+        "국토교통부",
+        "TAGO",
+        "고속버스",
+        "시외버스",
+        "도시간",
+        "터미널",
+        "배차",
+        "요금",
+        "출발",
+        "도착",
+        "express bus",
+        "intercity bus",
+    ]
+
+
 def _kcue_regional_additions(intent: ToolSelectionIntent) -> list[str]:
     if not intent.has_public_data_ref("kcue_regional"):
         return []
@@ -583,6 +625,24 @@ def _filter_djtc_subway_segment_scores(
         (tool_id, score + 1400.0)
         for tool_id, score in scored
         if tool_id in _DJTC_SUBWAY_SEGMENT_TOOL_IDS
+    ]
+
+
+def _filter_intercity_public_transport_scores(
+    intent: ToolSelectionIntent, scored: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    if not intent.has_public_data_ref("intercity_public_transport"):
+        return scored
+    if any(tool_id in _INTERCITY_PUBLIC_TRANSPORT_TOOL_IDS for tool_id, _ in scored):
+        return [
+            (tool_id, score + 1400.0)
+            for tool_id, score in scored
+            if tool_id in _INTERCITY_PUBLIC_TRANSPORT_TOOL_IDS
+        ]
+    return [
+        (tool_id, score)
+        for tool_id, score in scored
+        if tool_id not in _INTERCITY_PUBLIC_TRANSPORT_BLOCKED_TOOL_IDS
     ]
 
 
