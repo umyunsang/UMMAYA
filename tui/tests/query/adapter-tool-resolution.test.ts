@@ -26,6 +26,23 @@ const dispatchPrimitiveMock = mock(
       toolName: opts.toolName,
       args: opts.args,
     })
+    if (
+      opts.toolName === 'kakao_keyword_search' &&
+      opts.args.query === '다대포해수욕장'
+    ) {
+      return {
+        data: {
+          ok: true,
+          result: {
+            kind: 'poi',
+            name: '다대포해수욕장',
+            lat: 35.0465263488422,
+            lon: 128.962741189119,
+            source: 'kakao',
+          },
+        },
+      }
+    }
     return {
       data: {
         ok: true,
@@ -186,6 +203,49 @@ function makeNmcAedManifestFrame(): AdapterManifestSyncFrame {
     ],
     manifest_hash: 'd'.repeat(64),
     emitter_pid: 12345,
+  }
+}
+
+function makeKakaoKeywordManifestFrame(): AdapterManifestSyncFrame {
+  return {
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'test-session',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9KAK',
+    ts: new Date('2026-06-15T00:00:00.000Z').toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      {
+        tool_id: 'kakao_keyword_search',
+        name: 'Kakao keyword search',
+        primitive: 'find',
+        policy_authority_url: 'https://developers.kakao.com/',
+        source_mode: 'live',
+        search_hint: '카카오 키워드 위치 검색 다대포 해수욕장 AED',
+        llm_description: 'Kakao keyword location search adapter.',
+        input_schema_json: {
+          type: 'object',
+          properties: {
+            query: { type: 'string' },
+          },
+          required: ['query'],
+          additionalProperties: false,
+        },
+      },
+    ],
+    manifest_hash: 'k'.repeat(64),
+    emitter_pid: 12345,
+  }
+}
+
+function makeNmcAedAndKakaoManifestFrame(): AdapterManifestSyncFrame {
+  const nmcFrame = makeNmcAedManifestFrame()
+  const kakaoFrame = makeKakaoKeywordManifestFrame()
+  return {
+    ...nmcFrame,
+    entries: [...nmcFrame.entries, ...kakaoFrame.entries],
+    manifest_hash: 'f'.repeat(64),
   }
 }
 
@@ -873,6 +933,83 @@ describe('query runner adapter tool resolution', () => {
     expect(toolResultText(results)).not.toContain('InputValidationError')
     expect(dispatchPrimitiveMock).toHaveBeenCalledTimes(1)
     expect(dispatchObservations).toEqual([
+      {
+        primitive: 'find',
+        toolName: NMC_AED_TOOL_NAME,
+        args: {
+          q0: '부산광역시',
+          q1: '사하구',
+          origin_lat: 35.0465263488422,
+          origin_lon: 128.962741189119,
+        },
+      },
+    ])
+  })
+
+  test('resolves exact AED origin when the model keeps calling NMC directly', async () => {
+    ingestManifestFrame(makeNmcAedAndKakaoManifestFrame())
+    const citizenPrompt = createUserMessage({
+      content: '다대포해수욕장 근처 AED 위치를 찾아줘. 가장 가까운 곳부터 알려줘.',
+    })
+    const failedAddressBlock = {
+      type: 'tool_use',
+      id: 'toolu-kakao-address-failed',
+      name: 'kakao_address_search',
+      input: { query: '부산 사하구 다대포해수욕장' },
+    }
+    const failedAddressAssistant = createAssistantMessage({
+      content: [failedAddressBlock],
+    })
+    const failedAddressResult = createUserMessage({
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: failedAddressBlock.id,
+          content: JSON.stringify({
+            ok: false,
+            result: { kind: 'error', reason: 'not_found' },
+          }),
+          is_error: true,
+        },
+      ],
+      sourceToolAssistantUUID: failedAddressAssistant.uuid,
+    })
+    const aedBlock = {
+      type: 'tool_use',
+      id: 'toolu-nmc-aed-without-origin',
+      name: NMC_AED_TOOL_NAME,
+      input: {
+        q0: '부산광역시',
+        q1: '사하구',
+      },
+    }
+    const aedAssistant: AssistantMessage = createAssistantMessage({
+      content: [aedBlock],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [aedBlock],
+      assistantMessage: aedAssistant,
+      messages: [
+        citizenPrompt,
+        failedAddressAssistant,
+        failedAddressResult,
+        aedAssistant,
+      ],
+      toolUseContext: makeToolUseContext([], [citizenPrompt]),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).not.toContain('MissingPreciseOrigin')
+    expect(dispatchPrimitiveMock).toHaveBeenCalledTimes(2)
+    expect(dispatchObservations).toEqual([
+      {
+        primitive: 'find',
+        toolName: 'kakao_keyword_search',
+        args: {
+          query: '다대포해수욕장',
+        },
+      },
       {
         primitive: 'find',
         toolName: NMC_AED_TOOL_NAME,

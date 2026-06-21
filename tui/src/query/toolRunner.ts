@@ -784,6 +784,104 @@ function repairNmcAedOriginToolInput(params: {
       }
 }
 
+type NmcAedOriginResolution =
+  | { readonly kind: 'input'; readonly input: ToolInput }
+  | { readonly kind: 'blocked'; readonly message: string }
+
+async function resolveNmcAedOriginToolInput(params: {
+  readonly toolName: string
+  readonly input: ToolInput
+  readonly messages: readonly Message[]
+  readonly toolUseContext: ToolUseContext
+  readonly canUseTool: Parameters<Tool['call']>[2]
+  readonly assistantMessage: AssistantMessage
+  readonly toolUseId: string
+}): Promise<NmcAedOriginResolution> {
+  if (params.toolName !== NMC_AED_TOOL_NAME) {
+    return { kind: 'input', input: params.input }
+  }
+  const missingOriginMessage = nmcAedMissingPreciseOriginMessage(params.messages)
+  if (missingOriginMessage === undefined) {
+    return { kind: 'input', input: params.input }
+  }
+  const target = nmcAedNearTargetFromUserText(
+    latestCitizenPromptText(params.messages),
+  )
+  if (target === undefined) {
+    return { kind: 'blocked', message: missingOriginMessage }
+  }
+  const originTool = findToolByName(
+    params.toolUseContext.options.tools,
+    'kakao_keyword_search',
+  ) ?? getAdapterToolByName('kakao_keyword_search')
+  if (originTool === undefined) {
+    return { kind: 'blocked', message: missingOriginMessage }
+  }
+
+  const originInput: ToolInput = { query: target }
+  const parsedOriginInput = originTool.inputSchema.safeParse(originInput)
+  if (!parsedOriginInput.success || !isRecord(parsedOriginInput.data)) {
+    return { kind: 'blocked', message: missingOriginMessage }
+  }
+  const originPermission = await params.canUseTool(
+    originTool,
+    parsedOriginInput.data,
+    params.toolUseContext,
+    params.assistantMessage,
+    `${params.toolUseId}:origin`,
+  )
+  if (originPermission.behavior !== 'allow') {
+    return { kind: 'blocked', message: missingOriginMessage }
+  }
+  const originCallInput = isRecord(originPermission.updatedInput)
+    ? originPermission.updatedInput
+    : parsedOriginInput.data
+  const originResult = await originTool.call(
+    originCallInput,
+    {
+      ...params.toolUseContext,
+      toolUseId: `${params.toolUseId}:origin`,
+      userModified: originPermission.userModified ?? false,
+    },
+    params.canUseTool,
+    params.assistantMessage,
+  )
+  const originData = normalizeToolResultDataForModel(
+    'kakao_keyword_search',
+    originResult.data,
+  )
+  if (isStructuredFailureResult(originData)) {
+    return { kind: 'blocked', message: missingOriginMessage }
+  }
+  const parsedOriginData = parseJsonRecord(originData)
+  if (
+    !kakaoResultMatchesTarget({
+      result: {
+        toolName: 'kakao_keyword_search',
+        input: originInput,
+        content: originData,
+        isError: false,
+        isStructuredFailure: false,
+      },
+      parsed: parsedOriginData,
+      target,
+    })
+  ) {
+    return { kind: 'blocked', message: missingOriginMessage }
+  }
+  const origin = coordinatesFromRecord(parsedOriginData ?? originData)
+  return origin === undefined
+    ? { kind: 'blocked', message: missingOriginMessage }
+    : {
+        kind: 'input',
+        input: {
+          ...params.input,
+          origin_lat: origin.lat,
+          origin_lon: origin.lon,
+        },
+      }
+}
+
 function derivePpsProductQueryFromUserText(text: string): string | undefined {
   const normalized = text.normalize('NFKC')
   const keywordMatch = /(노트북|랩탑|휴대용\s*컴퓨터|컴퓨터|PC|전산장비|프린터|모니터|복사기)/iu.exec(normalized)
@@ -903,21 +1001,27 @@ export async function runToolUseBlocks(params: {
       input: publicAdapterInput,
       messages: params.messages,
     })
-    const aedOriginError = block.name === NMC_AED_TOOL_NAME
-      ? nmcAedMissingPreciseOriginMessage(params.messages)
-      : undefined
-    if (aedOriginError !== undefined) {
+    const aedOriginResolution = await resolveNmcAedOriginToolInput({
+      toolName: block.name,
+      input: aedOriginInput,
+      messages: params.messages,
+      toolUseContext,
+      canUseTool: params.canUseTool,
+      assistantMessage: params.assistantMessage,
+      toolUseId: block.id,
+    })
+    if (aedOriginResolution.kind === 'blocked') {
       results.push(
         createUserMessage({
           content: [
             {
               type: 'tool_result',
               tool_use_id: block.id,
-              content: aedOriginError,
+              content: aedOriginResolution.message,
               is_error: true,
             },
           ],
-          toolUseResult: aedOriginError,
+          toolUseResult: aedOriginResolution.message,
           sourceToolAssistantUUID: params.assistantMessage.uuid,
         }),
       )
@@ -925,7 +1029,7 @@ export async function runToolUseBlocks(params: {
     }
     const ppsProductInput = repairPpsProductToolInput({
       toolName: block.name,
-      input: aedOriginInput,
+      input: aedOriginResolution.input,
       messages: params.messages,
     })
     const inputForValidation = localTool === undefined
