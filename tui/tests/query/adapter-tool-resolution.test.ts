@@ -813,4 +813,76 @@ describe('query runner adapter tool resolution', () => {
       },
     ])
   })
+
+  test('replaces rounded direct AED origin with prior precise locate coordinates', async () => {
+    ingestManifestFrame(makeNmcAedManifestFrame())
+    const citizenPrompt = createUserMessage({
+      content: '다대포해수욕장 근처 AED 위치를 찾아줘. 가장 가까운 곳부터 알려줘.',
+    })
+    const locateBlock = {
+      type: 'tool_use',
+      id: 'toolu-kakao-dadaepo-rounded',
+      name: 'kakao_keyword_search',
+      input: { query: '다대포해수욕장' },
+    }
+    const locateAssistant = createAssistantMessage({
+      content: [locateBlock],
+    })
+    const locateResult = createUserMessage({
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: locateBlock.id,
+          content: JSON.stringify({
+            ok: true,
+            result: {
+              kind: 'poi',
+              name: '다대포해수욕장',
+              lat: 35.0465263488422,
+              lon: 128.962741189119,
+              source: 'kakao',
+            },
+          }),
+        },
+      ],
+      sourceToolAssistantUUID: locateAssistant.uuid,
+    })
+    const aedBlock = {
+      type: 'tool_use',
+      id: 'toolu-nmc-aed-rounded',
+      name: NMC_AED_TOOL_NAME,
+      input: {
+        q0: '부산광역시',
+        q1: '사하구',
+        origin_lat: 35,
+        origin_lon: 129,
+      },
+    }
+    const aedAssistant: AssistantMessage = createAssistantMessage({
+      content: [aedBlock],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [aedBlock],
+      assistantMessage: aedAssistant,
+      messages: [citizenPrompt, locateAssistant, locateResult, aedAssistant],
+      toolUseContext: makeToolUseContext([], [citizenPrompt]),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).not.toContain('InputValidationError')
+    expect(dispatchPrimitiveMock).toHaveBeenCalledTimes(1)
+    expect(dispatchObservations).toEqual([
+      {
+        primitive: 'find',
+        toolName: NMC_AED_TOOL_NAME,
+        args: {
+          q0: '부산광역시',
+          q1: '사하구',
+          origin_lat: 35.0465263488422,
+          origin_lon: 128.962741189119,
+        },
+      },
+    ])
+  })
 })

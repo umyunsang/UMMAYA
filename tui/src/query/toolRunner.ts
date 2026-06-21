@@ -696,10 +696,21 @@ function latestKakaoLocateOrigin(
   return undefined
 }
 
-function hasAedOrigin(input: ToolInput): boolean {
+function aedOriginFromInput(
+  input: ToolInput,
+): { readonly lat: number; readonly lon: number } | undefined {
+  const lat = finiteCoordinate(input.origin_lat)
+  const lon = finiteCoordinate(input.origin_lon)
+  return lat === undefined || lon === undefined ? undefined : { lat, lon }
+}
+
+function sameAedOrigin(
+  left: { readonly lat: number; readonly lon: number },
+  right: { readonly lat: number; readonly lon: number },
+): boolean {
   return (
-    finiteCoordinate(input.origin_lat) !== undefined &&
-    finiteCoordinate(input.origin_lon) !== undefined
+    Math.abs(left.lat - right.lat) <= 0.0005 &&
+    Math.abs(left.lon - right.lon) <= 0.0005
   )
 }
 
@@ -708,11 +719,13 @@ function repairNmcAedOriginToolInput(params: {
   readonly input: ToolInput
   readonly messages: readonly Message[]
 }): ToolInput {
-  if (params.toolName !== NMC_AED_TOOL_NAME || hasAedOrigin(params.input)) {
+  if (params.toolName !== NMC_AED_TOOL_NAME) {
     return params.input
   }
   const origin = latestKakaoLocateOrigin(params.messages)
-  return origin === undefined
+  const existingOrigin = aedOriginFromInput(params.input)
+  return origin === undefined ||
+    (existingOrigin !== undefined && sameAedOrigin(existingOrigin, origin))
     ? params.input
     : {
         ...params.input,
