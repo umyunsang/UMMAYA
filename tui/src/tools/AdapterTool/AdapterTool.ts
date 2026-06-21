@@ -1090,6 +1090,8 @@ const WEATHER_NEGATIVE_CONSTRAINT_RE =
   /((날씨|기상|weather).*(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘))|(대체하지\s*(?:마|말고|말아|말아줘)|쓰지\s*(?:마|말고|말아|말아줘)|사용하지\s*(?:마|말고|말아|말아줘)).*(날씨|기상|weather))/iu
 const TRAFFIC_HAZARD_RE =
   /(교통사고|사고\s*위험|사고다발|위험\s*(?:구간|도로|지점)|어린이보호구역|보호구역|도로\s*구간|accident|hazard|hotspot|KOROAD|도로교통공단)/iu
+const INTERCITY_TRANSPORT_RE =
+  /((서울|부산|대구|인천|광주|대전|울산|세종|수원|청주|전주|천안|아산|창원|포항)[^.\n]{0,32}(?:에서|출발)[^.\n]{0,32}(서울|부산|대구|인천|광주|대전|울산|세종|수원|청주|전주|천안|아산|창원|포항)[^.\n]{0,32}(?:까지|도착)|(?:고속버스|시외버스|KTX|SRT|열차|기차|도시\s*간|장거리|intercity|express\s+bus).*(?:시간표|배차|운행|요금|대중교통|공공\s*교통|이동|transport|fare|schedule))/iu
 const TAGO_BUS_RE =
   /(TAGO|버스|노선|정류장|도착정보|버스\s*도착|bus\s*(?:route|station|arrival))/iu
 const MOJ_VILLAGE_LAWYER_RE = /(마을변호사|법무부.*변호사|village\s+lawyer)/iu
@@ -1165,6 +1167,10 @@ const TRAFFIC_TOOL_IDS = new Set([
   'tago_bus_location_search',
   'tago_bus_station_search',
 ])
+const INTERCITY_TRANSPORT_TOOL_IDS = new Set([
+  'tago_express_bus_info',
+  'tago_intercity_bus_info',
+])
 const LEGAL_PUBLIC_DATA_TOOL_IDS = new Set([
   'moj_village_lawyer_lookup',
   'ccourt_publication_documents',
@@ -1209,6 +1215,7 @@ type ProviderRoutingIntent = {
   readonly hasWeatherNegativeConstraint: boolean
   readonly hasAirQuality: boolean
   readonly hasTrafficHazard: boolean
+  readonly hasIntercityTransport: boolean
   readonly hasTagoBus: boolean
   readonly hasMojVillageLawyer: boolean
   readonly hasCcourtPublication: boolean
@@ -1244,7 +1251,8 @@ function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
   const hasWeatherNegativeConstraint = WEATHER_NEGATIVE_CONSTRAINT_RE.test(query)
   const hasAirQuality = AIR_QUALITY_RE.test(query)
   const hasTrafficHazard = TRAFFIC_HAZARD_RE.test(query)
-  const hasTagoBus = TAGO_BUS_RE.test(query)
+  const hasIntercityTransport = INTERCITY_TRANSPORT_RE.test(query)
+  const hasTagoBus = TAGO_BUS_RE.test(query) && !hasIntercityTransport
   const hasMofOceanWater = MOF_OCEAN_WATER_RE.test(query)
   const hasCoordinateLocationAnchor = COORDINATE_PAIR_RE.test(query)
   const hasAdminLocationAnchor = ADMIN_LOCATION_RE.test(query)
@@ -1265,6 +1273,7 @@ function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
       !hasDjtcSubwaySegment &&
       !hasWeatherNegativeConstraint &&
       !hasTrafficHazard &&
+      !hasIntercityTransport &&
       !hasTagoBus &&
       !hasMofOceanWater &&
       !KMA_ANALYSIS_RE.test(query) &&
@@ -1278,13 +1287,17 @@ function extractProviderRoutingIntent(query: string): ProviderRoutingIntent {
     hasGov24Action,
     hasWelfare: WELFARE_RE.test(query),
     hasCivilBirthHandoff: CIVIL_BIRTH_HANDOFF_RE.test(query),
-    hasUtility: UTILITY_RE.test(query) && !hasDjtcSubwaySegment,
+    hasUtility:
+      UTILITY_RE.test(query) &&
+      !hasDjtcSubwaySegment &&
+      !hasIntercityTransport,
     hasHousingHandoff: HOUSING_HANDOFF_RE.test(query),
     hasCivilDeath: CIVIL_DEATH_RE.test(query),
     hasDjtcSubwaySegment,
     hasWeatherNegativeConstraint,
     hasAirQuality,
     hasTrafficHazard,
+    hasIntercityTransport,
     hasTagoBus,
     hasMojVillageLawyer: MOJ_VILLAGE_LAWYER_RE.test(query),
     hasCcourtPublication: CCOURT_PUBLICATION_RE.test(query),
@@ -1378,6 +1391,11 @@ function restrictiveToolIdsForIntent(
   if (intent.hasDjtcSubwaySegment) {
     restrictive = true
     addSetValues(allowed, DJTC_SUBWAY_SEGMENT_TOOL_IDS)
+  }
+
+  if (intent.hasIntercityTransport) {
+    restrictive = true
+    addSetValues(allowed, INTERCITY_TRANSPORT_TOOL_IDS)
   }
 
   if (intent.hasTrafficHazard || intent.hasTagoBus) {
@@ -1489,6 +1507,12 @@ function routingIntentBoostForTool(
   if (intent.hasTrafficHazard) {
     if (toolId === 'koroad_accident_hazard_search') return 1250
     if (toolId === 'koroad_accident_search') return 700
+  }
+  if (
+    intent.hasIntercityTransport &&
+    INTERCITY_TRANSPORT_TOOL_IDS.has(toolId)
+  ) {
+    return 1400
   }
   if (intent.hasTagoBus) {
     if (toolId === 'tago_bus_route_search') return 1200

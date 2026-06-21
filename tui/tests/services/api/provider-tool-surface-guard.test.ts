@@ -116,6 +116,15 @@ const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
 const AIRKOREA_CTPRVN_AIR_QUALITY_TOOL_NAME = 'airkorea_ctprvn_air_quality'
 const WEATHER_AIR_QUALITY_PROMPT =
   '오늘 부산 사하구 날씨랑 미세먼지 상태를 확인해줘. 날씨와 대기질 출처를 나눠서 알려줘.'
+const INTERCITY_PUBLIC_TRANSPORT_PROMPT =
+  '서울에서 대전까지 대중교통으로 이동한다고 가정하고, 버스나 지하철 관련 공공 교통 정보를 찾아줘.'
+const CITY_BUS_TRANSPORT_TOOL_NAMES = [
+  'tago_bus_route_search',
+  'tago_bus_route_station_search',
+  'tago_bus_arrival_search',
+  'tago_bus_location_search',
+  'tago_bus_station_search',
+] as const
 
 function publicDataEntry(
   toolId: string,
@@ -167,6 +176,47 @@ function ingestWeatherAirQualityManifest(): void {
       ),
     ],
     manifest_hash: 'a'.repeat(64),
+    emitter_pid: 12345,
+  })
+}
+
+function ingestCityBusTransportManifest(): void {
+  clearManifestCache()
+  ingestManifestFrame({
+    kind: 'adapter_manifest_sync',
+    version: '1.0',
+    session_id: 'provider-surface-city-bus-only',
+    correlation_id: '01HXKQ7Z3M1V8K2YQ8A6P4F9TB',
+    ts: new Date().toISOString(),
+    role: 'backend',
+    frame_seq: 0,
+    entries: [
+      publicDataEntry('tago_bus_route_search', 'TAGO 시내버스 노선 route route_no city_code', {
+        city_code: { type: 'string' },
+        route_no: { type: 'string' },
+      }),
+      publicDataEntry('tago_bus_route_station_search', 'TAGO 시내버스 노선 정류장 route station', {
+        city_code: { type: 'string' },
+        route_id: { type: 'string' },
+      }),
+      publicDataEntry('tago_bus_arrival_search', 'TAGO 시내버스 도착정보 arrival station', {
+        city_code: { type: 'string' },
+        node_id: { type: 'string' },
+      }),
+      publicDataEntry('tago_bus_location_search', 'TAGO 시내버스 차량 위치 bus location', {
+        city_code: { type: 'string' },
+        route_id: { type: 'string' },
+      }),
+      publicDataEntry('tago_bus_station_search', 'TAGO 시내버스 정류장 station city_code', {
+        city_code: { type: 'string' },
+        station_name: { type: 'string' },
+      }),
+      publicDataEntry(DJTC_SEGMENT_TOOL_NAME, '대전 도시철도 역간 소요시간 거리 요금', {
+        strstnno: { type: 'string' },
+        endstnno: { type: 'string' },
+      }),
+    ],
+    manifest_hash: 'b'.repeat(64),
     emitter_pid: 12345,
   })
 }
@@ -961,6 +1011,42 @@ describe('provider request tool surface guard', () => {
           selectedAdapterToolNames: selection.final_adapter_tools,
         })
         expect(serializedMessages(exchange.request)).toContain(DJTC_SEGMENT_PROMPT)
+      } finally {
+        ingestMetarManifest(undefined)
+        restoreRouteDiagnostics(previousDiagnostics)
+        diagnostics.cleanup()
+      }
+    })
+  })
+
+  test('does not expose city-bus TAGO tools for intercity public transport', async () => {
+    // Given: the manifest contains only city-bus TAGO and DJTC local subway transport tools.
+    await withFriendliEnv(async () => {
+      const previousDiagnostics = process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE
+      const diagnostics = createDiagnosticsTarget()
+      process.env.UMMAYA_TUI_ROUTE_DIAGNOSTIC_FILE = diagnostics.path
+      ingestCityBusTransportManifest()
+      try {
+        // When: the prompt asks for a Seoul-to-Daejeon city-to-city route.
+        const exchange = await captureProviderExchange({
+          messages: [
+            createUserMessage({ content: INTERCITY_PUBLIC_TRANSPORT_PROMPT }),
+          ],
+        })
+
+        // Then: the model is not given misleading city-bus or local-subway tools.
+        const toolNames = getToolNames(exchange.request)
+        const selection = readAdapterSelection(diagnostics.path)
+        for (const toolName of CITY_BUS_TRANSPORT_TOOL_NAMES) {
+          expect(toolNames).not.toContain(toolName)
+          expect(selection.final_adapter_tools).not.toContain(toolName)
+        }
+        expect(toolNames).not.toContain(DJTC_SEGMENT_TOOL_NAME)
+        expect(selection.final_adapter_tools).toEqual([])
+        expect(toolNames).toEqual([])
+        expect(serializedMessages(exchange.request)).toContain(
+          INTERCITY_PUBLIC_TRANSPORT_PROMPT,
+        )
       } finally {
         ingestMetarManifest(undefined)
         restoreRouteDiagnostics(previousDiagnostics)

@@ -122,6 +122,20 @@ describe('adapter tool routing intent', () => {
     expect(names).not.toContain('kma_current_observation')
   })
 
+  test('does not expose city-bus TAGO tools for intercity public transport', () => {
+    ingestAdversarialPublicDataManifest()
+
+    const names = selectTopKAdapterToolNamesForQuery(
+      '서울에서 대전까지 대중교통으로 이동한다고 가정하고, 버스나 지하철 관련 공공 교통 정보를 찾아줘.',
+      5,
+    )
+
+    expect(names).toEqual([])
+    expect(names).not.toContain('tago_bus_route_search')
+    expect(names).not.toContain('tago_bus_station_search')
+    expect(names).not.toContain('djtc_subway_segment_fare_time_check')
+  })
+
   test('keeps public-safety requests on MOIS and Gyeryong surface', () => {
     ingestAdversarialPublicDataManifest()
 
