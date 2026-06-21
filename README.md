@@ -75,7 +75,7 @@ Live public-information flows are easiest to verify today, so demos focus on tho
 UMMAYA keeps the model-facing surface small and lets adapters handle agency-specific details behind it.
 
 | Tool | Public alias | Role |
-|---|---|
+|---|---|---|
 | `locate` | `resolve_location` | Resolve places, addresses, coordinates, and administrative areas before a service lookup. |
 | `find` | `lookup` | Retrieve public information such as weather, emergency rooms, hospitals, road safety, welfare information, and other public-service reads. |
 | `check` | `verify` | Enter protected work by establishing identity, consent, purpose, scope, and delegation. This is the light permission gate. |
