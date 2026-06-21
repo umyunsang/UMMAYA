@@ -1,3 +1,5 @@
+<img alt="UMMAYA wordmark with the compact open-call companion mark" src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-wordmark.png" width="100%">
+
 # UMMAYA
 
 ![npm version](https://img.shields.io/npm/v/ummaya.svg?style=flat-square)
