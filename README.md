@@ -1,4 +1,4 @@
-<img alt="UMMAYA banner with the Umma mascot and Unified Multi-Ministry Agent for Your Administration wordmark" src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-readme-banner.png" width="100%">
+<img alt="UMMAYA wordmark with the compact open-call companion mark" src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-wordmark.png" width="100%">
 
 <a href="https://github.com/umyunsang/UMMAYA/blob/main/assets/ummaya-demo.mp4">
   <img src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-demo.gif" alt="UMMAYA terminal demo showing public-service prompts, separated tool calls, compact tool results, and final assistant answers" width="100%">

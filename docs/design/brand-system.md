@@ -63,7 +63,7 @@ The Korea AI Action Plan 공공AX Principle 9 adds a further constraint: citizen
   - `../../assets/ummaya-logo.png` — raster equivalent
   - `../../assets/ummaya-banner-dark.svg` — wide wordmark + subtitle on dark background
   - `../../assets/ummaya-banner-light.svg` — wide wordmark + subtitle on light background
-  - `../../assets/ummaya-readme-banner.png` — README hero banner raster
+  - `../../assets/ummaya-wordmark.png` — README header wordmark raster
   - `../../assets/ummaya-org-avatar.svg` — square avatar crop of the home-call mark; used in GitHub organisation profile
   - `../../assets/ummaya-org-avatar.png` — raster equivalent
 - **Korea AI Action Plan** — 공공AX Principle 8 (단일 대화 창, single conversational window) and Principle 9 (citizen-facing public-service AI) are tracked at the K-AI2026 live dashboard (`hollobit/K-AI2026`, referenced in `docs/vision.md § Reference materials`). Both principles are satisfied structurally by the home-call metaphor: Principle 8 by the architecture that routes all agency calls through one conversational interface, and Principle 9 by the citizen-legible branding that communicates trust without requiring technical literacy.
@@ -191,7 +191,7 @@ The UMMAYA wordmark + subtitle composition is rendered from a single SVG source:
 - `../../assets/ummaya-banner-dark.svg` — authoritative wide-format wordmark on the UMMAYA navy `#0a0e27` background. This is the palette-extraction source cited by ADR-006 A-9 and the only asset that carries the canonical UMMAYA hex values.
 - `../../assets/ummaya-logo.svg` — compact square logo (core + ring composition); also carries the 16-hex superset from which shimmer variants were drawn per research R-2.
 - `../../assets/ummaya-banner-light.svg` — light-theme vector variant owned by Epic H for the deferred light-theme work.
-- `../../assets/ummaya-readme-banner.png` — README hero banner raster.
+- `../../assets/ummaya-wordmark.png` — README header wordmark raster.
 
 ### §3.2 · Clear-space rule
 
