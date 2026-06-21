@@ -657,6 +657,8 @@ describe('query runner adapter tool resolution', () => {
     expect(toolResultText(results)).toContain('TAGO route lookup already returned zero official rows')
     expect(toolResultText(results)).toContain('route_no=1001')
     expect(toolResultText(results)).toContain('without citizen confirmation')
+    expect(results[0]?.message.content[0]?.type).toBe('tool_result')
+    expect(results[0]?.message.content[0]?.is_error).not.toBe(true)
     expect(dispatchPrimitiveMock).not.toHaveBeenCalled()
   })
 

@@ -120,8 +120,6 @@ const FAILED_TOOL_UNGROUNDED_DETAIL_RE =
   /(권장\s*조치|참고용|일반적인|홈페이지|직접\s*문의|https?:\/\/|콜센터|구청|복지로|국민행복카드|기초생활보장|주거급여|긴급복지지원|장애인\s*복지|노인\s*복지|한부모[·\s]*조손)/iu
 const PROTECTED_ACTION_BYPASS_REQUEST_RE =
   /(인증\s*없이|권한\s*없이|인증이\s*없더라도|권한이\s*없더라도|도구\s*호출이\s*실패|실패(?:하거나|해도|하더라도)|실제\s*결제가\s*안\s*됐어도|접수번호[^\n.。!?]{0,24}(?:만들|생성)|성공했다고\s*말|성공\s*처리|납부\s*완료라고|완료라고\s*답)/iu
-const PROTECTED_ACTION_BYPASS_SUCCESS_FINAL_RE =
-  /(접수번호|납부번호|접수\s*완료|납부\s*완료|신청[^\n.。!?]{0,40}접수|납부[^\n.。!?]{0,40}(?:성공|완료)|성공적으로\s*(?:처리|완료)|성공\s*처리|처리\s*결과\s*:\s*성공|완료되었습니다)/iu
 const PROTECTED_ACTION_BYPASS_SAFE_FINAL_RE =
   /(실행하지\s*않|처리할\s*수\s*없|만들\s*수\s*없|공식\s*gateway|권한[^\n.。!?]{0,40}필요|인증[^\n.。!?]{0,40}필요|성공으로\s*처리할\s*수\s*없|완료\s*상태를\s*안내할\s*수\s*없)/iu
 const READ_ONLY_PUBLIC_SERVICE_REQUEST_RE =
@@ -132,10 +130,16 @@ const NON_ACTION_BOUNDARY_REQUEST_RE =
   /(실제로\s*(?:만들|생성|접수|신청|제출|발급|납부|결제).*(?:말고|마|않|안)|(?:만들|생성|접수|신청|제출|발급|납부|결제).*실제로.*(?:말고|마|않|안)|어떤\s*인증|어떤\s*권한|필요한지만|만\s*설명|만\s*알려|하지\s*말고|하지마|하지\s*마)/iu
 const READ_ONLY_SEND_REPAIR_MARKER = 'Read-only protected-action repair:'
 const UNGROUNDED_PUBLIC_DATA_REPAIR_MARKER = 'Ungrounded public-data final repair:'
+const REPEATED_STALE_PRIOR_TOOL_RESULT_REPAIR_MARKER =
+  'Repeated read-only stale-prior repair:'
+const CURRENT_EVIDENCE_STALE_PRIOR_TOOL_RESULT_REPAIR_MARKER =
+  'Current-evidence stale-prior repair:'
 const PUBLIC_DATA_GROUNDED_DETAIL_RE =
   /(https?:\/\/[^\s)]+|지역번호\s*\+\s*129|\d{2,4}-\d{3,4}-\d{4}|부산\s*사하구청|사하구청|동주민센터|보건소|복지과|복지콜센터|life\.go\.kr)/giu
 const UNGROUNDED_DETAIL_NEGATED_CONTEXT_RE =
   /(확인되지\s*않|확인하지\s*못|반환되지\s*않|포함되지\s*않|미확인|not\s+verified|not\s+returned|not\s+included)/iu
+const WELFARE_UNVERIFIED_LOCAL_ADVICE_RE =
+  /(부산\s*)?사하구청|구청\s*홈페이지|보건소|동주민센터|복지로|bokjiro|홈페이지|직접\s*문의|방문\s*상담/iu
 const KMA_FORECAST_SUMMARY_LIMIT = 6
 const KOREAN_DATE_CLAIM_RE =
   /(오늘|현재)\s*날짜는\s*\d{4}년\s*\d{1,2}월\s*\d{1,2}일(?:입니다)?/gu
@@ -378,6 +382,15 @@ type AirQualitySummary = {
   readonly khai?: string
 }
 
+function concreteToolName(block: ToolUseBlock): string {
+  const toolId = block.input.tool_id
+  return ROOT_PRIMITIVE_TOOL_NAMES.has(block.name) &&
+    typeof toolId === 'string' &&
+    toolId.length > 0
+    ? toolId
+    : block.name
+}
+
 function toolResultsSinceLatestPrompt(
   messages: readonly Message[],
 ): readonly PriorToolResult[] {
@@ -388,7 +401,7 @@ function toolResultsSinceLatestPrompt(
   for (const message of messages.slice(latestUserIndex + 1)) {
     if (isAssistantMessage(message)) {
       for (const block of toolUseBlocks(message)) {
-        toolNamesByUseId.set(block.id, block.name)
+        toolNamesByUseId.set(block.id, concreteToolName(block))
       }
       continue
     }
@@ -1064,6 +1077,30 @@ function domainGuardFinalAnswerForToolResults(
         'KMA 일반 날씨 도구를 반복 호출하지 않습니다. 기존 위치 근거와 격자값 누락 한계를 바탕으로 안전한 이동 판단은 공식 날씨/교통 채널 확인으로 handoff합니다.',
     })
   }
+  if (text.includes('TAGO route lookup already returned zero official rows')) {
+    return createAssistantMessage({
+      content:
+        'TAGO 공식 조회에서 해당 노선/도시 조합의 결과가 0건으로 확인되었습니다. 다른 노선, 도시, 정류장, 도착정보로 임의 대체하지 않고 여기서 조회를 멈춥니다. 더 넓은 검색을 원하면 출발지, 도착지, 버스 노선 또는 교통수단 범위를 다시 지정해야 합니다.',
+    })
+  }
+  if (text.includes('MOHW/SSIS welfare lookup already returned NO DATA FOUND')) {
+    return createAssistantMessage({
+      content:
+        'mohw_welfare_eligibility_search가 이번 요청에서 두 차례 NO DATA FOUND를 반환했습니다. 임신·출산, 양육, 다른 생애주기나 복지 범주로 임의 확장하지 않고 여기서 조회를 멈춥니다. 다른 대상 조건이나 공식 채널 범위로 다시 검색할지는 사용자가 확인해야 합니다.',
+    })
+  }
+  if (text.includes('PPS shopping mall product lookup already returned official product rows')) {
+    return createAssistantMessage({
+      content:
+        'pps_shopping_mall_product_lookup가 이번 요청에서 이미 공식 공공조달 물품 행을 반환했습니다. 같은 조달 물품 조회를 반복하거나 정상 API 응답을 실패로 바꾸지 않습니다. 직전 tool_result에 있는 품목명, 식별번호, 계약업체, 가격, 총건수만 근거로 요약해야 합니다.',
+    })
+  }
+  if (text.includes('PPS shopping mall product lookup already returned an official successful response with totalCount=0')) {
+    return createAssistantMessage({
+      content:
+        'pps_shopping_mall_product_lookup가 공공조달 종합쇼핑몰 API에서 정상 응답을 받았지만 totalCount=0으로 공식 물품 행이 없었습니다. 이는 기관 API 실패가 아니라 0건 결과입니다. 노트북과 무관한 검색어로 임의 확장하지 않고 여기서 멈춥니다. 다른 검색어로 다시 조회할지는 사용자가 확인해야 합니다.',
+    })
+  }
   return undefined
 }
 
@@ -1138,6 +1175,107 @@ function latestUserText(messages: readonly Message[]): string {
   const latestUserIndex = latestTextUserMessageIndex(messages)
   const latestUserMessage = latestUserIndex >= 0 ? messages[latestUserIndex] : undefined
   return latestUserMessage ? messageText(latestUserMessage) : ''
+}
+
+function previousTextUserMessageBefore(
+  messages: readonly Message[],
+  endIndex: number,
+): Message | undefined {
+  for (let index = endIndex - 1; index >= 0; index -= 1) {
+    const message = messages[index]
+    if (
+      message !== undefined &&
+      isUserMessage(message) &&
+      message.isMeta !== true &&
+      messageText(message).trim().length > 0
+    ) {
+      return message
+    }
+  }
+  return undefined
+}
+
+function normalizeRepeatedUserRequestText(text: string): string {
+  return text.normalize('NFKC').replace(/\s+/gu, ' ').trim().toLocaleLowerCase()
+}
+
+function isRepeatedLatestUserRequest(messages: readonly Message[]): boolean {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return false
+  const latest = messages[latestUserIndex]
+  if (latest === undefined) return false
+  const previous = previousTextUserMessageBefore(messages, latestUserIndex)
+  if (previous === undefined) return false
+  const latestText = normalizeRepeatedUserRequestText(messageText(latest))
+  if (latestText.length === 0) return false
+  return latestText === normalizeRepeatedUserRequestText(messageText(previous))
+}
+
+function hasRepeatedStalePriorToolResultRepairPromptAfterLatestUser(
+  messages: readonly Message[],
+): boolean {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return false
+  return messages.slice(latestUserIndex + 1).some(message =>
+    messageText(message).includes(REPEATED_STALE_PRIOR_TOOL_RESULT_REPAIR_MARKER),
+  )
+}
+
+function repeatedReadOnlyStalePriorToolResultRepairPrompt(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): string | undefined {
+  const latestUser = latestUserText(params.messages)
+  if (!READ_ONLY_PUBLIC_SERVICE_REQUEST_RE.test(latestUser)) return undefined
+  if (queryExplicitlyRequestsProtectedSend(latestUser)) return undefined
+  if (PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUser)) return undefined
+  if (!isRepeatedLatestUserRequest(params.messages)) return undefined
+  if (hasRepeatedStalePriorToolResultRepairPromptAfterLatestUser(params.messages)) {
+    return undefined
+  }
+  if (!shouldBlockStalePriorToolResultAnswer(params)) return undefined
+  return [
+    `${REPEATED_STALE_PRIOR_TOOL_RESULT_REPAIR_MARKER} the latest citizen request repeats a prior read-only public-service lookup, but the assistant tried to answer from prior tool_result text without fresh tool_result evidence after the latest user message.`,
+    'Call the appropriate registered adapter tool again for the latest user request when one is available in the current tool schema.',
+    'Do not reuse prior tool_result values as current evidence, and do not finish with the stale-prior safety text unless the retry also cannot produce a current tool_result.',
+  ].join(' ')
+}
+
+function hasCurrentEvidenceStalePriorToolResultRepairPromptAfterLatestUser(
+  messages: readonly Message[],
+): boolean {
+  const latestUserIndex = latestTextUserMessageIndex(messages)
+  if (latestUserIndex < 0) return false
+  return messages.slice(latestUserIndex + 1).some(message =>
+    messageText(message).includes(CURRENT_EVIDENCE_STALE_PRIOR_TOOL_RESULT_REPAIR_MARKER),
+  )
+}
+
+function hasCurrentSuccessfulNonLocationToolResult(messages: readonly Message[]): boolean {
+  return toolResultsSinceLatestPrompt(messages).some(result =>
+    !result.isError && !KAKAO_LOCATION_TOOL_NAMES.has(result.toolName),
+  )
+}
+
+function currentEvidenceStalePriorToolResultRepairPrompt(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): string | undefined {
+  if (hasCurrentEvidenceStalePriorToolResultRepairPromptAfterLatestUser(params.messages)) {
+    return undefined
+  }
+  if (!hasCurrentSuccessfulNonLocationToolResult(params.messages)) {
+    return undefined
+  }
+  if (!shouldBlockStalePriorToolResultAnswer(params)) {
+    return undefined
+  }
+  return [
+    `${CURRENT_EVIDENCE_STALE_PRIOR_TOOL_RESULT_REPAIR_MARKER} the latest citizen request already has successful non-location tool_result evidence, but the assistant answer mixed in stale prior-turn values.`,
+    'Write the final Korean answer from successful tool_results after the latest citizen request only.',
+    'Do not reuse earlier weather, AED, hospital, route, welfare, procurement, or receipt values unless the latest user explicitly asked for prior results.',
+    'If the current official adapter returned zero rows or partial data, say that directly and name the adapter or agency API instead of fabricating a replacement.',
+  ].join(' ')
 }
 
 type FailedToolResult = {
@@ -1242,6 +1380,60 @@ function buildReadOnlySendBlockedText(): string {
   ].join('\n\n')
 }
 
+function welfareServiceSummaryLine(item: Record<string, unknown>): string | undefined {
+  const name = scalarText(item.servNm) ?? scalarText(item.serviceName) ?? scalarText(item.name)
+  if (name === undefined || name.length === 0) return undefined
+  const ministry = scalarText(item.jurMnofNm)
+  const summary = scalarText(item.servDgst)
+  const parts = [
+    `- ${name}`,
+    ministry !== undefined && ministry.length > 0 ? `(${ministry})` : undefined,
+    summary !== undefined && summary.length > 0 ? `: ${summary.slice(0, 120)}` : undefined,
+  ]
+  return parts.filter((part): part is string => part !== undefined).join(' ')
+}
+
+function welfareServiceItems(result: PriorToolResult): readonly Record<string, unknown>[] {
+  if (result.toolName !== 'mohw_welfare_eligibility_search' || result.isError) {
+    return []
+  }
+  const resultRecord = nestedResultRecord(parseJsonRecord(result.content))
+  const items = Array.isArray(resultRecord?.items) ? resultRecord.items : []
+  return items.flatMap(item => {
+    if (!isRecord(item)) return []
+    return isRecord(item.record) ? [item.record] : [item]
+  })
+}
+
+function readOnlyPublicServiceEvidenceMessage(
+  messages: readonly Message[],
+): AssistantMessage | undefined {
+  const welfareLines = toolResultsSinceLatestPrompt(messages)
+    .flatMap(result => welfareServiceItems(result))
+    .map(welfareServiceSummaryLine)
+    .filter((line): line is string => line !== undefined)
+    .slice(0, 5)
+  if (welfareLines.length === 0) return undefined
+  return createAssistantMessage({
+    content: [
+      '요청은 실행하지 않았습니다.',
+      '최신 보건복지부/SSIS adapter 조회 결과에 포함된 항목만 정리합니다.',
+      ...welfareLines,
+      '지역 상담 창구, 전화번호, 신청 가능 여부가 tool_result에 없으면 확인된 값처럼 단정하지 않습니다.',
+    ].join('\n'),
+  })
+}
+
+function buildNonActionProtectedBoundaryText(): string {
+  return [
+    '요청은 실행하지 않았습니다.',
+    '정부24 민원 접수번호는 실제 신청 또는 접수 단계의 결과이므로 이 흐름에서는 생성하지 않습니다.',
+    '필요한 확인은 본인확인, 민원 대상 자격, 대리 신청 또는 위임 권한, 신청 범위, 수수료와 제출 동의, 결과 수령 권한입니다.',
+    '본인확인은 공식 gateway의 간편인증, 공동/금융인증서, 모바일 신분증 같은 인증 수단을 통해 처리되어야 합니다.',
+    '성공한 tool_result 없이 신청 완료나 접수번호를 성공 처리하지 않습니다.',
+  ].join('\n\n')
+}
+
 function hasReadOnlySendRepairPromptAfterLatestUser(
   messages: readonly Message[],
 ): boolean {
@@ -1295,6 +1487,10 @@ function readOnlySendPromptActionGuard(params: {
   if (!toolUseBlocks(params.candidate).some(isSendActionToolUse)) {
     return undefined
   }
+  const evidenceMessage = readOnlyPublicServiceEvidenceMessage(params.messages)
+  if (evidenceMessage !== undefined) {
+    return evidenceMessage
+  }
   return createAssistantMessage({
     content: buildReadOnlySendBlockedText(),
   })
@@ -1345,6 +1541,17 @@ function ungroundedPublicDataDetails(
   return [...ungrounded]
 }
 
+function hasUngroundedWelfareLocalAdvice(candidateText: string): boolean {
+  const match = WELFARE_UNVERIFIED_LOCAL_ADVICE_RE.exec(candidateText)
+  if (match === null) return false
+  const matchIndex = match.index
+  const context = candidateText.slice(
+    Math.max(0, matchIndex - 80),
+    Math.min(candidateText.length, matchIndex + match[0].length + 80),
+  )
+  return !UNGROUNDED_DETAIL_NEGATED_CONTEXT_RE.test(context)
+}
+
 function buildUngroundedPublicDataRepairPrompt(details: readonly string[]): string {
   const joinedDetails = details.slice(0, 5).join(', ')
   return [
@@ -1368,8 +1575,16 @@ function ungroundedPublicDataFinalRepairPrompt(params: {
   }
   const evidenceText = successfulToolEvidenceSinceLatestUser(params.messages)
   if (evidenceText.length === 0) return undefined
-  const details = ungroundedPublicDataDetails(messageText(params.candidate), evidenceText)
-  return details.length > 0 ? buildUngroundedPublicDataRepairPrompt(details) : undefined
+  const candidateText = messageText(params.candidate)
+  if (
+    readOnlyPublicServiceEvidenceMessage(params.messages) !== undefined &&
+    hasUngroundedWelfareLocalAdvice(candidateText)
+  ) {
+    return undefined
+  }
+  const details = ungroundedPublicDataDetails(candidateText, evidenceText)
+  if (details.length > 0) return buildUngroundedPublicDataRepairPrompt(details)
+  return undefined
 }
 
 function buildUngroundedPublicDataBlockedText(): string {
@@ -1384,25 +1599,43 @@ function ungroundedPublicDataFinalGuard(params: {
   readonly candidate: AssistantMessage
 }): AssistantMessage | undefined {
   if (toolUseBlocks(params.candidate).length > 0) return undefined
-  if (!hasUngroundedPublicDataRepairPromptAfterLatestUser(params.messages)) {
+  const evidenceMessage = readOnlyPublicServiceEvidenceMessage(params.messages)
+  const hasWelfareLocalAdvice =
+    evidenceMessage !== undefined &&
+    hasUngroundedWelfareLocalAdvice(messageText(params.candidate))
+  if (
+    !hasWelfareLocalAdvice &&
+    !hasUngroundedPublicDataRepairPromptAfterLatestUser(params.messages)
+  ) {
     return undefined
   }
   const evidenceText = successfulToolEvidenceSinceLatestUser(params.messages)
   const details = ungroundedPublicDataDetails(messageText(params.candidate), evidenceText)
-  return details.length > 0
-    ? createAssistantMessage({ content: buildUngroundedPublicDataBlockedText() })
-    : undefined
+  if (
+    details.length === 0 &&
+    !hasWelfareLocalAdvice
+  ) {
+    return undefined
+  }
+  return evidenceMessage ??
+    createAssistantMessage({ content: buildUngroundedPublicDataBlockedText() })
 }
 
 function protectedBypassPromptActionGuard(params: {
   readonly messages: readonly Message[]
   readonly candidate: AssistantMessage
 }): AssistantMessage | undefined {
-  if (!PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUserText(params.messages))) {
+  const latestUser = latestUserText(params.messages)
+  if (!PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUser)) {
     return undefined
   }
   if (toolUseBlocks(params.candidate).length === 0) {
     return undefined
+  }
+  if (NON_ACTION_BOUNDARY_REQUEST_RE.test(latestUser)) {
+    return createAssistantMessage({
+      content: buildNonActionProtectedBoundaryText(),
+    })
   }
   return createAssistantMessage({
     content: buildProtectedBypassBlockedText(),
@@ -1421,8 +1654,10 @@ function protectedBypassPromptFinalAnswerGuard(params: {
   if (PROTECTED_ACTION_BYPASS_SAFE_FINAL_RE.test(candidateText)) {
     return undefined
   }
-  if (!PROTECTED_ACTION_BYPASS_SUCCESS_FINAL_RE.test(candidateText)) {
-    return undefined
+  if (NON_ACTION_BOUNDARY_REQUEST_RE.test(latestUserText(params.messages))) {
+    return createAssistantMessage({
+      content: buildNonActionProtectedBoundaryText(),
+    })
   }
   return createAssistantMessage({
     content: buildProtectedBypassBlockedText(),
@@ -1699,6 +1934,58 @@ export async function* query(params: QueryParams): QueryGenerator {
           candidate: boundary.message,
         })
       ) {
+        const repeatedReadOnlyStalePriorRepairPrompt =
+          repeatedReadOnlyStalePriorToolResultRepairPrompt({
+            messages,
+            candidate: boundary.message,
+          })
+        if (repeatedReadOnlyStalePriorRepairPrompt !== undefined) {
+          appendQueryAssistantDiagnostic({
+            event: 'query_assistant_repaired_repeated_stale_prior_tool_result',
+            querySource: String(params.querySource),
+            messages,
+            assistantMessage: boundary.message,
+            turnCount,
+            boundaryKind: 'pass',
+            repairPromptChars: repeatedReadOnlyStalePriorRepairPrompt.length,
+            continueAfterRepair: true,
+          })
+          messages.push(boundary.message)
+          messages.push(
+            createUserMessage({
+              content: repeatedReadOnlyStalePriorRepairPrompt,
+              isMeta: true,
+            }),
+          )
+          shouldContinueAfterRepairPrompt = true
+          break
+        }
+        const currentEvidenceRepairPrompt =
+          currentEvidenceStalePriorToolResultRepairPrompt({
+            messages,
+            candidate: boundary.message,
+          })
+        if (currentEvidenceRepairPrompt !== undefined) {
+          appendQueryAssistantDiagnostic({
+            event: 'query_assistant_repaired_current_evidence_stale_prior_tool_result',
+            querySource: String(params.querySource),
+            messages,
+            assistantMessage: boundary.message,
+            turnCount,
+            boundaryKind: 'pass',
+            repairPromptChars: currentEvidenceRepairPrompt.length,
+            continueAfterRepair: true,
+          })
+          messages.push(boundary.message)
+          messages.push(
+            createUserMessage({
+              content: currentEvidenceRepairPrompt,
+              isMeta: true,
+            }),
+          )
+          shouldContinueAfterRepairPrompt = true
+          break
+        }
         appendQueryAssistantDiagnostic({
           event: 'query_assistant_blocked_stale_prior_tool_result',
           querySource: String(params.querySource),

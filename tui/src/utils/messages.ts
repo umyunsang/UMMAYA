@@ -3019,7 +3019,6 @@ export function handleMessageFromStream(
 
   switch (message.event.type) {
     case 'content_block_start':
-      onStreamingText?.(() => null)
       if (
         feature('CONNECTOR_TEXT') &&
         isConnectorTextBlock(message.event.content_block)

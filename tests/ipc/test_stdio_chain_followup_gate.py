@@ -48,10 +48,12 @@ from ummaya.ipc.stdio import (
     _check_unrequested_send_for_read_only_query,
     _check_verify_terminated_without_verify,
     _check_verify_tool_choice_prerequisite,
+    _conversation_has_successful_any_primitive_result,
     _conversation_has_successful_identical_primitive_call,
     _conversation_has_successful_lookup,
     _conversation_has_successful_primitive,
     _effective_chat_max_tokens,
+    _final_answer_looks_like_fabricated_location_source,
     _final_answer_looks_like_generic_retry_after_success,
     _final_answer_looks_like_incomplete_sentence,
     _final_answer_looks_like_mismatched_kma_forecast_hour_label,
@@ -63,6 +65,9 @@ from ummaya.ipc.stdio import (
     _final_answer_missing_current_weather_observation_values,
     _initial_concrete_tool_choice_for_query,
     _latest_citizen_user_utterance,
+    _locate_context_for_lookup_tool,
+    _locate_query_matches_user_location_focus,
+    _locate_result_should_seed_aed_origin,
     _location_independent_resolve_redirect_for_query,
     _maybe_reroute_locate_admin_keyword_args,
     _maybe_reroute_locate_poi_address_args,
@@ -71,6 +76,7 @@ from ummaya.ipc.stdio import (
     _normalize_koroad_lookup_args_from_prior_locate,
     _normalize_lookup_args_for_query,
     _normalize_lookup_args_from_cached_locate_result,
+    _normalize_nmc_aed_args_from_prior_locate,
     _normalize_nmc_lookup_args_from_prior_locate,
     _normalize_pps_bid_args_from_user_query,
     _normalize_reverse_geocode_args_from_prior_locate,
@@ -82,6 +88,7 @@ from ummaya.ipc.stdio import (
     _query_implies_current_weather_observation,
     _query_implies_location_resolution,
     _sensitive_lookup_verify_redirect_for_query,
+    _should_replace_locate_coordinate_origin,
     _submit_requirement_for_query,
     _tool_result_payload_is_error,
 )
@@ -317,6 +324,75 @@ def test_stale_tool_result_refusal_after_success_is_rejected() -> None:
     )
 
 
+def test_final_answer_rejects_fabricated_google_source_for_kakao_locate() -> None:
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "kakao_address_search":
+                return SimpleNamespace(primitive="locate")
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content="다대포해수욕장 근처 AED 위치 찾아줘"),
+        _msg_assistant_tool_call("kakao_address_search", {"query": "부산 사하구 다대포해수욕장"}),
+        _msg_tool_result(
+            "kakao_address_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "다대포해수욕장",
+                    "lat": 35.0465263488422,
+                    "lon": 128.962741189119,
+                    "source": "kakao",
+                    "address_name": "부산 사하구 다대동",
+                },
+            },
+        ),
+    ]
+
+    assert _final_answer_looks_like_fabricated_location_source(
+        "구글에서 확인한 좌표는 35.0465, 128.9627입니다.",
+        msgs,
+        registry=Registry(),
+    )
+    assert not _final_answer_looks_like_fabricated_location_source(
+        "카카오 위치 검색 결과 좌표는 35.0465, 128.9627입니다.",
+        msgs,
+        registry=Registry(),
+    )
+
+
+def test_cc_tool_result_success_counts_for_stale_refusal_guard() -> None:
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "mohw_welfare_eligibility_search":
+                return SimpleNamespace(
+                    primitive="find",
+                    input_schema=SimpleNamespace(model_json_schema=lambda: {"properties": {}}),
+                )
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        _msg_assistant_tool_call(
+            "mohw_welfare_eligibility_search",
+            {"searchWrd": "기초생활수급자"},
+        ),
+        _msg_cc_tool_result(
+            "call_test",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "collection",
+                    "total_count": 51,
+                    "items": [{"servNm": "기초생활보장 생계급여"}],
+                },
+            },
+        ),
+    ]
+
+    assert _conversation_has_successful_any_primitive_result(msgs, registry=Registry())
+
+
 def test_meta_instruction_final_answer_after_success_is_rejected() -> None:
     """A final answer must not expose self-instructions after successful tools."""
     assert _final_answer_looks_like_pending_tool_plan(
@@ -402,6 +478,19 @@ def _msg_tool_result(name: str, payload: dict[str, Any]) -> LLMChatMessage:
         name=name,
         tool_call_id="call_test",
     )
+
+
+def _msg_cc_tool_result(tool_use_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "role": "user",
+        "content": [
+            {
+                "type": "tool_result",
+                "tool_use_id": tool_use_id,
+                "content": json.dumps(payload),
+            }
+        ],
+    }
 
 
 def _msg_available_adapters(*, find: bool = True) -> LLMChatMessage:
@@ -2944,6 +3033,72 @@ def test_resolve_only_then_terminate_is_rejected_with_new_projection() -> None:
     assert "Chain incomplete" in msg
 
 
+def test_resolve_only_cc_tool_result_then_terminate_is_rejected() -> None:
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id == "kakao_keyword_search":
+                return SimpleNamespace(
+                    primitive="locate",
+                    input_schema=SimpleNamespace(model_json_schema=lambda: {"properties": {}}),
+                )
+            if tool_id == "hira_hospital_search":
+                return SimpleNamespace(
+                    primitive="find",
+                    input_schema=SimpleNamespace(
+                        model_json_schema=lambda: {
+                            "properties": {"xPos": {}, "yPos": {}, "radius": {}, "dgsbjt": {}},
+                            "required": ["xPos", "yPos", "radius"],
+                        }
+                    ),
+                )
+            raise KeyError(tool_id)
+
+    msgs: list[Any] = [
+        LLMChatMessage(
+            role="system",
+            content="\n".join(
+                [
+                    '<available_adapters query="동아대 승학캠퍼스 근처 내과">',
+                    "- tool_id: kakao_keyword_search",
+                    "  primitive: locate",
+                    "- tool_id: hira_hospital_search",
+                    "  primitive: find",
+                    "</available_adapters>",
+                ]
+            ),
+        ),
+        LLMChatMessage(
+            role="user",
+            content="동아대 승학캠퍼스 근처에서 오늘 전화해볼 수 있는 내과를 찾아줘.",
+        ),
+        _msg_assistant_tool_call(
+            "kakao_keyword_search",
+            {"query": "동아대학교 승학캠퍼스 내과"},
+        ),
+        _msg_cc_tool_result(
+            "call_test",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "location",
+                    "lat": 35.105853756744445,
+                    "lon": 128.96384163031064,
+                },
+            },
+        ),
+    ]
+
+    msg = _check_resolve_terminated_without_followup(
+        msgs,
+        "동아대 승학캠퍼스 근처에서 오늘 전화해볼 수 있는 내과를 찾아줘.",
+        registry=Registry(),
+    )
+
+    assert msg is not None
+    assert "Chain incomplete" in msg
+    assert "find adapter" in msg
+
+
 def test_resolve_only_with_non_observable_query_passes() -> None:
     """When retrieval returns only locate candidates, the gate stays out of the way."""
     msgs: list[Any] = [
@@ -3445,6 +3600,23 @@ def test_cached_locate_result_normalizes_inbound_concrete_hira_call() -> None:
     }
 
 
+def test_inbound_concrete_locate_poi_address_reroutes_to_keyword() -> None:
+    args = _normalize_root_primitive_adapter_envelope(
+        "locate",
+        {
+            "tool_id": "kakao_address_search",
+            "params": {"query": "동아대학교 승학캠퍼스"},
+        },
+    )
+    args = _maybe_reroute_locate_admin_keyword_args("locate", args)
+    args = _maybe_reroute_locate_poi_address_args("locate", args)
+
+    assert args == {
+        "tool_id": "kakao_keyword_search",
+        "params": {"query": "동아대학교 승학캠퍼스"},
+    }
+
+
 def test_cached_locate_result_normalizes_inbound_kma_short_forecast_call() -> None:
     """Concrete KMA short forecast dispatch should use cached locate grid and base slot."""
     normalized = _normalize_lookup_args_from_cached_locate_result(
@@ -3467,6 +3639,49 @@ def test_cached_locate_result_normalizes_inbound_kma_short_forecast_call() -> No
     assert isinstance(params["base_time"], str)
     assert len(params["base_date"]) == 8
     assert params["base_time"] in {"0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"}
+
+
+def test_cached_locate_result_normalizes_inbound_kma_current_observation_call() -> None:
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {"tool_id": "kma_current_observation", "params": {}},
+        {
+            "kind": "poi",
+            "name": "부산 사하구",
+            "lat": 35.104448,
+            "lon": 128.974933,
+        },
+    )
+
+    params = normalized["params"]
+    assert params["nx"] == 97
+    assert params["ny"] == 75
+    assert isinstance(params["base_date"], str)
+    assert isinstance(params["base_time"], str)
+    assert len(params["base_date"]) == 8
+    assert len(params["base_time"]) == 4
+    assert params["base_time"].endswith("00")
+
+
+def test_cached_locate_result_normalizes_inbound_kma_ultra_short_forecast_call() -> None:
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {"tool_id": "kma_ultra_short_term_forecast", "params": {}},
+        {
+            "kind": "poi",
+            "name": "부산 사하구",
+            "lat": 35.104448,
+            "lon": 128.974933,
+        },
+    )
+
+    params = normalized["params"]
+    assert params["nx"] == 97
+    assert params["ny"] == 75
+    assert isinstance(params["base_date"], str)
+    assert isinstance(params["base_time"], str)
+    assert len(params["base_date"]) == 8
+    assert len(params["base_time"]) == 4
 
 
 def test_cached_locate_result_normalizes_inbound_concrete_nmc_call() -> None:
@@ -3578,6 +3793,211 @@ def test_cached_locate_result_normalizes_inbound_aed_after_reverse_geocode() -> 
         "origin_lat": 35.11520340622514,
         "origin_lon": 129.04154985192403,
     }
+
+
+def test_cached_aed_origin_keeps_specific_poi_after_later_region_locate() -> None:
+    dadaepo_beach = {
+        "kind": "poi",
+        "name": "다대포해수욕장",
+        "lat": 35.0465263488422,
+        "lon": 128.962741189119,
+        "address_name": "부산 사하구 다대동",
+    }
+    saha_region = {
+        "kind": "region",
+        "region_1depth_name": "부산광역시",
+        "region_2depth_name": "사하구",
+        "lat": 35.104448,
+        "lon": 128.974933,
+    }
+
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {
+            "tool_id": "nmc_aed_site_locate",
+            "params": {
+                "q0": "부산광역시",
+                "q1": "사하구",
+                "page_no": 1,
+                "num_of_rows": 10,
+            },
+        },
+        saha_region,
+        coordinate_locate_result=dadaepo_beach,
+    )
+
+    assert normalized["params"] == {
+        "q0": "부산광역시",
+        "q1": "사하구",
+        "page_no": 1,
+        "num_of_rows": 10,
+        "origin_lat": 35.0465263488422,
+        "origin_lon": 128.962741189119,
+    }
+
+
+def test_session_origin_cache_does_not_replace_poi_with_later_region_centroid() -> None:
+    dadaepo_beach = {
+        "kind": "poi",
+        "name": "다대포해수욕장",
+        "lat": 35.0465263488422,
+        "lon": 128.962741189119,
+        "address_name": "부산 사하구 다대동",
+    }
+    saha_region = {
+        "kind": "region",
+        "region_1depth_name": "부산광역시",
+        "region_2depth_name": "사하구",
+        "lat": 35.104448,
+        "lon": 128.974933,
+    }
+
+    assert _should_replace_locate_coordinate_origin(None, dadaepo_beach)
+    assert not _should_replace_locate_coordinate_origin(dadaepo_beach, saha_region)
+
+
+def test_aed_origin_focus_ignores_later_generic_aed_locate_query() -> None:
+    user_query = "다대포해수욕장 근처 AED 위치를 찾아줘. 가장 가까운 곳부터 알려줘."
+
+    assert _locate_query_matches_user_location_focus("부산 사하구 다대포해수욕장", user_query)
+    assert not _locate_query_matches_user_location_focus(
+        "부산 사하구 AED 자동심장충격기", user_query
+    )
+
+
+def test_aed_origin_cache_without_user_query_skips_generic_aed_locate() -> None:
+    dadaepo_beach = {
+        "kind": "poi",
+        "name": "다대포해수욕장",
+        "lat": 35.0465263488422,
+        "lon": 128.962741189119,
+        "address_name": "부산 사하구 다대동",
+    }
+    gs25_hadan = {
+        "kind": "poi",
+        "name": "GS25 하단사하점",
+        "lat": 35.1054485374189,
+        "lon": 128.966600874725,
+        "address_name": "부산 사하구 하단동 590-7",
+    }
+
+    assert _locate_result_should_seed_aed_origin(
+        {"tool_id": "kakao_address_search", "params": {"query": "부산 사하구 다대포해수욕장"}},
+        dadaepo_beach,
+        "",
+    )
+    assert not _locate_result_should_seed_aed_origin(
+        {"tool_id": "kakao_keyword_search", "params": {"query": "부산 사하구 AED 자동심장충격기"}},
+        gs25_hadan,
+        "",
+    )
+
+
+def test_aed_lookup_uses_user_focus_origin_not_later_generic_poi() -> None:
+    dadaepo_beach = {
+        "kind": "poi",
+        "name": "다대포해수욕장",
+        "lat": 35.0465263488422,
+        "lon": 128.962741189119,
+        "address_name": "부산 사하구 다대동",
+    }
+    gs25_hadan = {
+        "kind": "poi",
+        "name": "GS25 하단사하점",
+        "category": "가정,생활 > 편의점 > GS25",
+        "lat": 35.1054485374189,
+        "lon": 128.966600874725,
+        "address_name": "부산 사하구 하단동 590-7",
+    }
+
+    locate_result, coordinate_locate_result = _locate_context_for_lookup_tool(
+        "nmc_aed_site_locate",
+        gs25_hadan,
+        gs25_hadan,
+        dadaepo_beach,
+    )
+    normalized = _normalize_lookup_args_from_cached_locate_result(
+        "find",
+        {
+            "tool_id": "nmc_aed_site_locate",
+            "params": {
+                "q0": "부산광역시",
+                "q1": "사하구",
+                "page_no": 1,
+                "num_of_rows": 10,
+                "origin_lat": 35,
+                "origin_lon": 128,
+            },
+        },
+        locate_result,
+        coordinate_locate_result=coordinate_locate_result,
+    )
+
+    assert normalized["params"]["origin_lat"] == 35.0465263488422
+    assert normalized["params"]["origin_lon"] == 128.962741189119
+
+
+def test_nmc_aed_prior_locate_uses_user_focus_origin_not_generic_aed_poi() -> None:
+    class Registry:
+        def find(self, tool_id: str) -> object:
+            if tool_id in {"kakao_address_search", "kakao_keyword_search"}:
+                return SimpleNamespace(primitive="locate")
+            if tool_id == "nmc_aed_site_locate":
+                return SimpleNamespace(primitive="find")
+            raise KeyError(tool_id)
+
+    user_query = "다대포해수욕장 근처 AED 위치를 찾아줘. 가장 가까운 곳부터 알려줘."
+    msgs: list[Any] = [
+        LLMChatMessage(role="user", content=user_query),
+        _msg_assistant_tool_call("kakao_address_search", {"query": "부산 사하구 다대포해수욕장"}),
+        _msg_tool_result(
+            "kakao_address_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "다대포해수욕장",
+                    "lat": 35.0465263488422,
+                    "lon": 128.962741189119,
+                    "address_name": "부산 사하구 다대동",
+                },
+            },
+        ),
+        _msg_assistant_tool_call(
+            "kakao_keyword_search", {"query": "부산 사하구 AED 자동심장충격기"}
+        ),
+        _msg_tool_result(
+            "kakao_keyword_search",
+            {
+                "ok": True,
+                "result": {
+                    "kind": "poi",
+                    "name": "GS25 하단사하점",
+                    "lat": 35.1054485374189,
+                    "lon": 128.966600874725,
+                    "address_name": "부산 사하구 하단동 590-7",
+                },
+            },
+        ),
+    ]
+
+    normalized = _normalize_nmc_aed_args_from_prior_locate(
+        "find",
+        {
+            "tool_id": "nmc_aed_site_locate",
+            "params": {
+                "q0": "부산광역시",
+                "q1": "사하구",
+                "num_of_rows": 20,
+            },
+        },
+        msgs,
+        user_query,
+        registry=Registry(),
+    )
+
+    assert normalized["params"]["origin_lat"] == 35.0465263488422
+    assert normalized["params"]["origin_lon"] == 128.962741189119
 
 
 def test_cached_locate_result_normalizes_inbound_concrete_reverse_geocode_call() -> None:

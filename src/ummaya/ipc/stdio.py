@@ -930,6 +930,57 @@ def _final_answer_looks_like_stale_tool_result_refusal(text: str) -> bool:
     return any(marker in compact for marker in stale_markers)
 
 
+def _locate_result_sources(result: dict[str, object]) -> set[str]:
+    sources: set[str] = set()
+
+    def visit(value: object) -> None:
+        if isinstance(value, dict):
+            source = value.get("source")
+            if isinstance(source, str) and source.strip():
+                sources.add(source.strip().casefold())
+            for nested in value.values():
+                visit(nested)
+        elif isinstance(value, list):
+            for nested in value:
+                visit(nested)
+
+    visit(result)
+    return sources
+
+
+def _conversation_successful_locate_sources(
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> set[str]:
+    sources: set[str] = set()
+    for _, locate_result in _successful_locate_results_with_args(
+        llm_messages,
+        registry=registry,
+    ):
+        sources.update(_locate_result_sources(locate_result))
+    return sources
+
+
+def _final_answer_looks_like_fabricated_location_source(
+    text: str,
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> bool:
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+    lowered = normalized.casefold()
+    if "구글" not in normalized and "google" not in lowered:
+        return False
+    locate_sources = _conversation_successful_locate_sources(
+        llm_messages,
+        registry=registry,
+    )
+    return bool(locate_sources and "google" not in locate_sources)
+
+
 _KMA_ANALYSIS_USER_QUERY_RE: Final = re.compile(
     r"(분석자료|이미\s*분석|고해상도\s*격자|객관분석|AWS\s*객관|지도\s*자료|"
     r"일기도|분석일기도|비구름|바람\s*흐름|synoptic|weather\s*chart|"
@@ -1207,14 +1258,37 @@ def _final_answer_substitutes_after_kma_chart_failure(
     return any(marker in normalized for marker in substitution_markers)
 
 
-def _conversation_has_successful_any_primitive_result(llm_messages: list[Any]) -> bool:
+def _conversation_has_successful_any_primitive_result(
+    llm_messages: list[Any],
+    registry: Any = None,
+) -> bool:
     """Return True when the loop already has a successful primitive result."""
     return (
-        _conversation_has_successful_primitive_any_tool(llm_messages, primitive="find")
-        or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="locate")
-        or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="check")
-        or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="send")
-        or _conversation_has_successful_primitive_any_tool(llm_messages, primitive="document")
+        _conversation_has_successful_primitive_any_tool(
+            llm_messages,
+            primitive="find",
+            registry=registry,
+        )
+        or _conversation_has_successful_primitive_any_tool(
+            llm_messages,
+            primitive="locate",
+            registry=registry,
+        )
+        or _conversation_has_successful_primitive_any_tool(
+            llm_messages,
+            primitive="check",
+            registry=registry,
+        )
+        or _conversation_has_successful_primitive_any_tool(
+            llm_messages,
+            primitive="send",
+            registry=registry,
+        )
+        or _conversation_has_successful_primitive_any_tool(
+            llm_messages,
+            primitive="document",
+            registry=registry,
+        )
     )
 
 
@@ -2657,6 +2731,63 @@ def _latest_successful_locate_result_with_coords(
     return None
 
 
+def _successful_locate_results_with_args(
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> list[tuple[dict[str, object], dict[str, object]]]:
+    call_args_by_id: dict[str, dict[str, object]] = {}
+    pairs: list[tuple[dict[str, object], dict[str, object]]] = []
+    for msg in llm_messages:
+        role = getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
+        if role == "assistant":
+            tool_calls = getattr(msg, "tool_calls", None) or (
+                msg.get("tool_calls") if isinstance(msg, dict) else None
+            )
+            if tool_calls:
+                for tool_call in tool_calls:
+                    call_fn = getattr(getattr(tool_call, "function", None), "name", None) or (
+                        tool_call.get("function", {}).get("name")
+                        if isinstance(tool_call, dict)
+                        else None
+                    )
+                    canonical_args = _canonical_args_for_tool_call_name(
+                        call_fn,
+                        _tool_call_arguments_dict(tool_call),
+                        primitive="locate",
+                        registry=registry,
+                    )
+                    call_id = getattr(tool_call, "id", None) or (
+                        tool_call.get("id") if isinstance(tool_call, dict) else None
+                    )
+                    if canonical_args is not None and isinstance(call_id, str):
+                        call_args_by_id[call_id] = canonical_args
+
+        for call_id, _, payload in _iter_tool_result_payloads(msg):
+            if not isinstance(call_id, str) or call_id not in call_args_by_id:
+                continue
+            if not _primitive_payload_is_success(payload, primitive="locate"):
+                continue
+            result = _primitive_payload_result_dict(payload)
+            if result is not None and _locate_result_coords(result) is not None:
+                pairs.append((call_args_by_id[call_id], result))
+    return pairs
+
+
+def _latest_user_focus_locate_result_with_coords(
+    llm_messages: list[Any],
+    user_query: str,
+    *,
+    registry: Any = None,
+) -> dict[str, object] | None:
+    for args_obj, locate_result in reversed(
+        _successful_locate_results_with_args(llm_messages, registry=registry)
+    ):
+        if _locate_query_matches_user_location_focus(_locate_query_from_args(args_obj), user_query):
+            return locate_result
+    return None
+
+
 def _latest_successful_primitive_result_for_tool(
     llm_messages: list[Any],
     *,
@@ -3122,6 +3253,148 @@ def _locate_result_coords(result: dict[str, object]) -> tuple[float, float] | No
     return None
 
 
+def _locate_text_is_sigungu_region(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    parts = [part.strip() for part in value.split() if part.strip()]
+    if len(parts) == 1:
+        return parts[0].endswith(("시", "군", "구"))
+    if len(parts) != 2:
+        return False
+    q0 = _KOREAN_SIDO_ABBREVIATIONS.get(parts[0], parts[0])
+    return q0.endswith(("특별시", "광역시", "특별자치시", "특별자치도", "도")) and parts[
+        1
+    ].endswith(("시", "군", "구"))
+
+
+def _locate_result_is_broad_region(result: dict[str, object]) -> bool:
+    kind = str(result.get("kind") or "").casefold()
+    if kind in {"region", "adm_cd"}:
+        return True
+    for key in ("adm_cd", "region"):
+        value = result.get(key)
+        if not isinstance(value, dict):
+            continue
+        level = str(value.get("level") or "").casefold()
+        if level in {"sido", "sigungu", "si_gun_gu", "city", "district"}:
+            return True
+    if (
+        _nonempty_str(result.get("region_1depth_name"))
+        and _nonempty_str(result.get("region_2depth_name"))
+        and not _nonempty_str(result.get("region_3depth_name"))
+    ):
+        return True
+    for key in ("address_name", "name", "road_address", "jibun_address"):
+        if _locate_text_is_sigungu_region(result.get(key)):
+            return True
+    return False
+
+
+def _locate_result_is_specific_origin(result: dict[str, object]) -> bool:
+    return _locate_result_coords(result) is not None and not _locate_result_is_broad_region(result)
+
+
+_LOCATION_FOCUS_SUFFIX_RE = re.compile(
+    r"([0-9A-Za-z가-힣·.'()-]{2,}(?:해수욕장|해변|캠퍼스|대학교|대학|역|공항|터미널|항|공원|시장|구청|시청|주민센터|행정복지센터|보건소|병원|도서관|분수대|센터))"
+)
+
+
+def _normalized_location_text(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    return re.sub(r"\s+", "", value).casefold()
+
+
+def _location_focus_terms_from_user_query(user_query: str) -> tuple[str, ...]:
+    normalized = _normalized_location_text(user_query)
+    if not normalized:
+        return ()
+    terms: list[str] = []
+    for match in _LOCATION_FOCUS_SUFFIX_RE.finditer(normalized):
+        term = match.group(1)
+        if term not in terms:
+            terms.append(term)
+    return tuple(terms)
+
+
+def _locate_query_matches_user_location_focus(locate_query: str, user_query: str) -> bool:
+    normalized_query = _normalized_location_text(locate_query)
+    if not normalized_query:
+        return False
+    return any(
+        focus_term in normalized_query
+        for focus_term in _location_focus_terms_from_user_query(user_query)
+    )
+
+
+_AED_LOCATE_CONTEXT_RE = re.compile(r"(?:\bAED\b|자동심장|심장충격|제세동)", re.IGNORECASE)
+
+
+def _locate_query_is_generic_aed_context(locate_query: str) -> bool:
+    normalized_query = _normalized_location_text(locate_query)
+    if not normalized_query:
+        return False
+    if _AED_LOCATE_CONTEXT_RE.search(normalized_query) is None:
+        return False
+    return not _location_focus_terms_from_user_query(normalized_query)
+
+
+def _locate_query_from_args(args_obj: dict[str, object]) -> str:
+    queries: list[str] = []
+    raw_params = args_obj.get("params")
+    if isinstance(raw_params, dict):
+        for key in ("query", "address", "keyword", "q", "place_name", "name"):
+            value = _nonempty_str(raw_params.get(key))
+            if value:
+                queries.append(value)
+    for key in ("query", "address", "keyword", "q"):
+        value = _nonempty_str(args_obj.get(key))
+        if value:
+            queries.append(value)
+    return " ".join(queries)
+
+
+def _locate_result_should_seed_aed_origin(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+    latest_user_query: str,
+) -> bool:
+    if _locate_result_coords(locate_result) is None:
+        return False
+    locate_query = _locate_query_from_args(args_obj)
+    if latest_user_query:
+        return _locate_query_matches_user_location_focus(locate_query, latest_user_query)
+    return _locate_result_is_specific_origin(
+        locate_result
+    ) and not _locate_query_is_generic_aed_context(locate_query)
+
+
+def _locate_context_for_lookup_tool(
+    tool_id: str,
+    latest_locate_result: dict[str, object] | None,
+    latest_coordinate_locate_result: dict[str, object] | None,
+    user_focus_aed_origin: dict[str, object] | None,
+) -> tuple[dict[str, object] | None, dict[str, object] | None]:
+    if tool_id == "nmc_aed_site_locate" and user_focus_aed_origin is not None:
+        return user_focus_aed_origin, user_focus_aed_origin
+    return latest_locate_result, latest_coordinate_locate_result
+
+
+def _should_replace_locate_coordinate_origin(
+    previous: dict[str, object] | None,
+    candidate: dict[str, object],
+) -> bool:
+    if _locate_result_coords(candidate) is None:
+        return False
+    if previous is None or _locate_result_coords(previous) is None:
+        return True
+    if _locate_result_is_specific_origin(candidate):
+        return True
+    return not (
+        _locate_result_is_specific_origin(previous) and _locate_result_is_broad_region(candidate)
+    )
+
+
 def _locate_result_grid(result: dict[str, object]) -> tuple[int, int] | None:
     """Extract KMA nx/ny grid coordinates from a locate result."""
     candidates: list[object] = [result.get("coords"), result.get("poi"), result]
@@ -3140,6 +3413,22 @@ def _locate_result_grid(result: dict[str, object]) -> tuple[int, int] | None:
         ):
             return nx, ny
     return None
+
+
+def _locate_result_grid_or_projected(result: dict[str, object]) -> tuple[int, int] | None:
+    grid = _locate_result_grid(result)
+    if grid is not None:
+        return grid
+    coords = _locate_result_coords(result)
+    if coords is None:
+        return None
+    from ummaya.tools.kma.projection import KMADomainError, latlon_to_lcc  # noqa: PLC0415
+
+    try:
+        return latlon_to_lcc(coords[0], coords[1])
+    except KMADomainError as exc:
+        logger.debug("kma grid projection skipped for cached locate: %s", exc)
+        return None
 
 
 def _locate_result_adm_cd(result: dict[str, object]) -> str | None:
@@ -3438,6 +3727,8 @@ def _normalize_nmc_lookup_args_from_locate_result(
 def _normalize_nmc_aed_args_from_locate_result(
     args_obj: dict[str, object],
     locate_result: dict[str, object],
+    *,
+    force_origin: bool = False,
 ) -> dict[str, object]:
     """Fill NMC AED origin coords for client-side distance sorting."""
     raw_params = args_obj.get("params")
@@ -3446,7 +3737,7 @@ def _normalize_nmc_aed_args_from_locate_result(
     coords = _locate_result_coords(locate_result)
     if coords is None:
         return args_obj
-    if not _nmc_origin_needs_locate_repair(raw_params):
+    if not force_origin and not _nmc_origin_needs_locate_repair(raw_params):
         return args_obj
     next_params = dict(raw_params)
     next_params["origin_lat"] = coords[0]
@@ -3454,6 +3745,36 @@ def _normalize_nmc_aed_args_from_locate_result(
     normalized = dict(args_obj)
     normalized["params"] = next_params
     return normalized
+
+
+def _normalize_nmc_aed_args_from_prior_locate(
+    fname: str,
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    user_query: str,
+    *,
+    registry: Any = None,
+) -> dict[str, object]:
+    if fname != "find" or args_obj.get("tool_id") != "nmc_aed_site_locate":
+        return args_obj
+    focus_locate_result = _latest_user_focus_locate_result_with_coords(
+        llm_messages,
+        user_query,
+        registry=registry,
+    )
+    if focus_locate_result is not None:
+        return _normalize_nmc_aed_args_from_locate_result(
+            args_obj,
+            focus_locate_result,
+            force_origin=True,
+        )
+    latest_locate_result = _latest_successful_locate_result_with_coords(
+        llm_messages,
+        registry=registry,
+    )
+    if latest_locate_result is None:
+        return args_obj
+    return _normalize_nmc_aed_args_from_locate_result(args_obj, latest_locate_result)
 
 
 _HIRA_DEPARTMENT_HINTS: tuple[tuple[re.Pattern[str], str], ...] = (
@@ -3621,6 +3942,14 @@ def _valid_kma_short_forecast_base_time(value: object) -> bool:
     return isinstance(value, str) and value in _KMA_SHORT_FORECAST_BASE_TIMES
 
 
+def _valid_kma_clock_time(value: object) -> bool:
+    if not (isinstance(value, str) and len(value) == 4 and value.isdigit()):
+        return False
+    hour = int(value[:2])
+    minute = int(value[2:])
+    return 0 <= hour <= 23 and 0 <= minute <= 59
+
+
 def _normalize_kma_short_forecast_args_from_prior_locate(
     fname: str,
     args_obj: dict[str, object],
@@ -3683,18 +4012,110 @@ def _normalize_kma_short_forecast_args_from_locate_result(
     return normalized
 
 
+def _normalize_kma_recent_grid_args_from_prior_locate(
+    fname: str,
+    args_obj: dict[str, object],
+    llm_messages: list[Any],
+    *,
+    registry: Any = None,
+) -> dict[str, object]:
+    if fname != "find" or args_obj.get("tool_id") not in {
+        "kma_current_observation",
+        "kma_ultra_short_term_forecast",
+    }:
+        return args_obj
+    locate_result = _latest_successful_primitive_result(
+        llm_messages,
+        primitive="locate",
+        registry=registry,
+    )
+    if locate_result is None:
+        return args_obj
+    return _normalize_kma_recent_grid_args_from_locate_result(args_obj, locate_result)
+
+
+def _normalize_kma_recent_grid_args_from_locate_result(
+    args_obj: dict[str, object],
+    locate_result: dict[str, object],
+) -> dict[str, object]:
+    raw_params = args_obj.get("params")
+    params = dict(raw_params) if isinstance(raw_params, dict) else {}
+    changed = not isinstance(raw_params, dict)
+
+    grid = _locate_result_grid_or_projected(locate_result)
+    if grid is not None and (params.get("nx"), params.get("ny")) != grid:
+        params["nx"], params["ny"] = grid
+        changed = True
+
+    tool_id = args_obj.get("tool_id")
+    if tool_id == "kma_current_observation":
+        valid_time = _valid_kma_clock_time(params.get("base_time"))
+        if not _valid_kma_base_date(params.get("base_date")) or not valid_time:
+            from zoneinfo import ZoneInfo  # noqa: PLC0415
+
+            base_date, base_time, _day_note = _kma_observation_base_slot_hint(
+                datetime.now(ZoneInfo("Asia/Seoul"))
+            )
+            params["base_date"] = base_date
+            params["base_time"] = base_time
+            changed = True
+    elif tool_id == "kma_ultra_short_term_forecast":
+        if not _valid_kma_base_date(params.get("base_date")) or not _valid_kma_clock_time(
+            params.get("base_time")
+        ):
+            from ummaya.tools.kma.recent_slots import (  # noqa: PLC0415
+                ULTRA_SHORT_TERM_FORECAST_SLOT_POLICY,
+                latest_recent_slot,
+            )
+
+            slot = latest_recent_slot(ULTRA_SHORT_TERM_FORECAST_SLOT_POLICY)
+            params["base_date"] = slot.base_date
+            params["base_time"] = slot.base_time
+            changed = True
+
+    if not changed:
+        return args_obj
+    normalized = dict(args_obj)
+    normalized["params"] = params
+    logger.info(
+        "find: normalized %s params from prior locate base_date=%s base_time=%s nx=%s ny=%s",
+        tool_id,
+        params.get("base_date"),
+        params.get("base_time"),
+        params.get("nx"),
+        params.get("ny"),
+    )
+    return normalized
+
+
 def _locate_result_with_coordinate_fallback(
     locate_result: dict[str, object],
     coordinate_locate_result: dict[str, object] | None,
 ) -> dict[str, object]:
+    coordinate_coords = (
+        _locate_result_coords(coordinate_locate_result)
+        if coordinate_locate_result is not None
+        else None
+    )
     if (
-        _locate_result_coords(locate_result) is not None
-        or coordinate_locate_result is None
-        or _locate_result_coords(coordinate_locate_result) is None
+        coordinate_locate_result is None
+        or coordinate_coords is None
+        or (
+            _locate_result_coords(locate_result) is not None
+            and not (
+                _locate_result_is_broad_region(locate_result)
+                and _locate_result_is_specific_origin(coordinate_locate_result)
+            )
+        )
     ):
         return locate_result
-    merged_locate_result = dict(coordinate_locate_result)
-    merged_locate_result.update(locate_result)
+    merged_locate_result = dict(locate_result)
+    merged_locate_result["lat"], merged_locate_result["lon"] = coordinate_coords
+    coords_obj = merged_locate_result.get("coords")
+    if isinstance(coords_obj, dict):
+        merged_coords = dict(coords_obj)
+        merged_coords["lat"], merged_coords["lon"] = coordinate_coords
+        merged_locate_result["coords"] = merged_coords
     return merged_locate_result
 
 
@@ -3736,6 +4157,8 @@ def _normalize_lookup_args_from_cached_locate_result(
         return _normalize_koroad_lookup_args_from_locate_result(args_obj, locate_result)
     if tool_id == "kma_short_term_forecast":
         return _normalize_kma_short_forecast_args_from_locate_result(args_obj, locate_result)
+    if tool_id in {"kma_current_observation", "kma_ultra_short_term_forecast"}:
+        return _normalize_kma_recent_grid_args_from_locate_result(args_obj, locate_result)
     return args_obj
 
 
@@ -5819,8 +6242,12 @@ def _check_resolve_terminated_without_followup(  # noqa: C901
         if registry is not None
         else set()
     )
-    resolve_succeeded = False
-    saw_followup_lookup = False
+    resolve_succeeded = _conversation_has_successful_primitive_any_tool(
+        llm_messages,
+        primitive="locate",
+        registry=registry,
+    )
+    saw_followup_lookup = bool(find_call_ids)
     for m in llm_messages:
         role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
         # Detect locate tool result message
@@ -6274,6 +6701,7 @@ async def run(  # noqa: C901
     _session_auth_session_ids: dict[str, str] = {}
     _session_latest_locate_results: dict[str, dict[str, object]] = {}
     _session_latest_locate_results_with_coords: dict[str, dict[str, object]] = {}
+    _session_aed_origin_locate_results: dict[str, tuple[str, dict[str, object]]] = {}
     _session_latest_user_utterances: dict[str, str] = {}
 
     # Epic #2077 T010 — single ToolRegistry + ToolExecutor instance pair
@@ -7383,7 +7811,20 @@ async def run(  # noqa: C901
                 locate_result = result_payload.get("result")
                 if isinstance(locate_result, dict) and locate_result.get("kind") != "error":
                     _session_latest_locate_results[session_id] = locate_result
-                    if _locate_result_coords(locate_result) is not None:
+                    latest_user_query = _session_latest_user_utterances.get(session_id, "")
+                    if _locate_result_should_seed_aed_origin(
+                        args_obj,
+                        locate_result,
+                        latest_user_query,
+                    ):
+                        _session_aed_origin_locate_results[session_id] = (
+                            latest_user_query,
+                            locate_result,
+                        )
+                    if _should_replace_locate_coordinate_origin(
+                        _session_latest_locate_results_with_coords.get(session_id),
+                        locate_result,
+                    ):
                         _session_latest_locate_results_with_coords[session_id] = locate_result
 
             # Drain the outbound HTTP trace buffer + attach to the envelope.
@@ -8341,7 +8782,8 @@ async def run(  # noqa: C901
                 ):
                     merged_prose = _safe_failed_primitive_final_answer(latest_failed_tool_result)
                 has_successful_tool_result = _conversation_has_successful_any_primitive_result(
-                    llm_messages
+                    llm_messages,
+                    registry=_ensure_tool_registry(),
                 )
                 diff_only_document_answer = _document_diff_only_final_answer(
                     latest_user_utt,
@@ -8476,6 +8918,30 @@ async def run(  # noqa: C901
                             "result is broader than the citizen's requested filter, say "
                             "which filter is unsupported or unmatched; do not call the "
                             "observed current-turn result an older result."
+                        ),
+                    )
+                    buffered_visible.clear()
+                    continue
+                if (
+                    merged_prose.strip()
+                    and has_successful_tool_result
+                    and _final_answer_looks_like_fabricated_location_source(
+                        merged_prose,
+                        llm_messages,
+                        registry=_ensure_tool_registry(),
+                    )
+                    and empty_final_retry_count < 2
+                ):
+                    empty_final_retry_count += 1
+                    _append_final_answer_observation(
+                        "rejected fabricated location source after successful locate result",
+                        (
+                            "The previous assistant turn cited Google as the coordinate or "
+                            "location source, but the successful locate tool_result did not "
+                            "come from Google. Produce a concise Korean final answer using "
+                            "the latest successful tool_results. Cite Kakao/location adapter "
+                            "source only when present, or omit the coordinate source label. "
+                            "Do not invent external sources."
                         ),
                     )
                     buffered_visible.clear()
@@ -8824,6 +9290,13 @@ async def run(  # noqa: C901
                     llm_messages,
                     registry=registry,
                 )
+                args_obj = _normalize_nmc_aed_args_from_prior_locate(
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    latest_user_utt,
+                    registry=registry,
+                )
                 args_obj = _normalize_hira_lookup_args_from_prior_locate(
                     fname,
                     args_obj,
@@ -8838,6 +9311,12 @@ async def run(  # noqa: C901
                     registry=registry,
                 )
                 args_obj = _normalize_kma_short_forecast_args_from_prior_locate(
+                    fname,
+                    args_obj,
+                    llm_messages,
+                    registry=registry,
+                )
+                args_obj = _normalize_kma_recent_grid_args_from_prior_locate(
                     fname,
                     args_obj,
                     llm_messages,
@@ -9695,7 +10174,10 @@ async def run(  # noqa: C901
             _AGENTIC_LOOP_MAX_TURNS,
             duplicate_nonprogress_count,
         )
-        if _conversation_has_successful_any_primitive_result(llm_messages):
+        if _conversation_has_successful_any_primitive_result(
+            llm_messages,
+            registry=_ensure_tool_registry(),
+        ):
             await write_frame(
                 ErrorFrame(
                     session_id=frame.session_id,
@@ -9839,16 +10321,29 @@ async def run(  # noqa: C901
             dispatch_name = primitive_name
             dispatch_args = {"tool_id": canonical_dispatch_name, "params": dict(args_obj)}
 
+        dispatch_args = _normalize_root_primitive_adapter_envelope(dispatch_name, dispatch_args)
+        dispatch_args = _maybe_reroute_locate_admin_keyword_args(dispatch_name, dispatch_args)
+        dispatch_args = _maybe_reroute_locate_poi_address_args(dispatch_name, dispatch_args)
+        current_user_query = _session_latest_user_utterances.get(frame.session_id, "")
+        aed_origin_record = _session_aed_origin_locate_results.get(frame.session_id)
+        user_focus_aed_origin = (
+            aed_origin_record[1]
+            if aed_origin_record is not None and aed_origin_record[0] == current_user_query
+            else None
+        )
+        cached_locate_result, coordinate_locate_result = _locate_context_for_lookup_tool(
+            str(dispatch_args.get("tool_id") or ""),
+            _session_latest_locate_results.get(frame.session_id),
+            _session_latest_locate_results_with_coords.get(frame.session_id),
+            user_focus_aed_origin,
+        )
         dispatch_args = _normalize_lookup_args_from_cached_locate_result(
             dispatch_name,
             dispatch_args,
-            _session_latest_locate_results.get(frame.session_id),
-            coordinate_locate_result=_session_latest_locate_results_with_coords.get(
-                frame.session_id
-            ),
-            user_query=_session_latest_user_utterances.get(frame.session_id, ""),
+            cached_locate_result,
+            coordinate_locate_result=coordinate_locate_result,
+            user_query=current_user_query,
         )
-        dispatch_args = _normalize_root_primitive_adapter_envelope(dispatch_name, dispatch_args)
         lookup_context = _session_latest_user_utterances.get(
             frame.session_id, ""
         ) or _lookup_context_from_args(dispatch_args)

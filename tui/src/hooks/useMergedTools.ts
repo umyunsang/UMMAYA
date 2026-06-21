@@ -1,12 +1,36 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import type { Tools, ToolPermissionContext } from '../Tool.js'
 import { assembleToolPool } from '../tools.js'
 import { mergeAndFilterTools } from '../utils/toolPool.js'
+import { prewarmUmmayaAdapterManifest } from '../ipc/bridgeSingleton.js'
 import {
   getManifestVersion,
   subscribeAdapterManifest,
 } from '../services/api/adapterManifest.js'
+
+type AdapterManifestPrewarm = () => void
+
+let adapterManifestPrewarmForTests: AdapterManifestPrewarm | null = null
+
+export function setAdapterManifestPrewarmForTests(
+  prewarm: AdapterManifestPrewarm | null,
+): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setAdapterManifestPrewarmForTests is only available in tests')
+  }
+  adapterManifestPrewarmForTests = prewarm
+}
+
+function shouldPrewarmAdapterManifest(): boolean {
+  if (process.env.UMMAYA_DISABLE_ADAPTER_MANIFEST_PREWARM === '1') {
+    return false
+  }
+  if (process.env.NODE_ENV === 'test') {
+    return process.env.UMMAYA_TEST_PREWARM_ADAPTER_MANIFEST === '1'
+  }
+  return true
+}
 
 /**
  * React hook that assembles the full tool pool for the REPL.
@@ -32,6 +56,12 @@ export function useMergedTools(
     getManifestVersion,
     getManifestVersion,
   )
+  useEffect(() => {
+    if (!shouldPrewarmAdapterManifest()) return
+    const prewarm =
+      adapterManifestPrewarmForTests ?? prewarmUmmayaAdapterManifest
+    prewarm()
+  }, [])
   return useMemo(() => {
     // assembleToolPool is the shared function that both REPL and runAgent use.
     // It handles: getTools() + MCP deny-rule filtering + dedup + MCP CLI exclusion.

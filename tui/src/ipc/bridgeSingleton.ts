@@ -29,6 +29,8 @@ import { getOrCreatePendingCallRegistry } from './pendingCallSingleton.js'
 
 let _bridge: IPCBridge | null = null
 let _sessionId: string | null = null
+let _manifestPrewarmPromise: Promise<boolean> | null = null
+const ADAPTER_MANIFEST_PREWARM_TIMEOUT_MS = 60_000
 
 // Spec 1979 T016 — session-scoped flag flipped when a plugin install or
 // uninstall completes successfully. The flag tells the next ChatRequestFrame
@@ -77,6 +79,23 @@ export async function ensureUmmayaAdapterManifest(
   return waitForManifestSync(timeoutMs)
 }
 
+export function prewarmUmmayaAdapterManifest(
+  timeoutMs = ADAPTER_MANIFEST_PREWARM_TIMEOUT_MS,
+): void {
+  if (_manifestPrewarmPromise !== null) return
+  _manifestPrewarmPromise = ensureUmmayaAdapterManifest(timeoutMs)
+  void _manifestPrewarmPromise.then(
+    synced => {
+      if (!synced) {
+        _manifestPrewarmPromise = null
+      }
+    },
+    () => {
+      _manifestPrewarmPromise = null
+    },
+  )
+}
+
 export function getUmmayaBridgeSessionId(): string {
   if (_sessionId === null) {
     _sessionId = getSessionId()
@@ -113,6 +132,7 @@ export async function closeUmmayaBridge(): Promise<void> {
     _bridge = null
     await b.close()
   }
+  _manifestPrewarmPromise = null
   _pluginsModifiedThisSession = false
   _sessionId = null
 }

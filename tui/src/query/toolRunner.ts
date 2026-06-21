@@ -99,6 +99,8 @@ const KMA_ORDINARY_WEATHER_TOOL_NAMES = new Set([
   'kma_ultra_short_term_forecast',
 ])
 const TAGO_ROUTE_TOOL_NAME = 'tago_bus_route_search'
+const MOHW_WELFARE_TOOL_NAME = 'mohw_welfare_eligibility_search'
+const PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME = 'pps_shopping_mall_product_lookup'
 const TAGO_ROUTE_FOLLOWUP_TOOL_NAMES = new Set([
   'tago_bus_arrival_search',
   'tago_bus_location_search',
@@ -353,6 +355,31 @@ function createGuardToolResult(
   })
 }
 
+function createTerminalGuardToolResult(
+  block: ToolUseBlock,
+  assistantMessage: AssistantMessage,
+  message: string,
+): UserMessage {
+  const payload = {
+    ok: true,
+    result: {
+      kind: 'terminal_limitation',
+      message,
+    },
+  }
+  return createUserMessage({
+    content: [
+      {
+        type: 'tool_result',
+        tool_use_id: block.id,
+        content: JSON.stringify(payload),
+      },
+    ],
+    toolUseResult: payload,
+    sourceToolAssistantUUID: assistantMessage.uuid,
+  })
+}
+
 function recordHasZeroCollectionCount(value: unknown): boolean {
   if (!isRecord(value)) return false
   const kind = value.kind
@@ -380,6 +407,33 @@ function isZeroCollectionToolResult(content: unknown): boolean {
   if (recordHasZeroCollectionCount(content)) return true
   const parsed = parseJsonRecord(content)
   return parsed !== undefined && recordHasZeroCollectionCount(parsed)
+}
+
+function isMohwNoDataResult(result: PriorToolResult): boolean {
+  if (result.toolName !== MOHW_WELFARE_TOOL_NAME) return false
+  const text = serializeToolResult(result.content)
+  return /resultCode=['"]?40|NO DATA FOUND/iu.test(text)
+}
+
+function hasZeroTotalCount(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasZeroTotalCount)
+  if (!isRecord(value)) return false
+  const totalCount = value.total_count ?? value.totalCount
+  if (totalCount === 0 || totalCount === '0') return true
+  return Object.values(value).some(hasZeroTotalCount)
+}
+
+function isPpsZeroProductResult(result: PriorToolResult): boolean {
+  if (result.toolName !== PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME) return false
+  const parsed = parseJsonRecord(result.content)
+  const value = parsed ?? result.content
+  return hasZeroTotalCount(value)
+}
+
+function isPpsProductResult(result: PriorToolResult): boolean {
+  return result.toolName === PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME &&
+    !result.isError &&
+    !result.isStructuredFailure
 }
 
 function tagoNoRouteEvidenceMessage(result: PriorToolResult): string {
@@ -413,8 +467,37 @@ function tagoRouteZeroResult(
   return undefined
 }
 
+function mohwNoDataEvidenceMessage(): string {
+  return [
+    'MOHW/SSIS welfare lookup already returned NO DATA FOUND for two official query attempts in this request.',
+    'Do not broaden to unrelated life stages, benefit categories, or pregnancy/childcare scopes without citizen confirmation.',
+    'Answer in Korean that mohw_welfare_eligibility_search returned no official rows and ask whether to retry with a different target or official channel.',
+  ].join(' ')
+}
+
+function ppsZeroProductEvidenceMessage(): string {
+  return [
+    'PPS shopping mall product lookup already returned an official successful response with totalCount=0 in this request.',
+    'This is not an agency API failure; do not broaden to unrelated procurement product names without citizen confirmation.',
+    'Answer in Korean that pps_shopping_mall_product_lookup returned zero official product rows, name the agency API, and ask whether to retry with a different search term.',
+  ].join(' ')
+}
+
+function ppsProductAlreadyReturnedMessage(): string {
+  return [
+    'PPS shopping mall product lookup already returned official product rows in this request.',
+    'Do not repeat the same procurement product lookup or relabel the successful API response as a failure.',
+    'Answer in Korean from the prior pps_shopping_mall_product_lookup tool_result only.',
+  ].join(' ')
+}
+
 function isTagoRouteContinuationTool(toolName: string): boolean {
   return toolName === TAGO_ROUTE_TOOL_NAME || TAGO_ROUTE_FOLLOWUP_TOOL_NAMES.has(toolName)
+}
+
+type DomainRepeatGuardResult = {
+  readonly message: string
+  readonly terminal: boolean
 }
 
 function domainRepeatGuardMessage(params: {
@@ -422,11 +505,44 @@ function domainRepeatGuardMessage(params: {
   readonly input: ToolInput
   readonly priorResults: readonly PriorToolResult[]
   readonly successfulCalls: readonly SuccessfulToolCall[]
-}): string | undefined {
+}): DomainRepeatGuardResult | undefined {
   if (isTagoRouteContinuationTool(params.block.name)) {
     const zeroRouteResult = tagoRouteZeroResult(params.priorResults)
     if (zeroRouteResult !== undefined) {
-      return tagoNoRouteEvidenceMessage(zeroRouteResult)
+      return {
+        message: tagoNoRouteEvidenceMessage(zeroRouteResult),
+        terminal: true,
+      }
+    }
+  }
+
+  if (
+    params.block.name === MOHW_WELFARE_TOOL_NAME &&
+    params.priorResults.filter(isMohwNoDataResult).length >= 2
+  ) {
+    return {
+      message: mohwNoDataEvidenceMessage(),
+      terminal: true,
+    }
+  }
+
+  if (
+    params.block.name === PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME &&
+    params.priorResults.some(isPpsZeroProductResult)
+  ) {
+    return {
+      message: ppsZeroProductEvidenceMessage(),
+      terminal: true,
+    }
+  }
+
+  if (
+    params.block.name === PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME &&
+    params.priorResults.some(isPpsProductResult)
+  ) {
+    return {
+      message: ppsProductAlreadyReturnedMessage(),
+      terminal: true,
     }
   }
 
@@ -442,7 +558,10 @@ function domainRepeatGuardMessage(params: {
         call.input.query.trim() === query
       )
     ) {
-      return locationRepeatMessage(params.block.name, query)
+      return {
+        message: locationRepeatMessage(params.block.name, query),
+        terminal: false,
+      }
     }
   }
 
@@ -450,25 +569,39 @@ function domainRepeatGuardMessage(params: {
     params.block.name === HOMETAX_LOOKUP_TOOL_NAME &&
     params.successfulCalls.some(call => call.toolName === HOMETAX_LOOKUP_TOOL_NAME)
   ) {
-    return hometaxProgressionMessage()
+    return {
+      message: hometaxProgressionMessage(),
+      terminal: false,
+    }
   }
 
   if (params.block.name === KMA_METAR_TOOL_NAME) {
     const kind = priorKmaAviationResultKind(params.priorResults)
-    return kind ? kmaAviationRepeatMessage(kind) : undefined
+    return kind
+      ? {
+          message: kmaAviationRepeatMessage(kind),
+          terminal: false,
+        }
+      : undefined
   }
 
   const aviationKind = priorKmaAviationResultKind(params.priorResults)
   if (aviationKind !== undefined) {
     if (KMA_ORDINARY_WEATHER_TOOL_NAMES.has(params.block.name)) {
-      return kmaOrdinaryFallbackMessage(params.block.name)
+      return {
+        message: kmaOrdinaryFallbackMessage(params.block.name),
+        terminal: false,
+      }
     }
     if (
       params.block.name === ROOT_FIND_TOOL_NAME &&
       typeof params.block.input.tool_id === 'string' &&
       KMA_ORDINARY_WEATHER_TOOL_NAMES.has(params.block.input.tool_id)
     ) {
-      return kmaOrdinaryFallbackMessage(params.block.input.tool_id)
+      return {
+        message: kmaOrdinaryFallbackMessage(params.block.input.tool_id),
+        terminal: false,
+      }
     }
   }
 
@@ -479,7 +612,10 @@ function domainRepeatGuardMessage(params: {
         result.toolName === params.block.name && isKmaGridFailureResult(result),
     )
   ) {
-    return kmaGridRepeatMessage(params.block.name)
+    return {
+      message: kmaGridRepeatMessage(params.block.name),
+      terminal: false,
+    }
   }
 
   return undefined
@@ -501,6 +637,37 @@ function repairDirectLocationToolInputForValidation(params: {
     latestCitizenPromptText(params.messages),
   )
   return query === undefined ? params.input : { ...params.input, query }
+}
+
+function derivePpsProductQueryFromUserText(text: string): string | undefined {
+  const normalized = text.normalize('NFKC')
+  const keywordMatch = /(노트북|랩탑|휴대용\s*컴퓨터|컴퓨터|PC|전산장비|프린터|모니터|복사기)/iu.exec(normalized)
+  if (keywordMatch?.[1]) return keywordMatch[1].replace(/\s+/gu, ' ').trim()
+  const productMatch = /([가-힣A-Za-z0-9+\-\s]{2,24})(?:\s*관련)?\s*(?:물품|제품|상품)/u.exec(normalized)
+  const product = productMatch?.[1]?.trim()
+  return product && product.length > 0 ? product : undefined
+}
+
+function repairPpsProductToolInput(params: {
+  readonly toolName: string
+  readonly input: ToolInput
+  readonly messages: readonly Message[]
+}): ToolInput {
+  if (params.toolName !== PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME) {
+    return params.input
+  }
+  if (
+    typeof params.input.prdct_clsfc_no_nm === 'string' &&
+    params.input.prdct_clsfc_no_nm.trim().length > 0
+  ) {
+    return params.input
+  }
+  const query = derivePpsProductQueryFromUserText(
+    latestCitizenPromptText(params.messages),
+  )
+  return query === undefined
+    ? params.input
+    : { ...params.input, prdct_clsfc_no_nm: query }
 }
 
 function unexplainedRepeatedToolMessage(toolName: string): string {
@@ -586,11 +753,16 @@ export async function runToolUseBlocks(params: {
       documentRepair.input,
       latestCitizenPromptText(params.messages),
     )
+    const ppsProductInput = repairPpsProductToolInput({
+      toolName: block.name,
+      input: publicAdapterInput,
+      messages: params.messages,
+    })
     const inputForValidation = localTool === undefined
-      ? publicAdapterInput
+      ? ppsProductInput
       : repairDirectLocationToolInputForValidation({
           toolName: block.name,
-          input: publicAdapterInput,
+          input: ppsProductInput,
           messages: params.messages,
         })
     const parsedInput = tool.inputSchema.safeParse(inputForValidation)
@@ -624,7 +796,17 @@ export async function runToolUseBlocks(params: {
     })
     if (domainGuardMessage !== undefined) {
       results.push(
-        createGuardToolResult(block, params.assistantMessage, domainGuardMessage),
+        domainGuardMessage.terminal
+          ? createTerminalGuardToolResult(
+              block,
+              params.assistantMessage,
+              domainGuardMessage.message,
+            )
+          : createGuardToolResult(
+              block,
+              params.assistantMessage,
+              domainGuardMessage.message,
+            ),
       )
       continue
     }

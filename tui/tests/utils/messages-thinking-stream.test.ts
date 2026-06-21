@@ -93,7 +93,7 @@ describe('handleMessageFromStream CC-compatible stream contract', () => {
     expect(thinkingCallbackCalled).toBe(false)
   })
 
-  test('clears streaming text when a tool_use block starts, matching CC', () => {
+  test('keeps streaming text when a tool_use block starts so pre-tool prose survives render coalescing', () => {
     let streamingText: string | null = '도구 후보를 정리하고 있습니다.\n'
 
     handleMessageFromStream(
@@ -122,7 +122,7 @@ describe('handleMessageFromStream CC-compatible stream contract', () => {
       },
     )
 
-    expect(streamingText).toBeNull()
+    expect(streamingText).toBe('도구 후보를 정리하고 있습니다.\n')
   })
 
   test('captures complete assistant thinking blocks for transcript display', () => {

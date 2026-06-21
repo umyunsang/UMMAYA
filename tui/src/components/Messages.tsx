@@ -8,11 +8,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { every } from 'src/utils/set.js';
 import { getIsRemoteMode } from '../bootstrap/state.js';
 import type { Command } from '../commands.js';
-import { BLACK_CIRCLE } from '../constants/figures.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
 import { useTerminalNotification } from '../ink/useTerminalNotification.js';
-import { Box, Text } from '../ink.js';
+import { Box } from '../ink.js';
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
 import type { Screen } from '../screens/REPL.js';
 import type { Tools } from '../Tool.js';
@@ -34,7 +33,6 @@ import { renderableSearchText } from '../utils/transcriptSearch.js';
 import { Divider } from './design-system/Divider.js';
 import type { UnseenDivider } from './FullscreenLayout.js';
 import { LogoV2 } from './LogoV2/LogoV2.js';
-import { StreamingMarkdown } from './Markdown.js';
 import { hasContentAfterIndex, MessageRow } from './MessageRow.js';
 import { InVirtualListContext, type MessageActionsNav, MessageActionsSelectedContext, type MessageActionsState } from './messageActions.js';
 import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js';
@@ -230,7 +228,6 @@ type Props = {
   hidePastThinking?: boolean;
   /** Streaming thinking content (live updates, not frozen) */
   streamingThinking?: StreamingThinking | null;
-  /** Streaming text preview (rendered as last item so transition to final message is positionally seamless) */
   streamingText?: string | null;
   /** When true, only show Brief tool output (hide everything else) */
   isBriefOnly?: boolean;
@@ -338,6 +335,15 @@ export function computeSliceStart(collapsed: ReadonlyArray<{
   }
   return start;
 }
+export function createSyntheticStreamingTextMessages(streamingText: string | null | undefined): NormalizedMessage[] {
+  if (!streamingText || streamingText.trim().length === 0) return [];
+  const msg = createAssistantMessage({
+    content: streamingText,
+    isVirtual: true
+  });
+  msg.uuid = deriveUUID('00000000-0000-4000-8000-000000000001' as UUID, 0);
+  return normalizeMessages([msg]);
+}
 const MessagesImpl = ({
   messages,
   tools,
@@ -443,6 +449,7 @@ const MessagesImpl = ({
   // streamingToolUses updates on every input_json_delta while normalizedMessages
   // stays stable — precompute the Set so the filter is O(k) not O(n×k) per chunk.
   const normalizedToolUseIDs = useMemo(() => getToolUseIDs(normalizedMessages), [normalizedMessages]);
+  const syntheticStreamingTextMessages = useMemo(() => createSyntheticStreamingTextMessages(streamingText), [streamingText]);
   const streamingToolUsesWithoutInProgress = useMemo(() => streamingToolUses.filter(stu => !inProgressToolUseIDs.has(stu.contentBlock.id) && !normalizedToolUseIDs.has(stu.contentBlock.id)), [streamingToolUses, inProgressToolUseIDs, normalizedToolUseIDs]);
   const syntheticStreamingToolUseMessages = useMemo(() => streamingToolUsesWithoutInProgress.flatMap(streamingToolUse => {
     const msg_1 = createAssistantMessage({
@@ -501,7 +508,7 @@ const MessagesImpl = ({
     // null (hook_success, hook_additional_context, hook_cancelled, etc.)
     // BEFORE counting/slicing so they don't inflate the "N messages"
     // count in ctrl-o or consume slots in the 200-message render cap.
-    .filter(msg_3 => !isNullRenderingAttachment(msg_3)).filter(_ => shouldShowUserMessage(_, isTranscriptMode)), syntheticStreamingToolUseMessages);
+    .filter(msg_3 => !isNullRenderingAttachment(msg_3)).filter(_ => shouldShowUserMessage(_, isTranscriptMode)), [...syntheticStreamingTextMessages, ...syntheticStreamingToolUseMessages]);
     // Three-tier filtering. Transcript mode (ctrl+o screen) is truly unfiltered.
     // Brief-only: SendUserMessage + user input only. Default: drop redundant
     // assistant text in turns where SendUserMessage was called (the model's
@@ -526,7 +533,7 @@ const MessagesImpl = ({
       hasTruncatedMessages,
       hiddenMessageCount
     };
-  }, [verbose, normalizedMessages, isTranscriptMode, syntheticStreamingToolUseMessages, shouldTruncate, tools, isBriefOnly]);
+  }, [verbose, normalizedMessages, isTranscriptMode, syntheticStreamingTextMessages, syntheticStreamingToolUseMessages, shouldTruncate, tools, isBriefOnly]);
 
   // Cheap slice — only runs when scroll range or slice config changes.
   const renderableMessages = useMemo(() => {
@@ -614,11 +621,6 @@ const MessagesImpl = ({
   const renderMessageRow = (msg_8: RenderableMessage, index: number) => {
     const prevType = index > 0 ? renderableMessages[index - 1]?.type : undefined;
     const isUserContinuation = msg_8.type === 'user' && prevType === 'user';
-    // hasContentAfter is only consumed for collapsed_read_search groups;
-    // skip the scan for everything else. streamingText is rendered as a
-    // sibling after this map, so it's never in renderableMessages — OR it
-    // in explicitly so the group flips to past tense as soon as text starts
-    // streaming instead of waiting for the block to finalize.
     const hasContentAfter = msg_8.type === 'collapsed_read_search' && (!!streamingText || hasContentAfterIndex(renderableMessages, index, tools, streamingToolUseIDs));
     const k_0 = messageKey(msg_8);
     const row = <MessageRow key={k_0} message={msg_8} isUserContinuation={isUserContinuation} hasContentAfter={hasContentAfter} tools={tools} commands={commands} verbose={verbose || isItemExpanded(msg_8) || cursor?.expanded === true && index === selectedIdx} inProgressToolUseIDs={inProgressToolUseIDs} streamingToolUseIDs={streamingToolUseIDs} screen={screen} canAnimate={canAnimate} onOpenRateLimitOptions={onOpenRateLimitOptions} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} columns={columns} isLoading={isLoading} lookups={lookups_0} />;
@@ -699,17 +701,6 @@ const MessagesImpl = ({
       {virtualScrollRuntimeGate ? <InVirtualListContext.Provider value={true}>
           <VirtualMessageList messages={renderableMessages} scrollRef={scrollRef} columns={columns} itemKey={messageKey} renderItem={renderMessageRow} onItemClick={onItemClick} isItemClickable={isItemClickable} isItemExpanded={isItemExpanded} trackStickyPrompt={trackStickyPrompt} selectedIndex={selectedIdx >= 0 ? selectedIdx : undefined} cursorNavRef={cursorNavRef} setCursor={setCursor} jumpRef={jumpRef} onSearchMatchesChange={onSearchMatchesChange} scanElement={scanElement} setPositions={setPositions} extractSearchText={extractSearchText} />
         </InVirtualListContext.Provider> : renderableMessages.flatMap(renderMessageRow)}
-
-      {streamingText && !isBriefOnly && <Box alignItems="flex-start" flexDirection="row" marginTop={1} width="100%">
-          <Box flexDirection="row">
-            <Box minWidth={2}>
-              <Text color="text">{BLACK_CIRCLE}</Text>
-            </Box>
-            <Box flexDirection="column">
-              <StreamingMarkdown>{streamingText}</StreamingMarkdown>
-            </Box>
-          </Box>
-        </Box>}
 
       {isStreamingThinkingVisible && streamingThinking && !isBriefOnly && <Box marginTop={1}>
           <AssistantThinkingMessage param={{

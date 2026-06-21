@@ -13,9 +13,9 @@ type PromptParams = { readonly messages: readonly Message[] }
 type CandidateWithholdParams = PromptParams & { readonly candidate: Message }
 
 const GENERIC_PENDING_FINAL_RE =
-  /(답변을?\s*제공하겠습니다|제공하겠습니다|확인해\s*보겠습니다|확인하겠습니다|조회하겠습니다|찾아보겠습니다|검색해\s*보겠습니다|검색하겠습니다|최종\s*답변은|final answer should|will\s+(?:answer|provide|check|search|look\s+up))/iu
+  /(답변을?\s*제공하겠습니다|제공하겠습니다|확인해\s*보겠습니다|확인하겠습니다|조회하겠습니다|찾아보겠습니다|검색해\s*보겠습니다|검색하겠습니다|시도하겠습니다|최종\s*답변은|복구\s*방법은|검색을\s*생략하고|RATHER\s+검색|final answer should|will\s+(?:answer|provide|check|search|look\s+up)|retry)/iu
 const GENERIC_PENDING_FINAL_REPAIR_PROMPT =
-  'Final answer repair: successful tool_result evidence already exists, but the previous assistant message was still a plan or promise to answer later. Write the final Korean answer now from the actual tool_result values only. Do not say 제공하겠습니다, 확인하겠습니다, 조회하겠습니다, 찾아보겠습니다, 검색해 보겠습니다, or describe what you will answer next.'
+  'Final answer repair: successful tool_result evidence already exists, but the previous assistant message was still a plan, retry note, or promise to answer later. Write the final Korean answer now from the actual tool_result values only. Do not say 제공하겠습니다, 확인하겠습니다, 조회하겠습니다, 찾아보겠습니다, 검색해 보겠습니다, 시도하겠습니다, retry, 복구 방법, or describe what you will answer next.'
 const GENERIC_PENDING_FINAL_TOOL_USE_BLOCKED_TEXT =
   '이미 도구 결과가 반환되어 최종 답변 보정이 요청되었습니다. 이 단계에서는 추가 도구를 실행하지 않습니다. 현재 확인된 도구 결과만 근거로 답변을 마무리하고, 연결되지 않은 업무는 공식 채널 확인 또는 필요한 adapter/credential 준비로 넘겨야 합니다.'
 

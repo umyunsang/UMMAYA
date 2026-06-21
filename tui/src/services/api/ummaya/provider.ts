@@ -21,7 +21,7 @@ import type { ProviderOptions } from './types.js'
 
 export { getAPIMetadata }
 
-export const PUBLIC_SERVICE_MANIFEST_SYNC_TIMEOUT_MS = 30_000
+export const PUBLIC_SERVICE_MANIFEST_SYNC_TIMEOUT_MS = 60_000
 const PROVIDER_STREAM_TIMEOUT_HANDOFF =
   'K-EXAONE 응답이 지연되어 이번 요청을 이어갈 수 없습니다. 잠시 후 다시 시도해 주세요.'
 const DEFAULT_PROVIDER_EVENT_IDLE_TIMEOUT_MS = 90_000
