@@ -64,6 +64,17 @@ export function responseForTextDelta(text: string): Response {
   return responseFromSseLines(lines, 'req_provider_1')
 }
 
+export function responseForTextDeltaChunks(chunks: readonly string[]): Response {
+  const lines = [
+    ...chunks.map(chunk =>
+      `data: {"id":"chatcmpl_provider_chunks_1","model":"LGAI-EXAONE/K-EXAONE-236B-A23B","choices":[{"delta":{"content":${JSON.stringify(chunk)}}}]}`,
+    ),
+    'data: {"choices":[{"finish_reason":"stop","delta":{}}],"usage":{"prompt_tokens":5,"completion_tokens":2}}',
+    'data: [DONE]',
+  ]
+  return responseFromSseLines(lines, 'req_provider_chunks_1')
+}
+
 export function responseForRawJsonToolCallText(params: {
   readonly name: string
   readonly arguments: Record<string, unknown>

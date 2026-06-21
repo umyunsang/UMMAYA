@@ -8,10 +8,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { every } from 'src/utils/set.js';
 import { getIsRemoteMode } from '../bootstrap/state.js';
 import type { Command } from '../commands.js';
+import { BLACK_CIRCLE } from '../constants/figures.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
 import { useTerminalNotification } from '../ink/useTerminalNotification.js';
-import { Box } from '../ink.js';
+import { Box, Text } from '../ink.js';
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
 import type { Screen } from '../screens/REPL.js';
 import type { Tools } from '../Tool.js';
@@ -33,6 +34,7 @@ import { renderableSearchText } from '../utils/transcriptSearch.js';
 import { Divider } from './design-system/Divider.js';
 import type { UnseenDivider } from './FullscreenLayout.js';
 import { LogoV2 } from './LogoV2/LogoV2.js';
+import { StreamingMarkdown } from './Markdown.js';
 import { hasContentAfterIndex, MessageRow } from './MessageRow.js';
 import { InVirtualListContext, type MessageActionsNav, MessageActionsSelectedContext, type MessageActionsState } from './messageActions.js';
 import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js';
@@ -335,15 +337,6 @@ export function computeSliceStart(collapsed: ReadonlyArray<{
   }
   return start;
 }
-export function createSyntheticStreamingTextMessages(streamingText: string | null | undefined): NormalizedMessage[] {
-  if (!streamingText || streamingText.trim().length === 0) return [];
-  const msg = createAssistantMessage({
-    content: streamingText,
-    isVirtual: true
-  });
-  msg.uuid = deriveUUID('00000000-0000-4000-8000-000000000001' as UUID, 0);
-  return normalizeMessages([msg]);
-}
 const MessagesImpl = ({
   messages,
   tools,
@@ -449,7 +442,6 @@ const MessagesImpl = ({
   // streamingToolUses updates on every input_json_delta while normalizedMessages
   // stays stable — precompute the Set so the filter is O(k) not O(n×k) per chunk.
   const normalizedToolUseIDs = useMemo(() => getToolUseIDs(normalizedMessages), [normalizedMessages]);
-  const syntheticStreamingTextMessages = useMemo(() => createSyntheticStreamingTextMessages(streamingText), [streamingText]);
   const streamingToolUsesWithoutInProgress = useMemo(() => streamingToolUses.filter(stu => !inProgressToolUseIDs.has(stu.contentBlock.id) && !normalizedToolUseIDs.has(stu.contentBlock.id)), [streamingToolUses, inProgressToolUseIDs, normalizedToolUseIDs]);
   const syntheticStreamingToolUseMessages = useMemo(() => streamingToolUsesWithoutInProgress.flatMap(streamingToolUse => {
     const msg_1 = createAssistantMessage({
@@ -463,6 +455,12 @@ const MessagesImpl = ({
     msg_1.uuid = deriveUUID(streamingToolUse.contentBlock.id as UUID, 0);
     return normalizeMessages([msg_1]);
   }), [streamingToolUsesWithoutInProgress]);
+  const streamingToolUseRenderableMessages = useMemo(() => {
+    const {
+      messages: groupedMessages
+    } = applyGrouping(syntheticStreamingToolUseMessages, tools, verbose);
+    return collapseBackgroundBashNotifications(collapseHookSummaries(collapseTeammateShutdowns(collapseReadSearchGroups(groupedMessages, tools))), verbose);
+  }, [syntheticStreamingToolUseMessages, tools, verbose]);
   const isTranscriptMode = screen === 'transcript';
   // Hoisted to mount-time — this component re-renders on every scroll.
   const disableVirtualScroll = useMemo(() => isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_VIRTUAL_SCROLL), []);
@@ -508,7 +506,7 @@ const MessagesImpl = ({
     // null (hook_success, hook_additional_context, hook_cancelled, etc.)
     // BEFORE counting/slicing so they don't inflate the "N messages"
     // count in ctrl-o or consume slots in the 200-message render cap.
-    .filter(msg_3 => !isNullRenderingAttachment(msg_3)).filter(_ => shouldShowUserMessage(_, isTranscriptMode)), [...syntheticStreamingTextMessages, ...syntheticStreamingToolUseMessages]);
+    .filter(msg_3 => !isNullRenderingAttachment(msg_3)).filter(_ => shouldShowUserMessage(_, isTranscriptMode)), []);
     // Three-tier filtering. Transcript mode (ctrl+o screen) is truly unfiltered.
     // Brief-only: SendUserMessage + user input only. Default: drop redundant
     // assistant text in turns where SendUserMessage was called (the model's
@@ -525,7 +523,7 @@ const MessagesImpl = ({
       messages: groupedMessages
     } = applyGrouping(messagesToShow, tools, verbose);
     const collapsed = collapseBackgroundBashNotifications(collapseHookSummaries(collapseTeammateShutdowns(collapseReadSearchGroups(groupedMessages, tools))), verbose);
-    const lookups = buildMessageLookups(normalizedMessages, messagesToShow);
+    const lookups = buildMessageLookups(normalizedMessages, [...messagesToShow, ...syntheticStreamingToolUseMessages]);
     const hiddenMessageCount = messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE;
     return {
       collapsed,
@@ -533,7 +531,7 @@ const MessagesImpl = ({
       hasTruncatedMessages,
       hiddenMessageCount
     };
-  }, [verbose, normalizedMessages, isTranscriptMode, syntheticStreamingTextMessages, syntheticStreamingToolUseMessages, shouldTruncate, tools, isBriefOnly]);
+  }, [verbose, normalizedMessages, isTranscriptMode, syntheticStreamingToolUseMessages, shouldTruncate, tools, isBriefOnly]);
 
   // Cheap slice — only runs when scroll range or slice config changes.
   const renderableMessages = useMemo(() => {
@@ -549,6 +547,7 @@ const MessagesImpl = ({
     return renderRange ? collapsed_0.slice(renderRange[0], renderRange[1]) : sliceStart > 0 ? collapsed_0.slice(sliceStart) : collapsed_0;
   }, [collapsed_0, renderRange, virtualScrollRuntimeGate, disableRenderCap]);
   const streamingToolUseIDs = useMemo(() => new Set(streamingToolUses.map(__0 => __0.contentBlock.id)), [streamingToolUses]);
+  const renderableMessagesWithStreamingToolUses = useMemo(() => [...renderableMessages, ...streamingToolUseRenderableMessages], [renderableMessages, streamingToolUseRenderableMessages]);
 
   // Divider insertion point: first renderableMessage whose uuid shares the
   // 24-char prefix with firstUnseenUuid (deriveUUID keeps the first 24
@@ -621,7 +620,7 @@ const MessagesImpl = ({
   const renderMessageRow = (msg_8: RenderableMessage, index: number) => {
     const prevType = index > 0 ? renderableMessages[index - 1]?.type : undefined;
     const isUserContinuation = msg_8.type === 'user' && prevType === 'user';
-    const hasContentAfter = msg_8.type === 'collapsed_read_search' && (!!streamingText || hasContentAfterIndex(renderableMessages, index, tools, streamingToolUseIDs));
+    const hasContentAfter = msg_8.type === 'collapsed_read_search' && (!!streamingText || hasContentAfterIndex(renderableMessagesWithStreamingToolUses, index, tools, streamingToolUseIDs));
     const k_0 = messageKey(msg_8);
     const row = <MessageRow key={k_0} message={msg_8} isUserContinuation={isUserContinuation} hasContentAfter={hasContentAfter} tools={tools} commands={commands} verbose={verbose || isItemExpanded(msg_8) || cursor?.expanded === true && index === selectedIdx} inProgressToolUseIDs={inProgressToolUseIDs} streamingToolUseIDs={streamingToolUseIDs} screen={screen} canAnimate={canAnimate} onOpenRateLimitOptions={onOpenRateLimitOptions} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} columns={columns} isLoading={isLoading} lookups={lookups_0} />;
 
@@ -636,6 +635,15 @@ const MessagesImpl = ({
         </Box>, wrapped];
     }
     return wrapped;
+  };
+  const renderStreamingToolUseMessageRow = (msg_8: RenderableMessage, index: number) => {
+    const prevType = index > 0 ? streamingToolUseRenderableMessages[index - 1]?.type : renderableMessages.at(-1)?.type;
+    const isUserContinuation = msg_8.type === 'user' && prevType === 'user';
+    const k_0 = messageKey(msg_8);
+    const row = <MessageRow key={k_0} message={msg_8} isUserContinuation={isUserContinuation} hasContentAfter={false} tools={tools} commands={commands} verbose={verbose} inProgressToolUseIDs={inProgressToolUseIDs} streamingToolUseIDs={streamingToolUseIDs} screen={screen} canAnimate={canAnimate} onOpenRateLimitOptions={onOpenRateLimitOptions} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} columns={columns} isLoading={isLoading} lookups={lookups_0} />;
+    return <MessageActionsSelectedContext.Provider key={k_0} value={false}>
+        {row}
+      </MessageActionsSelectedContext.Provider>;
   };
 
   // Search indexing: for tool_result messages, look up the Tool and use
@@ -701,6 +709,19 @@ const MessagesImpl = ({
       {virtualScrollRuntimeGate ? <InVirtualListContext.Provider value={true}>
           <VirtualMessageList messages={renderableMessages} scrollRef={scrollRef} columns={columns} itemKey={messageKey} renderItem={renderMessageRow} onItemClick={onItemClick} isItemClickable={isItemClickable} isItemExpanded={isItemExpanded} trackStickyPrompt={trackStickyPrompt} selectedIndex={selectedIdx >= 0 ? selectedIdx : undefined} cursorNavRef={cursorNavRef} setCursor={setCursor} jumpRef={jumpRef} onSearchMatchesChange={onSearchMatchesChange} scanElement={scanElement} setPositions={setPositions} extractSearchText={extractSearchText} />
         </InVirtualListContext.Provider> : renderableMessages.flatMap(renderMessageRow)}
+
+      {streamingText && !isBriefOnly && <Box alignItems="flex-start" flexDirection="row" marginTop={1} width="100%">
+          <Box flexDirection="row">
+            <Box minWidth={2}>
+              <Text color="text">{BLACK_CIRCLE}</Text>
+            </Box>
+            <Box flexDirection="column">
+              <StreamingMarkdown>{streamingText}</StreamingMarkdown>
+            </Box>
+          </Box>
+        </Box>}
+
+      {streamingToolUseRenderableMessages.flatMap(renderStreamingToolUseMessageRow)}
 
       {isStreamingThinkingVisible && streamingThinking && !isBriefOnly && <Box marginTop={1}>
           <AssistantThinkingMessage param={{

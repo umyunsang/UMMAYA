@@ -12,6 +12,21 @@ import {
   queryParams,
 } from './query-loop-visible-progress.helpers.js'
 
+type StreamTextDeltaEvent = {
+  readonly type: 'stream_event'
+  readonly event: {
+    readonly type: 'content_block_delta'
+    readonly delta: {
+      readonly type: 'text_delta'
+      readonly text: string
+    }
+  }
+}
+
+type AssistantOrUserMessage = Message & {
+  readonly type: 'assistant' | 'user'
+}
+
 const PROMPT = '부산 중구 미세먼지 지금 어때? 마스크 써야 해?'
 const WEATHER_AIR_QUALITY_PROMPT =
   '오늘 부산 사하구 날씨랑 미세먼지 상태를 확인해줘. 날씨와 대기질 출처를 나눠서 알려줘.'
@@ -45,6 +60,25 @@ const KEPCO_TOOL_NAME = 'kepco_contract_power_usage'
 const TAGO_ROUTE_TOOL_NAME = 'tago_bus_route_search'
 const MOHW_WELFARE_TOOL_NAME = 'mohw_welfare_eligibility_search'
 const PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME = 'pps_shopping_mall_product_lookup'
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isAssistantOrUserMessage(value: unknown): value is AssistantOrUserMessage {
+  return isRecord(value) &&
+    (value.type === 'assistant' || value.type === 'user')
+}
+
+function isStreamTextDeltaEvent(value: unknown): value is StreamTextDeltaEvent {
+  if (!isRecord(value) || value.type !== 'stream_event') return false
+  const event = value.event
+  if (!isRecord(event) || event.type !== 'content_block_delta') return false
+  const delta = event.delta
+  return isRecord(delta) &&
+    delta.type === 'text_delta' &&
+    typeof delta.text === 'string'
+}
 
 function createAirKoreaTool(): Tools[number] {
   return {
@@ -2579,28 +2613,39 @@ describe('public-data terminal answer guard', () => {
       mutableModelInputs.push([...messages])
     })
 
-    const emitted: Message[] = []
-    for await (const message of query({
-      ...queryParams(
-        WEATHER_AIR_QUALITY_PROMPT,
-        [
-          createAirKoreaTool(),
-          createKmaCurrentObservationTool(),
-          createKmaUltraShortTermForecastTool(),
-        ],
-        deps,
-      ),
-      messages: [createUserMessage({ content: WEATHER_AIR_QUALITY_PROMPT })],
-      maxTurns: 5,
-    })) {
-      if (message.type === 'assistant' || message.type === 'user') {
-        emitted.push(message)
+    const previousPreviewDelay = process.env.UMMAYA_TUI_SYNTHETIC_STREAM_DELAY_MS
+    process.env.UMMAYA_TUI_SYNTHETIC_STREAM_DELAY_MS = '0'
+    const emitted: unknown[] = []
+    try {
+      for await (const message of query({
+        ...queryParams(
+          WEATHER_AIR_QUALITY_PROMPT,
+          [
+            createAirKoreaTool(),
+            createKmaCurrentObservationTool(),
+            createKmaUltraShortTermForecastTool(),
+          ],
+          deps,
+        ),
+        messages: [createUserMessage({ content: WEATHER_AIR_QUALITY_PROMPT })],
+        maxTurns: 5,
+      })) {
+        if (isAssistantOrUserMessage(message) || isStreamTextDeltaEvent(message)) {
+          emitted.push(message)
+        }
+      }
+    } finally {
+      if (previousPreviewDelay === undefined) {
+        delete process.env.UMMAYA_TUI_SYNTHETIC_STREAM_DELAY_MS
+      } else {
+        process.env.UMMAYA_TUI_SYNTHETIC_STREAM_DELAY_MS = previousPreviewDelay
       }
     }
 
     expect(deps.callCount()).toBe(4)
     expect(mutableModelInputs).toHaveLength(4)
-    const text = allAssistantText(emitted)
+    const emittedMessages = emitted.filter(isAssistantOrUserMessage)
+    const text = allAssistantText(emittedMessages)
     expect(text).toContain('기상청 adapter 결과 기준으로 확인된 값만 정리합니다')
     expect(text).toContain('현재관측(2026-06-20 19:00)')
     expect(text).toContain('기온: 23.9°C')
@@ -2610,6 +2655,22 @@ describe('public-data terminal answer guard', () => {
     expect(text).toContain('PM2.5: 11 (좋음)')
     expect(text).toContain('통합대기환경지수(CAI): 42 (좋음)')
     expect(text).not.toContain('날씨만 정리했습니다')
+
+    const streamedPreview = emitted
+      .filter(isStreamTextDeltaEvent)
+      .map(event => event.event.delta.text)
+      .join('')
+    expect(streamedPreview).toContain('기상청 adapter 결과 기준으로 확인된 값만 정리합니다')
+    expect(streamedPreview).toContain('AirKorea adapter 결과 기준으로 확인된 값만 정리합니다')
+    expect(emitted.filter(isStreamTextDeltaEvent).length).toBeGreaterThan(10)
+    const firstPreviewIndex = emitted.findIndex(isStreamTextDeltaEvent)
+    const finalMessageIndex = emitted.findIndex(event =>
+      isAssistantOrUserMessage(event) &&
+      event.type === 'assistant' &&
+      allAssistantText([event]).includes('기상청 adapter 결과 기준으로 확인된 값만 정리합니다'),
+    )
+    expect(firstPreviewIndex).toBeGreaterThanOrEqual(0)
+    expect(finalMessageIndex).toBeGreaterThan(firstPreviewIndex)
   })
 
   test('blocks extra tool dispatch after a generic final-answer repair prompt', async () => {

@@ -47,6 +47,7 @@ import {
 } from '../tools/AdapterTool/routeDiagnostics.js'
 import { createAssistantMessage, createUserMessage } from '../utils/messages.js'
 import { getKstTimeParts } from '../constants/common.js'
+import { streamGuardedAssistantMessage } from './guardedAssistantPreview.js'
 
 const ROOT_FIND_TOOL_NAME = 'find'
 const ROOT_PRIMITIVE_TOOL_NAMES = new Set([
@@ -1906,6 +1907,8 @@ export async function* query(params: QueryParams): QueryGenerator {
           tool => tool.name === activeToolChoiceName,
         )
       : false
+    const guardedPreviewEnabled =
+      params.toolUseContext.options.isNonInteractiveSession !== true
 
     for await (const event of deps.callModel({
       messages,
@@ -1956,7 +1959,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createPromptInjectionToolRecoveryBlockedMessage()
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -1979,7 +1988,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createMalformedToolProposalBlockedMessage()
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -2008,7 +2023,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createUnsupportedRouteFinalAnswerBlockedMessage()
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -2082,7 +2103,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createStalePriorToolResultFinalAnswerBlockedMessage()
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -2130,7 +2157,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           repairPromptChars: 0,
           continueAfterRepair: false,
         })
-        yield aedGuardMessage
+        yield* streamGuardedAssistantMessage({
+          message: aedGuardMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(aedGuardMessage)
         return Terminal.completed()
       }
@@ -2177,7 +2210,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           repairPromptChars: 0,
           continueAfterRepair: false,
         })
-        yield ungroundedPublicDataBlockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: ungroundedPublicDataBlockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(ungroundedPublicDataBlockedMessage)
         return Terminal.completed()
       }
@@ -2199,7 +2238,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createEmergencyNoClaimBlockedMessage()
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -2220,7 +2265,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           repairPromptChars: 0,
           continueAfterRepair: false,
         })
-        yield weatherGuardMessage
+        yield* streamGuardedAssistantMessage({
+          message: weatherGuardMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(weatherGuardMessage)
         return Terminal.completed()
       }
@@ -2242,7 +2293,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createUnavailableToolFinalAnswerBlockedMessage(messages)
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -2263,7 +2320,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           repairPromptChars: 0,
           continueAfterRepair: false,
         })
-        yield protectedBypassFinalMessage
+        yield* streamGuardedAssistantMessage({
+          message: protectedBypassFinalMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(protectedBypassFinalMessage)
         return Terminal.completed()
       }
@@ -2284,7 +2347,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           repairPromptChars: 0,
           continueAfterRepair: false,
         })
-        yield failedToolGuardMessage
+        yield* streamGuardedAssistantMessage({
+          message: failedToolGuardMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(failedToolGuardMessage)
         return Terminal.completed()
       }
@@ -2306,7 +2375,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createUnsupportedRouteFinalAnswerBlockedMessage()
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -2328,7 +2403,13 @@ export async function* query(params: QueryParams): QueryGenerator {
           continueAfterRepair: false,
         })
         const blockedMessage = createGenericPendingFinalAnswerToolUseBlockedMessage()
-        yield blockedMessage
+        yield* streamGuardedAssistantMessage({
+          message: blockedMessage,
+          messages,
+          querySource: String(params.querySource),
+          turnCount,
+          enabled: guardedPreviewEnabled,
+        })
         messages.push(blockedMessage)
         return Terminal.completed()
       }
@@ -2348,7 +2429,13 @@ export async function* query(params: QueryParams): QueryGenerator {
             repairPromptChars: 0,
             continueAfterRepair: false,
           })
-          yield protectedBypassBlockedMessage
+          yield* streamGuardedAssistantMessage({
+            message: protectedBypassBlockedMessage,
+            messages,
+            querySource: String(params.querySource),
+            turnCount,
+            enabled: guardedPreviewEnabled,
+          })
           messages.push(protectedBypassBlockedMessage)
           return Terminal.completed()
         }
@@ -2391,7 +2478,13 @@ export async function* query(params: QueryParams): QueryGenerator {
             repairPromptChars: 0,
             continueAfterRepair: false,
           })
-          yield readOnlySendBlockedMessage
+          yield* streamGuardedAssistantMessage({
+            message: readOnlySendBlockedMessage,
+            messages,
+            querySource: String(params.querySource),
+            turnCount,
+            enabled: guardedPreviewEnabled,
+          })
           messages.push(readOnlySendBlockedMessage)
           return Terminal.completed()
         }
@@ -2410,7 +2503,13 @@ export async function* query(params: QueryParams): QueryGenerator {
             repairPromptChars: 0,
             continueAfterRepair: false,
           })
-          yield protectedActionBlockedMessage
+          yield* streamGuardedAssistantMessage({
+            message: protectedActionBlockedMessage,
+            messages,
+            querySource: String(params.querySource),
+            turnCount,
+            enabled: guardedPreviewEnabled,
+          })
           messages.push(protectedActionBlockedMessage)
           return Terminal.completed()
         }
@@ -2498,8 +2597,14 @@ export async function* query(params: QueryParams): QueryGenerator {
     }
     const domainGuardFinalAnswer = domainGuardFinalAnswerForToolResults(toolResults)
     if (domainGuardFinalAnswer !== undefined) {
+      yield* streamGuardedAssistantMessage({
+        message: domainGuardFinalAnswer,
+        messages,
+        querySource: String(params.querySource),
+        turnCount,
+        enabled: guardedPreviewEnabled,
+      })
       messages.push(domainGuardFinalAnswer)
-      yield domainGuardFinalAnswer
       return Terminal.completed()
     }
     if (shouldCompleteAfterHardGuard) return Terminal.completed()

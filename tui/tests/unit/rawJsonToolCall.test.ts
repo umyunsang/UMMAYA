@@ -3,6 +3,13 @@ import {
   classifyRawJsonToolCallProposal,
   parseRawJsonToolCallProposal,
 } from '../../src/utils/rawJsonToolCall.js'
+import {
+  firstRawJsonToolCallBufferStartOffset,
+  firstRawJsonToolCallStartOffset,
+  firstTextualToolCallBufferStartOffset,
+  looksLikePotentialRawJsonToolCallStart,
+  looksLikeRawJsonToolCallStart,
+} from '../../src/utils/toolCallStreamBuffer.js'
 
 const REGISTERED_TOOL_NAMES = [
   'kakao_address_search',
@@ -138,6 +145,42 @@ describe('raw JSON tool-call parser classification', () => {
       executable: false,
       reason: 'not_exact_top_level_json',
     })
+  })
+
+  test('does not treat ordinary prose braces as a raw JSON tool-call start', () => {
+    expect(looksLikeRawJsonToolCallStart('{공식값 기준}으로 정리합니다.')).toBe(false)
+    expect(looksLikeRawJsonToolCallStart('{"station":"광복동"}')).toBe(false)
+    expect(looksLikeRawJsonToolCallStart('{"name":"kakao_address_search","arguments":{}}')).toBe(true)
+    expect(looksLikeRawJsonToolCallStart("{'tool':'legacy_tool','arguments':{}}")).toBe(true)
+  })
+
+  test('finds a raw JSON tool-call start after ordinary prose braces', () => {
+    const prelude = '날씨는 {공식 adapter 결과} 기준입니다.\n'
+    const proposal = '{"name":"kakao_address_search","arguments":{"query":"동아대학교"}}'
+
+    expect(firstRawJsonToolCallStartOffset(`${prelude}${proposal}`)).toBe(prelude.length)
+    expect(firstRawJsonToolCallStartOffset('{공식값 기준}으로 정리합니다.')).toBe(-1)
+  })
+
+  test('keeps split raw JSON tool-call prefixes buffered without treating ordinary braces as tool calls', () => {
+    const prelude = '공식 도구를 사용하겠습니다.\n'
+
+    expect(looksLikePotentialRawJsonToolCallStart('{')).toBe(true)
+    expect(looksLikePotentialRawJsonToolCallStart('{"na')).toBe(true)
+    expect(looksLikePotentialRawJsonToolCallStart('{"name":"kakao_address_search')).toBe(true)
+    expect(looksLikePotentialRawJsonToolCallStart('{공식 adapter 결과}')).toBe(false)
+    expect(looksLikePotentialRawJsonToolCallStart('{"station":"광복동"}')).toBe(false)
+    expect(firstRawJsonToolCallBufferStartOffset(`${prelude}{`)).toBe(prelude.length)
+    expect(firstRawJsonToolCallBufferStartOffset('{공식값 기준}으로 정리합니다.')).toBe(-1)
+  })
+
+  test('keeps split textual tool-call prefixes buffered', () => {
+    const prelude = '공식 도구를 사용하겠습니다.\n'
+
+    expect(firstTextualToolCallBufferStartOffset(`${prelude}<`, '<tool_call>')).toBe(prelude.length)
+    expect(firstTextualToolCallBufferStartOffset(`${prelude}<tool`, '<tool_call>')).toBe(prelude.length)
+    expect(firstTextualToolCallBufferStartOffset(`${prelude}<tool_call>`, '<tool_call>')).toBe(prelude.length)
+    expect(firstTextualToolCallBufferStartOffset('1 < 2 입니다.', '<tool_call>')).toBe(-1)
   })
 
   test('does not retain stale registry state between classification calls', () => {

@@ -33,6 +33,10 @@ import {
   extractTextualToolCallProposals,
   parseTrailingRawJsonToolCallProposal,
 } from '../utils/rawJsonToolCall.js'
+import {
+  firstRawJsonToolCallBufferStartOffset,
+  firstTextualToolCallBufferStartOffset,
+} from '../utils/toolCallStreamBuffer.js'
 
 export const UMMAYA_DEFAULT_MODEL = 'LGAI-EXAONE/K-EXAONE-236B-A23B'
 const TEXTUAL_TOOL_CALL_OPEN = '<tool_call>'
@@ -127,8 +131,11 @@ function _defaultAccumulator(): _TurnAccumulator {
 }
 
 function firstToolCallTextOffset(text: string): number {
-  const braceOffset = text.indexOf('{')
-  const tagOffset = text.indexOf(TEXTUAL_TOOL_CALL_OPEN)
+  const braceOffset = firstRawJsonToolCallBufferStartOffset(text)
+  const tagOffset = firstTextualToolCallBufferStartOffset(
+    text,
+    TEXTUAL_TOOL_CALL_OPEN,
+  )
   if (braceOffset < 0) return tagOffset
   if (tagOffset < 0) return braceOffset
   return Math.min(braceOffset, tagOffset)
@@ -461,22 +468,32 @@ export class LLMClient {
         text: string,
       ): Generator<UmmayaRawMessageStreamEvent, void, unknown> {
         if (text.length === 0) return
-        const previousTextLength = acc.accumulatedText.length
-        const bufferOffset = firstToolCallTextOffset(text)
+        acc.accumulatedText += text
+        const bufferOffset = firstToolCallTextOffset(acc.accumulatedText)
         const startsBuffering = !acc.shouldBufferTextDeltas && bufferOffset >= 0
         if (startsBuffering) acc.shouldBufferTextDeltas = true
-        acc.accumulatedText += text
         if (startsBuffering) {
-          if (bufferOffset > 0) {
+          if (bufferOffset > acc.emittedTextLength) {
             yield* appendVisibleTextDelta(
-              text.slice(0, bufferOffset),
-              previousTextLength,
+              acc.accumulatedText.slice(acc.emittedTextLength, bufferOffset),
+              acc.emittedTextLength,
             )
           }
           return
         }
+        if (acc.shouldBufferTextDeltas && bufferOffset < 0) {
+          acc.shouldBufferTextDeltas = false
+          yield* appendVisibleTextDelta(
+            acc.accumulatedText.slice(acc.emittedTextLength),
+            acc.emittedTextLength,
+          )
+          return
+        }
         if (!acc.shouldBufferTextDeltas) {
-          yield* appendVisibleTextDelta(text, previousTextLength)
+          yield* appendVisibleTextDelta(
+            acc.accumulatedText.slice(acc.emittedTextLength),
+            acc.emittedTextLength,
+          )
         }
       }
 

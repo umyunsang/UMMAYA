@@ -226,6 +226,43 @@ describe('Spec 2521 — LLMClient.stream() thinking + tool_use index collision',
     expect(toolBlock?.input).toEqual({ lat: 35.0, lon: 129.0 })
   })
 
+  test('assistant_chunk split trailing raw JSON becomes tool_use without painting partial JSON text', async () => {
+    const bridge = makeFakeBridge((corr) => [
+      assistantChunkFrame(corr, {
+        message_id: 'mid-raw-json-split-1',
+        delta: '공식 도구를 사용하겠습니다.\n{',
+        done: false,
+      }),
+      assistantChunkFrame(corr, {
+        message_id: 'mid-raw-json-split-1',
+        delta: '"name":"find_emergency_medical","arguments":{"lat":35.0,"lon":129.0}}',
+        done: true,
+      }),
+    ])
+
+    const final = await new LLMClient({
+      bridge,
+      sessionId: 'test-session-raw-json-split',
+    }).complete({
+      messages: [{ role: 'user', content: 'hi' }],
+      systemPrompt: 'test',
+    })
+
+    const textBlock = final.content.find((b) => b.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined
+    const toolBlock = final.content.find((b) => b.type === 'tool_use') as
+      | { type: 'tool_use'; name: string; input: Record<string, unknown> }
+      | undefined
+
+    expect(final.stop_reason).toBe('tool_use')
+    expect(textBlock?.text).toContain('공식 도구를 사용하겠습니다.')
+    expect(textBlock?.text).not.toContain('{"name"')
+    expect(textBlock?.text).not.toContain('"name":"find_emergency_medical"')
+    expect(toolBlock?.name).toBe('find_emergency_medical')
+    expect(toolBlock?.input).toEqual({ lat: 35.0, lon: 129.0 })
+  })
+
   test('assistant_chunk non-exact raw JSON stays text', async () => {
     const bridge = makeFakeBridge((corr) => [
       assistantChunkFrame(corr, {

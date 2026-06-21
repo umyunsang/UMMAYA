@@ -11,6 +11,7 @@ let frameMode:
   | 'timeout-error'
   | 'silent'
   | 'trailing-json'
+  | 'split-trailing-json'
   | 'textual-tool-call'
   | 'non-exact-json' = 'timeout-error'
 const bridgeSendMock = mock((frame: IPCFrame): boolean => {
@@ -42,6 +43,31 @@ const fakeBridge = {
           '공식 도구를 사용하겠습니다.',
           '{"name":"find_emergency_medical","arguments":{"lat":"35.0","lon":"129.0"}}',
         ].join('\n'),
+        done: true,
+      }
+      return
+    }
+    if (frameMode === 'split-trailing-json') {
+      yield {
+        session_id: 'test-session-backend-chat',
+        correlation_id: requestFrame.correlation_id,
+        ts: '2026-06-16T00:00:00.000Z',
+        version: '1.0',
+        role: 'backend',
+        frame_seq: 1,
+        kind: 'assistant_chunk',
+        delta: '공식 도구를 사용하겠습니다.\n{',
+        done: false,
+      }
+      yield {
+        session_id: 'test-session-backend-chat',
+        correlation_id: requestFrame.correlation_id,
+        ts: '2026-06-16T00:00:00.001Z',
+        version: '1.0',
+        role: 'backend',
+        frame_seq: 2,
+        kind: 'assistant_chunk',
+        delta: '"name":"find_emergency_medical","arguments":{"lat":"35.0","lon":"129.0"}}',
         done: true,
       }
       return
@@ -160,6 +186,22 @@ describe('backend chat stream timeout handoff', () => {
     expect(serializedEvents).toContain('"name":"find_emergency_medical"')
     expect(serializedEvents).not.toContain(
       '"text":"{\\"name\\":\\"find_emergency_medical\\"',
+    )
+  })
+
+  test('upgrades split trailing raw JSON assistant chunks without painting partial JSON', async () => {
+    frameMode = 'split-trailing-json'
+    const events = await collectBackendChatEvents()
+    const serializedEvents = JSON.stringify(events)
+    const visibleText = assistantText(events).join('\n')
+
+    expect(visibleText).toContain('공식 도구를 사용하겠습니다.')
+    expect(visibleText).not.toContain('{"name"')
+    expect(serializedEvents).toContain('"type":"tool_use"')
+    expect(serializedEvents).toContain('"name":"find_emergency_medical"')
+    expect(serializedEvents).not.toContain('"text":"{')
+    expect(serializedEvents).not.toContain(
+      '"text":"\\"name\\":\\"find_emergency_medical\\"',
     )
   })
 

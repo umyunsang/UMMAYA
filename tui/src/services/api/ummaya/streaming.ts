@@ -12,6 +12,10 @@ import {
   textContainsMalformedToolCallProposal,
 } from '../../../utils/rawJsonToolCall.js'
 import type { RawJsonToolCallProposal } from '../../../utils/rawJsonToolCall.js'
+import {
+  firstRawJsonToolCallBufferStartOffset,
+  firstTextualToolCallBufferStartOffset,
+} from '../../../utils/toolCallStreamBuffer.js'
 import type { Message, StreamEvent } from '../../../types/message.js'
 import type { OpenAIToolCall } from './types.js'
 import {
@@ -140,23 +144,30 @@ export async function* streamResponseToMessages(
         })
       }
       if (chunk.text.length > 0) {
-        const previousTextLength = text.length
-        const bufferOffset = firstToolCallTextOffset(chunk.text)
+        text += chunk.text
+        const bufferOffset = firstToolCallTextOffset(text)
         const startsBuffering = !shouldBufferTextDeltas && bufferOffset >= 0
         if (startsBuffering) {
           shouldBufferTextDeltas = true
         }
         sawTextDelta = true
-        text += chunk.text
         if (startsBuffering) {
-          if (bufferOffset > 0) {
-            const prefix = chunk.text.slice(0, bufferOffset)
+          if (bufferOffset > emittedTextLength) {
+            const prefix = text.slice(emittedTextLength, bufferOffset)
             yield streamEvent({
               type: 'content_block_delta',
               delta: { type: 'text_delta', text: prefix },
             })
-            emittedTextLength = previousTextLength + prefix.length
+            emittedTextLength = bufferOffset
           }
+        } else if (shouldBufferTextDeltas && bufferOffset < 0) {
+          shouldBufferTextDeltas = false
+          const visibleText = text.slice(emittedTextLength)
+          yield streamEvent({
+            type: 'content_block_delta',
+            delta: { type: 'text_delta', text: visibleText },
+          })
+          emittedTextLength = text.length
         } else if (!shouldBufferTextDeltas) {
           yield streamEvent({
             type: 'content_block_delta',
@@ -331,8 +342,11 @@ function streamEvent(event: Record<string, unknown>): StreamEvent {
 }
 
 function firstToolCallTextOffset(text: string): number {
-  const braceOffset = text.indexOf('{')
-  const tagOffset = text.indexOf(TEXTUAL_TOOL_CALL_OPEN)
+  const braceOffset = firstRawJsonToolCallBufferStartOffset(text)
+  const tagOffset = firstTextualToolCallBufferStartOffset(
+    text,
+    TEXTUAL_TOOL_CALL_OPEN,
+  )
   if (braceOffset < 0) return tagOffset
   if (tagOffset < 0) return braceOffset
   return Math.min(braceOffset, tagOffset)

@@ -17,6 +17,10 @@ import {
   parseTrailingRawJsonToolCallProposal,
 } from '../../../utils/rawJsonToolCall.js'
 import {
+  firstRawJsonToolCallBufferStartOffset,
+  firstTextualToolCallBufferStartOffset,
+} from '../../../utils/toolCallStreamBuffer.js'
+import {
   createContentBlockStopEvent,
   createMessageDeltaEvent,
   createMessageStartStreamEvent,
@@ -333,22 +337,34 @@ function* appendThinking(
 }
 
 function* appendText(state: BackendChatState, text: string): Generator<unknown> {
-  const previousTextLength = state.accumulated.length - text.length
-  const bufferOffset = firstToolCallTextOffset(text)
+  const bufferOffset = firstToolCallTextOffset(state.accumulated)
   const startsBuffering = !state.shouldBufferTextDeltas && bufferOffset >= 0
   if (startsBuffering) state.shouldBufferTextDeltas = true
   if (startsBuffering) {
-    if (bufferOffset > 0) {
+    if (bufferOffset > state.emittedTextLength) {
       yield* appendVisibleTextDelta(
         state,
-        text.slice(0, bufferOffset),
-        previousTextLength,
+        state.accumulated.slice(state.emittedTextLength, bufferOffset),
+        state.emittedTextLength,
       )
     }
     return
   }
+  if (state.shouldBufferTextDeltas && bufferOffset < 0) {
+    state.shouldBufferTextDeltas = false
+    yield* appendVisibleTextDelta(
+      state,
+      state.accumulated.slice(state.emittedTextLength),
+      state.emittedTextLength,
+    )
+    return
+  }
   if (state.shouldBufferTextDeltas) return
-  yield* appendVisibleTextDelta(state, text, previousTextLength)
+  yield* appendVisibleTextDelta(
+    state,
+    state.accumulated.slice(state.emittedTextLength),
+    state.emittedTextLength,
+  )
 }
 
 function* appendVisibleTextDelta(
@@ -411,8 +427,11 @@ function* appendRawJsonToolUseBlock(params: {
 }
 
 function firstToolCallTextOffset(text: string): number {
-  const braceOffset = text.indexOf('{')
-  const tagOffset = text.indexOf(TEXTUAL_TOOL_CALL_OPEN)
+  const braceOffset = firstRawJsonToolCallBufferStartOffset(text)
+  const tagOffset = firstTextualToolCallBufferStartOffset(
+    text,
+    TEXTUAL_TOOL_CALL_OPEN,
+  )
   if (braceOffset < 0) return tagOffset
   if (tagOffset < 0) return braceOffset
   return Math.min(braceOffset, tagOffset)

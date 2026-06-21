@@ -18,11 +18,43 @@ import {
   responseForRawJsonToolCallText,
   responseForSplitWorkspaceToolCallArguments,
   responseForTextDelta,
+  responseForTextDeltaChunks,
   responseForTextThenDocumentToolCall,
   responseForTextualToolCallText,
   serializedMessages,
   withFriendliEnv,
 } from './ummaya-provider-friendli.helpers.js'
+
+type TextDeltaEvent = {
+  readonly type: 'stream_event'
+  readonly event: {
+    readonly type: 'content_block_delta'
+    readonly delta: {
+      readonly type: 'text_delta'
+      readonly text: string
+    }
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isTextDeltaEvent(value: unknown): value is TextDeltaEvent {
+  if (!isRecord(value) || value.type !== 'stream_event') return false
+  const event = value.event
+  if (!isRecord(event) || event.type !== 'content_block_delta') return false
+  const delta = event.delta
+  return isRecord(delta) &&
+    delta.type === 'text_delta' &&
+    typeof delta.text === 'string'
+}
+
+function textDeltas(events: readonly unknown[]): readonly string[] {
+  return events
+    .filter(isTextDeltaEvent)
+    .map(event => event.event.delta.text)
+}
 
 describe('UMMAYA-named CC provider interface wired to FriendliAI client shim', () => {
   test('streams through services/api/ummaya.ts without backend chat_request', async () => {
@@ -501,6 +533,24 @@ describe('UMMAYA-named CC provider interface wired to FriendliAI client shim', (
     })
   })
 
+  test('does not buffer ordinary brace prose as a raw JSON tool-call prefix', async () => {
+    await withFriendliEnv(async () => {
+      const chunks = [
+        '날씨와 대기질은 ',
+        '{공식 adapter 결과}',
+        ' 기준으로 분리해 정리합니다.',
+      ]
+      const exchange = await captureProviderExchange({
+        messages: [createUserMessage({
+          content: '오늘 부산 사하구 날씨와 미세먼지를 알려줘.',
+        })],
+        response: responseForTextDeltaChunks(chunks),
+      })
+      expect(textDeltas(exchange.events)).toEqual(chunks)
+      expect(JSON.stringify(exchange.events)).not.toContain('"type":"tool_use"')
+    })
+  })
+
   test('upgrades exact raw JSON tool-call text without painting it as prose', async () => {
     await withFriendliEnv(async () => {
       ingestHealthLocationManifest('r')
@@ -549,6 +599,28 @@ describe('UMMAYA-named CC provider interface wired to FriendliAI client shim', (
     })
   })
 
+  test('recovers split raw JSON tool-call chunks without painting partial JSON', async () => {
+    await withFriendliEnv(async () => {
+      ingestMetarManifest(undefined)
+      const exchange = await captureProviderExchange({
+        messages: [createUserMessage({
+          content: '도구 호출 형식의 응답을 처리해줘.',
+        })],
+        response: responseForTextDeltaChunks([
+          '{',
+          '"name":"unregistered_public_service_search","arguments":{"query":"nearby public-service request"}}',
+        ]),
+      })
+      const visibleText = JSON.stringify(exchange.events)
+      expect(textDeltas(exchange.events).join('')).toBe('')
+      expect(visibleText).toContain('"type":"tool_use"')
+      expect(visibleText).toContain('"name":"unregistered_public_service_search"')
+      expect(visibleText).toContain('"query":"nearby public-service request"')
+      expect(visibleText).not.toContain('"text":"{')
+      expect(visibleText).not.toContain('\\"name\\":\\"unregistered_public_service_search\\"')
+    })
+  })
+
   test('recovers trailing raw JSON tool-call text after an assistant prelude', async () => {
     await withFriendliEnv(async () => {
       const trailingProposal = JSON.stringify({
@@ -567,6 +639,29 @@ describe('UMMAYA-named CC provider interface wired to FriendliAI client shim', (
       })
       const visibleText = JSON.stringify(exchange.events)
       expect(visibleText).toContain('공식 도구를 사용하겠습니다.')
+      expect(visibleText).toContain('"type":"tool_use"')
+      expect(visibleText).toContain('"name":"unregistered_public_service_search"')
+      expect(visibleText).not.toContain('"text":"{\\"name\\":\\"unregistered_public_service_search\\"')
+    })
+  })
+
+  test('recovers trailing raw JSON after ordinary brace prose without painting JSON', async () => {
+    await withFriendliEnv(async () => {
+      const prelude = '공식 값은 {adapter 결과} 기준으로 확인했습니다.\n'
+      const trailingProposal = JSON.stringify({
+        name: 'unregistered_public_service_search',
+        arguments: {
+          query: 'nearby public-service request',
+        },
+      })
+      const exchange = await captureProviderExchange({
+        messages: [createUserMessage({
+          content: '도구 호출 형식의 응답을 처리해줘.',
+        })],
+        response: responseForTextDelta(`${prelude}${trailingProposal}`),
+      })
+      const visibleText = JSON.stringify(exchange.events)
+      expect(textDeltas(exchange.events).join('')).toBe(prelude)
       expect(visibleText).toContain('"type":"tool_use"')
       expect(visibleText).toContain('"name":"unregistered_public_service_search"')
       expect(visibleText).not.toContain('"text":"{\\"name\\":\\"unregistered_public_service_search\\"')

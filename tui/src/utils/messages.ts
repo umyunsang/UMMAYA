@@ -3023,6 +3023,7 @@ export function handleMessageFromStream(
         feature('CONNECTOR_TEXT') &&
         isConnectorTextBlock(message.event.content_block)
       ) {
+        onStreamingText?.(() => null)
         onSetStreamMode('responding')
         return
       }
@@ -3032,6 +3033,7 @@ export function handleMessageFromStream(
           onSetStreamMode('thinking')
           return
         case 'text':
+          onStreamingText?.(() => null)
           onSetStreamMode('responding')
           return
         case 'tool_use': {
