@@ -102,6 +102,9 @@ const TAGO_ROUTE_TOOL_NAME = 'tago_bus_route_search'
 const MOHW_WELFARE_TOOL_NAME = 'mohw_welfare_eligibility_search'
 const PPS_SHOPPING_MALL_PRODUCT_TOOL_NAME = 'pps_shopping_mall_product_lookup'
 const NMC_AED_TOOL_NAME = 'nmc_aed_site_locate'
+const AED_NEAR_REQUEST_RE =
+  /((?:AED|자동심장충격기|제세동기).*(?:근처|주변|인근|가까운|가장\s*가까운)|(?:근처|주변|인근|가까운|가장\s*가까운).*(?:AED|자동심장충격기|제세동기))/iu
+const AED_NEAR_TARGET_SPLIT_RE = /근처|주변|인근|가까운|가장\s*가까운/iu
 const TAGO_ROUTE_FOLLOWUP_TOOL_NAMES = new Set([
   'tago_bus_arrival_search',
   'tago_bus_location_search',
@@ -675,10 +678,42 @@ function coordinatesFromRecord(
   )
 }
 
+function normalizeLocationText(value: string): string {
+  return value.normalize('NFKC').replace(/\s+/gu, '').toLowerCase()
+}
+
+function nmcAedNearTargetFromUserText(text: string): string | undefined {
+  if (!AED_NEAR_REQUEST_RE.test(text)) return undefined
+  const [beforeNear] = text.split(AED_NEAR_TARGET_SPLIT_RE)
+  const target = beforeNear
+    ?.split(/[.!?。！？,\n]/u)
+    .at(-1)
+    ?.replace(/^\s*(?:오늘|현재|지금)\s*/u, '')
+    .replace(/\s*(?:에서|의|를|을)?\s*$/u, '')
+    .trim()
+  return target && target.length > 0 ? target : undefined
+}
+
+function kakaoResultMatchesTarget(params: {
+  readonly result: PriorToolResult
+  readonly parsed: Record<string, unknown> | undefined
+  readonly target: string | undefined
+}): boolean {
+  if (params.target === undefined) return true
+  const target = normalizeLocationText(params.target)
+  const query = typeof params.result.input?.query === 'string'
+    ? normalizeLocationText(params.result.input.query)
+    : ''
+  if (query.includes(target)) return true
+  const text = normalizeLocationText(serializeToolResult(params.parsed ?? params.result.content))
+  return text.includes(target)
+}
+
 function latestKakaoLocateOrigin(
   messages: readonly Message[],
 ): { readonly lat: number; readonly lon: number } | undefined {
   const results = toolResultsSinceLatestPrompt(messages)
+  const target = nmcAedNearTargetFromUserText(latestCitizenPromptText(messages))
   for (let index = results.length - 1; index >= 0; index -= 1) {
     const result = results[index]
     if (
@@ -690,10 +725,25 @@ function latestKakaoLocateOrigin(
       continue
     }
     const parsed = parseJsonRecord(result.content)
+    if (!kakaoResultMatchesTarget({ result, parsed, target })) continue
     const origin = coordinatesFromRecord(parsed ?? result.content)
     if (origin !== undefined) return origin
   }
   return undefined
+}
+
+function nmcAedMissingPreciseOriginMessage(messages: readonly Message[]): string | undefined {
+  const target = nmcAedNearTargetFromUserText(latestCitizenPromptText(messages))
+  if (target === undefined || latestKakaoLocateOrigin(messages) !== undefined) {
+    return undefined
+  }
+  return [
+    '<tool_use_error>MissingPreciseOrigin:',
+    `For AED near-distance requests, first call kakao_keyword_search with the exact place name "${target}".`,
+    'Then call nmc_aed_site_locate with origin_lat/origin_lon from that Kakao result.',
+    'Do not use generic district or "AED" keyword coordinates as the distance origin.',
+    '</tool_use_error>',
+  ].join(' ')
 }
 
 function aedOriginFromInput(
@@ -853,6 +903,26 @@ export async function runToolUseBlocks(params: {
       input: publicAdapterInput,
       messages: params.messages,
     })
+    const aedOriginError = block.name === NMC_AED_TOOL_NAME
+      ? nmcAedMissingPreciseOriginMessage(params.messages)
+      : undefined
+    if (aedOriginError !== undefined) {
+      results.push(
+        createUserMessage({
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: block.id,
+              content: aedOriginError,
+              is_error: true,
+            },
+          ],
+          toolUseResult: aedOriginError,
+          sourceToolAssistantUUID: params.assistantMessage.uuid,
+        }),
+      )
+      continue
+    }
     const ppsProductInput = repairPpsProductToolInput({
       toolName: block.name,
       input: aedOriginInput,

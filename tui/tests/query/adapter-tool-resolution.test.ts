@@ -885,4 +885,63 @@ describe('query runner adapter tool resolution', () => {
       },
     ])
   })
+
+  test('blocks direct AED distance calls when only generic Kakao origin exists', async () => {
+    ingestManifestFrame(makeNmcAedManifestFrame())
+    const citizenPrompt = createUserMessage({
+      content: '다대포해수욕장 근처 AED 위치를 찾아줘. 가장 가까운 곳부터 알려줘.',
+    })
+    const locateBlock = {
+      type: 'tool_use',
+      id: 'toolu-kakao-generic-aed',
+      name: 'kakao_keyword_search',
+      input: { query: '사하구 AED' },
+    }
+    const locateAssistant = createAssistantMessage({
+      content: [locateBlock],
+    })
+    const locateResult = createUserMessage({
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: locateBlock.id,
+          content: JSON.stringify({
+            ok: true,
+            result: {
+              kind: 'poi',
+              name: '사하구 AED',
+              lat: 35.104448,
+              lon: 128.974933,
+              source: 'kakao',
+            },
+          }),
+        },
+      ],
+      sourceToolAssistantUUID: locateAssistant.uuid,
+    })
+    const aedBlock = {
+      type: 'tool_use',
+      id: 'toolu-nmc-aed-generic',
+      name: NMC_AED_TOOL_NAME,
+      input: {
+        q0: '부산광역시',
+        q1: '사하구',
+      },
+    }
+    const aedAssistant: AssistantMessage = createAssistantMessage({
+      content: [aedBlock],
+    })
+
+    const results = await runToolUseBlocks({
+      blocks: [aedBlock],
+      assistantMessage: aedAssistant,
+      messages: [citizenPrompt, locateAssistant, locateResult, aedAssistant],
+      toolUseContext: makeToolUseContext([], [citizenPrompt]),
+      canUseTool: allowTool,
+    })
+
+    expect(toolResultText(results)).toContain('MissingPreciseOrigin')
+    expect(toolResultText(results)).toContain('다대포해수욕장')
+    expect(dispatchPrimitiveMock).not.toHaveBeenCalled()
+  })
 })

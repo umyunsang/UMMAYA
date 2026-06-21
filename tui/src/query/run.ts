@@ -70,6 +70,7 @@ const KMA_ORDINARY_WEATHER_TOOL_NAMES = new Set([
 ])
 const KMA_CURRENT_OBSERVATION_TOOL_NAME = 'kma_current_observation'
 const AIRKOREA_AIR_QUALITY_TOOL_NAME = 'airkorea_ctprvn_air_quality'
+const NMC_AED_TOOL_NAME = 'nmc_aed_site_locate'
 const KMA_FORECAST_TOOL_NAMES = new Set([
   'kma_forecast_fetch',
   'kma_short_term_forecast',
@@ -102,6 +103,7 @@ const WEATHER_RESULT_REQUEST_RE =
   /(날씨|기상|weather|예보|현재\s*기온|강수|비|눈|습도|풍속)/iu
 const AIR_QUALITY_RESULT_REQUEST_RE =
   /(미세먼지|초미세먼지|초미세|대기질|공기질|대기오염|pm\s*2\.?5|pm\s*10|air\s*korea|airkorea|air\s*quality)/iu
+const AED_RESULT_REQUEST_RE = /(AED|자동심장충격기|제세동기)/iu
 const DJTC_SUBWAY_SEGMENT_REQUEST_RE =
   /((대전|DJTC|대전교통공사|도시철도|지하철).*(역간|소요시간|거리|운임|요금)|(역간|소요시간|거리|운임|요금).*(대전|DJTC|대전교통공사|도시철도|지하철))/iu
 const WEATHER_NEGATIVE_CONSTRAINT_RE =
@@ -1006,6 +1008,89 @@ function kmaWeatherEvidenceGuard(params: {
     forecastItems,
     airQuality,
   })
+}
+
+function nmcAedRecords(result: PriorToolResult): readonly Record<string, unknown>[] {
+  if (result.toolName !== NMC_AED_TOOL_NAME || result.isError) {
+    return []
+  }
+  const resultRecord = nestedResultRecord(parseJsonRecord(result.content))
+  const items = Array.isArray(resultRecord?.items) ? resultRecord.items : []
+  return items.flatMap(item => {
+    if (!isRecord(item)) return []
+    return isRecord(item.record) ? [item.record] : [item]
+  })
+}
+
+function nmcAedDistanceText(record: Record<string, unknown>): string | undefined {
+  const value = scalarText(record.distance_km) ?? scalarText(record.distance)
+  if (value === undefined || value.length === 0) return undefined
+  return value.endsWith('km') ? value : `${value}km`
+}
+
+function nmcAedOperatingText(record: Record<string, unknown>): string | undefined {
+  const start = scalarText(record.monSttTme)
+  const end = scalarText(record.monEndTme)
+  if (start === undefined || end === undefined) return undefined
+  const format = (value: string): string =>
+    value.length === 4 ? `${value.slice(0, 2)}:${value.slice(2)}` : value
+  return `${format(start)}-${format(end)}`
+}
+
+function nmcAedSummaryLines(records: readonly Record<string, unknown>[]): readonly string[] {
+  return records.slice(0, 5).flatMap((record, index) => {
+    const org = scalarText(record.org) ?? 'AED'
+    const distance = nmcAedDistanceText(record)
+    const title = distance === undefined
+      ? `${index + 1}. ${org}`
+      : `${index + 1}. ${org} (${distance})`
+    return [
+      title,
+      scalarText(record.buildAddress) !== undefined
+        ? `- 주소: ${scalarText(record.buildAddress)}`
+        : undefined,
+      scalarText(record.buildPlace) !== undefined
+        ? `- 설치장소: ${scalarText(record.buildPlace)}`
+        : undefined,
+      nmcAedOperatingText(record) !== undefined
+        ? `- 운영시간: ${nmcAedOperatingText(record)}`
+        : undefined,
+      scalarText(record.clerkTel) !== undefined
+        ? `- 연락처: ${scalarText(record.clerkTel)}`
+        : undefined,
+      scalarText(record.model) !== undefined
+        ? `- 모델: ${scalarText(record.model)}`
+        : undefined,
+    ].filter((line): line is string => line !== undefined)
+  })
+}
+
+function createNmcAedEvidenceMessage(records: readonly Record<string, unknown>[]): AssistantMessage {
+  const hasDistance = records.some(record => nmcAedDistanceText(record) !== undefined)
+  const lines = [
+    'NMC AED adapter 결과 기준으로 확인된 값만 정리합니다.',
+    hasDistance
+      ? '거리값이 있는 결과를 adapter 반환 순서대로 가까운 순서로 표시합니다.'
+      : '이번 결과에는 거리값이 없어 가까운 순서를 단정하지 않습니다.',
+    '',
+    ...nmcAedSummaryLines(records),
+  ]
+  return createAssistantMessage({
+    content: lines.filter(line => line !== '').join('\n'),
+  })
+}
+
+function nmcAedEvidenceGuard(params: {
+  readonly messages: readonly Message[]
+  readonly candidate: AssistantMessage
+}): AssistantMessage | undefined {
+  if (toolUseBlocks(params.candidate).length > 0) return undefined
+  if (!AED_RESULT_REQUEST_RE.test(latestUserText(params.messages))) {
+    return undefined
+  }
+  const records = toolResultsSinceLatestPrompt(params.messages)
+    .flatMap(result => nmcAedRecords(result))
+  return records.length === 0 ? undefined : createNmcAedEvidenceMessage(records)
 }
 
 function hasSuccessfulRegisteredEmergencyResult(
@@ -2095,6 +2180,27 @@ export async function* query(params: QueryParams): QueryGenerator {
         const blockedMessage = createEmergencyNoClaimBlockedMessage()
         yield blockedMessage
         messages.push(blockedMessage)
+        return Terminal.completed()
+      }
+      const aedGuardMessage = boundary.kind === 'pass'
+        ? nmcAedEvidenceGuard({
+            messages,
+            candidate: boundary.message,
+          })
+        : undefined
+      if (aedGuardMessage !== undefined) {
+        appendQueryAssistantDiagnostic({
+          event: 'query_assistant_replaced_nmc_aed_with_evidence_summary',
+          querySource: String(params.querySource),
+          messages,
+          assistantMessage: boundary.message,
+          turnCount,
+          boundaryKind: 'block',
+          repairPromptChars: 0,
+          continueAfterRepair: false,
+        })
+        yield aedGuardMessage
+        messages.push(aedGuardMessage)
         return Terminal.completed()
       }
       const weatherGuardMessage = boundary.kind === 'pass'
