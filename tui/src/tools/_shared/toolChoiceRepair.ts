@@ -39,6 +39,7 @@ export {
   buildIgnoredSupportToolChoiceBlockedText,
   scrubIgnoredSupportToolChoiceMessage,
   selectRecoveredSupportToolChoiceNameForMessages,
+  shouldScrubObeyedSupportToolChoicePrelude,
   shouldSuppressUmmayaToolCallsForAnswerSynthesis,
   shouldWithholdIgnoredSupportToolChoiceText,
 } from './toolChoiceRepair/supportRepair.js'

@@ -1045,6 +1045,57 @@ function kmaWeatherEvidenceGuard(params: {
   })
 }
 
+function shouldDeferProviderStreamForPublicDataEvidenceGuard(
+  messages: readonly Message[],
+): boolean {
+  const latestUser = latestUserText(messages)
+  if (
+    !WEATHER_RESULT_REQUEST_RE.test(latestUser) ||
+    DJTC_SUBWAY_SEGMENT_REQUEST_RE.test(latestUser) ||
+    WEATHER_NEGATIVE_CONSTRAINT_RE.test(latestUser)
+  ) {
+    return false
+  }
+  return toolResultsSinceLatestPrompt(messages).some(result =>
+    !result.isError &&
+    (
+      result.toolName === KMA_CURRENT_OBSERVATION_TOOL_NAME ||
+      KMA_FORECAST_TOOL_NAMES.has(result.toolName)
+    ),
+  )
+}
+
+function hasSuccessfulToolResultNamedAfterLatestUser(
+  messages: readonly Message[],
+  toolName: string,
+): boolean {
+  return toolResultsSinceLatestPrompt(messages).some(result =>
+    !result.isError && result.toolName === toolName,
+  )
+}
+
+function shouldDeferProviderStreamForTerminalReplacementGuard(
+  messages: readonly Message[],
+): boolean {
+  const latestUser = latestUserText(messages)
+  if (latestFailedToolResultAfterLatestUser(messages) !== undefined) {
+    return true
+  }
+  if (PROTECTED_ACTION_BYPASS_REQUEST_RE.test(latestUser)) {
+    return true
+  }
+  if (
+    AED_RESULT_REQUEST_RE.test(latestUser) &&
+    hasSuccessfulToolResultNamedAfterLatestUser(messages, NMC_AED_TOOL_NAME)
+  ) {
+    return true
+  }
+  if (readOnlyPublicServiceEvidenceMessage(messages) !== undefined) {
+    return true
+  }
+  return false
+}
+
 function nmcAedRecords(result: PriorToolResult): readonly Record<string, unknown>[] {
   if (result.toolName !== NMC_AED_TOOL_NAME || result.isError) {
     return []
@@ -1952,7 +2003,9 @@ export async function* query(params: QueryParams): QueryGenerator {
       guardedPreviewEnabled &&
       (
         hasUnavailableToolResultAfterLatestUser(messages) ||
-        shouldBlockUnavailableIntercitySurface
+        shouldBlockUnavailableIntercitySurface ||
+        shouldDeferProviderStreamForPublicDataEvidenceGuard(messages) ||
+        shouldDeferProviderStreamForTerminalReplacementGuard(messages)
       )
     const deferredProviderStreamEvents: QueryYield[] = []
 

@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import {
-  finalizeStreamingAssistantMessage,
   handleMessageFromStream,
+  type StreamingThinking,
   type StreamingToolUse,
-  createAssistantMessage,
-  createUserMessage,
 } from '../../src/utils/messages.js'
 import type { SpinnerMode } from '../../src/components/Spinner.js'
 import type { Message } from '../../src/types/message.js'
@@ -52,8 +50,8 @@ describe('handleMessageFromStream CC-compatible stream contract', () => {
     expect(streamingTools).toEqual([])
   })
 
-  test('keeps CC thinking_delta handling length-only in the stream handler', () => {
-    let thinkingCallbackCalled = false
+  test('streams thinking_delta into live streaming thinking state', () => {
+    let streamingThinking: StreamingThinking | null = null
     let responseLength = ''
     let streamMode: SpinnerMode = 'requesting'
     let streamingTools: StreamingToolUse[] = []
@@ -81,19 +79,78 @@ describe('handleMessageFromStream CC-compatible stream contract', () => {
         streamingTools = update(streamingTools)
       },
       undefined,
-      () => {
-        thinkingCallbackCalled = true
-        return null
+      update => {
+        streamingThinking = update(streamingThinking)
       },
     )
 
     expect(responseLength).toBe('checking weather risk')
     expect(streamMode).toBe('requesting')
     expect(streamingTools).toEqual([])
-    expect(thinkingCallbackCalled).toBe(false)
+    expect(streamingThinking).toEqual({
+      thinking: 'checking weather risk',
+      isStreaming: true,
+    })
   })
 
-  test('preserves pre-tool streaming text when a tool_use block starts', () => {
+  test('marks live streaming thinking complete when its content block stops', () => {
+    const beforeStop = Date.now()
+    let streamingThinking: StreamingThinking | null = {
+      thinking: 'checking weather risk',
+      isStreaming: true,
+    }
+    const stopEvent: Parameters<typeof handleMessageFromStream>[0] = {
+      type: 'stream_event',
+      event: {
+        type: 'content_block_stop',
+        index: 0,
+      },
+    }
+
+    handleMessageFromStream(
+      stopEvent,
+      (_message: Message) => {},
+      () => {},
+      () => {},
+      update => update([]),
+      undefined,
+      update => {
+        streamingThinking = update(streamingThinking)
+      },
+    )
+
+    if (streamingThinking === null) {
+      throw new Error('expected streaming thinking to be retained until auto-hide')
+    }
+    expect(streamingThinking.isStreaming).toBe(false)
+    expect(streamingThinking.streamingEndedAt).toBeGreaterThanOrEqual(beforeStop)
+  })
+
+  test('clears completed streaming thinking when a new provider request starts', () => {
+    let streamingThinking: StreamingThinking | null = {
+      thinking: 'previous turn reasoning',
+      isStreaming: false,
+      streamingEndedAt: Date.now(),
+    }
+
+    handleMessageFromStream(
+      {
+        type: 'stream_request_start',
+      },
+      (_message: Message) => {},
+      () => {},
+      () => {},
+      update => update([]),
+      undefined,
+      update => {
+        streamingThinking = update(streamingThinking)
+      },
+    )
+
+    expect(streamingThinking).toBeNull()
+  })
+
+  test('preserves streaming text when a tool_use block starts', () => {
     let streamingText: string | null = '도구 후보를 정리하고 있습니다.\n'
 
     handleMessageFromStream(
@@ -155,88 +212,4 @@ describe('handleMessageFromStream CC-compatible stream contract', () => {
     expect(streamingText).toBeNull()
   })
 
-  test('captures complete assistant thinking blocks for transcript display', () => {
-    let capturedThinking: string | null = null
-
-    handleMessageFromStream(
-      {
-        type: 'assistant',
-        uuid: 'assistant-1',
-        timestamp: 0,
-        message: {
-          id: 'assistant-1',
-          content: [
-            {
-              type: 'thinking',
-              thinking: '도구 호출 전 추론입니다.',
-            },
-            {
-              type: 'tool_use',
-              id: 'call-1',
-              name: 'lookup',
-              input: {},
-            },
-          ],
-        },
-      } as never,
-      () => {},
-      () => {},
-      () => {},
-      update => update([]),
-      undefined,
-      update => {
-        const next = update(null)
-        capturedThinking = next?.thinking ?? null
-      },
-      undefined,
-      () => null,
-    )
-
-    expect(capturedThinking).toBe('도구 호출 전 추론입니다.')
-  })
-
-  test('finalizes streamed provider text into a committed assistant when the turn ends without one', () => {
-    const messages = [
-      createUserMessage({ content: '이전 질문입니다.' }),
-      createAssistantMessage({ content: '이전 답변입니다.' }),
-      createUserMessage({ content: '지금 종합소득세 상태를 요약해줘.' }),
-    ]
-
-    const finalized = finalizeStreamingAssistantMessage({
-      messages,
-      streamingText: '종합소득세 신고 상태를 확인했고 다음 단계만 남았습니다.\n',
-      turnStartMessageCount: messages.length,
-    })
-
-    expect(finalized).toHaveLength(messages.length + 1)
-    const appended = finalized.at(-1)
-    expect(appended?.type).toBe('assistant')
-    if (appended?.type !== 'assistant') {
-      throw new Error('expected synthesized assistant message')
-    }
-    expect(
-      appended.message.content.some(
-        block =>
-          block.type === 'text' &&
-          block.text === '종합소득세 신고 상태를 확인했고 다음 단계만 남았습니다.\n',
-      ),
-    ).toBe(true)
-  })
-
-  test('does not duplicate a finalized assistant when the current turn already committed one', () => {
-    const messages = [
-      createUserMessage({ content: '이전 질문입니다.' }),
-      createAssistantMessage({ content: '이전 답변입니다.' }),
-      createUserMessage({ content: '지금 종합소득세 상태를 요약해줘.' }),
-      createAssistantMessage({ content: '종합소득세 신고 상태를 확인했고 다음 단계만 남았습니다.' }),
-    ]
-
-    const finalized = finalizeStreamingAssistantMessage({
-      messages,
-      streamingText: '스트리밍 미리보기 텍스트입니다.\n',
-      turnStartMessageCount: 3,
-    })
-
-    expect(finalized).toEqual(messages)
-  })
 })

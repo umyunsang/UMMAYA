@@ -17,20 +17,55 @@ import {
   hasCurrentTurnLocationContext,
   selectionTextWithPriorLocationContext,
 } from './selectionContext.js'
-import { providerReasoningRequestPayload } from './reasoning.js'
+import {
+  providerReasoningRequestPayload,
+  resolveProviderReasoningPolicy,
+} from './reasoning.js'
+import type { ResolvedReasoningPolicy } from '../../../utils/kExaoneReasoning.js'
 
 function forcedToolChoiceSystemInstruction(toolName: string): string {
   if (toolName === 'workspace_bash') {
     return [
       `Mandatory tool call: the host selected ${toolName} for this turn.`,
-      'Do not answer with prose, do not ask a follow-up question, and do not choose another tool.',
+      'You may emit one brief user-visible prelude that states the next check, then emit the tool call.',
+      'Do not ask a follow-up question, do not choose another tool, and do not provide the final answer before the tool result.',
       `Emit exactly one ${toolName} tool call with valid JSON arguments.`,
       'For sequenced shell requests, emit the next concrete shell command requested by the user rather than a status summary.',
       'If the user asks to attempt a destructive command and says they will deny the permission prompt, still emit that destructive command so the host permission gate can prompt and enforce the denial.',
       'Do not replace a requested delete command with ls/find/path-existence prose, and preserve leading dots in hidden paths such as .omo/...',
     ].join(' ')
   }
-  return `Mandatory tool call: the host selected ${toolName} for this turn. Do not answer with prose, do not ask a follow-up question, and do not choose another tool. Emit exactly one ${toolName} tool call with valid JSON arguments.`
+  return [
+    `Mandatory tool call: the host selected ${toolName} for this turn.`,
+    'You may emit one brief user-visible prelude that states the next check, then emit the tool call.',
+    'Do not ask a follow-up question, do not choose another tool, and do not provide the final answer before the tool result.',
+    `Emit exactly one ${toolName} tool call with valid JSON arguments.`,
+  ].join(' ')
+}
+
+function reasoningSystemInstruction(
+  policy: ResolvedReasoningPolicy,
+): string | undefined {
+  if (!policy.enableThinking) return undefined
+  return [
+    'Provider thinking is enabled for this turn.',
+    'Keep hidden reasoning concise for simple answer-only requests and move to the final answer as soon as enough evidence is available.',
+    'Use extended reasoning only when it materially improves correctness for multi-step calculations, tool planning, code, or public-service workflows.',
+    'Do not spend the whole completion budget on thinking; preserve budget for visible final answer text.',
+  ].join(' ')
+}
+
+function extraSystemInstruction(params: {
+  readonly activeToolChoiceName?: string
+  readonly reasoningPolicy: ResolvedReasoningPolicy
+}): string | undefined {
+  const parts = [
+    params.activeToolChoiceName
+      ? forcedToolChoiceSystemInstruction(params.activeToolChoiceName)
+      : undefined,
+    reasoningSystemInstruction(params.reasoningPolicy),
+  ].filter((part): part is string => part !== undefined)
+  return parts.length > 0 ? parts.join(' ') : undefined
 }
 
 function schemaForTool(tool: Tool): Record<string, unknown> {
@@ -272,16 +307,15 @@ export function buildProviderRequest(
     selectedToolChoiceName ?? firstUnresolvedAdapterToolName(tools, params.messages)
   const toolChoice = toolChoiceFor(activeToolChoiceName)
   const toolPayload = tools.map(toolToOpenAI)
+  const reasoningPolicy = resolveProviderReasoningPolicy()
   return {
     model: params.options.model,
     stream: true,
-    ...providerReasoningRequestPayload(),
+    ...providerReasoningRequestPayload(reasoningPolicy),
     messages: transcriptToOpenAIMessages(
       params.messages,
       params.systemPrompt,
-      activeToolChoiceName
-        ? forcedToolChoiceSystemInstruction(activeToolChoiceName)
-        : undefined,
+      extraSystemInstruction({ activeToolChoiceName, reasoningPolicy }),
     ),
     ...(toolPayload.length > 0 ? { tools: toolPayload } : {}),
     ...(toolChoice ? { tool_choice: toolChoice } : {}),

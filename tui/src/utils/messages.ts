@@ -2942,6 +2942,32 @@ export type StreamingThinking = {
   streamingEndedAt?: number
 }
 
+function appendStreamingThinkingDelta(
+  current: StreamingThinking | null,
+  delta: string,
+): StreamingThinking {
+  return {
+    thinking: `${current?.thinking ?? ''}${delta}`,
+    isStreaming: true,
+  }
+}
+
+function endStreamingThinking(
+  current: StreamingThinking | null,
+): StreamingThinking | null {
+  if (!current?.isStreaming) {
+    return current
+  }
+  if (current.thinking.length === 0) {
+    return null
+  }
+  return {
+    ...current,
+    isStreaming: false,
+    streamingEndedAt: Date.now(),
+  }
+}
+
 /**
  * Handles messages from a stream, updating response length for deltas and appending completed messages
  */
@@ -3002,6 +3028,7 @@ export function handleMessageFromStream(
 
   if (message.type === 'stream_request_start') {
     onSetStreamMode('requesting')
+    onStreamingThinking?.(() => null)
     return
   }
 
@@ -3014,6 +3041,7 @@ export function handleMessageFromStream(
   if (message.event.type === 'message_stop') {
     onSetStreamMode('tool-use')
     onStreamingToolUses(() => [])
+    onStreamingThinking?.(endStreamingThinking)
     return
   }
 
@@ -3024,19 +3052,28 @@ export function handleMessageFromStream(
         isConnectorTextBlock(message.event.content_block)
       ) {
         onStreamingText?.(() => null)
+        onStreamingThinking?.(endStreamingThinking)
         onSetStreamMode('responding')
         return
       }
       switch (message.event.content_block.type) {
         case 'thinking':
+          onStreamingText?.(() => null)
+          onStreamingThinking?.(() => ({ thinking: '', isStreaming: true }))
+          onSetStreamMode('thinking')
+          return
         case 'redacted_thinking':
+          onStreamingText?.(() => null)
+          onStreamingThinking?.(() => null)
           onSetStreamMode('thinking')
           return
         case 'text':
           onStreamingText?.(() => null)
+          onStreamingThinking?.(endStreamingThinking)
           onSetStreamMode('responding')
           return
         case 'tool_use': {
+          onStreamingThinking?.(endStreamingThinking)
           onSetStreamMode('tool-input')
           const contentBlock = message.event.content_block
           const index = message.event.index
@@ -3061,6 +3098,7 @@ export function handleMessageFromStream(
         case 'text_editor_code_execution_tool_result':
         case 'tool_search_tool_result':
         case 'compaction':
+          onStreamingThinking?.(endStreamingThinking)
           onSetStreamMode('tool-input')
           return
       }
@@ -3094,6 +3132,9 @@ export function handleMessageFromStream(
         }
         case 'thinking_delta':
           onUpdateLength(message.event.delta.thinking)
+          onStreamingThinking?.(current =>
+            appendStreamingThinkingDelta(current, message.event.delta.thinking),
+          )
           return
         case 'signature_delta':
           // Signatures are cryptographic authentication strings, not model
@@ -3104,6 +3145,7 @@ export function handleMessageFromStream(
           return
       }
     case 'content_block_stop':
+      onStreamingThinking?.(endStreamingThinking)
       return
     case 'message_delta':
       onSetStreamMode('responding')

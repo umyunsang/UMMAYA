@@ -3,7 +3,7 @@ import type { AssistantMessage, Message } from '../types/message.js'
 import {
   buildIgnoredDocumentToolChoiceBlockedText,
   buildIgnoredSupportToolChoiceBlockedText,
-  scrubIgnoredSupportToolChoiceMessage,
+  shouldScrubObeyedSupportToolChoicePrelude,
   shouldWithholdIgnoredDocumentToolChoiceText,
   shouldWithholdIgnoredSupportToolChoiceText,
 } from '../tools/_shared/toolChoiceRepair.js'
@@ -121,20 +121,14 @@ export function enforceSupportToolBoundary(params: {
     block => block.name === activeToolChoiceName,
   )
   if (currentToolUseExists) {
-    const scrubbed = scrubIgnoredSupportToolChoiceMessage({
-      toolChoiceName: activeToolChoiceName,
-      candidate: messageText(assistantMessage),
-    })
-    const shouldScrubDocumentText = shouldWithholdIgnoredDocumentToolChoiceText({
-      toolChoiceName: activeToolChoiceName,
+    const shouldScrubPrelude = shouldScrubObeyedSupportToolChoicePrelude({
       candidate: messageText(assistantMessage),
     })
     return {
       kind: 'pass',
-      message:
-        scrubbed === undefined && !shouldScrubDocumentText
-          ? assistantMessage
-          : cloneAssistantWithoutText(assistantMessage),
+      message: shouldScrubPrelude
+        ? cloneAssistantWithoutText(assistantMessage)
+        : assistantMessage,
     }
   }
 

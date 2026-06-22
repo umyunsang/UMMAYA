@@ -23,6 +23,11 @@ from opentelemetry.trace import Status, StatusCode
 from pydantic import ValidationError
 
 from ummaya.engine.events import QueryEvent, StopReason
+from ummaya.engine.final_answer_repair import (
+    build_unexecuted_tool_plan_repair_message,
+    looks_like_unexecuted_tool_plan,
+    should_hide_tool_prelude,
+)
 from ummaya.engine.models import QueryContext
 from ummaya.engine.preprocessing import PreprocessingPipeline
 from ummaya.engine.tokens import estimate_tokens
@@ -750,6 +755,7 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
         # --- Stream LLM completion ---
         pending_calls: dict[int, _PendingToolCall] = {}
         content_parts: list[str] = []
+        buffered_prelude_flushed = False
         usage = None
 
         try:
@@ -763,6 +769,11 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
                         yield QueryEvent(type="text_delta", content=event.content)
 
                 elif event.type == "tool_call_delta":
+                    if buffer_final_answer and not buffered_prelude_flushed:
+                        buffered_prelude = "".join(content_parts)
+                        if buffered_prelude and not should_hide_tool_prelude(buffered_prelude):
+                            yield QueryEvent(type="text_delta", content=buffered_prelude)
+                        buffered_prelude_flushed = True
                     idx = event.tool_call_index if event.tool_call_index is not None else 0
                     if idx not in pending_calls:
                         pending_calls[idx] = _PendingToolCall(index=idx)
@@ -886,6 +897,31 @@ async def _query_inner(ctx: QueryContext) -> AsyncIterator[QueryEvent]:  # noqa:
                 final_text = _remove_generic_retry_footer(final_text)
                 if ctx.state.messages and ctx.state.messages[-1].role == "assistant":
                     ctx.state.messages[-1] = ChatMessage(role="assistant", content=final_text)
+                if (
+                    looks_like_unexecuted_tool_plan(
+                        final_text,
+                        tool_defs,
+                        _tool_definition_name,
+                    )
+                    and final_answer_repair_count < 2
+                ):
+                    final_answer_repair_count += 1
+                    ctx.state.messages.append(
+                        ChatMessage(
+                            role="user",
+                            content=build_unexecuted_tool_plan_repair_message(
+                                latest_user_utterance=_latest_user_utterance(current_turn_messages),
+                                tool_defs=tool_defs,
+                                resolve_name=_tool_definition_name,
+                            ),
+                        )
+                    )
+                    logger.debug(
+                        "Rejected non-final tool-plan prose after successful tool result; "
+                        "continuing query loop (%d/2)",
+                        final_answer_repair_count,
+                    )
+                    continue
                 if (
                     _should_repair_successful_tool_final_answer(final_text)
                     and latest_successful_tool_payload is not None

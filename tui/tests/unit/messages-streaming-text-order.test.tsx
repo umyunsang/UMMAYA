@@ -97,6 +97,81 @@ describe('Messages streaming text order', () => {
     expect(frame).toContain('현재관측을 정리하는 중입니다.')
   })
 
+  test('renders active streaming thinking as a visible intermediate frame', () => {
+    const { lastFrame } = render(
+      <ThemeProvider>
+        <TerminalWriteProvider value={() => {}}>
+          <TerminalSizeContext.Provider value={{ columns: 100, rows: 30 }}>
+            <Messages
+              messages={[
+                createUserMessage({ content: '오늘 부산 사하구 날씨를 확인해줘.' }),
+              ]}
+              tools={[]}
+              commands={[]}
+              verbose={true}
+              toolJSX={null}
+              toolUseConfirmQueue={[]}
+              inProgressToolUseIDs={new Set()}
+              isMessageSelectorVisible={false}
+              conversationId="streaming-thinking-test"
+              screen="prompt"
+              streamingToolUses={[]}
+              showAllInTranscript={false}
+              hideLogo={true}
+              isLoading={true}
+              streamingThinking={{
+                thinking: '날씨 출처와 대기질 출처를 분리해 확인합니다.',
+                isStreaming: true,
+              }}
+            />
+          </TerminalSizeContext.Provider>
+        </TerminalWriteProvider>
+      </ThemeProvider>,
+    )
+
+    const frame = lastFrame() ?? ''
+    expect(frame).toContain('Thinking')
+    expect(frame).toContain('날씨 출처와 대기질 출처')
+  })
+
+  test('collapses active streaming thinking in the default prompt surface', () => {
+    const { lastFrame } = render(
+      <ThemeProvider>
+        <TerminalWriteProvider value={() => {}}>
+          <TerminalSizeContext.Provider value={{ columns: 100, rows: 30 }}>
+            <Messages
+              messages={[
+                createUserMessage({ content: '오늘 부산 사하구 날씨를 확인해줘.' }),
+              ]}
+              tools={[]}
+              commands={[]}
+              verbose={false}
+              toolJSX={null}
+              toolUseConfirmQueue={[]}
+              inProgressToolUseIDs={new Set()}
+              isMessageSelectorVisible={false}
+              conversationId="streaming-thinking-collapsed-test"
+              screen="prompt"
+              streamingToolUses={[]}
+              showAllInTranscript={false}
+              hideLogo={true}
+              isLoading={true}
+              streamingThinking={{
+                thinking: '날씨 출처와 대기질 출처를 분리해 확인합니다.',
+                isStreaming: true,
+              }}
+            />
+          </TerminalSizeContext.Provider>
+        </TerminalWriteProvider>
+      </ThemeProvider>,
+    )
+
+    const frame = lastFrame() ?? ''
+    expect(frame).toContain('Thinking')
+    expect(frame).toContain('ctrl+o')
+    expect(frame).not.toContain('날씨 출처와 대기질 출처')
+  })
+
   test('renders active streaming text before an active streaming tool card', () => {
     const { lastFrame } = render(
       <ThemeProvider>

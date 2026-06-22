@@ -67,6 +67,16 @@ export function scrubIgnoredSupportToolChoiceMessage({
     : undefined
 }
 
+export function shouldScrubObeyedSupportToolChoicePrelude({
+  candidate,
+}: {
+  readonly candidate: unknown
+}): boolean {
+  const candidateText = supportCandidateText(candidate)
+  if (candidateText.trim().length === 0) return false
+  return SENSITIVE_CONTEXT_RE.test(candidateText)
+}
+
 export function buildIgnoredSupportToolChoiceBlockedText(
   toolChoiceName: string,
   toolChoiceAvailable = true,
