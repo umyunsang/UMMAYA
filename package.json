@@ -10,14 +10,12 @@
   "files": [
     "bin/ummaya",
     "assets/*.svg",
-    "assets/*.gif",
     "assets/*.mp4",
     "tui/src/**",
     "tui/package.json",
     "tui/tsconfig.json",
     "bun.lock",
     "npm-shrinkwrap.json",
-    "docs/demo/**",
     "docs/plugins/security-review.md",
     "specs/2803-document-production-hardening/contracts/document-tools.schema.json",
     "tests/fixtures/documents/public_forms/baselines.yaml",
@@ -30,7 +28,6 @@
     "!tui/src/**/*.snap"
   ],
   "scripts": {
-    "demo:readme": "bash docs/demo/record-readme-demo.sh",
     "docs:dev": "cd docs-site && bun run dev",
     "docs:c4": "bash scripts/render_c4_diagrams.sh",
     "docs:generate": "uv run python scripts/docs_generate.py",

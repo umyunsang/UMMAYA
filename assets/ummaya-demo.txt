@@ -1,9 +1,0 @@
-UMMAYA README demo terminal evidence
-Generated: 2026-05-14T14:05:17Z
-Edited: 2026-05-14T23:34:58+09:00
-Recorder: t-rec direct live ummaya CLI
-Program: /Users/um-yunsang/UMMAYA/docs/demo/run-readme-demo.sh
-WindowId: 108945
-Mode: real user-visible terminal session; prompts typed manually or by external GUI driver
-Edit: removed long wait/idle spans from the real t-rec recording only; no synthetic UI, prompts, or tool calls added
-Original: package-evidence/readme-demo/ummaya-demo-original-untrimmed.mp4
