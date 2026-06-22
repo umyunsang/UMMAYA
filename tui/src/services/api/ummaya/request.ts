@@ -27,7 +27,7 @@ function forcedToolChoiceSystemInstruction(toolName: string): string {
   if (toolName === 'workspace_bash') {
     return [
       `Mandatory tool call: the host selected ${toolName} for this turn.`,
-      'You may emit one brief user-visible prelude that states the next check, then emit the tool call.',
+      "Before the tool call, emit exactly one brief user-visible prelude in the user's language that states the next check.",
       'Do not ask a follow-up question, do not choose another tool, and do not provide the final answer before the tool result.',
       `Emit exactly one ${toolName} tool call with valid JSON arguments.`,
       'For sequenced shell requests, emit the next concrete shell command requested by the user rather than a status summary.',
@@ -37,7 +37,7 @@ function forcedToolChoiceSystemInstruction(toolName: string): string {
   }
   return [
     `Mandatory tool call: the host selected ${toolName} for this turn.`,
-    'You may emit one brief user-visible prelude that states the next check, then emit the tool call.',
+    "Before the tool call, emit exactly one brief user-visible prelude in the user's language that states the next check.",
     'Do not ask a follow-up question, do not choose another tool, and do not provide the final answer before the tool result.',
     `Emit exactly one ${toolName} tool call with valid JSON arguments.`,
   ].join(' ')

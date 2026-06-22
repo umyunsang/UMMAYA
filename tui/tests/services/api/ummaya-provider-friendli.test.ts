@@ -123,6 +123,10 @@ describe('UMMAYA-named CC provider interface wired to FriendliAI client shim', (
         expect(serializedMessages(exchange.request)).toContain(
           'Mandatory tool call: the host selected kma_apihub_url_air_metar_decoded',
         )
+        expect(serializedMessages(exchange.request)).toContain(
+          "Before the tool call, emit exactly one brief user-visible prelude in the user's language",
+        )
+        expect(serializedMessages(exchange.request)).not.toContain('You may emit')
       } finally {
         ingestMetarManifest(undefined)
       }
