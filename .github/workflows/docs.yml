@@ -47,7 +47,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: "657819314c95688d19e6d72cd138927e"
       CLOUDFLARE_PROJECT_NAME: "ummaya-docs"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true

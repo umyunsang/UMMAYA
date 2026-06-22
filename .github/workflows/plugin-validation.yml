@@ -45,14 +45,14 @@ jobs:
 
     steps:
       - name: Check out UMMAYA validator
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: umyunsang/UMMAYA
           ref: ${{ inputs.ummaya_ref }}
           path: ummaya
 
       - name: Check out plugin repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: plugin
 

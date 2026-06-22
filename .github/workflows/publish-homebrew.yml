@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 20
     environment: homebrew
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -89,7 +89,7 @@ jobs:
 
       - name: Checkout tap with token
         if: steps.tap-credential.outputs.mode == 'token'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: umyunsang/homebrew-ummaya
           path: tap
@@ -97,7 +97,7 @@ jobs:
 
       - name: Checkout tap with deploy key
         if: steps.tap-credential.outputs.mode == 'ssh'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: umyunsang/homebrew-ummaya
           path: tap
