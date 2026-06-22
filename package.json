@@ -10,6 +10,7 @@
   "files": [
     "bin/ummaya",
     "assets/*.svg",
+    "assets/*.gif",
     "assets/*.mp4",
     "tui/src/**",
     "tui/package.json",

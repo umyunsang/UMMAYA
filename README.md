@@ -17,11 +17,11 @@ If Codex and Claude Code are terminal agents for software work, UMMAYA is the sa
 
 > UMMAYA is an independent academic and R&D project. It is not affiliated with, endorsed by, or operated by Anthropic, LG AI Research, FriendliAI, the Korean government, or any public agency.
 
-<p>
-  <a href="https://github.com/umyunsang/UMMAYA/blob/main/assets/ummaya-demo.mp4"><strong>Watch the latest UMMAYA demo video</strong></a>
-</p>
+<a href="https://github.com/umyunsang/UMMAYA/blob/main/assets/ummaya-demo.mp4">
+  <img src="https://raw.githubusercontent.com/umyunsang/UMMAYA/main/assets/ummaya-demo.gif" alt="UMMAYA terminal demo showing public-service prompts, tool calls, tool results, and final answers" width="100%">
+</a>
 
-<sub>The linked MP4 is the current project demo video.</sub>
+<sub>The README renders the GIF preview directly; click it to open the full MP4 demo.</sub>
 
 ## Find This Repo When You Need
 
