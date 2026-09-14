@@ -60,7 +60,7 @@ dependencies = [
     "pypdfium2>=5.9.0",
     # spec 2802 — local-only read engine for legacy HWP inspection. Direct HWP
     # writing remains blocked until a separate conversion/write ADR passes.
-    "unhwp>=0.5.0,<0.6",
+    "unhwp>=0.5.0,<0.12",
     # spec 2802 — pypdf uses fontTools to build embedded TrueType appearance
     # streams for Korean AcroForm text without viewer-side regeneration.
     "fonttools>=4.60",
