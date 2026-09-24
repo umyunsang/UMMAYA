@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           package-manager-cache: false
@@ -113,7 +113,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22.12.0"
           package-manager-cache: false
